@@ -1313,7 +1313,9 @@ extern int                 Cbs_ManSolve( Cbs_Man_t * p, Gia_Obj_t * pObj );
 extern int                 Cbs_ManSolve2( Cbs_Man_t * p, Gia_Obj_t * pObj, Gia_Obj_t * pObj2 );
 extern Vec_Int_t *         Cbs_ManSolveMiterNc( Gia_Man_t * pGia, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose );
 extern void                Cbs_ManSetConflictNum( Cbs_Man_t * p, int Num );
+extern void                Cbs_ManSetJustLimit( Cbs_Man_t * p, int Num );
 extern Vec_Int_t *         Cbs_ReadModel( Cbs_Man_t * p );
+extern int                 Cbs_ManSolveWithState( Cbs_Man_t * p, Gia_Obj_t * pTarget, Gia_Obj_t ** ppRoObjs, int * pRoVals, int nReg, int * pRiFaninVals );
 /*=== giaCTas.c ============================================================*/
 extern Vec_Int_t *         Tas_ManSolveMiterNc( Gia_Man_t * pGia, int nConfs, Vec_Str_t ** pvStatus, int fVerbose );
 /*=== giaCof.c =============================================================*/

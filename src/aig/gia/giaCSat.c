@@ -138,6 +138,10 @@ void Cbs_ManSetConflictNum( Cbs_Man_t * p, int Num )
 {
     p->Pars.nBTLimit = Num;
 }
+void Cbs_ManSetJustLimit( Cbs_Man_t * p, int Num )
+{
+    p->Pars.nJustLimit = Num;
+}
 
 /**Function*************************************************************
 
@@ -995,10 +999,104 @@ int Cbs_ManSolve2( Cbs_Man_t * p, Gia_Obj_t * pObj, Gia_Obj_t * pObj2 )
 
 /**Function*************************************************************
 
+  Synopsis    [Solve with forced RO-state assumptions and a CBS target node.]
+
+  Description [Forces RO[i] = pRoVals[i] as permanent level-0 assignments,
+               then asks CBS to satisfy pTarget = 1.  The RO constraints
+               emulate the "assumption" list of a traditional SAT solver call
+               without any CNF encoding overhead.
+
+               If the call returns SAT (0), the next-state is written into
+               pRiFaninVals[0..nReg-1] by reading the RI fanin values from
+               the CBS assignment trail *before* it is cancelled.  The CI
+               counter-example model is saved in p->vModel (same format as
+               Cbs_ManSolve).
+
+               Returns 0=SAT, 1=UNSAT, -1=undecided (conflict limit hit).
+               All CBS internal marks are cleared on exit regardless of the
+               result, identical to Cbs_ManSolve.]
+
+  SideEffects [Clears fMark0/fMark1/Value for all visited GIA nodes.]
+
+  SeeAlso     [Cbs_ManSolve, Cbs_ManSolve2]
+
+***********************************************************************/
+int Cbs_ManSolveWithState( Cbs_Man_t * p, Gia_Obj_t * pTarget,
+    Gia_Obj_t ** ppRoObjs, int * pRoVals, int nReg,
+    int * pRiFaninVals )
+{
+    Gia_Man_t * pAig     = p->pAig;
+    Gia_Obj_t * pRiObj, * pFanin, * pTargetR;
+    int         RetValue = 0, i, fCompl, targetVal;
+
+    assert( !p->pProp.iHead && !p->pProp.iTail );
+    assert( !p->pJust.iHead && !p->pJust.iTail );
+    assert( p->pClauses.iHead == 1 && p->pClauses.iTail == 1 );
+    p->Pars.nBTThis = p->Pars.nJustThis = p->Pars.nBTThisNc = 0;
+
+    /* Step 1: force RO[i] = pRoVals[i] at level 0.
+       ROs are CIs so no BCP propagation occurs here; the prop queue
+       simply accumulates them for the subsequent Cbs_ManSolve_rec. */
+    for ( i = 0; i < nReg; i++ )
+        Cbs_ManAssign( p, pRoVals[i] ? ppRoObjs[i] : Gia_Not(ppRoObjs[i]),
+                       0, NULL, NULL );
+
+    /* Step 2: force pTarget = 1 at level 0.
+       pTarget must be an AND gate (caller must not pass CIs or consts).
+       Guard against the (theoretical) case where BCP already assigned it. */
+    pTargetR  = Gia_Regular( pTarget );
+    targetVal = !Gia_IsComplement( pTarget );
+    if ( Cbs_VarIsAssigned( pTargetR ) )
+    {
+        /* Should not happen when caller skips CI targets, but handle it. */
+        if ( Cbs_VarValue( pTargetR ) != targetVal )
+        {
+            RetValue = 1;   /* immediate conflict → UNSAT */
+            goto cleanup;
+        }
+        /* Already consistent: no extra assignment needed; solver proceeds. */
+    }
+    else
+        Cbs_ManAssign( p, pTarget, 0, NULL, NULL );
+
+    /* Step 3: run the circuit-based solver. */
+    if ( !Cbs_ManSolve_rec( p, 0 ) && !Cbs_ManCheckLimits( p ) )
+    {
+        /* SAT: extract RI fanin-driven next-state BEFORE cancelling. */
+        if ( pRiFaninVals )
+        {
+            Gia_ManForEachRi( pAig, pRiObj, i )
+            {
+                pFanin = Gia_ObjFanin0( pRiObj );
+                fCompl = Gia_ObjFaninC0( pRiObj );
+                /* Unassigned fanin defaults to 0; output = 0 ^ fCompl. */
+                pRiFaninVals[i] = Cbs_VarIsAssigned( pFanin )
+                                  ? ( Cbs_VarValue( pFanin ) ^ fCompl )
+                                  : fCompl;
+            }
+        }
+        Cbs_ManSaveModel( p, p->vModel );
+    }
+    else
+        RetValue = 1;
+
+cleanup:
+    Cbs_ManCancelUntil( p, 0 );
+    p->pJust.iHead     = p->pJust.iTail     = 0;
+    p->pClauses.iHead  = p->pClauses.iTail  = 1;
+    p->Pars.nBTTotal  += p->Pars.nBTThis;
+    p->Pars.nJustTotal = Abc_MaxInt( p->Pars.nJustTotal, p->Pars.nJustThis );
+    if ( Cbs_ManCheckLimits( p ) )
+        RetValue = -1;
+    return RetValue;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Prints statistics of the manager.]
 
   Description []
-               
+
   SideEffects []
 
   SeeAlso     []

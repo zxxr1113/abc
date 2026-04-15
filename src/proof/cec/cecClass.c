@@ -955,218 +955,252 @@ int Cec_ManSimClassesRefine( Cec_ManSim_t * p )
     return 0;
 }
 ////////////////////////////////////////////////////////////////////////
-///          SAT-GUIDED SIMULATION (RIC3 rt_dfs_simulate style)      ///
+///       CBS-GUIDED SIMULATION (RIC3 rt_dfs_simulate via Circuit-SAT) ///
 ////////////////////////////////////////////////////////////////////////
+
+/* Number of RI registers probed per DFS state.
+   For each RI[j] we try two targets: RI[j]=1 then RI[j]=0.
+   Total targets per call = 2 * CBS_DFS_MAX_RI. */
+#define CBS_DFS_MAX_RI 8
 
 /**Function*************************************************************
 
-  Synopsis    [Builds a SAT solver for one combinational frame of the GIA.]
+  Synopsis    [Lightweight polynomial hash of a next-state vector.]
 
-  Description [Assigns SAT variable = GIA object ID for every node.
-               Forces constant-0 (obj 0) to false.
-               Adds Tseitin clauses for every AND gate.
-               CI nodes (PIs and ROs) are free variables – their values
-               are controlled via assumptions at solve time.]
+  Description [Used for duplicate-next-state suppression in the DFS.
+               Collisions are possible but acceptable – they merely cause
+               the DFS to skip an occasional valid state, not to loop.]
 
   SideEffects []
 
   SeeAlso     []
 
 ***********************************************************************/
-static sat_solver * Cec_ManBuildFrameSat( Gia_Man_t * p )
+static unsigned Cec_CbsStateHash( int * pState, int nReg )
 {
-    sat_solver * pSat;
-    Gia_Obj_t  * pObj;
-    int i, Lits[3];
-
-    pSat = sat_solver_new();
-    // set the number of variables to be the same as the number of GIA objects
-    sat_solver_setnvars( pSat, Gia_ManObjNum(p) );
-
-    /* const-0 node (obj id 0) must be false <=> ~a must be true */
-    Lits[0] = Abc_Var2Lit( 0, 1 );
-    sat_solver_addclause( pSat, Lits, Lits + 1 );
-
-    /* Tseitin encoding: r <=> lit0 /\ lit1
-       lit_k = Abc_Var2Lit(iVar_k, fC_k)
-       Clause A: ~lit0 | ~lit1 | r  <=> (lit0 /\ lit1 -> r)
-       Clause B:  ~r   | lit0            (r -> lit0)
-       Clause C:  ~r   | lit1            (r -> lit1)          */
-    Gia_ManForEachAnd( p, pObj, i )
-    {
-        int iVar  = i;
-        int iVar0 = Gia_ObjFaninId0( pObj, i );
-        int iVar1 = Gia_ObjFaninId1( pObj, i );
-        int fC0   = Gia_ObjFaninC0( pObj );
-        int fC1   = Gia_ObjFaninC1( pObj );
-
-        /* A: ~lit0 | ~lit1 | r */
-        Lits[0] = Abc_Var2Lit( iVar0, !fC0 );
-        Lits[1] = Abc_Var2Lit( iVar1, !fC1 );
-        Lits[2] = Abc_Var2Lit( iVar,   0   );
-        sat_solver_addclause( pSat, Lits, Lits + 3 );
-
-        /* B: ~r | lit0 */
-        Lits[0] = Abc_Var2Lit( iVar,   1   );
-        Lits[1] = Abc_Var2Lit( iVar0, fC0  );
-        sat_solver_addclause( pSat, Lits, Lits + 2 );
-
-        /* C: ~r | lit1 */
-        Lits[0] = Abc_Var2Lit( iVar,   1   );
-        Lits[1] = Abc_Var2Lit( iVar1, fC1  );
-        sat_solver_addclause( pSat, Lits, Lits + 2 );
-    }
-    return pSat;
+    unsigned h = 2166136261u;   /* FNV-1a basis */
+    int i;
+    for ( i = 0; i < nReg; i++ )
+        h = (h ^ (unsigned)pState[i]) * 16777619u;
+    return h;
 }
 
 /**Function*************************************************************
 
-  Synopsis    [DFS exploration of reachable states (RIC3 rt_dfs_simulate).]
+  Synopsis    [CBS-based DFS exploration of reachable states.]
 
   Description [Given the current latch state pCurState[0..nReg-1],
-               repeatedly asks the SAT solver for a valid next state
-               reachable in one transition step.  Each found next state
-               is:
-                 1. Packed as one simulation bit-pattern into vCiSimInfo.
-                 2. Blocked (its RI-fanin assignment is negated) so that
-                    subsequent calls discover different successor states.
-                 3. Explored further via recursive DFS.
-               Mirrors RIC3's rt_dfs_simulate loop.
-               *pBit is the next free bit slot; incremented per pattern.
+               this function probes each RI-fanin node as a CBS "target"
+               (forcing RI[j] output = 1 for j = 0..min(nReg,MAX_TARGETS)-1).
+               For every SAT result the function:
+                 1. Deduplicates against vSeen (a hash set of visited
+                    next-states), preventing the DFS from re-entering an
+                    already-explored state without needing blocking clauses.
+                 2. Packs PI values (from CBS model) and current RO values
+                    (= pCurState) as one simulation bit-pattern into
+                    vCiSimInfo at slot *pBit.
+                 3. Recurses into the discovered next state.
+
+               Diversity across patterns comes from rotating the target
+               RI register (j) so that CBS must justify a different circuit
+               output on each call.
+
+               *pBit is the next free bit slot; incremented per new pattern.
                nBits = 32*nWords is the capacity limit.]
 
-  SideEffects [Modifies vCiSimInfo; adds permanent blocking clauses to pSat.]
+  SideEffects [Modifies vCiSimInfo (bit-patterns); appends to vSeen.]
 
   SeeAlso     []
 
 ***********************************************************************/
-static void Cec_ManSatSimDfs( sat_solver * pSat, Gia_Man_t * pAig,
-    Vec_Ptr_t * vCiSimInfo, int * pCurState,
-    int * pBit, int nBits )
+static void Cec_ManCbsSimDfs( Cbs_Man_t * pCbs, Gia_Man_t * pAig,
+    Gia_Obj_t ** ppRoObjs, Vec_Ptr_t * vCiSimInfo,
+    int * pCurState, int * pBit, int nBits, Vec_Int_t * vSeen )
 {
-    Gia_Obj_t * pObj;
-    int * pAssumps, * pNextState, * pBlock;
-    int i, iVar0, fCompl, faninVal, status;
-    int nPi  = Gia_ManPiNum( pAig );
-    int nReg = Gia_ManRegNum( pAig );
+    Vec_Int_t  * vModel     = Cbs_ReadModel( pCbs );
+    int          nPi        = Gia_ManPiNum( pAig );
+    int          nReg       = Gia_ManRegNum( pAig );
+    int          nRiTry     = Abc_MinInt( nReg, CBS_DFS_MAX_RI );
+    int        * pNextState = ABC_ALLOC( int, nReg );
+    int          i, j, dir, lit, status, cio_id, val;
+    unsigned     h;
+    Gia_Obj_t  * pRiObj, * pTarget, * pTargetR;
 
-    pAssumps   = ABC_ALLOC( int, nReg );
-    pNextState = ABC_ALLOC( int, nReg );
-    pBlock     = ABC_ALLOC( int, nReg );
-
-    for ( ; ; )
+    if ( *pBit >= nBits )
     {
-        // Stop if we reach the capacity limit
-        if ( *pBit >= nBits )
-            break;
-
-        /* Assume all ROs equal to pCurState */
-        Gia_ManForEachRo( pAig, pObj, i )
-            pAssumps[i] = Abc_Var2Lit( Gia_ObjId(pAig, pObj), !pCurState[i] );
-
-        status = sat_solver_solve( pSat, pAssumps, pAssumps + nReg,
-                                   (long long)50, 0, 0, 0 ); //(ABC_INT64_T) 50
-        
-        // if UNSAT, we are done with this branch; if SAT, we have a new next state to explore
-        if ( status != l_True )
-            break;
-
-        /* --- Pack PI values into vCiSimInfo[i] at bit *pBit --- */
-        Gia_ManForEachPi( pAig, pObj, i )
-        {
-            if ( sat_solver_var_value( pSat, Gia_ObjId(pAig, pObj) ) )
-                Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, i), *pBit );
-        }
-
-        /* --- Pack current RO values (= pCurState) into vCiSimInfo[nPi+i] --- */
-        Gia_ManForEachRo( pAig, pObj, i )
-        {
-            if ( pCurState[i] )
-                Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, nPi + i), *pBit );
-        }
-
-        /* --- Extract next state and build blocking clause on RI fanins --- */
-        Gia_ManForEachRi( pAig, pObj, i )
-        {
-            iVar0    = Gia_ObjFaninId0( pObj, Gia_ObjId(pAig, pObj) );
-            fCompl   = Gia_ObjFaninC0( pObj );
-            faninVal = sat_solver_var_value( pSat, iVar0 );
-            pNextState[i] = faninVal ^ fCompl;       /* actual RI value */
-            pBlock[i]     = Abc_Var2Lit( iVar0, faninVal ); /* negate assignment */
-        }
-
-        /* Prevent revisiting the same next state */
-        sat_solver_addclause( pSat, pBlock, pBlock + nReg );
-
-        (*pBit)++;
-
-        /* DFS: explore deeper from the discovered next state */
-        Cec_ManSatSimDfs( pSat, pAig, vCiSimInfo,
-                          pNextState, pBit, nBits );
+        ABC_FREE( pNextState );
+        return;
     }
 
-    ABC_FREE( pAssumps );
+    /* Probe CBS_DFS_MAX_RI registers in two directions each:
+         dir=0: target makes RI[j] output = 1
+         dir=1: target makes RI[j] output = 0  (Gia_Not of the dir=0 target)
+       Trying both directions ensures we find patterns even when the circuit
+       cannot produce RI[j]=1 from the current state (e.g. reset-state fixed
+       points where all RI outputs are 0). */
+    for ( j = 0; j < nRiTry; j++ )
+    {
+        for ( dir = 0; dir < 2; dir++ )
+        {
+            int entry, idx, found;
+
+            if ( *pBit >= nBits )
+                goto dfs_done;
+
+            pRiObj   = Gia_ManRi( pAig, j );
+            /* dir=0: child0 forces RI[j]=1; dir=1: Not(child0) forces RI[j]=0 */
+            pTarget  = dir ? Gia_Not( Gia_ObjChild0(pRiObj) )
+                           : Gia_ObjChild0( pRiObj );
+            pTargetR = Gia_Regular( pTarget );
+
+            /* Skip trivial targets: constants and free CIs give CBS nothing to
+               justify and return trivial SAT with no useful PI assignments. */
+            if ( Gia_ObjIsConst0( pTargetR ) || Gia_ObjIsCi( pTargetR ) )
+                continue;
+
+            /* Call CBS with RO = pCurState and the chosen target.
+               status: 0=SAT, 1=UNSAT, -1=undecided(timeout). */
+            status = Cbs_ManSolveWithState( pCbs, pTarget,
+                                            ppRoObjs, pCurState, nReg,
+                                            pNextState );
+            if ( status != 0 )
+                continue;   /* UNSAT or timeout: try next target */
+
+            /* Deduplicate: skip if we have already recursed into this next state.
+               A 32-bit FNV hash makes false duplicates negligibly rare. */
+            h = Cec_CbsStateHash( pNextState, nReg );
+            found = 0;
+            Vec_IntForEachEntry( vSeen, entry, idx )
+                if ( (unsigned)entry == h ) { found = 1; break; }
+            if ( found )
+                continue;
+            Vec_IntPush( vSeen, (int)h );
+
+            /* --- Pack PI values from the CBS model into vCiSimInfo at *pBit.
+                   vModel entries: Abc_Var2Lit(Gia_ObjCioId(pCi), !value)
+                   → var = CioId, value = !(lit & 1).
+                   CioId 0..nPi-1 = PIs; CioId nPi..nPi+nReg-1 = ROs. --- */
+            Vec_IntForEachEntry( vModel, lit, i )
+            {
+                cio_id = Abc_Lit2Var( lit );
+                val    = !Abc_LitIsCompl( lit );
+                if ( cio_id < nPi && val )
+                    Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, cio_id),
+                                    *pBit );
+            }
+
+            /* --- Pack current RO values (= pCurState) into vCiSimInfo[nPi+k]. --- */
+            for ( i = 0; i < nReg; i++ )
+                if ( pCurState[i] )
+                    Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, nPi + i),
+                                    *pBit );
+
+            (*pBit)++;
+
+            /* DFS: explore the discovered next state recursively. */
+            Cec_ManCbsSimDfs( pCbs, pAig, ppRoObjs, vCiSimInfo,
+                              pNextState, pBit, nBits, vSeen );
+        } /* end dir loop */
+    } /* end j loop */
+
+dfs_done:
     ABC_FREE( pNextState );
-    ABC_FREE( pBlock );
 }
 
 /**Function*************************************************************
 
-  Synopsis    [SAT-guided sequential simulation for equivalence class refinement.]
+  Synopsis    [CBS-guided sequential simulation for equivalence class refinement.]
 
-  Description [Builds a one-frame SAT solver over the GIA and uses
-               DFS with blocking clauses (RIC3 rt_dfs_simulate strategy)
-               to generate diverse reachable-state simulation patterns.
-               The patterns are packed into p->vCiSimInfo and fed to
-               Cec_ManSimSimulateRound so that equivalence classes are
-               refined beyond what pure random simulation achieves.
+  Description [Replaces the old CNF/Tseitin approach with a Circuit-Based
+               Solver (CBS) that operates directly on the GIA.  This
+               eliminates the Tseitin-encoding overhead that made the
+               previous sat_solver version slower than random simulation
+               on large AIGs.
+
+               The function initialises CBS on the current GIA, then runs
+               a DFS (Cec_ManCbsSimDfs) that probes reachable successor
+               states from the all-zero reset state.  Each discovered
+               (PI, RO) pattern is packed into p->vCiSimInfo and forwarded
+               to Cec_ManSimSimulateRound for equivalence-class refinement.
 
                Called after Cec_ManSimClassesPrepare + Cec_ManSimClassesRefine
                in Cec_ManLSCorrespondenceClasses (cecCorr.c).]
 
-  SideEffects []
+  SideEffects [Temporarily sets fMark0/fMark1/Value on GIA nodes (cleaned
+               up by CBS internals before return).]
 
   SeeAlso     []
 
 ***********************************************************************/
 int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
 {
-    Gia_Man_t * pAig  = p->pAig;
-    int nReg   = Gia_ManRegNum( pAig );
-    int nCi    = Gia_ManCiNum( pAig );
-    int nWords = p->pPars->nWords;
-    int nBits  = 32 * nWords;
-    sat_solver * pSat;
-    int * pInitState;
-    int i, bit, RetValue = 0;
+    Gia_Man_t  * pAig      = p->pAig;
+    int          nReg      = Gia_ManRegNum( pAig );
+    int          nCi       = Gia_ManCiNum( pAig );
+    int          nWords    = p->pPars->nWords;
+    int          nBits     = 32 * nWords;
+    Cbs_Man_t  * pCbs;
+    Gia_Obj_t ** ppRoObjs;
+    Vec_Int_t  * vSeen;
+    Gia_Obj_t  * pObj;
+    int        * pInitState;
+    int          i, bit, RetValue = 0;
+    int          fCreatedRefs = 0;
 
     if ( nReg == 0 )
         return 0;
 
-    pSat = Cec_ManBuildFrameSat( pAig );
+    /* Cbs_ManSolve_rec uses Gia_ObjRefNum for the decision heuristic, so
+       pRefs must be populated.  Create it here if the caller has not done
+       so already; track whether we own it so we can free it at the end. */
+    if ( pAig->pRefs == NULL )
+    {
+        Gia_ManCreateRefs( pAig );
+        fCreatedRefs = 1;
+    }
 
-    /* All-zero reset state (matches &scorr convention) */
+    /* Prepare GIA for CBS: clear marks, fill Value (trail IDs), set phase. */
+    Gia_ManCleanMark0( pAig );
+    Gia_ManCleanMark1( pAig );
+    Gia_ManFillValue( pAig );
+    Gia_ManSetPhase( pAig );
+
+    pCbs = Cbs_ManAlloc( pAig );
+    /* Scale conflict/justification budgets with circuit size so CBS has a
+       realistic chance of finding SAT assignments in large sequential designs.
+       nBTLimit caps backtracks per call; nJustLimit caps the simultaneous
+       justification frontier (governs timeouts on wide cones). */
+    Cbs_ManSetConflictNum( pCbs, 5 );
+    Cbs_ManSetJustLimit( pCbs, Abc_MaxInt( 100, Gia_ManAndNum(pAig) / 10 ) );
+
+    /* Build an indexed array of RO GIA objects for fast assumption setup. */
+    ppRoObjs = ABC_ALLOC( Gia_Obj_t *, nReg );
+    Gia_ManForEachRo( pAig, pObj, i )
+        ppRoObjs[i] = pObj;
+
+    /* All-zero reset state (matches &scorr convention). */
     pInitState = ABC_CALLOC( int, nReg );
 
-    /* Zero vCiSimInfo — SAT patterns will be written bit-by-bit.
-       Bit 0 is forced to all-zeros by Cec_ManSimSimulateRound itself,
+    /* Zero vCiSimInfo – CBS patterns will be written bit-by-bit.
+       Bit 0 is forced all-zeros by Cec_ManSimSimulateRound itself,
        so we start filling from bit 1. */
     for ( i = 0; i < nCi; i++ )
         memset( Vec_PtrEntry(p->vCiSimInfo, i), 0,
                 (size_t)nWords * sizeof(unsigned) );
 
-    bit = 1;
-    Cec_ManSatSimDfs( pSat, pAig, p->vCiSimInfo,
-                      pInitState, &bit, nBits );
+    vSeen = Vec_IntAlloc( 64 );
+    bit   = 1;
+    Cec_ManCbsSimDfs( pCbs, pAig, ppRoObjs, p->vCiSimInfo,
+                      pInitState, &bit, nBits, vSeen );
+    Vec_IntFree( vSeen );
 
     if ( p->pPars->fVerbose )
-        Abc_Print( 1, "SAT-guided sim: generated %d patterns (capacity %d).\n",
+        Abc_Print( 1, "CBS-guided sim: generated %d patterns (capacity %d).\n",
                    bit - 1, nBits - 1 );
 
     if ( bit > 1 )
     {
         Gia_ManCreateValueRefs( pAig );
-        /* p->nWords is already pPars->nWords after Cec_ManSimClassesRefine */
         if ( Cec_ManSimSimulateRound( p, p->vCiSimInfo, p->vCoSimInfo ) )
             RetValue = 1;
         if ( p->pPars->fVerbose )
@@ -1174,7 +1208,17 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
     }
 
     ABC_FREE( pInitState );
-    sat_solver_delete( pSat );
+    ABC_FREE( ppRoObjs );
+    Cbs_ManStop( pCbs );
+
+    /* Restore clean marks for any code that runs after us. */
+    Gia_ManCleanMark0( pAig );
+    Gia_ManCleanMark1( pAig );
+
+    /* Release pRefs only if we allocated it; leave it if the caller owns it. */
+    if ( fCreatedRefs )
+        ABC_FREE( pAig->pRefs );
+
     return RetValue;
 }
 
