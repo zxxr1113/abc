@@ -1184,7 +1184,6 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
 {
     Gia_Man_t  * pAig      = p->pAig;
     int          nReg      = Gia_ManRegNum( pAig );
-    int          nCi       = Gia_ManCiNum( pAig );
     int          nWords    = p->pPars->nWords;
     int          nBits     = 32 * nWords;
     Cbs_Man_t  * pCbs;
@@ -1232,12 +1231,13 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
     /* Scratch space for forward simulation: one int per GIA object. */
     pSimVals   = ABC_ALLOC( int, Gia_ManObjNum(pAig) );
 
-    /* Zero vCiSimInfo – CBS patterns will be written bit-by-bit.
-       Bit 0 is forced all-zeros by Cec_ManSimSimulateRound itself,
-       so we start filling from bit 1. */
-    for ( i = 0; i < nCi; i++ )
-        memset( Vec_PtrEntry(p->vCiSimInfo, i), 0,
-                (size_t)nWords * sizeof(unsigned) );
+    /* Do NOT zero vCiSimInfo.  The previous Cec_ManSimClassesRefine call
+       already filled it with random patterns.  CBS patterns are written
+       starting from bit 1, overwriting only the bit-slots they occupy.
+       The remaining slots keep the existing random patterns, so the
+       simulation sees a mix of CBS-guided + random patterns rather than
+       CBS + zero-padding.  Bit 0 is handled internally by
+       Cec_ManSimSimulateRound (it drives the all-zeros path). */
 
     vSeen = Vec_IntAlloc( 64 );
     bit   = 1;

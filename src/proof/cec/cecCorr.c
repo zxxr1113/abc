@@ -945,6 +945,13 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ManSim_t * pSim;
     Gia_Man_t * pSrm;
     int r, RetValue, nPrev[4] = {0};
+    /* Adaptive frame depth: start at pPars->nFrames and allow growth up to
+       pPars->nFrames+2 when the inductive loop stalls.  nSlowRounds counts
+       consecutive iterations with less than 2% lit-count improvement. */
+    int nFramesCur   = pPars->nFrames;
+    int nFramesMax   = pPars->nFrames + 2;
+    int nSlowRounds  = 0;
+    int nLitsAdapt   = -1;   /* lit count at the end of the previous round */
     abctime clkTotal = Abc_Clock();
     abctime clkSat = 0, clkSim = 0, clkSrm = 0;
     abctime clk2, clk = Abc_Clock();
@@ -1019,8 +1026,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clk = Abc_Clock();
         // perform speculative reduction
         clk2 = Abc_Clock();
-        pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
-        assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
+        pSrm = Gia_ManCorrSpecReduce( pAig, nFramesCur, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
+        assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(nFramesCur+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
         clkSrm += Abc_Clock() - clk2;
         if ( Gia_ManCoNum(pSrm) == 0 )
         {
@@ -1048,7 +1055,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 
         // refine classes with these counter-examples
         clk2 = Abc_Clock();
-        RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
+        RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, nFramesCur + 1 + nAddFrames );
         Vec_IntFree( vCexStore );
         clkSim += Abc_Clock() - clk2;
         Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
@@ -1069,6 +1076,30 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             printf( "because the property output is no longer a candidate constant.\n" );
             Cec_ManSimStop( pSim );
             return 0;
+        }
+        /* Adaptive frame depth: if the last two rounds each improved the
+           lit count by less than 2% (or less than 1 lit), the current
+           induction depth has saturated.  Increase nFramesCur by one up
+           to nFramesMax and reset the stall counter.  This gives deeper
+           induction power for hard classes without paying the cost
+           upfront on easy instances. */
+        {
+            int nCur = Cec_ManCountLits( pAig );
+            int nImprove = (nLitsAdapt < 0) ? nCur : (nLitsAdapt - nCur);
+            int nThresh  = (nLitsAdapt < 0) ? 1    : Abc_MaxInt( 1, nLitsAdapt / 50 );
+            if ( nImprove < nThresh )
+                nSlowRounds++;
+            else
+                nSlowRounds = 0;
+            nLitsAdapt = nCur;
+            if ( nSlowRounds >= 2 && nFramesCur < nFramesMax )
+            {
+                nFramesCur++;
+                nSlowRounds  = 0;
+                nLitsAdapt   = -1;
+                if ( pPars->fVerbose )
+                    Abc_Print( 1, "Scorr: induction depth increased to %d frames.\n", nFramesCur );
+            }
         }
         if ( pPars->nLimitMax )
         {
