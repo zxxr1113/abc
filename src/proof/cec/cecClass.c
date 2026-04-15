@@ -1015,16 +1015,18 @@ static unsigned Cec_CbsStateHash( int * pState, int nReg )
 ***********************************************************************/
 static void Cec_ManCbsSimDfs( Cbs_Man_t * pCbs, Gia_Man_t * pAig,
     Gia_Obj_t ** ppRoObjs, Vec_Ptr_t * vCiSimInfo,
-    int * pCurState, int * pBit, int nBits, Vec_Int_t * vSeen )
+    int * pCurState, int * pBit, int nBits, Vec_Int_t * vSeen,
+    int * pSimVals )
 {
     Vec_Int_t  * vModel     = Cbs_ReadModel( pCbs );
     int          nPi        = Gia_ManPiNum( pAig );
     int          nReg       = Gia_ManRegNum( pAig );
+    int          nObjNum    = Gia_ManObjNum( pAig );
     int          nRiTry     = Abc_MinInt( nReg, CBS_DFS_MAX_RI );
     int        * pNextState = ABC_ALLOC( int, nReg );
-    int          i, j, dir, lit, status, cio_id, val;
+    int          i, j, k, dir, lit, status, cio_id, val;
     unsigned     h;
-    Gia_Obj_t  * pRiObj, * pTarget, * pTargetR;
+    Gia_Obj_t  * pObj, * pRiObj, * pTarget, * pTargetR;
 
     if ( *pBit >= nBits )
     {
@@ -1059,12 +1061,61 @@ static void Cec_ManCbsSimDfs( Cbs_Man_t * pCbs, Gia_Man_t * pAig,
                 continue;
 
             /* Call CBS with RO = pCurState and the chosen target.
-               status: 0=SAT, 1=UNSAT, -1=undecided(timeout). */
+               We pass NULL for pRiFaninVals: next state is computed by
+               forward simulation below, not extracted from CBS internals. */
             status = Cbs_ManSolveWithState( pCbs, pTarget,
                                             ppRoObjs, pCurState, nReg,
-                                            pNextState );
+                                            NULL );
             if ( status != 0 )
                 continue;   /* UNSAT or timeout: try next target */
+
+            /* ------------------------------------------------------------------
+               Forward simulation: compute the true next state from PI values
+               (provided by CBS) and the current RO state.
+
+               CBS backward justification only assigns nodes in the cone of the
+               target RI; all other RI fanins remain unassigned.  Defaulting
+               unassigned RI fanins to an arbitrary value would drive DFS into
+               unreachable states and produce simulation vectors that split
+               genuine equivalence classes.  Forward simulation avoids this by
+               evaluating the circuit's combinational function exactly.
+
+               Steps:
+                 1. Zero the sim-value array (const0 = 0 is already correct).
+                 2. Seed PIs from the CBS model; seed ROs from pCurState.
+                 3. Propagate through AND/buffer nodes in topological order.
+                 4. Read next-state values from RI fanins.
+               ------------------------------------------------------------------ */
+            memset( pSimVals, 0, (size_t)nObjNum * sizeof(int) );
+
+            /* Step 2a: set PI values from CBS model.
+               vModel entries: Abc_Var2Lit(Gia_ObjCioId(pCi), !value)
+               → var = CioId, value = !(lit & 1).
+               CioId 0..nPi-1 = PIs; CioId nPi..nPi+nReg-1 = ROs (skip). */
+            Vec_IntForEachEntry( vModel, lit, i )
+            {
+                cio_id = Abc_Lit2Var( lit );
+                val    = !Abc_LitIsCompl( lit );
+                if ( cio_id < nPi )
+                    pSimVals[ Gia_ObjId( pAig, Gia_ManCi(pAig, cio_id) ) ] = val;
+            }
+
+            /* Step 2b: set RO values from current state. */
+            for ( k = 0; k < nReg; k++ )
+                pSimVals[ Gia_ObjId( pAig, ppRoObjs[k] ) ] = pCurState[k];
+
+            /* Step 3: propagate through AND/buffer nodes (topological order). */
+            Gia_ManForEachAnd( pAig, pObj, i )
+            {
+                int v0 = pSimVals[ Gia_ObjFaninId0(pObj, i) ] ^ Gia_ObjFaninC0(pObj);
+                int v1 = pSimVals[ Gia_ObjFaninId1(pObj, i) ] ^ Gia_ObjFaninC1(pObj);
+                pSimVals[i] = v0 & v1;
+            }
+
+            /* Step 4: extract next-state values from RI fanins. */
+            Gia_ManForEachRi( pAig, pRiObj, k )
+                pNextState[k] = pSimVals[ Gia_ObjFaninId0p(pAig, pRiObj) ]
+                                ^ Gia_ObjFaninC0( pRiObj );
 
             /* Deduplicate: skip if we have already recursed into this next state.
                A 32-bit FNV hash makes false duplicates negligibly rare. */
@@ -1076,10 +1127,7 @@ static void Cec_ManCbsSimDfs( Cbs_Man_t * pCbs, Gia_Man_t * pAig,
                 continue;
             Vec_IntPush( vSeen, (int)h );
 
-            /* --- Pack PI values from the CBS model into vCiSimInfo at *pBit.
-                   vModel entries: Abc_Var2Lit(Gia_ObjCioId(pCi), !value)
-                   → var = CioId, value = !(lit & 1).
-                   CioId 0..nPi-1 = PIs; CioId nPi..nPi+nReg-1 = ROs. --- */
+            /* --- Pack PI values from the CBS model into vCiSimInfo at *pBit. --- */
             Vec_IntForEachEntry( vModel, lit, i )
             {
                 cio_id = Abc_Lit2Var( lit );
@@ -1090,16 +1138,16 @@ static void Cec_ManCbsSimDfs( Cbs_Man_t * pCbs, Gia_Man_t * pAig,
             }
 
             /* --- Pack current RO values (= pCurState) into vCiSimInfo[nPi+k]. --- */
-            for ( i = 0; i < nReg; i++ )
-                if ( pCurState[i] )
-                    Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, nPi + i),
+            for ( k = 0; k < nReg; k++ )
+                if ( pCurState[k] )
+                    Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, nPi + k),
                                     *pBit );
 
             (*pBit)++;
 
             /* DFS: explore the discovered next state recursively. */
             Cec_ManCbsSimDfs( pCbs, pAig, ppRoObjs, vCiSimInfo,
-                              pNextState, pBit, nBits, vSeen );
+                              pNextState, pBit, nBits, vSeen, pSimVals );
         } /* end dir loop */
     } /* end j loop */
 
@@ -1144,6 +1192,7 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
     Vec_Int_t  * vSeen;
     Gia_Obj_t  * pObj;
     int        * pInitState;
+    int        * pSimVals;
     int          i, bit, RetValue = 0;
     int          fCreatedRefs = 0;
 
@@ -1180,6 +1229,8 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
 
     /* All-zero reset state (matches &scorr convention). */
     pInitState = ABC_CALLOC( int, nReg );
+    /* Scratch space for forward simulation: one int per GIA object. */
+    pSimVals   = ABC_ALLOC( int, Gia_ManObjNum(pAig) );
 
     /* Zero vCiSimInfo – CBS patterns will be written bit-by-bit.
        Bit 0 is forced all-zeros by Cec_ManSimSimulateRound itself,
@@ -1191,7 +1242,7 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
     vSeen = Vec_IntAlloc( 64 );
     bit   = 1;
     Cec_ManCbsSimDfs( pCbs, pAig, ppRoObjs, p->vCiSimInfo,
-                      pInitState, &bit, nBits, vSeen );
+                      pInitState, &bit, nBits, vSeen, pSimVals );
     Vec_IntFree( vSeen );
 
     if ( p->pPars->fVerbose )
@@ -1207,6 +1258,7 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
             Gia_ManEquivPrintClasses( pAig, 0, Cec_MemUsage(p) );
     }
 
+    ABC_FREE( pSimVals );
     ABC_FREE( pInitState );
     ABC_FREE( ppRoObjs );
     Cbs_ManStop( pCbs );
