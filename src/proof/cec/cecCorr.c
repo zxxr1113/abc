@@ -968,6 +968,11 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     {
         Cec_ManSimClassesPrepare( pSim, pPars->nLevelMax );
         Cec_ManSimClassesRefine( pSim );
+        /* SAT-guided DFS simulation (RIC3 rt_dfs_simulate strategy):
+           explores the reachable sequential state space to produce
+           high-quality, diverse simulation patterns for class refinement,
+           mirroring RIC3's scorr approach. */
+        Cec_ManSimClassesSatGuided( pSim );
     }
     // prepare SAT solving
     Cec_ManSatSetDefaultParams( pParsSat );

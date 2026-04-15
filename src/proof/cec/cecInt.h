@@ -180,6 +180,7 @@ extern int                  Cec_ManSimClassRemoveOne( Cec_ManSim_t * p, int i );
 extern int                  Cec_ManSimClassesPrepare( Cec_ManSim_t * p, int LevelMax );
 extern int                  Cec_ManSimClassesRefine( Cec_ManSim_t * p );
 extern int                  Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos );
+extern int                  Cec_ManSimClassesSatGuided( Cec_ManSim_t * p );
 /*=== cecIso.c ============================================================*/
 extern int *                Cec_ManDetectIsomorphism( Gia_Man_t * p );
 /*=== cecMan.c ============================================================*/

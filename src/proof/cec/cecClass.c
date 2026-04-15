@@ -770,6 +770,7 @@ references:
             Vec_IntClear( p->vClassTemp );
             Gia_ClassForEachObj( p->pAig, Gia_ObjRepr(p->pAig, i), Ent )
                 Vec_IntPush( p->vClassTemp, Ent );
+            // refine this class
             Cec_ManSimClassRefineOne( p, Gia_ObjRepr(p->pAig, i) );
             Vec_IntForEachEntry( p->vClassTemp, Ent, k )
                 Cec_ManSimSimDeref( p, Ent );
@@ -953,6 +954,230 @@ int Cec_ManSimClassesRefine( Cec_ManSim_t * p )
         Gia_ManEquivPrintClasses( p->pAig, 0, Cec_MemUsage(p) );
     return 0;
 }
+////////////////////////////////////////////////////////////////////////
+///          SAT-GUIDED SIMULATION (RIC3 rt_dfs_simulate style)      ///
+////////////////////////////////////////////////////////////////////////
+
+/**Function*************************************************************
+
+  Synopsis    [Builds a SAT solver for one combinational frame of the GIA.]
+
+  Description [Assigns SAT variable = GIA object ID for every node.
+               Forces constant-0 (obj 0) to false.
+               Adds Tseitin clauses for every AND gate.
+               CI nodes (PIs and ROs) are free variables – their values
+               are controlled via assumptions at solve time.]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+static sat_solver * Cec_ManBuildFrameSat( Gia_Man_t * p )
+{
+    sat_solver * pSat;
+    Gia_Obj_t  * pObj;
+    int i, Lits[3];
+
+    pSat = sat_solver_new();
+    // set the number of variables to be the same as the number of GIA objects
+    sat_solver_setnvars( pSat, Gia_ManObjNum(p) );
+
+    /* const-0 node (obj id 0) must be false <=> ~a must be true */
+    Lits[0] = Abc_Var2Lit( 0, 1 );
+    sat_solver_addclause( pSat, Lits, Lits + 1 );
+
+    /* Tseitin encoding: r <=> lit0 /\ lit1
+       lit_k = Abc_Var2Lit(iVar_k, fC_k)
+       Clause A: ~lit0 | ~lit1 | r  <=> (lit0 /\ lit1 -> r)
+       Clause B:  ~r   | lit0            (r -> lit0)
+       Clause C:  ~r   | lit1            (r -> lit1)          */
+    Gia_ManForEachAnd( p, pObj, i )
+    {
+        int iVar  = i;
+        int iVar0 = Gia_ObjFaninId0( pObj, i );
+        int iVar1 = Gia_ObjFaninId1( pObj, i );
+        int fC0   = Gia_ObjFaninC0( pObj );
+        int fC1   = Gia_ObjFaninC1( pObj );
+
+        /* A: ~lit0 | ~lit1 | r */
+        Lits[0] = Abc_Var2Lit( iVar0, !fC0 );
+        Lits[1] = Abc_Var2Lit( iVar1, !fC1 );
+        Lits[2] = Abc_Var2Lit( iVar,   0   );
+        sat_solver_addclause( pSat, Lits, Lits + 3 );
+
+        /* B: ~r | lit0 */
+        Lits[0] = Abc_Var2Lit( iVar,   1   );
+        Lits[1] = Abc_Var2Lit( iVar0, fC0  );
+        sat_solver_addclause( pSat, Lits, Lits + 2 );
+
+        /* C: ~r | lit1 */
+        Lits[0] = Abc_Var2Lit( iVar,   1   );
+        Lits[1] = Abc_Var2Lit( iVar1, fC1  );
+        sat_solver_addclause( pSat, Lits, Lits + 2 );
+    }
+    return pSat;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [DFS exploration of reachable states (RIC3 rt_dfs_simulate).]
+
+  Description [Given the current latch state pCurState[0..nReg-1],
+               repeatedly asks the SAT solver for a valid next state
+               reachable in one transition step.  Each found next state
+               is:
+                 1. Packed as one simulation bit-pattern into vCiSimInfo.
+                 2. Blocked (its RI-fanin assignment is negated) so that
+                    subsequent calls discover different successor states.
+                 3. Explored further via recursive DFS.
+               Mirrors RIC3's rt_dfs_simulate loop.
+               *pBit is the next free bit slot; incremented per pattern.
+               nBits = 32*nWords is the capacity limit.]
+
+  SideEffects [Modifies vCiSimInfo; adds permanent blocking clauses to pSat.]
+
+  SeeAlso     []
+
+***********************************************************************/
+static void Cec_ManSatSimDfs( sat_solver * pSat, Gia_Man_t * pAig,
+    Vec_Ptr_t * vCiSimInfo, int * pCurState,
+    int * pBit, int nBits )
+{
+    Gia_Obj_t * pObj;
+    int * pAssumps, * pNextState, * pBlock;
+    int i, iVar0, fCompl, faninVal, status;
+    int nPi  = Gia_ManPiNum( pAig );
+    int nReg = Gia_ManRegNum( pAig );
+
+    pAssumps   = ABC_ALLOC( int, nReg );
+    pNextState = ABC_ALLOC( int, nReg );
+    pBlock     = ABC_ALLOC( int, nReg );
+
+    for ( ; ; )
+    {
+        // Stop if we reach the capacity limit
+        if ( *pBit >= nBits )
+            break;
+
+        /* Assume all ROs equal to pCurState */
+        Gia_ManForEachRo( pAig, pObj, i )
+            pAssumps[i] = Abc_Var2Lit( Gia_ObjId(pAig, pObj), !pCurState[i] );
+
+        status = sat_solver_solve( pSat, pAssumps, pAssumps + nReg,
+                                   (long long)50, 0, 0, 0 ); //(ABC_INT64_T) 50
+        
+        // if UNSAT, we are done with this branch; if SAT, we have a new next state to explore
+        if ( status != l_True )
+            break;
+
+        /* --- Pack PI values into vCiSimInfo[i] at bit *pBit --- */
+        Gia_ManForEachPi( pAig, pObj, i )
+        {
+            if ( sat_solver_var_value( pSat, Gia_ObjId(pAig, pObj) ) )
+                Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, i), *pBit );
+        }
+
+        /* --- Pack current RO values (= pCurState) into vCiSimInfo[nPi+i] --- */
+        Gia_ManForEachRo( pAig, pObj, i )
+        {
+            if ( pCurState[i] )
+                Abc_InfoSetBit( (unsigned *)Vec_PtrEntry(vCiSimInfo, nPi + i), *pBit );
+        }
+
+        /* --- Extract next state and build blocking clause on RI fanins --- */
+        Gia_ManForEachRi( pAig, pObj, i )
+        {
+            iVar0    = Gia_ObjFaninId0( pObj, Gia_ObjId(pAig, pObj) );
+            fCompl   = Gia_ObjFaninC0( pObj );
+            faninVal = sat_solver_var_value( pSat, iVar0 );
+            pNextState[i] = faninVal ^ fCompl;       /* actual RI value */
+            pBlock[i]     = Abc_Var2Lit( iVar0, faninVal ); /* negate assignment */
+        }
+
+        /* Prevent revisiting the same next state */
+        sat_solver_addclause( pSat, pBlock, pBlock + nReg );
+
+        (*pBit)++;
+
+        /* DFS: explore deeper from the discovered next state */
+        Cec_ManSatSimDfs( pSat, pAig, vCiSimInfo,
+                          pNextState, pBit, nBits );
+    }
+
+    ABC_FREE( pAssumps );
+    ABC_FREE( pNextState );
+    ABC_FREE( pBlock );
+}
+
+/**Function*************************************************************
+
+  Synopsis    [SAT-guided sequential simulation for equivalence class refinement.]
+
+  Description [Builds a one-frame SAT solver over the GIA and uses
+               DFS with blocking clauses (RIC3 rt_dfs_simulate strategy)
+               to generate diverse reachable-state simulation patterns.
+               The patterns are packed into p->vCiSimInfo and fed to
+               Cec_ManSimSimulateRound so that equivalence classes are
+               refined beyond what pure random simulation achieves.
+
+               Called after Cec_ManSimClassesPrepare + Cec_ManSimClassesRefine
+               in Cec_ManLSCorrespondenceClasses (cecCorr.c).]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
+{
+    Gia_Man_t * pAig  = p->pAig;
+    int nReg   = Gia_ManRegNum( pAig );
+    int nCi    = Gia_ManCiNum( pAig );
+    int nWords = p->pPars->nWords;
+    int nBits  = 32 * nWords;
+    sat_solver * pSat;
+    int * pInitState;
+    int i, bit, RetValue = 0;
+
+    if ( nReg == 0 )
+        return 0;
+
+    pSat = Cec_ManBuildFrameSat( pAig );
+
+    /* All-zero reset state (matches &scorr convention) */
+    pInitState = ABC_CALLOC( int, nReg );
+
+    /* Zero vCiSimInfo — SAT patterns will be written bit-by-bit.
+       Bit 0 is forced to all-zeros by Cec_ManSimSimulateRound itself,
+       so we start filling from bit 1. */
+    for ( i = 0; i < nCi; i++ )
+        memset( Vec_PtrEntry(p->vCiSimInfo, i), 0,
+                (size_t)nWords * sizeof(unsigned) );
+
+    bit = 1;
+    Cec_ManSatSimDfs( pSat, pAig, p->vCiSimInfo,
+                      pInitState, &bit, nBits );
+
+    if ( p->pPars->fVerbose )
+        Abc_Print( 1, "SAT-guided sim: generated %d patterns (capacity %d).\n",
+                   bit - 1, nBits - 1 );
+
+    if ( bit > 1 )
+    {
+        Gia_ManCreateValueRefs( pAig );
+        /* p->nWords is already pPars->nWords after Cec_ManSimClassesRefine */
+        if ( Cec_ManSimSimulateRound( p, p->vCiSimInfo, p->vCoSimInfo ) )
+            RetValue = 1;
+        if ( p->pPars->fVerbose )
+            Gia_ManEquivPrintClasses( pAig, 0, Cec_MemUsage(p) );
+    }
+
+    ABC_FREE( pInitState );
+    sat_solver_delete( pSat );
+    return RetValue;
+}
+
 ////////////////////////////////////////////////////////////////////////
 ///                       END OF FILE                                ///
 ////////////////////////////////////////////////////////////////////////
