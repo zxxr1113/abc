@@ -1218,7 +1218,7 @@ int Cec_ManSimClassesSatGuided( Cec_ManSim_t * p )
        realistic chance of finding SAT assignments in large sequential designs.
        nBTLimit caps backtracks per call; nJustLimit caps the simultaneous
        justification frontier (governs timeouts on wide cones). */
-    Cbs_ManSetConflictNum( pCbs, 5 );
+    Cbs_ManSetConflictNum( pCbs, 50 );
     Cbs_ManSetJustLimit( pCbs, Abc_MaxInt( 100, Gia_ManAndNum(pAig) / 10 ) );
 
     /* Build an indexed array of RO GIA objects for fast assumption setup. */
