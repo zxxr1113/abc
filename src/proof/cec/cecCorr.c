@@ -973,11 +973,16 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ManSatSetDefaultParams( pParsSat );
     pParsSat->nBTLimit = pPars->nBTLimit;
     pParsSat->fVerbose = pPars->fVerbose;
-    // Commit 2: per-pair fresh solver + TFI activity seed.
-    // After recycling the solver for each pair, we seed VSIDS with the
-    // pair's TFI vars ordered by circuit depth (output-adjacent = highest
-    // priority).  Top-down decisions drive fast proof-search convergence.
-    pParsSat->fDomainMode = 2;
+    // Commit 3: shared solver (no per-pair recycle) + TFI activity seed.
+    // A single solver accumulates learned clauses across all pairs within
+    // one SRM iteration.  Before each pair, sat_solver_set_var_activity
+    // zeros non-TFI vars and maximises TFI-var priority, forcing the solver
+    // to focus on the current pair's cone while reusing cross-pair lemmas.
+    // This is the closest analogue to rIC3's Domain::enable_local + push_to_vsids.
+    pParsSat->fDomainMode = 3;
+    // With incremental learning, a higher per-pair BT limit is affordable.
+    if ( !pPars->fUseCSat )
+        pParsSat->nBTLimit = Abc_MaxInt( pParsSat->nBTLimit, 5000 );
     // limit the number of conflicts in the circuit-based solver
     if ( pPars->fUseCSat )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
