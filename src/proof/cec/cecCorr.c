@@ -973,6 +973,10 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ManSatSetDefaultParams( pParsSat );
     pParsSat->nBTLimit = pPars->nBTLimit;
     pParsSat->fVerbose = pPars->fVerbose;
+    // Commit 1: per-pair fresh solver (domain isolation via CNF restriction).
+    // Each SRM output is solved with its own clean solver so learned clauses
+    // from other pairs cannot pollute the search space.
+    pParsSat->fDomainMode = 1;
     // limit the number of conflicts in the circuit-based solver
     if ( pPars->fUseCSat )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );

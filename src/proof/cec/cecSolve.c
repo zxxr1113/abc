@@ -394,10 +394,43 @@ void Cec_ManSatSolverRecycle( Cec_ManSat_t * p )
 
 /**Function*************************************************************
 
+  Synopsis    [Domain restriction helpers for per-pair solving.]
+
+  Description [Collect TFI SAT vars in DFS preorder (root first, CIs
+  last).  Passing the resulting array to sat_solver_set_var_activity
+  gives highest VSIDS priority to output-adjacent nodes, which drives
+  top-down proof search and minimises wasted decisions on irrelevant
+  variables (Commits 1/2/3).]
+
+***********************************************************************/
+static void Cec_ManSatCollectTfi_rec( Cec_ManSat_t * p, Gia_Obj_t * pObj, Vec_Int_t * vVars )
+{
+    int iVar;
+    if ( Gia_ObjIsTravIdCurrent(p->pAig, pObj) ) return;
+    Gia_ObjSetTravIdCurrent(p->pAig, pObj);
+    iVar = Cec_ObjSatNum(p, pObj);
+    if ( iVar ) Vec_IntPush(vVars, iVar);   // root pushed before fanins → highest priority
+    if ( !Gia_ObjIsAnd(pObj) ) return;
+    Cec_ManSatCollectTfi_rec(p, Gia_ObjFanin0(pObj), vVars);
+    Cec_ManSatCollectTfi_rec(p, Gia_ObjFanin1(pObj), vVars);
+}
+static void Cec_ManSatSeedTfiActivity( Cec_ManSat_t * p, Gia_Obj_t * pRoot )
+{
+    Vec_Int_t * vVars = Vec_IntAlloc(64);
+    Gia_ManIncrementTravId(p->pAig);
+    Cec_ManSatCollectTfi_rec(p, pRoot, vVars);
+    // zeros all non-TFI vars; sets TFI vars to descending activity (root first)
+    if ( Vec_IntSize(vVars) > 0 )
+        sat_solver_set_var_activity(p->pSat, Vec_IntArray(vVars), Vec_IntSize(vVars));
+    Vec_IntFree(vVars);
+}
+
+/**Function*************************************************************
+
   Synopsis    [Sets variable activities in the cone.]
 
   Description []
-               
+
   SideEffects []
 
   SeeAlso     []
@@ -499,7 +532,11 @@ clk2 = Abc_Clock();
 //Abc_Print( 1, "%d \n", p->pSat->size );
 
 clk2 = Abc_Clock();
-//    Cec_SetActivityFactors( p, pObjR ); 
+    // Commit 2/3: seed VSIDS with TFI-ordered activity.
+    // mode=2 (recycle+seed): fresh solver already restricted; ordering accelerates proof.
+    // mode=3 (shared+seed): zeros non-TFI vars so solver focuses on current pair's cone.
+    if ( p->pPars->fDomainMode >= 2 )
+        Cec_ManSatSeedTfiActivity( p, pObjR );
 //ABC_PRT( "act", Abc_Clock() - clk2 );
 
     // propage unit clauses
@@ -1105,6 +1142,11 @@ Vec_Int_t * Cec_ManSatSolveMiter( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_St
             }
             continue;
         }
+        // Commit 1/2: per-pair domain isolation via fresh solver
+        // Each pair gets its own clean CNF (only its TFI is encoded), mirroring
+        // rIC3's domain restriction but via structural isolation rather than masking.
+        if ( p->pPars->fDomainMode >= 1 && p->pPars->fDomainMode <= 2 )
+            Cec_ManSatSolverRecycle( p );
         status = Cec_ManSatCheckNode( p, Gia_ObjChild0(pObj) );
         Vec_StrPush( vStatus, (char)status );
         if ( status == -1 )

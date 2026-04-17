@@ -54,6 +54,8 @@ struct Cec_ParSat_t_
     int              fLearnCls;     // perform clause learning
     int              fSaveCexes;    // saves counter-examples
     int              fVerbose;      // verbose stats
+    // domain restriction mode (0=off, 1=recycle-per-pair, 2=recycle+activity-seed, 3=shared-solver+activity-seed)
+    int              fDomainMode;
 };
 
 // simulation parameters
