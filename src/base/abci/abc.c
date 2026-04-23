@@ -41148,15 +41148,17 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     extern Gia_Man_t * Cec_ManScorrCorrespondence( Gia_Man_t * p, Cec_ParCor_t * pPars );
     extern Gia_Man_t * Gia_ManScorrDivideTest( Gia_Man_t * p, Cec_ParCor_t * pPars );
     extern Gia_Man_t * Gia_SignalCorrespondencePart( Gia_Man_t * p, Cec_ParCor_t * pPars );
+    extern Gia_Man_t * Cec_ManXcgrpCorrespondence( Gia_Man_t * p, Cec_ParCor_t * pPars );
     Cec_ParCor_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
     int fPartition = 0;
+    int fUseXcgrp = 0;
     int nFlopIncFreq = 0;
     int fUseOld = 0, c;
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZpkrecqowvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZpkrecqoxwvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41258,6 +41260,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'o':
             fUseOld ^= 1;
             break;
+        case 'x':
+            fUseXcgrp ^= 1;
+            break;
         case 'w':
             pPars->fVerboseFlops ^= 1;
             break;
@@ -41303,6 +41308,8 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
                 pTemp = Gia_SignalCorrespondencePart( pUsed, pPars );
             else if ( fUseOld )
                 pTemp = Cec_ManScorrCorrespondence( pUsed, pPars );
+            else if ( fUseXcgrp )
+                pTemp = Cec_ManXcgrpCorrespondence( pUsed, pPars );
             else if ( fPartition )
                 pTemp = Gia_ManScorrDivideTest( pUsed, pPars );
             else
@@ -41320,6 +41327,8 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         pTemp = Gia_SignalCorrespondencePart( pAbc->pGia, pPars );
     else if ( fUseOld )
         pTemp = Cec_ManScorrCorrespondence( pAbc->pGia, pPars );
+    else if ( fUseXcgrp )
+        pTemp = Cec_ManXcgrpCorrespondence( pAbc->pGia, pPars );
     else if ( fPartition )
         pTemp = Gia_ManScorrDivideTest( pAbc->pGia, pPars );
     else
@@ -41328,7 +41337,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqowvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqoxwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
@@ -41344,6 +41353,7 @@ usage:
     Abc_Print( -2, "\t-c     : toggle using circuit-based SAT solver [default = %s]\n", pPars->fUseCSat? "yes": "no" );
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
+    Abc_Print( -2, "\t-x     : toggle XCGRP XOR-cluster-guided D&C engine [default = %s]\n", fUseXcgrp? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle printing verbose info about equivalent flops [default = %s]\n", pPars->fVerboseFlops? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");

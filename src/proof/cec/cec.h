@@ -244,6 +244,8 @@ extern Gia_Man_t *   Cec_ManChoiceComputation( Gia_Man_t * pAig, Cec_ParChc_t * 
 /*=== cecCorr.c ==========================================================*/
 extern int           Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars );
 extern Gia_Man_t *   Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars );
+/*=== cecXcgrp.c =========================================================*/
+extern Gia_Man_t *   Cec_ManXcgrpCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars );
 /*=== cecCore.c ==========================================================*/
 extern void          Cec_ManSatSetDefaultParams( Cec_ParSat_t * p );
 extern void          Cec_ManSimSetDefaultParams( Cec_ParSim_t * p );
