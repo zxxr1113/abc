@@ -87,6 +87,18 @@
 ABC_NAMESPACE_IMPL_START
 
 ////////////////////////////////////////////////////////////////////////
+///                    TIMING STATISTICS STRUCT                      ///
+////////////////////////////////////////////////////////////////////////
+
+typedef struct Xcg_Stats_t_ {
+    abctime tBuild;     // time spent in Xcg_Build and Gia_ManDup
+    abctime tScorr;     // time spent in Cec_ManLSCorrespondenceClasses
+    abctime tSim;       // time spent in Xcg_SimManRun and Xcg_SimManValidate
+    abctime tRefine;    // time spent in refinement logic
+    abctime tTotal;     // total time for this branch
+} Xcg_Stats_t;
+
+////////////////////////////////////////////////////////////////////////
 ///                        FORWARD DECLS                             ///
 ////////////////////////////////////////////////////////////////////////
 
@@ -681,7 +693,7 @@ static int * Xcg_ComputeChainIdMap( Gia_Man_t * p )
 // Inputs: an abstraction state p, scorr params, max refine iters,
 // simulation rounds per pair (nWords), pChainId for bulk refinement
 // (optional; NULL disables chain expansion), and fRewrite to pre-rewrite
-// the abstraction before each scorr call.
+// the abstraction before each scorr call. pStats is optional (can be NULL).
 // Outputs: fills pConfirmed with confirmed (origA,origB,fComp) triples
 // that passed simulation on the original.
 //
@@ -695,11 +707,12 @@ static int * Xcg_ComputeChainIdMap( Gia_Man_t * p )
 static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
                             int nMaxRefine, int nSimRounds,
                             int * pChainId, int fRewrite,
-                            Vec_Int_t * pConfirmed )
+                            Vec_Int_t * pConfirmed, Xcg_Stats_t * pStats )
 {
     Xcg_SimMan_t * pSim = Xcg_SimManAlloc(p->pOrig, nSimRounds);
     Vec_Int_t *    vTargets = Vec_IntAlloc(16);
     int iter;
+    abctime        tTemp = 0;
     for ( iter = 0; iter <= nMaxRefine; iter++ )
     {
         Gia_Man_t * pRew = NULL;
@@ -714,7 +727,12 @@ static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
             if ( pRew ) { Gia_ManStop(p->pAbs); p->pAbs = pRew; }
         }
         // Run the correspondence engine on the abstract AIG.
+        if ( pStats )
+            tTemp = Abc_Clock();
         Cec_ManLSCorrespondenceClasses(p->pAbs, pPars);
+        if ( pStats )
+            pStats->tScorr += Abc_Clock() - tTemp;
+
         // Back-map: pAbs->pObj[].Value = original node ID.  Rewriting
         // destroys node numbering, so CEGAR cannot proceed past a
         // rewrite pass (see top-of-file limitations).
@@ -725,8 +743,15 @@ static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
         vTrip = Xcg_CollectEquivTriples(p);
         // ONE simulation pass per iter; validate every pair in O(nWords).
         // Seed varies per iter so successive iters see different patterns.
+        if ( pStats )
+            tTemp = Abc_Clock();
         Xcg_SimManRun( pSim, (unsigned)(0x9E3779B1u * (unsigned)(iter + 1) + 0x12345u) );
+        if ( pStats )
+            pStats->tSim += Abc_Clock() - tTemp;
+
         Vec_IntClear(vTargets);
+        if ( pStats )
+            tTemp = Abc_Clock();
         for ( i = 0; i < Vec_IntSize(vTrip); i += 3 )
         {
             int origA = Vec_IntEntry(vTrip, i);
@@ -749,6 +774,9 @@ static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
                     Vec_IntPushUnique(vTargets, iT);
             }
         }
+        if ( pStats )
+            pStats->tSim += Abc_Clock() - tTemp;
+
         Vec_IntFree(vTrip);
         if ( pPars->fVerbose )
             Abc_Print(1, "  CEGAR iter %d: %d confirmed, %d spurious, %d refine targets.\n",
@@ -760,10 +788,18 @@ static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
         // Batched inline: mark every target (+chain if pChainId) then rebuild.
         {
             int k, iT;
+            if ( pStats )
+                tTemp = Abc_Clock();
             Vec_IntForEachEntry( vTargets, iT, k )
                 Xcg_MarkInlinedWithChain(p, iT, pChainId);
+            if ( pStats )
+                pStats->tRefine += Abc_Clock() - tTemp;
         }
+        if ( pStats )
+            tTemp = Abc_Clock();
         Xcg_Build(p);
+        if ( pStats )
+            pStats->tBuild += Abc_Clock() - tTemp;
         // pAbs was rebuilt -> old reprs/nexts are already gone with it.
     }
     Vec_IntFree(vTargets);
@@ -835,6 +871,7 @@ typedef struct Xcg_BT_t_ {
     int             fRewrite;
     Cec_ParCor_t *  pPars;          // shared (same pattern as cecXcgrp.c)
     Vec_Int_t *     vResult;        // per-thread output: (a,b,fComp) triples
+    Xcg_Stats_t *   pStats;         // per-thread timing statistics
 } Xcg_BT_t;
 
 static void * Xcg_BranchThread( void * pArg )
@@ -843,18 +880,34 @@ static void * Xcg_BranchThread( void * pArg )
     Gia_Man_t *  pLocal;
     int *        pChainLocal;
     Xcg_Abs_t *  pAbs;
+    abctime      tStart, tTemp;
+
+    // Initialize stats
+    memset(t->pStats, 0, sizeof(Xcg_Stats_t));
+    tStart = Abc_Clock();
+
     // Private clone of pOrig: Xcg_Build / Gia_ManLevelNum mutate pOrig.
+    tTemp = Abc_Clock();
     pLocal = Gia_ManDup(t->pOrigMaster);
+    t->pStats->tBuild += Abc_Clock() - tTemp;
+
     Gia_ManSetPhase(pLocal);
     pChainLocal = Xcg_ComputeChainIdMap(pLocal);
     pAbs = Xcg_AbsAlloc(pLocal, t->nLevelLimit,
                          t->pPivotIds, t->pPivConst, t->nPivots);
+    
+    tTemp = Abc_Clock();
     Xcg_Build(pAbs);
+    t->pStats->tBuild += Abc_Clock() - tTemp;
+
     Xcg_CegarLoop(pAbs, t->pPars, t->nMaxRefine, t->nSimRounds,
-                   pChainLocal, t->fRewrite, t->vResult);
+                   pChainLocal, t->fRewrite, t->vResult, t->pStats);
+    
     Xcg_AbsFree(pAbs);
     ABC_FREE(pChainLocal);
     Gia_ManStop(pLocal);
+
+    t->pStats->tTotal = Abc_Clock() - tStart;
     return NULL;
 }
 #endif
@@ -867,13 +920,29 @@ static void Xcg_RunBranchSerial( Gia_Man_t * pAig, int * pPivotIds,
                                   int nLevelLimit, int nMaxRefine,
                                   int nSimRounds, int fRewrite,
                                   int * pChainId, Cec_ParCor_t * pPars,
-                                  Vec_Int_t * vResult )
+                                  Vec_Int_t * vResult, Xcg_Stats_t * pStats )
 {
     Xcg_Abs_t * pAbs;
+    abctime      tTemp, tStart;
+
+    if ( pStats )
+    {
+        tStart = Abc_Clock();
+        memset(pStats, 0, sizeof(Xcg_Stats_t));
+    }
+
+    if ( pStats )
+        tTemp = Abc_Clock();
     pAbs = Xcg_AbsAlloc(pAig, nLevelLimit, pPivotIds, pPivConst, nPivots);
     Xcg_Build(pAbs);
-    Xcg_CegarLoop(pAbs, pPars, nMaxRefine, nSimRounds, pChainId, fRewrite, vResult);
+    if ( pStats )
+        pStats->tBuild += Abc_Clock() - tTemp;
+
+    Xcg_CegarLoop(pAbs, pPars, nMaxRefine, nSimRounds, pChainId, fRewrite, vResult, pStats);
     Xcg_AbsFree(pAbs);
+
+    if ( pStats )
+        pStats->tTotal = Abc_Clock() - tStart;
 }
 
 // Public entry: CEGAR-enhanced XCGRP correspondence.
@@ -896,6 +965,7 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
     int * pMapB;
     char * pMapSeen;
     int nParallel = 1;
+    
 
     if ( nPivots   < 1 ) nPivots   = 1;
     if ( nPivots   > 6 ) nPivots   = 6;
@@ -904,10 +974,14 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
 
     // --- Pivot selection (top-N XOR gates by score) ---
     vPivots = Xcg_SelectTopNPivots(pAig, nPivots);
+
+    Abc_Print(1, "XCGRP-CEGAR: pivots = %d, level limit = %d, max refine = %d, sim rounds = %d, rewrite = %d\n",
+              nPivots, nLevelLimit, nMaxRefine, nSimRounds, fRewrite);
+
     if ( Vec_IntSize(vPivots) == 0 )
     {
         // No XOR chains: graceful fallback to plain scorr.
-        if ( pPars->fVerbose )
+        //if ( pPars->fVerbose )
             Abc_Print(1, "XCGRP-CEGAR: no pivots found; falling back to scorr.\n");
         Vec_IntFree(vPivots);
         return Cec_ManLSCorrespondence(pAig, pPars);
@@ -942,10 +1016,15 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
         int iStart;
         int fStopAll = 0;
         Vec_Int_t ** pResults = ABC_ALLOC(Vec_Int_t *, nParallel);
+        Xcg_Stats_t * pStats = ABC_ALLOC(Xcg_Stats_t, nBranches);
+        Xcg_Stats_t  totalStats;
 #ifdef ABC_USE_PTHREADS
         pthread_t *  pThr  = (nParallel > 1) ? ABC_ALLOC(pthread_t, nParallel) : NULL;
         Xcg_BT_t *   pArgs = (nParallel > 1) ? ABC_ALLOC(Xcg_BT_t, nParallel)  : NULL;
 #endif
+        memset(&totalStats, 0, sizeof(Xcg_Stats_t));
+        memset(pStats, 0, nBranches * sizeof(Xcg_Stats_t));
+
         for ( iStart = 0; iStart < nBranches && !fStopAll; iStart += nParallel )
         {
             int nInWave = nBranches - iStart;
@@ -981,6 +1060,7 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
                     pArgs[k].fRewrite    = fRewrite;
                     pArgs[k].pPars       = pPars;
                     pArgs[k].vResult     = pResults[k];
+                    pArgs[k].pStats      = &pStats[iBranch];
                     pthread_create(&pThr[k], NULL, Xcg_BranchThread, &pArgs[k]);
                 }
                 else
@@ -990,7 +1070,7 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
                                          pPivConst, nPivots,
                                          nLevelLimit, nMaxRefine, nSimRounds,
                                          fRewrite, pChainId, pPars,
-                                         pResults[k]);
+                                         pResults[k], &pStats[iBranch]);
                 }
             }
             // Join.
@@ -1031,6 +1111,31 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
         ABC_FREE(pThr);
         ABC_FREE(pArgs);
 #endif
+        // --- Summarize timing statistics ---
+        {
+            int b;
+            for ( b = 0; b < nBranches; b++ )
+            {
+                totalStats.tBuild  += pStats[b].tBuild;
+                totalStats.tScorr  += pStats[b].tScorr;
+                totalStats.tSim    += pStats[b].tSim;
+                totalStats.tRefine += pStats[b].tRefine;
+                totalStats.tTotal  += pStats[b].tTotal;
+            }
+            //if ( pPars->fVerbose )
+            {
+                Abc_Print(1, "\n");
+                Abc_Print(1, "XCGRP-CEGAR Timing Summary:\n");
+                Abc_Print(1, "  Total branches:     %d\n", nBranches);
+                Abc_Print(1, "  Build time:         %.2f sec\n", (double)totalStats.tBuild / CLOCKS_PER_SEC);
+                Abc_Print(1, "  Scorr time:         %.2f sec\n", (double)totalStats.tScorr / CLOCKS_PER_SEC);
+                Abc_Print(1, "  Sim time:           %.2f sec\n", (double)totalStats.tSim / CLOCKS_PER_SEC);
+                Abc_Print(1, "  Refine time:        %.2f sec\n", (double)totalStats.tRefine / CLOCKS_PER_SEC);
+                Abc_Print(1, "  Total time:         %.2f sec\n", (double)totalStats.tTotal / CLOCKS_PER_SEC);
+                Abc_Print(1, "\n");
+            }
+        }
+        ABC_FREE(pStats);
     }
     ABC_FREE(pMapB); ABC_FREE(pMapSeen);
     ABC_FREE(pChainId);
