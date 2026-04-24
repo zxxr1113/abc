@@ -41149,16 +41149,27 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     extern Gia_Man_t * Gia_ManScorrDivideTest( Gia_Man_t * p, Cec_ParCor_t * pPars );
     extern Gia_Man_t * Gia_SignalCorrespondencePart( Gia_Man_t * p, Cec_ParCor_t * pPars );
     extern Gia_Man_t * Cec_ManXcgrpCorrespondence( Gia_Man_t * p, Cec_ParCor_t * pPars );
+    extern Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * p, Cec_ParCor_t * pPars,
+                                                        int nPivots, int nLevelLimit,
+                                                        int nMaxRefine, int nSimRounds,
+                                                        int fRewrite );
     Cec_ParCor_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
     int fPartition = 0;
     int fUseXcgrp = 0;
+    // CEGAR-XCGRP tunables (active only when fUseCegar = 1).
+    int fUseCegar   = 0;
+    int nCegarPiv   = 2;    // number of pivots => 2^N subproblems
+    int nCegarLev   = 16;   // CO-distance cutoff; 0 disables truncation
+    int nCegarRef   = 4;    // max refinement iterations per branch
+    int nCegarSim   = 16;   // random 32-bit words per pair validation
+    int fCegarRw    = 0;    // run Gia_ManAigSyn2 before first scorr
     int nFlopIncFreq = 0;
     int fUseOld = 0, c;
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZpkrecqoxwvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZNLRMpkrecqoxywWvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41263,6 +41274,36 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'x':
             fUseXcgrp ^= 1;
             break;
+        case 'y':
+            fUseCegar ^= 1;
+            break;
+        case 'N':
+            if ( globalUtilOptind >= argc )
+            { Abc_Print(-1, "\"-N\" needs an integer.\n"); goto usage; }
+            nCegarPiv = atoi(argv[globalUtilOptind++]);
+            if ( nCegarPiv < 1 || nCegarPiv > 6 ) goto usage;
+            break;
+        case 'L':
+            if ( globalUtilOptind >= argc )
+            { Abc_Print(-1, "\"-L\" needs an integer.\n"); goto usage; }
+            nCegarLev = atoi(argv[globalUtilOptind++]);
+            if ( nCegarLev < 0 ) goto usage;
+            break;
+        case 'R':
+            if ( globalUtilOptind >= argc )
+            { Abc_Print(-1, "\"-R\" needs an integer.\n"); goto usage; }
+            nCegarRef = atoi(argv[globalUtilOptind++]);
+            if ( nCegarRef < 0 ) goto usage;
+            break;
+        case 'M':
+            if ( globalUtilOptind >= argc )
+            { Abc_Print(-1, "\"-M\" needs an integer.\n"); goto usage; }
+            nCegarSim = atoi(argv[globalUtilOptind++]);
+            if ( nCegarSim < 1 ) goto usage;
+            break;
+        case 'W':
+            fCegarRw ^= 1;
+            break;
         case 'w':
             pPars->fVerboseFlops ^= 1;
             break;
@@ -41308,6 +41349,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
                 pTemp = Gia_SignalCorrespondencePart( pUsed, pPars );
             else if ( fUseOld )
                 pTemp = Cec_ManScorrCorrespondence( pUsed, pPars );
+            else if ( fUseCegar )
+                pTemp = Cec_ManXcgrpCegarCorrespondence( pUsed, pPars,
+                          nCegarPiv, nCegarLev, nCegarRef, nCegarSim, fCegarRw );
             else if ( fUseXcgrp )
                 pTemp = Cec_ManXcgrpCorrespondence( pUsed, pPars );
             else if ( fPartition )
@@ -41327,6 +41371,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         pTemp = Gia_SignalCorrespondencePart( pAbc->pGia, pPars );
     else if ( fUseOld )
         pTemp = Cec_ManScorrCorrespondence( pAbc->pGia, pPars );
+    else if ( fUseCegar )
+        pTemp = Cec_ManXcgrpCegarCorrespondence( pAbc->pGia, pPars,
+                  nCegarPiv, nCegarLev, nCegarRef, nCegarSim, fCegarRw );
     else if ( fUseXcgrp )
         pTemp = Cec_ManXcgrpCorrespondence( pAbc->pGia, pPars );
     else if ( fPartition )
@@ -41354,6 +41401,12 @@ usage:
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle XCGRP XOR-cluster-guided D&C engine [default = %s]\n", fUseXcgrp? "yes": "no" );
+    Abc_Print( -2, "\t-y     : toggle CEGAR-XCGRP with level-bounded abstraction [default = %s]\n", fUseCegar? "yes": "no" );
+    Abc_Print( -2, "\t-N num : [CEGAR] number of pivots (2^N subproblems) [default = %d]\n", nCegarPiv );
+    Abc_Print( -2, "\t-L num : [CEGAR] CO-distance level cutoff; 0 = off [default = %d]\n", nCegarLev );
+    Abc_Print( -2, "\t-R num : [CEGAR] max refinement iterations per branch [default = %d]\n", nCegarRef );
+    Abc_Print( -2, "\t-M num : [CEGAR] random 32b words per pair validation [default = %d]\n", nCegarSim );
+    Abc_Print( -2, "\t-W     : [CEGAR] toggle AIG rewrite before scorr [default = %s]\n", fCegarRw? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle printing verbose info about equivalent flops [default = %s]\n", pPars->fVerboseFlops? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");

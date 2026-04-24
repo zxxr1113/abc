@@ -18,4 +18,5 @@ SRC +=    src/proof/cec/cecCec.c \
     src/proof/cec/cecSplit.c \
     src/proof/cec/cecSynth.c \
     src/proof/cec/cecSweep.c \
-    src/proof/cec/cecXcgrp.c
+    src/proof/cec/cecXcgrp.c \
+    src/proof/cec/cecXcgrpCegar.c
