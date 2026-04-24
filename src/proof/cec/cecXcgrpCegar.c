@@ -399,66 +399,127 @@ static void Xcg_Build( Xcg_Abs_t * p )
 }
 
 ////////////////////////////////////////////////////////////////////////
-///        STAGE 2: SIMULATION-BASED CEX VALIDATION                  ///
+///        STAGE 2: BATCHED BIT-PARALLEL SIMULATION VALIDATION       ///
 ///                                                                  ///
 ///  Scorr gives us an equivalence class map on pAbs.  We translate  ///
-///  each surviving pair (a,b) into original-node IDs and simulate   ///
-///  the ORIGINAL AIG under random patterns.  If ever sim(a)!=sim(b),///
-///  the pair is spurious -- an artifact of the abstraction.         ///
+///  each surviving pair (a,b) into original-node IDs and check it   ///
+///  against a batch of random patterns simulated on the ORIGINAL    ///
+///  AIG.  If ever sim(a) != sim(b) (modulo polarity fComp), the     ///
+///  pair is spurious -- an artifact of the abstraction.             ///
 ///                                                                  ///
-///  32-bit word simulation: each node holds 32 concurrent bits.     ///
-///  For equivalence validation we also consider polarity: the pair  ///
-///  may be xor-equivalent (complementary) according to fPhase.      ///
+///  Design note (hot path rewrite):                                 ///
+///    The previous implementation ran one full-circuit simulation   ///
+///    PER candidate pair, giving O(P * R * N) cost per CEGAR iter.  ///
+///    We now run a single bit-parallel simulation of nWords 32-bit  ///
+///    words per iter (O(N * nWords)) and reuse the result for every ///
+///    pair via an O(nWords) word compare.  For typical P ~ 10^4,    ///
+///    R = 16, N ~ 10^5, this cuts the validation cost by 1000x+.    ///
+///                                                                  ///
+///  Register outputs (ROs) are treated as free PIs (sampled random- ///
+///  ly each call), which is worst-case sound for sequential         ///
+///  equivalence: a pair that survives all random RO states is       ///
+///  combinationally correlated across all reachable states.         ///
 ////////////////////////////////////////////////////////////////////////
 
-// Simulate one 32-bit word through the entire original AIG.
-// pSim[i] holds 32 simultaneous truth-values for node i.
-// Register outputs (ROs) are initialized from registers' previous
-// state if provided; for single-frame combinational validation we
-// treat ROs as free PIs (worst-case sound for sequential equiv).
-static void Xcg_SimOneWord( Gia_Man_t * p, unsigned * pSim, unsigned Seed )
+typedef struct Xcg_SimMan_t_ {
+    Gia_Man_t *  pAig;     // reference to the AIG being simulated (not owned)
+    int          nWords;   // number of 32-bit words per node (R in the docs)
+    unsigned *   pSim;     // nObj * nWords array; layout: pSim[id*nWords + w]
+} Xcg_SimMan_t;
+
+static Xcg_SimMan_t * Xcg_SimManAlloc( Gia_Man_t * pAig, int nWords )
 {
-    Gia_Obj_t * pObj;
-    int i;
-    // xorshift32 for reproducible per-call randomness.
-    unsigned S = Seed ? Seed : 0xDEADBEEFu;
-    pSim[0] = 0;  // const-0
-    Gia_ManForEachCi( p, pObj, i )
-    {
-        S ^= S << 13; S ^= S >> 17; S ^= S << 5;
-        pSim[Gia_ObjId(p, pObj)] = S;
-    }
-    Gia_ManForEachAnd( p, pObj, i )
-    {
-        unsigned v0 = pSim[ Gia_ObjFaninId0(pObj, i) ];
-        unsigned v1 = pSim[ Gia_ObjFaninId1(pObj, i) ];
-        if ( Gia_ObjFaninC0(pObj) ) v0 = ~v0;
-        if ( Gia_ObjFaninC1(pObj) ) v1 = ~v1;
-        pSim[i] = Gia_ObjIsXor(pObj) ? (v0 ^ v1) : (v0 & v1);
-    }
-    // COs are not evaluated here (not needed for internal pair check).
+    Xcg_SimMan_t * p = ABC_CALLOC( Xcg_SimMan_t, 1 );
+    p->pAig   = pAig;
+    p->nWords = nWords;
+    p->pSim   = ABC_CALLOC( unsigned, (size_t)Gia_ManObjNum(pAig) * nWords );
+    return p;
 }
 
-// Returns 1 if the pair (iA,iB) with polarity fComp passes N simulation
-// rounds on the ORIGINAL AIG (i.e., behaves equivalently under all
-// random patterns).  Returns 0 if any pattern disagrees (spurious).
-static int Xcg_SimValidatePair( Gia_Man_t * pOrig, int iA, int iB, int fComp,
-                                 int nRounds )
+static void Xcg_SimManFree( Xcg_SimMan_t * p )
 {
-    int nObj = Gia_ManObjNum(pOrig);
-    unsigned * pSim = ABC_ALLOC( unsigned, nObj );
-    int r, ok = 1;
-    for ( r = 0; r < nRounds; r++ )
+    if ( !p ) return;
+    ABC_FREE(p->pSim);
+    ABC_FREE(p);
+}
+
+// Run one complete bit-parallel simulation pass.  Fills
+// pSim[id*nWords + w] for every object in topological order.
+// CI values are drawn from an xorshift32 stream seeded by Seed.
+// const-0 (ID 0) is forced to zero.
+static void Xcg_SimManRun( Xcg_SimMan_t * p, unsigned Seed )
+{
+    Gia_Man_t * pAig = p->pAig;
+    unsigned *  pData = p->pSim;
+    int nW = p->nWords;
+    Gia_Obj_t * pObj;
+    int i, w;
+    unsigned S = Seed ? Seed : 0xDEADBEEFu;
+    // const-0 ID=0
+    for ( w = 0; w < nW; w++ )
+        pData[0 * nW + w] = 0;
+    // CIs: each node gets nW fresh words.  ROs are treated as free PIs.
+    Gia_ManForEachCi( pAig, pObj, i )
     {
-        unsigned vA, vB;
-        Xcg_SimOneWord(pOrig, pSim, (unsigned)(0x9E3779B1u * (r+1) + iA*2654435761u));
-        vA = pSim[iA];
-        vB = pSim[iB];
-        if ( fComp ) vB = ~vB;
-        if ( vA != vB ) { ok = 0; break; }
+        int id = Gia_ObjId(pAig, pObj);
+        unsigned * pDi = pData + (size_t)id * nW;
+        for ( w = 0; w < nW; w++ )
+        {
+            S ^= S << 13; S ^= S >> 17; S ^= S << 5;
+            pDi[w] = S;
+        }
     }
-    ABC_FREE(pSim);
-    return ok;
+    // Internal gates in topological order; XOR and AND handled separately
+    // so the inner loop is tight (no per-word branch on gate type).
+    Gia_ManForEachAnd( pAig, pObj, i )
+    {
+        int iF0 = Gia_ObjFaninId0(pObj, i);
+        int iF1 = Gia_ObjFaninId1(pObj, i);
+        int c0  = Gia_ObjFaninC0(pObj);
+        int c1  = Gia_ObjFaninC1(pObj);
+        unsigned * pD0 = pData + (size_t)iF0 * nW;
+        unsigned * pD1 = pData + (size_t)iF1 * nW;
+        unsigned * pDi = pData + (size_t)i   * nW;
+        if ( Gia_ObjIsXor(pObj) )
+        {
+            for ( w = 0; w < nW; w++ )
+            {
+                unsigned v0 = c0 ? ~pD0[w] : pD0[w];
+                unsigned v1 = c1 ? ~pD1[w] : pD1[w];
+                pDi[w] = v0 ^ v1;
+            }
+        }
+        else
+        {
+            for ( w = 0; w < nW; w++ )
+            {
+                unsigned v0 = c0 ? ~pD0[w] : pD0[w];
+                unsigned v1 = c1 ? ~pD1[w] : pD1[w];
+                pDi[w] = v0 & v1;
+            }
+        }
+    }
+    // COs not evaluated: they are not equivalence candidates.
+}
+
+// Pair validation against pre-simulated data.  Returns 1 iff every
+// one of the nWords * 32 patterns agrees with the claimed polarity.
+static inline int Xcg_SimManValidate( Xcg_SimMan_t * p, int iA, int iB, int fComp )
+{
+    int nW = p->nWords, w;
+    unsigned * pA = p->pSim + (size_t)iA * nW;
+    unsigned * pB = p->pSim + (size_t)iB * nW;
+    if ( fComp )
+    {
+        for ( w = 0; w < nW; w++ )
+            if ( pA[w] != ~pB[w] ) return 0;
+    }
+    else
+    {
+        for ( w = 0; w < nW; w++ )
+            if ( pA[w] !=  pB[w] ) return 0;
+    }
+    return 1;
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -554,41 +615,38 @@ static int Xcg_PickRefinementTarget( Xcg_Abs_t * p, int origA, int origB )
     return iBest;
 }
 
-// One refinement step: mark iOrig as must-inline and rebuild pAbs.
-// Returns 1 if rebuilding produced a DIFFERENT abstraction (i.e.,
-// iOrig was previously abstract and is now inlined), else 0.
-static int Xcg_RefineOne( Xcg_Abs_t * p, int iOrig )
-{
-    int nBefore;
-    if ( iOrig < 0 || p->pInlinedBit[iOrig] ) return 0;
-    nBefore = Vec_IntSize(p->vInlined);
-    Xcg_MarkInlined(p, iOrig);
-    if ( Vec_IntSize(p->vInlined) == nBefore ) return 0;
-    Xcg_Build(p);
-    return 1;
-}
-
 ////////////////////////////////////////////////////////////////////////
-///     STAGE 3 (cont.): XOR-CHAIN BULK REFINEMENT                   ///
+///     STAGE 3 (cont.): BATCHED REFINEMENT (fixes old RefineChain   ///
+///                    bug: mark-only without rebuild stalled CEGAR) ///
 ///                                                                  ///
-///  When a refinement target sits on an XOR chain identified by     ///
-///  XCGRP's chain-ID map, bulk-inline the entire chain.  Rationale: ///
-///  a chain that participates in the spurious conflict is likely to ///
-///  keep producing conflicts if only one link is refined.  Pulling  ///
-///  in the whole chain at once accelerates CEGAR convergence.       ///
+///  The old code had two separate refinement routines:              ///
+///    - Xcg_RefineOne     : mark + rebuild                          ///
+///    - Xcg_RefineChain   : mark ONLY (no rebuild!)   <-- BUG       ///
+///  When chain refinement fired, the next iteration called scorr on ///
+///  an unchanged abstraction -> identical equivalences -> CEGAR     ///
+///  loop made no progress until nMaxRefine was exhausted.           ///
+///                                                                  ///
+///  The new scheme collects every spurious pair's refinement target ///
+///  into vTargets (dedup'd), optionally expands each target to its  ///
+///  XOR chain, marks them all at once, and rebuilds pAbs ONCE.      ///
+///  This also multiplies progress per iteration, reducing the       ///
+///  number of scorr invocations needed.                             ///
 ////////////////////////////////////////////////////////////////////////
 
-static void Xcg_RefineChain( Xcg_Abs_t * p, int iOrig, int * pChainId )
+// Mark iOrig (and, if pChainId given, its entire XOR chain) as must-inline.
+// Does NOT rebuild; caller must invoke Xcg_Build() once all marks are done.
+static void Xcg_MarkInlinedWithChain( Xcg_Abs_t * p, int iOrig, int * pChainId )
 {
-    int cid, i;
-    Gia_Obj_t * pObj;
     Xcg_MarkInlined(p, iOrig);
-    if ( !pChainId ) return;
-    cid = pChainId[iOrig];
-    if ( cid < 0 ) return;
-    Gia_ManForEachAnd( p->pOrig, pObj, i )
-        if ( pChainId[i] == cid )
-            Xcg_MarkInlined(p, i);
+    if ( pChainId && pChainId[iOrig] >= 0 )
+    {
+        int cid = pChainId[iOrig];
+        Gia_Obj_t * pObj;
+        int i;
+        Gia_ManForEachAnd( p->pOrig, pObj, i )
+            if ( pChainId[i] == cid )
+                Xcg_MarkInlined(p, i);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -621,21 +679,31 @@ static int * Xcg_ComputeChainIdMap( Gia_Man_t * p )
 
 // CEGAR inner loop for ONE pivot-assignment branch.
 // Inputs: an abstraction state p, scorr params, max refine iters,
-// simulation rounds per pair, pChainId for bulk refinement (optional,
-// pass NULL to disable chain refinement), and fRewrite to pre-rewrite
+// simulation rounds per pair (nWords), pChainId for bulk refinement
+// (optional; NULL disables chain expansion), and fRewrite to pre-rewrite
 // the abstraction before each scorr call.
 // Outputs: fills pConfirmed with confirmed (origA,origB,fComp) triples
 // that passed simulation on the original.
+//
+// Key differences vs. the old loop:
+//   - Simulation allocated ONCE outside the iter loop, reused across
+//     iterations (O(N*W) per iter, not O(P*R*N)).
+//   - ALL spurious pairs contribute refinement targets (not just the
+//     first), and the whole batch is marked + rebuilt in one shot.
+//   - After the batched refinement, pAbs is rebuilt exactly once via
+//     Xcg_Build.  This fixes the old Xcg_RefineChain stall bug.
 static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
                             int nMaxRefine, int nSimRounds,
                             int * pChainId, int fRewrite,
                             Vec_Int_t * pConfirmed )
 {
+    Xcg_SimMan_t * pSim = Xcg_SimManAlloc(p->pOrig, nSimRounds);
+    Vec_Int_t *    vTargets = Vec_IntAlloc(16);
     int iter;
     for ( iter = 0; iter <= nMaxRefine; iter++ )
     {
         Gia_Man_t * pRew = NULL;
-        int i, nSpurious = 0, iRefine = -1;
+        int i, nSpurious = 0;
         Vec_Int_t * vTrip;
         // Optional rewrite pass BEFORE scorr to shrink the abstraction.
         // Gia_ManAigSyn2 returns a new AIG; we swap it into p->pAbs and
@@ -647,25 +715,24 @@ static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
         }
         // Run the correspondence engine on the abstract AIG.
         Cec_ManLSCorrespondenceClasses(p->pAbs, pPars);
-        // Build back-map: pAbs->pObj[].Value = original node ID.
-        // Note: after a rewrite pass the original-ID mapping is LOST
-        // because the new pAbs has different node numbering.  In that
-        // case we fall back to trusting scorr's equivalences blindly
-        // on a best-effort basis.  Robust rewrite-aware tracking
-        // requires propagating IDs through Gia_ManAigSyn2, which is
-        // nontrivial; see limitations note at top of file.
+        // Back-map: pAbs->pObj[].Value = original node ID.  Rewriting
+        // destroys node numbering, so CEGAR cannot proceed past a
+        // rewrite pass (see top-of-file limitations).
         if ( !fRewrite || !pRew )
             Xcg_InstallBackMap(p);
         else
-            break;  // bail: cannot do CEGAR without back-map
+            break;
         vTrip = Xcg_CollectEquivTriples(p);
-        // Validate each pair by simulation on the original AIG.
+        // ONE simulation pass per iter; validate every pair in O(nWords).
+        // Seed varies per iter so successive iters see different patterns.
+        Xcg_SimManRun( pSim, (unsigned)(0x9E3779B1u * (unsigned)(iter + 1) + 0x12345u) );
+        Vec_IntClear(vTargets);
         for ( i = 0; i < Vec_IntSize(vTrip); i += 3 )
         {
             int origA = Vec_IntEntry(vTrip, i);
             int origB = Vec_IntEntry(vTrip, i+1);
             int fComp = Vec_IntEntry(vTrip, i+2);
-            if ( Xcg_SimValidatePair(p->pOrig, origA, origB, fComp, nSimRounds) )
+            if ( Xcg_SimManValidate(pSim, origA, origB, fComp) )
             {
                 Vec_IntPush(pConfirmed, origA);
                 Vec_IntPush(pConfirmed, origB);
@@ -673,29 +740,34 @@ static void Xcg_CegarLoop( Xcg_Abs_t * p, Cec_ParCor_t * pPars,
             }
             else
             {
+                int iT;
                 nSpurious++;
-                // Remember the FIRST spurious pair's refinement target.
-                if ( iRefine < 0 )
-                    iRefine = Xcg_PickRefinementTarget(p, origA, origB);
+                iT = Xcg_PickRefinementTarget(p, origA, origB);
+                // Vec_IntPushUnique keeps vTargets tight and bounds rebuild
+                // work when many spurious pairs point to the same abstract PI.
+                if ( iT >= 0 )
+                    Vec_IntPushUnique(vTargets, iT);
             }
         }
         Vec_IntFree(vTrip);
         if ( pPars->fVerbose )
-            Abc_Print(1, "  CEGAR iter %d: %d confirmed, %d spurious.\n",
-                      iter, Vec_IntSize(pConfirmed)/3, nSpurious);
-        if ( nSpurious == 0 ) break;
-        if ( iter == nMaxRefine ) break;   // budget exhausted
-        // Refine: either bulk-chain or single-node.
-        if ( pChainId && iRefine >= 0 )
-            Xcg_RefineChain(p, iRefine, pChainId);
-        else if ( iRefine >= 0 )
-            Xcg_RefineOne(p, iRefine);
-        else
-            break;  // nowhere to refine -- accept what we have
-        // Clear stale reprs before next iteration.
-        ABC_FREE(p->pAbs->pReprs);
-        ABC_FREE(p->pAbs->pNexts);
+            Abc_Print(1, "  CEGAR iter %d: %d confirmed, %d spurious, %d refine targets.\n",
+                      iter, Vec_IntSize(pConfirmed)/3, nSpurious,
+                      Vec_IntSize(vTargets));
+        if ( nSpurious == 0 )         break;
+        if ( iter == nMaxRefine )     break;
+        if ( Vec_IntSize(vTargets) == 0 ) break;  // nowhere to refine
+        // Batched inline: mark every target (+chain if pChainId) then rebuild.
+        {
+            int k, iT;
+            Vec_IntForEachEntry( vTargets, iT, k )
+                Xcg_MarkInlinedWithChain(p, iT, pChainId);
+        }
+        Xcg_Build(p);
+        // pAbs was rebuilt -> old reprs/nexts are already gone with it.
     }
+    Vec_IntFree(vTargets);
+    Xcg_SimManFree(pSim);
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -735,12 +807,82 @@ static void Xcg_IntersectTriples( Vec_Int_t * vAccum, Vec_Int_t * vNew,
     }
 }
 
+////////////////////////////////////////////////////////////////////////
+///         BRANCH-LEVEL THREAD DISPATCH (optional, pthreads)        ///
+///                                                                  ///
+///  Each constant-assignment branch is independent: it owns its     ///
+///  own abstraction, pAbs, simulator, and equivalence triples.      ///
+///  The only shared state is the ORIGINAL AIG and pPars, so we      ///
+///  give each thread a private Gia_ManDup() clone of pOrig -- both  ///
+///  Xcg_Build (which mutates pObj->Value via Gia_ManFillValue) and  ///
+///  Gia_ManLevelNum (called inside Xcg_AbsAlloc) need exclusive     ///
+///  write access to pOrig fields.  Cloning costs O(nObj) per thread ///
+///  but eliminates all races at branch granularity.                 ///
+///                                                                  ///
+///  pPars is shared read/write, matching the existing cecXcgrp.c    ///
+///  pattern (Xcgrp_SolveParts).                                     ///
+////////////////////////////////////////////////////////////////////////
+
+#ifdef ABC_USE_PTHREADS
+typedef struct Xcg_BT_t_ {
+    Gia_Man_t *     pOrigMaster;    // shared, read-only
+    int *           pPivotIds;      // shared, read-only (original-node IDs)
+    int             nPivots;
+    int             pPivConst[8];   // per-thread: constant assignment
+    int             nLevelLimit;
+    int             nMaxRefine;
+    int             nSimRounds;
+    int             fRewrite;
+    Cec_ParCor_t *  pPars;          // shared (same pattern as cecXcgrp.c)
+    Vec_Int_t *     vResult;        // per-thread output: (a,b,fComp) triples
+} Xcg_BT_t;
+
+static void * Xcg_BranchThread( void * pArg )
+{
+    Xcg_BT_t *   t = (Xcg_BT_t *)pArg;
+    Gia_Man_t *  pLocal;
+    int *        pChainLocal;
+    Xcg_Abs_t *  pAbs;
+    // Private clone of pOrig: Xcg_Build / Gia_ManLevelNum mutate pOrig.
+    pLocal = Gia_ManDup(t->pOrigMaster);
+    Gia_ManSetPhase(pLocal);
+    pChainLocal = Xcg_ComputeChainIdMap(pLocal);
+    pAbs = Xcg_AbsAlloc(pLocal, t->nLevelLimit,
+                         t->pPivotIds, t->pPivConst, t->nPivots);
+    Xcg_Build(pAbs);
+    Xcg_CegarLoop(pAbs, t->pPars, t->nMaxRefine, t->nSimRounds,
+                   pChainLocal, t->fRewrite, t->vResult);
+    Xcg_AbsFree(pAbs);
+    ABC_FREE(pChainLocal);
+    Gia_ManStop(pLocal);
+    return NULL;
+}
+#endif
+
+// Run one branch sequentially (master thread).  Re-used when pthreads are
+// unavailable or nProcs <= 1; also used as the fallback body when the
+// pthread path is compiled out.
+static void Xcg_RunBranchSerial( Gia_Man_t * pAig, int * pPivotIds,
+                                  int pPivConst[8], int nPivots,
+                                  int nLevelLimit, int nMaxRefine,
+                                  int nSimRounds, int fRewrite,
+                                  int * pChainId, Cec_ParCor_t * pPars,
+                                  Vec_Int_t * vResult )
+{
+    Xcg_Abs_t * pAbs;
+    pAbs = Xcg_AbsAlloc(pAig, nLevelLimit, pPivotIds, pPivConst, nPivots);
+    Xcg_Build(pAbs);
+    Xcg_CegarLoop(pAbs, pPars, nMaxRefine, nSimRounds, pChainId, fRewrite, vResult);
+    Xcg_AbsFree(pAbs);
+}
+
 // Public entry: CEGAR-enhanced XCGRP correspondence.
 //   nPivots     : 1..6 (2^N subproblems); effective cap at 6 to keep 64 branches
 //   nLevelLimit : 0 disables truncation; positive = cut at that CO-distance
 //   nMaxRefine  : max CEGAR iterations per pivot branch (e.g. 8)
 //   nSimRounds  : random words per pair validation (e.g. 16 = 512 patterns)
 //   fRewrite    : 1 = call Gia_ManAigSyn2 before each scorr (first iter only)
+// pPars->nProcs > 1 (with ABC_USE_PTHREADS) enables branch-level parallelism.
 // Returns reduced Gia; caller frees.
 Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars,
                                               int nPivots, int nLevelLimit,
@@ -748,11 +890,12 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
                                               int fRewrite )
 {
     Gia_Man_t * pNew, * pTemp;
-    Vec_Int_t * vPivots, * vAccum, * vBranch;
+    Vec_Int_t * vPivots, * vAccum;
     int * pChainId;
     int i, k, nBranches, nObj;
     int * pMapB;
     char * pMapSeen;
+    int nParallel = 1;
 
     if ( nPivots   < 1 ) nPivots   = 1;
     if ( nPivots   > 6 ) nPivots   = 6;
@@ -779,49 +922,115 @@ Gia_Man_t * Cec_ManXcgrpCegarCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pP
     // agrees across branches.  Gia_ManSetPhase is idempotent.
     Gia_ManSetPhase(pAig);
 
-    // --- Branch enumeration: iterate all 2^N constant assignments ---
+#ifdef ABC_USE_PTHREADS
+    if ( pPars->nProcs > 1 )
+    {
+        nParallel = pPars->nProcs;
+        if ( nParallel > nBranches ) nParallel = nBranches;
+    }
+#endif
+
+    // --- Branch enumeration: iterate all 2^N constant assignments, in
+    // waves of up to nParallel branches.  After each wave, intersect
+    // per-branch triples into vAccum in branch-index order (which is
+    // the order they are dispatched in, so intersection semantics match
+    // the old serial loop exactly).
     vAccum   = Vec_IntAlloc(256);
     pMapB    = ABC_ALLOC(int,  nObj);
     pMapSeen = ABC_ALLOC(char, nObj);
-    for ( i = 0; i < nBranches; i++ )
     {
-        int pPivConst[8];
-        Xcg_Abs_t * pAbs;
-        for ( k = 0; k < nPivots; k++ )
-            pPivConst[k] = (i >> k) & 1;    // bit-k of branch index -> pivot k value
-        if ( pPars->fVerbose )
+        int iStart;
+        int fStopAll = 0;
+        Vec_Int_t ** pResults = ABC_ALLOC(Vec_Int_t *, nParallel);
+#ifdef ABC_USE_PTHREADS
+        pthread_t *  pThr  = (nParallel > 1) ? ABC_ALLOC(pthread_t, nParallel) : NULL;
+        Xcg_BT_t *   pArgs = (nParallel > 1) ? ABC_ALLOC(Xcg_BT_t, nParallel)  : NULL;
+#endif
+        for ( iStart = 0; iStart < nBranches && !fStopAll; iStart += nParallel )
         {
-            Abc_Print(1, "XCGRP-CEGAR: branch %d/%d, pivot consts =", i+1, nBranches);
-            for ( k = 0; k < nPivots; k++ ) Abc_Print(1, " %d", pPivConst[k]);
-            Abc_Print(1, "\n");
+            int nInWave = nBranches - iStart;
+            if ( nInWave > nParallel ) nInWave = nParallel;
+
+            // Dispatch all branches in this wave.
+            for ( k = 0; k < nInWave; k++ )
+            {
+                int iBranch = iStart + k;
+                int pPivConst[8];
+                pResults[k] = Vec_IntAlloc(64);
+                for ( i = 0; i < nPivots; i++ )
+                    pPivConst[i] = (iBranch >> i) & 1;
+                if ( pPars->fVerbose )
+                {
+                    Abc_Print(1, "XCGRP-CEGAR: branch %d/%d, pivot consts =",
+                              iBranch+1, nBranches);
+                    for ( i = 0; i < nPivots; i++ )
+                        Abc_Print(1, " %d", pPivConst[i]);
+                    Abc_Print(1, "\n");
+                }
+#ifdef ABC_USE_PTHREADS
+                if ( nParallel > 1 )
+                {
+                    pArgs[k].pOrigMaster = pAig;
+                    pArgs[k].pPivotIds   = Vec_IntArray(vPivots);
+                    pArgs[k].nPivots     = nPivots;
+                    for ( i = 0; i < nPivots; i++ )
+                        pArgs[k].pPivConst[i] = pPivConst[i];
+                    pArgs[k].nLevelLimit = nLevelLimit;
+                    pArgs[k].nMaxRefine  = nMaxRefine;
+                    pArgs[k].nSimRounds  = nSimRounds;
+                    pArgs[k].fRewrite    = fRewrite;
+                    pArgs[k].pPars       = pPars;
+                    pArgs[k].vResult     = pResults[k];
+                    pthread_create(&pThr[k], NULL, Xcg_BranchThread, &pArgs[k]);
+                }
+                else
+#endif
+                {
+                    Xcg_RunBranchSerial(pAig, Vec_IntArray(vPivots),
+                                         pPivConst, nPivots,
+                                         nLevelLimit, nMaxRefine, nSimRounds,
+                                         fRewrite, pChainId, pPars,
+                                         pResults[k]);
+                }
+            }
+            // Join.
+#ifdef ABC_USE_PTHREADS
+            if ( nParallel > 1 )
+                for ( k = 0; k < nInWave; k++ )
+                    pthread_join(pThr[k], NULL);
+#endif
+            // Intersect results in branch-index order.
+            for ( k = 0; k < nInWave; k++ )
+            {
+                int iBranch = iStart + k;
+                if ( iBranch == 0 )
+                {
+                    Vec_IntClear(vAccum);
+                    Vec_IntAppend(vAccum, pResults[k]);
+                }
+                else
+                {
+                    Xcg_IntersectTriples(vAccum, pResults[k],
+                                          nObj, pMapB, pMapSeen);
+                }
+                Vec_IntFree(pResults[k]);
+                if ( Vec_IntSize(vAccum) == 0 )
+                {
+                    if ( pPars->fVerbose )
+                        Abc_Print(1, "XCGRP-CEGAR: empty intersection after branch %d; stopping early.\n", iBranch+1);
+                    // Free remaining results in this wave, then abort.
+                    for ( k++; k < nInWave; k++ )
+                        Vec_IntFree(pResults[k]);
+                    fStopAll = 1;
+                    break;
+                }
+            }
         }
-        pAbs = Xcg_AbsAlloc(pAig, nLevelLimit, Vec_IntArray(vPivots),
-                             pPivConst, nPivots);
-        Xcg_Build(pAbs);
-        vBranch = Vec_IntAlloc(64);
-        Xcg_CegarLoop(pAbs, pPars, nMaxRefine, nSimRounds, pChainId,
-                       fRewrite, vBranch);
-        if ( i == 0 )
-        {
-            // First branch: seed the accumulator.
-            Vec_IntClear(vAccum);
-            Vec_IntAppend(vAccum, vBranch);
-        }
-        else
-        {
-            // Subsequent branches: intersect (keep only pairs agreed upon).
-            Xcg_IntersectTriples(vAccum, vBranch, nObj, pMapB, pMapSeen);
-        }
-        Vec_IntFree(vBranch);
-        Xcg_AbsFree(pAbs);
-        // Early termination: if the intersection is empty, no point
-        // running the remaining branches.
-        if ( Vec_IntSize(vAccum) == 0 )
-        {
-            if ( pPars->fVerbose )
-                Abc_Print(1, "XCGRP-CEGAR: empty intersection after branch %d; stopping early.\n", i+1);
-            break;
-        }
+        ABC_FREE(pResults);
+#ifdef ABC_USE_PTHREADS
+        ABC_FREE(pThr);
+        ABC_FREE(pArgs);
+#endif
     }
     ABC_FREE(pMapB); ABC_FREE(pMapSeen);
     ABC_FREE(pChainId);
