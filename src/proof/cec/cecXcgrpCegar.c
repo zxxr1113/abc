@@ -127,6 +127,56 @@ static void Xcg_UfUnion( int * pUf, int * pRank, int a, int b )
     if ( pRank[a] == pRank[b] ) pRank[a]++;
 }
 
+////////////////////////////////////////////////////////////////////////
+///                 STRUCTURAL XOR RECOGNITION                       ///
+///                                                                  ///
+///  Standard AIGER files do NOT carry native XOR nodes -- every XOR ///
+///  is synthesized as the 3-AND pattern                             ///
+///        XOR(a,b) = ~(~(a & ~b) & ~(~a & b))                       ///
+///  so Gia_ObjIsXor() (which only recognizes the iDiff0<iDiff1      ///
+///  native encoding) returns 0 everywhere and pivot selection       ///
+///  silently returned zero pivots -> plain scorr fallback.          ///
+///                                                                  ///
+///  ABC already ships Gia_ObjRecognizeExor to detect this 3-AND     ///
+///  pattern; we wrap it so both native and structural XOR look the  ///
+///  same to the chain detector and scorer.  The build path          ///
+///  (Xcg_DupRecBounded) does NOT need updating: Gia_ManHashAnd      ///
+///  already collapses AND(const, x) correctly, so feeding pivot=0/1 ///
+///  into a structural-XOR pattern propagates identically to native. ///
+////////////////////////////////////////////////////////////////////////
+
+// Returns 1 iff pObj is a native XOR OR a structural 3-AND XOR pattern.
+// On success, if piF0/piF1 are non-NULL, writes the two logical XOR-
+// operand node IDs (inversion bits discarded -- chain walking only needs
+// node identity).
+static inline int Xcg_ObjRecognizeXor( Gia_Man_t * p, Gia_Obj_t * pObj,
+                                        int * piF0, int * piF1 )
+{
+    if ( !Gia_ObjIsAnd(pObj) || Gia_ObjIsBuf(pObj) )
+        return 0;
+    // Path A: native XOR (only after XOR-aware synthesis).
+    if ( Gia_ObjIsXor(pObj) )
+    {
+        int i = Gia_ObjId(p, pObj);
+        if ( piF0 ) *piF0 = Gia_ObjFaninId0(pObj, i);
+        if ( piF1 ) *piF1 = Gia_ObjFaninId1(pObj, i);
+        return 1;
+    }
+    // Path B: structural XOR via the 3-AND pattern.  Gia_ObjRecognizeExor
+    // hands back the two operand literals as Gia_Obj_t *; strip inversion
+    // bits to recover raw IDs.
+    {
+        Gia_Obj_t * pFan0 = NULL, * pFan1 = NULL;
+        if ( Gia_ObjRecognizeExor(pObj, &pFan0, &pFan1) )
+        {
+            if ( piF0 ) *piF0 = Gia_ObjId(p, Gia_Regular(pFan0));
+            if ( piF1 ) *piF1 = Gia_ObjId(p, Gia_Regular(pFan1));
+            return 1;
+        }
+    }
+    return 0;
+}
+
 // Score[i] = chainLen(i)^2 / (distToCO(i)+1) for XOR gates in chains >=2.
 // Returns a newly-allocated score array; caller frees.
 static float * Xcg_ComputeScores( Gia_Man_t * p )
@@ -140,17 +190,19 @@ static float * Xcg_ComputeScores( Gia_Man_t * p )
     float * pScore = ABC_CALLOC(float, nObj);
     Gia_Obj_t * pObj;
     for ( i = 0; i < nObj; i++ ) { pUf[i]=i; pChainId[i]=-1; }
-    // Union XOR gates that share XOR-only fanin edges.
+    // Union XOR-like gates that share an XOR-like operand.  Works for
+    // both native XOR and structural 3-AND XOR patterns.
     Gia_ManForEachAnd( p, pObj, i )
     {
         int f0, f1;
-        if ( !Gia_ObjIsXor(pObj) ) continue;
-        f0 = Gia_ObjFaninId0(pObj,i); f1 = Gia_ObjFaninId1(pObj,i);
-        if ( Gia_ObjIsXor(Gia_ManObj(p,f0)) ) Xcg_UfUnion(pUf,pRank,i,f0);
-        if ( Gia_ObjIsXor(Gia_ManObj(p,f1)) ) Xcg_UfUnion(pUf,pRank,i,f1);
+        if ( !Xcg_ObjRecognizeXor(p, pObj, &f0, &f1) ) continue;
+        if ( Xcg_ObjRecognizeXor(p, Gia_ManObj(p,f0), NULL, NULL) )
+            Xcg_UfUnion(pUf,pRank,i,f0);
+        if ( Xcg_ObjRecognizeXor(p, Gia_ManObj(p,f1), NULL, NULL) )
+            Xcg_UfUnion(pUf,pRank,i,f1);
     }
     Gia_ManForEachAnd( p, pObj, i )
-        if ( Gia_ObjIsXor(pObj) )
+        if ( Xcg_ObjRecognizeXor(p, pObj, NULL, NULL) )
         {
             pChainId[i] = Xcg_UfFind(pUf,i);
             pLen[ pChainId[i] ]++;
@@ -176,7 +228,8 @@ static float * Xcg_ComputeScores( Gia_Man_t * p )
     Gia_ManForEachAnd( p, pObj, i )
     {
         int clen = (pChainId[i] >= 0) ? pLen[pChainId[i]] : 1;
-        if ( !Gia_ObjIsXor(pObj) || clen < 2 || pDist[i] < 0 ) continue;
+        if ( !Xcg_ObjRecognizeXor(p, pObj, NULL, NULL) ) continue;
+        if ( clen < 2 || pDist[i] < 0 ) continue;
         pScore[i] = (float)(clen*clen) / (float)(pDist[i] + 1);
     }
     ABC_FREE(pUf); ABC_FREE(pRank); ABC_FREE(pChainId);
@@ -675,16 +728,21 @@ static int * Xcg_ComputeChainIdMap( Gia_Man_t * p )
     int * pCid  = ABC_ALLOC(int, nObj);
     Gia_Obj_t * pObj;
     for ( i = 0; i < nObj; i++ ) { pUf[i] = i; pCid[i] = -1; }
+    // Match Xcg_ComputeScores exactly so bulk-chain refinement aligns with
+    // pivot selection: use the structural XOR recognizer instead of the
+    // native-only Gia_ObjIsXor predicate.
     Gia_ManForEachAnd( p, pObj, i )
     {
         int f0, f1;
-        if ( !Gia_ObjIsXor(pObj) ) continue;
-        f0 = Gia_ObjFaninId0(pObj,i); f1 = Gia_ObjFaninId1(pObj,i);
-        if ( Gia_ObjIsXor(Gia_ManObj(p,f0)) ) Xcg_UfUnion(pUf,pRank,i,f0);
-        if ( Gia_ObjIsXor(Gia_ManObj(p,f1)) ) Xcg_UfUnion(pUf,pRank,i,f1);
+        if ( !Xcg_ObjRecognizeXor(p, pObj, &f0, &f1) ) continue;
+        if ( Xcg_ObjRecognizeXor(p, Gia_ManObj(p,f0), NULL, NULL) )
+            Xcg_UfUnion(pUf,pRank,i,f0);
+        if ( Xcg_ObjRecognizeXor(p, Gia_ManObj(p,f1), NULL, NULL) )
+            Xcg_UfUnion(pUf,pRank,i,f1);
     }
     Gia_ManForEachAnd( p, pObj, i )
-        if ( Gia_ObjIsXor(pObj) ) pCid[i] = Xcg_UfFind(pUf,i);
+        if ( Xcg_ObjRecognizeXor(p, pObj, NULL, NULL) )
+            pCid[i] = Xcg_UfFind(pUf,i);
     ABC_FREE(pUf); ABC_FREE(pRank);
     return pCid;
 }
