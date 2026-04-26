@@ -41160,7 +41160,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     // CEGAR-XCGRP tunables (active only when fUseCegar = 1).
     int fUseCegar   = 0;
     int nCegarPiv   = 2;    // number of pivots => 2^N subproblems
-    int nCegarLev   = 16;   // CO-distance cutoff; 0 disables truncation
+    int nCegarLev   = 64;   // CO-distance cutoff; 0 disables truncation
     int nCegarRef   = 4;    // max refinement iterations per branch
     int nCegarSim   = 16;   // random 32-bit words per pair validation
     int fCegarRw    = 0;    // run Gia_ManAigSyn2 before first scorr

@@ -355,112 +355,224 @@ static inline void Xcg_MarkInlined( Xcg_Abs_t * p, int iOrig )
 }
 
 ////////////////////////////////////////////////////////////////////////
-///   STAGE 1: BOUNDED DUPLICATION WITH ABSTRACT-PI FRONTIER         ///
+///   STAGE 1: BOUNDED ITERATIVE BUILD WITH ABSTRACT-PI FRONTIER     ///
+///                                                                  ///
+///  Three problems were fixed here vs. the previous recursive       ///
+///  builder:                                                        ///
+///                                                                  ///
+///  (1) RO/RI register-position invariant.  GIA convention says     ///
+///      "the LAST nReg CIs are ROs, the LAST nReg COs are RIs".     ///
+///      The old builder pre-created real CIs (PIs+ROs), then        ///
+///      appended abstract PIs at the TAIL via Gia_ManAppendCi -- so ///
+///      with K abstract PIs and nReg ROs, the new last nReg CIs are ///
+///      the original ROs SHIFTED LEFT by K.  Once K >= nReg, ALL    ///
+///      original ROs become regular PIs and the last nReg abstract  ///
+///      PIs masquerade as ROs.  scorr's sequential simulator then   ///
+///      reads stale RI->RO transitions and asserts in cecClass.c    ///
+///      line 729 (Gia_ObjValue==0) on dead nodes downstream.        ///
+///      FIX: append CIs in fixed order PIs -> AbsPIs -> ROs so that ///
+///      ROs are always the last nReg CIs after all abstract PIs are ///
+///      enumerated.                                                 ///
+///                                                                  ///
+///  (2) Stack overflow.  The recursive builder blew the stack on    ///
+///      million-gate AIGs (HWMCC Problem10_label21, ~1.5e5 ANDs but ///
+///      depth ~5e3).  FIX: iterate over Gia_ManForEachAnd in topo   ///
+///      order; const propagation through Gia_ManHashAnd still       ///
+///      collapses pivot-driven cones automatically.                 ///
+///                                                                  ///
+///  (3) Orphan ANDs that fail scorr's refcount assertion.  Even     ///
+///      with one pivot, const propagation can leave a downstream    ///
+///      AND whose only fanout was a now-collapsed parent.  cecCorr  ///
+///      asserts every AND in its input has at least one fanout.     ///
+///      FIX: run Gia_ManCleanup after the build, then translate the ///
+///      forward back-map (pOrig.Value) through the ID-renaming      ///
+///      table that Gia_ManDupMarked records on pAbs.                ///
 ////////////////////////////////////////////////////////////////////////
 
-// Decision: should we CUT at this original node (replace by abstract PI)?
-// Cutting rules:
-//   - Never cut CIs (they become real PIs naturally).
-//   - Never cut pivot nodes (their Value is pre-set to const).
-//   - Never cut nodes explicitly marked in vInlined (refinement targets).
-//   - Cut AND/XOR nodes whose fanout-distance to CO exceeds nLevelLimit.
-// The intent is: logic "far" from any output (deep in the TFI) is
-// conservatively abstracted; logic near the COs (where the property
-// lives) stays concrete.
-static inline int Xcg_ShouldCut( Xcg_Abs_t * p, int iObj )
+// Decision: should iObj be cut (replaced by an abstract PI)?
+// Excludes pivots explicitly -- they MUST stay constant in the build.
+static inline int Xcg_ShouldCut( Xcg_Abs_t * p, int iObj, const char * pIsPivot )
 {
     Gia_Obj_t * pObj = Gia_ManObj(p->pOrig, iObj);
-    if ( p->nLevelLimit <= 0 ) return 0;       // no truncation
-    if ( !Gia_ObjIsAnd(pObj)  ) return 0;      // only internal gates
-    if ( p->pInlinedBit[iObj] ) return 0;      // refinement override
-    // pDistToCo is the SHORTEST distance from iObj to any CO.  Cutting
-    // when this exceeds the limit abstracts away "deep" cones.
+    if ( p->nLevelLimit <= 0 ) return 0;
+    if ( !Gia_ObjIsAnd(pObj)  ) return 0;
+    if ( pIsPivot[iObj] )       return 0;
+    if ( p->pInlinedBit[iObj] ) return 0;
     return ( p->pDistToCo[iObj] > p->nLevelLimit );
 }
 
-// Recursive builder.  Differs from plain XCGRP's DupRec in two ways:
-//   (1) checks Xcg_ShouldCut; if true, emits a fresh CI in pAbs and
-//       records the back-map entry (abs PI index -> original node ID).
-//   (2) also tracks original-ID -> abs literal in vOrig2Abs so the
-//       refiner can find already-built nodes on the boundary.
-static int Xcg_DupRecBounded( Xcg_Abs_t * p, int iObj )
+// Post-build cleanup: drop orphan ANDs and propagate the new ID
+// numbering back to the forward map (pOrig->pObj[i].Value).  Gia_ManDupMarked
+// stores the new literal of every kept node into pAbs->pObj[oldId].Value;
+// dead nodes get ~0.  We translate using that table, polarity-preserving.
+static void Xcg_CleanupAbs( Xcg_Abs_t * p )
 {
-    Gia_Obj_t * pObj = Gia_ManObj(p->pOrig, iObj);
-    int iLit0, iLit1;
-    // Cache: Value holds literal in pAbs if already built (or pre-set).
-    if ( ~pObj->Value ) return pObj->Value;
-
-    // Level cutoff: emit abstract PI and record the mapping.  The CI
-    // is always pushed as a positive literal (no inversion); later
-    // users wrap it with Abc_LitNotCond as needed.
-    if ( Xcg_ShouldCut(p, iObj) )
+    Gia_Man_t * pAbsClean;
+    Gia_Obj_t * pObj;
+    int i, nDead;
+    nDead = Gia_ManCombMarkUsed(p->pAbs);     // marks live AND fMark0=0
+    (void)nDead;
+    pAbsClean = Gia_ManDupMarked(p->pAbs);    // overwrites pAbs.Value with newLit
+    // Translate forward map: pOrig.Value (oldLit in pAbs) -> newLit in pAbsClean.
+    Gia_ManForEachObj( p->pOrig, pObj, i )
     {
-        int iLitPi = Gia_ManAppendCi(p->pAbs);
-        // New PI index in pAbs = (Vec_IntSize(vAbsPi2Orig) after push) - 1
-        // BUT real PIs occupy the first slots; we track abstract PIs
-        // indexed by their PI ordinal.  For simplicity, vAbsPi2Orig is
-        // indexed by PI ordinal (1-to-1 with Gia_ManPiNum order).
-        // Size before push = current PI count; we must pad for the real
-        // PIs that were added first.  See Xcg_Build() below: real PIs
-        // are all created before any Xcg_DupRecBounded call.
-        Vec_IntPush( p->vAbsPi2Orig, iObj );
-        Vec_IntWriteEntry( p->vOrig2Abs, iObj, iLitPi );
-        return (pObj->Value = iLitPi);
+        int oldLit, oldId, oldC;
+        unsigned newLit;
+        if ( !~pObj->Value ) continue;        // already unmapped
+        oldLit = pObj->Value;
+        oldId  = Abc_Lit2Var(oldLit);
+        oldC   = Abc_LitIsCompl(oldLit);
+        if ( oldId < 0 || oldId >= Gia_ManObjNum(p->pAbs) ) { pObj->Value = ~0u; continue; }
+        newLit = Gia_ManObj(p->pAbs, oldId)->Value;
+        pObj->Value = (~newLit) ? Abc_LitNotCond((int)newLit, oldC) : ~0u;
     }
-
-    // Recurse fanin0 (CI/CO/AND/XOR all have fanin0).
-    iLit0 = Xcg_DupRecBounded( p, Gia_ObjFaninId0(pObj, iObj) );
-    iLit0 = Abc_LitNotCond(iLit0, Gia_ObjFaninC0(pObj));
-    if ( Gia_ObjIsCo(pObj) )
-        return (pObj->Value = Gia_ManAppendCo(p->pAbs, iLit0));
-    // Fanin1 for AND/XOR.
-    iLit1 = Xcg_DupRecBounded( p, Gia_ObjFaninId1(pObj, iObj) );
-    iLit1 = Abc_LitNotCond(iLit1, Gia_ObjFaninC1(pObj));
-    if ( Gia_ObjIsXor(pObj) )
-        pObj->Value = Gia_ManHashXor(p->pAbs, iLit0, iLit1);
-    else
-        pObj->Value = Gia_ManHashAnd(p->pAbs, iLit0, iLit1);
-    Vec_IntWriteEntry( p->vOrig2Abs, iObj, pObj->Value );
-    return pObj->Value;
+    // Translate vOrig2Abs entries similarly (used by refinement target picking).
+    if ( p->vOrig2Abs )
+    {
+        for ( i = 0; i < Vec_IntSize(p->vOrig2Abs); i++ )
+        {
+            int oldLit = Vec_IntEntry(p->vOrig2Abs, i);
+            int oldId, oldC;
+            unsigned newLit;
+            if ( oldLit < 0 ) continue;
+            oldId = Abc_Lit2Var(oldLit);
+            oldC  = Abc_LitIsCompl(oldLit);
+            if ( oldId < 0 || oldId >= Gia_ManObjNum(p->pAbs) ) { Vec_IntWriteEntry(p->vOrig2Abs, i, -1); continue; }
+            newLit = Gia_ManObj(p->pAbs, oldId)->Value;
+            Vec_IntWriteEntry( p->vOrig2Abs, i,
+                               (~newLit) ? Abc_LitNotCond((int)newLit, oldC) : -1 );
+        }
+    }
+    Gia_ManStop(p->pAbs);
+    p->pAbs = pAbsClean;
 }
 
 // (Re)build the abstraction.  Called initially and after each refine.
-// The previous pAbs (if any) is freed.  Pivots are pre-set to consts.
+//
+// Build order (CRITICAL for sequential correctness):
+//   1. real PIs       (first nPI CIs in pAbs)
+//   2. abstract PIs   (next K CIs)
+//   3. real ROs       (last nRO CIs -> matched by Gia_ManSetRegNum)
+//   4. AND walk in pOrig topological order; pre-set values for pivots
+//      and abstract-PI cut nodes so the iterative hash never visits them
+//   5. COs in original order (POs first, then RIs)
+//   6. Gia_ManSetRegNum + post-build cleanup
 static void Xcg_Build( Xcg_Abs_t * p )
 {
     Gia_Obj_t * pObj;
-    int i;
-    // Discard stale abstraction artifacts.
+    int i, nObj = Gia_ManObjNum(p->pOrig);
+    int nPI = Gia_ManPiNum(p->pOrig);
+    int nRO = Gia_ManRegNum(p->pOrig);
+    int nCO = Gia_ManCoNum(p->pOrig);
+    char *      pIsPivot = ABC_CALLOC(char, nObj);
+    Vec_Int_t * vCutNodes = Vec_IntAlloc(64);
+
     Xcg_AbsFreeAig(p);
-    p->pAbs = Gia_ManStart( Gia_ManObjNum(p->pOrig) );
+    p->pAbs = Gia_ManStart( nObj );
     p->pAbs->pName = Abc_UtilStrsav(p->pOrig->pName);
     p->pAbs->pSpec = Abc_UtilStrsav(p->pOrig->pSpec);
     Gia_ManHashStart(p->pAbs);
+
+    p->vAbsPi2Orig = Vec_IntAlloc( nObj );
+    p->vOrig2Abs   = Vec_IntStartFull( nObj );
+
+    // Mark pivots so the cut decision and hash walk both skip them.
+    for ( i = 0; i < p->nPivots; i++ )
+        pIsPivot[ p->pPivots[i] ] = 1;
+
+    // Pre-pass: collect cut nodes (abstract-PI candidates) so we can
+    // append them to pAbs BEFORE the original ROs and keep the
+    // "last nRO CIs are RO" invariant intact.
+    Gia_ManForEachAnd( p->pOrig, pObj, i )
+        if ( Xcg_ShouldCut(p, i, pIsPivot) )
+            Vec_IntPush(vCutNodes, i);
+
+    // Reset all forward-map slots; const-0 literal stays 0; pivots get consts.
     Gia_ManFillValue(p->pOrig);
     Gia_ManConst0(p->pOrig)->Value = 0;
-    // Pivots: force to the assigned constant (0 or 1 as a literal).
-    for ( i = 0; i < p->nPivots; i++ )
-        Gia_ManObj(p->pOrig, p->pPivots[i])->Value = p->pPivConst[i];
-    // Pre-create all REAL CIs so the PI/RO numbering is preserved.
-    // Every subsequent Gia_ManAppendCi call (for abstract PIs) appends
-    // AFTER the real PIs, breaking naive PI-indexed simulation unless
-    // the simulator is aware.  We expose this ordering via vAbsPi2Orig,
-    // which is populated only for abstract PIs.  Real PI slots in that
-    // vector (indices 0..nPiOrig-1) are padded with -1.
-    p->vAbsPi2Orig = Vec_IntAlloc( Gia_ManObjNum(p->pOrig) );
-    p->vOrig2Abs   = Vec_IntStartFull( Gia_ManObjNum(p->pOrig) );
-    Gia_ManForEachCi( p->pOrig, pObj, i )
+
+    // CI block 1: real PIs.
+    Gia_ManForEachPi( p->pOrig, pObj, i )
     {
         int iLit = Gia_ManAppendCi(p->pAbs);
         pObj->Value = iLit;
-        Vec_IntPush( p->vAbsPi2Orig, -1 );  // -1 marks "real PI, not abstract"
+        Vec_IntPush( p->vAbsPi2Orig, -1 );    // sentinel: real PI
         Vec_IntWriteEntry( p->vOrig2Abs, Gia_ObjId(p->pOrig, pObj), iLit );
     }
-    // Walk every CO to materialize reachable logic.
+    // CI block 2: abstract PIs.  These sit between real PIs and ROs so
+    // they cannot be misclassified as registers by Gia_ManSetRegNum.
+    {
+        int iCut, k;
+        Vec_IntForEachEntry( vCutNodes, iCut, k )
+        {
+            int iLit = Gia_ManAppendCi(p->pAbs);
+            Gia_ManObj(p->pOrig, iCut)->Value = iLit;
+            Vec_IntPush( p->vAbsPi2Orig, iCut );
+            Vec_IntWriteEntry( p->vOrig2Abs, iCut, iLit );
+        }
+    }
+    // CI block 3: real ROs.  Now positioned at the tail, so RegNum holds.
+    Gia_ManForEachRo( p->pOrig, pObj, i )
+    {
+        int iLit = Gia_ManAppendCi(p->pAbs);
+        pObj->Value = iLit;
+        Vec_IntPush( p->vAbsPi2Orig, -1 );    // sentinel: real RO
+        Vec_IntWriteEntry( p->vOrig2Abs, Gia_ObjId(p->pOrig, pObj), iLit );
+    }
+
+    // Pivots: force to assigned constant literal (0 or 1).  Done AFTER
+    // CI assignments because pivots are AND nodes (their Value would
+    // otherwise still be ~0 from Gia_ManFillValue).
+    for ( i = 0; i < p->nPivots; i++ )
+        Gia_ManObj(p->pOrig, p->pPivots[i])->Value = p->pPivConst[i];
+
+    // Iterative AND walk in topological order.  Pivots and cut nodes
+    // already have non-~0 Value and are skipped via the cache check.
+    Gia_ManForEachAnd( p->pOrig, pObj, i )
+    {
+        int iLit0, iLit1;
+        unsigned vF0, vF1;
+        if ( ~pObj->Value ) continue;         // pivot or abstract PI
+        vF0 = Gia_ManObj(p->pOrig, Gia_ObjFaninId0(pObj, i))->Value;
+        vF1 = Gia_ManObj(p->pOrig, Gia_ObjFaninId1(pObj, i))->Value;
+        // Topological order guarantees fanins are set; if not, the build
+        // is corrupt -- assert defensively.
+        assert( ~vF0 && ~vF1 );
+        iLit0 = Abc_LitNotCond((int)vF0, Gia_ObjFaninC0(pObj));
+        iLit1 = Abc_LitNotCond((int)vF1, Gia_ObjFaninC1(pObj));
+        if ( Gia_ObjIsXor(pObj) )
+            pObj->Value = (unsigned)Gia_ManHashXor(p->pAbs, iLit0, iLit1);
+        else
+            pObj->Value = (unsigned)Gia_ManHashAnd(p->pAbs, iLit0, iLit1);
+        Vec_IntWriteEntry( p->vOrig2Abs, i, (int)pObj->Value );
+    }
+
+    // CO walk in pOrig's CO order (POs first, RIs last by GIA convention).
     Gia_ManForEachCo( p->pOrig, pObj, i )
-        Xcg_DupRecBounded( p, Gia_ObjId(p->pOrig, pObj) );
+    {
+        unsigned vF0 = Gia_ManObj(p->pOrig, Gia_ObjFaninId0(pObj, Gia_ObjId(p->pOrig, pObj)))->Value;
+        int iLit;
+        assert( ~vF0 );
+        iLit = Abc_LitNotCond((int)vF0, Gia_ObjFaninC0(pObj));
+        pObj->Value = (unsigned)Gia_ManAppendCo(p->pAbs, iLit);
+    }
+
     Gia_ManHashStop(p->pAbs);
-    Gia_ManSetRegNum(p->pAbs, Gia_ManRegNum(p->pOrig));
+    Gia_ManSetRegNum(p->pAbs, nRO);
+
+    // Sanity invariants: CI/CO 1:1 with pOrig (plus K abstract PIs in CI).
+    assert( Gia_ManCiNum(p->pAbs) == nPI + Vec_IntSize(vCutNodes) + nRO );
+    assert( Gia_ManCoNum(p->pAbs) == nCO );
+    assert( Gia_ManRegNum(p->pAbs) == nRO );
+    (void)nPI; (void)nCO;
+
+    Vec_IntFree(vCutNodes);
+    ABC_FREE(pIsPivot);
+
+    // Drop orphan ANDs (created when a const-propagated parent collapsed)
+    // and translate the forward map through the ID renaming.  Without this
+    // pass scorr asserts on nodes with refcount==0 in cecClass.c:729.
+    Xcg_CleanupAbs(p);
 }
 
 ////////////////////////////////////////////////////////////////////////
