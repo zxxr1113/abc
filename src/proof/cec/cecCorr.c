@@ -1063,7 +1063,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( pPars->fCexLift && Vec_IntSize(vCexStore) > 0 )
         {
             Vec_Int_t * vLifted = Cec_ManCexLiftAndReplicate(
-                pSrm, vCexStore, pPars->nCexReplicate, pPars->fVerbose );
+                pSrm, vCexStore, pPars->nCexReplicate,
+                Gia_ManRegNum(pAig), pPars->fVerbose );
             Vec_IntFree( vCexStore );
             vCexStore = vLifted;
         }

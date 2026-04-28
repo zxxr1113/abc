@@ -262,12 +262,18 @@ static Vec_Int_t * LiftOneCube( Gia_Man_t * pSrm, int * pLits, int nLits,
    (random polarity).  This extra pin conflicts with earlier replicas'
    extra pins, pushing each replica into a distinct bit-slot inside
    Cec_ManLoadCounterExamplesTry.  The remaining free bits retain the
-   independent random backgrounds set by Cec_ManStartSimInfo.         */
+   independent random backgrounds set by Cec_ManStartSimInfo.
+
+   nPiStart = Gia_ManRegNum(pAig): the first PI CI index.  CIs [0, nPiStart)
+   are RO slots that Gia_ManCorrPerformRemapping expects to stay zero — we
+   must never write to them via the extra pin.                          */
 static void EmitWithReplicas( Vec_Int_t * vOut, int iOut,
                                int * pLiftedLits, int nLifted,
-                               int K, int nCiTotal, int * pCiUsed )
+                               int K, int nCiTotal, int nPiStart,
+                               int * pCiUsed )
 {
-    int k, j, freeIdx, freeCi, freeVal, tried;
+    int k, j, freeCi, freeVal, tried;
+    int nPi = nCiTotal - nPiStart;   /* number of PI-range CIs */
 
     /* Replica 0: bare lifted cube */
     Vec_IntPush( vOut, iOut );
@@ -275,20 +281,20 @@ static void EmitWithReplicas( Vec_Int_t * vOut, int iOut,
     for ( j = 0; j < nLifted; j++ )
         Vec_IntPush( vOut, pLiftedLits[j] );
 
-    if ( K <= 1 || nLifted >= nCiTotal ) return;
+    if ( K <= 1 || nPi <= 0 || nLifted >= nCiTotal ) return;
 
-    /* Replicas 1 .. K-1 */
+    /* Replicas 1 .. K-1: extra pin drawn only from PI range [nPiStart, nCiTotal) */
     for ( k = 1; k < K; k++ )
     {
-        /* Random free-CI selection (scan from random offset to avoid bias) */
-        freeIdx = (int)( Gia_ManRandom(0) % (unsigned)nCiTotal );
-        freeCi  = -1;
-        for ( tried = 0; tried < nCiTotal; tried++ )
+        /* Random start within the PI range to avoid systematic bias */
+        int freeStart = nPiStart + (int)( Gia_ManRandom(0) % (unsigned)nPi );
+        freeCi = -1;
+        for ( tried = 0; tried < nPi; tried++ )
         {
-            int ci = ( freeIdx + tried ) % nCiTotal;
+            int ci = nPiStart + ( freeStart - nPiStart + tried ) % nPi;
             if ( !pCiUsed[ci] ) { freeCi = ci; break; }
         }
-        if ( freeCi < 0 ) break;  /* all CIs pinned */
+        if ( freeCi < 0 ) break;  /* all PI CIs pinned */
 
         freeVal = (int)( Gia_ManRandom(0) & 1 );
         Vec_IntPush( vOut, iOut );
@@ -325,7 +331,7 @@ static void EmitWithReplicas( Vec_Int_t * vOut, int iOut,
 
 ***********************************************************************/
 Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
-                                         int nReplicate, int fVerbose )
+                                         int nReplicate, int nReg, int fVerbose )
 {
     Vec_Int_t * vOut;
     CexLiftScratch_t scratch;
@@ -417,7 +423,7 @@ Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
         /* ── Emit lifted cube + replicas ── */
         EmitWithReplicas( vOut, iOut,
                           Vec_IntArray(vLifted), nLifted,
-                          K_actual, nCi, pCiUsed );
+                          K_actual, nCi, nReg, pCiUsed );
         Vec_IntFree( vLifted );
     }
 
