@@ -201,7 +201,7 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->fVeryVerbose   =       0;  // verbose stats
     p->fVerbose       =       0;  // verbose stats
     p->fCexLift       =       0;  // ternary CEX lifting off by default
-    p->nCexReplicate  =       8;  // replication count when lifting is on
+    p->nCexReplicate  =       1;  // K_max=1 = lift-only; set >1 via -K to enable replication
 }
 
 /**Function*************************************************************

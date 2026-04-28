@@ -41351,7 +41351,7 @@ usage:
     Abc_Print( -2, "\t-P num : the number of concurrent processes [default = %d]\n", pPars->nProcs );
     Abc_Print( -2, "\t-S num : the number of flops in one partition [default = %d]\n", pPars->nPartSize );
     Abc_Print( -2, "\t-Z num : the average flop include frequency [default = %d]\n", nFlopIncFreq );
-    Abc_Print( -2, "\t-K num : cube replication count when -L is on (1 = lift only) [default = %d]\n", pPars->nCexReplicate );
+    Abc_Print( -2, "\t-K num : max replication K_max (K=1=lift-only; K>1 enables adaptive K=64/nRecs capped at K_max) [default = %d]\n", pPars->nCexReplicate );
     Abc_Print( -2, "\t-p     : toggle using partitioning for the input AIG [default = %s]\n", fPartition? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle using constant correspondence [default = %s]\n", pPars->fConstCorr? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using implication rings during refinement [default = %s]\n", pPars->fUseRings? "yes": "no" );

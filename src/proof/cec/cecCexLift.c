@@ -6,42 +6,64 @@
 
   PackageName [Combinational equivalence checking.]
 
-  Synopsis    [CEX ternary lifting and cube replication for &scorr.]
+  Synopsis    [CEX ternary lifting (bit-parallel) and adaptive replication.]
 
   Description [
-    Two orthogonal optimizations applied after each SAT call in the scorr
-    inductive loop:
+    Two orthogonal optimizations inserted between the SAT call and
+    Cec_ManResimulateCounterExamples in the scorr inductive loop.
 
-    1. Ternary Lifting  — 3-valued simulation on the (combinational) SRM
-       shrinks each SAT-returned cube to a near-minimal subset that still
-       causes the target CO to evaluate to definite-1.  Smaller cubes
-       leave more free CI positions whose random backgrounds (set by
-       Cec_ManStartSimInfo) cover a wider part of the state space.
+    ── 1. Ternary Lifting (bit-parallel, 64 trials per sim pass) ──────
 
-    2. Cube Replication — each lifted cube is emitted nReplicate times in
-       the output vCexStore.  Replicas k >= 1 each carry one additional
-       randomly-pinned free-CI literal so they are forced into distinct
-       bit-slots by Cec_ManLoadCounterExamplesTry.  The remaining free
-       positions retain the distinct random values pre-filled by
-       Cec_ManStartSimInfo, giving nReplicate independent trajectories
-       through the original AIG during sequential re-simulation.
+    CBS / MiniSAT return a *partial* assignment (cube): only the decision
+    variables appear as literals; the vast majority of the SRM CIs are
+    already X.  Lifting removes additional redundant literals from this
+    small set — it does NOT scan all CIs.
 
-    Both steps are transparent to the caller: the output has the same
-    vCexStore format as the SAT solver output, and is fed directly into
-    Cec_ManResimulateCounterExamples.
+    Algorithm (per record):
+      Process the nLits literals in batches of 64.  Within each batch,
+      bit k of a 64-bit Word64 represents trial k, where literal
+      (batch_start + k) is dropped (set to X) while all other
+      non-dropped literals retain their cube values.
 
-    Note on CBS (circuit SAT) solver: CBS already leaves most CI bits
-    unset (they receive random fill later).  The ternary sim works only
-    on the literals explicitly present in vCexStore, so unset CIs are
-    naturally represented as X — no extra work needed.
+      One forward pass through the AND graph evaluates all 64 trials
+      simultaneously.  Reading the CO word: bit k = 1 means the CO is
+      definite-1 in trial k → literal (batch_start+k) is droppable.
 
-    Note on multi-cube conflict: Cec_ManLoadCounterExamplesTry uses
-    per-slot conflict detection (vPres bitmask).  Multiple cubes that
-    constrain the same CI to different values land in different slots
-    automatically.  Replication does NOT bypass this check.
+      Drops from earlier batches carry forward into later ones (greedy
+      across batches).  Within a batch the test is non-greedy (peers
+      tested with each other present).
+
+    Non-greedy safety: if literals A and B are both independently
+    droppable but not jointly droppable, our scheme may mark both as
+    dropped.  The resulting "lifted" cube is an unsound CEX in the
+    ternary-sim sense.  In scorr this is harmless: such a pattern merely
+    fails to refine any equivalence class — it never causes incorrect
+    merges (simulation is monotone: it only splits).
+
+    Complexity: O( ceil(nLits/64) × nAnd ) vs O( nLits × nAnd ) serial.
+
+    ── 2. Adaptive Cube Replication ──────────────────────────────────
+
+    Context: Cec_ManLoadCounterExamples packs cubes into up to nBits
+    bit-slots per simulation batch.  If nRecs cubes already fill that
+    capacity, replicating them is pure overhead (information-redundant).
+    If nRecs is tiny (say 1), there are ~63 empty slots begging to be
+    used.
+
+    K_actual = clamp(64 / nRecs, 1, K_max)
+      where K_max = pPars->nCexReplicate (set by -K, default 1 = lift-only)
+
+    Replica 0: bare lifted cube.
+    Replica k ≥ 1: lifted cube + one extra randomly-selected free-CI
+      literal (random polarity).  The extra pin creates a conflict with
+      earlier replicas in Cec_ManLoadCounterExamplesTry, forcing each
+      replica into a distinct bit-slot.  The remaining free bits keep the
+      independent random backgrounds from Cec_ManStartSimInfo, so each
+      replica explores a different extension of the CEX cube.
+
+    When K_max = 1 (default): lifting only, no replication overhead.
+    Enable replication: &scorr -L -K 8   (adaptive K ≤ 8).
   ]
-
-  Author      [Alan Mishchenko / cex_lifting branch]
 
 ***********************************************************************/
 
@@ -49,283 +71,256 @@
 
 ABC_NAMESPACE_IMPL_START
 
+/* 64-bit word for bit-parallel ternary simulation */
+typedef unsigned long long Word64;
+
 ////////////////////////////////////////////////////////////////////////
-///                        DECLARATIONS                              ///
+///                      SCRATCH MEMORY                              ///
 ////////////////////////////////////////////////////////////////////////
 
-/* Scratch arrays reused across cubes (allocated once, passed by pointer) */
-typedef struct CexLiftScratch_t_ {
-    int * pCare;     /* care[id]=1 iff node id has a determined value   */
-    int * pVal;      /* val[id]   — valid only when care[id]=1          */
-    int * pActive;   /* active[i]=1 iff literal i is still in the cube  */
-    int   nObjAlloc; /* capacity of pCare / pVal                        */
-    int   nLitAlloc; /* capacity of pActive                             */
+typedef struct {
+    Word64 * pCare;      /* pCare[id]: bit k = node 'id' is care in trial k  */
+    Word64 * pVal;       /* pVal[id]:  bit k = value in trial k (valid if care k=1) */
+    int    * pDropped;   /* pDropped[i] = 1: literal i confirmed droppable   */
+    int      nObjAlloc;
+    int      nLitAlloc;
 } CexLiftScratch_t;
 
 static void CexLiftScratch_Resize( CexLiftScratch_t * s, int nObj, int nLit )
 {
     if ( nObj > s->nObjAlloc )
     {
-        ABC_FREE( s->pCare );
-        ABC_FREE( s->pVal );
-        s->pCare     = ABC_ALLOC( int, nObj );
-        s->pVal      = ABC_ALLOC( int, nObj );
+        ABC_FREE( s->pCare ); s->pCare = ABC_ALLOC( Word64, nObj );
+        ABC_FREE( s->pVal  ); s->pVal  = ABC_ALLOC( Word64, nObj );
         s->nObjAlloc = nObj;
     }
     if ( nLit > s->nLitAlloc )
     {
-        ABC_FREE( s->pActive );
-        s->pActive   = ABC_ALLOC( int, nLit );
+        ABC_FREE( s->pDropped ); s->pDropped = ABC_ALLOC( int, nLit );
         s->nLitAlloc = nLit;
     }
 }
 
 static void CexLiftScratch_Free( CexLiftScratch_t * s )
 {
-    ABC_FREE( s->pCare );
-    ABC_FREE( s->pVal );
-    ABC_FREE( s->pActive );
+    ABC_FREE( s->pCare ); ABC_FREE( s->pVal ); ABC_FREE( s->pDropped );
 }
 
 ////////////////////////////////////////////////////////////////////////
-///                   TERNARY SIMULATION HELPERS                     ///
+///         BIT-PARALLEL 64-TRIAL TERNARY SIMULATION                 ///
 ////////////////////////////////////////////////////////////////////////
 
-/* Initialise pCare/pVal from the currently-active subset of cube lits.
-   Const0 (obj id=0) is always care=1, val=0.
-   CIs in the active set: care=1, val = !compl.
-   All other nodes: care=0 (X). */
-static void TernarySeed( Gia_Man_t * p, int * pCare, int * pVal,
-                          int * pActive, int * pLits, int nLits )
-{
-    int i, id;
-    memset( pCare, 0, Gia_ManObjNum(p) * sizeof(int) );
-    memset( pVal,  0, Gia_ManObjNum(p) * sizeof(int) );
-    /* const-0 is always determined */
-    pCare[0] = 1;  pVal[0] = 0;
-    /* set each active cube literal */
-    for ( i = 0; i < nLits; i++ )
-    {
-        if ( !pActive[i] ) continue;
-        id = Gia_ObjId( p, Gia_ManCi( p, Abc_Lit2Var(pLits[i]) ) );
-        pCare[id] = 1;
-        pVal[id]  = !Abc_LitIsCompl( pLits[i] );  /* compl=1 => ci=0 */
-    }
-}
+/* Run one 64-trial ternary sim for the literal batch [batch_start, batch_start+batch_size).
 
-/* Forward 3-valued propagation through all AND nodes (topological order).
-   GIA stores objects in topological order, so a single forward pass suffices. */
-static void TernaryPropagate( Gia_Man_t * p, int * pCare, int * pVal )
+   Bit layout: bit k of each Word64 encodes trial k.
+     Trial k: literal (batch_start+k) is treated as X (we test if it's droppable).
+              All other non-dropped literals retain their cube values.
+              Already-dropped literals (pDropped[i]=1) are X in ALL trials.
+
+   The CBS/SAT solver only sets a few literals; most CIs are already X.
+   We seed ONLY those literals — no full-CI scan required.
+
+   Returns: bitmask where bit k=1 ⟺ CO is definite-1 in trial k,
+            meaning literal (batch_start+k) can be dropped.             */
+static Word64 TernaryBatch64( Gia_Man_t * p,
+                               int * pLits, int * pDropped, int nLits,
+                               int batch_start, int batch_size,
+                               Word64 * pCare, Word64 * pVal, int iOut )
 {
     Gia_Obj_t * pObj;
-    int i, id0, id1, c0, c1, care0, care1, val0, val1;
-    Gia_ManForEachAnd( p, pObj, i )
+    int i, idx, id0, id1, c0, c1, id, v, k;
+    int co_id, fan_id, co_compl;
+    Word64 c0mask, c1mask, care0, care1, val0, val1;
+    Word64 zero0, zero1, one0, one1, can_drop, batch_mask;
+    int nObj = Gia_ManObjNum( p );
+
+    /* Zero all node words (X in every trial) */
+    memset( pCare, 0, nObj * sizeof(Word64) );
+    memset( pVal,  0, nObj * sizeof(Word64) );
+
+    /* Const-0: care=1 and val=0 in all 64 trials */
+    pCare[0] = ~(Word64)0;
+    pVal[0]  =  (Word64)0;
+
+    /* Seed only the cube's literals (CBS leaves non-decision CIs as X already).
+       Each SAT-solver cube has at most one literal per CI variable.         */
+    for ( i = 0; i < nLits; i++ )
     {
-        /* Obtain fanin IDs and complement bits */
-        id0   = Gia_ObjFaninId0( pObj, i );
-        id1   = Gia_ObjFaninId1( pObj, i );
+        if ( pDropped[i] ) continue;          /* already dropped → always X */
+
+        id = Gia_ObjId( p, Gia_ManCi( p, Abc_Lit2Var(pLits[i]) ) );
+        v  = !Abc_LitIsCompl( pLits[i] );    /* v=1: literal constrains CI=1 */
+
+        if ( i < batch_start || i >= batch_start + batch_size )
+        {
+            /* Outside this batch: literal is active in all 64 trials */
+            pCare[id] = ~(Word64)0;
+            pVal[id]  = v ? ~(Word64)0 : (Word64)0;
+        }
+        else
+        {
+            /* Inside this batch at position k:
+               In trial k this literal is X (dropped); in all other trials active.
+               pCare bit k = 0 (X); all other bits = 1.
+               pVal  follows the same mask (val is don't-care where care=0). */
+            k = i - batch_start;
+            pCare[id] = ~( (Word64)1 << k );
+            pVal[id]  = v ? ~( (Word64)1 << k ) : (Word64)0;
+        }
+    }
+
+    /* Forward 3-valued propagation (topological = GIA object order).
+       Per bit:
+         definite-0:  at least one input is (care=1, val=0)
+         definite-1:  both inputs are (care=1, val=1)
+         X:           otherwise                               */
+    Gia_ManForEachAnd( p, pObj, idx )
+    {
+        id0   = Gia_ObjFaninId0( pObj, idx );
+        id1   = Gia_ObjFaninId1( pObj, idx );
         c0    = Gia_ObjFaninC0( pObj );
         c1    = Gia_ObjFaninC1( pObj );
+
+        /* Edge-complement masks: XOR with all-1s if edge is inverted */
+        c0mask = c0 ? ~(Word64)0 : (Word64)0;
+        c1mask = c1 ? ~(Word64)0 : (Word64)0;
+
         care0 = pCare[id0];
         care1 = pCare[id1];
-        /* Apply edge complement to get post-edge values */
-        val0  = care0 ? ( pVal[id0] ^ c0 ) : 0;
-        val1  = care1 ? ( pVal[id1] ^ c1 ) : 0;
-        /*
-         * 3-valued AND:
-         *   0 & X = 0 (care)     <- one definite 0 absorbs
-         *   X & 0 = 0 (care)
-         *   1 & 1 = 1 (care)     <- both definite 1
-         *   otherwise  = X       <- at least one unknown, no definite 0
-         */
-        if ( care0 && val0 == 0 )
-        {
-            pCare[i] = 1;  pVal[i] = 0;
-        }
-        else if ( care1 && val1 == 0 )
-        {
-            pCare[i] = 1;  pVal[i] = 0;
-        }
-        else if ( care0 && care1 )
-        {
-            /* Both are definite 1 (the only remaining case) */
-            pCare[i] = 1;  pVal[i] = 1;
-        }
-        else
-        {
-            pCare[i] = 0;  pVal[i] = 0;  /* X */
-        }
+        val0  = pVal[id0] ^ c0mask;   /* val0 after inversion */
+        val1  = pVal[id1] ^ c1mask;
+
+        zero0 = care0 & ~val0;        /* fanin0: care=1, val=0 */
+        zero1 = care1 & ~val1;
+        one0  = care0 &  val0;        /* fanin0: care=1, val=1 */
+        one1  = care1 &  val1;
+
+        pCare[idx] = (zero0 | zero1) | (one0 & one1);
+        pVal[idx]  =  one0 & one1;
     }
-}
 
-/* Return 1 iff CO iOut evaluates to definite 1 under current pCare/pVal. */
-static int TernaryCheckCo( Gia_Man_t * p, int * pCare, int * pVal, int iOut )
-{
-    Gia_Obj_t * pCo = Gia_ManCo( p, iOut );
-    int co_id   = Gia_ObjId( p, pCo );
-    int fan_id  = Gia_ObjFaninId0( pCo, co_id );
-    int compl   = Gia_ObjFaninC0( pCo );
-    int care    = pCare[fan_id];
-    int val     = care ? ( pVal[fan_id] ^ compl ) : 0;
-    return ( care && val );
+    /* CO evaluation: bit k=1 ⟺ CO is definite-1 in trial k */
+    {
+        Gia_Obj_t * pCo = Gia_ManCo( p, iOut );
+        co_id    = Gia_ObjId( p, pCo );
+        fan_id   = Gia_ObjFaninId0( pCo, co_id );
+        co_compl = Gia_ObjFaninC0( pCo );
+        c0mask   = co_compl ? ~(Word64)0 : (Word64)0;
+        can_drop = pCare[fan_id] & ( pVal[fan_id] ^ c0mask );
+    }
+
+    /* Mask unused high bits (only batch_size trials are valid) */
+    batch_mask = ( batch_size < 64 )
+                 ? ( ((Word64)1 << batch_size) - (Word64)1 )
+                 : ~(Word64)0;
+    return can_drop & batch_mask;
 }
 
 ////////////////////////////////////////////////////////////////////////
-///                      LIFTING ONE CUBE                            ///
+///                   LIFTING ONE CUBE                               ///
 ////////////////////////////////////////////////////////////////////////
 
-/* Greedy ternary lift for a single cube record.
-   pLits[0..nLits-1]: literals from vCexStore.
-   iOut            : SRM CO index that must stay at definite-1.
-   s               : scratch (pre-allocated, capacity >= nObj, nLits).
-   *pnDropped      : OUT — number of literals removed.
+/* Bit-parallel ternary lifting for a single cube [pLits, nLits].
+   Literals are processed in batches of 64.  Each batch runs ONE
+   forward sim pass and returns a drop-bitmask.  Drops accumulate
+   across batches (inter-batch greedy).
 
-   Returns a newly-allocated Vec_Int_t with the surviving literals.
-   The caller must free it.  On assertion failure (original cube
-   doesn't satisfy the CO) the original literal set is returned unchanged
-   and *pnDropped = 0. */
+   *pnDropped ← number of literals removed.
+   Returns newly-allocated Vec_Int_t (caller must Vec_IntFree).        */
 static Vec_Int_t * LiftOneCube( Gia_Man_t * pSrm, int * pLits, int nLits,
-                                 int iOut, CexLiftScratch_t * s, int * pnDropped )
+                                  int iOut, CexLiftScratch_t * s, int * pnDropped )
 {
-    int i;
     Vec_Int_t * vRes;
+    int i, k;
     *pnDropped = 0;
+    memset( s->pDropped, 0, nLits * sizeof(int) );
 
-    /* Initialise all literals as active */
-    for ( i = 0; i < nLits; i++ ) s->pActive[i] = 1;
-
-    /* Verify that the original cube already satisfies the CO */
-    TernarySeed( pSrm, s->pCare, s->pVal, s->pActive, pLits, nLits );
-    TernaryPropagate( pSrm, s->pCare, s->pVal );
-    if ( !TernaryCheckCo( pSrm, s->pCare, s->pVal, iOut ) )
+    for ( i = 0; i < nLits; i += 64 )
     {
-        /* Defensive: should never happen if the SAT solver is correct */
-        vRes = Vec_IntAlloc( nLits );
-        for ( i = 0; i < nLits; i++ ) Vec_IntPush( vRes, pLits[i] );
-        return vRes;
+        int batch_size = ( i + 64 <= nLits ) ? 64 : nLits - i;
+        Word64 can_drop = TernaryBatch64( pSrm, pLits, s->pDropped, nLits,
+                                           i, batch_size,
+                                           s->pCare, s->pVal, iOut );
+        for ( k = 0; k < batch_size; k++ )
+            if ( ( can_drop >> k ) & (Word64)1 )
+            { s->pDropped[i + k] = 1;  (*pnDropped)++; }
     }
 
-    /* Greedy dropping: try each literal; if the CO still holds after
-       removing it, drop it permanently.  The permanent drop is carried
-       over to subsequent trials (greedy, not exhaustive). */
-    for ( i = 0; i < nLits; i++ )
-    {
-        s->pActive[i] = 0;   /* tentatively drop literal i */
-        TernarySeed( pSrm, s->pCare, s->pVal, s->pActive, pLits, nLits );
-        TernaryPropagate( pSrm, s->pCare, s->pVal );
-        if ( TernaryCheckCo( pSrm, s->pCare, s->pVal, iOut ) )
-        {
-            (*pnDropped)++;  /* keep dropped permanently */
-        }
-        else
-        {
-            s->pActive[i] = 1;  /* must keep: restore for subsequent trials */
-        }
-    }
-
-    /* Build result from surviving active literals */
     vRes = Vec_IntAlloc( nLits - *pnDropped );
     for ( i = 0; i < nLits; i++ )
-        if ( s->pActive[i] )
+        if ( !s->pDropped[i] )
             Vec_IntPush( vRes, pLits[i] );
     return vRes;
 }
 
 ////////////////////////////////////////////////////////////////////////
-///                   REPLICATION HELPER                             ///
+///                   CUBE REPLICATION                               ///
 ////////////////////////////////////////////////////////////////////////
 
-/* Emit the base lifted cube into vOut, then emit (nReplicate-1) replicas.
-   Each replica k >= 1 carries one additional randomly-selected free-CI
-   literal (random polarity).  This extra literal makes the replica
-   distinct from earlier entries in vCexStore, so Cec_ManLoadCounterExamplesTry
-   places it in a different bit-slot from the base cube and earlier replicas.
-   The remaining free bits keep the distinct random backgrounds already
-   written by Cec_ManStartSimInfo — no explicit random extension needed here.
-
-   pLiftedLits[0..nLifted-1] : the minimised cube literals.
-   nCiTotal                  : total CI count of pSrm (= Gia_ManCiNum(pSrm)).
-   pCiUsed[ci]               : 1 if CI index ci is already in the lifted cube. */
+/* Emit lifted cube (replica 0) and K-1 replicated variants.
+   Replica k ≥ 1 appends one extra randomly-selected free-CI literal
+   (random polarity).  This extra pin conflicts with earlier replicas'
+   extra pins, pushing each replica into a distinct bit-slot inside
+   Cec_ManLoadCounterExamplesTry.  The remaining free bits retain the
+   independent random backgrounds set by Cec_ManStartSimInfo.         */
 static void EmitWithReplicas( Vec_Int_t * vOut, int iOut,
                                int * pLiftedLits, int nLifted,
-                               int nReplicate, int nCiTotal, int * pCiUsed )
+                               int K, int nCiTotal, int * pCiUsed )
 {
-    int k, j, freeIdx, freeCi, freeVal, nFree;
+    int k, j, freeIdx, freeCi, freeVal, tried;
 
-    /* Count free CIs for quick check */
-    nFree = nCiTotal - nLifted;  /* rough upper bound; exact count not needed */
-
-    /* Replica 0: the bare lifted cube */
+    /* Replica 0: bare lifted cube */
     Vec_IntPush( vOut, iOut );
     Vec_IntPush( vOut, nLifted );
     for ( j = 0; j < nLifted; j++ )
         Vec_IntPush( vOut, pLiftedLits[j] );
 
-    if ( nReplicate <= 1 || nFree <= 0 )
-        return;
+    if ( K <= 1 || nLifted >= nCiTotal ) return;
 
-    /* Replicas 1 .. nReplicate-1: lifted cube + 1 random free-CI pin.
-       The random pin makes each replica collide (in different slots) with
-       earlier entries, so Cec_ManLoadCounterExamplesTry assigns distinct
-       bit positions.  Using Gia_ManRandom(0) for both CI selection and
-       polarity keeps this thread-local to the current ABC session. */
-    for ( k = 1; k < nReplicate; k++ )
+    /* Replicas 1 .. K-1 */
+    for ( k = 1; k < K; k++ )
     {
-        /* Pick a random free CI index.  Scan from a random offset to avoid
-           always picking the same one when the free set is sparse. */
-        freeCi = -1;
+        /* Random free-CI selection (scan from random offset to avoid bias) */
         freeIdx = (int)( Gia_ManRandom(0) % (unsigned)nCiTotal );
+        freeCi  = -1;
+        for ( tried = 0; tried < nCiTotal; tried++ )
         {
-            int tried;
-            for ( tried = 0; tried < nCiTotal; tried++ )
-            {
-                int ci = ( freeIdx + tried ) % nCiTotal;
-                if ( !pCiUsed[ci] )
-                {
-                    freeCi = ci;
-                    break;
-                }
-            }
+            int ci = ( freeIdx + tried ) % nCiTotal;
+            if ( !pCiUsed[ci] ) { freeCi = ci; break; }
         }
-        if ( freeCi < 0 )
-            break;  /* all CIs are pinned — no room for extra literal */
+        if ( freeCi < 0 ) break;  /* all CIs pinned */
 
         freeVal = (int)( Gia_ManRandom(0) & 1 );
-
-        /* Emit replica: lifted lits + the extra free-CI literal */
         Vec_IntPush( vOut, iOut );
         Vec_IntPush( vOut, nLifted + 1 );
         for ( j = 0; j < nLifted; j++ )
             Vec_IntPush( vOut, pLiftedLits[j] );
-        /* Abc_Var2Lit(var, compl): compl=1 means var=0, compl=0 means var=1 */
+        /* Abc_Var2Lit(var, compl=1) means var=0; compl=0 means var=1 */
         Vec_IntPush( vOut, Abc_Var2Lit( freeCi, !freeVal ) );
     }
 }
 
 ////////////////////////////////////////////////////////////////////////
-///                          PUBLIC API                              ///
+///                        PUBLIC API                                ///
 ////////////////////////////////////////////////////////////////////////
 
 /**Function*************************************************************
 
-  Synopsis    [Ternary-lift every CEX cube in vCexStore, optionally replicate.]
+  Synopsis    [Bit-parallel ternary lifting + adaptive cube replication.]
 
   Description [
-    Iterates vCexStore records (format: [iOut, nLits, lit_0..lit_{nLits-1}]).
-    For each record:
-      1. 3-valued simulation on pSrm minimises the cube.
-      2. The minimised cube is emitted nReplicate times; replicas k >= 1
-         carry one extra randomly-pinned free-CI literal to force placement
-         in distinct simulation bit-slots.
+    For each record in vCexStore:
+      1. Lift: reduce the cube via 64-trial bit-parallel ternary sim.
+      2. Replicate (if K_max > 1): emit K_actual copies, computed as
+           K_actual = clamp(64 / nRecs, 1, K_max)
+         so that the fixed simulation batch width is fully utilized when
+         nRecs is small, and no replication is done when nRecs >= 64
+         (the batch is already full without replication).
 
-    Returns a newly-allocated Vec_Int_t in the same vCexStore format.
-    The caller is responsible for Vec_IntFree().
+    nReplicate = K_max (from pPars->nCexReplicate; default 1 = lift-only).
+    Set nReplicate > 1 via "&scorr -L -K <num>" to enable replication.
 
-    pSrm must still be alive when this function is called (Gia_ManStop
-    must be deferred until after the call returns).
-
-    nReplicate = 1 : lift only (no replication).
-    nReplicate = 0 : treated as 1 (caller should use fCexLift=0 to bypass).
+    pSrm must be alive; do NOT call Gia_ManStop(pSrm) before this.
   ]
 
 ***********************************************************************/
@@ -335,89 +330,106 @@ Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
     Vec_Int_t * vOut;
     CexLiftScratch_t scratch;
     int * pCiUsed;
-    int iStart, nObj, nCi, nReplMax;
+    int nObj, nCi, iStart, K_actual;
     int nRecs, nLitsOrigTotal, nLitsLiftedTotal, nDroppedTotal;
 
     if ( nReplicate < 1 ) nReplicate = 1;
-    nReplMax = nReplicate;
+
+    /* ── Pre-scan: count records for adaptive K computation ── */
+    nRecs = 0;
+    {
+        int _p = 0, _n;
+        while ( _p < Vec_IntSize(vCexStore) )
+        {
+            _p++;                              /* skip iOut */
+            _n = Vec_IntEntry( vCexStore, _p++ );
+            if ( _n > 0 ) _p += _n;
+            nRecs++;
+        }
+    }
+
+    /* ── Adaptive K ────────────────────────────────────────────────
+       Goal: fully utilise the ~64-slot simulation batch width.
+         nRecs= 1 → K_actual = min(K_max, 64)    fill all 64 slots
+         nRecs= 8 → K_actual = min(K_max,  8)    8 cubes × 8 copies = 64
+         nRecs=64 → K_actual = 1                 already fills batch
+         nRecs>64 → K_actual = 1                 Cec_ManLoadCounterExamples
+                                                  already auto-batches
+       K_max = nReplicate (set by -K, default 1 = lift-only).             */
+    if ( nReplicate <= 1 )
+    {
+        K_actual = 1;
+    }
+    else
+    {
+        K_actual = 64 / Abc_MaxInt( nRecs, 1 );
+        K_actual = Abc_MaxInt( K_actual, 1 );
+        K_actual = Abc_MinInt( K_actual, nReplicate );
+    }
 
     nObj = Gia_ManObjNum( pSrm );
     nCi  = Gia_ManCiNum( pSrm );
+    vOut = Vec_IntAlloc( K_actual * Vec_IntSize(vCexStore) );
 
-    /* Output buffer: worst case is nReplMax * original size */
-    vOut = Vec_IntAlloc( nReplMax * Vec_IntSize(vCexStore) );
-
-    /* Scratch memory for ternary sim (resized lazily per cube) */
     memset( &scratch, 0, sizeof(scratch) );
-    CexLiftScratch_Resize( &scratch, nObj, 64 );
+    CexLiftScratch_Resize( &scratch, nObj, 64 );   /* initial capacity */
+    pCiUsed = ABC_CALLOC( int, nCi );              /* zero-initialised */
 
-    /* Per-CI usage map for replica generation */
-    pCiUsed = ABC_CALLOC( int, nCi );
-
-    nRecs = 0;  nLitsOrigTotal = 0;  nLitsLiftedTotal = 0;  nDroppedTotal = 0;
-
+    nLitsOrigTotal = nLitsLiftedTotal = nDroppedTotal = 0;
     iStart = 0;
+
     while ( iStart < Vec_IntSize(vCexStore) )
     {
         int iOut, nLits, nDropped, nLifted, i;
         int * pLits;
         Vec_Int_t * vLifted;
 
-        /* Parse one record: [iOut, nLits, lit_0 .. lit_{nLits-1}] */
+        /* Parse record: [iOut, nLits, lit_0 .. lit_{nLits-1}] */
         iOut  = Vec_IntEntry( vCexStore, iStart++ );
         nLits = Vec_IntEntry( vCexStore, iStart++ );
 
-        if ( nLits <= 0 )
-        {
-            /* Empty cube — skip; don't replicate (no information content) */
-            continue;
-        }
+        if ( nLits <= 0 ) continue;       /* empty cube: skip */
 
         pLits  = Vec_IntArray(vCexStore) + iStart;
         iStart += nLits;
 
-        nRecs++;
         nLitsOrigTotal += nLits;
 
-        /* Resize scratch if this cube is larger than any seen so far */
+        /* Grow scratch if this cube has more literals than any previous */
         CexLiftScratch_Resize( &scratch, nObj, nLits );
 
-        /* ---- Ternary lifting ---- */
+        /* ── Bit-parallel ternary lifting ── */
         vLifted = LiftOneCube( pSrm, pLits, nLits, iOut, &scratch, &nDropped );
-        nLifted = Vec_IntSize( vLifted );
+        nLifted          = Vec_IntSize( vLifted );
         nLitsLiftedTotal += nLifted;
         nDroppedTotal    += nDropped;
 
-        if ( nLifted == 0 )
+        if ( nLifted == 0 ) { Vec_IntFree( vLifted ); continue; }
+
+        /* ── CI-usage map for replica random-pin selection ── */
+        if ( K_actual > 1 )
         {
-            /* Fully-free cube after lifting — useless for refinement; skip */
-            Vec_IntFree( vLifted );
-            continue;
+            memset( pCiUsed, 0, nCi * sizeof(int) );
+            for ( i = 0; i < nLifted; i++ )
+                pCiUsed[ Abc_Lit2Var( Vec_IntEntry(vLifted, i) ) ] = 1;
         }
 
-        /* ---- Build CI-usage map for this cube (for replica generation) ---- */
-        memset( pCiUsed, 0, nCi * sizeof(int) );
-        for ( i = 0; i < nLifted; i++ )
-            pCiUsed[ Abc_Lit2Var( Vec_IntEntry(vLifted, i) ) ] = 1;
-
-        /* ---- Emit lifted cube + replicas ---- */
+        /* ── Emit lifted cube + replicas ── */
         EmitWithReplicas( vOut, iOut,
                           Vec_IntArray(vLifted), nLifted,
-                          nReplMax, nCi, pCiUsed );
-
+                          K_actual, nCi, pCiUsed );
         Vec_IntFree( vLifted );
     }
 
-    /* Verbose summary */
-    if ( fVerbose && nRecs > 0 )
+    if ( fVerbose && nLitsOrigTotal > 0 )
     {
-        double dropPct = nLitsOrigTotal > 0
-            ? 100.0 * nDroppedTotal / nLitsOrigTotal : 0.0;
+        double dropPct = 100.0 * nDroppedTotal / nLitsOrigTotal;
         Abc_Print( 1,
-            "[CEX-LIFT] recs=%-4d  lits: %d -> %d  (drop=%.1f%%)  "
-            "repl=%-2d  outRecs=%d\n",
-            nRecs, nLitsOrigTotal, nLitsLiftedTotal, dropPct,
-            nReplMax, Vec_IntSize(vOut) );
+            "[CEX-LIFT] nRecs=%-4d K=%d  lits: %d -> %d  drop=%.1f%%"
+            "  outEntries=%d\n",
+            nRecs, K_actual,
+            nLitsOrigTotal, nLitsLiftedTotal, dropPct,
+            Vec_IntSize(vOut) );
     }
 
     CexLiftScratch_Free( &scratch );
