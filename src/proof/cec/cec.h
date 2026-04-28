@@ -170,6 +170,9 @@ struct Cec_ParCor_t_
     int              fVerboseFlops; // verbose stats
     int              fVeryVerbose;  // verbose stats
     int              fVerbose;      // verbose stats
+    // CEX lifting / replication (cecCexLift.c)
+    int              fCexLift;      // enable ternary CEX lifting (off by default)
+    int              nCexReplicate; // cube replication count; 1 = lift only, 0 = bypass
     // callback
     void *           pData;
     void *           pFunc;

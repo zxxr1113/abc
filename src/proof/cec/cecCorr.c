@@ -1042,7 +1042,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
-        /* CEX-STAT: print cube size distribution before pSrm is freed */
+        /* CEX-STAT: print cube size distribution; pSrm still alive here */
         if ( Vec_IntSize(vCexStore) > 0 )
         {
             int _iPos = 0, _nRecs = 0, _nLitsTotal = 0, _n;
@@ -1057,6 +1057,16 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 r, Gia_ManCiNum(pSrm), Gia_ManAndNum(pSrm), Gia_ManCoNum(pSrm),
                 _nRecs, _nRecs > 0 ? (double)_nLitsTotal / _nRecs : 0.0 );
         }
+        /* CEX Lifting: ternary lift + optional replication.
+           Must happen before Gia_ManStop(pSrm) because the lifter needs
+           the SRM AIG for 3-valued propagation. */
+        if ( pPars->fCexLift && Vec_IntSize(vCexStore) > 0 )
+        {
+            Vec_Int_t * vLifted = Cec_ManCexLiftAndReplicate(
+                pSrm, vCexStore, pPars->nCexReplicate, pPars->fVerbose );
+            Vec_IntFree( vCexStore );
+            vCexStore = vLifted;
+        }
         Gia_ManStop( pSrm );
         clkSat += Abc_Clock() - clk2;
         if ( Vec_IntSize(vCexStore) == 0 )
@@ -1066,7 +1076,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             Vec_IntFree( vOutputs );
             break;
         }
-//        Cec_ManLSCorrAnalyzeDependence( pAig, vOutputs, vStatus );        
+//        Cec_ManLSCorrAnalyzeDependence( pAig, vOutputs, vStatus );
 
         // refine classes with these counter-examples
         clk2 = Abc_Clock();

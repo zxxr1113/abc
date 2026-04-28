@@ -200,7 +200,9 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->fUseSmartCnf   =       0;  // use smart CNF computation
     p->fVeryVerbose   =       0;  // verbose stats
     p->fVerbose       =       0;  // verbose stats
-}  
+    p->fCexLift       =       0;  // ternary CEX lifting off by default
+    p->nCexReplicate  =       8;  // replication count when lifting is on
+}
 
 /**Function*************************************************************
 

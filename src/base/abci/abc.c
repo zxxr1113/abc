@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZpkrecqowvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKpkrecqowLvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41236,7 +41236,21 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             globalUtilOptind++;
             if ( nFlopIncFreq < 0 )
                 goto usage;
-            break;            
+            break;
+        case 'K':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-K\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            pPars->nCexReplicate = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nCexReplicate < 1 )
+                goto usage;
+            break;
+        case 'L':
+            pPars->fCexLift ^= 1;
+            break;
         case 'p':
             fPartition ^= 1;
             break;
@@ -41328,7 +41342,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqowvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-FCGXPSZK num] [-pkrecqowLvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
@@ -41337,6 +41351,7 @@ usage:
     Abc_Print( -2, "\t-P num : the number of concurrent processes [default = %d]\n", pPars->nProcs );
     Abc_Print( -2, "\t-S num : the number of flops in one partition [default = %d]\n", pPars->nPartSize );
     Abc_Print( -2, "\t-Z num : the average flop include frequency [default = %d]\n", nFlopIncFreq );
+    Abc_Print( -2, "\t-K num : cube replication count when -L is on (1 = lift only) [default = %d]\n", pPars->nCexReplicate );
     Abc_Print( -2, "\t-p     : toggle using partitioning for the input AIG [default = %s]\n", fPartition? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle using constant correspondence [default = %s]\n", pPars->fConstCorr? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using implication rings during refinement [default = %s]\n", pPars->fUseRings? "yes": "no" );
@@ -41345,6 +41360,7 @@ usage:
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle printing verbose info about equivalent flops [default = %s]\n", pPars->fVerboseFlops? "yes": "no" );
+    Abc_Print( -2, "\t-L     : toggle ternary CEX lifting + cube replication [default = %s]\n", pPars->fCexLift? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");
     return 1;

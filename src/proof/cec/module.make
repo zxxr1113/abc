@@ -1,4 +1,5 @@
-SRC +=    src/proof/cec/cecCec.c \
+SRC +=    src/proof/cec/cecCexLift.c \
+    src/proof/cec/cecCec.c \
     src/proof/cec/cecChoice.c \
     src/proof/cec/cecClass.c \
     src/proof/cec/cecCore.c \

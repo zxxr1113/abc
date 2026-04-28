@@ -220,6 +220,8 @@ extern void                 CecG_ManSatSolve( Cec_ManPat_t * pPat, Gia_Man_t * p
 /*=== ceFraeep.c ============================================================*/
 extern Gia_Man_t *          Cec_ManFraSpecReduction( Cec_ManFra_t * p );
 extern int                  Cec_ManFraClassesUpdate( Cec_ManFra_t * p, Cec_ManSim_t * pSim, Cec_ManPat_t * pPat, Gia_Man_t * pNew );
+/*=== cecCexLift.c ============================================================*/
+extern Vec_Int_t *          Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore, int nReplicate, int fVerbose );
 
 
 
