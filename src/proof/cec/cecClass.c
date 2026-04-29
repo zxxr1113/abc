@@ -717,12 +717,8 @@ int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t *
             if ( vInfoCos )
             {
                 pRes = (unsigned *)Vec_PtrEntry( vInfoCos, iCoId++ );
-                if ( Gia_ObjFaninC0(pObj) )
-                    for ( w = 1; w <= p->nWords; w++ )
-                        pRes[w-1] = ~pRes0[w];
-                else 
-                    for ( w = 1; w <= p->nWords; w++ )
-                        pRes[w-1] = pRes0[w];
+                /* pRes0 is 1-indexed (slot 0 = refcount); pRes (output) is 0-indexed */
+                Sim_AccelCoKernel( p->pAccel, pRes, pRes0 + 1, Gia_ObjFaninC0(pObj), p->nWords );
             }
             continue;
         }
@@ -733,23 +729,13 @@ int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t *
 
 //        Abc_Print( 1, "%d,%d  ", Gia_ObjValue( Gia_ObjFanin0(pObj) ), Gia_ObjValue( Gia_ObjFanin1(pObj) ) );
 
-        if ( Gia_ObjFaninC0(pObj) )
+        /* pRes[0] is the refcount slot; simulation data starts at pRes[1].
+           Pass pRes+1 so the kernel sees a 0-indexed array of nWords elements. */
         {
-            if ( Gia_ObjFaninC1(pObj) )
-                for ( w = 1; w <= p->nWords; w++ )
-                    pRes[w] = ~(pRes0[w] | pRes1[w]);
-            else
-                for ( w = 1; w <= p->nWords; w++ )
-                    pRes[w] = ~pRes0[w] & pRes1[w];
-        }
-        else
-        {
-            if ( Gia_ObjFaninC1(pObj) )
-                for ( w = 1; w <= p->nWords; w++ )
-                    pRes[w] = pRes0[w] & ~pRes1[w];
-            else
-                for ( w = 1; w <= p->nWords; w++ )
-                    pRes[w] = pRes0[w] & pRes1[w];
+            int compl0 = Gia_ObjFaninC0(pObj), compl1 = Gia_ObjFaninC1(pObj);
+            unsigned mm0 = compl0 ? ~0u : 0u, mm1 = compl1 ? ~0u : 0u;
+            for ( w = 1; w <= p->nWords; w++ )
+                pRes[w] = (pRes0[w] ^ mm0) & (pRes1[w] ^ mm1);
         }
 
 references:

@@ -1,3 +1,5 @@
+include src/proof/cec/sim_accel/module.make
+
 SRC +=    src/proof/cec/cecCexLift.c \
     src/proof/cec/cecCec.c \
     src/proof/cec/cecChoice.c \

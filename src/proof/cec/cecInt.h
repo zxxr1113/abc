@@ -31,6 +31,7 @@
 #include "misc/bar/bar.h"
 #include "aig/gia/gia.h"
 #include "cec.h"
+#include "sim_accel/sim_accel.h"
 
 ////////////////////////////////////////////////////////////////////////
 ///                         PARAMETERS                               ///
@@ -136,6 +137,8 @@ struct Cec_ManSim_t_
     Abc_Cex_t *      pBestState;     // the state that led to most of the refinements
     // scoring simulation patterns
     int *            pScores;        // counters of refinement for each pattern
+    // simulation acceleration backend
+    Sim_AccelCtx_t * pAccel;         // opaque accel context (owned)
     // temporaries
     Vec_Int_t *      vClassOld;      // old class numbers
     Vec_Int_t *      vClassNew;      // new class numbers

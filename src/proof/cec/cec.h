@@ -73,6 +73,7 @@ struct Cec_ParSim_t_
     int              fConstCorr;    // consider only constants
     int              fVeryVerbose;  // verbose stats
     int              fVerbose;      // verbose stats
+    int              nSimBackend;   // sim_accel backend: -1=auto, 0=s32, 1=s64, 2=avx2
 };
 
 // semiformal parameters
@@ -173,6 +174,9 @@ struct Cec_ParCor_t_
     // CEX lifting / replication (cecCexLift.c)
     int              fCexLift;      // enable ternary CEX lifting (off by default)
     int              nCexReplicate; // cube replication count; 1 = lift only, 0 = bypass
+    // simulation backend selection (sim_accel)
+    int              nSimBackend;   // -1=auto, 0=scalar32, 1=scalar64, 2=avx2
+    int              fAllBackends;  // run all 3 backends and print comparison (-A flag)
     // callback
     void *           pData;
     void *           pFunc;

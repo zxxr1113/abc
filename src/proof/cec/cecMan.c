@@ -216,6 +216,7 @@ Cec_ManSim_t * Cec_ManSimStart( Gia_Man_t * pAig, Cec_ParSim_t *  pPars )
         Vec_PtrCleanSimInfo( p->vCoSimInfo, 0, pPars->nWords );
     }
     p->iOut = -1;
+    p->pAccel = Sim_AccelCtxAlloc( pPars->nWords, (Sim_BackendId_t)pPars->nSimBackend );
     return p;
 }
 
@@ -245,6 +246,7 @@ void Cec_ManSimStop( Cec_ManSim_t * p )
     ABC_FREE( p->pCexes );
     ABC_FREE( p->pMems );
     ABC_FREE( p->pSimInfo );
+    Sim_AccelCtxFree( p->pAccel );
     ABC_FREE( p );
 }
 

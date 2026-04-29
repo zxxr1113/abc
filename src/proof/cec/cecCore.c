@@ -83,7 +83,8 @@ void Cec_ManSimSetDefaultParams( Cec_ParSim_t * p )
     p->fSeqSimulate   =       0;  // performs sequential simulation
     p->fVeryVerbose   =       0;  // verbose stats
     p->fVerbose       =       0;  // verbose stats
-} 
+    p->nSimBackend    =      -1;  // auto-select simulation backend
+}
 
 /**Function************  *************************************************
 
@@ -202,6 +203,8 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->fVerbose       =       0;  // verbose stats
     p->fCexLift       =       0;  // ternary CEX lifting off by default
     p->nCexReplicate  =       1;  // K_max=1 = lift-only; set >1 via -K to enable replication
+    p->nSimBackend    =      -1;  // auto-select simulation backend
+    p->fAllBackends   =       0;  // benchmark all backends
 }
 
 /**Function*************************************************************

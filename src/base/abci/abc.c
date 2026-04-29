@@ -41148,6 +41148,8 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     extern Gia_Man_t * Cec_ManScorrCorrespondence( Gia_Man_t * p, Cec_ParCor_t * pPars );
     extern Gia_Man_t * Gia_ManScorrDivideTest( Gia_Man_t * p, Cec_ParCor_t * pPars );
     extern Gia_Man_t * Gia_SignalCorrespondencePart( Gia_Man_t * p, Cec_ParCor_t * pPars );
+    extern void        Sim_AccelGlobalInit( void );
+    extern const char* Sim_AccelBackendName( void );
     Cec_ParCor_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
     int fPartition = 0;
@@ -41156,7 +41158,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKpkrecqowLvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKBpkrecqowLAvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41251,6 +41253,20 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'L':
             pPars->fCexLift ^= 1;
             break;
+        case 'B':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-B\" should be followed by an integer (0=scalar32, 1=scalar64, 2=avx2).\n" );
+                goto usage;
+            }
+            pPars->nSimBackend = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nSimBackend < 0 || pPars->nSimBackend > 2 )
+                goto usage;
+            break;
+        case 'A':
+            pPars->fAllBackends ^= 1;
+            break;
         case 'p':
             fPartition ^= 1;
             break;
@@ -41330,6 +41346,46 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             return 0;
         }
     }
+    /* -A: run all three backends sequentially on copies, print timing table */
+    if ( pPars->fAllBackends )
+    {
+        extern Gia_Man_t * Gia_ManDup( Gia_Man_t * p );
+        int bids[3] = {0, 1, 2};
+        const char *bnames[3] = {"scalar32", "scalar64", "avx2  "};
+        abctime tWall[3];
+        Gia_Man_t *pResults[3];
+        int b, nBackends = 3;
+        Sim_AccelGlobalInit();
+        Abc_Print( 1, "\n=== &scorr -A: all-backends benchmark ===\n" );
+        for ( b = 0; b < nBackends; b++ )
+        {
+            Gia_Man_t *pCopy = Gia_ManDup( pAbc->pGia );
+            abctime tStart = Abc_Clock();
+            pPars->nSimBackend  = bids[b];
+            pPars->fAllBackends = 0;
+            if ( fUseOld )
+                pResults[b] = Cec_ManScorrCorrespondence( pCopy, pPars );
+            else if ( fPartition )
+                pResults[b] = Gia_ManScorrDivideTest( pCopy, pPars );
+            else
+                pResults[b] = Cec_ManLSCorrespondence( pCopy, pPars );
+            tWall[b] = Abc_Clock() - tStart;
+            Gia_ManStop( pCopy );
+            Abc_Print( 1, "  %-10s : %7.2f s\n", bnames[b], (double)tWall[b]/(double)CLOCKS_PER_SEC );
+        }
+        Abc_Print( 1, "\n  Speedup scalar64 vs scalar32 : %.2f×\n",
+                   tWall[0] > 0 ? (double)tWall[0]/(double)tWall[1] : 0.0 );
+        Abc_Print( 1, "  Speedup avx2     vs scalar32 : %.2f×\n",
+                   tWall[0] > 0 ? (double)tWall[0]/(double)tWall[2] : 0.0 );
+        Abc_Print( 1, "  Speedup avx2     vs scalar64 : %.2f×\n",
+                   tWall[1] > 0 ? (double)tWall[1]/(double)tWall[2] : 0.0 );
+        Abc_Print( 1, "=========================================\n\n" );
+        /* Use the avx2 result as the final network */
+        Abc_FrameUpdateGia( pAbc, pResults[nBackends-1] );
+        for ( b = 0; b < nBackends-1; b++ )
+            Gia_ManStop( pResults[b] );
+        return 0;
+    }
     if ( pPars->nPartSize > 0 )
         pTemp = Gia_SignalCorrespondencePart( pAbc->pGia, pPars );
     else if ( fUseOld )
@@ -41342,7 +41398,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZK num] [-pkrecqowLvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-FCGXPSZK num] [-B num] [-pkrecqowLAvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
@@ -41361,6 +41417,8 @@ usage:
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle printing verbose info about equivalent flops [default = %s]\n", pPars->fVerboseFlops? "yes": "no" );
     Abc_Print( -2, "\t-L     : toggle ternary CEX lifting + cube replication [default = %s]\n", pPars->fCexLift? "yes": "no" );
+    Abc_Print( -2, "\t-B num : sim backend: 0=scalar32, 1=scalar64, 2=avx2 [default = auto]\n" );
+    Abc_Print( -2, "\t-A     : benchmark all three sim backends and print timing table\n" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");
     return 1;

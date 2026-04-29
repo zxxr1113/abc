@@ -163,6 +163,9 @@ static Word64 TernaryBatch64( Gia_Man_t * p,
                In trial k this literal is X (dropped); in all other trials active.
                pCare bit k = 0 (X); all other bits = 1.
                pVal  follows the same mask (val is don't-care where care=0). */
+            // L_0  x(test) original original
+            // L_1  original x(test) original
+            // L_2  original original x(test)
             k = i - batch_start;
             pCare[id] = ~( (Word64)1 << k );
             pVal[id]  = v ? ~( (Word64)1 << k ) : (Word64)0;
