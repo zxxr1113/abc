@@ -979,7 +979,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
            explores the reachable sequential state space to produce
            high-quality, diverse simulation patterns for class refinement,
            mirroring RIC3's scorr approach. */
-        Cec_ManSimClassesSatGuided( pSim );
+        //Cec_ManSimClassesSatGuided( pSim );
     }
     // prepare SAT solving
     Cec_ManSatSetDefaultParams( pParsSat );
@@ -1120,13 +1120,24 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             nLitsAdapt = nCur;
             if ( nSlowRounds >= 2 && nFramesCur < nFramesMax )
             {
+                int nFramesSave;
                 nFramesCur++;
                 nSlowRounds  = 0;
                 nLitsAdapt   = -1;
                 if ( pPars->fVerbose )
                     Abc_Print( 1, "Scorr: induction depth increased to %d frames.\n", nFramesCur );
+                /* Re-establish the k-induction base case at the new depth.
+                   Equivalences merged under k>1 induction need BMC coverage
+                   over frames 0..k-1 from the initial state; without this
+                   re-run, classes proven at the old k may lack base-case
+                   support at the new k and unsound merges slip through. */
+                nFramesSave    = pPars->nFrames;
+                pPars->nFrames = nFramesCur;
+                Cec_ManLSCorrespondenceBmc( pAig, pPars, 0 );
+                pPars->nFrames = nFramesSave;
             }
         }
+
         if ( pPars->nLimitMax )
         {
             int nCur = Cec_ManCountLits(pAig);
