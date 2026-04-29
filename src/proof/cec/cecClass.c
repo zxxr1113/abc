@@ -729,14 +729,8 @@ int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t *
 
 //        Abc_Print( 1, "%d,%d  ", Gia_ObjValue( Gia_ObjFanin0(pObj) ), Gia_ObjValue( Gia_ObjFanin1(pObj) ) );
 
-        /* pRes[0] is the refcount slot; simulation data starts at pRes[1].
-           Pass pRes+1 so the kernel sees a 0-indexed array of nWords elements. */
-        {
-            int compl0 = Gia_ObjFaninC0(pObj), compl1 = Gia_ObjFaninC1(pObj);
-            unsigned mm0 = compl0 ? ~0u : 0u, mm1 = compl1 ? ~0u : 0u;
-            for ( w = 1; w <= p->nWords; w++ )
-                pRes[w] = (pRes0[w] ^ mm0) & (pRes1[w] ^ mm1);
-        }
+        Sim_AccelAndKernel( p->pAccel, pRes + 1, pRes0 + 1, Gia_ObjFaninC0(pObj),
+                                               pRes1 + 1, Gia_ObjFaninC1(pObj), p->nWords );
 
 references:
         // if this node is candidate constant, collect it
