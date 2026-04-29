@@ -1109,34 +1109,34 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
            to nFramesMax and reset the stall counter.  This gives deeper
            induction power for hard classes without paying the cost
            upfront on easy instances. */
-        {
-            int nCur = Cec_ManCountLits( pAig );
-            int nImprove = (nLitsAdapt < 0) ? nCur : (nLitsAdapt - nCur);
-            int nThresh  = (nLitsAdapt < 0) ? 1    : Abc_MaxInt( 1, nLitsAdapt / 50 );
-            if ( nImprove < nThresh )
-                nSlowRounds++;
-            else
-                nSlowRounds = 0;
-            nLitsAdapt = nCur;
-            if ( nSlowRounds >= 2 && nFramesCur < nFramesMax )
-            {
-                int nFramesSave;
-                nFramesCur++;
-                nSlowRounds  = 0;
-                nLitsAdapt   = -1;
-                if ( pPars->fVerbose )
-                    Abc_Print( 1, "Scorr: induction depth increased to %d frames.\n", nFramesCur );
-                /* Re-establish the k-induction base case at the new depth.
-                   Equivalences merged under k>1 induction need BMC coverage
-                   over frames 0..k-1 from the initial state; without this
-                   re-run, classes proven at the old k may lack base-case
-                   support at the new k and unsound merges slip through. */
-                nFramesSave    = pPars->nFrames;
-                pPars->nFrames = nFramesCur;
-                Cec_ManLSCorrespondenceBmc( pAig, pPars, 0 );
-                pPars->nFrames = nFramesSave;
-            }
-        }
+        // {
+        //     int nCur = Cec_ManCountLits( pAig );
+        //     int nImprove = (nLitsAdapt < 0) ? nCur : (nLitsAdapt - nCur);
+        //     int nThresh  = (nLitsAdapt < 0) ? 1    : Abc_MaxInt( 1, nLitsAdapt / 50 );
+        //     if ( nImprove < nThresh )
+        //         nSlowRounds++;
+        //     else
+        //         nSlowRounds = 0;
+        //     nLitsAdapt = nCur;
+        //     if ( nSlowRounds >= 2 && nFramesCur < nFramesMax )
+        //     {
+        //         int nFramesSave;
+        //         nFramesCur++;
+        //         nSlowRounds  = 0;
+        //         nLitsAdapt   = -1;
+        //         if ( pPars->fVerbose )
+        //             Abc_Print( 1, "Scorr: induction depth increased to %d frames.\n", nFramesCur );
+        //         /* Re-establish the k-induction base case at the new depth.
+        //            Equivalences merged under k>1 induction need BMC coverage
+        //            over frames 0..k-1 from the initial state; without this
+        //            re-run, classes proven at the old k may lack base-case
+        //            support at the new k and unsound merges slip through. */
+        //         nFramesSave    = pPars->nFrames;
+        //         pPars->nFrames = nFramesCur;
+        //         Cec_ManLSCorrespondenceBmc( pAig, pPars, 0 );
+        //         pPars->nFrames = nFramesSave;
+        //     }
+        // }
 
         if ( pPars->nLimitMax )
         {

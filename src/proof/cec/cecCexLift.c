@@ -225,6 +225,14 @@ static Word64 TernaryBatch64( Gia_Man_t * p,
    forward sim pass and returns a drop-bitmask.  Drops accumulate
    across batches (inter-batch greedy).
 
+   Soundness note: the intra-batch test is non-greedy.  If A and B are
+   both individually droppable but not jointly droppable, both may end up
+   marked as dropped.  In scorr this is harmless — the resulting "weak"
+   cube only fails to split classes it could have split; it never causes
+   incorrect merges (resimulation refinement is monotone: split-only).
+   We therefore skip the post-hoc validation pass that would otherwise
+   require two extra full forward sims per cube.
+
    *pnDropped ← number of literals removed.
    Returns newly-allocated Vec_Int_t (caller must Vec_IntFree).        */
 static Vec_Int_t * LiftOneCube( Gia_Man_t * pSrm, int * pLits, int nLits,
@@ -394,7 +402,17 @@ Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
         iOut  = Vec_IntEntry( vCexStore, iStart++ );
         nLits = Vec_IntEntry( vCexStore, iStart++ );
 
-        if ( nLits <= 0 ) continue;       /* empty cube: skip */
+        /* Pass through timeouts (nLits==-1) and trivial CEXes (nLits==0)
+           VERBATIM.  Dropping them shrinks vCexStore which can spuriously
+           trigger the "Vec_IntSize==0 → break" early-termination in the
+           scorr refinement loop, leaving classes under-refined and causing
+           massive over-merging on giant benchmarks.                       */
+        if ( nLits <= 0 )
+        {
+            Vec_IntPush( vOut, iOut );
+            Vec_IntPush( vOut, nLits );
+            continue;
+        }
 
         pLits  = Vec_IntArray(vCexStore) + iStart;
         iStart += nLits;
@@ -410,7 +428,16 @@ Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
         nLitsLiftedTotal += nLifted;
         nDroppedTotal    += nDropped;
 
-        if ( nLifted == 0 ) { Vec_IntFree( vLifted ); continue; }
+        /* Should not happen now that LiftOneCube validates and reverts on
+           unsoundness, but if a 0-literal cube does materialise, emit it
+           verbatim rather than swallowing the whole record.               */
+        if ( nLifted == 0 )
+        {
+            Vec_IntPush( vOut, iOut );
+            Vec_IntPush( vOut, 0 );
+            Vec_IntFree( vLifted );
+            continue;
+        }
 
         /* ── CI-usage map for replica random-pin selection ── */
         if ( K_actual > 1 )
