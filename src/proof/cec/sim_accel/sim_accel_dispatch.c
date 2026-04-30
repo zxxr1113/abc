@@ -96,42 +96,35 @@ void Sim_AccelAndKernel( Sim_AccelCtx_t * pCtx,
                          const unsigned * pRes1, int compl1,
                          int nWords32 )
 {
-    abctime t0;
-
     if ( pCtx->fShadow )
     {
         unsigned shadow[SIM_SHADOW_CAPTURE_WORDS];
         int n = nWords32;
         if ( n > SIM_SHADOW_CAPTURE_WORDS ) n = SIM_SHADOW_CAPTURE_WORDS;
+        int w;
 
         g_BackendScalar32.and_kernel( shadow, pRes0, compl0, pRes1, compl1, nWords32 );
         pCtx->ops->and_kernel( pRes, pRes0, compl0, pRes1, compl1, nWords32 );
 
+        for ( w = 0; w < n; w++ )
         {
-            int w;
-            for ( w = 0; w < n; w++ )
+            if ( pRes[w] != shadow[w] && pCtx->nShadowMismatch == 0 )
             {
-                if ( pRes[w] != shadow[w] && pCtx->nShadowMismatch == 0 )
-                {
-                    Sim_ShadowCapture_t *sc = &pCtx->shadowFirst;
-                    memcpy(sc->in0,  pRes0,  n * 4);
-                    memcpy(sc->in1,  pRes1,  n * 4);
-                    memcpy(sc->fast, pRes,   n * 4);
-                    memcpy(sc->ref,  shadow, n * 4);
-                    sc->c0 = compl0; sc->c1 = compl1; sc->nWords32 = nWords32;
-                    sc->fMismatch = 1;
-                }
-                if ( pRes[w] != shadow[w] )
-                    pCtx->nShadowMismatch++;
+                Sim_ShadowCapture_t *sc = &pCtx->shadowFirst;
+                memcpy(sc->in0,  pRes0,  n * 4);
+                memcpy(sc->in1,  pRes1,  n * 4);
+                memcpy(sc->fast, pRes,   n * 4);
+                memcpy(sc->ref,  shadow, n * 4);
+                sc->c0 = compl0; sc->c1 = compl1; sc->nWords32 = nWords32;
+                sc->fMismatch = 1;
             }
+            if ( pRes[w] != shadow[w] )
+                pCtx->nShadowMismatch++;
         }
     }
     else
     {
-        /* Hot path: one indirect call, no branching */
-        t0 = Abc_Clock();
         pCtx->ops->and_kernel( pRes, pRes0, compl0, pRes1, compl1, nWords32 );
-        pCtx->tKernel += Abc_Clock() - t0;
     }
 
     pCtx->nKernelCalls++;
@@ -143,9 +136,7 @@ void Sim_AccelCoKernel( Sim_AccelCtx_t * pCtx,
                         const unsigned * pResIn, int compl0,
                         int nWords32 )
 {
-    abctime t0 = Abc_Clock();
     pCtx->ops->co_kernel( pResOut, pResIn, compl0, nWords32 );
-    pCtx->tKernel    += Abc_Clock() - t0;
     pCtx->nGateBitsCo += (uint64_t)nWords32 * 32;
 }
 
