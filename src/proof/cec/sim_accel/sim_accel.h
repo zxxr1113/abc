@@ -71,6 +71,12 @@ void Sim_AccelCoKernel  ( Sim_AccelCtx_t * pCtx,
                           int nWords32 );
 
 /* ------------------------------------------------------------------ */
+/* Per-ctx accessors used by the round-level dispatch in cecClass.c    */
+/* ------------------------------------------------------------------ */
+Sim_BackendId_t Sim_AccelCtxGetBackendId   ( const Sim_AccelCtx_t * pCtx );
+int             Sim_AccelCtxIsShadowEnabled( const Sim_AccelCtx_t * pCtx );
+
+/* ------------------------------------------------------------------ */
 /* Shadow (correctness) verification                                    */
 /* ------------------------------------------------------------------ */
 void Sim_AccelEnableShadow       ( Sim_AccelCtx_t * pCtx, int fEnable );

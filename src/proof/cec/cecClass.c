@@ -19,6 +19,8 @@
 ***********************************************************************/
 
 #include "cecInt.h"
+#include "sim_accel/sim_accel.h"
+#include <string.h>
 
 ABC_NAMESPACE_IMPL_START
 
@@ -31,6 +33,13 @@ static inline unsigned * Cec_ObjSim( Cec_ManSim_t * p, int Id )            { ret
 static inline void       Cec_ObjSetSim( Cec_ManSim_t * p, int Id, int n )  { p->pSimInfo[Id] = n;                     }
 
 static inline float      Cec_MemUsage( Cec_ManSim_t * p )                  { return 1.0*p->nMemsMax*(p->pPars->nWords+1)/(1<<20);   }
+
+/* always_inline guard — at -O1 plain `inline` is advisory only */
+#if defined(__GNUC__)
+#  define CEC_SIM_FORCE_INLINE static inline __attribute__((always_inline))
+#else
+#  define CEC_SIM_FORCE_INLINE static inline
+#endif
 
 ////////////////////////////////////////////////////////////////////////
 ///                     FUNCTION DEFINITIONS                         ///
@@ -656,68 +665,263 @@ int Cec_ManSimAnalyzeOutputs( Cec_ManSim_t * p )
 
 /**Function*************************************************************
 
-  Synopsis    [Simulates one round.]
+  Synopsis    [Simulates one round — Plan A: round-level dispatch.]
 
-  Description [Returns the number of PO entry if failed; 0 otherwise.]
-               
+  Description [Three specialised round functions are produced by including
+               cec_sim_round.inc three times, each with a different inline
+               kernel macro. The public Cec_ManSimSimulateRound entry point
+               below picks one based on the backend selected at sim_accel
+               init time. This eliminates the per-AND-node function-pointer
+               call and the wrapper stats writes that previously made the
+               AVX2 backend slower than the original scalar32 path on
+               nWords=15 workloads.
+
+               Inline kernels mirror the original 4-branch logic exactly,
+               so scalar32 produces bit-identical results to legacy code.
+               scalar64 widens to uint64 with a uint32 tail. avx2 widens
+               to __m256i with a uint32 tail.]
+
   SideEffects []
 
   SeeAlso     []
 
 ***********************************************************************/
-int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos )
+
+/* ---------- scalar32 inline kernels (4-branch, matches legacy exactly) -- */
+CEC_SIM_FORCE_INLINE void cec_sim_and_scalar32(
+    unsigned * pd, const unsigned * p0, int c0,
+                   const unsigned * p1, int c1, int n )
+{
+    int w;
+    if ( c0 ) {
+        if ( c1 ) for ( w = 0; w < n; w++ ) pd[w] = ~(p0[w] | p1[w]);
+        else      for ( w = 0; w < n; w++ ) pd[w] = ~p0[w] & p1[w];
+    } else {
+        if ( c1 ) for ( w = 0; w < n; w++ ) pd[w] = p0[w] & ~p1[w];
+        else      for ( w = 0; w < n; w++ ) pd[w] = p0[w] & p1[w];
+    }
+}
+CEC_SIM_FORCE_INLINE void cec_sim_co_scalar32(
+    unsigned * po, const unsigned * pi, int c0, int n )
+{
+    int w;
+    if ( c0 ) for ( w = 0; w < n; w++ ) po[w] = ~pi[w];
+    else      for ( w = 0; w < n; w++ ) po[w] = pi[w];
+}
+
+/* ---------- scalar64 inline kernels (uint64 stride + uint32 tail) ------- */
+CEC_SIM_FORCE_INLINE void cec_sim_and_scalar64(
+    unsigned * pd, const unsigned * p0, int c0,
+                   const unsigned * p1, int c1, int n )
+{
+    int v, nv = n / 2;          /* uint64 vec count = n/2 uint32 pairs */
+    int wt = nv * 2;            /* tail starts here (1 word if n is odd) */
+    int w;
+    /* uint64 main loop, 4-branch specialised */
+    if ( c0 ) {
+        if ( c1 ) {
+            for ( v = 0; v < nv; v++ ) {
+                uint64_t a, b, r;
+                memcpy(&a, p0 + v*2, 8); memcpy(&b, p1 + v*2, 8);
+                r = ~(a | b);
+                memcpy(pd + v*2, &r, 8);
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = ~(p0[w] | p1[w]);
+        } else {
+            for ( v = 0; v < nv; v++ ) {
+                uint64_t a, b, r;
+                memcpy(&a, p0 + v*2, 8); memcpy(&b, p1 + v*2, 8);
+                r = ~a & b;
+                memcpy(pd + v*2, &r, 8);
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = ~p0[w] & p1[w];
+        }
+    } else {
+        if ( c1 ) {
+            for ( v = 0; v < nv; v++ ) {
+                uint64_t a, b, r;
+                memcpy(&a, p0 + v*2, 8); memcpy(&b, p1 + v*2, 8);
+                r = a & ~b;
+                memcpy(pd + v*2, &r, 8);
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = p0[w] & ~p1[w];
+        } else {
+            for ( v = 0; v < nv; v++ ) {
+                uint64_t a, b, r;
+                memcpy(&a, p0 + v*2, 8); memcpy(&b, p1 + v*2, 8);
+                r = a & b;
+                memcpy(pd + v*2, &r, 8);
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = p0[w] & p1[w];
+        }
+    }
+}
+CEC_SIM_FORCE_INLINE void cec_sim_co_scalar64(
+    unsigned * po, const unsigned * pi, int c0, int n )
+{
+    int v, nv = n / 2;
+    int wt = nv * 2;
+    int w;
+    if ( c0 ) {
+        for ( v = 0; v < nv; v++ ) {
+            uint64_t a, r;
+            memcpy(&a, pi + v*2, 8);
+            r = ~a;
+            memcpy(po + v*2, &r, 8);
+        }
+        for ( w = wt; w < n; w++ ) po[w] = ~pi[w];
+    } else {
+        for ( v = 0; v < nv; v++ ) {
+            uint64_t a;
+            memcpy(&a, pi + v*2, 8);
+            memcpy(po + v*2, &a, 8);
+        }
+        for ( w = wt; w < n; w++ ) po[w] = pi[w];
+    }
+}
+
+/* ---------- AVX2 inline kernels (4-branch, _mm256 + uint32 tail) -------- */
+#if defined(SIM_ACCEL_HAS_AVX2_BUILD)
+#pragma GCC push_options
+#pragma GCC target("avx2")
+#include <immintrin.h>
+
+CEC_SIM_FORCE_INLINE void cec_sim_and_avx2(
+    unsigned * pd, const unsigned * p0, int c0,
+                   const unsigned * p1, int c1, int n )
+{
+    int v, nv = (n * 4) / 32;       /* full ymm count: 8 uint32 per vec */
+    int wt = nv * 8;                /* tail start in uint32 words */
+    int w;
+    if ( c0 ) {
+        if ( c1 ) {
+            for ( v = 0; v < nv; v++ ) {
+                __m256i A = _mm256_loadu_si256((const __m256i *)(p0 + v*8));
+                __m256i B = _mm256_loadu_si256((const __m256i *)(p1 + v*8));
+                _mm256_storeu_si256((__m256i *)(pd + v*8),
+                    _mm256_xor_si256(_mm256_or_si256(A, B), _mm256_set1_epi64x(-1LL)));
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = ~(p0[w] | p1[w]);
+        } else {
+            for ( v = 0; v < nv; v++ ) {
+                __m256i A = _mm256_loadu_si256((const __m256i *)(p0 + v*8));
+                __m256i B = _mm256_loadu_si256((const __m256i *)(p1 + v*8));
+                _mm256_storeu_si256((__m256i *)(pd + v*8),
+                    _mm256_andnot_si256(A, B));   /* (~A) & B */
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = ~p0[w] & p1[w];
+        }
+    } else {
+        if ( c1 ) {
+            for ( v = 0; v < nv; v++ ) {
+                __m256i A = _mm256_loadu_si256((const __m256i *)(p0 + v*8));
+                __m256i B = _mm256_loadu_si256((const __m256i *)(p1 + v*8));
+                _mm256_storeu_si256((__m256i *)(pd + v*8),
+                    _mm256_andnot_si256(B, A));   /* (~B) & A */
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = p0[w] & ~p1[w];
+        } else {
+            for ( v = 0; v < nv; v++ ) {
+                __m256i A = _mm256_loadu_si256((const __m256i *)(p0 + v*8));
+                __m256i B = _mm256_loadu_si256((const __m256i *)(p1 + v*8));
+                _mm256_storeu_si256((__m256i *)(pd + v*8),
+                    _mm256_and_si256(A, B));
+            }
+            for ( w = wt; w < n; w++ ) pd[w] = p0[w] & p1[w];
+        }
+    }
+}
+CEC_SIM_FORCE_INLINE void cec_sim_co_avx2(
+    unsigned * po, const unsigned * pi, int c0, int n )
+{
+    int v, nv = (n * 4) / 32;
+    int wt = nv * 8;
+    int w;
+    if ( c0 ) {
+        __m256i ones = _mm256_set1_epi64x(-1LL);
+        for ( v = 0; v < nv; v++ ) {
+            __m256i A = _mm256_loadu_si256((const __m256i *)(pi + v*8));
+            _mm256_storeu_si256((__m256i *)(po + v*8), _mm256_xor_si256(A, ones));
+        }
+        for ( w = wt; w < n; w++ ) po[w] = ~pi[w];
+    } else {
+        for ( v = 0; v < nv; v++ ) {
+            __m256i A = _mm256_loadu_si256((const __m256i *)(pi + v*8));
+            _mm256_storeu_si256((__m256i *)(po + v*8), A);
+        }
+        for ( w = wt; w < n; w++ ) po[w] = pi[w];
+    }
+}
+
+/* AVX2 round body — generated from the template under the avx2 #pragma scope.
+   Calls to non-AVX2 helpers (Cec_ManSimSimRef etc.) cross the target boundary
+   as ordinary calls; the AVX2 attribute only enables intrinsics within this
+   function and the inline kernels above. */
+#define ROUND_SUFFIX avx2
+#define ROUND_AND(pd, p0, c0, p1, c1, n)  cec_sim_and_avx2((pd), (p0), (c0), (p1), (c1), (n))
+#define ROUND_CO(po, pi, c0, n)           cec_sim_co_avx2((po), (pi), (c0), (n))
+#include "sim_accel/cec_sim_round.inc"
+#undef ROUND_SUFFIX
+#undef ROUND_AND
+#undef ROUND_CO
+
+#pragma GCC pop_options
+#endif /* SIM_ACCEL_HAS_AVX2_BUILD */
+
+/* scalar32 round body */
+#define ROUND_SUFFIX scalar32
+#define ROUND_AND(pd, p0, c0, p1, c1, n)  cec_sim_and_scalar32((pd), (p0), (c0), (p1), (c1), (n))
+#define ROUND_CO(po, pi, c0, n)           cec_sim_co_scalar32((po), (pi), (c0), (n))
+#include "sim_accel/cec_sim_round.inc"
+#undef ROUND_SUFFIX
+#undef ROUND_AND
+#undef ROUND_CO
+
+/* scalar64 round body */
+#define ROUND_SUFFIX scalar64
+#define ROUND_AND(pd, p0, c0, p1, c1, n)  cec_sim_and_scalar64((pd), (p0), (c0), (p1), (c1), (n))
+#define ROUND_CO(po, pi, c0, n)           cec_sim_co_scalar64((po), (pi), (c0), (n))
+#include "sim_accel/cec_sim_round.inc"
+#undef ROUND_SUFFIX
+#undef ROUND_AND
+#undef ROUND_CO
+
+/* Shadow-mode round: keeps the legacy op-level Sim_AccelAndKernel path so
+   the per-call shadow check still works when fShadow is enabled. Slow but
+   only used when explicitly requested. */
+static int Cec_ManSimSimulateRound_shadow( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos )
 {
     Gia_Obj_t * pObj;
     unsigned * pRes0, * pRes1, * pRes;
     int i, k, w, Ent, iCiId = 0, iCoId = 0;
-    // prepare internal storage
     if ( p->nWordsOld != p->nWords )
         Cec_ManSimMemRelink( p );
     p->nMemsMax = 0;
-    // allocate score counters
     ABC_FREE( p->pScores );
     if ( p->pBestState )
         p->pScores = ABC_CALLOC( int, 32 * p->nWords );
-    // simulate nodes
     Vec_IntClear( p->vRefinedC );
-    if ( Gia_ObjValue(Gia_ManConst0(p->pAig)) )
-    {
+    if ( Gia_ObjValue(Gia_ManConst0(p->pAig)) ) {
         pRes = Cec_ManSimSimRef( p, 0 );
-        for ( w = 1; w <= p->nWords; w++ )
-            pRes[w] = 0;
+        for ( w = 1; w <= p->nWords; w++ ) pRes[w] = 0;
     }
-    Gia_ManForEachObj1( p->pAig, pObj, i )
-    {
-        if ( Gia_ObjIsCi(pObj) ) 
-        {
-            if ( Gia_ObjValue(pObj) == 0 )
-            {
-                iCiId++;
-                continue;
-            }
+    Gia_ManForEachObj1( p->pAig, pObj, i ) {
+        if ( Gia_ObjIsCi(pObj) ) {
+            if ( Gia_ObjValue(pObj) == 0 ) { iCiId++; continue; }
             pRes = Cec_ManSimSimRef( p, i );
-            if ( vInfoCis ) 
-            {
+            if ( vInfoCis ) {
                 pRes0 = (unsigned *)Vec_PtrEntry( vInfoCis, iCiId++ );
-                for ( w = 1; w <= p->nWords; w++ )
-                    pRes[w] = pRes0[w-1];
+                for ( w = 1; w <= p->nWords; w++ ) pRes[w] = pRes0[w-1];
+            } else {
+                for ( w = 1; w <= p->nWords; w++ ) pRes[w] = Gia_ManRandom( 0 );
             }
-            else
-            {
-                for ( w = 1; w <= p->nWords; w++ )
-                    pRes[w] = Gia_ManRandom( 0 );
-            }
-            // make sure the first pattern is always zero
             pRes[1] ^= (pRes[1] & 1);
             goto references;
         }
-        if ( Gia_ObjIsCo(pObj) ) // co always has non-zero 1st fanin and zero 2nd fanin
-        {
+        if ( Gia_ObjIsCo(pObj) ) {
             pRes0 = Cec_ManSimSimDeref( p, Gia_ObjFaninId0(pObj,i) );
-            if ( vInfoCos )
-            {
+            if ( vInfoCos ) {
                 pRes = (unsigned *)Vec_PtrEntry( vInfoCos, iCoId++ );
-                /* pRes0 is 1-indexed (slot 0 = refcount); pRes (output) is 0-indexed */
                 Sim_AccelCoKernel( p->pAccel, pRes, pRes0 + 1, Gia_ObjFaninC0(pObj), p->nWords );
             }
             continue;
@@ -726,47 +930,32 @@ int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t *
         pRes  = Cec_ManSimSimRef( p, i );
         pRes0 = Cec_ManSimSimDeref( p, Gia_ObjFaninId0(pObj,i) );
         pRes1 = Cec_ManSimSimDeref( p, Gia_ObjFaninId1(pObj,i) );
-
-//        Abc_Print( 1, "%d,%d  ", Gia_ObjValue( Gia_ObjFanin0(pObj) ), Gia_ObjValue( Gia_ObjFanin1(pObj) ) );
-
         Sim_AccelAndKernel( p->pAccel, pRes + 1, pRes0 + 1, Gia_ObjFaninC0(pObj),
-                                               pRes1 + 1, Gia_ObjFaninC1(pObj), p->nWords );
-
+                                       pRes1 + 1, Gia_ObjFaninC1(pObj), p->nWords );
 references:
-        // if this node is candidate constant, collect it
-        if ( Gia_ObjIsConst(p->pAig, i) && !Cec_ManSimCompareConst(pRes + 1, p->nWords) )
-        {
+        if ( Gia_ObjIsConst(p->pAig, i) && !Cec_ManSimCompareConst(pRes + 1, p->nWords) ) {
             pRes[0]++;
             Vec_IntPush( p->vRefinedC, i );
             if ( p->pBestState )
                 Cec_ManSimCompareConstScore( pRes + 1, p->nWords, p->pScores );
         }
-        // if the node belongs to a class, save it
-        if ( Gia_ObjIsClass(p->pAig, i) )
-            pRes[0]++;
-        // if this is the last node of the class, process it
-        if ( Gia_ObjIsTail(p->pAig, i) )
-        {
+        if ( Gia_ObjIsClass(p->pAig, i) ) pRes[0]++;
+        if ( Gia_ObjIsTail(p->pAig, i) ) {
             Vec_IntClear( p->vClassTemp );
             Gia_ClassForEachObj( p->pAig, Gia_ObjRepr(p->pAig, i), Ent )
                 Vec_IntPush( p->vClassTemp, Ent );
-            // refine this class
             Cec_ManSimClassRefineOne( p, Gia_ObjRepr(p->pAig, i) );
             Vec_IntForEachEntry( p->vClassTemp, Ent, k )
                 Cec_ManSimSimDeref( p, Ent );
         }
     }
-
-    if ( p->pPars->fConstCorr )
-    {
-        Vec_IntForEachEntry( p->vRefinedC, i, k )
-        {
+    if ( p->pPars->fConstCorr ) {
+        Vec_IntForEachEntry( p->vRefinedC, i, k ) {
             Gia_ObjSetRepr( p->pAig, i, GIA_VOID );
             Cec_ManSimSimDeref( p, i );
         }
         Vec_IntClear( p->vRefinedC );
     }
-
     if ( Vec_IntSize(p->vRefinedC) > 0 )
         Cec_ManSimProcessRefined( p, p->vRefinedC );
     assert( vInfoCis == NULL || iCiId == Gia_ManCiNum(p->pAig) );
@@ -778,15 +967,23 @@ references:
         Gia_ManEquivPrintClasses( p->pAig, 0, Cec_MemUsage(p) );
     if ( p->pBestState )
         Cec_ManSimFindBestPattern( p );
-/*
-    if ( p->nMems > 1 ) {
-        for ( i = 1; i < p->nObjs; i++ )
-        if ( p->pSims[i] ) {
-            int x = 0;
-        }
-    }
-*/
     return Cec_ManSimAnalyzeOutputs( p );
+}
+
+/* Public dispatch — chosen once per call, no per-AND-node indirection. */
+int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos )
+{
+    Sim_BackendId_t id;
+    if ( p->pAccel && Sim_AccelCtxIsShadowEnabled(p->pAccel) )
+        return Cec_ManSimSimulateRound_shadow( p, vInfoCis, vInfoCos );
+    id = p->pAccel ? Sim_AccelCtxGetBackendId(p->pAccel) : SIM_BACKEND_SCALAR32;
+#if defined(SIM_ACCEL_HAS_AVX2_BUILD)
+    if ( id == SIM_BACKEND_AVX2 )
+        return Cec_ManSimSimulateRound_avx2( p, vInfoCis, vInfoCos );
+#endif
+    if ( id == SIM_BACKEND_SCALAR64 )
+        return Cec_ManSimSimulateRound_scalar64( p, vInfoCis, vInfoCos );
+    return Cec_ManSimSimulateRound_scalar32( p, vInfoCis, vInfoCos );
 }
 
 

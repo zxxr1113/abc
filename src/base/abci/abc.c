@@ -41158,7 +41158,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKBpkrecqowLAvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKBWpkrecqowLAvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41171,6 +41171,17 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nFrames = atoi(argv[globalUtilOptind]);
             globalUtilOptind++;
             if ( pPars->nFrames < 0 )
+                goto usage;
+            break;
+        case 'W':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-W\" should be followed by an integer (simulation words).\n" );
+                goto usage;
+            }
+            pPars->nWords = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nWords < 1 )
                 goto usage;
             break;
         case 'C':
@@ -41398,7 +41409,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZK num] [-B num] [-pkrecqowLAvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-FCGXPSZKW num] [-B num] [-pkrecqowLAvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );

@@ -1045,20 +1045,20 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
         /* CEX-STAT: print cube size distribution; pSrm still alive here */
-        if ( Vec_IntSize(vCexStore) > 0 )
-        {
-            int _iPos = 0, _nRecs = 0, _nLitsTotal = 0, _n;
-            while ( _iPos < Vec_IntSize(vCexStore) )
-            {
-                _iPos++;                                  /* skip iOut */
-                _n = Vec_IntEntry(vCexStore, _iPos++);   /* nLits for this record */
-                if ( _n > 0 ) { _nLitsTotal += _n; _iPos += _n; }
-                _nRecs++;
-            }
-            Abc_Print( 1, "[CEX-STAT] r=%-4d nSrmCi=%-6d nSrmAnd=%-8d nSrmCo=%-6d nRecs=%-4d avgLits=%.2f\n",
-                r, Gia_ManCiNum(pSrm), Gia_ManAndNum(pSrm), Gia_ManCoNum(pSrm),
-                _nRecs, _nRecs > 0 ? (double)_nLitsTotal / _nRecs : 0.0 );
-        }
+        // if ( Vec_IntSize(vCexStore) > 0 )
+        // {
+        //     int _iPos = 0, _nRecs = 0, _nLitsTotal = 0, _n;
+        //     while ( _iPos < Vec_IntSize(vCexStore) )
+        //     {
+        //         _iPos++;                                  /* skip iOut */
+        //         _n = Vec_IntEntry(vCexStore, _iPos++);   /* nLits for this record */
+        //         if ( _n > 0 ) { _nLitsTotal += _n; _iPos += _n; }
+        //         _nRecs++;
+        //     }
+        //     Abc_Print( 1, "[CEX-STAT] r=%-4d nSrmCi=%-6d nSrmAnd=%-8d nSrmCo=%-6d nRecs=%-4d avgLits=%.2f\n",
+        //         r, Gia_ManCiNum(pSrm), Gia_ManAndNum(pSrm), Gia_ManCoNum(pSrm),
+        //         _nRecs, _nRecs > 0 ? (double)_nLitsTotal / _nRecs : 0.0 );
+        // }
         /* CEX Lifting: ternary lift + optional replication.
            Must happen before Gia_ManStop(pSrm) because the lifter needs
            the SRM AIG for 3-valued propagation. */

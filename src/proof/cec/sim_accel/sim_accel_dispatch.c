@@ -67,15 +67,34 @@ const char * Sim_AccelBackendName( void )
 Sim_AccelCtx_t * Sim_AccelCtxAlloc( int nWords32, Sim_BackendId_t override )
 {
     Sim_AccelCtx_t *p;
+    const Sim_BackendOps_t *ops;
 
     if ( g_pSimAccelBackend == NULL )
         Sim_AccelGlobalInit();
 
+    if ( override == SIM_BACKEND_AUTO )
+        ops = g_pSimAccelBackend;
+    else
+        ops = Sim_AccelGetOpsById(override);
+
+    /* Validate AVX2 availability when explicitly overridden — without this guard
+       a user-forced "-B 2" on a non-AVX2 host would crash with SIGILL inside the
+       AVX2 kernel. Fall back to scalar64 with a warning. */
+#if defined(SIM_ACCEL_HAS_AVX2_BUILD)
+    if ( ops == &g_BackendAVX2 )
+    {
+        __builtin_cpu_init();
+        if ( !__builtin_cpu_supports("avx2") )
+        {
+            Abc_Print( 0, "sim_accel: AVX2 backend requested but CPU lacks AVX2; using scalar64.\n" );
+            ops = &g_BackendScalar64;
+        }
+    }
+#endif
+
     p = ABC_CALLOC( Sim_AccelCtx_t, 1 );
     p->nWords32 = nWords32;
-    p->ops      = ( override == SIM_BACKEND_AUTO )
-                  ? g_pSimAccelBackend
-                  : Sim_AccelGetOpsById(override);
+    p->ops      = ops;
     return p;
 }
 
@@ -84,6 +103,21 @@ void Sim_AccelCtxFree( Sim_AccelCtx_t * pCtx )
 {
     if ( pCtx )
         ABC_FREE( pCtx );
+}
+
+/* ------------------------------------------------------------------ */
+/* Per-ctx accessors used by the round-level dispatch in cecClass.c    */
+/* ------------------------------------------------------------------ */
+Sim_BackendId_t Sim_AccelCtxGetBackendId( const Sim_AccelCtx_t * pCtx )
+{
+    if ( pCtx == NULL || pCtx->ops == NULL )
+        return SIM_BACKEND_SCALAR32;
+    return pCtx->ops->id;
+}
+
+int Sim_AccelCtxIsShadowEnabled( const Sim_AccelCtx_t * pCtx )
+{
+    return pCtx ? pCtx->fShadow : 0;
 }
 
 /* ------------------------------------------------------------------ */
