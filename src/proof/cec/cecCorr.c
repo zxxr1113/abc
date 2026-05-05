@@ -945,13 +945,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ManSim_t * pSim;
     Gia_Man_t * pSrm;
     int r, RetValue, nPrev[4] = {0};
-    /* Adaptive frame depth: start at pPars->nFrames and allow growth up to
-       pPars->nFrames+2 when the inductive loop stalls.  nSlowRounds counts
-       consecutive iterations with less than 2% lit-count improvement. */
-    int nFramesCur   = pPars->nFrames;
-    int nFramesMax   = pPars->nFrames + 2;
-    int nSlowRounds  = 0;
-    int nLitsAdapt   = -1;   /* lit count at the end of the previous round */
     abctime clkTotal = Abc_Clock();
     abctime clkSat = 0, clkSim = 0, clkSrm = 0;
     abctime clk2, clk = Abc_Clock();
@@ -975,11 +968,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     {
         Cec_ManSimClassesPrepare( pSim, pPars->nLevelMax );
         Cec_ManSimClassesRefine( pSim );
-        /* SAT-guided DFS simulation (RIC3 rt_dfs_simulate strategy):
-           explores the reachable sequential state space to produce
-           high-quality, diverse simulation patterns for class refinement,
-           mirroring RIC3's scorr approach. */
-        //Cec_ManSimClassesSatGuided( pSim );
     }
     // prepare SAT solving
     Cec_ManSatSetDefaultParams( pParsSat );
@@ -1026,8 +1014,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clk = Abc_Clock();
         // perform speculative reduction
         clk2 = Abc_Clock();
-        pSrm = Gia_ManCorrSpecReduce( pAig, nFramesCur, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
-        assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(nFramesCur+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
+        pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
+        assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
         clkSrm += Abc_Clock() - clk2;
         if ( Gia_ManCoNum(pSrm) == 0 )
         {
@@ -1046,24 +1034,33 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( Vec_IntSize(vCexStore) > 0 )
         {
             int _iPos = 0, _nRecs = 0, _nLitsTotal = 0, _n;
+            int _nSat = 0, _nTriv = 0, _nTo = 0, _nMax = 0;
             while ( _iPos < Vec_IntSize(vCexStore) )
             {
                 _iPos++;                                  /* skip iOut */
                 _n = Vec_IntEntry(vCexStore, _iPos++);   /* nLits for this record */
-                if ( _n > 0 ) { _nLitsTotal += _n; _iPos += _n; }
+                if ( _n > 0 )      { _nLitsTotal += _n; _iPos += _n; _nSat++;
+                                     if ( _n > _nMax ) _nMax = _n; }
+                else if ( _n == 0 ) { _nTriv++; }
+                else                { _nTo++;   /* timeout */ }
                 _nRecs++;
             }
-            Abc_Print( 1, "[CEX-STAT] r=%-4d nSrmCi=%-6d nSrmAnd=%-8d nSrmCo=%-6d nRecs=%-4d avgLits=%.2f\n",
+            Abc_Print( 1, "[CEX-STAT] r=%-4d nSrmCi=%-6d nSrmAnd=%-8d nSrmCo=%-6d "
+                          "nRecs=%-4d sat/triv/to=%d/%d/%d avgLits=%.2f maxLits=%d\n",
                 r, Gia_ManCiNum(pSrm), Gia_ManAndNum(pSrm), Gia_ManCoNum(pSrm),
-                _nRecs, _nRecs > 0 ? (double)_nLitsTotal / _nRecs : 0.0 );
+                _nRecs, _nSat, _nTriv, _nTo,
+                _nSat > 0 ? (double)_nLitsTotal / _nSat : 0.0, _nMax );
         }
-        /* CEX Lifting: ternary lift + optional replication.
-           Must happen before Gia_ManStop(pSrm) because the lifter needs
-           the SRM AIG for 3-valued propagation. */
-        if ( pPars->fCexLift && Vec_IntSize(vCexStore) > 0 )
+        /* CEX Lifting / Replication: -L enables ternary lift, -K>1 enables
+           cube replication.  They are independent — either one alone or both
+           together can be selected.  Must happen before Gia_ManStop(pSrm)
+           because the lifter needs the SRM AIG for 3-valued propagation. */
+        if ( ( pPars->fCexLift || pPars->nCexReplicate > 1 ) &&
+             Vec_IntSize(vCexStore) > 0 )
         {
             Vec_Int_t * vLifted = Cec_ManCexLiftAndReplicate(
-                pSrm, vCexStore, pPars->nCexReplicate,
+                pSrm, vCexStore,
+                pPars->fCexLift, pPars->nCexReplicate,
                 Gia_ManRegNum(pAig), pPars->fVerbose );
             Vec_IntFree( vCexStore );
             vCexStore = vLifted;
@@ -1081,7 +1078,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 
         // refine classes with these counter-examples
         clk2 = Abc_Clock();
-        RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, nFramesCur + 1 + nAddFrames );
+        RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
         Vec_IntFree( vCexStore );
         clkSim += Abc_Clock() - clk2;
         Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );

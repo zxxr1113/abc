@@ -41351,7 +41351,7 @@ usage:
     Abc_Print( -2, "\t-P num : the number of concurrent processes [default = %d]\n", pPars->nProcs );
     Abc_Print( -2, "\t-S num : the number of flops in one partition [default = %d]\n", pPars->nPartSize );
     Abc_Print( -2, "\t-Z num : the average flop include frequency [default = %d]\n", nFlopIncFreq );
-    Abc_Print( -2, "\t-K num : max replication K_max (K=1=lift-only; K>1 enables adaptive K=64/nRecs capped at K_max) [default = %d]\n", pPars->nCexReplicate );
+    Abc_Print( -2, "\t-K num : cube replication K_max (K=1=off; K>1 enables adaptive K=64/nRecs capped at K_max; works with or without -L) [default = %d]\n", pPars->nCexReplicate );
     Abc_Print( -2, "\t-p     : toggle using partitioning for the input AIG [default = %s]\n", fPartition? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle using constant correspondence [default = %s]\n", pPars->fConstCorr? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using implication rings during refinement [default = %s]\n", pPars->fUseRings? "yes": "no" );
@@ -41360,7 +41360,7 @@ usage:
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle printing verbose info about equivalent flops [default = %s]\n", pPars->fVerboseFlops? "yes": "no" );
-    Abc_Print( -2, "\t-L     : toggle ternary CEX lifting + cube replication [default = %s]\n", pPars->fCexLift? "yes": "no" );
+    Abc_Print( -2, "\t-L     : toggle ternary CEX lifting [default = %s]\n", pPars->fCexLift? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");
     return 1;

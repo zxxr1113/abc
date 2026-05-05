@@ -265,53 +265,92 @@ static Vec_Int_t * LiftOneCube( Gia_Man_t * pSrm, int * pLits, int nLits,
 ///                   CUBE REPLICATION                               ///
 ////////////////////////////////////////////////////////////////////////
 
-/* Emit lifted cube (replica 0) and K-1 replicated variants.
-   Replica k ≥ 1 appends one extra randomly-selected free-CI literal
-   (random polarity).  This extra pin conflicts with earlier replicas'
-   extra pins, pushing each replica into a distinct bit-slot inside
-   Cec_ManLoadCounterExamplesTry.  The remaining free bits retain the
-   independent random backgrounds set by Cec_ManStartSimInfo.
+/* Emit K replicas of the lifted cube, each forced into a DISTINCT
+   bit-slot inside Cec_ManLoadCounterExamples by appending a per-replica
+   tag-bit pattern.
 
-   nPiStart = Gia_ManRegNum(pAig): the first PI CI index.  CIs [0, nPiStart)
-   are RO slots that Gia_ManCorrPerformRemapping expects to stay zero — we
-   must never write to them via the extra pin.                          */
+   Why tag bits (and why the previous "single random extra pin" was a
+   no-op): Cec_ManLoadCounterExamplesTry returns 0 only when some literal
+   conflicts with an already-pinned bit at that slot.  Two replicas that
+   share the same cube and pin DIFFERENT free CIs do not conflict — the
+   second replica simply joins slot 1 and adds its extra pin there.  All
+   K replicas collapse into one slot, defeating the point of replication.
+
+   Fix: pre-pick B = ceil(log2(K)) free PI CIs (call them tag_0..tag_{B-1}).
+   Replica r ∈ [0, K-1] appends literals { tag_b = bit_b(r) for b∈[0,B) }.
+   Any two replicas r != r' differ in at least one tag bit, so the second
+   one to be loaded conflicts with the first at that slot and is forced
+   into the next slot.  Result: K replicas occupy K consecutive slots,
+   each with the cube core + a unique random extension on the remaining
+   free PIs (background bits from Cec_ManStartSimInfo).
+
+   nPiStart = Gia_ManRegNum(pAig): first PI CI index.  CIs [0, nPiStart)
+   are RO slots that must stay zero for Gia_ManCorrPerformRemapping —
+   we never write tag bits there.                                      */
+static void EmitOne( Vec_Int_t * vOut, int iOut,
+                      int * pLits, int nLits,
+                      int * pTagCi, int nTagBits, int rIdx )
+{
+    int j, b;
+    Vec_IntPush( vOut, iOut );
+    Vec_IntPush( vOut, nLits + nTagBits );
+    for ( j = 0; j < nLits; j++ )
+        Vec_IntPush( vOut, pLits[j] );
+    for ( b = 0; b < nTagBits; b++ )
+    {
+        int bit = ( rIdx >> b ) & 1;
+        /* Abc_Var2Lit(var, compl=1) means var=0; compl=0 means var=1 */
+        Vec_IntPush( vOut, Abc_Var2Lit( pTagCi[b], !bit ) );
+    }
+}
+
 static void EmitWithReplicas( Vec_Int_t * vOut, int iOut,
                                int * pLiftedLits, int nLifted,
                                int K, int nCiTotal, int nPiStart,
                                int * pCiUsed )
 {
-    int k, j, freeCi, freeVal, tried;
-    int nPi = nCiTotal - nPiStart;   /* number of PI-range CIs */
+    int k, j, nBits, found;
+    int tagCi[6];                  /* up to 64 replicas → 6 tag bits */
+    int nPi = nCiTotal - nPiStart;
 
-    /* Replica 0: bare lifted cube */
-    Vec_IntPush( vOut, iOut );
-    Vec_IntPush( vOut, nLifted );
-    for ( j = 0; j < nLifted; j++ )
-        Vec_IntPush( vOut, pLiftedLits[j] );
-
-    if ( K <= 1 || nPi <= 0 || nLifted >= nCiTotal ) return;
-
-    /* Replicas 1 .. K-1: extra pin drawn only from PI range [nPiStart, nCiTotal) */
-    for ( k = 1; k < K; k++ )
+    /* K=1 or no room for tag CIs: emit bare cube once */
+    if ( K <= 1 || nPi <= 0 )
     {
-        /* Random start within the PI range to avoid systematic bias */
-        int freeStart = nPiStart + (int)( Gia_ManRandom(0) % (unsigned)nPi );
-        freeCi = -1;
-        for ( tried = 0; tried < nPi; tried++ )
-        {
-            int ci = nPiStart + ( freeStart - nPiStart + tried ) % nPi;
-            if ( !pCiUsed[ci] ) { freeCi = ci; break; }
-        }
-        if ( freeCi < 0 ) break;  /* all PI CIs pinned */
-
-        freeVal = (int)( Gia_ManRandom(0) & 1 );
         Vec_IntPush( vOut, iOut );
-        Vec_IntPush( vOut, nLifted + 1 );
+        Vec_IntPush( vOut, nLifted );
         for ( j = 0; j < nLifted; j++ )
             Vec_IntPush( vOut, pLiftedLits[j] );
-        /* Abc_Var2Lit(var, compl=1) means var=0; compl=0 means var=1 */
-        Vec_IntPush( vOut, Abc_Var2Lit( freeCi, !freeVal ) );
+        return;
     }
+
+    /* nBits = ceil(log2(K)), capped at 6 (=> K ≤ 64) */
+    nBits = 0;
+    while ( ( 1 << nBits ) < K ) nBits++;
+    if ( nBits > 6 ) { nBits = 6; K = 64; }
+
+    /* Pick nBits distinct free PI CIs (not in cube) for tag bits */
+    found = 0;
+    {
+        int start = nPiStart + (int)( Gia_ManRandom(0) % (unsigned)nPi );
+        for ( j = 0; j < nPi && found < nBits; j++ )
+        {
+            int ci = nPiStart + ( start - nPiStart + j ) % nPi;
+            if ( !pCiUsed[ci] ) tagCi[found++] = ci;
+        }
+    }
+    if ( found < nBits )
+    {
+        /* Not enough free PIs for tag encoding — emit bare cube once */
+        Vec_IntPush( vOut, iOut );
+        Vec_IntPush( vOut, nLifted );
+        for ( j = 0; j < nLifted; j++ )
+            Vec_IntPush( vOut, pLiftedLits[j] );
+        return;
+    }
+
+    /* Emit K replicas; replica k pins tag bits to binary encoding of k */
+    for ( k = 0; k < K; k++ )
+        EmitOne( vOut, iOut, pLiftedLits, nLifted, tagCi, nBits, k );
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -331,15 +370,18 @@ static void EmitWithReplicas( Vec_Int_t * vOut, int iOut,
          nRecs is small, and no replication is done when nRecs >= 64
          (the batch is already full without replication).
 
-    nReplicate = K_max (from pPars->nCexReplicate; default 1 = lift-only).
-    Set nReplicate > 1 via "&scorr -L -K <num>" to enable replication.
+    fLift / nReplicate are independent:
+      &scorr -L          : lift only         (fLift=1, K=1)
+      &scorr -K 8        : replicate only    (fLift=0, K_max=8)
+      &scorr -L -K 8     : lift + replicate  (fLift=1, K_max=8)
+    Caller wires this via pPars->fCexLift / pPars->nCexReplicate.
 
     pSrm must be alive; do NOT call Gia_ManStop(pSrm) before this.
   ]
 
 ***********************************************************************/
 Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
-                                         int nReplicate, int nReg, int fVerbose )
+                                         int fLift, int nReplicate, int nReg, int fVerbose )
 {
     Vec_Int_t * vOut;
     CexLiftScratch_t scratch;
@@ -349,36 +391,38 @@ Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
 
     if ( nReplicate < 1 ) nReplicate = 1;
 
-    /* ── Pre-scan: count records for adaptive K computation ── */
+    /* ── Pre-scan: count records and SAT-only records ──────────────
+       nRecs = total records (incl. timeouts/trivials)
+       nSat  = records with nLits > 0 — only these consume sim slots
+               and are eligible for replication.                    */
     nRecs = 0;
     {
-        int _p = 0, _n;
+        int _p = 0, _n, _nSat = 0;
         while ( _p < Vec_IntSize(vCexStore) )
         {
             _p++;                              /* skip iOut */
             _n = Vec_IntEntry( vCexStore, _p++ );
-            if ( _n > 0 ) _p += _n;
+            if ( _n > 0 ) { _p += _n; _nSat++; }
             nRecs++;
         }
-    }
-
-    /* ── Adaptive K ────────────────────────────────────────────────
-       Goal: fully utilise the ~64-slot simulation batch width.
-         nRecs= 1 → K_actual = min(K_max, 64)    fill all 64 slots
-         nRecs= 8 → K_actual = min(K_max,  8)    8 cubes × 8 copies = 64
-         nRecs=64 → K_actual = 1                 already fills batch
-         nRecs>64 → K_actual = 1                 Cec_ManLoadCounterExamples
-                                                  already auto-batches
-       K_max = nReplicate (set by -K, default 1 = lift-only).             */
-    if ( nReplicate <= 1 )
-    {
-        K_actual = 1;
-    }
-    else
-    {
-        K_actual = 64 / Abc_MaxInt( nRecs, 1 );
-        K_actual = Abc_MaxInt( K_actual, 1 );
-        K_actual = Abc_MinInt( K_actual, nReplicate );
+        /* ── Adaptive K ────────────────────────────────────────────
+           Cec_ManLoadCounterExamples uses ~480 slots (nWords=15 × 32).
+           Aim: fill the batch but never exceed K_max requested by -K.
+             nSat=  1 → K_actual = K_max           one cube → many extensions
+             nSat= 50 → K_actual = min(K_max, 9)   50 cubes × 9 copies ≈ 450
+             nSat>=480→ K_actual = 1               batch already saturated
+           Tag-bit cap: at most 6 tag bits → K_actual ≤ 64.            */
+        if ( nReplicate <= 1 )
+            K_actual = 1;
+        else if ( _nSat == 0 )
+            K_actual = 1;
+        else
+        {
+            K_actual = 480 / _nSat;
+            K_actual = Abc_MaxInt( K_actual, 1 );
+            K_actual = Abc_MinInt( K_actual, nReplicate );
+            K_actual = Abc_MinInt( K_actual, 64 );
+        }
     }
 
     nObj = Gia_ManObjNum( pSrm );
@@ -395,8 +439,8 @@ Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
     while ( iStart < Vec_IntSize(vCexStore) )
     {
         int iOut, nLits, nDropped, nLifted, i;
-        int * pLits;
-        Vec_Int_t * vLifted;
+        int * pLits, * pEmitLits;
+        Vec_Int_t * vLifted = NULL;
 
         /* Parse record: [iOut, nLits, lit_0 .. lit_{nLits-1}] */
         iOut  = Vec_IntEntry( vCexStore, iStart++ );
@@ -419,48 +463,57 @@ Vec_Int_t * Cec_ManCexLiftAndReplicate( Gia_Man_t * pSrm, Vec_Int_t * vCexStore,
 
         nLitsOrigTotal += nLits;
 
-        /* Grow scratch if this cube has more literals than any previous */
-        CexLiftScratch_Resize( &scratch, nObj, nLits );
-
-        /* ── Bit-parallel ternary lifting ── */
-        vLifted = LiftOneCube( pSrm, pLits, nLits, iOut, &scratch, &nDropped );
-        nLifted          = Vec_IntSize( vLifted );
-        nLitsLiftedTotal += nLifted;
-        nDroppedTotal    += nDropped;
-
-        /* Should not happen now that LiftOneCube validates and reverts on
-           unsoundness, but if a 0-literal cube does materialise, emit it
-           verbatim rather than swallowing the whole record.               */
-        if ( nLifted == 0 )
+        if ( fLift )
         {
-            Vec_IntPush( vOut, iOut );
-            Vec_IntPush( vOut, 0 );
-            Vec_IntFree( vLifted );
-            continue;
+            /* Grow scratch if this cube has more literals than any previous */
+            CexLiftScratch_Resize( &scratch, nObj, nLits );
+
+            /* ── Bit-parallel ternary lifting ── */
+            vLifted = LiftOneCube( pSrm, pLits, nLits, iOut, &scratch, &nDropped );
+            nLifted          = Vec_IntSize( vLifted );
+            nLitsLiftedTotal += nLifted;
+            nDroppedTotal    += nDropped;
+
+            /* If a 0-literal cube materialises, emit it verbatim rather
+               than swallowing the whole record. */
+            if ( nLifted == 0 )
+            {
+                Vec_IntPush( vOut, iOut );
+                Vec_IntPush( vOut, 0 );
+                Vec_IntFree( vLifted );
+                continue;
+            }
+            pEmitLits = Vec_IntArray( vLifted );
+        }
+        else
+        {
+            /* ── No lifting: emit/replicate the original cube ── */
+            nLifted          = nLits;
+            nLitsLiftedTotal += nLits;
+            pEmitLits        = pLits;
         }
 
-        /* ── CI-usage map for replica random-pin selection ── */
+        /* ── CI-usage map for tag-bit pick (avoid cube CIs) ── */
         if ( K_actual > 1 )
         {
             memset( pCiUsed, 0, nCi * sizeof(int) );
             for ( i = 0; i < nLifted; i++ )
-                pCiUsed[ Abc_Lit2Var( Vec_IntEntry(vLifted, i) ) ] = 1;
+                pCiUsed[ Abc_Lit2Var( pEmitLits[i] ) ] = 1;
         }
 
-        /* ── Emit lifted cube + replicas ── */
-        EmitWithReplicas( vOut, iOut,
-                          Vec_IntArray(vLifted), nLifted,
+        /* ── Emit cube + replicas ── */
+        EmitWithReplicas( vOut, iOut, pEmitLits, nLifted,
                           K_actual, nCi, nReg, pCiUsed );
-        Vec_IntFree( vLifted );
+        if ( vLifted ) Vec_IntFree( vLifted );
     }
 
     if ( fVerbose && nLitsOrigTotal > 0 )
     {
-        double dropPct = 100.0 * nDroppedTotal / nLitsOrigTotal;
+        double dropPct = fLift ? 100.0 * nDroppedTotal / nLitsOrigTotal : 0.0;
         Abc_Print( 1,
-            "[CEX-LIFT] nRecs=%-4d K=%d  lits: %d -> %d  drop=%.1f%%"
+            "[CEX-LIFT] nRecs=%-4d K=%d  lift=%s  lits: %d -> %d  drop=%.1f%%"
             "  outEntries=%d\n",
-            nRecs, K_actual,
+            nRecs, K_actual, fLift ? "on" : "off",
             nLitsOrigTotal, nLitsLiftedTotal, dropPct,
             Vec_IntSize(vOut) );
     }
