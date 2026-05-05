@@ -1030,11 +1030,12 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
-        /* CEX-STAT: print cube size distribution; pSrm still alive here */
-        if ( Vec_IntSize(vCexStore) > 0 )
+        /* CEX-STAT: per-round breakdown of CBS outcomes across all SRM COs.
+           Invariant: unsat + sat + triv + to == nSrmCo (= Vec_StrSize(vStatus)). */
         {
             int _iPos = 0, _nRecs = 0, _nLitsTotal = 0, _n;
-            int _nSat = 0, _nTriv = 0, _nTo = 0, _nMax = 0;
+            int _nSat = 0, _nTriv = 0, _nTo = 0, _nMax = 0, _nUnsat = 0;
+            int _i, _st;
             while ( _iPos < Vec_IntSize(vCexStore) )
             {
                 _iPos++;                                  /* skip iOut */
@@ -1045,10 +1046,13 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 else                { _nTo++;   /* timeout */ }
                 _nRecs++;
             }
+            /* count UNSAT (proved equivalent) directly from vStatus */
+            Vec_StrForEachEntry( vStatus, _st, _i )
+                if ( _st == 1 ) _nUnsat++;
             Abc_Print( 1, "[CEX-STAT] r=%-4d nSrmCi=%-6d nSrmAnd=%-8d nSrmCo=%-6d "
-                          "nRecs=%-4d sat/triv/to=%d/%d/%d avgLits=%.2f maxLits=%d\n",
+                          "nRecs=%-4d unsat/sat/triv/to=%d/%d/%d/%d avgLits=%.2f maxLits=%d\n",
                 r, Gia_ManCiNum(pSrm), Gia_ManAndNum(pSrm), Gia_ManCoNum(pSrm),
-                _nRecs, _nSat, _nTriv, _nTo,
+                _nRecs, _nUnsat, _nSat, _nTriv, _nTo,
                 _nSat > 0 ? (double)_nLitsTotal / _nSat : 0.0, _nMax );
         }
         /* CEX Lifting / Replication: -L enables ternary lift, -K>1 enables
