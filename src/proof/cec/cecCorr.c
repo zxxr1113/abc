@@ -240,24 +240,42 @@ static void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
 }
 
 /**Function*************************************************************
-  Synopsis    [Variant of Gia_ManCorrSpecReduce that emits miter POs only
-               for candidate pairs whose endpoints lie in pTfoMark.]
-  Description [Identical to Gia_ManCorrSpecReduce w.r.t. SRM topology and
-               speculative reduction. The ONLY difference is the emission
-               filter: a pair (a, b) is emitted iff pTfoMark[a] || pTfoMark[b].
-               Passing pTfoMark==NULL is equivalent to the baseline.]
+  Synopsis    [Variant of Gia_ManCorrSpecReduce: TFO filter + OR-batch + iObj filter.]
+  Description [Like Gia_ManCorrSpecReduce in topology and speculative reduction.
+               Three orthogonal filters/transforms operate on PO emission:
+
+               1. pTfoMark (NULL = no filter): emit pair (a,b) iff pTfoMark[a]
+                  || pTfoMark[b]. This is the v7 incremental TFO mask.
+
+               2. pFallbackObjMark (NULL = no filter): additionally require
+                  pFallbackObjMark[iObj] = 1, where iObj is the "Obj-side"
+                  endpoint of each pair. Each candidate node has at most one
+                  pair as its iObj side, so this filter selects an exact
+                  per-pair subset (used by the OR-batch fallback path).
+
+               3. nBatchSize (1 = no batching): when > 1, group every
+                  nBatchSize consecutive emitted miter lits with OR and emit
+                  one PO per group; vBatchSizes (if non-NULL) records the
+                  actual size of each batch (last batch may be smaller).
+                  vOutputs still records ALL per-pair endpoints in emission
+                  order so the caller can recover pair-to-batch mapping.]
 ***********************************************************************/
 static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr,
                                                  Vec_Int_t ** pvOutputs, int fRings,
-                                                 int * pTfoMark )
+                                                 int * pTfoMark,
+                                                 int nBatchSize,
+                                                 int * pFallbackObjMark,
+                                                 Vec_Int_t * vBatchSizes )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
     Vec_Int_t * vXorLits;
     int f, i, iPrev, iObj, iPrevNew, iObjNew;
+    int j, k, nLits, nEnd, orLit;
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p) > 0 );
     assert( p->pReprs != NULL );
+    assert( nBatchSize >= 1 );
     Vec_IntFill( &p->vCopies, (nFrames+fScorr)*Gia_ManObjNum(p), -1 );
     Gia_ManSetPhase( p );
     pNew = Gia_ManStart( nFrames * Gia_ManObjNum(p) );
@@ -284,8 +302,10 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
         {
             if ( Gia_ObjIsConst( p, i ) )
             {
-                // const-class: pair is (0, i). Filter on i.
+                // const-class: pair is (0, i). iObj == i.
                 if ( pTfoMark && !pTfoMark[i] )
+                    continue;
+                if ( pFallbackObjMark && !pFallbackObjMark[i] )
                     continue;
                 iObjNew = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
                 iObjNew = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pObj) );
@@ -298,13 +318,16 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
             }
             else if ( Gia_ObjIsHead( p, i ) )
             {
-                // ring class. Edge filter: emit (iPrev,iObj) iff either
-                // endpoint is in TFO. We must still walk the whole ring
-                // (iPrev advances), but skip edge emission when filtered.
+                // ring class. Walk the whole ring (iPrev advances), but
+                // emit edges only when both filters pass. Each edge has a
+                // unique iObj across the ring (members + head as closing
+                // edge's iObj), so the iObj filter is unambiguous.
                 iPrev = i;
                 Gia_ClassForEachObj1( p, i, iObj )
                 {
                     int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj];
+                    if ( fEmit && pFallbackObjMark && !pFallbackObjMark[iObj] )
+                        fEmit = 0;
                     if ( fEmit )
                     {
                         iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
@@ -320,10 +343,12 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
                     }
                     iPrev = iObj;
                 }
-                // closing edge of the ring: (iPrev, head)
+                // closing edge of the ring: (iPrev, head). iObj == head.
                 iObj = i;
                 {
                     int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj];
+                    if ( fEmit && pFallbackObjMark && !pFallbackObjMark[iObj] )
+                        fEmit = 0;
                     if ( fEmit )
                     {
                         iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
@@ -348,13 +373,15 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
             pRepr = Gia_ObjReprObj( p, Gia_ObjId(p,pObj) );
             if ( pRepr == NULL )
                 continue;
-            // pair = (pRepr, pObj). Filter on either endpoint.
+            // pair = (pRepr, pObj). iObj == i.
             if ( pTfoMark )
             {
                 int idR = Gia_ObjId(p, pRepr);
                 if ( !pTfoMark[i] && !pTfoMark[idR] )
                     continue;
             }
+            if ( pFallbackObjMark && !pFallbackObjMark[i] )
+                continue;
             iPrevNew = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorrSpecReal( pNew, p, pRepr, nFrames, 0 );
             iObjNew  = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
             iObjNew  = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
@@ -366,8 +393,29 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
             }
         }
     }
-    Vec_IntForEachEntry( vXorLits, iObjNew, i )
-        Gia_ManAppendCo( pNew, iObjNew );
+    nLits = Vec_IntSize(vXorLits);
+    if ( nBatchSize <= 1 )
+    {
+        // Per-pair: one PO per pair miter (v7 default).
+        Vec_IntForEachEntry( vXorLits, iObjNew, i )
+            Gia_ManAppendCo( pNew, iObjNew );
+    }
+    else
+    {
+        // OR-batched: one PO per group of nBatchSize consecutive miters.
+        // Pairs in the same batch are typically siblings within a class
+        // (ring traversal order), so they tend to share UNSAT/SAT fate.
+        for ( j = 0; j < nLits; j += nBatchSize )
+        {
+            nEnd  = (j + nBatchSize < nLits) ? j + nBatchSize : nLits;
+            orLit = 0;
+            for ( k = j; k < nEnd; k++ )
+                orLit = Gia_ManHashOr( pNew, orLit, Vec_IntEntry(vXorLits, k) );
+            Gia_ManAppendCo( pNew, orLit );
+            if ( vBatchSizes )
+                Vec_IntPush( vBatchSizes, nEnd - j );
+        }
+    }
     Vec_IntFree( vXorLits );
     Gia_ManHashStop( pNew );
     Vec_IntErase( &p->vCopies );
@@ -1293,6 +1341,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_IncrMgr_t * pMgr = NULL;
     abctime clkIncr = 0;
     int nIncrSkipped = 0, nIncrFallback = 0;
+    // OR-batching state (active iff pPars->fOrBatch and TFO mask is in use)
+    Vec_Int_t * vBatchSizes = NULL;
+    int nBatchSize = 8;        // disjuncts per OR-batched PO; tunable
+    int nBatchTotal = 0, nBatchProved = 0, nBatchFailed = 0;
+    // -b implies -i: OR-batching only makes sense within incremental mode,
+    // since the savings come from not re-solving stable pairs per round.
+    if ( pPars->fOrBatch )
+        pPars->fIncremental = 1;
     if ( Gia_ManRegNum(pAig) == 0 )
     {
         Abc_Print( 1, "Cec_ManLatchCorrespondence(): Not a sequential AIG.\n" );
@@ -1408,22 +1464,37 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( pMgr )
                 Cec_IncrMgrSnapshotReprs( pMgr );
 
-            if ( pTfoMask )
-                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask );
+            // Decide build mode:
+            //   pTfoMask + fOrBatch -> Phase-1 OR-batched SRM (vBatchSizes filled);
+            //   pTfoMask alone      -> v7 per-pair active SRM;
+            //   no mask             -> baseline full SRM.
+            vBatchSizes = NULL;
+            if ( pTfoMask && pPars->fOrBatch )
+            {
+                vBatchSizes = Vec_IntAlloc( 1024 );
+                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr,
+                                                     &vOutputs, pPars->fUseRings, pTfoMask,
+                                                     nBatchSize, NULL, vBatchSizes );
+            }
+            else if ( pTfoMask )
+                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr,
+                                                     &vOutputs, pPars->fUseRings, pTfoMask,
+                                                     1, NULL, NULL );
             else
                 pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
             if ( pTfoMask && pPars->fVeryVerbose )
-                Abc_Print( 1, "  [incr r=%d seeds=%d tfo=%d POs=%d]\n",
+                Abc_Print( 1, "  [incr r=%d seeds=%d tfo=%d POs=%d batch=%d]\n",
                            r, Vec_IntSize(pMgr->vSeeds), Vec_IntSize(pMgr->vTfoNodes),
-                           Gia_ManCoNum(pSrm) );
+                           Gia_ManCoNum(pSrm), vBatchSizes ? Vec_IntSize(vBatchSizes) : 0 );
             (void)nIncrSkipped;
         }
         assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
         clkSrm += Abc_Clock() - clk2;
         if ( Gia_ManCoNum(pSrm) == 0 )
         {
+            if ( vBatchSizes ) { Vec_IntFree( vBatchSizes ); vBatchSizes = NULL; }
             Vec_IntFree( vOutputs );
-            Gia_ManStop( pSrm );            
+            Gia_ManStop( pSrm );
             break;
         }
 //Gia_DumpAiger( pSrm, "corrsrm", r, 2 );
@@ -1435,6 +1506,114 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
         Gia_ManStop( pSrm );
         clkSat += Abc_Clock() - clk2;
+        // OR-batching Phase-2: expand per-batch status to per-pair, then run
+        // a fallback per-pair solve for any batch that failed (SAT or timeout).
+        // Soundness: a batched OR is UNSAT iff every disjunct (pair miter) is
+        // unsatisfiable, so vStatus[batch]==1 individually proves all K pairs
+        // in the batch. If the batched OR is SAT/unknown, we cannot tell which
+        // disjunct is the offender, so we MUST resolve per-pair to keep the
+        // v7 invariant ("UNSAT in round r"). Without this fallback, sibling
+        // pairs of a SAT pair would silently slip through without ever being
+        // proven.
+        if ( vBatchSizes )
+        {
+            int N    = Vec_IntSize(vOutputs) / 2;
+            int M    = Vec_StrSize(vStatus);
+            int p, fbIdx, pIdx, j;
+            int nFailed = 0;
+            Vec_Str_t * vStatusFinal = Vec_StrAlloc( N );
+            int * pFallbackMark = ABC_CALLOC( int, Gia_ManObjNum(pAig) );
+            assert( M == Vec_IntSize(vBatchSizes) );
+            pIdx = 0;
+            for ( j = 0; j < M; j++ )
+            {
+                char st = Vec_StrEntry( vStatus, j );
+                int  sz = Vec_IntEntry( vBatchSizes, j );
+                int  kk;
+                for ( kk = 0; kk < sz; kk++, pIdx++ )
+                {
+                    int iObjP = Vec_IntEntry( vOutputs, 2*pIdx + 1 );
+                    if ( st == 1 )
+                        Vec_StrPush( vStatusFinal, 1 );
+                    else
+                    {
+                        pFallbackMark[iObjP] = 1;
+                        Vec_StrPush( vStatusFinal, -2 );  // placeholder, resolved below
+                        nFailed++;
+                    }
+                }
+                if ( st == 1 ) nBatchProved++;
+                else           nBatchFailed++;
+            }
+            nBatchTotal += M;
+            assert( pIdx == N );
+            if ( nFailed > 0 )
+            {
+                Vec_Int_t * vOutputsFb = NULL;
+                Vec_Str_t * vStatusFb  = NULL;
+                Vec_Int_t * vCexStoreFb = NULL;
+                Gia_Man_t * pSrmFb;
+                int Nfb;
+
+                clk2 = Abc_Clock();
+                // vBatchSizes!=NULL implies Phase-1 used the TFO mask, so pMgr
+                // is non-NULL and pMgr->pTfoMark is the active mask this round.
+                pSrmFb = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr,
+                                                       &vOutputsFb, pPars->fUseRings, pMgr->pTfoMark,
+                                                       1, pFallbackMark, NULL );
+                clkSrm += Abc_Clock() - clk2;
+                clk2 = Abc_Clock();
+                if ( pPars->fUseCSat )
+                    vCexStoreFb = Cbs_ManSolveMiterNc( pSrmFb, pPars->nBTLimit, &vStatusFb, 0, 0 );
+                else
+                    vCexStoreFb = Cec_ManSatSolveMiter( pSrmFb, pParsSat, &vStatusFb );
+                Gia_ManStop( pSrmFb );
+                clkSat += Abc_Clock() - clk2;
+
+                // Phase-2 emits in the same order as Phase-1 (deterministic SRM
+                // construction, identical pReprs, identical structural collapse
+                // since hash-cons agrees on equal sub-expressions). Walk both
+                // in lock-step: every '-2' placeholder must match the next pair
+                // in vOutputsFb. If it doesn't (rare: a structural sweep dropped
+                // a pair on phase 2 only), treat as failed (status 0) to be
+                // safe -- sim refinement and next round's seed diff will still
+                // catch it via pReprs change.
+                Nfb   = Vec_IntSize(vOutputsFb) / 2;
+                fbIdx = 0;
+                for ( p = 0; p < N && fbIdx < Nfb; p++ )
+                {
+                    if ( Vec_StrEntry(vStatusFinal, p) != -2 )
+                        continue;
+                    {
+                        int iReprP1 = Vec_IntEntry( vOutputs,    2*p );
+                        int iObjP1  = Vec_IntEntry( vOutputs,    2*p + 1 );
+                        int iReprP2 = Vec_IntEntry( vOutputsFb,  2*fbIdx );
+                        int iObjP2  = Vec_IntEntry( vOutputsFb,  2*fbIdx + 1 );
+                        if ( iReprP1 == iReprP2 && iObjP1 == iObjP2 )
+                        {
+                            Vec_StrWriteEntry( vStatusFinal, p, Vec_StrEntry(vStatusFb, fbIdx) );
+                            fbIdx++;
+                        }
+                    }
+                }
+                // Any unresolved placeholders mean phase-2 didn't emit them
+                // (structural collapse). Mark as 0 (failed); see comment above.
+                for ( p = 0; p < N; p++ )
+                    if ( Vec_StrEntry(vStatusFinal, p) == -2 )
+                        Vec_StrWriteEntry( vStatusFinal, p, 0 );
+                Vec_IntAppend( vCexStore, vCexStoreFb );
+                Vec_IntFree( vCexStoreFb );
+                Vec_IntFree( vOutputsFb );
+                Vec_StrFree( vStatusFb );
+            }
+            ABC_FREE( pFallbackMark );
+            Vec_IntFree( vBatchSizes );
+            vBatchSizes = NULL;
+            Vec_StrFree( vStatus );
+            vStatus = vStatusFinal;
+            if ( pPars->fVeryVerbose )
+                Abc_Print( 1, "  [batch r=%d M=%d N=%d nFailedPairs=%d]\n", r, M, N, nFailed );
+        }
         if ( Vec_IntSize(vCexStore) == 0 )
         {
             Vec_IntFree( vCexStore );
@@ -1510,6 +1689,12 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             ABC_PRTP( "Incr ", clkIncr, clkTotal );
             Abc_Print( 1, "Incr: fallback rounds = %d\n", nIncrFallback );
+        }
+        if ( pPars->fOrBatch && nBatchTotal > 0 )
+        {
+            Abc_Print( 1, "Batch: K=%d batches=%d proved=%d failed=%d (proved-rate=%.1f%%)\n",
+                       nBatchSize, nBatchTotal, nBatchProved, nBatchFailed,
+                       100.0 * nBatchProved / (nBatchTotal ? nBatchTotal : 1) );
         }
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }
