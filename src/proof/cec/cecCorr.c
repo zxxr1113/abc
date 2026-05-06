@@ -37,6 +37,67 @@ static inline int Cec_ParCorShouldStop( Cec_ParCor_t * pPars )
 static void Gia_ManCorrSpecReduce_rec( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
 static inline int Gia_ManCorrSpecReal( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
 
+#define CEC_OR_BATCH_SIZE_DEFAULT      8
+#define CEC_OR_BATCH_UNSAT_RATE_MIN    0.95
+
+static Vec_Int_t * Cec_ManSolveMiterWithSolver( Gia_Man_t * pSrm, Cec_ParSat_t * pParsSat, Vec_Str_t ** pvStatus,
+                                                int fUseCSat )
+{
+    if ( fUseCSat )
+        return Cbs_ManSolveMiterNc( pSrm, pParsSat->nBTLimit, pvStatus, 0, 0 );
+    return Cec_ManSatSolveMiter( pSrm, pParsSat, pvStatus );
+}
+
+static void Cec_ManStatusCount( Vec_Str_t * vStatus, int * pnProved, int * pnDisproved, int * pnFailed )
+{
+    int i, Entry;
+    *pnProved = *pnDisproved = *pnFailed = 0;
+    Vec_StrForEachEntry( vStatus, Entry, i )
+    {
+        if ( Entry == 1 )
+            (*pnProved)++;
+        else if ( Entry == 0 )
+            (*pnDisproved)++;
+        else
+            (*pnFailed)++;
+    }
+}
+
+static void Gia_ManCorrSpecReduceAppendBatchPos( Gia_Man_t * pNew, Vec_Int_t * vXorLits,
+                                                 Vec_Int_t * vGroupStarts, int nBatchSize,
+                                                 Vec_Int_t * vBatchSizes )
+{
+    int i, j, k, nGroups, nLits, nStart, nEnd, nChunkEnd, orLit;
+    nLits = Vec_IntSize( vXorLits );
+    if ( vBatchSizes == NULL || nBatchSize <= 1 )
+    {
+        Vec_IntForEachEntry( vXorLits, orLit, i )
+            Gia_ManAppendCo( pNew, orLit );
+        return;
+    }
+    assert( vGroupStarts != NULL );
+    assert( Vec_IntSize(vGroupStarts) > 0 );
+    assert( Vec_IntEntryLast(vGroupStarts) == nLits );
+    nGroups = Vec_IntSize(vGroupStarts) - 1;
+    for ( i = 0; i < nGroups; i++ )
+    {
+        nStart = Vec_IntEntry( vGroupStarts, i );
+        nEnd   = Vec_IntEntry( vGroupStarts, i+1 );
+        assert( nStart < nEnd );
+        for ( j = nStart; j < nEnd; j += nBatchSize )
+        {
+            nChunkEnd = Abc_MinInt( j + nBatchSize, nEnd );
+            Vec_IntPush( vBatchSizes, nChunkEnd - j );
+            if ( nChunkEnd - j == 1 )
+                continue;
+            orLit = 0;
+            for ( k = j; k < nChunkEnd; k++ )
+                orLit = Gia_ManHashOr( pNew, orLit, Vec_IntEntry(vXorLits, k) );
+            Gia_ManAppendCo( pNew, orLit );
+        }
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////
 ///        INCREMENTAL ACTIVE-LIST SRM (TFO-triggered re-proof)      ///
 ////////////////////////////////////////////////////////////////////////
@@ -269,9 +330,10 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
-    Vec_Int_t * vXorLits;
+    Vec_Int_t * vXorLits, * vGroupStarts = NULL;
     int f, i, iPrev, iObj, iPrevNew, iObjNew;
-    int j, k, nLits, nEnd, orLit;
+    int nLits;
+    int iGroupStart = -1, iGroupRepr = -1;
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p) > 0 );
     assert( p->pReprs != NULL );
@@ -296,6 +358,8 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
     }
     *pvOutputs = Vec_IntAlloc( 1000 );
     vXorLits = Vec_IntAlloc( 1000 );
+    if ( vBatchSizes && nBatchSize > 1 )
+        vGroupStarts = Vec_IntAlloc( 1000 );
     if ( fRings )
     {
         Gia_ManForEachObj1( p, pObj, i )
@@ -311,6 +375,8 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
                 iObjNew = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pObj) );
                 if ( iObjNew != 0 )
                 {
+                    if ( vGroupStarts )
+                        Vec_IntPush( vGroupStarts, Vec_IntSize(vXorLits) );
                     Vec_IntPush( *pvOutputs, 0 );
                     Vec_IntPush( *pvOutputs, i );
                     Vec_IntPush( vXorLits, iObjNew );
@@ -323,6 +389,7 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
                 // unique iObj across the ring (members + head as closing
                 // edge's iObj), so the iObj filter is unambiguous.
                 iPrev = i;
+                iGroupStart = Vec_IntSize( vXorLits );
                 Gia_ClassForEachObj1( p, i, iObj )
                 {
                     int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj];
@@ -363,6 +430,8 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
                         }
                     }
                 }
+                if ( vGroupStarts && Vec_IntSize(vXorLits) > iGroupStart )
+                    Vec_IntPush( vGroupStarts, iGroupStart );
             }
         }
     }
@@ -387,35 +456,36 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
             iObjNew  = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
             if ( iPrevNew != iObjNew )
             {
+                int idR = Gia_ObjId(p, pRepr);
+                if ( vGroupStarts )
+                {
+                    if ( iGroupStart == -1 )
+                    {
+                        iGroupStart = Vec_IntSize(vXorLits);
+                        iGroupRepr  = idR;
+                    }
+                    else if ( iGroupRepr != idR )
+                    {
+                        if ( Vec_IntSize(vXorLits) > iGroupStart )
+                            Vec_IntPush( vGroupStarts, iGroupStart );
+                        iGroupStart = Vec_IntSize(vXorLits);
+                        iGroupRepr  = idR;
+                    }
+                }
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p, pRepr) );
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p, pObj) );
                 Vec_IntPush( vXorLits, Gia_ManHashXor(pNew, iPrevNew, iObjNew) );
             }
         }
+        if ( vGroupStarts && iGroupStart != -1 && Vec_IntSize(vXorLits) > iGroupStart )
+            Vec_IntPush( vGroupStarts, iGroupStart );
     }
     nLits = Vec_IntSize(vXorLits);
-    if ( nBatchSize <= 1 )
-    {
-        // Per-pair: one PO per pair miter (v7 default).
-        Vec_IntForEachEntry( vXorLits, iObjNew, i )
-            Gia_ManAppendCo( pNew, iObjNew );
-    }
-    else
-    {
-        // OR-batched: one PO per group of nBatchSize consecutive miters.
-        // Pairs in the same batch are typically siblings within a class
-        // (ring traversal order), so they tend to share UNSAT/SAT fate.
-        for ( j = 0; j < nLits; j += nBatchSize )
-        {
-            nEnd  = (j + nBatchSize < nLits) ? j + nBatchSize : nLits;
-            orLit = 0;
-            for ( k = j; k < nEnd; k++ )
-                orLit = Gia_ManHashOr( pNew, orLit, Vec_IntEntry(vXorLits, k) );
-            Gia_ManAppendCo( pNew, orLit );
-            if ( vBatchSizes )
-                Vec_IntPush( vBatchSizes, nEnd - j );
-        }
-    }
+    if ( vGroupStarts )
+        Vec_IntPush( vGroupStarts, nLits );
+    Gia_ManCorrSpecReduceAppendBatchPos( pNew, vXorLits, vGroupStarts, nBatchSize, vBatchSizes );
+    if ( vGroupStarts )
+        Vec_IntFree( vGroupStarts );
     Vec_IntFree( vXorLits );
     Gia_ManHashStop( pNew );
     Vec_IntErase( &p->vCopies );
@@ -1331,6 +1401,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Vec_Int_t * vCexStore;
     Cec_ParSim_t ParsSim, * pParsSim = &ParsSim;
     Cec_ParSat_t ParsSat, * pParsSat = &ParsSat;
+    Cec_ParSat_t ParsBatchSat, * pParsBatchSat = &ParsBatchSat;
     Cec_ManSim_t * pSim;
     Gia_Man_t * pSrm;
     int r, RetValue, nPrev[4] = {0};
@@ -1343,8 +1414,13 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     int nIncrSkipped = 0, nIncrFallback = 0;
     // OR-batching state (active iff pPars->fOrBatch and TFO mask is in use)
     Vec_Int_t * vBatchSizes = NULL;
-    int nBatchSize = 8;        // disjuncts per OR-batched PO; tunable
-    int nBatchTotal = 0, nBatchProved = 0, nBatchFailed = 0;
+    int nBatchSize = CEC_OR_BATCH_SIZE_DEFAULT;
+    int nBatchGroups = 0, nBatchGroupsProved = 0, nBatchGroupsFailed = 0;
+    int nBatchPairs = 0, nBatchPairsProved = 0, nBatchPairsFailed = 0;
+    int nBatchSingles = 0, nBatchFallbackCalls = 0, nBatchSavedCalls = 0;
+    int nBatchRounds = 0, nBatchSkippedRate = 0, nBatchNoGroups = 0;
+    double dOrBatchPrevUnsatRate = 0.0;
+    abctime clkBatchTry = 0, clkBatchFallback = 0;
     // -b implies -i: OR-batching only makes sense within incremental mode,
     // since the savings come from not re-solving stable pairs per round.
     if ( pPars->fOrBatch )
@@ -1374,6 +1450,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ManSatSetDefaultParams( pParsSat );
     pParsSat->nBTLimit = pPars->nBTLimit;
     pParsSat->fVerbose = pPars->fVerbose;
+    Cec_ManSatSetDefaultParams( pParsBatchSat );
+    pParsBatchSat->nBTLimit = Abc_MaxInt( 10, pPars->nBTLimit / 2 );
+    pParsBatchSat->fVerbose = 0;
     // limit the number of conflicts in the circuit-based solver
     if ( pPars->fUseCSat )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
@@ -1469,12 +1548,20 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             //   pTfoMask alone      -> v7 per-pair active SRM;
             //   no mask             -> baseline full SRM.
             vBatchSizes = NULL;
-            if ( pTfoMask && pPars->fOrBatch )
+            if ( pTfoMask && pPars->fOrBatch && dOrBatchPrevUnsatRate > CEC_OR_BATCH_UNSAT_RATE_MIN )
             {
+                nBatchRounds++;
                 vBatchSizes = Vec_IntAlloc( 1024 );
                 pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr,
                                                      &vOutputs, pPars->fUseRings, pTfoMask,
                                                      nBatchSize, NULL, vBatchSizes );
+            }
+            else if ( pTfoMask && pPars->fOrBatch )
+            {
+                nBatchSkippedRate++;
+                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr,
+                                                     &vOutputs, pPars->fUseRings, pTfoMask,
+                                                     1, NULL, NULL );
             }
             else if ( pTfoMask )
                 pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr,
@@ -1483,29 +1570,43 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             else
                 pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
             if ( pTfoMask && pPars->fVeryVerbose )
-                Abc_Print( 1, "  [incr r=%d seeds=%d tfo=%d POs=%d batch=%d]\n",
+                Abc_Print( 1, "  [incr r=%d seeds=%d tfo=%d POs=%d batch=%d prev-unsat=%.1f%%]\n",
                            r, Vec_IntSize(pMgr->vSeeds), Vec_IntSize(pMgr->vTfoNodes),
-                           Gia_ManCoNum(pSrm), vBatchSizes ? Vec_IntSize(vBatchSizes) : 0 );
+                           Gia_ManCoNum(pSrm), vBatchSizes ? Vec_IntSize(vBatchSizes) : 0,
+                           100.0 * dOrBatchPrevUnsatRate );
             (void)nIncrSkipped;
         }
         assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
         clkSrm += Abc_Clock() - clk2;
         if ( Gia_ManCoNum(pSrm) == 0 )
         {
-            if ( vBatchSizes ) { Vec_IntFree( vBatchSizes ); vBatchSizes = NULL; }
-            Vec_IntFree( vOutputs );
+            if ( vBatchSizes == NULL )
+            {
+                Vec_IntFree( vOutputs );
+                Gia_ManStop( pSrm );
+                break;
+            }
+            nBatchNoGroups++;
+            vStatus = Vec_StrAlloc( 0 );
+            vCexStore = Vec_IntAlloc( 0 );
             Gia_ManStop( pSrm );
-            break;
         }
-//Gia_DumpAiger( pSrm, "corrsrm", r, 2 );
-        // found counter-examples to speculation
-        clk2 = Abc_Clock();
-        if ( pPars->fUseCSat )
-            vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
         else
-            vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
-        Gia_ManStop( pSrm );
-        clkSat += Abc_Clock() - clk2;
+        {
+            abctime clkSolve;
+//Gia_DumpAiger( pSrm, "corrsrm", r, 2 );
+            // found counter-examples to speculation
+            clk2 = Abc_Clock();
+            if ( vBatchSizes )
+                vCexStore = Cec_ManSolveMiterWithSolver( pSrm, pParsBatchSat, &vStatus, pPars->fOrBatchUseCSat );
+            else
+                vCexStore = Cec_ManSolveMiterWithSolver( pSrm, pParsSat, &vStatus, pPars->fUseCSat );
+            Gia_ManStop( pSrm );
+            clkSolve = Abc_Clock() - clk2;
+            if ( vBatchSizes )
+                clkBatchTry += clkSolve;
+            clkSat += clkSolve;
+        }
         // OR-batching Phase-2: expand per-batch status to per-pair, then run
         // a fallback per-pair solve for any batch that failed (SAT or timeout).
         // Soundness: a batched OR is UNSAT iff every disjunct (pair miter) is
@@ -1518,35 +1619,60 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( vBatchSizes )
         {
             int N    = Vec_IntSize(vOutputs) / 2;
-            int M    = Vec_StrSize(vStatus);
-            int p, fbIdx, pIdx, j;
+            int M    = Vec_IntSize(vBatchSizes);
+            int p, fbIdx, pIdx, j, poIdx;
             int nFailed = 0;
             Vec_Str_t * vStatusFinal = Vec_StrAlloc( N );
             int * pFallbackMark = ABC_CALLOC( int, Gia_ManObjNum(pAig) );
-            assert( M == Vec_IntSize(vBatchSizes) );
+            Vec_Int_t * vPairMap = Vec_IntStartFull( Gia_ManObjNum(pAig) );
+            Vec_Int_t * vCexStoreBatch = vCexStore;
+            vCexStore = Vec_IntAlloc( 10000 );
             pIdx = 0;
+            poIdx = 0;
             for ( j = 0; j < M; j++ )
             {
-                char st = Vec_StrEntry( vStatus, j );
                 int  sz = Vec_IntEntry( vBatchSizes, j );
                 int  kk;
+                char st = -1;
+                assert( sz >= 1 );
+                if ( sz > 1 )
+                {
+                    assert( poIdx < Vec_StrSize(vStatus) );
+                    st = Vec_StrEntry( vStatus, poIdx++ );
+                    nBatchGroups++;
+                    nBatchPairs += sz;
+                }
                 for ( kk = 0; kk < sz; kk++, pIdx++ )
                 {
-                    int iObjP = Vec_IntEntry( vOutputs, 2*pIdx + 1 );
-                    if ( st == 1 )
-                        Vec_StrPush( vStatusFinal, 1 );
-                    else
+                    int iObjP;
+                    if ( sz > 1 && st == 1 )
                     {
-                        pFallbackMark[iObjP] = 1;
-                        Vec_StrPush( vStatusFinal, -2 );  // placeholder, resolved below
-                        nFailed++;
+                        Vec_StrPush( vStatusFinal, 1 );
+                        continue;
                     }
+                    iObjP = Vec_IntEntry( vOutputs, 2*pIdx + 1 );
+                    pFallbackMark[iObjP] = 1;
+                    Vec_IntWriteEntry( vPairMap, iObjP, pIdx );
+                    Vec_StrPush( vStatusFinal, -2 );  // placeholder, resolved below
+                    nFailed++;
                 }
-                if ( st == 1 ) nBatchProved++;
-                else           nBatchFailed++;
+                if ( sz == 1 )
+                    nBatchSingles++;
+                else if ( st == 1 )
+                {
+                    nBatchGroupsProved++;
+                    nBatchPairsProved += sz;
+                    nBatchSavedCalls += sz - 1;
+                }
+                else
+                {
+                    nBatchGroupsFailed++;
+                    nBatchPairsFailed += sz;
+                }
             }
-            nBatchTotal += M;
             assert( pIdx == N );
+            assert( poIdx == Vec_StrSize(vStatus) );
+            Vec_IntFree( vCexStoreBatch );
             if ( nFailed > 0 )
             {
                 Vec_Int_t * vOutputsFb = NULL;
@@ -1554,6 +1680,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Vec_Int_t * vCexStoreFb = NULL;
                 Gia_Man_t * pSrmFb;
                 int Nfb;
+                abctime clkSolve;
 
                 clk2 = Abc_Clock();
                 // vBatchSizes!=NULL implies Phase-1 used the TFO mask, so pMgr
@@ -1563,56 +1690,51 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                                                        1, pFallbackMark, NULL );
                 clkSrm += Abc_Clock() - clk2;
                 clk2 = Abc_Clock();
-                if ( pPars->fUseCSat )
-                    vCexStoreFb = Cbs_ManSolveMiterNc( pSrmFb, pPars->nBTLimit, &vStatusFb, 0, 0 );
-                else
-                    vCexStoreFb = Cec_ManSatSolveMiter( pSrmFb, pParsSat, &vStatusFb );
+                vCexStoreFb = Cec_ManSolveMiterWithSolver( pSrmFb, pParsSat, &vStatusFb, pPars->fUseCSat );
                 Gia_ManStop( pSrmFb );
-                clkSat += Abc_Clock() - clk2;
+                clkSolve = Abc_Clock() - clk2;
+                clkBatchFallback += clkSolve;
+                clkSat += clkSolve;
 
-                // Phase-2 emits in the same order as Phase-1 (deterministic SRM
-                // construction, identical pReprs, identical structural collapse
-                // since hash-cons agrees on equal sub-expressions). Walk both
-                // in lock-step: every '-2' placeholder must match the next pair
-                // in vOutputsFb. If it doesn't (rare: a structural sweep dropped
-                // a pair on phase 2 only), treat as failed (status 0) to be
-                // safe -- sim refinement and next round's seed diff will still
-                // catch it via pReprs change.
                 Nfb   = Vec_IntSize(vOutputsFb) / 2;
-                fbIdx = 0;
-                for ( p = 0; p < N && fbIdx < Nfb; p++ )
+                nBatchFallbackCalls += Nfb;
+                for ( fbIdx = 0; fbIdx < Nfb; fbIdx++ )
                 {
-                    if ( Vec_StrEntry(vStatusFinal, p) != -2 )
-                        continue;
+                    int iObjP2  = Vec_IntEntry( vOutputsFb,  2*fbIdx + 1 );
+                    int iFinal  = Vec_IntEntry( vPairMap, iObjP2 );
+                    if ( iFinal >= 0 )
                     {
-                        int iReprP1 = Vec_IntEntry( vOutputs,    2*p );
-                        int iObjP1  = Vec_IntEntry( vOutputs,    2*p + 1 );
-                        int iReprP2 = Vec_IntEntry( vOutputsFb,  2*fbIdx );
-                        int iObjP2  = Vec_IntEntry( vOutputsFb,  2*fbIdx + 1 );
-                        if ( iReprP1 == iReprP2 && iObjP1 == iObjP2 )
-                        {
-                            Vec_StrWriteEntry( vStatusFinal, p, Vec_StrEntry(vStatusFb, fbIdx) );
-                            fbIdx++;
-                        }
+                        assert( Vec_StrEntry(vStatusFinal, iFinal) == -2 );
+                        Vec_StrWriteEntry( vStatusFinal, iFinal, Vec_StrEntry(vStatusFb, fbIdx) );
                     }
                 }
-                // Any unresolved placeholders mean phase-2 didn't emit them
-                // (structural collapse). Mark as 0 (failed); see comment above.
+                // Any unresolved placeholders were selected for fallback but
+                // did not emit a non-trivial miter in phase 2; structural
+                // reduction proved them locally.
                 for ( p = 0; p < N; p++ )
                     if ( Vec_StrEntry(vStatusFinal, p) == -2 )
-                        Vec_StrWriteEntry( vStatusFinal, p, 0 );
+                        Vec_StrWriteEntry( vStatusFinal, p, 1 );
                 Vec_IntAppend( vCexStore, vCexStoreFb );
                 Vec_IntFree( vCexStoreFb );
                 Vec_IntFree( vOutputsFb );
                 Vec_StrFree( vStatusFb );
             }
             ABC_FREE( pFallbackMark );
+            Vec_IntFree( vPairMap );
             Vec_IntFree( vBatchSizes );
             vBatchSizes = NULL;
             Vec_StrFree( vStatus );
             vStatus = vStatusFinal;
             if ( pPars->fVeryVerbose )
-                Abc_Print( 1, "  [batch r=%d M=%d N=%d nFailedPairs=%d]\n", r, M, N, nFailed );
+                Abc_Print( 1, "  [batch r=%d groups=%d pos=%d pairs=%d fallback-pairs=%d solver=%s]\n",
+                           r, M, poIdx, N, nFailed, pPars->fOrBatchUseCSat ? "CBS" : "SAT" );
+        }
+        if ( pPars->fOrBatch )
+        {
+            int nRoundProved, nRoundDisproved, nRoundFailed, nRoundTotal;
+            Cec_ManStatusCount( vStatus, &nRoundProved, &nRoundDisproved, &nRoundFailed );
+            nRoundTotal = nRoundProved + nRoundDisproved + nRoundFailed;
+            dOrBatchPrevUnsatRate = nRoundTotal ? 1.0 * nRoundProved / nRoundTotal : 0.0;
         }
         if ( Vec_IntSize(vCexStore) == 0 )
         {
@@ -1690,11 +1812,24 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             ABC_PRTP( "Incr ", clkIncr, clkTotal );
             Abc_Print( 1, "Incr: fallback rounds = %d\n", nIncrFallback );
         }
-        if ( pPars->fOrBatch && nBatchTotal > 0 )
+        if ( pPars->fOrBatch )
         {
-            Abc_Print( 1, "Batch: K=%d batches=%d proved=%d failed=%d (proved-rate=%.1f%%)\n",
-                       nBatchSize, nBatchTotal, nBatchProved, nBatchFailed,
-                       100.0 * nBatchProved / (nBatchTotal ? nBatchTotal : 1) );
+            double dFallbackAvg = nBatchFallbackCalls ? 1.0 * clkBatchFallback / CLOCKS_PER_SEC / nBatchFallbackCalls : 0.0;
+            double dTrySec      = 1.0 * clkBatchTry / CLOCKS_PER_SEC;
+            double dEstSaved    = nBatchSavedCalls * dFallbackAvg - dTrySec;
+            Abc_Print( 1, "Batch: solver=%s K=%d limit=%d rounds=%d skipped-rate=%d no-groups=%d\n",
+                       pPars->fOrBatchUseCSat ? "CBS" : "SAT",
+                       nBatchSize, pParsBatchSat->nBTLimit, nBatchRounds, nBatchSkippedRate, nBatchNoGroups );
+            Abc_Print( 1, "Batch: groups=%d proved=%d failed=%d pairs=%d proved=%d failed=%d singles=%d fallback-calls=%d saved-calls=%d\n",
+                       nBatchGroups, nBatchGroupsProved, nBatchGroupsFailed,
+                       nBatchPairs, nBatchPairsProved, nBatchPairsFailed,
+                       nBatchSingles, nBatchFallbackCalls, nBatchSavedCalls );
+            Abc_Print( 1, "Batch: group-proved-rate=%.1f%% pair-proved-rate=%.1f%% est-saved-vs-fallback-avg=%.2f sec\n",
+                       100.0 * nBatchGroupsProved / (nBatchGroups ? nBatchGroups : 1),
+                       100.0 * nBatchPairsProved / (nBatchPairs ? nBatchPairs : 1),
+                       dEstSaved );
+            ABC_PRTP( "BatchTry", clkBatchTry, clkTotal );
+            ABC_PRTP( "BatchFb ", clkBatchFallback, clkTotal );
         }
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }

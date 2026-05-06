@@ -169,6 +169,7 @@ struct Cec_ParCor_t_
     int              fStopWhenGone; // quit when PO is not a candidate constant
     int              fIncremental;  // active-list/TFO-triggered reproof in main loop
     int              fOrBatch;      // OR-batched miter for stable pairs (-b), implies -i
+    int              fOrBatchUseCSat; // use CBS for OR-batch phase; default uses regular SAT
     int              fVerboseFlops; // verbose stats
     int              fVeryVerbose;  // verbose stats
     int              fVerbose;      // verbose stats
