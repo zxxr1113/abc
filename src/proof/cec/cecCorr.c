@@ -49,11 +49,13 @@ static inline int Gia_ManCorrSpecReal( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_
 //
 //   A pair P = (iRepr, iObj) that was UNSAT in round r-1 is GUARANTEED
 //   to remain UNSAT in round r if no node X in the SRM TFI of P had its
-//   speculative-substitution status (pReprs[X]) modified between rounds.
+//   equivalence-class state modified between rounds.
 //
 // Equivalently: P needs re-verification iff some "seed" (a node with a
-// changed pReprs entry since last round) lies in TFI(P) inside the
-// k-frame unrolling -- equivalently, iRepr or iObj lies in TFO_k(seeds).
+// changed pReprs/pNexts entry since last round) lies in TFI(P) inside
+// the k-frame unrolling -- equivalently, iRepr or iObj lies in TFO_k(seeds).
+// In ring mode, pNexts changes are essential because refinement can create
+// new ring edges without changing the surviving endpoints' representatives.
 //
 // We build the SRM exactly as before (so speculative reduction still
 // keeps the SRM compact -- this is the lesson from v3.0/rIC3-domain:
@@ -70,7 +72,8 @@ struct Cec_IncrMgr_t_
     int          nFrames;         // unrolling depth used by the SRM builder
     int          nObjs;           // cached Gia_ManObjNum(pAig)
     Vec_Int_t *  vReprPrev;       // snapshot of pReprs from previous round
-    Vec_Int_t *  vSeeds;          // nodes whose pReprs changed since snapshot
+    Vec_Int_t *  vNextPrev;       // snapshot of pNexts from previous round
+    Vec_Int_t *  vSeeds;          // nodes whose class state changed since snapshot
     Vec_Int_t *  vTfoNodes;       // ids currently in TFO (for fast clearing)
     int *        pTfoMark;        // dense mark array, size = nObjs
     Vec_Int_t *  vBfsCur;         // BFS frontier for current frame
@@ -89,6 +92,7 @@ static Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
     p->nFrames   = nFrames;
     p->nObjs     = Gia_ManObjNum(pAig);
     p->vReprPrev = Vec_IntStartFull( p->nObjs );  // init to GIA_VOID-equivalent (-1)
+    p->vNextPrev = Vec_IntStart( p->nObjs );
     p->vSeeds    = Vec_IntAlloc( 64 );
     p->vTfoNodes = Vec_IntAlloc( 1024 );
     p->pTfoMark  = ABC_CALLOC( int, p->nObjs );
@@ -108,6 +112,7 @@ static void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
     if ( p->fOwnsFanout )
         Gia_ManStaticFanoutStop( p->pAig );
     Vec_IntFree( p->vReprPrev );
+    Vec_IntFree( p->vNextPrev );
     Vec_IntFree( p->vSeeds );
     Vec_IntFree( p->vTfoNodes );
     Vec_IntFree( p->vBfsCur );
@@ -117,34 +122,39 @@ static void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
 }
 
 /**Function*************************************************************
-  Synopsis    [Snapshot current pReprs into vReprPrev.]
+  Synopsis    [Snapshot current equivalence-class state.]
   Description [O(N). Called at the end of each iteration so that the
                next iteration can diff against it.]
 ***********************************************************************/
-static void Cec_IncrMgrSnapshotReprs( Cec_IncrMgr_t * p )
+static void Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
     int i;
     assert( pAig->pReprs != NULL );
     for ( i = 0; i < p->nObjs; i++ )
+    {
         Vec_IntWriteEntry( p->vReprPrev, i, Gia_ObjRepr(pAig, i) );
+        Vec_IntWriteEntry( p->vNextPrev, i, pAig->pNexts ? Gia_ObjNext(pAig, i) : 0 );
+    }
 }
 
 /**Function*************************************************************
-  Synopsis    [Compute seeds: nodes whose pReprs differ from snapshot.]
+  Synopsis    [Compute seeds: nodes whose class state differs from snapshot.]
   Description [O(N). Returns size of seed set. Does NOT update snapshot
                (caller decides when to snapshot).]
 ***********************************************************************/
 static int Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
-    int i, reprNew, reprOld;
+    int i, reprNew, reprOld, nextNew, nextOld;
     Vec_IntClear( p->vSeeds );
     for ( i = 1; i < p->nObjs; i++ )  // skip const0
     {
         reprNew = Gia_ObjRepr( pAig, i );
         reprOld = Vec_IntEntry( p->vReprPrev, i );
-        if ( reprNew != reprOld )
+        nextNew = pAig->pNexts ? Gia_ObjNext( pAig, i ) : 0;
+        nextOld = Vec_IntEntry( p->vNextPrev, i );
+        if ( reprNew != reprOld || nextNew != nextOld )
             Vec_IntPush( p->vSeeds, i );
     }
     return Vec_IntSize( p->vSeeds );
@@ -1348,7 +1358,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     if ( pPars->fIncremental )
     {
         pMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames );
-        Cec_IncrMgrSnapshotReprs( pMgr );  // initial snapshot (post-BMC pReprs)
+        Cec_IncrMgrSnapshotClasses( pMgr );  // initial snapshot (post-BMC classes)
     }
     // perform refinement of equivalence classes
     for ( r = 0; r < nIterMax; r++ )
@@ -1379,9 +1389,10 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 int nSeeds = Cec_IncrMgrComputeSeeds( pMgr );
                 if ( nSeeds == 0 )
                 {
-                    // No pReprs change since last round => truly converged.
-                    // (Both SAT splits and sim refinement go through pReprs,
-                    // so an empty diff means no candidate moved last round.)
+                    // No class-state change since last round => truly converged.
+                    // In ring mode pNexts matters as much as pReprs because
+                    // refinement can reconnect class edges without changing a
+                    // survivor's representative.
                     clkIncr += Abc_Clock() - clkI;
                     clkSrm  += Abc_Clock() - clk2;
                     break;
@@ -1404,9 +1415,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 clkIncr += Abc_Clock() - clkI;
             }
             // Snapshot for the NEXT iteration's diff. Must happen before
-            // the round modifies pReprs (via SAT/sim refinement below).
+            // the round modifies the classes (via SAT/sim refinement below).
             if ( pMgr )
-                Cec_IncrMgrSnapshotReprs( pMgr );
+                Cec_IncrMgrSnapshotClasses( pMgr );
 
             if ( pTfoMask )
                 pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask );
