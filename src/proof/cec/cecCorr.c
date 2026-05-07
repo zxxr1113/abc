@@ -52,10 +52,12 @@ static inline int Gia_ManCorrSpecReal( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_
 //   equivalence-class state modified between rounds.
 //
 // Equivalently: P needs re-verification iff some "seed" (a node with a
-// changed pReprs/pNexts entry since last round) lies in TFI(P) inside
-// the k-frame unrolling -- equivalently, iRepr or iObj lies in TFO_k(seeds).
-// In ring mode, pNexts changes are essential because refinement can create
-// new ring edges without changing the surviving endpoints' representatives.
+// changed pReprs entry since last round) lies in TFI(P) inside the k-frame
+// unrolling -- equivalently, iRepr or iObj lies in TFO_k(seeds).
+// In ring mode, pNexts changes are handled separately: refinement can create
+// new ring edges without changing the surviving endpoints' representatives,
+// but such an edge only needs the new pair itself to be re-proved. Treating
+// every pNexts change as a TFO seed is correct but too conservative.
 //
 // We build the SRM exactly as before (so speculative reduction still
 // keeps the SRM compact -- this is the lesson from v3.0/rIC3-domain:
@@ -73,7 +75,7 @@ struct Cec_IncrMgr_t_
     int          nObjs;           // cached Gia_ManObjNum(pAig)
     Vec_Int_t *  vReprPrev;       // snapshot of pReprs from previous round
     Vec_Int_t *  vNextPrev;       // snapshot of pNexts from previous round
-    Vec_Int_t *  vSeeds;          // nodes whose class state changed since snapshot
+    Vec_Int_t *  vSeeds;          // nodes whose pReprs changed since snapshot
     Vec_Int_t *  vTfoNodes;       // ids currently in TFO (for fast clearing)
     int *        pTfoMark;        // dense mark array, size = nObjs
     Vec_Int_t *  vBfsCur;         // BFS frontier for current frame
@@ -123,8 +125,9 @@ static void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
 
 /**Function*************************************************************
   Synopsis    [Snapshot current equivalence-class state.]
-  Description [O(N). Called at the end of each iteration so that the
-               next iteration can diff against it.]
+  Description [O(N). Called after SRM construction and before SAT/sim
+               refinement, so the next iteration can diff against the
+               class state whose pairs were just proved.]
 ***********************************************************************/
 static void Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p )
 {
@@ -139,25 +142,129 @@ static void Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p )
 }
 
 /**Function*************************************************************
-  Synopsis    [Compute seeds: nodes whose class state differs from snapshot.]
+  Synopsis    [Compute seeds: nodes whose representative changed.]
   Description [O(N). Returns size of seed set. Does NOT update snapshot
-               (caller decides when to snapshot).]
+               (caller decides when to snapshot). pNexts is intentionally
+               excluded here; ring-link changes are handled edge-locally.]
 ***********************************************************************/
 static int Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
-    int i, reprNew, reprOld, nextNew, nextOld;
+    int i, reprNew, reprOld;
     Vec_IntClear( p->vSeeds );
     for ( i = 1; i < p->nObjs; i++ )  // skip const0
     {
         reprNew = Gia_ObjRepr( pAig, i );
         reprOld = Vec_IntEntry( p->vReprPrev, i );
-        nextNew = pAig->pNexts ? Gia_ObjNext( pAig, i ) : 0;
-        nextOld = Vec_IntEntry( p->vNextPrev, i );
-        if ( reprNew != reprOld || nextNew != nextOld )
+        if ( reprNew != reprOld )
             Vec_IntPush( p->vSeeds, i );
     }
     return Vec_IntSize( p->vSeeds );
+}
+
+/**Function*************************************************************
+  Synopsis    [Count nodes whose ring-list successor changed.]
+  Description [Used only for convergence/fallback decisions. These nodes
+               are not TFO seeds because a pNexts-only change creates a
+               new ring edge, not a new fanout cone to re-prove.]
+***********************************************************************/
+static int Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p )
+{
+    Gia_Man_t * pAig = p->pAig;
+    int i, nChanges = 0;
+    if ( pAig->pNexts == NULL )
+        return 0;
+    for ( i = 1; i < p->nObjs; i++ )  // skip const0
+        nChanges += Gia_ObjNext( pAig, i ) != Vec_IntEntry( p->vNextPrev, i );
+    return nChanges;
+}
+
+/**Function*************************************************************
+  Synopsis    [Detect whether a current ring edge is new since snapshot.]
+  Description [Ring classes store list edges explicitly in pNexts, but the
+               SRM also proves the implicit closing edge tail -> head.  For
+               explicit edges, compare the predecessor's pNexts slot.  For
+               the closing edge, reconstruct whether the same tail/head pair
+               existed in the previous snapshot.]
+***********************************************************************/
+static int Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj )
+{
+    Gia_Man_t * pAig;
+    int iNextCur, iNextOld;
+    if ( p == NULL )
+        return 0;
+    pAig = p->pAig;
+    if ( pAig->pNexts == NULL )
+        return 0;
+    iNextCur = Gia_ObjNext( pAig, iPrev );
+    iNextOld = Vec_IntEntry( p->vNextPrev, iPrev );
+    if ( iNextCur == iObj )
+        return iNextOld != iObj;
+    if ( iNextCur > 0 )
+        return 1; // should not happen for callers below; prove conservatively
+
+    // Current edge is the implicit closing edge (tail -> head).
+    return iNextOld > 0 ||
+           Vec_IntEntry( p->vReprPrev, iPrev ) != iObj ||
+           Vec_IntEntry( p->vReprPrev, iObj ) != GIA_VOID ||
+           Vec_IntEntry( p->vNextPrev, iObj ) <= 0;
+}
+
+/**Function*************************************************************
+  Synopsis    [Count total and active candidate pairs before SRM building.]
+  Description [This mirrors the PO-emission loops below, but stops before
+               constructing the unrolled network.  The count is approximate
+               because SRM construction can still simplify a pair away; it
+               is only used to decide when active filtering is worth it.]
+***********************************************************************/
+static void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
+                                         int * pnTotal, int * pnActive )
+{
+    Gia_Man_t * pAig = p->pAig;
+    Gia_Obj_t * pObj, * pRepr;
+    int i, iPrev, iObj;
+    *pnTotal = *pnActive = 0;
+    assert( pAig->pReprs != NULL );
+    if ( fRings )
+    {
+        Gia_ManForEachObj1( pAig, pObj, i )
+        {
+            if ( Gia_ObjIsConst( pAig, i ) )
+            {
+                (*pnTotal)++;
+                (*pnActive) += pTfoMark == NULL || pTfoMark[i];
+            }
+            else if ( Gia_ObjIsHead( pAig, i ) )
+            {
+                iPrev = i;
+                Gia_ClassForEachObj1( pAig, i, iObj )
+                {
+                    (*pnTotal)++;
+                    (*pnActive) += pTfoMark == NULL || pTfoMark[iPrev] || pTfoMark[iObj] ||
+                                   Cec_IncrMgrRingEdgeChanged( p, iPrev, iObj );
+                    iPrev = iObj;
+                }
+                // Include the implicit closing edge (tail -> head).
+                iObj = i;
+                (*pnTotal)++;
+                (*pnActive) += pTfoMark == NULL || pTfoMark[iPrev] || pTfoMark[iObj] ||
+                               Cec_IncrMgrRingEdgeChanged( p, iPrev, iObj );
+            }
+        }
+    }
+    else
+    {
+        Gia_ManForEachObj1( pAig, pObj, i )
+        {
+            int idR;
+            pRepr = Gia_ObjReprObj( pAig, Gia_ObjId(pAig,pObj) );
+            if ( pRepr == NULL )
+                continue;
+            idR = Gia_ObjId( pAig, pRepr );
+            (*pnTotal)++;
+            (*pnActive) += pTfoMark == NULL || pTfoMark[i] || pTfoMark[idR];
+        }
+    }
 }
 
 /**Function*************************************************************
@@ -251,15 +358,17 @@ static void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
 
 /**Function*************************************************************
   Synopsis    [Variant of Gia_ManCorrSpecReduce that emits miter POs only
-               for candidate pairs whose endpoints lie in pTfoMark.]
+               for active candidate pairs.]
   Description [Identical to Gia_ManCorrSpecReduce w.r.t. SRM topology and
                speculative reduction. The ONLY difference is the emission
                filter: a pair (a, b) is emitted iff pTfoMark[a] || pTfoMark[b].
-               Passing pTfoMark==NULL is equivalent to the baseline.]
+               In ring mode, a new/changed ring edge is also emitted even if
+               neither endpoint is in TFO. Passing pTfoMark==NULL is equivalent
+               to the baseline.]
 ***********************************************************************/
 static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr,
                                                  Vec_Int_t ** pvOutputs, int fRings,
-                                                 int * pTfoMark )
+                                                 int * pTfoMark, Cec_IncrMgr_t * pIncr )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
@@ -308,13 +417,15 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
             }
             else if ( Gia_ObjIsHead( p, i ) )
             {
-                // ring class. Edge filter: emit (iPrev,iObj) iff either
-                // endpoint is in TFO. We must still walk the whole ring
-                // (iPrev advances), but skip edge emission when filtered.
+                // Ring class. Emit old edges only when their endpoints are in
+                // TFO; emit new/rewired edges directly because they had no
+                // previous UNSAT result to reuse. We still walk the full ring
+                // so iPrev stays aligned with the current class order.
                 iPrev = i;
                 Gia_ClassForEachObj1( p, i, iObj )
                 {
-                    int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj];
+                    int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj] ||
+                                Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj );
                     if ( fEmit )
                     {
                         iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
@@ -333,7 +444,8 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
                 // closing edge of the ring: (iPrev, head)
                 iObj = i;
                 {
-                    int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj];
+                    int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj] ||
+                                Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj );
                     if ( fEmit )
                     {
                         iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
@@ -396,7 +508,7 @@ static Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int
   Synopsis    [Computes the real value of the literal w/o spec reduction.]
 
   Description []
-               
+
   SideEffects []
 
   SeeAlso     []
@@ -958,9 +1070,48 @@ int Cec_ManResimulateCounterExamplesComb( Cec_ManSim_t * pSim, Vec_Int_t * vCexS
 
 /**Function*************************************************************
 
+  Synopsis    [Checks whether two endpoints are still in the same class.]
+
+  Description [Ring mode needs special handling for the closing edge
+               tail -> head because Gia_ObjHasSameRepr() compares raw
+               representatives and the head stores GIA_VOID.]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+static int Cec_ManObjsStillMerged( Gia_Man_t * p, int iRepr, int iObj, int fRings )
+{
+    int iReprRoot, iObjRoot;
+    if ( !fRings )
+        return Gia_ObjHasSameRepr( p, iRepr, iObj );
+    if ( iRepr == 0 )
+        return Gia_ObjIsConst( p, iObj );
+    if ( iObj == 0 )
+        return Gia_ObjIsConst( p, iRepr );
+    if ( !Gia_ObjIsClass( p, iRepr ) || !Gia_ObjIsClass( p, iObj ) )
+        return 0;
+    iReprRoot = Gia_ObjIsHead( p, iRepr ) ? iRepr : Gia_ObjRepr( p, iRepr );
+    iObjRoot  = Gia_ObjIsHead( p, iObj  ) ? iObj  : Gia_ObjRepr( p, iObj  );
+    return iReprRoot == iObjRoot && iReprRoot != GIA_VOID;
+}
+
+static int Cec_ManObjToSplit( Gia_Man_t * p, int iRepr, int iObj, int fRings )
+{
+    // For the ring closing edge (tail, head), split the tail. Splitting the
+    // head is also correct, but it changes the representative of the whole
+    // remaining class and creates a much larger incremental seed set.
+    if ( fRings && iObj > 0 && Gia_ObjIsHead( p, iObj ) && Gia_ObjIsClass( p, iRepr ) )
+        return iRepr;
+    return iObj;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Updates equivalence classes by marking those that timed out.]
 
-  Description [Returns 1 if all ndoes are proved.]
+  Description [Returns 1 if all nodes are proved.]
                
   SideEffects []
 
@@ -980,12 +1131,15 @@ int Gia_ManCheckRefinements( Gia_Man_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOu
             continue;
         if ( status == 0 )
         {
-            if ( Gia_ObjHasSameRepr(p, iRepr, iObj) )
+            if ( Cec_ManObjsStillMerged( p, iRepr, iObj, fRings ) )
+            {
                 Counter++;
-//            if ( Gia_ObjHasSameRepr(p, iRepr, iObj) )
-//                Abc_Print( 1, "Gia_ManCheckRefinements(): Disproved equivalence (%d,%d) is not refined!\n", iRepr, iObj );
-//            if ( Gia_ObjHasSameRepr(p, iRepr, iObj) )
-//                Cec_ManSimClassRemoveOne( pSim, iObj );
+                // SAT produced a real counter-example. Resimulation normally
+                // splits the class, but packed patterns can be dropped due to
+                // conflicts; do not leave a disproved pair merged for reuse by
+                // the next incremental round.
+                Cec_ManSimClassRemoveOne( pSim, Cec_ManObjToSplit( p, iRepr, iObj, fRings ) );
+            }
             continue;
         }
         if ( status == -1 )
@@ -996,7 +1150,7 @@ int Gia_ManCheckRefinements( Gia_Man_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOu
 //            Gia_ObjSetFailed( p, iObj );        
 //            if ( fRings )
 //            Cec_ManSimClassRemoveOne( pSim, iRepr );
-            Cec_ManSimClassRemoveOne( pSim, iObj );
+            Cec_ManSimClassRemoveOne( pSim, Cec_ManObjToSplit( p, iRepr, iObj, fRings ) );
             continue;
         }
     }
@@ -1381,53 +1535,64 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clk2 = Abc_Clock();
         {
             int * pTfoMask = NULL;
+            int nReprSeeds = 0, nNextChanges = 0;
+            int nTotalPairs = 0, nActivePairs = 0;
             // Decide whether to apply incremental TFO mask this iteration.
-            // Skip on r==0 (no prior snapshot diff yet) and after fallback.
+            // Skip on r==0 because the first full SRM establishes the cache.
             if ( pMgr && r > 0 )
             {
                 abctime clkI = Abc_Clock();
-                int nSeeds = Cec_IncrMgrComputeSeeds( pMgr );
-                if ( nSeeds == 0 )
+                nReprSeeds = Cec_IncrMgrComputeSeeds( pMgr );
+                nNextChanges = pPars->fUseRings ? Cec_IncrMgrCountNextChanges( pMgr ) : 0;
+                if ( nReprSeeds == 0 && nNextChanges == 0 )
                 {
-                    // No class-state change since last round => truly converged.
-                    // In ring mode pNexts matters as much as pReprs because
-                    // refinement can reconnect class edges without changing a
-                    // survivor's representative.
+                    // No class-state change since the full/active SRM just
+                    // proved these pairs; this is true convergence.
                     clkIncr += Abc_Clock() - clkI;
                     clkSrm  += Abc_Clock() - clk2;
                     break;
                 }
-                // Fallback heuristic: if the disturbed set is large enough
-                // that recomputing TFO + filtering offers no benefit over
-                // a plain rebuild, skip the mask. The threshold is generous
-                // because TFO computation itself is cheap (BFS on static
-                // fanout); the real cost is solver work, which scales with
-                // emitted POs, not seeds.
-                if ( nSeeds * 8 > pMgr->nObjs )
+                Cec_IncrMgrComputeTfo( pMgr );
+                Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                if ( nActivePairs == 0 )
+                {
+                    // Classes changed, but no remaining candidate pair depends
+                    // on the changed reprs and no new ring edge needs proving.
+                    clkIncr += Abc_Clock() - clkI;
+                    clkSrm  += Abc_Clock() - clk2;
+                    break;
+                }
+                // Fallback is based on emitted candidate pairs, not seed count.
+                // A large pNexts-only ring rewiring may have many changed slots
+                // but only a few new edges; conversely a tiny seed can fan out
+                // to almost all pairs. Above ~70% active pairs, the full SRM is
+                // usually cheaper than filtering plus bookkeeping.
+                if ( nTotalPairs > 0 && (ABC_INT64_T)10 * nActivePairs > (ABC_INT64_T)7 * nTotalPairs )
                 {
                     nIncrFallback++;
                 }
                 else
                 {
-                    Cec_IncrMgrComputeTfo( pMgr );
                     pTfoMask = pMgr->pTfoMark;
+                    nIncrSkipped += nTotalPairs - nActivePairs;
                 }
                 clkIncr += Abc_Clock() - clkI;
             }
-            // Snapshot for the NEXT iteration's diff. Must happen before
-            // the round modifies the classes (via SAT/sim refinement below).
-            if ( pMgr )
-                Cec_IncrMgrSnapshotClasses( pMgr );
 
             if ( pTfoMask )
-                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask );
+                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr );
             else
                 pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
             if ( pTfoMask && pPars->fVeryVerbose )
-                Abc_Print( 1, "  [incr r=%d seeds=%d tfo=%d POs=%d]\n",
-                           r, Vec_IntSize(pMgr->vSeeds), Vec_IntSize(pMgr->vTfoNodes),
+                Abc_Print( 1, "  [incr r=%d repr=%d next=%d tfo=%d active=%d/%d POs=%d]\n",
+                           r, nReprSeeds, nNextChanges, Vec_IntSize(pMgr->vTfoNodes),
+                           nActivePairs, nTotalPairs,
                            Gia_ManCoNum(pSrm) );
-            (void)nIncrSkipped;
+            // Snapshot after SRM construction: the active builder still needs
+            // the old pNexts snapshot to recognize newly-created ring edges.
+            // SAT/sim refinement below is what creates the next iteration's diff.
+            if ( pMgr )
+                Cec_IncrMgrSnapshotClasses( pMgr );
         }
         assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
         clkSrm += Abc_Clock() - clk2;
@@ -1520,7 +1685,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( pMgr )
         {
             ABC_PRTP( "Incr ", clkIncr, clkTotal );
-            Abc_Print( 1, "Incr: fallback rounds = %d\n", nIncrFallback );
+            Abc_Print( 1, "Incr: fallback rounds = %d, skipped candidate pairs = %d\n", nIncrFallback, nIncrSkipped );
         }
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }
