@@ -750,6 +750,86 @@ Gia_Man_t * Gia_ManCorrSpecReduceInit( Gia_Man_t * p, int nFrames, int nPrefix, 
 
 /**Function*************************************************************
 
+  Synopsis    [Active variant of Gia_ManCorrSpecReduceInit for BMC.]
+
+  Description [Identical to Gia_ManCorrSpecReduceInit but emits a
+               candidate PO (pRepr, pObj) only when at least one of the
+               endpoints lies in pTfoMark.  Note: the upstream BMC SRM
+               builder takes an fRings flag but never inspects it -- the
+               topology is always (head, member) pairs derived from
+               pReprs alone, with no ring edges.  Therefore the active
+               variant only needs pReprs-driven seeds; pNexts changes
+               cannot affect this SRM and there is no closing edge to
+               reprove.  Passing pTfoMark==NULL falls back to the
+               baseline behaviour.]
+
+***********************************************************************/
+static Gia_Man_t * Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr,
+                                                    Vec_Int_t ** pvOutputs, int * pTfoMark )
+{
+    Gia_Man_t * pNew, * pTemp;
+    Gia_Obj_t * pObj, * pRepr;
+    Vec_Int_t * vXorLits;
+    int f, i, iPrevNew, iObjNew;
+    assert( (!fScorr && nFrames > 1) || (fScorr && nFrames > 0) || nPrefix );
+    assert( Gia_ManRegNum(p) > 0 );
+    assert( p->pReprs != NULL );
+    Vec_IntFill( &p->vCopies, (nFrames+nPrefix+fScorr)*Gia_ManObjNum(p), -1 );
+    Gia_ManSetPhase( p );
+    pNew = Gia_ManStart( (nFrames+nPrefix) * Gia_ManObjNum(p) );
+    pNew->pName = Abc_UtilStrsav( p->pName );
+    pNew->pSpec = Abc_UtilStrsav( p->pSpec );
+    Gia_ManHashAlloc( pNew );
+    Gia_ManForEachRo( p, pObj, i )
+    {
+        Gia_ManAppendCi(pNew);
+        Gia_ObjSetCopyF( p, 0, pObj, 0 );
+    }
+    for ( f = 0; f < nFrames+nPrefix+fScorr; f++ )
+    {
+        Gia_ObjSetCopyF( p, f, Gia_ManConst0(p), 0 );
+        Gia_ManForEachPi( p, pObj, i )
+            Gia_ObjSetCopyF( p, f, pObj, Gia_ManAppendCi(pNew) );
+    }
+    *pvOutputs = Vec_IntAlloc( 1000 );
+    vXorLits = Vec_IntAlloc( 1000 );
+    for ( f = nPrefix; f < nFrames+nPrefix; f++ )
+    {
+        Gia_ManForEachObj1( p, pObj, i )
+        {
+            pRepr = Gia_ObjReprObj( p, Gia_ObjId(p,pObj) );
+            if ( pRepr == NULL )
+                continue;
+            // Active filter: skip pairs whose endpoints are both outside TFO.
+            if ( pTfoMark )
+            {
+                int idR = Gia_ObjId(p, pRepr);
+                if ( !pTfoMark[i] && !pTfoMark[idR] )
+                    continue;
+            }
+            iPrevNew = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorrSpecReal( pNew, p, pRepr, f, nPrefix );
+            iObjNew  = Gia_ManCorrSpecReal( pNew, p, pObj, f, nPrefix );
+            iObjNew  = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
+            if ( iPrevNew != iObjNew )
+            {
+                Vec_IntPush( *pvOutputs, Gia_ObjId(p, pRepr) );
+                Vec_IntPush( *pvOutputs, Gia_ObjId(p, pObj) );
+                Vec_IntPush( vXorLits, Gia_ManHashXor(pNew, iPrevNew, iObjNew) );
+            }
+        }
+    }
+    Vec_IntForEachEntry( vXorLits, iObjNew, i )
+        Gia_ManAppendCo( pNew, iObjNew );
+    Vec_IntFree( vXorLits );
+    Gia_ManHashStop( pNew );
+    Vec_IntErase( &p->vCopies );
+    pNew = Gia_ManCleanup( pTemp = pNew );
+    Gia_ManStop( pTemp );
+    return pNew;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Initializes simulation info for lcorr/scorr counter-examples.]
 
   Description []
@@ -1131,15 +1211,15 @@ int Gia_ManCheckRefinements( Gia_Man_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOu
             continue;
         if ( status == 0 )
         {
+            // Match upstream ABC: do not force-split when SAT returns a CEX.
+            // Cec_ManResimulateCounterExamples replays the CEX and refines the
+            // class; only a contrived pattern-packing conflict could leave the
+            // pair merged (each lit must collide at every one of the 32*nWords
+            // packed slots). Forcing a split here is sound but perturbs the
+            // BMC/refinement trajectory and was the cause of the
+            // Problem05_label47/49 + token_ring incremental regression.
             if ( Cec_ManObjsStillMerged( p, iRepr, iObj, fRings ) )
-            {
                 Counter++;
-                // SAT produced a real counter-example. Resimulation normally
-                // splits the class, but packed patterns can be dropped due to
-                // conflicts; do not leave a disproved pair merged for reuse by
-                // the next incremental round.
-                Cec_ManSimClassRemoveOne( pSim, Cec_ManObjToSplit( p, iRepr, iObj, fRings ) );
-            }
             continue;
         }
         if ( status == -1 )
@@ -1147,10 +1227,10 @@ int Gia_ManCheckRefinements( Gia_Man_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOu
 //            if ( !Gia_ObjFailed( p, iObj ) )
 //                Abc_Print( 1, "Gia_ManCheckRefinements(): Failed equivalence is not marked as failed!\n" );
 //            Gia_ObjSetFailed( p, iRepr );
-//            Gia_ObjSetFailed( p, iObj );        
+//            Gia_ObjSetFailed( p, iObj );
 //            if ( fRings )
 //            Cec_ManSimClassRemoveOne( pSim, iRepr );
-            Cec_ManSimClassRemoveOne( pSim, Cec_ManObjToSplit( p, iRepr, iObj, fRings ) );
+            Cec_ManSimClassRemoveOne( pSim, iObj );
             continue;
         }
     }
@@ -1296,7 +1376,7 @@ int Cec_ManCountLits( Gia_Man_t * p )
 
 ***********************************************************************/
 void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPrefs )
-{  
+{
     Cec_ParSim_t ParsSim, * pParsSim = &ParsSim;
     Cec_ParSat_t ParsSat, * pParsSat = &ParsSat;
     Vec_Str_t * vStatus;
@@ -1305,6 +1385,12 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     Cec_ManSim_t * pSim;
     Gia_Man_t * pSrm;
     int fChanges, RetValue, i;
+    // BMC SRM is keyed only on pReprs (Gia_ManCorrSpecReduceInit ignores
+    // its fRings flag).  So the incremental filter only needs pReprs-based
+    // seeds; pNexts changes cannot affect this SRM and there are no ring
+    // closing edges to reprove -- BMC is structurally simpler than the
+    // main inductive loop.
+    Cec_IncrMgr_t * pBmcMgr = NULL;
     // prepare simulation manager
     Cec_ManSimSetDefaultParams( pParsSim );
     pParsSim->nWords     = pPars->nWords;
@@ -1317,20 +1403,66 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     Cec_ManSatSetDefaultParams( pParsSat );
     pParsSat->nBTLimit = pPars->nBTLimit;
     pParsSat->fVerbose = pPars->fVerbose;
+    if ( pPars->fIncremental )
+    {
+        // Use the deepest BMC unrolling depth so the TFO BFS covers every
+        // frame the SRM emits.  In practice nPrefs is 0 and this matches
+        // the main loop's depth, but be defensive in case of non-default
+        // nPrefs callers.
+        pBmcMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames + nPrefs );
+        Cec_IncrMgrSnapshotClasses( pBmcMgr );
+    }
     fChanges = 1;
     for ( i = 0; fChanges && (!pPars->nLimitMax || i < pPars->nLimitMax); i++ )
     {
+        int * pTfoMask = NULL;
+        int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0;
         if ( Cec_ParCorShouldStop( pPars ) )
             break;
         abctime clkBmc = Abc_Clock();
         fChanges = 0;
-        pSrm = Gia_ManCorrSpecReduceInit( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
+        // Decide whether to apply incremental TFO mask this iteration.
+        // Skip on i==0 because the first full BMC SRM establishes the cache.
+        if ( pBmcMgr && i > 0 )
+        {
+            nReprSeeds = Cec_IncrMgrComputeSeeds( pBmcMgr );
+            if ( nReprSeeds == 0 )
+            {
+                // No pReprs change since last SRM proved its pairs --
+                // BMC SRM topology is unchanged so no useful new SAT
+                // work; treat as convergence.
+                break;
+            }
+            Cec_IncrMgrComputeTfo( pBmcMgr );
+            // BMC SRM is non-ring; pass fRings=0 so we count (head, member)
+            // pairs only and skip any ring-edge bookkeeping.
+            Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+            if ( nActivePairs == 0 )
+                break;
+            // Same fallback heuristic as the main loop: above ~70% active,
+            // the mask plus emission filter costs more than just rebuilding
+            // the full SRM.
+            if ( !( nTotalPairs > 0 && (ABC_INT64_T)10 * nActivePairs > (ABC_INT64_T)7 * nTotalPairs ) )
+                pTfoMask = pBmcMgr->pTfoMark;
+        }
+        if ( pTfoMask )
+            pSrm = Gia_ManCorrSpecReduceInit_Active( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pTfoMask );
+        else
+            pSrm = Gia_ManCorrSpecReduceInit( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
+        if ( pTfoMask && pPars->fVeryVerbose )
+            Abc_Print( 1, "  [bmc-incr i=%d repr=%d active=%d/%d POs=%d]\n",
+                       i, nReprSeeds, nActivePairs, nTotalPairs, Gia_ManCoNum(pSrm) );
+        // Snapshot after SRM construction, before SAT/refine: this is the
+        // class state whose pairs were just emitted.  The next iteration's
+        // diff vs this snapshot tells us which pairs are stale.
+        if ( pBmcMgr )
+            Cec_IncrMgrSnapshotClasses( pBmcMgr );
         if ( Gia_ManPoNum(pSrm) == 0 )
         {
             Gia_ManStop( pSrm );
             Vec_IntFree( vOutputs );
             break;
-        } 
+        }
         pParsSat->nBTLimit *= 10;
         if ( pPars->fUseCSat )
             vCexStore = Tas_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0 );
@@ -1353,6 +1485,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         if ( Cec_ParCorShouldStop( pPars ) )
             break;
     }
+    Cec_IncrMgrFree( pBmcMgr );
     Cec_ManSimStop( pSim );
 }
 
