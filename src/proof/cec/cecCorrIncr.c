@@ -24,8 +24,21 @@ ABC_NAMESPACE_IMPL_START
 ///                     FUNCTION DEFINITIONS                         ///
 ////////////////////////////////////////////////////////////////////////
 
-// Allocate the manager. Builds static fanout on pAig if not already present;
-// fOwnsFanout records that we must release it ourselves on Free.
+/**Function*************************************************************
+
+  Synopsis    [Allocates the incremental active-list manager.]
+
+  Description [The manager owns one snapshot of pReprs/pNexts plus the
+  TFO bookkeeping arrays.  pAig must outlive the manager; the manager
+  never duplicates the AIG, only references it.  If the host AIG does
+  not yet carry a static fanout, this routine builds it and remembers
+  to tear it down on Free.]
+
+  SideEffects [Builds static fanout on pAig if not already present.]
+
+  SeeAlso     []
+
+***********************************************************************/
 Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
 {
     Cec_IncrMgr_t * p = ABC_CALLOC( Cec_IncrMgr_t, 1 );
@@ -47,6 +60,19 @@ Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
     return p;
 }
 
+/**Function*************************************************************
+
+  Synopsis    [Frees the incremental manager.]
+
+  Description [Releases all internal vectors and the TFO mark array.
+  If the manager built the static fanout on Alloc, it is also torn
+  down here.  Safe to call with a NULL pointer.]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
 void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
 {
     if ( p == NULL ) return;
@@ -62,8 +88,21 @@ void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
     ABC_FREE( p );
 }
 
-// Capture the equivalence-class state whose pairs were just emitted into the
-// SRM, so the next iteration can diff against it to find stale pairs.
+/**Function*************************************************************
+
+  Synopsis    [Snapshots the current equivalence-class state.]
+
+  Description [Copies the per-node pReprs and pNexts arrays into the
+  manager so the next iteration can diff against the class state whose
+  pairs were just emitted into the SRM.  Should be called after SRM
+  construction and before SAT/sim refinement: the snapshot then reflects
+  exactly the pairs the SAT solver was asked to prove.  O(N).]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
 void Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
@@ -76,9 +115,23 @@ void Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p )
     }
 }
 
-// Seeds = nodes whose pReprs changed since the snapshot. pNexts changes are
-// handled separately because a ring-link rewrite is an edge-local event, not
-// a new fanout cone to re-prove.
+/**Function*************************************************************
+
+  Synopsis    [Computes the seed set for the next TFO BFS.]
+
+  Description [Returns the number of nodes whose representative changed
+  since the last snapshot; the seeds themselves are stored in vSeeds and
+  consumed by Cec_IncrMgrComputeTfo.  Does not update the snapshot --
+  the caller decides when to snapshot.  pNexts changes are intentionally
+  excluded here: a ring-link rewrite is an edge-local event that creates
+  a new ring edge to reprove, not a new fanout cone, so it is handled by
+  Cec_IncrMgrRingEdgeChanged at SRM emission time.]
+
+  SideEffects []
+
+  SeeAlso     [Cec_IncrMgrComputeTfo Cec_IncrMgrRingEdgeChanged]
+
+***********************************************************************/
 int Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
@@ -94,6 +147,21 @@ int Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p )
     return Vec_IntSize( p->vSeeds );
 }
 
+/**Function*************************************************************
+
+  Synopsis    [Counts nodes whose ring-list successor changed.]
+
+  Description [Used only for convergence and fallback decisions.  These
+  nodes are NOT TFO seeds, because a pNexts-only change creates a new
+  ring edge (proved edge-locally by the active SRM builder) rather than
+  a new fanout cone to re-prove.  Returns 0 when pNexts is unallocated,
+  i.e. when ring mode is off.]
+
+  SideEffects []
+
+  SeeAlso     [Cec_IncrMgrComputeSeeds]
+
+***********************************************************************/
 int Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
@@ -105,9 +173,25 @@ int Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p )
     return nChanges;
 }
 
-// Has the current ring edge (iPrev -> iObj) appeared since the snapshot?
-// Explicit edges live in pNexts. The implicit closing edge (tail -> head) does
-// not, so we reconstruct whether the same tail/head pair already existed.
+/**Function*************************************************************
+
+  Synopsis    [Detects whether a ring edge is new since the last snapshot.]
+
+  Description [Ring classes store list edges explicitly in pNexts, but
+  the SRM also proves the implicit closing edge tail -> head.  For an
+  explicit edge, the edge is unchanged iff the predecessor's pNexts slot
+  still names the same successor.  For the closing edge there is no
+  pNexts slot to compare, so we reconstruct whether the same tail/head
+  pair already existed in the previous snapshot: the tail must have been
+  pointing to the head (closing the ring) and the head must still have
+  been a class root.  Returns 1 to mean "must be re-proved".  Passing a
+  NULL manager or a non-ring AIG returns 0 (no edge work needed).]
+
+  SideEffects []
+
+  SeeAlso     [Cec_IncrMgrCountActivePairs]
+
+***********************************************************************/
 int Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj )
 {
     Gia_Man_t * pAig;
@@ -131,9 +215,25 @@ int Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj )
            Vec_IntEntry( p->vNextPrev, iObj ) <= 0;
 }
 
-// Approximate count of (total, active) candidate pairs before SRM build.
-// Mirrors the PO-emission loops below; the SRM may still simplify pairs away,
-// so the result is only used to decide whether the active filter is worth it.
+/**Function*************************************************************
+
+  Synopsis    [Counts total and active candidate pairs before SRM build.]
+
+  Description [Mirrors the PO-emission loops in the active SRM builders
+  but stops before constructing the unrolled network: it walks every
+  candidate pair the SRM would emit and tallies how many would survive
+  the active filter (pTfoMark plus the ring-edge override).  The count
+  is approximate because SRM construction can still simplify a pair
+  away after the literal it represents collapses; it is used only to
+  decide whether the active filter saves enough work to be worth the
+  bookkeeping (the main loop falls back to the full SRM above ~70%
+  active pairs).  When pTfoMark is NULL every pair is counted active.]
+
+  SideEffects []
+
+  SeeAlso     [Gia_ManCorrSpecReduce_Active]
+
+***********************************************************************/
 void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
                                   int * pnTotal, int * pnActive )
 {
@@ -183,11 +283,32 @@ void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
     }
 }
 
-// Forward TFO BFS from seeds across nFrames unrollings. Marks pTfoMark[id]=1
-// for every AIG node reachable from a seed within nFrames steps. RI fanouts
-// cross to the next frame via Gia_ObjRiToRo. RIs themselves are intentionally
-// not marked: SRM emission is keyed on AIG candidates (ANDs/CIs), not COs.
-// vTfoNodes records every marked id so we can clear marks in O(|TFO|).
+/**Function*************************************************************
+
+  Synopsis    [Forward TFO BFS from seeds across nFrames unrollings.]
+
+  Description [Marks pTfoMark[id]=1 for every AIG node reachable from
+  any seed within nFrames combinational+sequential steps.  Each frame
+  performs a combinational fanout BFS; RI fanouts cross to the next
+  frame by following Gia_ObjRiToRo to the corresponding register output.
+  After nFrames cross-frame jumps the search stops, since pairs deeper
+  than that cannot depend on the seeds within an nFrames-deep SRM.
+
+  RI nodes themselves are intentionally not marked: SRM emission is
+  keyed on AIG candidate nodes (ANDs and CIs) and never on COs, so
+  marking RIs would only inflate the active set without enabling any
+  additional pair.
+
+  Mark clearing is amortised: vTfoNodes records every id touched in
+  the previous round and is iterated to zero only those entries, so
+  the routine never sweeps the full N-sized array.  Cost per call is
+  O(|TFO_k| * avg_fanout).]
+
+  SideEffects []
+
+  SeeAlso     [Cec_IncrMgrComputeSeeds]
+
+***********************************************************************/
 void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
@@ -258,10 +379,30 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
     }
 }
 
-// Variant of Gia_ManCorrSpecReduce that emits a candidate PO (a, b) only when
-// pTfoMark[a] || pTfoMark[b]. In ring mode, a new/changed ring edge is also
-// emitted even if neither endpoint is in the TFO. Passing pTfoMark==NULL is
-// equivalent to the baseline.
+/**Function*************************************************************
+
+  Synopsis    [Active-filter variant of Gia_ManCorrSpecReduce.]
+
+  Description [Identical to Gia_ManCorrSpecReduce in its SRM topology
+  and speculative reduction; the only difference is the PO emission
+  filter.  A candidate pair (a, b) is emitted iff pTfoMark[a] is set
+  or pTfoMark[b] is set, i.e. at least one endpoint lies in the TFO of
+  a recently-changed representative.  In ring mode, a ring edge that is
+  new or rewired since the last snapshot (Cec_IncrMgrRingEdgeChanged)
+  is also emitted even if neither endpoint is in the TFO -- the edge
+  has no prior UNSAT result to reuse and must be reproved on its own.
+
+  Walking the full ring is required (rather than skipping unmarked
+  members) so iPrev stays aligned with the live class order; the active
+  filter only suppresses the resulting PO when the edge is provably
+  not new and neither endpoint is reachable from a seed.  Passing
+  pTfoMark == NULL falls back to the unfiltered baseline behaviour.]
+
+  SideEffects []
+
+  SeeAlso     [Gia_ManCorrSpecReduce]
+
+***********************************************************************/
 Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr,
                                           Vec_Int_t ** pvOutputs, int fRings,
                                           int * pTfoMark, Cec_IncrMgr_t * pIncr )
@@ -391,11 +532,25 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
     return pNew;
 }
 
-// Variant of Gia_ManCorrSpecReduceInit (BMC SRM) with the same active filter.
-// The baseline BMC SRM ignores its fRings flag -- topology is always
-// (head, member) pairs from pReprs alone, with no ring edges -- so this
-// variant only filters on pReprs-derived endpoints. pTfoMark==NULL falls back
-// to the baseline.
+/**Function*************************************************************
+
+  Synopsis    [Active-filter variant of Gia_ManCorrSpecReduceInit (BMC SRM).]
+
+  Description [Mirrors Gia_ManCorrSpecReduceInit but emits a candidate
+  PO (pRepr, pObj) only when at least one of the two endpoints lies in
+  pTfoMark.  The baseline BMC SRM accepts an fRings flag for symmetry
+  with the inductive builder but never inspects it -- its topology is
+  always (head, member) pairs derived from pReprs alone, with no ring
+  edges to close.  Therefore this active variant only needs pReprs-
+  driven seeds: pNexts changes cannot affect this SRM and there is no
+  closing edge to reprove.  Passing pTfoMark == NULL falls back to the
+  unfiltered baseline behaviour.]
+
+  SideEffects []
+
+  SeeAlso     [Gia_ManCorrSpecReduceInit]
+
+***********************************************************************/
 Gia_Man_t * Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr,
                                               Vec_Int_t ** pvOutputs, int * pTfoMark )
 {
