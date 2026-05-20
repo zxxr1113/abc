@@ -1038,12 +1038,16 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
 {
     extern void Gia_ManCollectTest( Gia_Man_t * pAig );
     extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
-    Cbs_Man_t * p; 
+    // &scorr fine-grained profiling hooks (defined in cecCorr.c)
+    extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
+    extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
+    Cbs_Man_t * p;
     Vec_Int_t * vCex, * vVisit, * vCexStore;
     Vec_Str_t * vStatus;
-    Gia_Obj_t * pRoot; 
+    Gia_Obj_t * pRoot;
     int i, status;
     abctime clk, clkTotal = Abc_Clock();
+    abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     assert( Gia_ManRegNum(pAig) == 0 );
 //    Gia_ManCollectTest( pAig );
     // prepare AIG
@@ -1060,6 +1064,12 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
     vCexStore = Vec_IntAlloc( 10000 );
     vVisit    = Vec_IntAlloc( 100 );
     vCex      = Cbs_ReadModel( p );
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // solver alloc + AIG prep
+        Cec_ScorrProfSolve = Cec_ScorrProfMax = 0;
+        Cec_ScorrProfCalls = 0;
+    }
     // solve for each output
     Gia_ManForEachCo( pAig, pRoot, i )
     {
@@ -1082,9 +1092,17 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
             continue;
         }
         clk = Abc_Clock();
+        clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
         p->Pars.fUseHighest = 1;
         p->Pars.fUseLowest  = 0;
         status = Cbs_ManSolve( p, Gia_ObjChild0(pRoot) );
+        if ( Cec_ScorrProfOn )
+        {
+            abctime dHr = Abc_ClockHr() - clkHr;
+            Cec_ScorrProfSolve += dHr;
+            if ( dHr > Cec_ScorrProfMax ) Cec_ScorrProfMax = dHr;
+            Cec_ScorrProfCalls++;
+        }
 //        printf( "\n" );
 /*
         if ( status == -1 )

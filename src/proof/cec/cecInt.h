@@ -194,6 +194,13 @@ struct Cec_IncrMgr_t_
 extern void                 Cec_ManRefinedClassPrintStats( Gia_Man_t * p, Vec_Str_t * vStatus, int iIter, abctime Time );
 extern int                  Gia_ManCorrSpecReal( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
 extern void                 Gia_ManCorrSpecReduce_rec( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
+/* &scorr per-proof profiling counters: defined in cecCorr.c, written by the    */
+/* SAT/CSAT miter solvers, reset+read by the &scorr loop. All times in ns.      */
+extern int                  Cec_ScorrProfOn;     // master enable (gates all profiling work)
+extern int                  Cec_ScorrProfCalls;  // # of per-PO solve calls in the last miter
+extern abctime              Cec_ScorrProfSetup;  // solver alloc + AIG prep before the PO loop
+extern abctime              Cec_ScorrProfSolve;  // summed over every per-PO solve call
+extern abctime              Cec_ScorrProfMax;    // slowest single per-PO solve call
 /*=== cecCorrIncr.c ============================================================*/
 extern Cec_IncrMgr_t *      Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames );
 extern void                 Cec_IncrMgrFree( Cec_IncrMgr_t * p );
