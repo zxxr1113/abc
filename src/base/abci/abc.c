@@ -41263,6 +41263,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             break;
         case 'w':
             pPars->fVerboseFlops ^= 1;
+            pPars->fVeryVerbose ^= 1;
             break;
         case 'v':
             pPars->fVerbose ^= 1;
@@ -41348,7 +41349,7 @@ usage:
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-i     : toggle incremental TFO-triggered re-proof in main loop [default = %s]\n", pPars->fIncremental? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
-    Abc_Print( -2, "\t-w     : toggle printing verbose info about equivalent flops [default = %s]\n", pPars->fVerboseFlops? "yes": "no" );
+    Abc_Print( -2, "\t-w     : toggle detailed profiling and verbose info about equivalent flops [default = %s]\n", pPars->fVeryVerbose? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");
     return 1;

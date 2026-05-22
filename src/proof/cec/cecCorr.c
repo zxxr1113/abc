@@ -607,6 +607,36 @@ int Cec_ManLoadCounterExamples2( Vec_Ptr_t * vInfo, Vec_Int_t * vCexStore, int i
 
 /**Function*************************************************************
 
+  Synopsis    [Returns true if the store contains a real SAT result.]
+
+  Description [Timeouts are encoded as (Out, -1).  They should still be
+  handled by Gia_ManCheckRefinements(), but they do not carry a pattern
+  for counter-example resimulation.  SAT counter-examples, including the
+  trivial constant-1 case, have nSize >= 0 and preserve the old resim
+  path.]
+               
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+static int Cec_ManCexStoreHasPattern( Vec_Int_t * vCexStore )
+{
+    int iStart = 0, nSize;
+    while ( iStart < Vec_IntSize(vCexStore) )
+    {
+        iStart++; // output number
+        assert( iStart < Vec_IntSize(vCexStore) );
+        nSize = Vec_IntEntry( vCexStore, iStart++ );
+        if ( nSize >= 0 )
+            return 1;
+        assert( nSize == -1 );
+    }
+    return 0;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Resimulates counter-examples derived by the SAT solver.]
 
   Description []
@@ -1021,10 +1051,13 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         // refine classes with these counter-examples
         if ( Vec_IntSize(vCexStore) )
         {
-            tH = Abc_ClockHr();
-            RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs );
-            Prof.tSim = Abc_ClockHr() - tH;
-            Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+            if ( Cec_ManCexStoreHasPattern(vCexStore) )
+            {
+                tH = Abc_ClockHr();
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs );
+                Prof.tSim = Abc_ClockHr() - tH;
+                Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+            }
             tH = Abc_ClockHr();
             Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
@@ -1349,10 +1382,13 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 
         // refine classes with these counter-examples
         clk2 = Abc_Clock();
-        tH = Abc_ClockHr();
-        RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
-        Prof.tSim = Abc_ClockHr() - tH;
-        Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+        if ( Cec_ManCexStoreHasPattern(vCexStore) )
+        {
+            tH = Abc_ClockHr();
+            RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
+            Prof.tSim = Abc_ClockHr() - tH;
+            Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+        }
         Vec_IntFree( vCexStore );
         clkSim += Abc_Clock() - clk2;
         tH = Abc_ClockHr();
