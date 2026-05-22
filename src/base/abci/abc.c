@@ -41263,6 +41263,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             break;
         case 'w':
             pPars->fVerboseFlops ^= 1;
+            pPars->fVeryVerbose ^= 1;
             break;
         case 'v':
             pPars->fVerbose ^= 1;
