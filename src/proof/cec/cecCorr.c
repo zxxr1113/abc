@@ -66,6 +66,16 @@ struct Cec_ScorrProf_t_
     abctime tChk;                               // Gia_ManCheckRefinements
     abctime tStats;                             // Cec_ManRefinedClassPrintStats
     int     nSatCalls;                          // # of per-PO solve calls
+    // CEX-store classification (set when vCexStore non-empty).
+    // R = real SAT CEX (nLits > 0); T = trivial SAT (nLits == 0); F = timeout/fail (nLits == -1).
+    int     nCexReal, nCexTriv, nCexFail;
+    // Did we actually invoke Cec_ManResimulateCounterExamples this iter? (0 or 1)
+    int     nSimCalls;
+    // Lit-count deltas around the two refinement stages.
+    //   dSimLits = #pairs broken by the sim call (lits before sim - lits after sim).
+    //   dChkLits = #pairs broken by Gia_ManCheckRefinements (lits after sim - lits after chk).
+    // Lit-count = Gia_ManEquivCountLitsAll(pAig).  Captured only when -w (Cec_ScorrProfOn).
+    int     dSimLits, dChkLits;
 };
 
 // Accumulate one iteration's profile into a running total.
@@ -77,6 +87,9 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->tSatSolve+=pI->tSatSolve; pT->tSim+=pI->tSim; pT->tSimRemap+=pI->tSimRemap;
     pT->tSimRun+=pI->tSimRun; pT->tChk+=pI->tChk; pT->tStats+=pI->tStats;
     pT->nSatCalls+=pI->nSatCalls;
+    pT->nCexReal+=pI->nCexReal; pT->nCexTriv+=pI->nCexTriv; pT->nCexFail+=pI->nCexFail;
+    pT->nSimCalls+=pI->nSimCalls;
+    pT->dSimLits+=pI->dSimLits; pT->dChkLits+=pI->dChkLits;
     if ( pI->tSatMax > pT->tSatMax ) pT->tSatMax = pI->tSatMax;
 }
 
@@ -98,8 +111,11 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
     Abc_Print( 1, "snap=%6.3f srm=%7.3f ", p->tSnap*M, p->tSrm*M );
     Abc_Print( 1, "sat=%7.3f(set=%.3f slv=%.3f max=%.4f n=%d) ",
         p->tSat*M, p->tSatSetup*M, p->tSatSolve*M, p->tSatMax*M, p->nSatCalls );
-    Abc_Print( 1, "sim=%6.3f(rmp=%.3f run=%.3f) ", p->tSim*M, p->tSimRemap*M, p->tSimRun*M );
-    Abc_Print( 1, "chk=%6.3f stat=%6.3f rest=%6.3f\n", p->tChk*M, p->tStats*M, tRest*M );
+    Abc_Print( 1, "cex=R/T/F=%d/%d/%d ", p->nCexReal, p->nCexTriv, p->nCexFail );
+    Abc_Print( 1, "sim=%6.3f(rmp=%.3f run=%.3f n=%d d=%d) ",
+        p->tSim*M, p->tSimRemap*M, p->tSimRun*M, p->nSimCalls, p->dSimLits );
+    Abc_Print( 1, "chk=%6.3f(d=%d) stat=%6.3f rest=%6.3f\n",
+        p->tChk*M, p->dChkLits, p->tStats*M, tRest*M );
 }
 
 
@@ -607,32 +623,49 @@ int Cec_ManLoadCounterExamples2( Vec_Ptr_t * vInfo, Vec_Int_t * vCexStore, int i
 
 /**Function*************************************************************
 
-  Synopsis    [Returns true if the store contains a real SAT result.]
+  Synopsis    [Classifies vCexStore entries by SAT outcome.]
 
-  Description [Timeouts are encoded as (Out, -1).  They should still be
-  handled by Gia_ManCheckRefinements(), but they do not carry a pattern
-  for counter-example resimulation.  SAT counter-examples, including the
-  trivial constant-1 case, have nSize >= 0 and preserve the old resim
-  path.]
-               
+  Description [Each entry is (Out, nLits[, lit0, ..., lit{nLits-1}]).
+                 nLits  > 0  -> real SAT CEX with usable literals;
+                 nLits == 0  -> trivial SAT (e.g. SRM PO became const 1);
+                 nLits == -1 -> timeout/fail, no CEX.
+               Counts are written via the out-pointers (any may be NULL).
+               Returns 1 iff there is at least one entry usable for resim
+               (real or trivial), preserving the prior skip-failed-resim
+               semantics where only timeout-only stores get skipped.]
+
   SideEffects []
 
   SeeAlso     []
 
 ***********************************************************************/
-static int Cec_ManCexStoreHasPattern( Vec_Int_t * vCexStore )
+static int Cec_ManCexStoreClassify( Vec_Int_t * vCexStore, int * pnReal, int * pnTriv, int * pnFail )
 {
-    int iStart = 0, nSize;
+    int iStart = 0, nSize, nReal = 0, nTriv = 0, nFail = 0;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
         iStart++; // output number
         assert( iStart < Vec_IntSize(vCexStore) );
         nSize = Vec_IntEntry( vCexStore, iStart++ );
-        if ( nSize >= 0 )
-            return 1;
-        assert( nSize == -1 );
+        if ( nSize > 0 )
+        {
+            nReal++;
+            iStart += nSize;
+        }
+        else if ( nSize == 0 )
+        {
+            nTriv++;
+        }
+        else
+        {
+            assert( nSize == -1 );
+            nFail++;
+        }
     }
-    return 0;
+    if ( pnReal ) *pnReal = nReal;
+    if ( pnTriv ) *pnTriv = nTriv;
+    if ( pnFail ) *pnFail = nFail;
+    return (nReal + nTriv) > 0;
 }
 
 /**Function*************************************************************
@@ -1051,16 +1084,26 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         // refine classes with these counter-examples
         if ( Vec_IntSize(vCexStore) )
         {
-            if ( Cec_ManCexStoreHasPattern(vCexStore) )
+            int nLitsPre = 0, nLitsMid = 0, nLitsPost = 0;
+            // classify CEX entries: real (nLits>0) / trivial (==0) / fail (==-1)
+            Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
+            if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
+            // skip-failed-resim: only invoke resim when there is a usable pattern
+            if ( Prof.nCexReal + Prof.nCexTriv > 0 )
             {
                 tH = Abc_ClockHr();
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+                Prof.nSimCalls = 1;
             }
+            if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
             Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
+            if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
+            Prof.dSimLits = nLitsPre - nLitsMid;
+            Prof.dChkLits = nLitsMid - nLitsPost;
             fChanges = 1;
         }
         if ( pPars->fVerbose )
@@ -1382,18 +1425,28 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 
         // refine classes with these counter-examples
         clk2 = Abc_Clock();
-        if ( Cec_ManCexStoreHasPattern(vCexStore) )
         {
+            int nLitsPre = 0, nLitsMid = 0, nLitsPost = 0;
+            Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
+            if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
+            if ( Prof.nCexReal + Prof.nCexTriv > 0 )
+            {
+                tH = Abc_ClockHr();
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
+                Prof.tSim = Abc_ClockHr() - tH;
+                Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+                Prof.nSimCalls = 1;
+            }
+            Vec_IntFree( vCexStore );
+            clkSim += Abc_Clock() - clk2;
+            if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
-            RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
-            Prof.tSim = Abc_ClockHr() - tH;
-            Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+            Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
+            Prof.tChk = Abc_ClockHr() - tH;
+            if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
+            Prof.dSimLits = nLitsPre - nLitsMid;
+            Prof.dChkLits = nLitsMid - nLitsPost;
         }
-        Vec_IntFree( vCexStore );
-        clkSim += Abc_Clock() - clk2;
-        tH = Abc_ClockHr();
-        Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
-        Prof.tChk = Abc_ClockHr() - tH;
         if ( pPars->fVerbose )
         {
             tH = Abc_ClockHr();
