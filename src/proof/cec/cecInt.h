@@ -182,6 +182,31 @@ struct Cec_IncrMgr_t_
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
 };
 
+// incremental local-simulation manager for &scorr (step 3: TFO measurement).
+// Step 3 only collects the dirty (frame, objId) cone induced by a vCexStore's
+// CEX literals.  It does not yet evaluate signatures or refine classes; full
+// Cec_ManResimulateCounterExamples still runs alongside it for now.  Frame
+// keying uses key = frame*nObjs + objId, treating nFrames*nObjs as the upper
+// bound on the cone size.
+typedef struct Cec_IncrSim_t_ Cec_IncrSim_t;
+struct Cec_IncrSim_t_
+{
+    Gia_Man_t *  pAig;            // host AIG (frames unfolded conceptually only)
+    int          nFrames;         // = nFrames passed to Cec_ManResimulateCounterExamples
+    int          nObjs;           // cached Gia_ManObjNum(pAig)
+    int          nPis;            // cached Gia_ManPiNum(pAig)
+    int          nRegs;           // cached Gia_ManRegNum(pAig)
+    // Dense mark over keys = frame*nObjs + objId, length nFrames*nObjs.
+    // Reset cheaply by bumping nMarkVersion (constant-time clear via per-key
+    // version compare); per-batch reset uses Cec_IncrSimReset.
+    int *        pMark;
+    int          nMarkVersion;
+    Vec_Int_t *  vSources;        // distinct (frame, objId) keys injected as sources
+    Vec_Int_t *  vDirtyKeys;      // distinct (frame, objId) keys marked dirty
+    Vec_Int_t *  vQueue;          // BFS frontier of keys awaiting fanout walk
+    int          fOwnsFanout;     // 1 if we built static fanout (must free)
+};
+
 ////////////////////////////////////////////////////////////////////////
 ///                      MACRO DEFINITIONS                           ///
 ////////////////////////////////////////////////////////////////////////
@@ -212,6 +237,15 @@ extern void                 Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int 
 extern void                 Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p );
 extern Gia_Man_t *          Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr );
 extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark );
+/*=== cecCorrIncrSim.c ============================================================*/
+extern Cec_IncrSim_t *      Cec_IncrSimAlloc( Gia_Man_t * pAig, int nFrames );
+extern void                 Cec_IncrSimFree( Cec_IncrSim_t * p );
+extern void                 Cec_IncrSimReset( Cec_IncrSim_t * p );
+extern void                 Cec_IncrSimInjectCexStore( Cec_IncrSim_t * p, Vec_Int_t * vCexStore );
+extern int                  Cec_IncrSimComputeTfo( Cec_IncrSim_t * p );
+extern int                  Cec_IncrSimNumSources( Cec_IncrSim_t * p );
+extern int                  Cec_IncrSimNumDirty  ( Cec_IncrSim_t * p );
+extern int                  Cec_IncrSimNumKeys   ( Cec_IncrSim_t * p );
 /*=== cecClass.c ============================================================*/
 extern int                  Cec_ManSimClassRemoveOne( Cec_ManSim_t * p, int i );
 extern int                  Cec_ManSimClassesPrepare( Cec_ManSim_t * p, int LevelMax );

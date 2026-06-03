@@ -4,6 +4,7 @@ SRC +=    src/proof/cec/cecCec.c \
     src/proof/cec/cecCore.c \
     src/proof/cec/cecCorr.c \
     src/proof/cec/cecCorrIncr.c \
+    src/proof/cec/cecCorrIncrSim.c \
     src/proof/cec/cecIso.c \
     src/proof/cec/cecMan.c \
     src/proof/cec/cecPat.c \

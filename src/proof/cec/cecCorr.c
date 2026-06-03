@@ -52,6 +52,10 @@ abctime Cec_ScorrProfMax   = 0;
 // Sim-phase split, filled inside Cec_ManResimulateCounterExamples (ns).
 static abctime Cec_ScorrProfSimRemap = 0; // O(N) remapping + value-ref setup
 static abctime Cec_ScorrProfSimRun   = 0; // actual bit-parallel resimulation
+// Incremental local-sim cone measurement (counts, not times).
+static int     Cec_ScorrProfIncrSrc   = 0; // # distinct (frame, obj) CEX sources
+static int     Cec_ScorrProfIncrDirty = 0; // # distinct (frame, obj) in TFO cone
+static int     Cec_ScorrProfIncrKeys  = 0; // total nFrames * nObjs (upper bound)
 
 // One iteration's wall-clock breakdown; all fields are nanoseconds.
 typedef struct Cec_ScorrProf_t_ Cec_ScorrProf_t;
@@ -74,6 +78,10 @@ struct Cec_ScorrProf_t_
     // # of pairs forced split this iter because SAT returned trivial (nLits==0).
     // Resim cannot break those (no literals), so we directly demote them.
     int     nTrivSplits;
+    // Incremental local-sim cone: distinct (frame, obj) CEX sources,
+    // distinct (frame, obj) in TFO, and the upper-bound nFrames*nObjs.
+    // Measurement-only this commit; eval/refine land in a follow-up.
+    int     nIncrSrc, nIncrDirty, nIncrKeys;
     // Lit-count deltas around the two refinement stages.
     //   dSimLits = #pairs broken by the sim call (lits before sim - lits after sim).
     //   dChkLits = #pairs broken by Gia_ManCheckRefinements (lits after sim - lits after chk).
@@ -93,6 +101,7 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->nCexReal+=pI->nCexReal; pT->nCexTriv+=pI->nCexTriv; pT->nCexFail+=pI->nCexFail;
     pT->nSimCalls+=pI->nSimCalls; pT->nTrivSplits+=pI->nTrivSplits;
     pT->dSimLits+=pI->dSimLits; pT->dChkLits+=pI->dChkLits;
+    pT->nIncrSrc+=pI->nIncrSrc; pT->nIncrDirty+=pI->nIncrDirty; pT->nIncrKeys+=pI->nIncrKeys;
     if ( pI->tSatMax > pT->tSatMax ) pT->tSatMax = pI->tSatMax;
 }
 
@@ -118,6 +127,8 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
         p->nCexReal, p->nCexTriv, p->nCexFail, p->nTrivSplits );
     Abc_Print( 1, "sim=%6.3f(rmp=%.3f run=%.3f n=%d d=%d) ",
         p->tSim*M, p->tSimRemap*M, p->tSimRun*M, p->nSimCalls, p->dSimLits );
+    Abc_Print( 1, "incr=src/dirty/keys=%d/%d/%d ",
+        p->nIncrSrc, p->nIncrDirty, p->nIncrKeys );
     Abc_Print( 1, "chk=%6.3f(d=%d) stat=%6.3f rest=%6.3f\n",
         p->tChk*M, p->dChkLits, p->tStats*M, tRest*M );
 }
@@ -684,12 +695,27 @@ static int Cec_ManCexStoreClassify( Vec_Int_t * vCexStore, int * pnReal, int * p
 
 ***********************************************************************/
 int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames )
-{ 
+{
     Vec_Int_t * vPairs;
-    Vec_Ptr_t * vSimInfo; 
+    Vec_Ptr_t * vSimInfo;
     int RetValue = 0, iStart = 0;
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     Cec_ScorrProfSimRemap = Cec_ScorrProfSimRun = 0;
+    Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
+    // Incremental-sim cone measurement (profile-only).  Allocate manager,
+    // inject all CEX literals as (frame, obj) sources, walk frame-aware TFO.
+    // Results feed the profile only this commit; full sim still runs.
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_IncrSim_t * pIncr = Cec_IncrSimAlloc( pSim->pAig, nFrames );
+        Cec_IncrSimReset( pIncr );
+        Cec_IncrSimInjectCexStore( pIncr, vCexStore );
+        Cec_IncrSimComputeTfo( pIncr );
+        Cec_ScorrProfIncrSrc   = Cec_IncrSimNumSources( pIncr );
+        Cec_ScorrProfIncrDirty = Cec_IncrSimNumDirty( pIncr );
+        Cec_ScorrProfIncrKeys  = Cec_IncrSimNumKeys( pIncr );
+        Cec_IncrSimFree( pIncr );
+    }
     vPairs = Gia_ManCorrCreateRemapping( pSim->pAig );
     Gia_ManCreateValueRefs( pSim->pAig );
 //    pSim->pPars->nWords  = 63;
@@ -1152,6 +1178,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
+                Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.nSimCalls = 1;
             }
             if ( Prof.nCexTriv > 0 )
@@ -1494,6 +1522,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
+                Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.nSimCalls = 1;
             }
             if ( Prof.nCexTriv > 0 )
