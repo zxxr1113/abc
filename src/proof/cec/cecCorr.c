@@ -71,6 +71,9 @@ struct Cec_ScorrProf_t_
     int     nCexReal, nCexTriv, nCexFail;
     // Did we actually invoke Cec_ManResimulateCounterExamples this iter? (0 or 1)
     int     nSimCalls;
+    // # of pairs forced split this iter because SAT returned trivial (nLits==0).
+    // Resim cannot break those (no literals), so we directly demote them.
+    int     nTrivSplits;
     // Lit-count deltas around the two refinement stages.
     //   dSimLits = #pairs broken by the sim call (lits before sim - lits after sim).
     //   dChkLits = #pairs broken by Gia_ManCheckRefinements (lits after sim - lits after chk).
@@ -88,7 +91,7 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->tSimRun+=pI->tSimRun; pT->tChk+=pI->tChk; pT->tStats+=pI->tStats;
     pT->nSatCalls+=pI->nSatCalls;
     pT->nCexReal+=pI->nCexReal; pT->nCexTriv+=pI->nCexTriv; pT->nCexFail+=pI->nCexFail;
-    pT->nSimCalls+=pI->nSimCalls;
+    pT->nSimCalls+=pI->nSimCalls; pT->nTrivSplits+=pI->nTrivSplits;
     pT->dSimLits+=pI->dSimLits; pT->dChkLits+=pI->dChkLits;
     if ( pI->tSatMax > pT->tSatMax ) pT->tSatMax = pI->tSatMax;
 }
@@ -111,7 +114,8 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
     Abc_Print( 1, "snap=%6.3f srm=%7.3f ", p->tSnap*M, p->tSrm*M );
     Abc_Print( 1, "sat=%7.3f(set=%.3f slv=%.3f max=%.4f n=%d) ",
         p->tSat*M, p->tSatSetup*M, p->tSatSolve*M, p->tSatMax*M, p->nSatCalls );
-    Abc_Print( 1, "cex=R/T/F=%d/%d/%d ", p->nCexReal, p->nCexTriv, p->nCexFail );
+    Abc_Print( 1, "cex=R/T/F=%d/%d/%d trsplit=%d ",
+        p->nCexReal, p->nCexTriv, p->nCexFail, p->nTrivSplits );
     Abc_Print( 1, "sim=%6.3f(rmp=%.3f run=%.3f n=%d d=%d) ",
         p->tSim*M, p->tSimRemap*M, p->tSimRun*M, p->nSimCalls, p->dSimLits );
     Abc_Print( 1, "chk=%6.3f(d=%d) stat=%6.3f rest=%6.3f\n",
@@ -780,6 +784,57 @@ static int Cec_ManObjToSplit( Gia_Man_t * p, int iRepr, int iObj, int fRings )
 
 /**Function*************************************************************
 
+  Synopsis    [Directly splits pairs whose SAT result was trivial (nLits==0).]
+
+  Description [A trivial SAT (e.g. SRM PO became const 1) is a real
+  disproval but carries no CEX literals, so Cec_ManResimulateCounterExamples
+  cannot break the pair -- only random filler can, and usually does not.
+  Splitting these pairs directly is sound (SAT proved disequivalence) and
+  recovers work that the standard resim path leaves on the table.
+
+  Only nLits==0 entries are touched; nLits>0 entries are left for resim to
+  refine, matching the established behaviour in Gia_ManCheckRefinements
+  that avoids force-splitting CEX-bearing SAT pairs (token_ring regression).
+
+  Returns the number of pairs actually split this call.]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+static int Cec_ManTrivialSatSplit( Gia_Man_t * pAig, Cec_ManSim_t * pSim,
+    Vec_Int_t * vCexStore, Vec_Str_t * vStatus, Vec_Int_t * vOutputs, int fRings )
+{
+    int iStart = 0, Out, nSize, iRepr, iObj, iSplit, Count = 0;
+    while ( iStart < Vec_IntSize(vCexStore) )
+    {
+        Out = Vec_IntEntry( vCexStore, iStart++ );
+        assert( iStart < Vec_IntSize(vCexStore) );
+        nSize = Vec_IntEntry( vCexStore, iStart++ );
+        if ( nSize > 0 )
+        {
+            iStart += nSize;
+            continue;
+        }
+        if ( nSize < 0 )
+            continue;
+        // nSize == 0 -> trivial SAT, no CEX literals.
+        assert( Out < Vec_StrSize(vStatus) );
+        assert( Vec_StrEntry(vStatus, Out) == 0 );
+        iRepr = Vec_IntEntry( vOutputs, 2*Out );
+        iObj  = Vec_IntEntry( vOutputs, 2*Out + 1 );
+        if ( !Cec_ManObjsStillMerged( pAig, iRepr, iObj, fRings ) )
+            continue;
+        iSplit = Cec_ManObjToSplit( pAig, iRepr, iObj, fRings );
+        if ( Cec_ManSimClassRemoveOne( pSim, iSplit ) )
+            Count++;
+    }
+    return Count;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Updates equivalence classes by marking those that timed out.]
 
   Description [Returns 1 if all nodes are proved.]
@@ -1088,8 +1143,10 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             // classify CEX entries: real (nLits>0) / trivial (==0) / fail (==-1)
             Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
             if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
-            // skip-failed-resim: only invoke resim when there is a usable pattern
-            if ( Prof.nCexReal + Prof.nCexTriv > 0 )
+            // only invoke resim when there is a real CEX (nLits>0).  Trivial
+            // (nLits==0) and fail (==-1) entries carry no literals; trivial
+            // pairs are handled by direct split below, fail pairs by chk.
+            if ( Prof.nCexReal > 0 )
             {
                 tH = Abc_ClockHr();
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs );
@@ -1097,6 +1154,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nSimCalls = 1;
             }
+            if ( Prof.nCexTriv > 0 )
+                Prof.nTrivSplits = Cec_ManTrivialSatSplit( pAig, pSim, vCexStore, vStatus, vOutputs, pPars->fUseRings );
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
             Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
@@ -1429,7 +1488,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             int nLitsPre = 0, nLitsMid = 0, nLitsPost = 0;
             Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
             if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
-            if ( Prof.nCexReal + Prof.nCexTriv > 0 )
+            if ( Prof.nCexReal > 0 )
             {
                 tH = Abc_ClockHr();
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
@@ -1437,6 +1496,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nSimCalls = 1;
             }
+            if ( Prof.nCexTriv > 0 )
+                Prof.nTrivSplits = Cec_ManTrivialSatSplit( pAig, pSim, vCexStore, vStatus, vOutputs, pPars->fUseRings );
             Vec_IntFree( vCexStore );
             clkSim += Abc_Clock() - clk2;
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
