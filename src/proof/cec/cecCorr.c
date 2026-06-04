@@ -53,9 +53,10 @@ abctime Cec_ScorrProfMax   = 0;
 static abctime Cec_ScorrProfSimRemap = 0; // O(N) remapping + value-ref setup
 static abctime Cec_ScorrProfSimRun   = 0; // actual bit-parallel resimulation
 // Incremental local-sim cone measurement (counts, not times).
-static int     Cec_ScorrProfIncrSrc   = 0; // # distinct (frame, obj) CEX sources
-static int     Cec_ScorrProfIncrDirty = 0; // # distinct (frame, obj) in TFO cone
-static int     Cec_ScorrProfIncrKeys  = 0; // total nFrames * nObjs (upper bound)
+static int     Cec_ScorrProfIncrSrc   = 0; // # batches handled by local TFO sim
+static int     Cec_ScorrProfIncrFull  = 0; // # batches that fell back to full sweep
+static int     Cec_ScorrProfIncrDirty = 0; // largest dirty cone across the call
+static int     Cec_ScorrProfIncrKeys  = 0; // nFrames * nObjs (cone-size denominator)
 
 // One iteration's wall-clock breakdown; all fields are nanoseconds.
 typedef struct Cec_ScorrProf_t_ Cec_ScorrProf_t;
@@ -78,10 +79,12 @@ struct Cec_ScorrProf_t_
     // # of pairs forced split this iter because SAT returned trivial (nLits==0).
     // Resim cannot break those (no literals), so we directly demote them.
     int     nTrivSplits;
-    // Incremental local-sim cone: distinct (frame, obj) CEX sources,
-    // distinct (frame, obj) in TFO, and the upper-bound nFrames*nObjs.
-    // Measurement-only this commit; eval/refine land in a follow-up.
-    int     nIncrSrc, nIncrDirty, nIncrKeys;
+    // Incremental local-sim stats for this resim call (only under -I):
+    //   nIncrSrc   = #batches handled by local TFO sim
+    //   nIncrFull  = #batches that fell back to the full sweep (cone too wide)
+    //   nIncrDirty = largest dirty cone seen across the call's batches
+    //   nIncrKeys  = nFrames*nObjs (the cone-size denominator)
+    int     nIncrSrc, nIncrFull, nIncrDirty, nIncrKeys;
     // Lit-count deltas around the two refinement stages.
     //   dSimLits = #pairs broken by the sim call (lits before sim - lits after sim).
     //   dChkLits = #pairs broken by Gia_ManCheckRefinements (lits after sim - lits after chk).
@@ -101,7 +104,10 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->nCexReal+=pI->nCexReal; pT->nCexTriv+=pI->nCexTriv; pT->nCexFail+=pI->nCexFail;
     pT->nSimCalls+=pI->nSimCalls; pT->nTrivSplits+=pI->nTrivSplits;
     pT->dSimLits+=pI->dSimLits; pT->dChkLits+=pI->dChkLits;
-    pT->nIncrSrc+=pI->nIncrSrc; pT->nIncrDirty+=pI->nIncrDirty; pT->nIncrKeys+=pI->nIncrKeys;
+    // local/full batch counts accumulate; dirty is a max; keys is constant
+    pT->nIncrSrc+=pI->nIncrSrc; pT->nIncrFull+=pI->nIncrFull;
+    if ( pI->nIncrDirty > pT->nIncrDirty ) pT->nIncrDirty = pI->nIncrDirty;
+    if ( pI->nIncrKeys  > pT->nIncrKeys  ) pT->nIncrKeys  = pI->nIncrKeys;
     if ( pI->tSatMax > pT->tSatMax ) pT->tSatMax = pI->tSatMax;
 }
 
@@ -127,8 +133,8 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
         p->nCexReal, p->nCexTriv, p->nCexFail, p->nTrivSplits );
     Abc_Print( 1, "sim=%6.3f(rmp=%.3f run=%.3f n=%d d=%d) ",
         p->tSim*M, p->tSimRemap*M, p->tSimRun*M, p->nSimCalls, p->dSimLits );
-    Abc_Print( 1, "incr=src/dirty/keys=%d/%d/%d ",
-        p->nIncrSrc, p->nIncrDirty, p->nIncrKeys );
+    Abc_Print( 1, "incr=loc/full/maxdirty/keys=%d/%d/%d/%d ",
+        p->nIncrSrc, p->nIncrFull, p->nIncrDirty, p->nIncrKeys );
     Abc_Print( 1, "chk=%6.3f(d=%d) stat=%6.3f rest=%6.3f\n",
         p->tChk*M, p->dChkLits, p->tStats*M, tRest*M );
 }
@@ -701,7 +707,9 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     int RetValue = 0, iStart = 0;
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     Cec_ScorrProfSimRemap = Cec_ScorrProfSimRun = 0;
-    Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
+    Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrFull = Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
+    if ( pIncr )
+        Cec_IncrSimBeginCall( pIncr );  // reset per-call local/full/maxdirty counters
     vPairs = Gia_ManCorrCreateRemapping( pSim->pAig );
     Gia_ManCreateValueRefs( pSim->pAig );
 //    pSim->pPars->nWords  = 63;
@@ -728,6 +736,8 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     }
     if ( pIncr )
     {
+        Cec_ScorrProfIncrSrc   = Cec_IncrSimNumLocal( pIncr );
+        Cec_ScorrProfIncrFull  = Cec_IncrSimNumFull( pIncr );
         Cec_ScorrProfIncrDirty = Cec_IncrSimNumDirty( pIncr );
         Cec_ScorrProfIncrKeys  = Cec_IncrSimNumKeys( pIncr );
     }
@@ -1217,8 +1227,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs, NULL );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
-                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
-                Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
+                Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.nSimCalls = 1;
             }
             if ( Prof.nCexTriv > 0 )
@@ -1569,8 +1579,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pIncrSim );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
-                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
-                Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
+                Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.nSimCalls = 1;
             }
             if ( Prof.nCexTriv > 0 )

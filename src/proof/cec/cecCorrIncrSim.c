@@ -459,7 +459,8 @@ int Cec_IncrSimTryBatch( Cec_IncrSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSi
     Cec_IncrSimReset( p );
     Cec_IncrSimCollectSources( p, vSimInfo );
     nDirty = Cec_IncrSimComputeTfo( p );
-    p->nLastDirty = nDirty;
+    if ( nDirty > p->nMaxDirty )
+        p->nMaxDirty = nDirty;
     // gate: a wide cone is cheaper to resimulate with the full bit-parallel sweep
     if ( (ABC_INT64_T)nDirty * CEC_INCRSIM_FRAC_DEN >
          (ABC_INT64_T)p->nFrames * p->nObjs * CEC_INCRSIM_FRAC_NUM )
@@ -485,7 +486,15 @@ int Cec_IncrSimTryBatch( Cec_IncrSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSi
     return 1;
 }
 
-int Cec_IncrSimNumDirty( Cec_IncrSim_t * p ) { return p->nLastDirty; }
+// Resets the per-resim-call profile counters; the host calls this once before
+// the batch loop so the -w numbers are per-iteration, not cumulative.
+void Cec_IncrSimBeginCall( Cec_IncrSim_t * p )
+{
+    p->nBatchLocal = p->nBatchFull = p->nMaxDirty = 0;
+}
+int Cec_IncrSimNumLocal( Cec_IncrSim_t * p ) { return p->nBatchLocal; }
+int Cec_IncrSimNumFull ( Cec_IncrSim_t * p ) { return p->nBatchFull; }
+int Cec_IncrSimNumDirty( Cec_IncrSim_t * p ) { return p->nMaxDirty; }
 int Cec_IncrSimNumKeys ( Cec_IncrSim_t * p ) { return p->nFrames * p->nObjs; }
 
 ////////////////////////////////////////////////////////////////////////

@@ -219,10 +219,10 @@ struct Cec_IncrSim_t_
     unsigned *   pPhase0;         // nWords words of 0  (default signature, phase 0)
     unsigned *   pPhase1;         // nWords words of ~0 (default signature, phase 1)
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
-    // counters for the -w profile (cumulative within one resim call)
+    // counters for the -w profile (reset per resim call by the host)
     int          nBatchLocal;     // batches handled by local TFO sim
     int          nBatchFull;      // batches that fell back to full sim
-    int          nLastDirty;      // dirty-cone size of the last batch
+    int          nMaxDirty;       // largest dirty-cone seen across this call's batches
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -259,6 +259,9 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 extern Cec_IncrSim_t *      Cec_IncrSimAlloc( Gia_Man_t * pAig, int nFrames, int nWords );
 extern void                 Cec_IncrSimFree( Cec_IncrSim_t * p );
 extern int                  Cec_IncrSimTryBatch( Cec_IncrSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, int nFrames );
+extern void                 Cec_IncrSimBeginCall ( Cec_IncrSim_t * p );
+extern int                  Cec_IncrSimNumLocal  ( Cec_IncrSim_t * p );
+extern int                  Cec_IncrSimNumFull   ( Cec_IncrSim_t * p );
 extern int                  Cec_IncrSimNumDirty  ( Cec_IncrSim_t * p );
 extern int                  Cec_IncrSimNumKeys   ( Cec_IncrSim_t * p );
 /*=== cecClass.c ============================================================*/
