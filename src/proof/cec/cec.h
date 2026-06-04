@@ -168,6 +168,7 @@ struct Cec_ParCor_t_
     int              fUseSmartCnf;  // use smart CNF computation
     int              fStopWhenGone; // quit when PO is not a candidate constant
     int              fIncremental;  // active-list/TFO-triggered reproof in main loop
+    int              fIncrSim;      // incremental TFO-only resimulation after SAT
     int              fVerboseFlops; // verbose stats
     int              fVeryVerbose;  // verbose stats
     int              fVerbose;      // verbose stats

@@ -694,7 +694,7 @@ static int Cec_ManCexStoreClassify( Vec_Int_t * vCexStore, int * pnReal, int * p
   SeeAlso     []
 
 ***********************************************************************/
-int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames )
+int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames, Cec_IncrSim_t * pIncr )
 {
     Vec_Int_t * vPairs;
     Vec_Ptr_t * vSimInfo;
@@ -702,20 +702,6 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     Cec_ScorrProfSimRemap = Cec_ScorrProfSimRun = 0;
     Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
-    // Incremental-sim cone measurement (profile-only).  Allocate manager,
-    // inject all CEX literals as (frame, obj) sources, walk frame-aware TFO.
-    // Results feed the profile only this commit; full sim still runs.
-    if ( Cec_ScorrProfOn )
-    {
-        Cec_IncrSim_t * pIncr = Cec_IncrSimAlloc( pSim->pAig, nFrames );
-        Cec_IncrSimReset( pIncr );
-        Cec_IncrSimInjectCexStore( pIncr, vCexStore );
-        Cec_IncrSimComputeTfo( pIncr );
-        Cec_ScorrProfIncrSrc   = Cec_IncrSimNumSources( pIncr );
-        Cec_ScorrProfIncrDirty = Cec_IncrSimNumDirty( pIncr );
-        Cec_ScorrProfIncrKeys  = Cec_IncrSimNumKeys( pIncr );
-        Cec_IncrSimFree( pIncr );
-    }
     vPairs = Gia_ManCorrCreateRemapping( pSim->pAig );
     Gia_ManCreateValueRefs( pSim->pAig );
 //    pSim->pPars->nWords  = 63;
@@ -724,13 +710,26 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRemap = Abc_ClockHr() - tH;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
-        Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
+        // Deterministic 0-completion under incremental sim: zero ALL slots so
+        // the only nonzero inputs are the packed CEX bits (and the repr-remap),
+        // keeping the dirty cone tight.  Without -I the unfilled slots are
+        // random-filled as in upstream ABC.
+        Cec_ManStartSimInfo( vSimInfo, pIncr ? Vec_PtrSize(vSimInfo) : Gia_ManRegNum(pSim->pAig) );
         iStart = Cec_ManLoadCounterExamples( vSimInfo, vCexStore, iStart );
 //        iStart = Cec_ManLoadCounterExamples2( vSimInfo, vCexStore, iStart );
 //        Gia_ManCorrRemapSimInfo( pSim->pAig, vSimInfo );
         Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
-        RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
+        // Local TFO-only resimulation when the cone is small; otherwise the
+        // full bit-parallel sweep.  Cec_IncrSimTryBatch returns 0 when it
+        // decides the cone is too wide to win, so we fall back transparently.
+        if ( !pIncr || !Cec_IncrSimTryBatch( pIncr, pSim, vSimInfo, nFrames ) )
+            RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
 //        Cec_ManSeqResimulateInfo( pSim->pAig, vSimInfo, NULL );
+    }
+    if ( pIncr )
+    {
+        Cec_ScorrProfIncrDirty = Cec_IncrSimNumDirty( pIncr );
+        Cec_ScorrProfIncrKeys  = Cec_IncrSimNumKeys( pIncr );
     }
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRun = Abc_ClockHr() - tH - Cec_ScorrProfSimRemap;
 //Gia_ManEquivPrintOne( pSim->pAig, 85, 0 );
@@ -861,10 +860,47 @@ static int Cec_ManTrivialSatSplit( Gia_Man_t * pAig, Cec_ManSim_t * pSim,
 
 /**Function*************************************************************
 
+  Synopsis    [Force-splits SAT pairs (status==0) the resim left merged.]
+
+  Description [Used only on the incremental-sim path.  Local TFO-only sim uses
+  deterministic CEX-only inputs (no random filler), so a genuine SAT pair can
+  remain merged after resim if its distinguishing lane was packed into a batch
+  that fell back, or its cone hit the gate.  Splitting such a pair is sound --
+  SAT already proved the speculative equivalence false -- and guarantees the
+  refinement makes progress (the disproved pair never survives to the next
+  iteration).  It deliberately perturbs the upstream trajectory, which is the
+  accepted trade-off under -I.  Returns the number of pairs split.]
+
+  SideEffects [Mutates pAig->pReprs/pNexts.]
+
+  SeeAlso     []
+
+***********************************************************************/
+static int Cec_ManForceSplitSatPairs( Gia_Man_t * pAig, Cec_ManSim_t * pSim,
+    Vec_Str_t * vStatus, Vec_Int_t * vOutputs, int fRings )
+{
+    int i, status, iRepr, iObj, iSplit, Count = 0;
+    Vec_StrForEachEntry( vStatus, status, i )
+    {
+        if ( status != 0 )
+            continue;
+        iRepr = Vec_IntEntry( vOutputs, 2*i );
+        iObj  = Vec_IntEntry( vOutputs, 2*i + 1 );
+        if ( !Cec_ManObjsStillMerged( pAig, iRepr, iObj, fRings ) )
+            continue;
+        iSplit = Cec_ManObjToSplit( pAig, iRepr, iObj, fRings );
+        if ( Cec_ManSimClassRemoveOne( pSim, iSplit ) )
+            Count++;
+    }
+    return Count;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Updates equivalence classes by marking those that timed out.]
 
   Description [Returns 1 if all nodes are proved.]
-               
+
   SideEffects []
 
   SeeAlso     []
@@ -1175,7 +1211,10 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             if ( Prof.nCexReal > 0 )
             {
                 tH = Abc_ClockHr();
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs );
+                // BMC base-case resim stays on the full sweep (NULL manager):
+                // its unroll depth grows with the prefix, so a resident dense
+                // cone array is not worth it here.  -I only affects the main loop.
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs, NULL );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
@@ -1317,6 +1356,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clk2, clk = Abc_Clock();
     // Incremental active-list manager (NULL if -i not set)
     Cec_IncrMgr_t * pMgr = NULL;
+    // Incremental local-sim manager (NULL if -I not set); resident across iters
+    Cec_IncrSim_t * pIncrSim = NULL;
     abctime clkIncr = 0;
     int nIncrSkipped = 0, nIncrFallback = 0;
     // fine-grained profiling (-w only); zero-cost when fVeryVerbose is off
@@ -1379,6 +1420,10 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames );
         Cec_IncrMgrSnapshotClasses( pMgr );  // initial snapshot (post-BMC classes)
     }
+    // Resident local-sim manager: dense cone arrays sized for the main-loop
+    // resim depth (pPars->nFrames + 1 + nAddFrames); reset in O(1) per batch.
+    if ( pPars->fIncrSim )
+        pIncrSim = Cec_IncrSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pParsSim->nWords );
     Cec_ScorrProfOn = pPars->fVeryVerbose;
     // perform refinement of equivalence classes
     for ( r = 0; r < nIterMax; r++ )
@@ -1387,12 +1432,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
+            Cec_IncrSimFree( pIncrSim );
             return 1;
         }
         if ( pPars->nStepsMax == r )
         {
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
+            Cec_IncrSimFree( pIncrSim );
             Abc_Print( 1, "Stopped signal correspondence after %d refiment iterations.\n", r );
             return 1;
         }
@@ -1519,7 +1566,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Prof.nCexReal > 0 )
             {
                 tH = Abc_ClockHr();
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames );
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pIncrSim );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
@@ -1533,6 +1580,11 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
             Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
+            // Incremental sim uses deterministic CEX-only inputs and a cone
+            // gate, so a SAT-disproved pair can survive resim; split it now to
+            // guarantee progress (sound: SAT already proved disequivalence).
+            if ( pIncrSim )
+                Cec_ManForceSplitSatPairs( pAig, pSim, vStatus, vOutputs, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;
@@ -1555,6 +1607,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
+            Cec_IncrSimFree( pIncrSim );
             return 1;
         }
         // quit if const is no longer there
@@ -1564,6 +1617,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             printf( "because the property output is no longer a candidate constant.\n" );
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
+            Cec_IncrSimFree( pIncrSim );
             return 0;
         }
         if ( pPars->nLimitMax )
@@ -1575,6 +1629,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 printf( "because refinement does not proceed quickly.\n" );
                 Cec_ManSimStop( pSim );
                 Cec_IncrMgrFree( pMgr );
+                Cec_IncrSimFree( pIncrSim );
                 ABC_FREE( pAig->pReprs );
                 ABC_FREE( pAig->pNexts );
                 return 0;
@@ -1613,6 +1668,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }
     Cec_IncrMgrFree( pMgr );
+    Cec_IncrSimFree( pIncrSim );
     return 1;
 }
 

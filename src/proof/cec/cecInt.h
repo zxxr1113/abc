@@ -182,29 +182,47 @@ struct Cec_IncrMgr_t_
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
 };
 
-// incremental local-simulation manager for &scorr (step 3: TFO measurement).
-// Step 3 only collects the dirty (frame, objId) cone induced by a vCexStore's
-// CEX literals.  It does not yet evaluate signatures or refine classes; full
-// Cec_ManResimulateCounterExamples still runs alongside it for now.  Frame
-// keying uses key = frame*nObjs + objId, treating nFrames*nObjs as the upper
-// bound on the cone size.
+// Incremental local-simulation manager for &scorr.  Replaces a whole-graph
+// resimulation pass with a TFO-only one when the dirty cone induced by the SAT
+// counter-examples is small.  All scratch is allocated once and reset in O(1)
+// via version stamping, so the per-iteration cost is O(|dirty cone|), never
+// O(N).  Keying uses key = frame*nObjs + objId; sorting keys ascending yields
+// frame-major / objId-minor order, which is a valid topological evaluation
+// order (AND fanins have smaller ids; ROs read the previous frame).
 typedef struct Cec_IncrSim_t_ Cec_IncrSim_t;
 struct Cec_IncrSim_t_
 {
     Gia_Man_t *  pAig;            // host AIG (frames unfolded conceptually only)
-    int          nFrames;         // = nFrames passed to Cec_ManResimulateCounterExamples
+    int          nFrames;         // unrolling depth of the resim buffer
     int          nObjs;           // cached Gia_ManObjNum(pAig)
     int          nPis;            // cached Gia_ManPiNum(pAig)
     int          nRegs;           // cached Gia_ManRegNum(pAig)
-    // Dense mark over keys = frame*nObjs + objId, length nFrames*nObjs.
-    // Reset cheaply by bumping nMarkVersion (constant-time clear via per-key
-    // version compare); per-batch reset uses Cec_IncrSimReset.
+    int          nWords;          // sim words per key (= pSim->pPars->nWords)
+    // Dense per-key state over keys = frame*nObjs + objId, length nFrames*nObjs.
+    // pMark stamps "dirty this batch"; pSimOff[key] is the word offset into
+    // vSimData (valid iff pMark[key]==nMarkVersion).  Both cleared in O(1) by
+    // bumping nMarkVersion (Cec_IncrSimReset).
     int *        pMark;
+    int *        pSimOff;
     int          nMarkVersion;
-    Vec_Int_t *  vSources;        // distinct (frame, objId) keys injected as sources
-    Vec_Int_t *  vDirtyKeys;      // distinct (frame, objId) keys marked dirty
+    Vec_Int_t *  vSimData;        // pool of nWords-word signatures for dirty keys
+                                  // (unsigned words stored as int; cast on access)
+    Vec_Int_t *  vSources;        // source keys (nonzero input slots of vSimInfo)
+    Vec_Int_t *  vDirtyKeys;      // all dirty (frame,objId) keys (sorted before eval)
     Vec_Int_t *  vQueue;          // BFS frontier of keys awaiting fanout walk
+    // Class-refinement scratch.
+    int *        pRootMark;       // per-objId stamp of "root already queued this frame"
+    int          nRootVersion;
+    Vec_Int_t *  vDirtyRoots;     // class roots touched in the current frame
+    Vec_Int_t *  vClassOld;       // refine scratch: members equal to root
+    Vec_Int_t *  vClassNew;       // refine scratch: members differing from root
+    unsigned *   pPhase0;         // nWords words of 0  (default signature, phase 0)
+    unsigned *   pPhase1;         // nWords words of ~0 (default signature, phase 1)
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
+    // counters for the -w profile (cumulative within one resim call)
+    int          nBatchLocal;     // batches handled by local TFO sim
+    int          nBatchFull;      // batches that fell back to full sim
+    int          nLastDirty;      // dirty-cone size of the last batch
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -238,16 +256,15 @@ extern void                 Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p );
 extern Gia_Man_t *          Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr );
 extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark );
 /*=== cecCorrIncrSim.c ============================================================*/
-extern Cec_IncrSim_t *      Cec_IncrSimAlloc( Gia_Man_t * pAig, int nFrames );
+extern Cec_IncrSim_t *      Cec_IncrSimAlloc( Gia_Man_t * pAig, int nFrames, int nWords );
 extern void                 Cec_IncrSimFree( Cec_IncrSim_t * p );
-extern void                 Cec_IncrSimReset( Cec_IncrSim_t * p );
-extern void                 Cec_IncrSimInjectCexStore( Cec_IncrSim_t * p, Vec_Int_t * vCexStore );
-extern int                  Cec_IncrSimComputeTfo( Cec_IncrSim_t * p );
-extern int                  Cec_IncrSimNumSources( Cec_IncrSim_t * p );
+extern int                  Cec_IncrSimTryBatch( Cec_IncrSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, int nFrames );
 extern int                  Cec_IncrSimNumDirty  ( Cec_IncrSim_t * p );
 extern int                  Cec_IncrSimNumKeys   ( Cec_IncrSim_t * p );
 /*=== cecClass.c ============================================================*/
 extern int                  Cec_ManSimClassRemoveOne( Cec_ManSim_t * p, int i );
+extern void                 Cec_ManSimClassCreate( Gia_Man_t * p, Vec_Int_t * vClass );
+extern int                  Cec_ManSimCompareEqual( unsigned * p0, unsigned * p1, int nWords );
 extern int                  Cec_ManSimClassesPrepare( Cec_ManSim_t * p, int LevelMax );
 extern int                  Cec_ManSimClassesRefine( Cec_ManSim_t * p );
 extern int                  Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos );
