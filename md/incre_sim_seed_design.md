@@ -141,6 +141,33 @@ Cec_SeedSim_t:
 
 ---
 
+## 9. Phase 1 实测结果(2026-06-05)—— 未过 go/no-go 门槛
+
+直接从已有 `v_i_w`(增量 SAT)日志做了 Phase 1 验证:逐轮把 changed-repr 的 TFO 节点占比和**该轮实际 sim 耗时**配对,按锥宽分桶。结果(4 个 ILA case 一致):
+
+| 桶 | 定义 | 占总 sim 时间 | 轮数 |
+|---|---|---|---|
+| **NARROW** | TFO < 20% 节点(seed-sim 能赢) | **~14–16%** | ~27–32 |
+| WIDE | TFO ≥ 20%(seed-sim 要 fallback) | ~34–38% | ~66–76 |
+| FALLBACK | 全 SRM(active pairs >70%,最宽) | ~48–50% | ~25–31 |
+
+**关键结论:窄轮虽多(~30 轮),但都是廉价轮,合计只占 sim 时间的 ~14%。** 昂贵的 sim 时间(~85%)集中在宽轮/fallback 轮——那里 changed-repr 的 TFO 也是半图(高扇出 repr 一进 seed 集就炸),seed-sim 只能 fallback 全图 sweep,持久化零收益还多付 seed/TFO/writeback 开销。
+
+**对照 §7 的 go/no-go 标准(窄轮 ≥ ~40% sim 时间才值得建):实测 ~14%,未达标。**
+
+- 乐观天花板:完美吃掉窄轮 = 省 ~14% 的 Sim;Sim 占 TOTAL ~35% → **≤ ~5% TOTAL**。
+- 扣掉宽轮的开销(像 `-I` 那样)后,**很可能净中性甚至净负**。
+- 且 20% 阈值偏宽(局部随机访问 per-node 常数远大于 cache 友好的全图 bit-parallel,真正能赢的阈值更接近 ~5%),所以 ~14% 还是**上界**。
+
+**决定:停在 Phase 1,不建 Phase 2 引擎。** 理由是 ILA 的 sim 成本结构性地集中在宽锥轮,换触发源(CEX→repr)把窄轮做窄了,但窄轮本来就不费时间。这条路的根本瓶颈和 `-I` 一样:高扇出 repr 让锥无法持续地窄。
+
+### 真正的时间都在哪 / 下一步候选
+- sim 的 ~85% 在宽轮——要省只能**让全图 sweep 本身更便宜**(降 nWords?向量化?见 `sim_accel`/`rIC3_sim` 分支),而非缩锥。
+- 或**减少轮数**(更快收敛),而非缩每轮 sim。
+- 已落袋的真实收益是增量 SAT(`-i`,token_ring 3.9–8.6×)+ `-s` skip + 删 force-split;sim 这条增量化(无论 `-I` 还是 seed)在 ILA 上**结构性地走不通**。
+
+---
+
 ## 8. 风险与回退
 
 - **半图轮拖累**:~50% 的轮 fallback 全图,持久化在那些轮零收益还多付了 seed/TFO 开销。靠 cone gate 把额外开销压到 O(seed+TFO 计算),且这些轮本就要全图 sweep。
