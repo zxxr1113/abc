@@ -870,43 +870,6 @@ static int Cec_ManTrivialSatSplit( Gia_Man_t * pAig, Cec_ManSim_t * pSim,
 
 /**Function*************************************************************
 
-  Synopsis    [Force-splits SAT pairs (status==0) the resim left merged.]
-
-  Description [Used only on the incremental-sim path.  Local TFO-only sim uses
-  deterministic CEX-only inputs (no random filler), so a genuine SAT pair can
-  remain merged after resim if its distinguishing lane was packed into a batch
-  that fell back, or its cone hit the gate.  Splitting such a pair is sound --
-  SAT already proved the speculative equivalence false -- and guarantees the
-  refinement makes progress (the disproved pair never survives to the next
-  iteration).  It deliberately perturbs the upstream trajectory, which is the
-  accepted trade-off under -I.  Returns the number of pairs split.]
-
-  SideEffects [Mutates pAig->pReprs/pNexts.]
-
-  SeeAlso     []
-
-***********************************************************************/
-static int Cec_ManForceSplitSatPairs( Gia_Man_t * pAig, Cec_ManSim_t * pSim,
-    Vec_Str_t * vStatus, Vec_Int_t * vOutputs, int fRings )
-{
-    int i, status, iRepr, iObj, iSplit, Count = 0;
-    Vec_StrForEachEntry( vStatus, status, i )
-    {
-        if ( status != 0 )
-            continue;
-        iRepr = Vec_IntEntry( vOutputs, 2*i );
-        iObj  = Vec_IntEntry( vOutputs, 2*i + 1 );
-        if ( !Cec_ManObjsStillMerged( pAig, iRepr, iObj, fRings ) )
-            continue;
-        iSplit = Cec_ManObjToSplit( pAig, iRepr, iObj, fRings );
-        if ( Cec_ManSimClassRemoveOne( pSim, iSplit ) )
-            Count++;
-    }
-    return Count;
-}
-
-/**Function*************************************************************
-
   Synopsis    [Updates equivalence classes by marking those that timed out.]
 
   Description [Returns 1 if all nodes are proved.]
@@ -1218,7 +1181,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             // only invoke resim when there is a real CEX (nLits>0).  Trivial
             // (nLits==0) and fail (==-1) entries carry no literals; trivial
             // pairs are handled by direct split below, fail pairs by chk.
-            if ( Prof.nCexReal > 0 )
+            if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
                 tH = Abc_ClockHr();
                 // BMC base-case resim stays on the full sweep (NULL manager):
@@ -1573,7 +1536,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             int nLitsPre = 0, nLitsMid = 0, nLitsPost = 0;
             Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
             if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
-            if ( Prof.nCexReal > 0 )
+            if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
                 tH = Abc_ClockHr();
                 RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pIncrSim );
@@ -1590,11 +1553,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
             Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
-            // Incremental sim uses deterministic CEX-only inputs and a cone
-            // gate, so a SAT-disproved pair can survive resim; split it now to
-            // guarantee progress (sound: SAT already proved disequivalence).
-            if ( pIncrSim )
-                Cec_ManForceSplitSatPairs( pAig, pSim, vStatus, vOutputs, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;
