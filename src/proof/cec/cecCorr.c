@@ -700,7 +700,7 @@ static int Cec_ManCexStoreClassify( Vec_Int_t * vCexStore, int * pnReal, int * p
   SeeAlso     []
 
 ***********************************************************************/
-int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames, Cec_IncrSim_t * pIncr )
+int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames, Cec_SeedSim_t * pSeed )
 {
     Vec_Int_t * vPairs;
     Vec_Ptr_t * vSimInfo;
@@ -708,8 +708,8 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     Cec_ScorrProfSimRemap = Cec_ScorrProfSimRun = 0;
     Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrFull = Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
-    if ( pIncr )
-        Cec_IncrSimBeginCall( pIncr );  // reset per-call local/full/maxdirty counters
+    if ( pSeed )
+        Cec_SeedSimBeginCall( pSeed );  // reset per-call local/full/maxdirty counters
     vPairs = Gia_ManCorrCreateRemapping( pSim->pAig );
     Gia_ManCreateValueRefs( pSim->pAig );
 //    pSim->pPars->nWords  = 63;
@@ -718,28 +718,30 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRemap = Abc_ClockHr() - tH;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
-        // Deterministic 0-completion under incremental sim: zero ALL slots so
-        // the only nonzero inputs are the packed CEX bits (and the repr-remap),
-        // keeping the dirty cone tight.  Without -I the unfilled slots are
-        // random-filled as in upstream ABC.
-        Cec_ManStartSimInfo( vSimInfo, pIncr ? Vec_PtrSize(vSimInfo) : Gia_ManRegNum(pSim->pAig) );
+        // Deterministic 0-completion under persistent incremental sim: zero all
+        // slots so the changed source set is exactly the packed CEX/remap delta.
+        // Without -I, keep upstream random-filled PI/timeframe slots.
+        Cec_ManStartSimInfo( vSimInfo, pSeed ? Vec_PtrSize(vSimInfo) : Gia_ManRegNum(pSim->pAig) );
         iStart = Cec_ManLoadCounterExamples( vSimInfo, vCexStore, iStart );
 //        iStart = Cec_ManLoadCounterExamples2( vSimInfo, vCexStore, iStart );
 //        Gia_ManCorrRemapSimInfo( pSim->pAig, vSimInfo );
         Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
-        // Local TFO-only resimulation when the cone is small; otherwise the
-        // full bit-parallel sweep.  Cec_IncrSimTryBatch returns 0 when it
-        // decides the cone is too wide to win, so we fall back transparently.
-        if ( !pIncr || !Cec_IncrSimTryBatch( pIncr, pSim, vSimInfo, nFrames ) )
+        // Local persistent CEX-TFO resimulation when the cone is small;
+        // otherwise run the full bit-parallel sweep and refresh pVal.
+        if ( !pSeed || !Cec_SeedSimTryBatch( pSeed, pSim, vSimInfo, nFrames ) )
+        {
             RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
+            if ( pSeed )
+                Cec_SeedSimUpdateFull( pSeed, vSimInfo, nFrames );
+        }
 //        Cec_ManSeqResimulateInfo( pSim->pAig, vSimInfo, NULL );
     }
-    if ( pIncr )
+    if ( pSeed )
     {
-        Cec_ScorrProfIncrSrc   = Cec_IncrSimNumLocal( pIncr );
-        Cec_ScorrProfIncrFull  = Cec_IncrSimNumFull( pIncr );
-        Cec_ScorrProfIncrDirty = Cec_IncrSimNumDirty( pIncr );
-        Cec_ScorrProfIncrKeys  = Cec_IncrSimNumKeys( pIncr );
+        Cec_ScorrProfIncrSrc   = Cec_SeedSimNumLocal( pSeed );
+        Cec_ScorrProfIncrFull  = Cec_SeedSimNumFull( pSeed );
+        Cec_ScorrProfIncrDirty = Cec_SeedSimNumDirty( pSeed );
+        Cec_ScorrProfIncrKeys  = Cec_SeedSimNumKeys( pSeed );
     }
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRun = Abc_ClockHr() - tH - Cec_ScorrProfSimRemap;
 //Gia_ManEquivPrintOne( pSim->pAig, 85, 0 );
@@ -1329,8 +1331,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clk2, clk = Abc_Clock();
     // Incremental active-list manager (NULL if -i not set)
     Cec_IncrMgr_t * pMgr = NULL;
-    // Incremental local-sim manager (NULL if -I not set); resident across iters
-    Cec_IncrSim_t * pIncrSim = NULL;
+    // Persistent CEX-TFO local-sim manager (NULL if -I not set).
+    Cec_SeedSim_t * pSeedSim = NULL;
     abctime clkIncr = 0;
     int nIncrSkipped = 0, nIncrFallback = 0;
     // fine-grained profiling (-w only); zero-cost when fVeryVerbose is off
@@ -1393,10 +1395,10 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames );
         Cec_IncrMgrSnapshotClasses( pMgr );  // initial snapshot (post-BMC classes)
     }
-    // Resident local-sim manager: dense cone arrays sized for the main-loop
-    // resim depth (pPars->nFrames + 1 + nAddFrames); reset in O(1) per batch.
+    // Resident local-sim manager: dense persistent value array sized for the
+    // main-loop resim depth (pPars->nFrames + 1 + nAddFrames).
     if ( pPars->fIncrSim )
-        pIncrSim = Cec_IncrSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pParsSim->nWords );
+        pSeedSim = Cec_SeedSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pParsSim->nWords );
     Cec_ScorrProfOn = pPars->fVeryVerbose;
     // perform refinement of equivalence classes
     for ( r = 0; r < nIterMax; r++ )
@@ -1405,14 +1407,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
-            Cec_IncrSimFree( pIncrSim );
+            Cec_SeedSimFree( pSeedSim );
             return 1;
         }
         if ( pPars->nStepsMax == r )
         {
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
-            Cec_IncrSimFree( pIncrSim );
+            Cec_SeedSimFree( pSeedSim );
             Abc_Print( 1, "Stopped signal correspondence after %d refiment iterations.\n", r );
             return 1;
         }
@@ -1539,7 +1541,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
                 tH = Abc_ClockHr();
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pIncrSim );
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pSeedSim );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
@@ -1575,7 +1577,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
-            Cec_IncrSimFree( pIncrSim );
+            Cec_SeedSimFree( pSeedSim );
             return 1;
         }
         // quit if const is no longer there
@@ -1585,7 +1587,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             printf( "because the property output is no longer a candidate constant.\n" );
             Cec_ManSimStop( pSim );
             Cec_IncrMgrFree( pMgr );
-            Cec_IncrSimFree( pIncrSim );
+            Cec_SeedSimFree( pSeedSim );
             return 0;
         }
         if ( pPars->nLimitMax )
@@ -1597,7 +1599,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 printf( "because refinement does not proceed quickly.\n" );
                 Cec_ManSimStop( pSim );
                 Cec_IncrMgrFree( pMgr );
-                Cec_IncrSimFree( pIncrSim );
+                Cec_SeedSimFree( pSeedSim );
                 ABC_FREE( pAig->pReprs );
                 ABC_FREE( pAig->pNexts );
                 return 0;
@@ -1636,7 +1638,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }
     Cec_IncrMgrFree( pMgr );
-    Cec_IncrSimFree( pIncrSim );
+    Cec_SeedSimFree( pSeedSim );
     return 1;
 }
 

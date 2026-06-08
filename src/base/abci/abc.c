@@ -41354,7 +41354,7 @@ usage:
     Abc_Print( -2, "\t-c     : toggle using circuit-based SAT solver [default = %s]\n", pPars->fUseCSat? "yes": "no" );
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-i     : toggle incremental TFO-triggered re-proof in main loop [default = %s]\n", pPars->fIncremental? "yes": "no" );
-    Abc_Print( -2, "\t-I     : toggle incremental TFO-only resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
+    Abc_Print( -2, "\t-I     : toggle persistent CEX-TFO-only resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle detailed profiling and verbose info about equivalent flops [default = %s]\n", pPars->fVeryVerbose? "yes": "no" );

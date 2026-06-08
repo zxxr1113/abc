@@ -168,7 +168,7 @@ struct Cec_ParCor_t_
     int              fUseSmartCnf;  // use smart CNF computation
     int              fStopWhenGone; // quit when PO is not a candidate constant
     int              fIncremental;  // active-list/TFO-triggered reproof in main loop
-    int              fIncrSim;      // incremental TFO-only resimulation after SAT
+    int              fIncrSim;      // persistent CEX-TFO-only resimulation after SAT
     int              fSkipFailResim;// skip resim in rounds with no real CEX (only timeout/fail)
     int              fVerboseFlops; // verbose stats
     int              fVeryVerbose;  // verbose stats
