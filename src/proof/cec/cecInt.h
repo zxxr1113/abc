@@ -182,11 +182,11 @@ struct Cec_IncrMgr_t_
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
 };
 
-// Persistent CEX-TFO simulation manager for &scorr -I.
-// Each prepared CEX batch is compared with the previous batch at the sequential
-// CI slots.  Changed slots seed a frame-aware TFO walk; only this cone is
+// Persistent failed-endpoint TFO simulation manager for &scorr -I.
+// SAT stores the values of each disproved pair's endpoints.  These endpoints
+// seed a frame-aware TFO walk at the SAT comparison frame; only this cone is
 // re-evaluated, while side inputs are read from the dense persistent pVal array.
-// A full resimulation initializes pVal and refreshes it after wide-cone fallback.
+// A full resimulation initializes pVal and refreshes it after fallback.
 //
 // Keying uses key = frame*nObjs + objId.  pVal layout:
 //   pVal[(frame * nObjs + objId) * nWords + w]
@@ -195,6 +195,7 @@ struct Cec_SeedSim_t_
 {
     Gia_Man_t *  pAig;            // host AIG (immutable across iterations)
     int          nFrames;         // total unrolling depth used by resim
+    int          iSeedFrame;       // frame where SAT proved the endpoint pair
     int          nObjs;           // cached Gia_ManObjNum(pAig)
     int          nPis;            // cached Gia_ManPiNum(pAig)
     int          nRegs;           // cached Gia_ManRegNum(pAig)
@@ -205,7 +206,9 @@ struct Cec_SeedSim_t_
     unsigned *   pVal;            // size = (size_t)nFrames * nObjs * nWords
     // Dense per-key state (version-stamped, O(1) clear).
     int *        pMark;           // per-key version stamp, size = nFrames * nObjs
+    int *        pSeedMark;       // per-key version stamp for authoritative SAT roots
     int          nMarkVersion;
+    int          nSeedVersion;
     Vec_Int_t *  vSeeds;          // changed CEX source keys in the current batch
     Vec_Int_t *  vDirtyKeys;      // dirty (frame, objId) keys (sorted before eval)
     Vec_Int_t *  vQueue;          // BFS frontier
@@ -224,7 +227,7 @@ struct Cec_SeedSim_t_
     int          nMaxDirty;       // largest dirty cone across this call
 };
 
-// Fall back when the changed-CEX TFO exceeds this fraction of the unrolled AIG.
+// Fall back when the failed-endpoint TFO exceeds this fraction of the unrolled AIG.
 #define CEC_SEEDSIM_FRAC_NUM 1
 #define CEC_SEEDSIM_FRAC_DEN 5
 
@@ -256,12 +259,12 @@ extern int                  Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj );
 extern void                 Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern void                 Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p );
-extern Gia_Man_t *          Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr );
+extern Gia_Man_t *          Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr, Vec_Int_t ** pvOutLits );
 extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark );
 /*=== cecCorrIncrSim.c ============================================================*/
-extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int nWords );
+extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
 extern void                 Cec_SeedSimFree( Cec_SeedSim_t * p );
-extern int                  Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, int nFrames );
+extern int                  Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits, int nFrames );
 extern void                 Cec_SeedSimUpdateFull( Cec_SeedSim_t * p, Vec_Ptr_t * vSimInfo, int nFrames );
 extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumLocal ( Cec_SeedSim_t * p );
@@ -305,6 +308,7 @@ extern void                 Cec_ManSatSolve( Cec_ManPat_t * pPat, Gia_Man_t * pA
 extern void                 Cec_ManSatSolveCSat( Cec_ManPat_t * pPat, Gia_Man_t * pAig, Cec_ParSat_t * pPars );
 extern Vec_Str_t *          Cec_ManSatSolveSeq( Vec_Ptr_t * vPatts, Gia_Man_t * pAig, Cec_ParSat_t * pPars, int nRegs, int * pnPats );
 extern Vec_Int_t *          Cec_ManSatSolveMiter( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus );
+extern Vec_Int_t *          Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals );
 extern int                  Cec_ManSatCheckNode( Cec_ManSat_t * p, Gia_Obj_t * pObj );
 extern int                  Cec_ManSatCheckNodeTwo( Cec_ManSat_t * p, Gia_Obj_t * pObj1, Gia_Obj_t * pObj2 );
 extern void                 Cec_ManSavePattern( Cec_ManSat_t * p, Gia_Obj_t * pObj1, Gia_Obj_t * pObj2 );

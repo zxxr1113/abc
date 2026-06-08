@@ -179,7 +179,7 @@ int Gia_ManCorrSpecReal( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int 
   Synopsis    [Recursively performs speculative reduction for the object.]
 
   Description []
-               
+
   SideEffects []
 
   SeeAlso     []
@@ -208,18 +208,18 @@ void Gia_ManCorrSpecReduce_rec( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pOb
   Synopsis    [Derives SRM for signal correspondence.]
 
   Description []
-               
+
   SideEffects []
 
   SeeAlso     []
 
 ***********************************************************************/
-Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings )
+Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, Vec_Int_t ** pvOutLits )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
     Vec_Int_t * vXorLits;
-    int f, i, iPrev, iObj, iPrevNew, iObjNew;
+    int f, i, iPrev, iObj, iPrevNew, iObjNew, iPrevRaw, iObjRaw;
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p) > 0 );
     assert( p->pReprs != NULL );
@@ -242,6 +242,8 @@ Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_I
             Gia_ObjSetCopyF( p, f, pObj, Gia_ManAppendCi(pNew) );
     }
     *pvOutputs = Vec_IntAlloc( 1000 );
+    if ( pvOutLits )
+        *pvOutLits = Vec_IntAlloc( 1000 );
     vXorLits = Vec_IntAlloc( 1000 );
     if ( fRings )
     {
@@ -249,12 +251,17 @@ Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_I
         {
             if ( Gia_ObjIsConst( p, i ) )
             {
-                iObjNew = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
-                iObjNew = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pObj) );
+                iObjRaw = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
+                iObjNew = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pObj) );
                 if ( iObjNew != 0 )
                 {
                     Vec_IntPush( *pvOutputs, 0 );
                     Vec_IntPush( *pvOutputs, i );
+                    if ( pvOutLits )
+                    {
+                        Vec_IntPush( *pvOutLits, 0 );
+                        Vec_IntPush( *pvOutLits, iObjRaw );
+                    }
                     Vec_IntPush( vXorLits, iObjNew );
                 }
             }
@@ -263,27 +270,37 @@ Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_I
                 iPrev = i;
                 Gia_ClassForEachObj1( p, i, iObj )
                 {
-                    iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
-                    iObjNew  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
-                    iPrevNew = Abc_LitNotCond( iPrevNew, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
-                    iObjNew  = Abc_LitNotCond( iObjNew,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
+                    iPrevRaw = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
+                    iObjRaw  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
+                    iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
+                    iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
                     if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
                     {
                         Vec_IntPush( *pvOutputs, iPrev );
                         Vec_IntPush( *pvOutputs, iObj );
+                        if ( pvOutLits )
+                        {
+                            Vec_IntPush( *pvOutLits, iPrevRaw );
+                            Vec_IntPush( *pvOutLits, iObjRaw );
+                        }
                         Vec_IntPush( vXorLits, Gia_ManHashAnd(pNew, iPrevNew, Abc_LitNot(iObjNew)) );
                     }
                     iPrev = iObj;
                 }
                 iObj = i;
-                iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
-                iObjNew  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
-                iPrevNew = Abc_LitNotCond( iPrevNew, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
-                iObjNew  = Abc_LitNotCond( iObjNew,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
+                iPrevRaw = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
+                iObjRaw  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
+                iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
+                iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
                 if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
                 {
                     Vec_IntPush( *pvOutputs, iPrev );
                     Vec_IntPush( *pvOutputs, iObj );
+                    if ( pvOutLits )
+                    {
+                        Vec_IntPush( *pvOutLits, iPrevRaw );
+                        Vec_IntPush( *pvOutLits, iObjRaw );
+                    }
                     Vec_IntPush( vXorLits, Gia_ManHashAnd(pNew, iPrevNew, Abc_LitNot(iObjNew)) );
                 }
             }
@@ -296,13 +313,19 @@ Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_I
             pRepr = Gia_ObjReprObj( p, Gia_ObjId(p,pObj) );
             if ( pRepr == NULL )
                 continue;
-            iPrevNew = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorrSpecReal( pNew, p, pRepr, nFrames, 0 );
-            iObjNew  = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
-            iObjNew  = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
+            iPrevRaw = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorrSpecReal( pNew, p, pRepr, nFrames, 0 );
+            iObjRaw  = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
+            iPrevNew = iPrevRaw;
+            iObjNew  = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
             if ( iPrevNew != iObjNew )
             {
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p, pRepr) );
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p, pObj) );
+                if ( pvOutLits )
+                {
+                    Vec_IntPush( *pvOutLits, iPrevRaw );
+                    Vec_IntPush( *pvOutLits, iObjRaw );
+                }
                 Vec_IntPush( vXorLits, Gia_ManHashXor(pNew, iPrevNew, iObjNew) );
             }
         }
@@ -314,6 +337,8 @@ Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_I
     Vec_IntErase( &p->vCopies );
 //Abc_Print( 1, "Before sweeping = %d\n", Gia_ManAndNum(pNew) );
     pNew = Gia_ManCleanup( pTemp = pNew );
+    if ( pvOutLits )
+        Gia_ManDupRemapLiterals( *pvOutLits, pTemp );
 //Abc_Print( 1, "After sweeping = %d\n", Gia_ManAndNum(pNew) );
     Gia_ManStop( pTemp );
     return pNew;
@@ -325,7 +350,7 @@ Gia_Man_t * Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_I
   Synopsis    [Derives SRM for signal correspondence.]
 
   Description []
-               
+
   SideEffects []
 
   SeeAlso     []
@@ -394,7 +419,7 @@ Gia_Man_t * Gia_ManCorrSpecReduceInit( Gia_Man_t * p, int nFrames, int nPrefix, 
   Synopsis    [Initializes simulation info for lcorr/scorr counter-examples.]
 
   Description []
-               
+
   SideEffects []
 
   SeeAlso     []
@@ -603,6 +628,53 @@ int Cec_ManLoadCounterExamples( Vec_Ptr_t * vInfo, Vec_Int_t * vCexStore, int iS
 
 /**Function*************************************************************
 
+  Synopsis    [Performs bitpacking of counter-examples and records bit lanes.]
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+int Cec_ManLoadCounterExamplesMapped( Vec_Ptr_t * vInfo, Vec_Int_t * vCexStore, int iStart, Vec_Int_t * vOutBits )
+{
+    Vec_Int_t * vPat;
+    Vec_Ptr_t * vPres;
+    int nWords = Vec_PtrReadWordsSimInfo(vInfo);
+    int nBits = 32 * nWords;
+    int k, nSize, Out;
+    Vec_IntClear( vOutBits );
+    vPat  = Vec_IntAlloc( 100 );
+    vPres = Vec_PtrAllocSimInfo( Vec_PtrSize(vInfo), nWords );
+    Vec_PtrCleanSimInfo( vPres, 0, nWords );
+    while ( iStart < Vec_IntSize(vCexStore) )
+    {
+        Out = Vec_IntEntry( vCexStore, iStart++ );
+        nSize = Vec_IntEntry( vCexStore, iStart++ );
+        if ( nSize <= 0 )
+            continue;
+        Vec_IntClear( vPat );
+        for ( k = 0; k < nSize; k++ )
+            Vec_IntPush( vPat, Vec_IntEntry( vCexStore, iStart++ ) );
+        for ( k = 1; k < nBits; k++ )
+            if ( Cec_ManLoadCounterExamplesTry( vInfo, vPres, k, (int *)Vec_IntArray(vPat), Vec_IntSize(vPat) ) )
+                break;
+        if ( k < nBits )
+        {
+            Vec_IntPush( vOutBits, Out );
+            Vec_IntPush( vOutBits, k );
+        }
+        if ( k == nBits-1 )
+            break;
+    }
+    Vec_PtrFree( vPres );
+    Vec_IntFree( vPat );
+    return iStart;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Performs bitpacking of counter-examples.]
 
   Description []
@@ -700,9 +772,10 @@ static int Cec_ManCexStoreClassify( Vec_Int_t * vCexStore, int * pnReal, int * p
   SeeAlso     []
 
 ***********************************************************************/
-int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames, Cec_SeedSim_t * pSeed )
+int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames, Cec_SeedSim_t * pSeed, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals )
 {
     Vec_Int_t * vPairs;
+    Vec_Int_t * vOutBits = NULL;
     Vec_Ptr_t * vSimInfo;
     int RetValue = 0, iStart = 0;
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
@@ -715,6 +788,8 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
 //    pSim->pPars->nWords  = 63;
     pSim->pPars->nFrames = nFrames;
     vSimInfo = Vec_PtrAllocSimInfo( Gia_ManRegNum(pSim->pAig) + Gia_ManPiNum(pSim->pAig) * nFrames, pSim->pPars->nWords );
+    if ( pSeed )
+        vOutBits = Vec_IntAlloc( 1000 );
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRemap = Abc_ClockHr() - tH;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
@@ -722,14 +797,21 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         // slots so the changed source set is exactly the packed CEX/remap delta.
         // Without -I, keep upstream random-filled PI/timeframe slots.
         Cec_ManStartSimInfo( vSimInfo, pSeed ? Vec_PtrSize(vSimInfo) : Gia_ManRegNum(pSim->pAig) );
-        iStart = Cec_ManLoadCounterExamples( vSimInfo, vCexStore, iStart );
+        if ( pSeed )
+            iStart = Cec_ManLoadCounterExamplesMapped( vSimInfo, vCexStore, iStart, vOutBits );
+        else
+        {
+            iStart = Cec_ManLoadCounterExamples( vSimInfo, vCexStore, iStart );
+            Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
+        }
 //        iStart = Cec_ManLoadCounterExamples2( vSimInfo, vCexStore, iStart );
 //        Gia_ManCorrRemapSimInfo( pSim->pAig, vSimInfo );
-        Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
-        // Local persistent CEX-TFO resimulation when the cone is small;
+        // Local persistent failed-endpoint TFO resimulation when the cone is small;
         // otherwise run the full bit-parallel sweep and refresh pVal.
-        if ( !pSeed || !Cec_SeedSimTryBatch( pSeed, pSim, vSimInfo, nFrames ) )
+        if ( !pSeed || !Cec_SeedSimTryBatch( pSeed, pSim, vOutputs, vOutVals, vOutBits, nFrames ) )
         {
+            if ( pSeed )
+                Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
             RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
             if ( pSeed )
                 Cec_SeedSimUpdateFull( pSeed, vSimInfo, nFrames );
@@ -746,6 +828,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRun = Abc_ClockHr() - tH - Cec_ScorrProfSimRemap;
 //Gia_ManEquivPrintOne( pSim->pAig, 85, 0 );
     assert( iStart == Vec_IntSize(vCexStore) );
+    Vec_IntFreeP( &vOutBits );
     Vec_PtrFree( vSimInfo );
     Vec_IntFree( vPairs );
     return RetValue;
@@ -1189,7 +1272,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 // BMC base-case resim stays on the full sweep (NULL manager):
                 // its unroll depth grows with the prefix, so a resident dense
                 // cone array is not worth it here.  -I only affects the main loop.
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs, NULL );
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs, NULL, NULL, NULL );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
@@ -1321,6 +1404,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Vec_Str_t * vStatus;
     Vec_Int_t * vOutputs;
     Vec_Int_t * vCexStore;
+    Vec_Int_t * vOutLits = NULL, * vOutVals = NULL;
     Cec_ParSim_t ParsSim, * pParsSim = &ParsSim;
     Cec_ParSat_t ParsSat, * pParsSat = &ParsSat;
     Cec_ManSim_t * pSim;
@@ -1398,7 +1482,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     // Resident local-sim manager: dense persistent value array sized for the
     // main-loop resim depth (pPars->nFrames + 1 + nAddFrames).
     if ( pPars->fIncrSim )
-        pSeedSim = Cec_SeedSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pParsSim->nWords );
+        pSeedSim = Cec_SeedSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pPars->nFrames, pParsSim->nWords );
     Cec_ScorrProfOn = pPars->fVeryVerbose;
     // perform refinement of equivalence classes
     for ( r = 0; r < nIterMax; r++ )
@@ -1478,10 +1562,11 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             }
 
             tH = Abc_ClockHr();
+            vOutLits = NULL;
             if ( pTfoMask )
-                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr );
+                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr, pSeedSim ? &vOutLits : NULL );
             else
-                pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
+                pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pSeedSim ? &vOutLits : NULL );
             Prof.tSrm = Abc_ClockHr() - tH;
             if ( pTfoMask && pPars->fVeryVerbose )
                 Abc_Print( 1, "  [incr r=%d repr=%d next=%d tfo=%d active=%d/%d POs=%d]\n",
@@ -1502,6 +1587,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clkSrm += Abc_Clock() - clk2;
         if ( Gia_ManCoNum(pSrm) == 0 )
         {
+            Vec_IntFreeP( &vOutLits );
             Vec_IntFree( vOutputs );
             Gia_ManStop( pSrm );            
             break;
@@ -1510,18 +1596,21 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         // found counter-examples to speculation
         clk2 = Abc_Clock();
         tH = Abc_ClockHr();
+        vOutVals = NULL;
         if ( pPars->fUseCSat )
-            vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
+            vCexStore = Cbs_ManSolveMiterNcOutVals( pSrm, pPars->nBTLimit, &vStatus, 0, 0, vOutLits, pSeedSim ? &vOutVals : NULL );
         else
-            vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
+            vCexStore = Cec_ManSatSolveMiterOutVals( pSrm, pParsSat, &vStatus, vOutLits, pSeedSim ? &vOutVals : NULL );
         Prof.tSat = Abc_ClockHr() - tH;
         Prof.tSatSetup = Cec_ScorrProfSetup; Prof.tSatSolve = Cec_ScorrProfSolve;
         Prof.tSatMax   = Cec_ScorrProfMax;   Prof.nSatCalls = Cec_ScorrProfCalls;
         Gia_ManStop( pSrm );
+        Vec_IntFreeP( &vOutLits );
         clkSat += Abc_Clock() - clk2;
         if ( Vec_IntSize(vCexStore) == 0 )
         {
             Vec_IntFree( vCexStore );
+            Vec_IntFreeP( &vOutVals );
             Vec_StrFree( vStatus );
             Vec_IntFree( vOutputs );
             Prof.tWall = Abc_ClockHr() - tWall0;
@@ -1541,7 +1630,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
                 tH = Abc_ClockHr();
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pSeedSim );
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pSeedSim, vOutputs, vOutVals );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
@@ -1551,6 +1640,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Prof.nCexTriv > 0 )
                 Prof.nTrivSplits = Cec_ManTrivialSatSplit( pAig, pSim, vCexStore, vStatus, vOutputs, pPars->fUseRings );
             Vec_IntFree( vCexStore );
+            Vec_IntFreeP( &vOutVals );
             clkSim += Abc_Clock() - clk2;
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();

@@ -71,6 +71,9 @@ struct Cbs_Man_t_
     Vec_Int_t *   vLevReas;     // levels and decisions
     Vec_Int_t *   vModel;       // satisfying assignment
     Vec_Ptr_t *   vTemp;        // temporary storage
+    Vec_Int_t *   vOutLits;     // optional endpoint literals to sample before cancel
+    Vec_Int_t *   vOutVals;     // optional endpoint values by output
+    int           iOutVal;      // current output whose endpoints are sampled
     // SAT calls statistics
     int           nSatUnsat;    // the number of proofs
     int           nSatSat;      // the number of failure
@@ -255,6 +258,29 @@ static inline void Cbs_ManSaveModelAll( Cbs_Man_t * p, Vec_Int_t * vCex )
     Cbs_QueForEachEntry( p->pProp, pVar, i )
         Vec_IntPush( vCex, Abc_Var2Lit(Gia_ObjId(p->pAig,pVar), !Cbs_VarValue(pVar)) );
 } 
+
+static inline int Cbs_ManLitValue( Cbs_Man_t * p, int iLit )
+{
+    Gia_Obj_t * pObj;
+    if ( iLit < 0 )
+        return -1;
+    if ( Abc_Lit2Var(iLit) == 0 )
+        return Abc_LitIsCompl(iLit);
+    pObj = Gia_ManObj( p->pAig, Abc_Lit2Var(iLit) );
+    if ( !Cbs_VarIsAssigned(pObj) )
+        return -1;
+    return Cbs_VarValue(pObj) ^ Abc_LitIsCompl(iLit);
+}
+
+static inline void Cbs_ManSaveOutVals( Cbs_Man_t * p, Vec_Int_t * vOutLits, Vec_Int_t * vOutVals, int Out )
+{
+    if ( vOutLits == NULL || vOutVals == NULL )
+        return;
+    if ( 2*Out + 1 >= Vec_IntSize(vOutLits) )
+        return;
+    Vec_IntWriteEntry( vOutVals, 2*Out,     Cbs_ManLitValue( p, Vec_IntEntry(vOutLits, 2*Out) ) );
+    Vec_IntWriteEntry( vOutVals, 2*Out + 1, Cbs_ManLitValue( p, Vec_IntEntry(vOutLits, 2*Out + 1) ) );
+}
 
 /**Function*************************************************************
 
@@ -954,7 +980,10 @@ int Cbs_ManSolve( Cbs_Man_t * p, Gia_Obj_t * pObj )
     p->Pars.nBTThis = p->Pars.nJustThis = p->Pars.nBTThisNc = 0;
     Cbs_ManAssign( p, pObj, 0, NULL, NULL );
     if ( !Cbs_ManSolve_rec(p, 0) && !Cbs_ManCheckLimits(p) )
+    {
         Cbs_ManSaveModel( p, p->vModel );
+        Cbs_ManSaveOutVals( p, p->vOutLits, p->vOutVals, p->iOutVal );
+    }
     else
         RetValue = 1;
     Cbs_ManCancelUntil( p, 0 );
@@ -1034,7 +1063,7 @@ void Cbs_ManSatPrintStats( Cbs_Man_t * p )
   SeeAlso     []
 
 ***********************************************************************/
-Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose )
+Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals )
 {
     extern void Gia_ManCollectTest( Gia_Man_t * pAig );
     extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
@@ -1042,7 +1071,7 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
     extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
     extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
     Cbs_Man_t * p;
-    Vec_Int_t * vCex, * vVisit, * vCexStore;
+    Vec_Int_t * vCex, * vVisit, * vCexStore, * vOutVals = NULL;
     Vec_Str_t * vStatus;
     Gia_Obj_t * pRoot;
     int i, status;
@@ -1062,6 +1091,12 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
     // create resulting data-structures
     vStatus   = Vec_StrAlloc( Gia_ManPoNum(pAig) );
     vCexStore = Vec_IntAlloc( 10000 );
+    if ( pvOutVals )
+    {
+        *pvOutVals = NULL;
+        if ( vOutLits )
+            vOutVals = Vec_IntStartFull( 2 * Gia_ManPoNum(pAig) );
+    }
     vVisit    = Vec_IntAlloc( 100 );
     vCex      = Cbs_ReadModel( p );
     if ( Cec_ScorrProfOn )
@@ -1095,7 +1130,13 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
         clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
         p->Pars.fUseHighest = 1;
         p->Pars.fUseLowest  = 0;
+        p->vOutLits = vOutLits;
+        p->vOutVals = vOutVals;
+        p->iOutVal  = i;
         status = Cbs_ManSolve( p, Gia_ObjChild0(pRoot) );
+        p->vOutLits = NULL;
+        p->vOutVals = NULL;
+        p->iOutVal  = -1;
         if ( Cec_ScorrProfOn )
         {
             abctime dHr = Abc_ClockHr() - clkHr;
@@ -1144,11 +1185,20 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
 //    printf( "RecCalls = %8d.  RecClause = %8d.  RecNonChro = %8d.\n", p->nRecCall, p->nRecClause, p->nRecNonChro );
     Cbs_ManStop( p );
     *pvStatus = vStatus;
+    if ( pvOutVals )
+        *pvOutVals = vOutVals;
+    else
+        Vec_IntFreeP( &vOutVals );
 
 //    printf( "Total number of cex literals = %d. (Ave = %d)\n", 
 //         Vec_IntSize(vCexStore)-2*p->nSatUndec-2*p->nSatSat, 
 //        (Vec_IntSize(vCexStore)-2*p->nSatUndec-2*p->nSatSat)/p->nSatSat );
     return vCexStore;
+}
+
+Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose )
+{
+    return Cbs_ManSolveMiterNcOutVals( pAig, nConfs, pvStatus, f0Proved, fVerbose, NULL, NULL );
 }
 
 
@@ -1158,4 +1208,3 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
 
 
 ABC_NAMESPACE_IMPL_END
-

@@ -405,12 +405,13 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
 ***********************************************************************/
 Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr,
                                           Vec_Int_t ** pvOutputs, int fRings,
-                                          int * pTfoMark, Cec_IncrMgr_t * pIncr )
+                                          int * pTfoMark, Cec_IncrMgr_t * pIncr,
+                                          Vec_Int_t ** pvOutLits )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
     Vec_Int_t * vXorLits;
-    int f, i, iPrev, iObj, iPrevNew, iObjNew;
+    int f, i, iPrev, iObj, iPrevNew, iObjNew, iPrevRaw, iObjRaw;
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p) > 0 );
     assert( p->pReprs != NULL );
@@ -433,6 +434,8 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
             Gia_ObjSetCopyF( p, f, pObj, Gia_ManAppendCi(pNew) );
     }
     *pvOutputs = Vec_IntAlloc( 1000 );
+    if ( pvOutLits )
+        *pvOutLits = Vec_IntAlloc( 1000 );
     vXorLits = Vec_IntAlloc( 1000 );
     if ( fRings )
     {
@@ -442,12 +445,17 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
             {
                 if ( pTfoMark && !pTfoMark[i] )
                     continue;
-                iObjNew = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
-                iObjNew = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pObj) );
+                iObjRaw = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
+                iObjNew = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pObj) );
                 if ( iObjNew != 0 )
                 {
                     Vec_IntPush( *pvOutputs, 0 );
                     Vec_IntPush( *pvOutputs, i );
+                    if ( pvOutLits )
+                    {
+                        Vec_IntPush( *pvOutLits, 0 );
+                        Vec_IntPush( *pvOutLits, iObjRaw );
+                    }
                     Vec_IntPush( vXorLits, iObjNew );
                 }
             }
@@ -463,14 +471,19 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
                                 Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj );
                     if ( fEmit )
                     {
-                        iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
-                        iObjNew  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
-                        iPrevNew = Abc_LitNotCond( iPrevNew, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
-                        iObjNew  = Abc_LitNotCond( iObjNew,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
+                        iPrevRaw = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
+                        iObjRaw  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
+                        iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
+                        iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
                         if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
                         {
                             Vec_IntPush( *pvOutputs, iPrev );
                             Vec_IntPush( *pvOutputs, iObj );
+                            if ( pvOutLits )
+                            {
+                                Vec_IntPush( *pvOutLits, iPrevRaw );
+                                Vec_IntPush( *pvOutLits, iObjRaw );
+                            }
                             Vec_IntPush( vXorLits, Gia_ManHashAnd(pNew, iPrevNew, Abc_LitNot(iObjNew)) );
                         }
                     }
@@ -483,14 +496,19 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
                                 Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj );
                     if ( fEmit )
                     {
-                        iPrevNew = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
-                        iObjNew  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
-                        iPrevNew = Abc_LitNotCond( iPrevNew, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
-                        iObjNew  = Abc_LitNotCond( iObjNew,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
+                        iPrevRaw = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
+                        iObjRaw  = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iObj), nFrames, 0 );
+                        iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iPrev)) );
+                        iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p, iObj)) );
                         if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
                         {
                             Vec_IntPush( *pvOutputs, iPrev );
                             Vec_IntPush( *pvOutputs, iObj );
+                            if ( pvOutLits )
+                            {
+                                Vec_IntPush( *pvOutLits, iPrevRaw );
+                                Vec_IntPush( *pvOutLits, iObjRaw );
+                            }
                             Vec_IntPush( vXorLits, Gia_ManHashAnd(pNew, iPrevNew, Abc_LitNot(iObjNew)) );
                         }
                     }
@@ -511,13 +529,19 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
                 if ( !pTfoMark[i] && !pTfoMark[idR] )
                     continue;
             }
-            iPrevNew = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorrSpecReal( pNew, p, pRepr, nFrames, 0 );
-            iObjNew  = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
-            iObjNew  = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
+            iPrevRaw = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorrSpecReal( pNew, p, pRepr, nFrames, 0 );
+            iObjRaw  = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
+            iPrevNew = iPrevRaw;
+            iObjNew  = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
             if ( iPrevNew != iObjNew )
             {
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p, pRepr) );
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p, pObj) );
+                if ( pvOutLits )
+                {
+                    Vec_IntPush( *pvOutLits, iPrevRaw );
+                    Vec_IntPush( *pvOutLits, iObjRaw );
+                }
                 Vec_IntPush( vXorLits, Gia_ManHashXor(pNew, iPrevNew, iObjNew) );
             }
         }
@@ -528,6 +552,8 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
     Gia_ManHashStop( pNew );
     Vec_IntErase( &p->vCopies );
     pNew = Gia_ManCleanup( pTemp = pNew );
+    if ( pvOutLits )
+        Gia_ManDupRemapLiterals( *pvOutLits, pTemp );
     Gia_ManStop( pTemp );
     return pNew;
 }

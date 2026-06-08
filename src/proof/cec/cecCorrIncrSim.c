@@ -6,14 +6,13 @@
 
   PackageName [Combinational equivalence checking.]
 
-  Synopsis    [Persistent CEX-TFO incremental simulation for &scorr.]
+  Synopsis    [Persistent failed-endpoint TFO incremental simulation for &scorr.]
 
-  Description [Keeps the previous CEX batch's simulation values for every
-  (frame, object) key.  A new batch is compared at the sequential CI slots;
-  changed slots seed a frame-aware TFO walk.  Only this cone is re-evaluated,
-  and side inputs are read from the persistent value array.  Wide cones fall
-  back to the standard full sweep, after which the persistent array is
-  refreshed without another class-refinement pass.]
+  Description [Keeps simulation values for every (frame, object) key.  SAT
+  supplies the values of each failed pair's endpoints.  These endpoints seed
+  a frame-aware TFO walk; only this cone is re-evaluated, and side inputs are
+  read from the persistent value array.  Wide cones fall back to the standard
+  full sweep, after which the persistent array is refreshed.]
 
   Author      [Xiran Zhao]
 
@@ -83,19 +82,22 @@ static inline void Cec_SeedSimEvalAnd( Cec_SeedSim_t * p, int frame, int objId )
     }
 }
 
-Cec_SeedSim_t * Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int nWords )
+Cec_SeedSim_t * Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords )
 {
     Cec_SeedSim_t * p = ABC_CALLOC( Cec_SeedSim_t, 1 );
     size_t nKeys = (size_t)nFrames * Gia_ManObjNum(pAig);
     int w;
+    assert( iSeedFrame >= 0 && iSeedFrame < nFrames );
     p->pAig    = pAig;
     p->nFrames = nFrames;
+    p->iSeedFrame = iSeedFrame;
     p->nObjs   = Gia_ManObjNum( pAig );
     p->nPis    = Gia_ManPiNum( pAig );
     p->nRegs   = Gia_ManRegNum( pAig );
     p->nWords  = nWords;
     p->pVal         = ABC_CALLOC( unsigned, nKeys * nWords );
     p->pMark        = ABC_CALLOC( int, nKeys );
+    p->pSeedMark    = ABC_CALLOC( int, nKeys );
     p->pRootMark    = ABC_CALLOC( int, p->nObjs );
     p->vSeeds       = Vec_IntAlloc( 1024 );
     p->vDirtyKeys   = Vec_IntAlloc( 4096 );
@@ -132,6 +134,7 @@ void Cec_SeedSimFree( Cec_SeedSim_t * p )
     Vec_IntFreeP( &p->vClassNew );
     ABC_FREE( p->pVal );
     ABC_FREE( p->pMark );
+    ABC_FREE( p->pSeedMark );
     ABC_FREE( p->pRootMark );
     ABC_FREE( p->pPhase0 );
     ABC_FREE( p->pPhase1 );
@@ -144,59 +147,73 @@ static void Cec_SeedSimReset( Cec_SeedSim_t * p )
     Vec_IntClear( p->vDirtyKeys );
     Vec_IntClear( p->vQueue );
     p->nMarkVersion++;
+    p->nSeedVersion++;
     if ( p->nMarkVersion == 0 )
     {
         memset( p->pMark, 0, sizeof(int) * (size_t)p->nFrames * p->nObjs );
         p->nMarkVersion = 1;
     }
+    if ( p->nSeedVersion == 0 )
+    {
+        memset( p->pSeedMark, 0, sizeof(int) * (size_t)p->nFrames * p->nObjs );
+        p->nSeedVersion = 1;
+    }
 }
 
-static void Cec_SeedSimCollectSources( Cec_SeedSim_t * p, Vec_Ptr_t * vSimInfo, int nFrames )
+static inline void Cec_SeedSimSetBit( unsigned * pInfo, int iBit, int Value )
 {
-    int nSlots = p->nRegs + nFrames * p->nPis;
-    int Slot, w;
-    assert( Vec_PtrSize(vSimInfo) == nSlots );
-    assert( Vec_PtrReadWordsSimInfo(vSimInfo) == p->nWords );
-    for ( Slot = 0; Slot < nSlots; Slot++ )
+    if ( Abc_InfoHasBit( pInfo, iBit ) != Value )
+        Abc_InfoXorBit( pInfo, iBit );
+}
+
+static int Cec_SeedSimAddSourceBit( Cec_SeedSim_t * p, int ObjId, int iBit, int Value )
+{
+    int Key;
+    unsigned * pInfo;
+    if ( ObjId == 0 )
+        return Value == 0;
+    if ( ObjId < 0 || ObjId >= p->nObjs || Value < 0 )
+        return 0;
+    Key = Cec_SeedSimKey( p, p->iSeedFrame, ObjId );
+    p->pSeedMark[Key] = p->nSeedVersion;
+    pInfo = Cec_SeedSimVal( p, p->iSeedFrame, ObjId );
+    if ( Abc_InfoHasBit( pInfo, iBit ) == Value )
+        return 1;
+    Cec_SeedSimSetBit( pInfo, iBit, Value );
+    if ( Cec_SeedSimMark( p, p->iSeedFrame, ObjId ) )
     {
-        unsigned * pInfo = (unsigned *)Vec_PtrEntry( vSimInfo, Slot );
-        int Frame, ObjId, fChanged = 0;
-        unsigned * pOld;
-        if ( Slot < p->nRegs )
-        {
-            Frame = 0;
-            ObjId = Gia_ObjId( p->pAig, Gia_ManRo(p->pAig, Slot) );
-        }
-        else
-        {
-            int Offset = Slot - p->nRegs;
-            Frame = Offset / p->nPis;
-            ObjId = Gia_ObjId( p->pAig, Gia_ManPi(p->pAig, Offset % p->nPis) );
-        }
-        pOld = Cec_SeedSimVal( p, Frame, ObjId );
-        for ( w = 0; w < p->nWords; w++ )
-        {
-            unsigned Value = pInfo[w];
-            if ( w == 0 )
-                Value &= ~(unsigned)1;
-            if ( pOld[w] != Value )
-                fChanged = 1;
-        }
-        if ( !fChanged )
-            continue;
-        for ( w = 0; w < p->nWords; w++ )
-        {
-            pOld[w] = pInfo[w];
-            if ( w == 0 )
-                pOld[w] &= ~(unsigned)1;
-        }
-        if ( Cec_SeedSimMark( p, Frame, ObjId ) )
-        {
-            int Key = Cec_SeedSimKey( p, Frame, ObjId );
-            Vec_IntPush( p->vSeeds, Key );
-            Vec_IntPush( p->vQueue, Key );
-        }
+        p->pSeedMark[Key] = p->nSeedVersion;
+        Vec_IntPush( p->vSeeds, Key );
+        Vec_IntPush( p->vQueue, Key );
     }
+    return 1;
+}
+
+static int Cec_SeedSimCollectEndpointSources( Cec_SeedSim_t * p, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits )
+{
+    int i, Out, iBit;
+    if ( vOutputs == NULL || vOutVals == NULL || vOutBits == NULL )
+        return 0;
+    if ( Vec_IntSize(vOutputs) > Vec_IntSize(vOutVals) )
+        return 0;
+    Vec_IntForEachEntryDouble( vOutBits, Out, iBit, i )
+    {
+        int Obj0, Obj1, Val0, Val1;
+        if ( Out < 0 || 2*Out + 1 >= Vec_IntSize(vOutputs) ||
+             2*Out + 1 >= Vec_IntSize(vOutVals) )
+            return 0;
+        Obj0 = Vec_IntEntry( vOutputs, 2*Out );
+        Obj1 = Vec_IntEntry( vOutputs, 2*Out + 1 );
+        Val0 = Vec_IntEntry( vOutVals, 2*Out );
+        Val1 = Vec_IntEntry( vOutVals, 2*Out + 1 );
+        if ( Val0 < 0 || Val1 < 0 )
+            return 0;
+        if ( !Cec_SeedSimAddSourceBit( p, Obj0, iBit, Val0 ) )
+            return 0;
+        if ( !Cec_SeedSimAddSourceBit( p, Obj1, iBit, Val1 ) )
+            return 0;
+    }
+    return 1;
 }
 
 static int Cec_SeedSimComputeTfo( Cec_SeedSim_t * p )
@@ -235,6 +252,8 @@ static void Cec_SeedSimEvaluate( Cec_SeedSim_t * p )
         int Frame = Key / p->nObjs;
         int ObjId = Key % p->nObjs;
         Gia_Obj_t * pObj = Gia_ManObj( p->pAig, ObjId );
+        if ( p->pSeedMark[Key] == p->nSeedVersion )
+            continue;
         if ( Gia_ObjIsAnd(pObj) )
             Cec_SeedSimEvalAnd( p, Frame, ObjId );
         else if ( Gia_ObjIsRo(p->pAig, pObj) && Frame > 0 )
@@ -315,7 +334,7 @@ static void Cec_SeedSimRefineFrame( Cec_SeedSim_t * p, int Frame, int iLo, int i
             Cec_SeedSimRefineClass( p, Frame, Ent );
 }
 
-int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, int nFrames )
+int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits, int nFrames )
 {
     int nDirty, iLo;
     (void)pSim;
@@ -326,7 +345,11 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSi
         return 0;
     }
     Cec_SeedSimReset( p );
-    Cec_SeedSimCollectSources( p, vSimInfo, nFrames );
+    if ( !Cec_SeedSimCollectEndpointSources( p, vOutputs, vOutVals, vOutBits ) )
+    {
+        p->nBatchFull++;
+        return 0;
+    }
     nDirty = Cec_SeedSimComputeTfo( p );
     if ( nDirty > p->nMaxDirty )
         p->nMaxDirty = nDirty;
