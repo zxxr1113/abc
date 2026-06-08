@@ -140,9 +140,10 @@ Then `Cec_SeedSimAddSourceBit()` writes that SAT value into:
 pVal[frame = iSeedFrame, objId = endpoint]
 ```
 
-If the bit differs from the previous persistent value, the endpoint becomes a
-dirty seed and is pushed into the TFO queue.  If the value is unchanged, no
-downstream recomputation is needed for that endpoint lane.
+The endpoint always becomes a dirty seed and is pushed into the TFO queue.  The
+bit is overwritten only when it differs from the previous persistent value, but
+unchanged endpoint values still have to seed refinement because SAT has just
+proved this pair failed in the current SRM.
 
 The seed itself is marked in `pSeedMark`, so evaluation will not overwrite this
 authoritative SAT-provided value.
@@ -245,4 +246,3 @@ This is intentionally not in the normal `-I` path.
 - `src/aig/gia/giaCSat.c`: CBS endpoint-value sampling.
 - `src/aig/gia/giaCTas.c`: TAS endpoint-value sampling.
 - `src/aig/gia/gia.h`: CBS/TAS wrapper declarations.
-

@@ -177,8 +177,6 @@ static int Cec_SeedSimAddSourceBit( Cec_SeedSim_t * p, int ObjId, int iBit, int 
     Key = Cec_SeedSimKey( p, p->iSeedFrame, ObjId );
     p->pSeedMark[Key] = p->nSeedVersion;
     pInfo = Cec_SeedSimVal( p, p->iSeedFrame, ObjId );
-    if ( Abc_InfoHasBit( pInfo, iBit ) == Value )
-        return 1;
     Cec_SeedSimSetBit( pInfo, iBit, Value );
     if ( Cec_SeedSimMark( p, p->iSeedFrame, ObjId ) )
     {
