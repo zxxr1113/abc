@@ -121,6 +121,12 @@ The table is initialized and refreshed only by full sweep:
 - fallback calls `Cec_ManSeqResimulate()` and then
   `Cec_SeedSimUpdateFull()`.
 
+Full fallback uses the same input completion as the standard path: initial ROs
+are zero and PI/timeframe slots are random-filled. Successful local batches do
+not initialize the full `vSimInfo` array because they only need the packed
+`(output, bit)` mapping. If a local attempt requests fallback, that batch is
+reloaded after standard initialization before the full sweep.
+
 ### 5. Local seed collection
 
 File:
@@ -194,6 +200,13 @@ After evaluation, only dirty frames/classes are considered for refinement:
 This is the important narrowing: the implementation refines only classes that
 intersect the failed-endpoint TFO.
 
+TFO-external members of an intersecting class retain their persistent values.
+This is intentional: endpoint nodes are treated as cut-point updates, so nodes
+outside their TFO are unchanged in the resulting hybrid pattern. Since classes
+only split and never merge, two external members that remained equivalent
+under the previous persistent pattern cannot become different without a dirty
+member/path.
+
 ## Difference from CEX-input TFO
 
 The previous `-I` implementation treated changed CEX input slots as sources.
@@ -224,6 +237,11 @@ For the no-skip baseline, keep `-s` off.
 
 The core path does not run a shadow full sweep because that would contaminate
 the timing of the local simulation experiment.
+
+The existing very-verbose profile reports `pending=<count>`, the number of real
+SAT failed pairs that remain merged after resimulation. This distinguishes a
+failure to split the just-disproved pairs from the expected loss of unrelated
+opportunistic splits.
 
 To test whether a CEX would also split pairs outside the failed-endpoint TFO,
 add a test-only profiling mode around `Cec_ManResimulateCounterExamples()`:

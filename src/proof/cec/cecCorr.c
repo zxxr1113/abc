@@ -79,6 +79,8 @@ struct Cec_ScorrProf_t_
     // # of pairs forced split this iter because SAT returned trivial (nLits==0).
     // Resim cannot break those (no literals), so we directly demote them.
     int     nTrivSplits;
+    // # of real SAT pairs still merged after counter-example resimulation.
+    int     nCexPending;
     // Incremental local-sim stats for this resim call (only under -I):
     //   nIncrSrc   = #batches handled by local TFO sim
     //   nIncrFull  = #batches that fell back to the full sweep (cone too wide)
@@ -103,6 +105,7 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->nSatCalls+=pI->nSatCalls;
     pT->nCexReal+=pI->nCexReal; pT->nCexTriv+=pI->nCexTriv; pT->nCexFail+=pI->nCexFail;
     pT->nSimCalls+=pI->nSimCalls; pT->nTrivSplits+=pI->nTrivSplits;
+    pT->nCexPending+=pI->nCexPending;
     pT->dSimLits+=pI->dSimLits; pT->dChkLits+=pI->dChkLits;
     // local/full batch counts accumulate; dirty is a max; keys is constant
     pT->nIncrSrc+=pI->nIncrSrc; pT->nIncrFull+=pI->nIncrFull;
@@ -129,8 +132,8 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
     Abc_Print( 1, "snap=%6.3f srm=%7.3f ", p->tSnap*M, p->tSrm*M );
     Abc_Print( 1, "sat=%7.3f(set=%.3f slv=%.3f max=%.4f n=%d) ",
         p->tSat*M, p->tSatSetup*M, p->tSatSolve*M, p->tSatMax*M, p->nSatCalls );
-    Abc_Print( 1, "cex=R/T/F=%d/%d/%d trsplit=%d ",
-        p->nCexReal, p->nCexTriv, p->nCexFail, p->nTrivSplits );
+    Abc_Print( 1, "cex=R/T/F=%d/%d/%d trsplit=%d pending=%d ",
+        p->nCexReal, p->nCexTriv, p->nCexFail, p->nTrivSplits, p->nCexPending );
     Abc_Print( 1, "sim=%6.3f(rmp=%.3f run=%.3f n=%d d=%d) ",
         p->tSim*M, p->tSimRemap*M, p->tSimRun*M, p->nSimCalls, p->dSimLits );
     Abc_Print( 1, "incr=loc/full/maxdirty/keys=%d/%d/%d/%d ",
@@ -793,29 +796,44 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRemap = Abc_ClockHr() - tH;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
-        // Deterministic 0-completion under persistent incremental sim: zero all
-        // slots so the changed source set is exactly the packed CEX/remap delta.
-        // Without -I, keep upstream random-filled PI/timeframe slots.
-        Cec_ManStartSimInfo( vSimInfo, pSeed ? Vec_PtrSize(vSimInfo) : Gia_ManRegNum(pSim->pAig) );
+        int iBatchStart = iStart;
         if ( pSeed )
+        {
+            int fHadPersistentState = pSeed->fInitialized;
+            // The first batch must establish the persistent table with exactly
+            // the standard full-resimulation completion: zero ROs, random PIs.
+            if ( !fHadPersistentState )
+                Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
             iStart = Cec_ManLoadCounterExamplesMapped( vSimInfo, vCexStore, iStart, vOutBits );
+            if ( Cec_SeedSimTryBatch( pSeed, pSim, vOutputs, vOutVals, vOutBits, nFrames ) )
+                continue;
+            // Successful local batches only need the output-to-bit mapping, so
+            // they avoid initializing every CI slot.  A later fallback reloads
+            // this batch after standard initialization before the full sweep.
+            if ( fHadPersistentState )
+            {
+                int iReload;
+                Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
+                iReload = Cec_ManLoadCounterExamplesMapped( vSimInfo, vCexStore, iBatchStart, vOutBits );
+                assert( iReload == iStart );
+            }
+        }
         else
         {
+            Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
             iStart = Cec_ManLoadCounterExamples( vSimInfo, vCexStore, iStart );
             Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
         }
-//        iStart = Cec_ManLoadCounterExamples2( vSimInfo, vCexStore, iStart );
-//        Gia_ManCorrRemapSimInfo( pSim->pAig, vSimInfo );
-        // Local persistent failed-endpoint TFO resimulation when the cone is small;
-        // otherwise run the full bit-parallel sweep and refresh pVal.
-        if ( !pSeed || !Cec_SeedSimTryBatch( pSeed, pSim, vOutputs, vOutVals, vOutBits, nFrames ) )
+        // The local path returned above.  Reaching here means standard full
+        // resimulation, either without -I or as an incremental fallback.
+        if ( pSeed )
         {
-            if ( pSeed )
-                Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
+            Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
             RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
-            if ( pSeed )
-                Cec_SeedSimUpdateFull( pSeed, vSimInfo, nFrames );
+            Cec_SeedSimUpdateFull( pSeed, vSimInfo, nFrames );
         }
+        else
+            RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
 //        Cec_ManSeqResimulateInfo( pSim->pAig, vSimInfo, NULL );
     }
     if ( pSeed )
@@ -1002,7 +1020,7 @@ int Gia_ManCheckRefinements( Gia_Man_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOu
     }
 //    if ( Counter )
 //    Abc_Print( 1, "Gia_ManCheckRefinements(): Could not refine %d nodes.\n", Counter );
-    return 1;
+    return Counter;
 }
 
 
@@ -1283,7 +1301,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 Prof.nTrivSplits = Cec_ManTrivialSatSplit( pAig, pSim, vCexStore, vStatus, vOutputs, pPars->fUseRings );
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
-            Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
+            Prof.nCexPending = Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;
@@ -1644,7 +1662,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             clkSim += Abc_Clock() - clk2;
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
-            Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
+            Prof.nCexPending = Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;
