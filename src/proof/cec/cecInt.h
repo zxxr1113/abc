@@ -209,9 +209,9 @@ struct Cec_SeedSim_t_
     int *        pSeedMark;       // per-key version stamp for authoritative SAT roots
     int          nMarkVersion;
     int          nSeedVersion;
-    Vec_Int_t *  vSeeds;          // changed CEX source keys in the current batch
     Vec_Int_t *  vDirtyKeys;      // dirty (frame, objId) keys (sorted before eval)
     Vec_Int_t *  vQueue;          // BFS frontier
+    Vec_Ptr_t *  vSimInfo;        // reusable full-simulation CI storage
     // Class-refinement scratch.
     int *        pRootMark;       // per-objId "root already queued" stamp
     int          nRootVersion;
@@ -228,7 +228,7 @@ struct Cec_SeedSim_t_
 };
 
 // Fall back when the failed-endpoint TFO exceeds this fraction of the unrolled AIG.
-#define CEC_SEEDSIM_FRAC_NUM 1
+#define CEC_SEEDSIM_FRAC_NUM 3
 #define CEC_SEEDSIM_FRAC_DEN 5
 
 ////////////////////////////////////////////////////////////////////////
@@ -265,7 +265,9 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
 extern void                 Cec_SeedSimFree( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits, int nFrames );
-extern void                 Cec_SeedSimUpdateFull( Cec_SeedSim_t * p, Vec_Ptr_t * vSimInfo, int nFrames );
+extern void                 Cec_SeedSimSaveFrameInputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCis, int Frame );
+extern void                 Cec_SeedSimSaveFrameOutputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCos, int Frame );
+extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumLocal ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFull  ( Cec_SeedSim_t * p );
@@ -278,6 +280,7 @@ extern int                  Cec_ManSimCompareEqual( unsigned * p0, unsigned * p1
 extern int                  Cec_ManSimClassesPrepare( Cec_ManSim_t * p, int LevelMax );
 extern int                  Cec_ManSimClassesRefine( Cec_ManSim_t * p );
 extern int                  Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos );
+extern int                  Cec_ManSimSimulateRoundSave( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave );
 /*=== cecIso.c ============================================================*/
 extern int *                Cec_ManDetectIsomorphism( Gia_Man_t * p );
 /*=== cecMan.c ============================================================*/
@@ -298,6 +301,7 @@ extern Vec_Ptr_t *          Cec_ManPatCollectPatterns( Cec_ManPat_t *  pMan, int
 extern Vec_Ptr_t *          Cec_ManPatPackPatterns( Vec_Int_t * vCexStore, int nInputs, int nRegs, int nWordsInit );
 /*=== cecSeq.c ============================================================*/
 extern int                  Cec_ManSeqResimulate( Cec_ManSim_t * p, Vec_Ptr_t * vInfo );
+extern int                  Cec_ManSeqResimulateSeed( Cec_ManSim_t * p, Vec_Ptr_t * vInfo, Cec_SeedSim_t * pSeed );
 extern int                  Cec_ManSeqResimulateInfo( Gia_Man_t * pAig, Vec_Ptr_t * vSimInfo, Abc_Cex_t * pBestState, int fCheckMiter );
 extern void                 Cec_ManSeqDeriveInfoInitRandom( Vec_Ptr_t * vInfo, Gia_Man_t * pAig, Abc_Cex_t * pCex );
 extern int                  Cec_ManCountNonConstOutputs( Gia_Man_t * pAig );

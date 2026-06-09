@@ -777,22 +777,31 @@ static int Cec_ManCexStoreClassify( Vec_Int_t * vCexStore, int * pnReal, int * p
 ***********************************************************************/
 int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames, Cec_SeedSim_t * pSeed, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals )
 {
-    Vec_Int_t * vPairs;
+    Vec_Int_t * vPairs = NULL;
     Vec_Int_t * vOutBits = NULL;
-    Vec_Ptr_t * vSimInfo;
-    int RetValue = 0, iStart = 0;
+    Vec_Ptr_t * vSimInfo = NULL;
+    int RetValue = 0, iStart = 0, fValueRefs = 0;
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     Cec_ScorrProfSimRemap = Cec_ScorrProfSimRun = 0;
     Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrFull = Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
     if ( pSeed )
         Cec_SeedSimBeginCall( pSeed );  // reset per-call local/full/maxdirty counters
     vPairs = Gia_ManCorrCreateRemapping( pSim->pAig );
-    Gia_ManCreateValueRefs( pSim->pAig );
 //    pSim->pPars->nWords  = 63;
     pSim->pPars->nFrames = nFrames;
-    vSimInfo = Vec_PtrAllocSimInfo( Gia_ManRegNum(pSim->pAig) + Gia_ManPiNum(pSim->pAig) * nFrames, pSim->pPars->nWords );
     if ( pSeed )
+    {
+        if ( pSeed->vSimInfo == NULL )
+            pSeed->vSimInfo = Vec_PtrAllocSimInfo( Gia_ManRegNum(pSim->pAig) + Gia_ManPiNum(pSim->pAig) * nFrames, pSim->pPars->nWords );
+        vSimInfo = pSeed->vSimInfo;
         vOutBits = Vec_IntAlloc( 1000 );
+    }
+    else
+    {
+        Gia_ManCreateValueRefs( pSim->pAig );
+        fValueRefs = 1;
+        vSimInfo = Vec_PtrAllocSimInfo( Gia_ManRegNum(pSim->pAig) + Gia_ManPiNum(pSim->pAig) * nFrames, pSim->pPars->nWords );
+    }
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRemap = Abc_ClockHr() - tH;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
@@ -828,9 +837,13 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         // resimulation, either without -I or as an incremental fallback.
         if ( pSeed )
         {
+            if ( !fValueRefs )
+            {
+                Gia_ManCreateValueRefs( pSim->pAig );
+                fValueRefs = 1;
+            }
             Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
-            RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
-            Cec_SeedSimUpdateFull( pSeed, vSimInfo, nFrames );
+            RetValue |= Cec_ManSeqResimulateSeed( pSim, vSimInfo, pSeed );
         }
         else
             RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
@@ -847,8 +860,9 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
 //Gia_ManEquivPrintOne( pSim->pAig, 85, 0 );
     assert( iStart == Vec_IntSize(vCexStore) );
     Vec_IntFreeP( &vOutBits );
-    Vec_PtrFree( vSimInfo );
-    Vec_IntFree( vPairs );
+    if ( !pSeed )
+        Vec_PtrFree( vSimInfo );
+    Vec_IntFreeP( &vPairs );
     return RetValue;
 }
 

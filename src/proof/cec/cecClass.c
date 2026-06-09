@@ -665,7 +665,7 @@ int Cec_ManSimAnalyzeOutputs( Cec_ManSim_t * p )
   SeeAlso     []
 
 ***********************************************************************/
-int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos )
+static int Cec_ManSimSimulateRoundInt( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave )
 {
     Gia_Obj_t * pObj;
     unsigned * pRes0, * pRes1, * pRes;
@@ -751,6 +751,9 @@ int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t *
                 for ( w = 1; w <= p->nWords; w++ )
                     pRes[w] = pRes0[w] & pRes1[w];
         }
+        if ( pSave )
+            for ( w = 0; w < p->nWords; w++ )
+                pSave[(size_t)i * p->nWords + w] = pRes[w+1];
 
 references:
         // if this node is candidate constant, collect it
@@ -806,6 +809,17 @@ references:
     }
 */
     return Cec_ManSimAnalyzeOutputs( p );
+}
+
+int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos )
+{
+    return Cec_ManSimSimulateRoundInt( p, vInfoCis, vInfoCos, NULL );
+}
+
+int Cec_ManSimSimulateRoundSave( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave )
+{
+    assert( pSave != NULL );
+    return Cec_ManSimSimulateRoundInt( p, vInfoCis, vInfoCos, pSave );
 }
 
 
@@ -959,4 +973,3 @@ int Cec_ManSimClassesRefine( Cec_ManSim_t * p )
 
 
 ABC_NAMESPACE_IMPL_END
-
