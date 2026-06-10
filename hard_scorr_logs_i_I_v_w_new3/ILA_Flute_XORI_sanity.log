@@ -1,0 +1,576 @@
+### benchmark: /home/zxr_wsl/benchmarks/incre_spec//ILA_Flute_XORI_sanity.aig
+### opts:      &scorr -i -I -v -w
+### timeout:   1800s
+### date:      Wed Jun 10 14:26:10 CST 2026
+
+======== ABC command line "&r /home/zxr_wsl/benchmarks/incre_spec//ILA_Flute_XORI_sanity.aig; &ps; &scorr -i -I -v -w; &ps"
+Warning: The last output is interpreted as a constraint.
+Converted 548 1-valued FFs and 173794 DC-valued FFs.
+Warning: The number of inputs does not match the number of input names.
+[1;37m/home/zxr_wsl/benchmarks/incre_spec//ILA_Flute_XORI_sanity[0m : i/o = 180287/      2(c=1)  ff = 174678  [1;36mand = 1617800[0m  [1;35mlev =  284[0m [1;35m(219.53)[0m  mem =26.60 MB
+cst = 1792478  cls =      0  lit = 1792478  unused =  180287  proof =     0
+cst =  355560  cls = 351484  lit = 1210703  unused =  410578  proof =     0
+cst =  353934  cls = 350462  lit = 1204201  unused =  418102  proof =     0
+cst =  353286  cls = 350196  lit = 1202278  unused =  420291  proof =     0
+cst =  352451  cls = 350240  lit = 1200326  unused =  422199  proof =     0
+cst =  351894  cls = 350110  lit = 1199197  unused =  423458  proof =     0
+cst =  351323  cls = 349928  lit = 1197917  unused =  424920  proof =     0
+cst =  350882  cls = 349578  lit = 1196646  unused =  426541  proof =     0
+cst =  350601  cls = 349314  lit = 1195751  unused =  427700  proof =     0
+cst =  350494  cls = 349032  lit = 1195113  unused =  428620  proof =     0
+Obj = 2147446. And = 1617800. Conf =   100. Fr = 1. Lcorr = 0. Ring = 1. CSat = 1.
+  0 : c =  350494  cl = 349032  lit = 1195113  p =     0  d =     0  f =     0  +  T =     2.05 sec
+BMC : c =  349991  cl = 348834  lit = 1193576  p =  2584  d =  4033  f =     0  +  T =     0.18 sec
+  [bmc-prof   0] wall= 180.495 p=  6617 | ifo=  0.000(sd=0.000 nx=0.000 tfo=0.000 cnt=0.000) snap= 1.790 srm= 50.544 sat= 14.869(set=1.792 slv=12.685 max=0.0458 n=6617) cex=R/T/F=4033/0/0 trsplit=0 pending=339 sim=110.225(rmp=4.284 run=105.837 n=1 d=1537) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.028(d=0) stat= 0.856 rest= 2.184
+BMC : c =  349506  cl = 348561  lit = 1192352  p =  2481  d =  4515  f =     1  +  T =     0.23 sec
+  [bmc-prof   1] wall= 230.151 p=  6997 | ifo= 21.494(sd=1.069 nx=0.000 tfo=18.070 cnt=2.356) snap= 1.779 srm= 53.188 sat= 19.113(set=1.727 slv=16.973 max=0.1951 n=6997) cex=R/T/F=4515/0/1 trsplit=0 pending=509 sim=131.153(rmp=4.679 run=126.473 n=1 d=1223) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.031(d=1) stat= 0.921 rest= 2.471
+BMC : c =  349022  cl = 348275  lit = 1190999  p =  2501  d =  4601  f =     0  +  T =     0.29 sec
+  [bmc-prof   2] wall= 295.088 p=  7102 | ifo= 22.756(sd=1.064 nx=0.000 tfo=18.330 cnt=3.362) snap= 2.241 srm= 58.441 sat= 30.752(set=2.266 slv=28.012 max=0.2627 n=7102) cex=R/T/F=4601/0/0 trsplit=0 pending=2560 sim=177.108(rmp=3.899 run=173.208 n=1 d=1353) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.038(d=0) stat= 1.001 rest= 2.750
+BMC : c =  348681  cl = 348148  lit = 1190046  p =  2498  d =  4144  f =     1  +  T =     0.31 sec
+  [bmc-prof   3] wall= 309.025 p=  6643 | ifo= 21.705(sd=1.146 nx=0.000 tfo=17.861 cnt=2.698) snap= 1.861 srm= 55.401 sat= 36.305(set=2.058 slv=33.770 max=0.0843 n=6643) cex=R/T/F=4144/0/1 trsplit=0 pending=196 sim=189.563(rmp=4.782 run=184.779 n=1 d=952) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.029(d=1) stat= 1.060 rest= 3.101
+BMC : c =  348576  cl = 348073  lit = 1189524  p =  2495  d =  3986  f =     0  +  T =     0.28 sec
+  [bmc-prof   4] wall= 283.524 p=  6481 | ifo= 23.974(sd=1.452 nx=0.000 tfo=20.046 cnt=2.476) snap= 1.892 srm= 60.962 sat= 35.653(set=2.068 slv=33.099 max=0.1436 n=6481) cex=R/T/F=3986/0/0 trsplit=0 pending=458 sim=157.212(rmp=4.973 run=152.237 n=1 d=522) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.028(d=0) stat= 0.914 rest= 2.889
+BMC : c =  348226  cl = 348013  lit = 1188723  p =  2492  d =  3593  f =     4  +  T =     0.29 sec
+  [bmc-prof   5] wall= 290.766 p=  6089 | ifo= 21.940(sd=1.108 nx=0.000 tfo=18.365 cnt=2.466) snap= 1.852 srm= 53.563 sat= 33.503(set=1.963 slv=31.095 max=0.0784 n=6089) cex=R/T/F=3593/0/4 trsplit=0 pending=238 sim=176.207(rmp=3.986 run=172.219 n=1 d=799) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.028(d=2) stat= 0.961 rest= 2.712
+BMC : c =  347620  cl = 347758  lit = 1187658  p =  2484  d =  3177  f =     1  +  T =     0.32 sec
+  [bmc-prof   6] wall= 318.028 p=  5662 | ifo= 24.699(sd=1.227 nx=0.000 tfo=21.018 cnt=2.453) snap= 1.904 srm= 63.766 sat= 31.510(set=1.937 slv=29.154 max=0.1329 n=5662) cex=R/T/F=3177/0/1 trsplit=0 pending=239 sim=192.336(rmp=3.981 run=188.354 n=1 d=1064) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.065(d=1) stat= 0.997 rest= 2.751
+BMC : c =  347241  cl = 347666  lit = 1186666  p =  2507  d =  3339  f =     0  +  T =     0.28 sec
+  [bmc-prof   7] wall= 285.570 p=  5846 | ifo= 24.108(sd=1.142 nx=0.000 tfo=20.318 cnt=2.647) snap= 2.004 srm= 56.424 sat= 31.547(set=2.226 slv=28.882 max=0.2471 n=5846) cex=R/T/F=3339/0/0 trsplit=0 pending=262 sim=167.647(rmp=4.110 run=163.536 n=1 d=992) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.029(d=0) stat= 0.934 rest= 2.878
+BMC : c =  347005  cl = 347469  lit = 1185836  p =  2608  d =  2789  f =     0  +  T =     0.26 sec
+  [bmc-prof   8] wall= 263.474 p=  5397 | ifo= 19.711(sd=1.097 nx=0.000 tfo=16.127 cnt=2.487) snap= 2.017 srm= 53.319 sat= 28.770(set=1.850 slv=26.499 max=0.1206 n=5397) cex=R/T/F=2789/0/0 trsplit=0 pending=177 sim=156.061(rmp=4.008 run=152.052 n=1 d=830) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.024(d=0) stat= 0.956 rest= 2.615
+BMC : c =  346974  cl = 347415  lit = 1185409  p =  2584  d =  2384  f =     0  +  T =     0.28 sec
+  [bmc-prof   9] wall= 282.545 p=  4968 | ifo= 17.794(sd=1.098 nx=0.000 tfo=14.222 cnt=2.475) snap= 1.937 srm= 54.809 sat= 40.512(set=1.849 slv=38.263 max=0.2860 n=4968) cex=R/T/F=2384/0/0 trsplit=0 pending=1424 sim=163.780(rmp=4.158 run=159.620 n=1 d=427) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.023(d=0) stat= 0.952 rest= 2.739
+BMC : c =  346852  cl = 347374  lit = 1185157  p =  2583  d =  1999  f =     0  +  T =     0.29 sec
+  [bmc-prof  10] wall= 292.428 p=  4582 | ifo= 19.161(sd=1.157 nx=0.000 tfo=15.491 cnt=2.512) snap= 2.443 srm= 54.309 sat= 38.251(set=2.096 slv=35.812 max=0.2027 n=4582) cex=R/T/F=1999/0/0 trsplit=0 pending=120 sim=174.504(rmp=4.676 run=169.827 n=1 d=252) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.016(d=0) stat= 0.926 rest= 2.819
+BMC : c =  346803  cl = 347377  lit = 1184880  p =  2577  d =  1858  f =     0  +  T =     0.28 sec
+  [bmc-prof  11] wall= 277.283 p=  4435 | ifo= 17.677(sd=1.103 nx=0.000 tfo=14.047 cnt=2.527) snap= 1.857 srm= 53.217 sat= 37.667(set=1.841 slv=35.482 max=0.1468 n=4435) cex=R/T/F=1858/0/0 trsplit=0 pending=126 sim=163.205(rmp=4.060 run=159.144 n=1 d=277) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.017(d=0) stat= 0.899 rest= 2.745
+BMC : c =  346801  cl = 347373  lit = 1184695  p =  2634  d =  1631  f =     0  +  T =     0.27 sec
+  [bmc-prof  12] wall= 274.415 p=  4265 | ifo= 17.099(sd=1.095 nx=0.000 tfo=13.547 cnt=2.457) snap= 1.866 srm= 53.322 sat= 37.465(set=1.855 slv=35.283 max=0.1791 n=4265) cex=R/T/F=1631/0/0 trsplit=0 pending=115 sim=160.885(rmp=6.338 run=154.545 n=1 d=185) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.014(d=0) stat= 0.992 rest= 2.773
+BMC : c =  346792  cl = 347381  lit = 1184517  p =  2634  d =  1449  f =     0  +  T =     0.29 sec
+  [bmc-prof  13] wall= 290.266 p=  4083 | ifo= 22.705(sd=1.094 nx=0.000 tfo=17.442 cnt=4.169) snap= 2.395 srm= 59.377 sat= 19.596(set=1.966 slv=17.358 max=0.1783 n=4083) cex=R/T/F=1449/0/0 trsplit=0 pending=89 sim=181.949(rmp=3.796 run=178.151 n=1 d=178) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.015(d=0) stat= 1.017 rest= 3.211
+BMC : c =  346789  cl = 347367  lit = 1184351  p =  2630  d =  1292  f =     0  +  T =     0.27 sec
+  [bmc-prof  14] wall= 272.386 p=  3922 | ifo= 22.376(sd=1.445 nx=0.000 tfo=18.021 cnt=2.911) snap= 1.901 srm= 55.260 sat= 19.441(set=2.071 slv=17.082 max=0.1633 n=3922) cex=R/T/F=1292/0/0 trsplit=0 pending=53 sim=169.813(rmp=3.970 run=165.841 n=1 d=166) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.012(d=0) stat= 0.905 rest= 2.678
+BMC : c =  346783  cl = 347365  lit = 1184202  p =  2627  d =  1134  f =     0  +  T =     0.26 sec
+  [bmc-prof  15] wall= 257.124 p=  3761 | ifo= 18.132(sd=1.100 nx=0.000 tfo=14.496 cnt=2.536) snap= 1.853 srm= 58.244 sat= 18.839(set=1.804 slv=16.786 max=0.1174 n=3761) cex=R/T/F=1134/0/0 trsplit=0 pending=47 sim=156.337(rmp=4.330 run=152.005 n=1 d=149) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.011(d=0) stat= 0.947 rest= 2.762
+BMC : c =  346770  cl = 347366  lit = 1184055  p =  2627  d =   996  f =     0  +  T =     0.25 sec
+  [bmc-prof  16] wall= 253.507 p=  3623 | ifo= 18.213(sd=1.120 nx=0.000 tfo=14.635 cnt=2.458) snap= 1.851 srm= 53.656 sat= 17.247(set=1.879 slv=15.131 max=0.1324 n=3623) cex=R/T/F=996/0/0 trsplit=0 pending=38 sim=158.762(rmp=4.038 run=154.722 n=1 d=147) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.025(d=0) stat= 0.919 rest= 2.835
+BMC : c =  346767  cl = 347348  lit = 1183933  p =  2626  d =   872  f =     0  +  T =     0.27 sec
+  [bmc-prof  17] wall= 272.468 p=  3498 | ifo= 22.745(sd=1.095 nx=0.000 tfo=19.214 cnt=2.436) snap= 3.387 srm= 54.615 sat= 16.616(set=2.249 slv=14.140 max=0.1343 n=3498) cex=R/T/F=872/0/0 trsplit=0 pending=40 sim=171.426(rmp=3.954 run=167.471 n=1 d=122) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.010(d=0) stat= 0.925 rest= 2.743
+BMC : c =  346764  cl = 347346  lit = 1183821  p =  2625  d =   757  f =     0  +  T =     0.25 sec
+  [bmc-prof  18] wall= 251.290 p=  3382 | ifo= 18.631(sd=1.103 nx=0.000 tfo=15.045 cnt=2.483) snap= 1.908 srm= 53.800 sat= 14.674(set=1.794 slv=12.676 max=0.1715 n=3382) cex=R/T/F=757/0/0 trsplit=0 pending=26 sim=158.708(rmp=3.984 run=154.723 n=1 d=112) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.009(d=0) stat= 0.924 rest= 2.635
+BMC : c =  346761  cl = 347343  lit = 1183715  p =  2630  d =   648  f =     0  +  T =     0.28 sec
+  [bmc-prof  19] wall= 283.179 p=  3278 | ifo= 18.703(sd=1.107 nx=0.000 tfo=15.135 cnt=2.461) snap= 1.883 srm= 54.577 sat= 15.883(set=2.023 slv=13.655 max=0.1501 n=3278) cex=R/T/F=648/0/0 trsplit=0 pending=25 sim=188.021(rmp=4.003 run=184.016 n=1 d=106) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.009(d=0) stat= 1.020 rest= 3.084
+BMC : c =  346761  cl = 347347  lit = 1183625  p =  2627  d =   547  f =     1  +  T =     0.26 sec
+  [bmc-prof  20] wall= 264.479 p=  3175 | ifo= 24.310(sd=1.370 nx=0.000 tfo=18.932 cnt=4.008) snap= 1.904 srm= 55.926 sat= 13.764(set=1.869 slv=11.702 max=0.2946 n=3175) cex=R/T/F=547/0/1 trsplit=0 pending=27 sim=164.970(rmp=4.098 run=160.871 n=1 d=89) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.010(d=1) stat= 0.902 rest= 2.692
+BMC : c =  346761  cl = 347347  lit = 1183544  p =  2626  d =   459  f =     0  +  T =     0.28 sec
+  [bmc-prof  21] wall= 285.012 p=  3085 | ifo= 13.576(sd=1.104 nx=0.000 tfo=9.850 cnt=2.622) snap= 2.360 srm= 57.403 sat= 12.997(set=1.993 slv=10.815 max=0.0764 n=3085) cex=R/T/F=459/0/0 trsplit=0 pending=23 sim=194.240(rmp=4.839 run=189.399 n=1 d=81) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.008(d=0) stat= 1.033 rest= 3.396
+BMC : c =  346759  cl = 347342  lit = 1183462  p =  2628  d =   378  f =     0  +  T =     0.25 sec
+  [bmc-prof  22] wall= 255.478 p=  3006 | ifo= 13.698(sd=1.390 nx=0.000 tfo=9.682 cnt=2.626) snap= 1.877 srm= 57.696 sat= 12.135(set=1.843 slv=10.123 max=0.0643 n=3006) cex=R/T/F=378/0/0 trsplit=0 pending=19 sim=166.368(rmp=3.925 run=162.441 n=1 d=82) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.006(d=0) stat= 0.896 rest= 2.803
+BMC : c =  346759  cl = 347336  lit = 1183401  p =  2627  d =   301  f =     0  +  T =     0.27 sec
+  [bmc-prof  23] wall= 267.988 p=  2928 | ifo= 12.462(sd=1.079 nx=0.000 tfo=8.852 cnt=2.531) snap= 1.900 srm= 55.112 sat= 15.369(set=1.779 slv=13.415 max=0.1061 n=2928) cex=R/T/F=301/0/0 trsplit=0 pending=10 sim=179.584(rmp=3.762 run=175.821 n=1 d=61) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.006(d=0) stat= 0.893 rest= 2.664
+BMC : c =  346759  cl = 347324  lit = 1183352  p =  2627  d =   240  f =     0  +  T =     0.26 sec
+  [bmc-prof  24] wall= 263.082 p=  2867 | ifo= 12.270(sd=1.070 nx=0.000 tfo=8.665 cnt=2.534) snap= 1.832 srm= 52.808 sat= 11.119(set=1.739 slv=9.228 max=0.0649 n=2867) cex=R/T/F=240/0/0 trsplit=0 pending=5 sim=181.477(rmp=4.435 run=177.040 n=1 d=49) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.005(d=0) stat= 0.888 rest= 2.683
+BMC : c =  346759  cl = 347322  lit = 1183323  p =  2626  d =   193  f =     0  +  T =     0.25 sec
+  [bmc-prof  25] wall= 254.455 p=  2819 | ifo= 12.980(sd=1.059 nx=0.000 tfo=9.200 cnt=2.721) snap= 1.853 srm= 54.474 sat= 10.873(set=1.668 slv=9.045 max=0.0648 n=2819) cex=R/T/F=193/0/0 trsplit=0 pending=17 sim=170.623(rmp=3.832 run=166.790 n=1 d=29) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 0.960 rest= 2.687
+BMC : c =  346759  cl = 347321  lit = 1183301  p =  2626  d =   164  f =     0  +  T =     0.24 sec
+  [bmc-prof  26] wall= 237.426 p=  2790 | ifo= 12.541(sd=1.090 nx=0.000 tfo=8.881 cnt=2.570) snap= 1.862 srm= 52.868 sat= 11.078(set=1.704 slv=9.223 max=0.0675 n=2790) cex=R/T/F=164/0/0 trsplit=0 pending=16 sim=155.509(rmp=3.966 run=151.541 n=1 d=22) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.005(d=0) stat= 0.885 rest= 2.678
+BMC : c =  346759  cl = 347319  lit = 1183278  p =  2625  d =   144  f =     0  +  T =     0.24 sec
+  [bmc-prof  27] wall= 237.777 p=  2769 | ifo= 11.273(sd=1.067 nx=0.000 tfo=7.675 cnt=2.531) snap= 1.847 srm= 57.254 sat= 10.533(set=1.776 slv=8.616 max=0.0643 n=2769) cex=R/T/F=144/0/0 trsplit=0 pending=6 sim=153.249(rmp=3.868 run=149.380 n=1 d=23) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 0.957 rest= 2.659
+BMC : c =  346759  cl = 347319  lit = 1183258  p =  2626  d =   121  f =     0  +  T =     0.24 sec
+  [bmc-prof  28] wall= 242.040 p=  2747 | ifo= 11.072(sd=1.090 nx=0.000 tfo=7.442 cnt=2.541) snap= 1.900 srm= 53.315 sat= 11.378(set=1.683 slv=9.551 max=0.2726 n=2747) cex=R/T/F=121/0/0 trsplit=0 pending=17 sim=160.787(rmp=3.867 run=156.918 n=1 d=20) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 0.932 rest= 2.651
+BMC : c =  346759  cl = 347318  lit = 1183241  p =  2624  d =   103  f =     0  +  T =     0.24 sec
+  [bmc-prof  29] wall= 238.515 p=  2727 | ifo= 12.017(sd=1.631 nx=0.000 tfo=7.843 cnt=2.543) snap= 2.387 srm= 54.934 sat= 10.390(set=1.914 slv=8.339 max=0.0646 n=2727) cex=R/T/F=103/0/0 trsplit=0 pending=18 sim=155.254(rmp=3.978 run=151.275 n=1 d=17) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 0.918 rest= 2.610
+BMC : c =  346759  cl = 347318  lit = 1183222  p =  2624  d =    86  f =     0  +  T =     0.26 sec
+  [bmc-prof  30] wall= 258.451 p=  2710 | ifo= 12.047(sd=1.104 nx=0.000 tfo=8.026 cnt=2.917) snap= 1.885 srm= 52.614 sat= 18.892(set=1.840 slv=16.913 max=8.4950 n=2710) cex=R/T/F=86/0/0 trsplit=0 pending=3 sim=169.475(rmp=3.905 run=165.569 n=1 d=19) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 0.934 rest= 2.601
+BMC : c =  346759  cl = 347316  lit = 1183202  p =  2622  d =    69  f =     0  +  T =     0.24 sec
+  [bmc-prof  31] wall= 245.716 p=  2691 | ifo= 15.032(sd=1.104 nx=0.000 tfo=11.187 cnt=2.741) snap= 1.903 srm= 58.553 sat= 10.028(set=1.704 slv=8.190 max=0.0636 n=2691) cex=R/T/F=69/0/0 trsplit=0 pending=2 sim=156.656(rmp=3.934 run=152.720 n=1 d=20) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 0.889 rest= 2.652
+BMC : c =  346759  cl = 347314  lit = 1183189  p =  2622  d =    49  f =     0  +  T =     0.25 sec
+  [bmc-prof  32] wall= 247.345 p=  2671 | ifo= 14.727(sd=1.095 nx=0.000 tfo=9.735 cnt=3.898) snap= 1.858 srm= 59.086 sat=  9.748(set=1.700 slv=7.917 max=0.0645 n=2671) cex=R/T/F=49/0/0 trsplit=0 pending=5 sim=158.456(rmp=3.793 run=154.662 n=1 d=13) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 0.882 rest= 2.583
+BMC : c =  346759  cl = 347312  lit = 1183180  p =  2621  d =    37  f =     0  +  T =     0.24 sec
+  [bmc-prof  33] wall= 244.445 p=  2658 | ifo= 11.761(sd=1.092 nx=0.000 tfo=8.145 cnt=2.524) snap= 1.831 srm= 54.860 sat= 10.006(set=1.698 slv=8.175 max=0.0645 n=2658) cex=R/T/F=37/0/0 trsplit=0 pending=3 sim=162.077(rmp=4.342 run=157.734 n=1 d=9) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.005(d=0) stat= 0.938 rest= 2.967
+BMC : c =  346759  cl = 347309  lit = 1183173  p =  2620  d =    29  f =     0  +  T =     0.26 sec
+  [bmc-prof  34] wall= 266.260 p=  2649 | ifo= 13.118(sd=1.074 nx=0.000 tfo=9.504 cnt=2.540) snap= 2.365 srm= 57.518 sat= 10.068(set=1.951 slv=7.980 max=0.0978 n=2649) cex=R/T/F=29/0/0 trsplit=0 pending=2 sim=179.164(rmp=4.200 run=174.964 n=1 d=7) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 1.009 rest= 3.012
+BMC : c =  346759  cl = 347310  lit = 1183166  p =  2619  d =    23  f =     0  +  T =     0.25 sec
+  [bmc-prof  35] wall= 248.365 p=  2642 | ifo= 14.087(sd=1.400 nx=0.000 tfo=9.652 cnt=3.035) snap= 1.842 srm= 53.476 sat=  9.867(set=1.675 slv=8.060 max=0.0648 n=2642) cex=R/T/F=23/0/0 trsplit=0 pending=0 sim=165.018(rmp=4.731 run=160.285 n=1 d=7) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 1.028 rest= 3.044
+BMC : c =  346759  cl = 347310  lit = 1183161  p =  2616  d =    19  f =     0  +  T =     0.24 sec
+  [bmc-prof  36] wall= 245.178 p=  2635 | ifo= 14.615(sd=1.662 nx=0.000 tfo=9.912 cnt=3.041) snap= 2.365 srm= 59.226 sat= 10.245(set=2.037 slv=8.021 max=0.1540 n=2635) cex=R/T/F=19/0/0 trsplit=0 pending=2 sim=155.198(rmp=3.883 run=151.314 n=1 d=5) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.003(d=0) stat= 0.909 rest= 2.616
+BMC : c =  346759  cl = 347308  lit = 1183156  p =  2616  d =    14  f =     0  +  T =     0.24 sec
+  [bmc-prof  37] wall= 243.446 p=  2630 | ifo= 14.538(sd=1.057 nx=0.000 tfo=9.658 cnt=3.823) snap= 1.879 srm= 55.056 sat=  9.637(set=1.673 slv=7.834 max=0.1022 n=2630) cex=R/T/F=14/0/0 trsplit=0 pending=1 sim=158.149(rmp=3.861 run=154.287 n=1 d=5) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.004(d=0) stat= 1.029 rest= 3.154
+BMC : c =  346759  cl = 347309  lit = 1183152  p =  2616  d =     9  f =     0  +  T =     0.24 sec
+  [bmc-prof  38] wall= 245.450 p=  2625 | ifo= 13.025(sd=1.382 nx=0.000 tfo=9.111 cnt=2.533) snap= 1.840 srm= 51.715 sat=  9.847(set=1.686 slv=8.032 max=0.0650 n=2625) cex=R/T/F=9/0/0 trsplit=0 pending=0 sim=165.505(rmp=4.100 run=161.404 n=1 d=4) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.003(d=0) stat= 0.911 rest= 2.603
+BMC : c =  346759  cl = 347307  lit = 1183148  p =  2618  d =     5  f =     0  +  T =     0.25 sec
+  [bmc-prof  39] wall= 255.948 p=  2623 | ifo= 11.283(sd=1.104 nx=0.000 tfo=7.632 cnt=2.547) snap= 1.850 srm= 53.268 sat=  9.584(set=1.650 slv=7.806 max=0.0643 n=2623) cex=R/T/F=5/0/0 trsplit=0 pending=0 sim=176.300(rmp=3.962 run=172.337 n=1 d=4) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.003(d=0) stat= 0.965 rest= 2.696
+  [bmc-incr i=40 repr=5 active=77/1183148 POs=1]
+BMC : c =  346759  cl = 347306  lit = 1183147  p =     0  d =     1  f =     0  +  T =     0.19 sec
+  [bmc-prof  40] wall= 192.942 p=     1 | ifo=  4.846(sd=1.073 nx=0.000 tfo=0.630 cnt=3.143) snap= 1.887 srm= 23.635 sat=  1.497(set=1.485 slv=0.010 max=0.0100 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim=157.637(rmp=3.830 run=153.806 n=1 d=1) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.001(d=0) stat= 0.900 rest= 2.539
+  [bmc-incr i=41 repr=1 active=73/1183147 POs=0]
+  [bmc-prof ALL] wall=10702.810 p=156079 | ifo=668.903(sd=46.920 nx=0.000 tfo=511.645 cnt=110.338) snap=81.844 srm=2241.589 sat=767.267(set=76.381 slv=680.829 max=8.4950 n=156079) cex=R/T/F=52188/0/8 trsplit=0 pending=7257 sim=6790.599(rmp=171.119 run=6619.318 n=41 d=11960) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.556(d=6) stat=38.688 rest=113.363
+  1 : c =  346281  cl = 346328  lit = 1181010  p = 11536  d =  1868  f =     1  +  T =     0.52 sec
+  [prof   1] wall= 516.721 p= 13405 | ifo=  0.000(sd=0.000 nx=0.000 tfo=0.000 cnt=0.000) snap= 2.466 srm= 96.435 sat= 12.225(set=2.358 slv=9.206 max=0.0883 n=13405) cex=R/T/F=1868/0/1 trsplit=0 pending=804 sim=402.114(rmp=1.005 run=401.107 n=1 d=2136) incr=loc/full/maxdirty/keys=0/1/0/6442338 chk= 0.035(d=1) stat= 0.850 rest= 2.595
+  2 : c =  346140  cl = 346232  lit = 1180500  p = 10670  d =   494  f =     0  +  T =     0.35 sec
+  [prof   2] wall= 351.497 p= 11164 | ifo= 25.557(sd=1.092 nx=1.055 tfo=20.534 cnt=2.876) snap= 2.469 srm=103.903 sat= 10.918(set=2.492 slv=7.909 max=0.0428 n=11164) cex=R/T/F=494/0/0 trsplit=0 pending=0 sim=204.438(rmp=0.325 run=204.112 n=1 d=510) incr=loc/full/maxdirty/keys=1/0/2597296/6442338 chk= 0.014(d=0) stat= 0.836 rest= 3.362
+  3 : c =  345214  cl = 346246  lit = 1179137  p = 10650  d =   551  f =     0  +  T =     0.33 sec
+  [prof   3] wall= 334.073 p= 11201 | ifo= 20.406(sd=1.101 nx=0.966 tfo=15.397 cnt=2.942) snap= 1.929 srm=102.161 sat= 10.858(set=2.179 slv=8.129 max=0.1166 n=11201) cex=R/T/F=551/0/0 trsplit=0 pending=0 sim=194.491(rmp=0.263 run=194.228 n=1 d=1363) incr=loc/full/maxdirty/keys=1/0/2609057/6442338 chk= 0.023(d=0) stat= 1.083 rest= 3.122
+  4 : c =  310590  cl = 362069  lit = 1148726  p = 13774  d =  3531  f =     0  +  T =     0.35 sec
+  [prof   4] wall= 348.507 p= 17305 | ifo= 25.101(sd=1.618 nx=1.360 tfo=19.302 cnt=2.821) snap= 1.999 srm= 97.775 sat= 22.095(set=2.789 slv=18.327 max=0.1241 n=17305) cex=R/T/F=3531/0/0 trsplit=0 pending=0 sim=197.791(rmp=0.266 run=197.524 n=1 d=30411) incr=loc/full/maxdirty/keys=1/0/2618541/6442338 chk= 0.038(d=0) stat= 1.097 rest= 2.612
+  5 : c =  278185  cl = 365724  lit = 1093943  p =145803  d =111647  f =     0  +  T =     0.60 sec
+  [prof   5] wall= 605.304 p=257450 | ifo= 34.884(sd=1.575 nx=0.951 tfo=28.691 cnt=3.667) snap= 1.968 srm=157.197 sat=182.301(set=8.752 slv=159.124 max=0.2440 n=257450) cex=R/T/F=111647/0/0 trsplit=0 pending=0 sim=223.118(rmp=0.295 run=222.822 n=1 d=54783) incr=loc/full/maxdirty/keys=1/0/2628351/6442338 chk= 0.836(d=0) stat= 1.719 rest= 3.281
+  6 : c =  238183  cl = 358227  lit =  989144  p = 58731  d =191540  f =     7  +  T =     1.21 sec
+  [prof   6] wall=1210.211 p=250278 | ifo= 32.315(sd=1.742 nx=1.013 tfo=25.578 cnt=3.983) snap= 2.430 srm=172.265 sat=698.858(set=10.441 slv=667.199 max=0.2719 n=250278) cex=R/T/F=191540/0/7 trsplit=0 pending=0 sim=296.648(rmp=0.239 run=296.407 n=1 d=104794) incr=loc/full/maxdirty/keys=1/0/2634500/6442338 chk= 1.009(d=5) stat= 1.743 rest= 4.942
+  7 : c =  148586  cl = 346868  lit =  793645  p = 55275  d =178062  f =    12  +  T =     3.11 sec
+  [prof   7] wall=3116.444 p=233349 | ifo= 29.877(sd=2.098 nx=1.021 tfo=22.213 cnt=4.546) snap= 1.959 srm=180.973 sat=1839.857(set=10.021 slv=1810.169 max=5.9638 n=233349) cex=R/T/F=178062/0/12 trsplit=0 pending=0 sim=1054.147(rmp=0.291 run=1053.855 n=1 d=195496) incr=loc/full/maxdirty/keys=7/0/2630950/6442338 chk= 1.235(d=3) stat= 2.722 rest= 5.672
+  8 : c =   74910  cl = 263551  lit =  604304  p =115607  d =354806  f =  4286  +  T =    14.27 sec
+  [prof   8] wall=14273.088 p=474699 | ifo= 31.871(sd=2.971 nx=1.104 tfo=22.019 cnt=5.777) snap= 3.004 srm=263.307 sat=11572.248(set=20.714 slv=11480.195 max=5.9985 n=474699) cex=R/T/F=354806/0/4286 trsplit=0 pending=0 sim=2386.911(rmp=0.239 run=2386.671 n=1 d=185623) incr=loc/full/maxdirty/keys=25/0/2623091/6442338 chk= 2.661(d=3718) stat= 2.598 rest=10.489
+  9 : c =   69780  cl = 241417  lit =  460976  p = 42516  d =242499  f = 23308  +  T =    13.74 sec
+  [prof   9] wall=13744.830 p=308323 | ifo= 30.932(sd=2.850 nx=1.351 tfo=21.638 cnt=5.093) snap= 1.857 srm=242.414 sat=10730.256(set=16.237 slv=10658.879 max=1.7562 n=308323) cex=R/T/F=242499/0/23308 trsplit=0 pending=0 sim=2721.641(rmp=0.241 run=2721.399 n=1 d=123706) incr=loc/full/maxdirty/keys=37/0/2624087/6442338 chk= 2.934(d=19622) stat= 3.005 rest=11.791
+ 10 : c =   67721  cl = 216152  lit =  377921  p = 96233  d = 95061  f = 50050  +  T =    15.16 sec
+  [prof  10] wall=15160.498 p=241344 | ifo= 28.287(sd=2.115 nx=0.979 tfo=21.140 cnt=4.053) snap= 2.021 srm=239.621 sat=13540.768(set=18.573 slv=13490.576 max=1.2983 n=241344) cex=R/T/F=95061/0/50050 trsplit=0 pending=0 sim=1339.669(rmp=0.252 run=1339.415 n=1 d=55262) incr=loc/full/maxdirty/keys=20/0/2629238/6442338 chk= 2.439(d=27793) stat= 1.568 rest= 6.125
+ 11 : c =   64842  cl = 210668  lit =  351014  p = 97410  d = 46182  f =  5099  +  T =     6.04 sec
+  [prof  11] wall=6040.607 p=148691 | ifo= 31.822(sd=1.796 nx=0.986 tfo=26.145 cnt=2.895) snap= 1.947 srm=198.316 sat=4971.509(set=12.117 slv=4947.893 max=2.3505 n=148691) cex=R/T/F=46182/0/5099 trsplit=0 pending=0 sim=830.052(rmp=0.230 run=829.820 n=1 d=23533) incr=loc/full/maxdirty/keys=10/0/2607310/6442338 chk= 1.010(d=3374) stat= 1.330 rest= 4.621
+ 12 : c =   40707  cl = 205808  lit =  308498  p = 85477  d = 18262  f = 35667  +  T =     9.06 sec
+  [prof  12] wall=9062.332 p=139406 | ifo= 28.123(sd=1.355 nx=0.989 tfo=22.907 cnt=2.872) snap= 1.952 srm=171.701 sat=8535.752(set=11.775 slv=8513.648 max=1.3927 n=139406) cex=R/T/F=18262/0/35667 trsplit=0 pending=0 sim=318.084(rmp=0.237 run=317.846 n=1 d=10471) incr=loc/full/maxdirty/keys=3/0/2607752/6442338 chk= 1.012(d=32045) stat= 1.445 rest= 4.262
+ 13 : c =   38917  cl = 194662  lit =  286775  p = 88168  d =  1946  f = 22217  +  T =     7.04 sec
+  [prof  13] wall=7039.034 p=112331 | ifo= 25.670(sd=1.646 nx=1.363 tfo=19.904 cnt=2.757) snap= 2.442 srm=186.470 sat=6613.240(set=12.533 slv=6594.307 max=7.8683 n=112331) cex=R/T/F=1946/0/22217 trsplit=0 pending=0 sim=206.506(rmp=0.277 run=206.227 n=1 d=1587) incr=loc/full/maxdirty/keys=1/0/2611444/6442338 chk= 0.681(d=20136) stat= 0.993 rest= 3.034
+ 14 : c =   37349  cl = 193607  lit =  281215  p = 78600  d =   970  f =  4969  +  T =     1.17 sec
+  [prof  14] wall=1174.368 p= 84539 | ifo= 19.733(sd=1.252 nx=0.991 tfo=15.764 cnt=1.726) snap= 2.472 srm=174.018 sat=788.285(set=11.569 slv=772.476 max=0.8437 n=84539) cex=R/T/F=970/0/4969 trsplit=0 pending=0 sim=185.865(rmp=0.240 run=185.624 n=1 d=708) incr=loc/full/maxdirty/keys=1/0/2607043/6442338 chk= 0.158(d=4852) stat= 0.964 rest= 2.873
+ 15 : c =   21766  cl = 196851  lit =  264056  p = 77710  d =  3674  f =  1703  +  T =     0.72 sec
+  [prof  15] wall= 725.519 p= 83087 | ifo= 17.292(sd=1.114 nx=0.949 tfo=13.517 cnt=1.712) snap= 1.937 srm=167.980 sat=394.804(set=10.346 slv=380.218 max=0.8641 n=83087) cex=R/T/F=3674/0/1703 trsplit=0 pending=0 sim=139.443(rmp=0.237 run=139.204 n=1 d=15469) incr=loc/full/maxdirty/keys=1/0/1948343/6442338 chk= 0.091(d=1690) stat= 1.109 rest= 2.864
+ 16 : c =    9396  cl = 191201  lit =  235692  p = 31142  d = 33335  f = 10980  +  T =     2.10 sec
+  [prof  16] wall=2097.847 p= 75457 | ifo= 17.760(sd=1.274 nx=0.956 tfo=13.609 cnt=1.922) snap= 1.973 srm=189.009 sat=1619.639(set=10.568 slv=1602.471 max=1.4537 n=75457) cex=R/T/F=33335/0/10980 trsplit=0 pending=0 sim=203.369(rmp=0.292 run=203.076 n=1 d=21122) incr=loc/full/maxdirty/keys=1/0/2626475/6442338 chk=60.436(d=7242) stat= 1.279 rest= 4.383
+ 17 : c =    6023  cl = 180993  lit =  216043  p = 17580  d = 40876  f =  3665  +  T =     2.46 sec
+  [prof  17] wall=2464.926 p= 62121 | ifo= 16.334(sd=1.193 nx=0.899 tfo=12.434 cnt=1.808) snap= 1.777 srm=169.953 sat=2082.059(set=10.021 slv=2066.092 max=0.7861 n=62121) cex=R/T/F=40876/0/3665 trsplit=0 pending=0 sim=188.587(rmp=0.236 run=188.349 n=1 d=18182) incr=loc/full/maxdirty/keys=1/0/2616804/6442338 chk= 1.003(d=1467) stat= 1.071 rest= 4.141
+ 18 : c =    5441  cl = 178019  lit =  208447  p =  6052  d = 26667  f =  2750  +  T =     1.59 sec
+  [prof  18] wall=1591.151 p= 35469 | ifo= 16.146(sd=1.195 nx=0.886 tfo=12.349 cnt=1.716) snap= 1.785 srm=166.595 sat=1212.670(set=10.299 slv=1198.702 max=1.0917 n=35469) cex=R/T/F=26667/0/2750 trsplit=0 pending=0 sim=188.649(rmp=0.261 run=188.387 n=1 d=5753) incr=loc/full/maxdirty/keys=1/0/2602791/6442338 chk= 0.668(d=1843) stat= 1.027 rest= 3.610
+ 19 : c =    5198  cl = 178546  lit =  204921  p =  4416  d = 20236  f =   816  -  T =     1.00 sec
+  [prof  19] wall=1003.003 p= 25468 | ifo= 18.261(sd=1.244 nx=0.958 tfo=14.304 cnt=1.754) snap= 1.929 srm=171.590 sat=621.652(set=12.197 slv=606.438 max=3.0779 n=25468) cex=R/T/F=20236/0/816 trsplit=0 pending=0 sim=184.745(rmp=0.238 run=184.506 n=1 d=3048) incr=loc/full/maxdirty/keys=1/0/2603125/6442338 chk= 0.143(d=478) stat= 1.014 rest= 3.669
+ 20 : c =    4280  cl = 178354  lit =  197954  p =  4341  d = 14326  f =  4081  -  T =     0.84 sec
+  [prof  20] wall= 842.372 p= 22748 | ifo= 19.429(sd=1.205 nx=0.951 tfo=15.131 cnt=2.141) snap= 1.941 srm=192.993 sat=433.350(set=10.588 slv=420.156 max=0.9714 n=22748) cex=R/T/F=14326/0/4081 trsplit=0 pending=0 sim=190.314(rmp=0.244 run=190.069 n=1 d=4293) incr=loc/full/maxdirty/keys=1/0/2607713/6442338 chk= 0.227(d=2674) stat= 1.011 rest= 3.108
+ 21 : c =    3882  cl = 178443  lit =  193643  p =  4621  d = 14550  f =   175  -  T =     0.63 sec
+  [prof  21] wall= 632.432 p= 19346 | ifo= 19.185(sd=1.187 nx=0.941 tfo=15.229 cnt=1.827) snap= 1.951 srm=173.061 sat=256.142(set=10.215 slv=243.707 max=0.2514 n=19346) cex=R/T/F=14550/0/175 trsplit=0 pending=0 sim=177.937(rmp=0.236 run=177.701 n=1 d=4262) incr=loc/full/maxdirty/keys=1/0/2607333/6442338 chk= 0.104(d=49) stat= 1.038 rest= 3.015
+ 22 : c =    3827  cl = 177801  lit =  188851  p =  4416  d = 11428  f =    43  -  T =     0.47 sec
+  [prof  22] wall= 474.392 p= 15887 | ifo= 19.864(sd=1.167 nx=1.219 tfo=15.712 cnt=1.765) snap= 1.936 srm=171.803 sat=189.474(set=10.177 slv=177.605 max=0.3129 n=15887) cex=R/T/F=11428/0/43 trsplit=0 pending=0 sim=87.133(rmp=0.237 run=86.895 n=1 d=4754) incr=loc/full/maxdirty/keys=1/0/1351304/6442338 chk= 0.079(d=38) stat= 0.986 rest= 3.117
+  [incr r=22 repr=7380 next=9302 tfo=1051560 active=18251/366652 POs=7453]
+ 23 : c =    3782  cl = 176071  lit =  184625  p =  1187  d =  1013  f =  5253  -  T =     1.06 sec
+  [prof  23] wall=1062.004 p=  7453 | ifo= 12.863(sd=1.134 nx=0.949 tfo=8.673 cnt=2.106) snap= 1.937 srm=125.794 sat=836.585(set=9.981 slv=825.984 max=1.2870 n=7453) cex=R/T/F=1013/0/5253 trsplit=0 pending=0 sim=81.053(rmp=0.233 run=80.820 n=1 d=3664) incr=loc/full/maxdirty/keys=1/0/1339640/6442338 chk= 0.051(d=562) stat= 0.916 rest= 2.807
+  [incr r=23 repr=4471 next=4633 tfo=1042058 active=10460/360696 POs=1563]
+ 24 : c =    3758  cl = 176053  lit =  184304  p =  1162  d =   361  f =    40  -  T =     0.23 sec
+  [prof  24] wall= 229.129 p=  1563 | ifo= 15.024(sd=1.101 nx=0.959 tfo=10.536 cnt=2.427) snap= 2.428 srm=118.893 sat= 20.097(set=10.439 slv=9.563 max=0.3896 n=1563) cex=R/T/F=361/0/40 trsplit=0 pending=0 sim=68.504(rmp=0.274 run=68.229 n=1 d=283) incr=loc/full/maxdirty/keys=1/0/1035364/6442338 chk= 0.038(d=38) stat= 1.060 rest= 3.086
+  [incr r=24 repr=435 next=453 tfo=1024996 active=4165/360357 POs=502]
+ 25 : c =    3738  cl = 176031  lit =  184166  p =   370  d =   102  f =    30  -  T =     0.21 sec
+  [prof  25] wall= 211.776 p=   502 | ifo= 13.782(sd=1.339 nx=1.222 tfo=9.156 cnt=2.065) snap= 1.910 srm=118.003 sat= 16.162(set=9.693 slv=6.434 max=0.3095 n=502) cex=R/T/F=102/0/30 trsplit=0 pending=0 sim=58.503(rmp=0.233 run=58.269 n=1 d=108) incr=loc/full/maxdirty/keys=1/0/1036122/6442338 chk= 0.024(d=30) stat= 0.879 rest= 2.513
+  [incr r=25 repr=186 next=194 tfo=1022675 active=3481/360197 POs=434]
+ 26 : c =    3705  cl = 176028  lit =  184082  p =   361  d =    34  f =    39  -  T =     0.17 sec
+  [prof  26] wall= 171.209 p=   434 | ifo= 11.735(sd=1.070 nx=0.931 tfo=7.684 cnt=2.050) snap= 1.920 srm=117.218 sat= 17.371(set=9.899 slv=7.442 max=0.2286 n=434) cex=R/T/F=34/0/39 trsplit=0 pending=0 sim=19.423(rmp=0.259 run=19.163 n=1 d=46) incr=loc/full/maxdirty/keys=1/0/308896/6442338 chk= 0.016(d=38) stat= 0.895 rest= 2.631
+  [incr r=26 repr=118 next=110 tfo=1024411 active=3353/360110 POs=427]
+ 27 : c =    3667  cl = 176019  lit =  184016  p =   364  d =    31  f =    32  -  T =     0.21 sec
+  [prof  27] wall= 209.560 p=   427 | ifo= 13.795(sd=1.066 nx=1.026 tfo=9.940 cnt=1.764) snap= 1.903 srm=114.795 sat= 16.647(set=10.324 slv=6.296 max=0.2303 n=427) cex=R/T/F=31/0/32 trsplit=0 pending=0 sim=59.042(rmp=0.232 run=58.808 n=1 d=34) incr=loc/full/maxdirty/keys=1/0/1034218/6442338 chk= 0.011(d=32) stat= 0.890 rest= 2.478
+  [incr r=27 repr=123 next=133 tfo=1021267 active=3225/360035 POs=433]
+ 28 : c =    3611  cl = 176026  lit =  183947  p =   364  d =    39  f =    30  -  T =     0.17 sec
+  [prof  28] wall= 166.018 p=   433 | ifo= 11.387(sd=1.116 nx=0.932 tfo=7.640 cnt=1.700) snap= 1.920 srm=114.382 sat= 15.837(set=9.725 slv=6.084 max=0.1837 n=433) cex=R/T/F=39/0/30 trsplit=0 pending=0 sim=18.900(rmp=0.241 run=18.658 n=1 d=39) incr=loc/full/maxdirty/keys=1/0/308741/6442338 chk= 0.029(d=30) stat= 0.914 rest= 2.649
+  [incr r=28 repr=183 next=225 tfo=1021563 active=3392/359973 POs=450]
+ 29 : c =    3572  cl = 176033  lit =  183865  p =   370  d =    55  f =    25  -  T =     0.20 sec
+  [prof  29] wall= 205.282 p=   450 | ifo= 11.797(sd=1.053 nx=0.979 tfo=7.987 cnt=1.778) snap= 1.981 srm=114.510 sat= 15.737(set=9.867 slv=5.842 max=0.1899 n=450) cex=R/T/F=55/0/25 trsplit=0 pending=0 sim=57.843(rmp=0.240 run=57.602 n=1 d=59) incr=loc/full/maxdirty/keys=1/0/1035086/6442338 chk= 0.024(d=23) stat= 0.881 rest= 2.509
+  [incr r=29 repr=186 next=244 tfo=1021466 active=3308/359898 POs=484]
+ 30 : c =    3543  cl = 176044  lit =  183742  p =   382  d =    61  f =    41  -  T =     0.17 sec
+  [prof  30] wall= 172.713 p=   484 | ifo= 11.468(sd=1.064 nx=0.949 tfo=7.672 cnt=1.783) snap= 1.903 srm=117.476 sat= 18.717(set=10.217 slv=8.468 max=0.1731 n=484) cex=R/T/F=61/0/41 trsplit=0 pending=0 sim=19.393(rmp=0.246 run=19.146 n=1 d=82) incr=loc/full/maxdirty/keys=1/0/308758/6442338 chk= 0.043(d=41) stat= 0.916 rest= 2.798
+  [incr r=30 repr=210 next=242 tfo=1021859 active=3431/359786 POs=472]
+ 31 : c =    3514  cl = 176032  lit =  183633  p =   379  d =    47  f =    46  -  T =     0.21 sec
+  [prof  31] wall= 213.650 p=   472 | ifo= 11.724(sd=1.086 nx=0.958 tfo=7.909 cnt=1.771) snap= 1.971 srm=114.643 sat= 18.809(set=9.995 slv=8.784 max=0.1715 n=472) cex=R/T/F=47/0/46 trsplit=0 pending=0 sim=62.498(rmp=0.246 run=62.251 n=1 d=64) incr=loc/full/maxdirty/keys=1/0/1035018/6442338 chk= 0.018(d=45) stat= 0.875 rest= 3.112
+  [incr r=31 repr=150 next=170 tfo=1021656 active=3238/359665 POs=472]
+ 32 : c =    3488  cl = 176016  lit =  183530  p =   379  d =    22  f =    71  -  T =     0.17 sec
+  [prof  32] wall= 173.397 p=   472 | ifo= 11.701(sd=1.073 nx=0.935 tfo=7.957 cnt=1.736) snap= 1.975 srm=116.378 sat= 21.077(set=9.543 slv=11.505 max=0.1740 n=472) cex=R/T/F=22/0/71 trsplit=0 pending=0 sim=18.772(rmp=0.232 run=18.540 n=1 d=37) incr=loc/full/maxdirty/keys=1/0/307570/6442338 chk= 0.036(d=66) stat= 0.913 rest= 2.544
+  [incr r=32 repr=121 next=122 tfo=1021240 active=3161/359546 POs=441]
+ 33 : c =    3437  cl = 176009  lit =  183477  p =   383  d =    21  f =    37  -  T =     0.22 sec
+  [prof  33] wall= 217.441 p=   441 | ifo= 12.553(sd=1.065 nx=0.961 tfo=8.619 cnt=1.908) snap= 2.052 srm=116.574 sat= 16.130(set=9.806 slv=6.299 max=0.1798 n=441) cex=R/T/F=21/0/37 trsplit=0 pending=0 sim=66.749(rmp=0.232 run=66.515 n=1 d=17) incr=loc/full/maxdirty/keys=1/0/1034016/6442338 chk= 0.012(d=36) stat= 0.902 rest= 2.470
+  [incr r=33 repr=118 next=135 tfo=1021177 active=3121/359486 POs=464]
+ 34 : c =    3390  cl = 176017  lit =  183416  p =   395  d =    35  f =    34  -  T =     0.22 sec
+  [prof  34] wall= 220.130 p=   464 | ifo= 12.395(sd=1.066 nx=0.933 tfo=8.699 cnt=1.697) snap= 1.915 srm=124.279 sat= 15.943(set=9.506 slv=6.409 max=0.2058 n=464) cex=R/T/F=35/0/34 trsplit=0 pending=0 sim=62.225(rmp=0.234 run=61.990 n=1 d=27) incr=loc/full/maxdirty/keys=1/0/1034438/6442338 chk= 0.028(d=34) stat= 0.906 rest= 2.439
+  [incr r=34 repr=153 next=207 tfo=1022090 active=3261/359433 POs=472]
+ 35 : c =    3347  cl = 176035  lit =  183333  p =   395  d =    55  f =    22  -  T =     0.21 sec
+  [prof  35] wall= 211.027 p=   472 | ifo= 12.344(sd=1.156 nx=0.997 tfo=8.490 cnt=1.700) snap= 1.908 srm=117.071 sat= 16.566(set=11.015 slv=5.520 max=0.1686 n=472) cex=R/T/F=55/0/22 trsplit=0 pending=0 sim=59.699(rmp=0.232 run=59.465 n=1 d=63) incr=loc/full/maxdirty/keys=1/0/1034930/6442338 chk= 0.026(d=20) stat= 0.880 rest= 2.533
+  [incr r=35 repr=195 next=258 tfo=1021321 active=3136/359368 POs=448]
+ 36 : c =    3323  cl = 176036  lit =  183252  p =   370  d =    57  f =    21  -  T =     0.20 sec
+  [prof  36] wall= 203.134 p=   448 | ifo= 13.396(sd=1.080 nx=0.955 tfo=9.476 cnt=1.885) snap= 2.418 srm=109.357 sat= 16.792(set=10.888 slv=5.875 max=0.1666 n=448) cex=R/T/F=57/0/21 trsplit=0 pending=0 sim=57.789(rmp=0.232 run=57.557 n=1 d=63) incr=loc/full/maxdirty/keys=1/0/1034673/6442338 chk= 0.013(d=18) stat= 0.878 rest= 2.490
+  [incr r=36 repr=155 next=206 tfo=1022028 active=3233/359288 POs=468]
+ 37 : c =    3318  cl = 176020  lit =  183144  p =   372  d =    42  f =    54  -  T =     0.22 sec
+  [prof  37] wall= 221.596 p=   468 | ifo= 12.341(sd=1.061 nx=0.940 tfo=8.651 cnt=1.689) snap= 2.410 srm=122.046 sat= 21.375(set=10.904 slv=10.441 max=0.1864 n=468) cex=R/T/F=42/0/54 trsplit=0 pending=0 sim=59.804(rmp=0.243 run=59.559 n=1 d=62) incr=loc/full/maxdirty/keys=1/0/1034180/6442338 chk= 0.026(d=46) stat= 0.887 rest= 2.706
+  [incr r=37 repr=128 next=165 tfo=1021167 active=2963/359164 POs=434]
+ 38 : c =    3295  cl = 176011  lit =  183076  p =   364  d =    19  f =    51  -  T =     0.18 sec
+  [prof  38] wall= 178.567 p=   434 | ifo= 13.770(sd=1.328 nx=0.950 tfo=9.655 cnt=1.837) snap= 2.422 srm=118.918 sat= 19.566(set=10.653 slv=8.886 max=0.1739 n=434) cex=R/T/F=19/0/51 trsplit=0 pending=0 sim=20.091(rmp=0.299 run=19.791 n=1 d=24) incr=loc/full/maxdirty/keys=1/0/294408/6442338 chk= 0.022(d=44) stat= 0.920 rest= 2.858
+  [incr r=38 repr=85 next=98 tfo=1021130 active=2966/359087 POs=416]
+ 39 : c =    3272  cl = 175993  lit =  183012  p =   352  d =    14  f =    50  -  T =     0.23 sec
+  [prof  39] wall= 227.528 p=   416 | ifo= 14.758(sd=1.057 nx=0.981 tfo=10.362 cnt=2.359) snap= 1.948 srm=118.744 sat= 18.450(set=9.891 slv=8.533 max=0.1840 n=416) cex=R/T/F=14/0/50 trsplit=0 pending=0 sim=69.727(rmp=0.243 run=69.481 n=1 d=18) incr=loc/full/maxdirty/keys=1/0/1021552/6442338 chk= 0.021(d=46) stat= 1.060 rest= 2.822
+  [incr r=39 repr=70 next=59 tfo=1021022 active=2835/359005 POs=373]
+ 40 : c =    3216  cl = 175999  lit =  182977  p =   334  d =    17  f =    22  -  T =     0.18 sec
+  [prof  40] wall= 180.854 p=   373 | ifo= 15.171(sd=1.355 nx=1.255 tfo=10.086 cnt=2.477) snap= 1.891 srm=127.620 sat= 14.277(set=10.171 slv=4.085 max=0.1518 n=373) cex=R/T/F=17/0/22 trsplit=0 pending=0 sim=18.209(rmp=0.232 run=17.976 n=1 d=14) incr=loc/full/maxdirty/keys=1/0/294584/6442338 chk= 0.016(d=21) stat= 0.910 rest= 2.760
+  [incr r=40 repr=102 next=112 tfo=1021174 active=2971/358976 POs=422]
+ 41 : c =    3167  cl = 176004  lit =  182926  p =   358  d =    37  f =    27  -  T =     0.20 sec
+  [prof  41] wall= 198.860 p=   422 | ifo= 13.317(sd=1.098 nx=1.016 tfo=9.495 cnt=1.708) snap= 1.960 srm=106.969 sat= 15.363(set=9.878 slv=5.459 max=0.1729 n=422) cex=R/T/F=37/0/27 trsplit=0 pending=0 sim=57.767(rmp=0.232 run=57.534 n=1 d=25) incr=loc/full/maxdirty/keys=1/0/1022532/6442338 chk= 0.022(d=26) stat= 0.889 rest= 2.573
+  [incr r=41 repr=154 next=213 tfo=1021118 active=2929/358930 POs=430]
+ 42 : c =    3130  cl = 176020  lit =  182839  p =   356  d =    52  f =    22  -  T =     0.17 sec
+  [prof  42] wall= 170.191 p=   430 | ifo= 13.169(sd=1.073 nx=0.970 tfo=9.325 cnt=1.801) snap= 2.393 srm=109.476 sat= 16.622(set=10.888 slv=5.706 max=0.1623 n=430) cex=R/T/F=52/0/22 trsplit=0 pending=0 sim=24.118(rmp=0.283 run=23.835 n=1 d=67) incr=loc/full/maxdirty/keys=1/0/295587/6442338 chk= 0.023(d=20) stat= 1.095 rest= 3.296
+  [incr r=42 repr=194 next=241 tfo=1021444 active=3033/358859 POs=461]
+ 43 : c =    3110  cl = 176026  lit =  182741  p =   369  d =    57  f =    35  -  T =     0.21 sec
+  [prof  43] wall= 210.115 p=   461 | ifo= 13.453(sd=1.079 nx=1.054 tfo=9.569 cnt=1.751) snap= 1.945 srm=113.635 sat= 19.073(set=10.497 slv=8.544 max=0.2163 n=461) cex=R/T/F=57/0/35 trsplit=0 pending=0 sim=58.611(rmp=0.238 run=58.371 n=1 d=68) incr=loc/full/maxdirty/keys=1/0/1025024/6442338 chk= 0.019(d=30) stat= 0.872 rest= 2.506
+  [incr r=43 repr=151 next=202 tfo=1020929 active=2835/358767 POs=465]
+ 44 : c =    3098  cl = 176006  lit =  182637  p =   381  d =    33  f =    51  -  T =     0.20 sec
+  [prof  44] wall= 199.829 p=   465 | ifo= 20.901(sd=1.091 nx=0.965 tfo=8.644 cnt=10.200) snap= 1.914 srm=132.025 sat= 19.765(set=9.914 slv=9.821 max=0.2225 n=465) cex=R/T/F=33/0/51 trsplit=0 pending=0 sim=21.621(rmp=0.242 run=21.379 n=1 d=58) incr=loc/full/maxdirty/keys=1/0/294671/6442338 chk= 0.037(d=46) stat= 0.970 rest= 2.595
+  [incr r=44 repr=120 next=144 tfo=1021246 active=2822/358643 POs=434]
+ 45 : c =    3076  cl = 175992  lit =  182573  p =   368  d =    14  f =    52  -  T =     0.22 sec
+  [prof  45] wall= 218.019 p=   434 | ifo= 14.598(sd=1.064 nx=1.212 tfo=9.905 cnt=2.418) snap= 1.917 srm=122.434 sat= 18.406(set=9.897 slv=8.483 max=0.1660 n=434) cex=R/T/F=14/0/52 trsplit=0 pending=0 sim=57.161(rmp=0.252 run=56.908 n=1 d=14) incr=loc/full/maxdirty/keys=1/0/1021585/6442338 chk= 0.023(d=50) stat= 0.875 rest= 2.605
+  [incr r=45 repr=81 next=96 tfo=1020633 active=2663/358565 POs=396]
+ 46 : c =    3043  cl = 175987  lit =  182516  p =   346  d =     9  f =    41  -  T =     0.17 sec
+  [prof  46] wall= 166.645 p=   396 | ifo= 12.254(sd=1.081 nx=0.945 tfo=8.529 cnt=1.699) snap= 1.993 srm=113.575 sat= 17.337(set=9.778 slv=7.531 max=0.2123 n=396) cex=R/T/F=9/0/41 trsplit=0 pending=0 sim=17.919(rmp=0.231 run=17.688 n=1 d=17) incr=loc/full/maxdirty/keys=1/0/293788/6442338 chk= 0.012(d=40) stat= 0.905 rest= 2.651
+  [incr r=46 repr=66 next=48 tfo=1021121 active=2737/358503 POs=376]
+ 47 : c =    2991  cl = 175989  lit =  182481  p =   337  d =    18  f =    21  -  T =     0.21 sec
+  [prof  47] wall= 209.090 p=   376 | ifo= 13.812(sd=1.069 nx=0.971 tfo=10.056 cnt=1.716) snap= 1.915 srm=118.647 sat= 13.765(set=9.559 slv=4.184 max=0.1840 n=376) cex=R/T/F=18/0/21 trsplit=0 pending=0 sim=57.096(rmp=0.242 run=56.853 n=1 d=14) incr=loc/full/maxdirty/keys=1/0/1021936/6442338 chk= 0.004(d=21) stat= 0.898 rest= 2.952
+  [incr r=47 repr=99 next=111 tfo=1020484 active=2680/358470 POs=419]
+ 48 : c =    2928  cl = 175998  lit =  182437  p =   357  d =    39  f =    23  -  T =     0.17 sec
+  [prof  48] wall= 168.093 p=   419 | ifo= 12.993(sd=1.074 nx=0.941 tfo=9.204 cnt=1.774) snap= 1.931 srm=116.546 sat= 15.105(set=9.893 slv=5.184 max=0.2713 n=419) cex=R/T/F=39/0/23 trsplit=0 pending=0 sim=17.877(rmp=0.239 run=17.637 n=1 d=22) incr=loc/full/maxdirty/keys=1/0/295463/6442338 chk= 0.021(d=22) stat= 0.963 rest= 2.656
+  [incr r=48 repr=178 next=247 tfo=1021424 active=2869/358435 POs=445]
+ 49 : c =    2905  cl = 176011  lit =  182352  p =   359  d =    62  f =    24  -  T =     0.21 sec
+  [prof  49] wall= 208.216 p=   445 | ifo= 11.777(sd=1.059 nx=0.964 tfo=8.050 cnt=1.705) snap= 2.136 srm=117.001 sat= 16.227(set=10.040 slv=6.159 max=0.1722 n=445) cex=R/T/F=62/0/24 trsplit=0 pending=0 sim=57.328(rmp=0.248 run=57.079 n=1 d=64) incr=loc/full/maxdirty/keys=1/0/1022878/6442338 chk= 0.018(d=21) stat= 0.892 rest= 2.838
+  [incr r=49 repr=181 next=249 tfo=1020573 active=2711/358363 POs=473]
+ 50 : c =    2887  cl = 176024  lit =  182241  p =   370  d =    58  f =    45  -  T =     0.17 sec
+  [prof  50] wall= 172.968 p=   473 | ifo= 12.311(sd=1.053 nx=0.963 tfo=8.481 cnt=1.814) snap= 1.998 srm=115.696 sat= 20.774(set=10.102 slv=10.637 max=0.5327 n=473) cex=R/T/F=58/0/45 trsplit=0 pending=0 sim=18.429(rmp=0.240 run=18.188 n=1 d=68) incr=loc/full/maxdirty/keys=1/0/295147/6442338 chk= 0.027(d=43) stat= 0.912 rest= 2.821
+  [incr r=50 repr=174 next=224 tfo=1021350 active=2743/358265 POs=465]
+ 51 : c =    2869  cl = 176002  lit =  182142  p =   370  d =    42  f =    53  -  T =     0.21 sec
+  [prof  51] wall= 211.983 p=   465 | ifo= 11.929(sd=1.059 nx=0.960 tfo=8.118 cnt=1.792) snap= 1.932 srm=115.902 sat= 20.505(set=9.779 slv=10.696 max=0.1709 n=465) cex=R/T/F=42/0/53 trsplit=0 pending=0 sim=58.080(rmp=0.241 run=57.837 n=1 d=52) incr=loc/full/maxdirty/keys=1/0/1022105/6442338 chk= 0.012(d=47) stat= 0.877 rest= 2.745
+  [incr r=51 repr=114 next=122 tfo=1020265 active=2508/358144 POs=432]
+ 52 : c =    2839  cl = 175985  lit =  182075  p =   364  d =    12  f =    56  -  T =     0.17 sec
+  [prof  52] wall= 172.376 p=   432 | ifo= 11.573(sd=1.067 nx=0.949 tfo=7.864 cnt=1.692) snap= 1.967 srm=117.047 sat= 19.835(set=10.414 slv=9.394 max=0.2617 n=432) cex=R/T/F=12/0/56 trsplit=0 pending=0 sim=18.310(rmp=0.287 run=18.022 n=1 d=16) incr=loc/full/maxdirty/keys=1/0/293799/6442338 chk= 0.021(d=51) stat= 1.012 rest= 2.612
+  [incr r=52 repr=85 next=90 tfo=1021223 active=2593/358060 POs=393]
+ 53 : c =    2783  cl = 175982  lit =  182027  p =   342  d =    25  f =    26  -  T =     0.21 sec
+  [prof  53] wall= 213.036 p=   393 | ifo= 12.732(sd=1.053 nx=0.980 tfo=8.839 cnt=1.860) snap= 1.912 srm=118.341 sat= 19.081(set=10.201 slv=8.838 max=1.2832 n=393) cex=R/T/F=25/0/26 trsplit=0 pending=0 sim=57.543(rmp=0.233 run=57.309 n=1 d=23) incr=loc/full/maxdirty/keys=1/0/1022112/6442338 chk= 0.010(d=25) stat= 0.932 rest= 2.485
+  [incr r=53 repr=124 next=145 tfo=1020213 active=2546/358009 POs=432]
+ 54 : c =    2742  cl = 175996  lit =  181967  p =   363  d =    35  f =    34  -  T =     0.18 sec
+  [prof  54] wall= 177.464 p=   432 | ifo= 12.853(sd=1.081 nx=0.973 tfo=8.928 cnt=1.871) snap= 2.480 srm=116.378 sat= 17.534(set=10.654 slv=6.847 max=0.1683 n=432) cex=R/T/F=35/0/34 trsplit=0 pending=0 sim=23.584(rmp=0.361 run=23.223 n=1 d=26) incr=loc/full/maxdirty/keys=1/0/294745/6442338 chk= 0.027(d=34) stat= 1.165 rest= 3.444
+  [incr r=54 repr=140 next=195 tfo=1020916 active=2645/357963 POs=431]
+ 55 : c =    2700  cl = 176000  lit =  181875  p =   362  d =    46  f =    23  -  T =     0.22 sec
+  [prof  55] wall= 223.216 p=   431 | ifo= 14.895(sd=1.330 nx=1.431 tfo=9.698 cnt=2.436) snap= 2.413 srm=125.782 sat= 16.619(set=11.195 slv=5.398 max=0.1680 n=431) cex=R/T/F=46/0/23 trsplit=0 pending=0 sim=60.169(rmp=0.235 run=59.933 n=1 d=69) incr=loc/full/maxdirty/keys=1/0/1022426/6442338 chk= 0.018(d=23) stat= 0.867 rest= 2.452
+  [incr r=55 repr=215 next=225 tfo=1020026 active=2568/357875 POs=480]
+ 56 : c =    2676  cl = 176009  lit =  181801  p =   396  d =    46  f =    38  -  T =     0.17 sec
+  [prof  56] wall= 171.324 p=   480 | ifo= 11.701(sd=1.081 nx=0.933 tfo=7.940 cnt=1.747) snap= 1.937 srm=118.242 sat= 17.888(set=9.838 slv=8.019 max=0.1725 n=480) cex=R/T/F=46/0/38 trsplit=0 pending=0 sim=18.005(rmp=0.240 run=17.764 n=1 d=36) incr=loc/full/maxdirty/keys=1/0/294789/6442338 chk= 0.025(d=38) stat= 0.906 rest= 2.622
+  [incr r=56 repr=158 next=218 tfo=1020738 active=2618/357810 POs=464]
+ 57 : c =    2659  cl = 175996  lit =  181695  p =   367  d =    41  f =    56  -  T =     0.21 sec
+  [prof  57] wall= 212.265 p=   464 | ifo= 11.534(sd=1.061 nx=0.971 tfo=7.794 cnt=1.708) snap= 1.949 srm=115.954 sat= 20.287(set=9.950 slv=10.307 max=0.1923 n=464) cex=R/T/F=41/0/56 trsplit=0 pending=0 sim=59.058(rmp=0.244 run=58.813 n=1 d=55) incr=loc/full/maxdirty/keys=1/0/1021528/6442338 chk= 0.016(d=51) stat= 0.883 rest= 2.584
+  [incr r=57 repr=138 next=148 tfo=1019455 active=2382/357691 POs=440]
+ 58 : c =    2635  cl = 175987  lit =  181619  p =   371  d =    17  f =    52  -  T =     0.17 sec
+  [prof  58] wall= 167.399 p=   440 | ifo= 11.573(sd=1.057 nx=0.948 tfo=7.753 cnt=1.815) snap= 1.915 srm=112.695 sat= 19.771(set=9.989 slv=9.755 max=0.1734 n=440) cex=R/T/F=17/0/52 trsplit=0 pending=0 sim=17.832(rmp=0.239 run=17.592 n=1 d=25) incr=loc/full/maxdirty/keys=1/0/293669/6442338 chk= 0.020(d=51) stat= 0.932 rest= 2.660
+  [incr r=58 repr=93 next=83 tfo=1020639 active=2434/357606 POs=395]
+ 59 : c =    2579  cl = 175978  lit =  181579  p =   344  d =    21  f =    30  -  T =     0.21 sec
+  [prof  59] wall= 207.642 p=   395 | ifo= 11.653(sd=1.068 nx=0.958 tfo=7.797 cnt=1.830) snap= 2.027 srm=117.524 sat= 15.767(set=9.975 slv=5.768 max=0.3822 n=395) cex=R/T/F=21/0/30 trsplit=0 pending=0 sim=57.320(rmp=0.230 run=57.088 n=1 d=13) incr=loc/full/maxdirty/keys=1/0/1021512/6442338 chk= 0.004(d=27) stat= 0.873 rest= 2.475
+  [incr r=59 repr=127 next=143 tfo=1019371 active=2377/357557 POs=431]
+ 60 : c =    2538  cl = 175986  lit =  181524  p =   363  d =    34  f =    34  -  T =     0.17 sec
+  [prof  60] wall= 169.505 p=   431 | ifo= 11.532(sd=1.069 nx=0.957 tfo=7.690 cnt=1.817) snap= 1.917 srm=113.944 sat= 16.428(set=9.532 slv=6.867 max=0.2128 n=431) cex=R/T/F=34/0/34 trsplit=0 pending=0 sim=21.625(rmp=0.240 run=21.384 n=1 d=22) incr=loc/full/maxdirty/keys=1/0/294325/6442338 chk= 0.023(d=33) stat= 0.996 rest= 3.041
+  [incr r=60 repr=134 next=199 tfo=1020666 active=2533/357510 POs=423]
+ 61 : c =    2501  cl = 175998  lit =  181451  p =   352  d =    52  f =    19  -  T =     0.21 sec
+  [prof  61] wall= 212.288 p=   423 | ifo= 11.607(sd=1.064 nx=0.980 tfo=7.728 cnt=1.836) snap= 2.408 srm=115.367 sat= 16.308(set=10.733 slv=5.547 max=0.1805 n=423) cex=R/T/F=52/0/19 trsplit=0 pending=0 sim=62.892(rmp=0.271 run=62.620 n=1 d=56) incr=loc/full/maxdirty/keys=1/0/1022105/6442338 chk= 0.011(d=17) stat= 0.916 rest= 2.780
+  [incr r=61 repr=159 next=220 tfo=1019310 active=2458/357449 POs=455]
+ 62 : c =    2471  cl = 176007  lit =  181360  p =   376  d =    53  f =    26  -  T =     0.17 sec
+  [prof  62] wall= 175.439 p=   455 | ifo= 11.953(sd=1.086 nx=0.953 tfo=8.015 cnt=1.899) snap= 1.948 srm=121.788 sat= 17.869(set=10.668 slv=7.169 max=0.1953 n=455) cex=R/T/F=53/0/26 trsplit=0 pending=0 sim=18.304(rmp=0.242 run=18.061 n=1 d=65) incr=loc/full/maxdirty/keys=1/0/294512/6442338 chk= 0.017(d=26) stat= 0.924 rest= 2.636
+  [incr r=62 repr=185 next=230 tfo=1020488 active=2483/357367 POs=482]
+ 63 : c =    2464  cl = 175995  lit =  181262  p =   392  d =    44  f =    46  -  T =     0.22 sec
+  [prof  63] wall= 215.914 p=   482 | ifo= 12.257(sd=1.139 nx=0.990 tfo=8.176 cnt=1.953) snap= 1.927 srm=119.056 sat= 19.353(set=9.836 slv=9.484 max=0.1726 n=482) cex=R/T/F=44/0/46 trsplit=0 pending=0 sim=59.727(rmp=0.235 run=59.491 n=1 d=57) incr=loc/full/maxdirty/keys=1/0/1021106/6442338 chk= 0.020(d=41) stat= 0.911 rest= 2.665
+  [incr r=63 repr=119 next=156 tfo=1018788 active=2224/357257 POs=443]
+ 64 : c =    2447  cl = 175983  lit =  181189  p =   366  d =    21  f =    56  -  T =     0.18 sec
+  [prof  64] wall= 179.316 p=   443 | ifo= 15.205(sd=1.075 nx=0.971 tfo=10.600 cnt=2.558) snap= 2.138 srm=119.800 sat= 20.136(set=10.168 slv=9.939 max=0.1754 n=443) cex=R/T/F=21/0/56 trsplit=0 pending=0 sim=18.037(rmp=0.234 run=17.802 n=1 d=23) incr=loc/full/maxdirty/keys=1/0/293109/6442338 chk= 0.021(d=50) stat= 1.230 rest= 2.751
+  [incr r=64 repr=84 next=89 tfo=1019880 active=2279/357172 POs=394]
+ 65 : c =    2418  cl = 175967  lit =  181133  p =   343  d =    10  f =    41  -  T =     0.21 sec
+  [prof  65] wall= 214.158 p=   394 | ifo= 13.068(sd=1.090 nx=1.026 tfo=9.250 cnt=1.701) snap= 1.968 srm=116.344 sat= 16.892(set=9.867 slv=7.001 max=0.1844 n=394) cex=R/T/F=10/0/41 trsplit=0 pending=0 sim=62.232(rmp=0.233 run=61.997 n=1 d=17) incr=loc/full/maxdirty/keys=1/0/1019975/6442338 chk= 0.008(d=39) stat= 0.969 rest= 2.678
+  [incr r=65 repr=58 next=41 tfo=1018281 active=2095/357100 POs=372]
+ 66 : c =    2362  cl = 175971  lit =  181099  p =   334  d =    14  f =    24  -  T =     0.18 sec
+  [prof  66] wall= 182.289 p=   372 | ifo= 11.842(sd=1.073 nx=1.016 tfo=7.935 cnt=1.818) snap= 1.938 srm=123.661 sat= 14.409(set=9.952 slv=4.435 max=0.1749 n=372) cex=R/T/F=14/0/24 trsplit=0 pending=0 sim=26.903(rmp=0.233 run=26.669 n=1 d=10) incr=loc/full/maxdirty/keys=1/0/293076/6442338 chk= 0.007(d=24) stat= 0.929 rest= 2.600
+  [incr r=66 repr=104 next=118 tfo=1019964 active=2293/357070 POs=422]
+ 67 : c =    2307  cl = 175981  lit =  181048  p =   357  d =    37  f =    28  -  T =     0.22 sec
+  [prof  67] wall= 225.450 p=   422 | ifo= 13.253(sd=1.070 nx=0.974 tfo=9.326 cnt=1.883) snap= 2.031 srm=119.169 sat= 16.068(set=10.355 slv=5.687 max=0.1731 n=422) cex=R/T/F=37/0/28 trsplit=0 pending=0 sim=70.808(rmp=0.273 run=70.534 n=1 d=23) incr=loc/full/maxdirty/keys=1/0/1021236/6442338 chk= 0.020(d=28) stat= 1.061 rest= 3.041
+  [incr r=67 repr=166 next=236 tfo=1018551 active=2265/357029 POs=445]
+ 68 : c =    2270  cl = 176000  lit =  180966  p =   364  d =    54  f =    27  -  T =     0.18 sec
+  [prof  68] wall= 176.436 p=   445 | ifo= 14.234(sd=1.421 nx=1.241 tfo=9.654 cnt=1.918) snap= 2.447 srm=118.892 sat= 17.523(set=10.823 slv=6.648 max=0.2197 n=445) cex=R/T/F=54/0/27 trsplit=0 pending=0 sim=19.523(rmp=0.271 run=19.252 n=1 d=57) incr=loc/full/maxdirty/keys=1/0/294298/6442338 chk= 0.017(d=25) stat= 0.913 rest= 2.887
+  [incr r=68 repr=187 next=262 tfo=1020288 active=2401/356966 POs=449]
+ 69 : c =    2243  cl = 176022  lit =  180875  p =   364  d =    62  f =    23  -  T =     0.21 sec
+  [prof  69] wall= 214.506 p=   449 | ifo= 12.458(sd=1.110 nx=0.965 tfo=7.444 cnt=2.940) snap= 1.982 srm=120.768 sat= 17.245(set=10.071 slv=7.143 max=0.1863 n=449) cex=R/T/F=62/0/23 trsplit=0 pending=0 sim=58.523(rmp=0.244 run=58.278 n=1 d=72) incr=loc/full/maxdirty/keys=1/0/1021396/6442338 chk= 0.005(d=19) stat= 0.889 rest= 2.637
+  [incr r=69 repr=168 next=223 tfo=1018572 active=2259/356897 POs=484]
+ 70 : c =    2232  cl = 175998  lit =  180756  p =   381  d =    54  f =    49  -  T =     0.17 sec
+  [prof  70] wall= 172.555 p=   484 | ifo= 11.069(sd=1.062 nx=0.956 tfo=7.306 cnt=1.745) snap= 1.951 srm=115.490 sat= 21.530(set=9.907 slv=11.588 max=0.1987 n=484) cex=R/T/F=54/0/49 trsplit=0 pending=0 sim=18.295(rmp=0.238 run=18.057 n=1 d=79) incr=loc/full/maxdirty/keys=1/0/293758/6442338 chk= 0.018(d=40) stat= 0.925 rest= 3.277
+  [incr r=70 repr=148 next=191 tfo=1020005 active=2191/356754 POs=457]
+ 71 : c =    2222  cl = 175977  lit =  180680  p =   377  d =    16  f =    64  -  T =     0.22 sec
+  [prof  71] wall= 215.950 p=   457 | ifo= 12.186(sd=1.082 nx=0.960 tfo=8.278 cnt=1.866) snap= 1.933 srm=116.797 sat= 21.637(set=10.152 slv=11.454 max=0.3028 n=457) cex=R/T/F=16/0/64 trsplit=0 pending=0 sim=59.752(rmp=0.240 run=59.510 n=1 d=16) incr=loc/full/maxdirty/keys=1/0/1020035/6442338 chk= 0.025(d=60) stat= 0.915 rest= 2.705
+  [incr r=71 repr=78 next=96 tfo=1018308 active=1961/356657 POs=385]
+ 72 : c =    2190  cl = 175963  lit =  180631  p =   341  d =     4  f =    40  -  T =     0.22 sec
+  [prof  72] wall= 217.100 p=   385 | ifo= 13.539(sd=1.072 nx=1.018 tfo=9.576 cnt=1.873) snap= 3.298 srm=120.882 sat= 18.191(set=11.501 slv=6.667 max=0.2232 n=385) cex=R/T/F=4/0/40 trsplit=0 pending=0 sim=57.741(rmp=0.231 run=57.509 n=1 d=9) incr=loc/full/maxdirty/keys=1/0/1019634/6442338 chk= 0.004(d=40) stat= 0.893 rest= 2.551
+  [incr r=72 repr=54 next=32 tfo=1020552 active=2117/356594 POs=374]
+ 73 : c =    2140  cl = 175967  lit =  180594  p =   334  d =    17  f =    23  -  T =     0.21 sec
+  [prof  73] wall= 210.936 p=   374 | ifo= 11.967(sd=1.103 nx=0.954 tfo=7.885 cnt=2.025) snap= 1.932 srm=115.936 sat= 14.727(set=10.352 slv=4.352 max=0.1790 n=374) cex=R/T/F=17/0/23 trsplit=0 pending=0 sim=62.789(rmp=0.239 run=62.548 n=1 d=14) incr=loc/full/maxdirty/keys=1/0/1020323/6442338 chk= 0.005(d=23) stat= 0.947 rest= 2.632
+  [incr r=73 repr=93 next=106 tfo=1018418 active=2019/356561 POs=413]
+ 74 : c =    2077  cl = 175979  lit =  180547  p =   354  d =    38  f =    21  -  T =     0.17 sec
+  [prof  74] wall= 171.101 p=   413 | ifo= 13.981(sd=1.174 nx=1.011 tfo=9.956 cnt=1.839) snap= 1.931 srm=118.431 sat= 14.877(set=10.067 slv=4.785 max=0.1709 n=413) cex=R/T/F=38/0/21 trsplit=0 pending=0 sim=18.217(rmp=0.243 run=17.974 n=1 d=26) incr=loc/full/maxdirty/keys=1/0/293712/6442338 chk= 0.014(d=21) stat= 0.940 rest= 2.708
+  [incr r=74 repr=174 next=239 tfo=1020007 active=2194/356526 POs=440]
+ 75 : c =    2048  cl = 175992  lit =  180479  p =   360  d =    61  f =    19  -  T =     0.21 sec
+  [prof  75] wall= 207.756 p=   440 | ifo= 12.439(sd=1.068 nx=0.984 tfo=8.583 cnt=1.805) snap= 1.969 srm=115.772 sat= 15.251(set=9.607 slv=5.614 max=0.1732 n=440) cex=R/T/F=61/0/19 trsplit=0 pending=0 sim=58.370(rmp=0.242 run=58.127 n=1 d=51) incr=loc/full/maxdirty/keys=1/0/1021313/6442338 chk= 0.009(d=17) stat= 0.889 rest= 3.057
+  [incr r=75 repr=168 next=248 tfo=1018641 active=2086/356471 POs=470]
+ 76 : c =    2034  cl = 176008  lit =  180362  p =   367  d =    62  f =    41  -  T =     0.18 sec
+  [prof  76] wall= 183.809 p=   470 | ifo= 11.855(sd=1.089 nx=0.955 tfo=8.060 cnt=1.751) snap= 1.935 srm=128.648 sat= 19.602(set=9.967 slv=9.597 max=0.1837 n=470) cex=R/T/F=62/0/41 trsplit=0 pending=0 sim=18.246(rmp=0.241 run=18.004 n=1 d=80) incr=loc/full/maxdirty/keys=1/0/293518/6442338 chk= 0.016(d=37) stat= 0.917 rest= 2.590
+  [incr r=76 repr=185 next=232 tfo=1020055 active=2172/356370 POs=490]
+ 77 : c =    2011  cl = 175986  lit =  180276  p =   383  d =    68  f =    39  -  T =     0.24 sec
+  [prof  77] wall= 241.000 p=   490 | ifo= 12.852(sd=1.124 nx=1.020 tfo=8.913 cnt=1.794) snap= 2.463 srm=123.490 sat= 25.923(set=13.163 slv=12.722 max=0.3100 n=490) cex=R/T/F=68/0/39 trsplit=0 pending=0 sim=72.102(rmp=0.274 run=71.826 n=1 d=53) incr=loc/full/maxdirty/keys=1/0/1020771/6442338 chk= 0.012(d=33) stat= 1.057 rest= 3.103
+  [incr r=77 repr=132 next=168 tfo=1018711 active=1966/356262 POs=454]
+ 78 : c =    1928  cl = 175977  lit =  180212  p =   365  d =    42  f =    47  -  T =     0.23 sec
+  [prof  78] wall= 230.225 p=   454 | ifo= 14.628(sd=1.417 nx=0.980 tfo=9.864 cnt=2.367) snap= 1.989 srm=124.428 sat= 22.923(set=9.842 slv=13.050 max=0.1841 n=454) cex=R/T/F=42/0/47 trsplit=0 pending=0 sim=62.763(rmp=0.238 run=62.525 n=1 d=24) incr=loc/full/maxdirty/keys=1/0/1020106/6442338 chk= 0.011(d=40) stat= 0.892 rest= 2.590
+  [incr r=78 repr=197 next=247 tfo=1020873 active=2221/356189 POs=463]
+ 79 : c =    1899  cl = 175985  lit =  180125  p =   377  d =    36  f =    50  -  T =     0.22 sec
+  [prof  79] wall= 219.463 p=   463 | ifo= 11.370(sd=1.066 nx=0.952 tfo=7.478 cnt=1.874) snap= 1.966 srm=118.549 sat= 20.999(set=10.373 slv=10.595 max=0.2009 n=463) cex=R/T/F=36/0/50 trsplit=0 pending=0 sim=62.971(rmp=0.233 run=62.736 n=1 d=40) incr=loc/full/maxdirty/keys=1/0/1020334/6442338 chk= 0.019(d=47) stat= 0.901 rest= 2.688
+  [incr r=79 repr=215 next=245 tfo=1018795 active=2017/356110 POs=435]
+ 80 : c =    1884  cl = 175986  lit =  180026  p =   358  d =    33  f =    44  -  T =     0.17 sec
+  [prof  80] wall= 170.409 p=   435 | ifo= 11.519(sd=1.063 nx=0.952 tfo=7.805 cnt=1.698) snap= 1.945 srm=115.569 sat= 18.756(set=9.866 slv=8.862 max=0.1994 n=435) cex=R/T/F=33/0/44 trsplit=0 pending=0 sim=19.082(rmp=0.242 run=18.839 n=1 d=66) incr=loc/full/maxdirty/keys=1/0/292677/6442338 chk= 0.013(d=33) stat= 0.924 rest= 2.602
+  [incr r=80 repr=134 next=160 tfo=1019903 active=2015/356012 POs=441]
+ 81 : c =    1858  cl = 175989  lit =  179953  p =   371  d =    37  f =    33  -  T =     0.21 sec
+  [prof  81] wall= 212.917 p=   441 | ifo= 12.157(sd=1.077 nx=0.974 tfo=8.408 cnt=1.699) snap= 1.929 srm=117.481 sat= 16.986(set=9.832 slv=7.125 max=0.2218 n=441) cex=R/T/F=37/0/33 trsplit=0 pending=0 sim=60.970(rmp=0.243 run=60.725 n=1 d=40) incr=loc/full/maxdirty/keys=1/0/1020447/6442338 chk= 0.010(d=33) stat= 0.882 rest= 2.503
+  [incr r=81 repr=128 next=152 tfo=1018613 active=1861/355942 POs=430]
+ 82 : c =    1837  cl = 175981  lit =  179879  p =   365  d =    22  f =    43  -  T =     0.17 sec
+  [prof  82] wall= 170.706 p=   430 | ifo= 11.562(sd=1.057 nx=0.952 tfo=7.837 cnt=1.716) snap= 1.922 srm=116.851 sat= 17.539(set=9.793 slv=7.719 max=0.1807 n=430) cex=R/T/F=22/0/43 trsplit=0 pending=0 sim=18.869(rmp=0.261 run=18.607 n=1 d=36) incr=loc/full/maxdirty/keys=1/0/292125/6442338 chk= 0.015(d=38) stat= 0.935 rest= 3.014
+  [incr r=82 repr=112 next=140 tfo=1019716 active=1855/355860 POs=421]
+ 83 : c =    1813  cl = 175972  lit =  179801  p =   353  d =    27  f =    41  -  T =     0.22 sec
+  [prof  83] wall= 223.179 p=   421 | ifo= 11.972(sd=1.100 nx=0.979 tfo=8.043 cnt=1.850) snap= 2.446 srm=120.625 sat= 19.724(set=10.782 slv=8.913 max=0.7962 n=421) cex=R/T/F=27/0/41 trsplit=0 pending=0 sim=62.532(rmp=0.237 run=62.294 n=1 d=43) incr=loc/full/maxdirty/keys=1/0/1020172/6442338 chk= 0.010(d=35) stat= 1.025 rest= 4.845
+  [incr r=83 repr=95 next=108 tfo=1018557 active=1747/355773 POs=407]
+ 84 : c =    1785  cl = 175966  lit =  179743  p =   351  d =    12  f =    44  -  T =     0.18 sec
+  [prof  84] wall= 176.558 p=   407 | ifo= 12.253(sd=1.134 nx=0.976 tfo=8.309 cnt=1.835) snap= 1.988 srm=121.804 sat= 18.587(set=10.520 slv=8.042 max=0.1735 n=407) cex=R/T/F=12/0/44 trsplit=0 pending=0 sim=18.395(rmp=0.240 run=18.153 n=1 d=18) incr=loc/full/maxdirty/keys=1/0/291295/6442338 chk= 0.008(d=40) stat= 0.923 rest= 2.600
+  [incr r=84 repr=66 next=59 tfo=1019588 active=1759/355709 POs=395]
+ 85 : c =    1732  cl = 175964  lit =  179705  p =   347  d =    21  f =    27  -  T =     0.21 sec
+  [prof  85] wall= 210.955 p=   395 | ifo= 12.544(sd=1.100 nx=0.972 tfo=8.734 cnt=1.738) snap= 1.971 srm=118.797 sat= 15.167(set=9.859 slv=5.284 max=0.1702 n=395) cex=R/T/F=21/0/27 trsplit=0 pending=0 sim=59.027(rmp=0.234 run=58.792 n=1 d=12) incr=loc/full/maxdirty/keys=1/0/1020353/6442338 chk= 0.007(d=26) stat= 0.891 rest= 2.551
+  [incr r=85 repr=128 next=162 tfo=1018737 active=1797/355669 POs=435]
+ 86 : c =    1684  cl = 175973  lit =  179651  p =   365  d =    36  f =    34  -  T =     0.17 sec
+  [prof  86] wall= 173.882 p=   435 | ifo= 11.969(sd=1.057 nx=0.968 tfo=7.979 cnt=1.965) snap= 1.963 srm=119.472 sat= 17.550(set=10.621 slv=6.900 max=0.1787 n=435) cex=R/T/F=36/0/34 trsplit=0 pending=0 sim=19.047(rmp=0.264 run=18.782 n=1 d=21) incr=loc/full/maxdirty/keys=1/0/292558/6442338 chk= 0.017(d=33) stat= 0.960 rest= 2.903
+  [incr r=86 repr=159 next=239 tfo=1019719 active=1850/355624 POs=434]
+ 87 : c =    1659  cl = 176002  lit =  179574  p =   354  d =    52  f =    28  -  T =     0.22 sec
+  [prof  87] wall= 221.236 p=   434 | ifo= 13.655(sd=1.149 nx=1.026 tfo=9.601 cnt=1.879) snap= 1.955 srm=114.480 sat= 18.418(set=11.151 slv=7.237 max=0.2477 n=434) cex=R/T/F=52/0/28 trsplit=0 pending=0 sim=68.787(rmp=0.241 run=68.544 n=1 d=51) incr=loc/full/maxdirty/keys=1/0/1020865/6442338 chk= 0.013(d=26) stat= 1.057 rest= 2.871
+  [incr r=87 repr=160 next=223 tfo=1018780 active=1798/355576 POs=438]
+ 88 : c =    1629  cl = 175994  lit =  179477  p =   364  d =    54  f =    20  -  T =     0.24 sec
+  [prof  88] wall= 241.822 p=   438 | ifo= 17.126(sd=1.355 nx=1.327 tfo=12.033 cnt=2.411) snap= 2.434 srm=133.899 sat= 18.728(set=11.182 slv=7.506 max=0.5452 n=438) cex=R/T/F=54/0/20 trsplit=0 pending=0 sim=66.119(rmp=0.250 run=65.867 n=1 d=77) incr=loc/full/maxdirty/keys=1/0/1020916/6442338 chk= 0.008(d=20) stat= 0.975 rest= 2.534
+  [incr r=88 repr=166 next=205 tfo=1020579 active=1889/355471 POs=488]
+ 89 : c =    1620  cl = 175990  lit =  179382  p =   395  d =    39  f =    54  -  T =     0.23 sec
+  [prof  89] wall= 227.374 p=   488 | ifo= 12.987(sd=1.081 nx=0.944 tfo=9.051 cnt=1.910) snap= 1.965 srm=117.844 sat= 20.820(set=10.445 slv=10.344 max=0.1727 n=488) cex=R/T/F=39/0/54 trsplit=0 pending=0 sim=69.887(rmp=0.287 run=69.598 n=1 d=46) incr=loc/full/maxdirty/keys=1/0/1020292/6442338 chk= 0.017(d=49) stat= 0.892 rest= 2.962
+  [incr r=89 repr=122 next=169 tfo=1018690 active=1677/355372 POs=443]
+ 90 : c =    1589  cl = 175965  lit =  179296  p =   364  d =    22  f =    57  -  T =     0.19 sec
+  [prof  90] wall= 190.321 p=   443 | ifo= 11.967(sd=1.093 nx=0.960 tfo=8.210 cnt=1.704) snap= 2.446 srm=126.121 sat= 20.988(set=10.929 slv=10.032 max=0.2266 n=443) cex=R/T/F=22/0/57 trsplit=0 pending=0 sim=24.299(rmp=0.286 run=24.012 n=1 d=35) incr=loc/full/maxdirty/keys=1/0/291263/6442338 chk= 0.009(d=51) stat= 1.141 rest= 3.350
+  [incr r=90 repr=102 next=91 tfo=1019638 active=1638/355261 POs=406]
+ 91 : c =    1565  cl = 175960  lit =  179245  p =   353  d =     8  f =    45  -  T =     0.24 sec
+  [prof  91] wall= 236.278 p=   406 | ifo= 15.591(sd=1.343 nx=1.374 tfo=10.415 cnt=2.458) snap= 2.456 srm=124.356 sat= 20.299(set=12.610 slv=7.665 max=0.2095 n=406) cex=R/T/F=8/0/45 trsplit=0 pending=0 sim=69.472(rmp=0.286 run=69.185 n=1 d=8) incr=loc/full/maxdirty/keys=1/0/1019406/6442338 chk= 0.010(d=43) stat= 1.059 rest= 3.035
+  [incr r=91 repr=54 next=46 tfo=1018562 active=1522/355205 POs=376]
+ 92 : c =    1493  cl = 175957  lit =  179220  p =   336  d =    23  f =    17  -  T =     0.22 sec
+  [prof  92] wall= 224.243 p=   376 | ifo= 15.342(sd=1.370 nx=1.283 tfo=10.747 cnt=1.942) snap= 1.969 srm=118.206 sat= 14.047(set=9.792 slv=4.229 max=0.4684 n=376) cex=R/T/F=23/0/17 trsplit=0 pending=0 sim=70.579(rmp=0.287 run=70.291 n=1 d=9) incr=loc/full/maxdirty/keys=1/0/1020469/6442338 chk= 0.003(d=16) stat= 1.075 rest= 3.023
+  [incr r=92 repr=145 next=169 tfo=1020563 active=1823/355177 POs=440]
+ 93 : c =    1463  cl = 175963  lit =  179171  p =   368  d =    46  f =    26  -  T =     0.22 sec
+  [prof  93] wall= 224.606 p=   440 | ifo= 14.512(sd=1.361 nx=1.248 tfo=9.448 cnt=2.456) snap= 1.966 srm=129.047 sat= 15.927(set=10.134 slv=5.764 max=0.2391 n=440) cex=R/T/F=46/0/26 trsplit=0 pending=0 sim=59.608(rmp=0.237 run=59.369 n=1 d=23) incr=loc/full/maxdirty/keys=1/0/1020704/6442338 chk= 0.012(d=26) stat= 0.915 rest= 2.619
+  [incr r=93 repr=144 next=236 tfo=1018954 active=1722/355134 POs=434]
+ 94 : c =    1434  cl = 175994  lit =  179093  p =   351  d =    53  f =    30  -  T =     0.18 sec
+  [prof  94] wall= 182.659 p=   434 | ifo= 12.869(sd=1.072 nx=0.986 tfo=8.925 cnt=1.886) snap= 2.431 srm=120.287 sat= 18.373(set=10.911 slv=7.431 max=0.2684 n=434) cex=R/T/F=53/0/30 trsplit=0 pending=0 sim=24.171(rmp=0.282 run=23.888 n=1 d=50) incr=loc/full/maxdirty/keys=1/0/292159/6442338 chk= 0.012(d=28) stat= 1.127 rest= 3.389
+  [incr r=94 repr=197 next=236 tfo=1020879 active=1824/355087 POs=442]
+ 95 : c =    1419  cl = 175988  lit =  178980  p =   359  d =    53  f =    30  -  T =     0.23 sec
+  [prof  95] wall= 227.432 p=   442 | ifo= 15.692(sd=1.376 nx=1.405 tfo=10.499 cnt=2.412) snap= 2.195 srm=122.238 sat= 18.598(set=10.206 slv=8.360 max=0.9402 n=442) cex=R/T/F=53/0/30 trsplit=0 pending=0 sim=65.030(rmp=0.234 run=64.795 n=1 d=86) incr=loc/full/maxdirty/keys=1/0/1021961/6442338 chk= 0.007(d=27) stat= 0.880 rest= 2.793
+  [incr r=95 repr=152 next=189 tfo=1020344 active=1643/354968 POs=457]
+ 96 : c =    1401  cl = 175972  lit =  178898  p =   378  d =    32  f =    47  -  T =     0.18 sec
+  [prof  96] wall= 176.764 p=   457 | ifo= 12.090(sd=1.299 nx=0.968 tfo=7.956 cnt=1.866) snap= 1.990 srm=121.900 sat= 19.238(set=9.780 slv=9.428 max=0.1805 n=457) cex=R/T/F=32/0/47 trsplit=0 pending=0 sim=18.008(rmp=0.252 run=17.756 n=1 d=39) incr=loc/full/maxdirty/keys=1/0/291259/6442338 chk= 0.009(d=43) stat= 0.916 rest= 2.613
+  [incr r=96 repr=115 next=151 tfo=1019611 active=1597/354870 POs=466]
+ 97 : c =    1383  cl = 175958  lit =  178831  p =   400  d =    15  f =    51  -  T =     0.21 sec
+  [prof  97] wall= 212.329 p=   466 | ifo= 12.453(sd=1.072 nx=0.976 tfo=8.701 cnt=1.704) snap= 1.945 srm=117.042 sat= 18.849(set=9.902 slv=8.918 max=0.1778 n=466) cex=R/T/F=15/0/51 trsplit=0 pending=0 sim=58.374(rmp=0.243 run=58.129 n=1 d=19) incr=loc/full/maxdirty/keys=1/0/1019574/6442338 chk= 0.008(d=48) stat= 0.877 rest= 2.781
+  [incr r=97 repr=77 next=92 tfo=1018818 active=1464/354789 POs=424]
+ 98 : c =    1352  cl = 175955  lit =  178777  p =   375  d =    11  f =    38  -  T =     0.18 sec
+  [prof  98] wall= 184.412 p=   424 | ifo= 11.869(sd=1.072 nx=0.950 tfo=8.086 cnt=1.761) snap= 1.928 srm=128.419 sat= 16.787(set=9.931 slv=6.832 max=0.1857 n=424) cex=R/T/F=11/0/38 trsplit=0 pending=0 sim=21.195(rmp=0.234 run=20.961 n=1 d=20) incr=loc/full/maxdirty/keys=1/0/290201/6442338 chk= 0.005(d=34) stat= 0.936 rest= 3.273
+  [incr r=98 repr=60 next=49 tfo=1019308 active=1430/354732 POs=381]
+ 99 : c =    1300  cl = 175954  lit =  178739  p =   337  d =    18  f =    26  -  T =     0.21 sec
+  [prof  99] wall= 208.294 p=   381 | ifo= 12.837(sd=1.166 nx=0.991 tfo=8.934 cnt=1.745) snap= 2.013 srm=116.315 sat= 14.808(set=9.945 slv=4.841 max=0.1837 n=381) cex=R/T/F=18/0/26 trsplit=0 pending=0 sim=58.909(rmp=0.234 run=58.673 n=1 d=13) incr=loc/full/maxdirty/keys=1/0/1019951/6442338 chk= 0.004(d=25) stat= 0.907 rest= 2.500
+  [incr r=99 repr=119 next=120 tfo=1018884 active=1469/354693 POs=407]
+100 : c =    1248  cl = 175964  lit =  178699  p =   352  d =    36  f =    19  -  T =     0.16 sec
+  [prof 100] wall= 164.762 p=   407 | ifo= 11.717(sd=1.060 nx=0.950 tfo=7.937 cnt=1.770) snap= 2.004 srm=115.049 sat= 14.456(set=9.969 slv=4.462 max=0.1793 n=407) cex=R/T/F=36/0/19 trsplit=0 pending=0 sim=17.995(rmp=0.234 run=17.761 n=1 d=22) incr=loc/full/maxdirty/keys=1/0/291471/6442338 chk= 0.006(d=18) stat= 0.940 rest= 2.595
+  [incr r=100 repr=159 next=223 tfo=1019551 active=1556/354663 POs=439]
+101 : c =    1221  cl = 175984  lit =  178616  p =   354  d =    62  f =    23  -  T =     0.22 sec
+  [prof 101] wall= 224.052 p=   439 | ifo= 17.937(sd=5.578 nx=0.975 tfo=9.660 cnt=1.724) snap= 1.939 srm=122.828 sat= 18.641(set=10.507 slv=8.098 max=0.4408 n=439) cex=R/T/F=62/0/23 trsplit=0 pending=0 sim=59.275(rmp=0.234 run=59.040 n=1 d=62) incr=loc/full/maxdirty/keys=1/0/1020673/6442338 chk= 0.006(d=21) stat= 0.881 rest= 2.545
+  [incr r=101 repr=175 next=242 tfo=1019029 active=1527/354600 POs=452]
+102 : c =    1204  cl = 175983  lit =  178495  p =   361  d =    56  f =    35  -  T =     0.17 sec
+  [prof 102] wall= 173.103 p=   452 | ifo= 12.516(sd=1.154 nx=0.942 tfo=8.554 cnt=1.865) snap= 2.116 srm=117.625 sat= 19.164(set=10.170 slv=8.964 max=0.1763 n=452) cex=R/T/F=56/0/35 trsplit=0 pending=0 sim=18.016(rmp=0.245 run=17.770 n=1 d=89) incr=loc/full/maxdirty/keys=1/0/291276/6442338 chk= 0.006(d=32) stat= 0.930 rest= 2.730
+  [incr r=102 repr=164 next=193 tfo=1019514 active=1445/354478 POs=490]
+103 : c =    1191  cl = 175968  lit =  178408  p =   399  d =    29  f =    62  -  T =     0.22 sec
+  [prof 103] wall= 216.802 p=   490 | ifo= 12.463(sd=1.074 nx=0.979 tfo=8.462 cnt=1.949) snap= 2.000 srm=117.961 sat= 21.488(set=9.978 slv=11.479 max=0.2664 n=490) cex=R/T/F=29/0/62 trsplit=0 pending=0 sim=59.436(rmp=0.232 run=59.202 n=1 d=29) incr=loc/full/maxdirty/keys=1/0/1019723/6442338 chk= 0.010(d=58) stat= 0.891 rest= 2.553
+  [incr r=103 repr=110 next=144 tfo=1018895 active=1313/354376 POs=413]
+104 : c =    1165  cl = 175951  lit =  178343  p =   353  d =    12  f =    48  -  T =     0.17 sec
+  [prof 104] wall= 171.441 p=   413 | ifo= 12.741(sd=1.085 nx=0.937 tfo=8.896 cnt=1.822) snap= 1.983 srm=116.858 sat= 18.036(set=10.028 slv=7.982 max=0.1671 n=413) cex=R/T/F=12/0/48 trsplit=0 pending=0 sim=18.124(rmp=0.262 run=17.861 n=1 d=23) incr=loc/full/maxdirty/keys=1/0/289883/6442338 chk= 0.005(d=42) stat= 0.932 rest= 2.764
+  [incr r=104 repr=76 next=73 tfo=1019262 active=1253/354294 POs=390]
+105 : c =    1138  cl = 175951  lit =  178293  p =   343  d =    10  f =    37  -  T =     0.22 sec
+  [prof 105] wall= 219.843 p=   390 | ifo= 12.589(sd=1.082 nx=0.980 tfo=8.727 cnt=1.799) snap= 2.533 srm=121.251 sat= 17.032(set=10.437 slv=6.571 max=0.1829 n=390) cex=R/T/F=10/0/37 trsplit=0 pending=0 sim=62.269(rmp=0.281 run=61.987 n=1 d=14) incr=loc/full/maxdirty/keys=1/0/1019158/6442338 chk= 0.006(d=36) stat= 1.094 rest= 3.069
+  [incr r=105 repr=54 next=43 tfo=1018700 active=1183/354244 POs=381]
+106 : c =    1077  cl = 175950  lit =  178259  p =   339  d =    18  f =    24  -  T =     0.17 sec
+  [prof 106] wall= 172.550 p=   381 | ifo= 15.442(sd=1.355 nx=1.253 tfo=10.934 cnt=1.899) snap= 1.955 srm=118.738 sat= 14.572(set=9.905 slv=4.644 max=0.1790 n=381) cex=R/T/F=18/0/24 trsplit=0 pending=0 sim=18.279(rmp=0.236 run=18.043 n=1 d=11) incr=loc/full/maxdirty/keys=1/0/290357/6442338 chk= 0.003(d=23) stat= 0.929 rest= 2.632
+  [incr r=106 repr=128 next=158 tfo=1019310 active=1212/354209 POs=435]
+107 : c =    1035  cl = 175960  lit =  178207  p =   364  d =    41  f =    30  -  T =     0.22 sec
+  [prof 107] wall= 223.333 p=   435 | ifo= 12.159(sd=1.068 nx=0.972 tfo=8.385 cnt=1.734) snap= 1.958 srm=118.506 sat= 16.427(set=10.021 slv=6.377 max=0.2433 n=435) cex=R/T/F=41/0/30 trsplit=0 pending=0 sim=69.822(rmp=0.246 run=69.575 n=1 d=23) incr=loc/full/maxdirty/keys=1/0/1027115/6442338 chk= 0.007(d=29) stat= 1.055 rest= 3.398
+  [incr r=107 repr=158 next=232 tfo=1019129 active=1164/354167 POs=459]
+108 : c =    1009  cl = 175984  lit =  178109  p =   369  d =    50  f =    40  -  T =     0.18 sec
+  [prof 108] wall= 184.764 p=   459 | ifo= 14.702(sd=1.397 nx=1.240 tfo=9.652 cnt=2.413) snap= 1.931 srm=126.914 sat= 19.234(set=10.158 slv=9.043 max=0.6620 n=459) cex=R/T/F=50/0/40 trsplit=0 pending=0 sim=18.394(rmp=0.235 run=18.159 n=1 d=60) incr=loc/full/maxdirty/keys=1/0/290840/6442338 chk= 0.008(d=38) stat= 0.938 rest= 2.644
+  [incr r=108 repr=177 next=245 tfo=1019507 active=1120/354093 POs=468]
+109 : c =     977  cl = 175975  lit =  177990  p =   364  d =    54  f =    50  -  T =     0.23 sec
+  [prof 109] wall= 227.172 p=   468 | ifo= 13.582(sd=1.068 nx=1.004 tfo=9.647 cnt=1.864) snap= 2.078 srm=124.967 sat= 20.710(set=9.963 slv=10.715 max=0.2074 n=468) cex=R/T/F=54/0/50 trsplit=0 pending=0 sim=62.360(rmp=0.241 run=62.119 n=1 d=71) incr=loc/full/maxdirty/keys=1/0/1020235/6442338 chk= 0.006(d=48) stat= 0.969 rest= 2.501
+  [incr r=109 repr=161 next=182 tfo=1019087 active=974/353965 POs=453]
+110 : c =     947  cl = 175960  lit =  177903  p =   371  d =    29  f =    53  -  T =     0.16 sec
+  [prof 110] wall= 164.883 p=   453 | ifo= 11.836(sd=1.073 nx=0.981 tfo=7.992 cnt=1.791) snap= 2.158 srm=118.687 sat= 21.443(set=11.188 slv=10.227 max=0.1919 n=453) cex=R/T/F=29/0/53 trsplit=0 pending=0 sim= 6.848(rmp=0.277 run=6.571 n=1 d=38) incr=loc/full/maxdirty/keys=1/0/1590/6442338 chk= 0.007(d=49) stat= 0.957 rest= 2.946
+  [incr r=110 repr=99 next=99 tfo=1019248 active=892/353863 POs=412]
+111 : c =     903  cl = 175944  lit =  177857  p =   350  d =    28  f =    34  -  T =     0.23 sec
+  [prof 111] wall= 229.543 p=   412 | ifo= 12.078(sd=1.088 nx=1.045 tfo=8.067 cnt=1.880) snap= 1.938 srm=121.015 sat= 16.265(set=9.822 slv=6.416 max=0.1735 n=412) cex=R/T/F=28/0/34 trsplit=0 pending=0 sim=74.313(rmp=0.236 run=74.076 n=1 d=14) incr=loc/full/maxdirty/keys=1/0/1323767/6442338 chk= 0.004(d=32) stat= 0.956 rest= 2.974
+  [incr r=111 repr=111 next=113 tfo=1034842 active=2915/353801 POs=1186]
+112 : c =     875  cl = 175949  lit =  177808  p =  1130  d =    27  f =    29  -  T =     0.24 sec
+  [prof 112] wall= 238.839 p=  1186 | ifo= 13.550(sd=1.070 nx=0.993 tfo=9.414 cnt=2.073) snap= 2.460 srm=121.910 sat= 18.280(set=11.379 slv=6.836 max=0.2094 n=1186) cex=R/T/F=27/0/29 trsplit=0 pending=0 sim=78.953(rmp=0.286 run=78.667 n=1 d=21) incr=loc/full/maxdirty/keys=1/0/1323739/6442338 chk= 0.006(d=28) stat= 0.878 rest= 2.802
+  [incr r=112 repr=102 next=146 tfo=1035835 active=2965/353757 POs=1183]
+113 : c =     866  cl = 175964  lit =  177745  p =  1125  d =    36  f =    22  -  T =     0.21 sec
+  [prof 113] wall= 209.375 p=  1183 | ifo= 12.059(sd=1.078 nx=0.952 tfo=8.313 cnt=1.717) snap= 2.709 srm=114.202 sat= 15.928(set=9.842 slv=6.017 max=0.1906 n=1183) cex=R/T/F=36/0/22 trsplit=0 pending=0 sim=60.074(rmp=0.247 run=59.826 n=1 d=45) incr=loc/full/maxdirty/keys=1/0/1019600/6442338 chk= 0.006(d=18) stat= 1.113 rest= 3.283
+  [incr r=113 repr=97 next=130 tfo=1018958 active=752/353709 POs=393]
+114 : c =     856  cl = 175948  lit =  177682  p =   348  d =    27  f =    18  -  T =     0.17 sec
+  [prof 114] wall= 166.536 p=   393 | ifo= 14.729(sd=1.377 nx=1.229 tfo=9.778 cnt=2.346) snap= 1.972 srm=126.250 sat= 14.907(set=10.280 slv=4.603 max=0.1828 n=393) cex=R/T/F=27/0/18 trsplit=0 pending=0 sim= 5.042(rmp=0.270 run=4.772 n=1 d=46) incr=loc/full/maxdirty/keys=1/0/1411/6442338 chk= 0.004(d=17) stat= 0.940 rest= 2.691
+  [incr r=114 repr=75 next=78 tfo=1018821 active=683/353630 POs=365]
+115 : c =     850  cl = 175936  lit =  177656  p =   342  d =     4  f =    19  -  T =     0.21 sec
+  [prof 115] wall= 211.693 p=   365 | ifo= 14.208(sd=1.089 nx=1.091 tfo=10.173 cnt=1.855) snap= 1.958 srm=119.016 sat= 14.080(set=10.193 slv=3.866 max=0.1772 n=365) cex=R/T/F=4/0/19 trsplit=0 pending=0 sim=58.904(rmp=0.238 run=58.664 n=1 d=7) incr=loc/full/maxdirty/keys=1/0/1018601/6442338 chk= 0.003(d=19) stat= 0.904 rest= 2.621
+  [incr r=115 repr=28 next=28 tfo=1018458 active=648/353592 POs=340]
+116 : c =     841  cl = 175938  lit =  177643  p =   333  d =     3  f =     4  -  T =     0.17 sec
+  [prof 116] wall= 173.082 p=   340 | ifo= 12.910(sd=1.131 nx=0.984 tfo=8.925 cnt=1.869) snap= 2.030 srm=123.326 sat= 12.657(set=10.743 slv=1.893 max=0.1884 n=340) cex=R/T/F=3/0/4 trsplit=0 pending=0 sim=18.577(rmp=0.242 run=18.335 n=1 d=9) incr=loc/full/maxdirty/keys=1/0/288566/6442338 chk= 0.003(d=4) stat= 0.930 rest= 2.650
+  [incr r=116 repr=18 next=18 tfo=1018590 active=641/353581 POs=345]
+117 : c =     839  cl = 175935  lit =  177634  p =   334  d =     6  f =     5  -  T =     0.21 sec
+  [prof 117] wall= 212.748 p=   345 | ifo= 12.523(sd=1.070 nx=0.995 tfo=8.748 cnt=1.710) snap= 1.929 srm=119.877 sat= 12.322(set=10.234 slv=2.068 max=0.2497 n=345) cex=R/T/F=6/0/5 trsplit=0 pending=0 sim=62.501(rmp=0.233 run=62.266 n=1 d=5) incr=loc/full/maxdirty/keys=1/0/1018750/6442338 chk= 0.003(d=4) stat= 0.910 rest= 2.685
+  [incr r=117 repr=9 next=10 tfo=1018520 active=627/353569 POs=336]
+118 : c =     837  cl = 175933  lit =  177629  p =   330  d =     3  f =     3  -  T =     0.16 sec
+  [prof 118] wall= 161.428 p=   336 | ifo= 13.863(sd=1.172 nx=1.009 tfo=9.950 cnt=1.732) snap= 1.948 srm=124.097 sat= 12.133(set=10.501 slv=1.612 max=0.1712 n=336) cex=R/T/F=3/0/3 trsplit=0 pending=0 sim= 5.260(rmp=0.234 run=5.025 n=1 d=2) incr=loc/full/maxdirty/keys=1/0/225/6442338 chk= 0.004(d=3) stat= 0.978 rest= 3.144
+  [incr r=118 repr=5 next=3 tfo=195 active=15/353562 POs=1]
+119 : c =     834  cl = 175934  lit =  177625  p =     0  d =     1  f =     0  -  T =     0.07 sec
+  [prof 119] wall=  73.559 p=     1 | ifo=  4.507(sd=1.094 nx=1.088 tfo=0.671 cnt=1.654) snap= 1.916 srm= 54.083 sat=  1.849(set=1.818 slv=0.028 max=0.0282 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 7.164(rmp=0.233 run=6.930 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 1.196 rest= 2.844
+  [incr r=119 repr=6 next=7 tfo=54 active=23/353559 POs=9]
+120 : c =     834  cl = 175934  lit =  177621  p =     5  d =     3  f =     1  -  T =     0.09 sec
+  [prof 120] wall=  88.359 p=     9 | ifo=  5.289(sd=1.535 nx=1.444 tfo=0.006 cnt=2.304) snap= 2.532 srm= 64.789 sat=  6.318(set=5.927 slv=0.388 max=0.2689 n=9) cex=R/T/F=3/0/1 trsplit=0 pending=0 sim= 5.754(rmp=0.288 run=5.466 n=1 d=3) incr=loc/full/maxdirty/keys=1/0/82/6442338 chk= 0.001(d=1) stat= 0.981 rest= 2.693
+  [incr r=120 repr=5 next=7 tfo=40 active=19/353555 POs=7]
+121 : c =     833  cl = 175934  lit =  177618  p =     4  d =     0  f =     3  -  T =     0.09 sec
+  [prof 121] wall=  92.508 p=     7 | ifo=  3.817(sd=1.092 nx=1.082 tfo=0.004 cnt=1.639) snap= 1.965 srm= 63.207 sat= 10.502(set=10.038 slv=0.461 max=0.2211 n=7) cex=R/T/F=0/0/3 trsplit=0 pending=0 sim= 8.818(rmp=0.234 run=8.583 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.002(d=3) stat= 1.177 rest= 3.019
+  [incr r=121 repr=3 next=2 tfo=54 active=16/353552 POs=3]
+122 : c =     832  cl = 175934  lit =  177617  p =     2  d =     0  f =     1  -  T =     0.08 sec
+  [prof 122] wall=  80.862 p=     3 | ifo=  4.235(sd=1.408 nx=1.207 tfo=0.005 cnt=1.615) snap= 1.928 srm= 60.510 sat=  5.355(set=5.300 slv=0.052 max=0.0420 n=3) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 4.985(rmp=0.232 run=4.752 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.001(d=1) stat= 1.159 rest= 2.690
+  [incr r=122 repr=1 next=0 tfo=26 active=15/353551 POs=3]
+123 : c =     829  cl = 175935  lit =  177613  p =     2  d =     1  f =     0  -  T =     0.08 sec
+  [prof 123] wall=  84.667 p=     3 | ifo=  5.023(sd=1.492 nx=1.416 tfo=0.004 cnt=2.111) snap= 1.937 srm= 63.906 sat=  5.150(set=5.115 slv=0.032 max=0.0236 n=3) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 5.093(rmp=0.234 run=4.859 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.000(d=0) stat= 0.961 rest= 2.597
+  [incr r=123 repr=6 next=5 tfo=54 active=23/353548 POs=7]
+124 : c =     829  cl = 175935  lit =  177611  p =     5  d =     1  f =     1  -  T =     0.08 sec
+  [prof 124] wall=  80.782 p=     7 | ifo=  3.745(sd=1.069 nx=1.022 tfo=0.004 cnt=1.650) snap= 2.081 srm= 60.053 sat=  6.043(set=5.641 slv=0.398 max=0.2612 n=7) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 5.331(rmp=0.234 run=5.096 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.002(d=1) stat= 0.955 rest= 2.572
+  [incr r=124 repr=2 next=4 tfo=26 active=19/353546 POs=3]
+125 : c =     828  cl = 175934  lit =  177609  p =     1  d =     1  f =     1  -  T =     0.08 sec
+  [prof 125] wall=  81.972 p=     3 | ifo=  3.916(sd=1.068 nx=1.075 tfo=0.005 cnt=1.768) snap= 1.940 srm= 61.617 sat=  5.664(set=5.335 slv=0.327 max=0.2926 n=3) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 5.105(rmp=0.253 run=4.851 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=1) stat= 0.968 rest= 2.761
+  [incr r=125 repr=2 next=1 tfo=40 active=18/353543 POs=3]
+126 : c =     827  cl = 175934  lit =  177608  p =     2  d =     0  f =     1  -  T =     0.08 sec
+  [prof 126] wall=  84.445 p=     3 | ifo=  3.893(sd=1.154 nx=1.058 tfo=0.004 cnt=1.677) snap= 1.932 srm= 61.960 sat=  5.268(set=5.205 slv=0.060 max=0.0438 n=3) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 7.161(rmp=0.243 run=6.917 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.001(d=1) stat= 1.157 rest= 3.073
+  [incr r=126 repr=1 next=0 tfo=26 active=15/353542 POs=1]
+127 : c =     824  cl = 175935  lit =  177604  p =     0  d =     1  f =     0  -  T =     0.07 sec
+  [prof 127] wall=  74.064 p=     1 | ifo=  4.337(sd=1.521 nx=1.069 tfo=0.004 cnt=1.743) snap= 1.928 srm= 56.086 sat=  1.968(set=1.940 slv=0.026 max=0.0257 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 6.596(rmp=0.232 run=6.363 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 0.946 rest= 2.203
+  [incr r=127 repr=6 next=7 tfo=54 active=25/353539 POs=11]
+128 : c =     824  cl = 175935  lit =  177600  p =     7  d =     3  f =     1  -  T =     0.08 sec
+  [prof 128] wall=  80.971 p=    11 | ifo=  4.061(sd=1.077 nx=1.010 tfo=0.004 cnt=1.970) snap= 1.933 srm= 59.763 sat=  5.614(set=5.156 slv=0.454 max=0.2671 n=11) cex=R/T/F=3/0/1 trsplit=0 pending=0 sim= 5.985(rmp=0.235 run=5.750 n=1 d=3) incr=loc/full/maxdirty/keys=1/0/82/6442338 chk= 0.002(d=1) stat= 0.937 rest= 2.677
+  [incr r=128 repr=5 next=7 tfo=40 active=19/353535 POs=7]
+129 : c =     823  cl = 175935  lit =  177597  p =     4  d =     0  f =     3  -  T =     0.08 sec
+  [prof 129] wall=  82.656 p=     7 | ifo=  3.906(sd=1.231 nx=1.047 tfo=0.005 cnt=1.623) snap= 2.786 srm= 61.886 sat=  5.582(set=5.143 slv=0.437 max=0.2062 n=7) cex=R/T/F=0/0/3 trsplit=0 pending=0 sim= 5.030(rmp=0.255 run=4.775 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.003(d=3) stat= 0.948 rest= 2.514
+  [incr r=129 repr=3 next=2 tfo=54 active=18/353532 POs=5]
+130 : c =     822  cl = 175935  lit =  177596  p =     4  d =     0  f =     1  -  T =     0.08 sec
+  [prof 130] wall=  85.389 p=     5 | ifo=  3.709(sd=1.109 nx=1.020 tfo=0.005 cnt=1.575) snap= 2.466 srm= 64.598 sat=  5.688(set=5.620 slv=0.066 max=0.0415 n=5) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 5.297(rmp=0.234 run=5.062 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.000(d=1) stat= 0.950 rest= 2.680
+  [incr r=130 repr=1 next=0 tfo=26 active=15/353531 POs=3]
+131 : c =     819  cl = 175936  lit =  177592  p =     2  d =     1  f =     0  -  T =     0.08 sec
+  [prof 131] wall=  81.471 p=     3 | ifo=  3.815(sd=1.088 nx=1.013 tfo=0.005 cnt=1.710) snap= 1.939 srm= 61.689 sat=  5.226(set=5.192 slv=0.032 max=0.0228 n=3) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 5.272(rmp=0.258 run=5.013 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 0.923 rest= 2.607
+  [incr r=131 repr=6 next=5 tfo=54 active=21/353528 POs=7]
+132 : c =     819  cl = 175936  lit =  177590  p =     5  d =     1  f =     1  -  T =     0.08 sec
+  [prof 132] wall=  79.911 p=     7 | ifo=  3.802(sd=1.085 nx=1.077 tfo=0.006 cnt=1.634) snap= 1.940 srm= 59.887 sat=  5.645(set=5.249 slv=0.393 max=0.2563 n=7) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 5.057(rmp=0.236 run=4.820 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=1) stat= 0.945 rest= 2.635
+  [incr r=132 repr=2 next=4 tfo=26 active=17/353526 POs=3]
+133 : c =     818  cl = 175935  lit =  177588  p =     1  d =     1  f =     1  -  T =     0.09 sec
+  [prof 133] wall=  90.767 p=     3 | ifo=  3.847(sd=1.106 nx=1.044 tfo=0.004 cnt=1.692) snap= 2.471 srm= 67.079 sat=  6.095(set=5.777 slv=0.317 max=0.2822 n=3) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 6.917(rmp=0.271 run=6.646 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=1) stat= 1.163 rest= 3.193
+  [incr r=133 repr=2 next=1 tfo=40 active=16/353523 POs=3]
+134 : c =     817  cl = 175935  lit =  177587  p =     2  d =     0  f =     1  -  T =     0.09 sec
+  [prof 134] wall=  95.977 p=     3 | ifo=  4.978(sd=1.445 nx=1.499 tfo=0.004 cnt=2.030) snap= 2.418 srm= 71.349 sat=  6.021(set=5.959 slv=0.060 max=0.0445 n=3) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 6.937(rmp=0.281 run=6.655 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.000(d=1) stat= 1.133 rest= 3.141
+  [incr r=134 repr=1 next=0 tfo=26 active=13/353522 POs=1]
+135 : c =     814  cl = 175936  lit =  177583  p =     0  d =     1  f =     0  -  T =     0.08 sec
+  [prof 135] wall=  79.629 p=     1 | ifo=  4.849(sd=1.375 nx=1.439 tfo=0.005 cnt=2.031) snap= 2.553 srm= 58.757 sat=  2.307(set=2.280 slv=0.025 max=0.0254 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 7.165(rmp=0.284 run=6.880 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 1.126 rest= 2.872
+  [incr r=135 repr=6 next=7 tfo=54 active=23/353519 POs=11]
+136 : c =     814  cl = 175936  lit =  177579  p =     7  d =     3  f =     1  -  T =     0.09 sec
+  [prof 136] wall=  90.556 p=    11 | ifo=  5.325(sd=1.366 nx=1.604 tfo=0.004 cnt=2.351) snap= 2.481 srm= 67.526 sat=  6.295(set=5.770 slv=0.521 max=0.3199 n=11) cex=R/T/F=3/0/1 trsplit=0 pending=0 sim= 5.344(rmp=0.249 run=5.094 n=1 d=3) incr=loc/full/maxdirty/keys=1/0/82/6442338 chk= 0.002(d=1) stat= 0.989 rest= 2.593
+  [incr r=136 repr=5 next=6 tfo=40 active=17/353515 POs=7]
+137 : c =     813  cl = 175936  lit =  177576  p =     4  d =     0  f =     3  -  T =     0.09 sec
+  [prof 137] wall=  90.387 p=     7 | ifo=  4.386(sd=1.446 nx=1.184 tfo=0.004 cnt=1.752) snap= 2.465 srm= 65.825 sat=  6.387(set=5.938 slv=0.446 max=0.2127 n=7) cex=R/T/F=0/0/3 trsplit=0 pending=0 sim= 7.070(rmp=0.279 run=6.790 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.003(d=3) stat= 1.130 rest= 3.122
+  [incr r=137 repr=3 next=2 tfo=54 active=15/353512 POs=5]
+138 : c =     810  cl = 175937  lit =  177573  p =     4  d =     1  f =     0  -  T =     0.09 sec
+  [prof 138] wall=  86.124 p=     5 | ifo=  5.110(sd=1.493 nx=1.485 tfo=0.005 cnt=2.127) snap= 1.934 srm= 63.153 sat=  5.121(set=5.072 slv=0.046 max=0.0235 n=5) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 6.917(rmp=0.285 run=6.632 n=1 d=3) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 0.976 rest= 2.912
+  [incr r=138 repr=5 next=4 tfo=54 active=23/353510 POs=7]
+139 : c =     810  cl = 175937  lit =  177571  p =     5  d =     1  f =     1  -  T =     0.08 sec
+  [prof 139] wall=  83.203 p=     7 | ifo=  4.946(sd=1.310 nx=1.430 tfo=0.005 cnt=2.201) snap= 2.006 srm= 62.027 sat=  5.498(set=5.096 slv=0.399 max=0.2597 n=7) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 5.205(rmp=0.234 run=4.970 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.002(d=1) stat= 0.941 rest= 2.579
+  [incr r=139 repr=2 next=4 tfo=26 active=19/353508 POs=3]
+140 : c =     809  cl = 175936  lit =  177569  p =     1  d =     1  f =     1  -  T =     0.09 sec
+  [prof 140] wall=  88.301 p=     3 | ifo=  3.836(sd=1.084 nx=1.051 tfo=0.004 cnt=1.696) snap= 2.433 srm= 64.632 sat=  6.331(set=5.998 slv=0.331 max=0.2970 n=3) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 6.905(rmp=0.276 run=6.627 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=1) stat= 1.132 rest= 3.032
+  [incr r=140 repr=2 next=1 tfo=40 active=18/353505 POs=3]
+141 : c =     808  cl = 175936  lit =  177568  p =     2  d =     0  f =     1  -  T =     0.09 sec
+  [prof 141] wall=  88.583 p=     3 | ifo=  4.930(sd=1.370 nx=1.458 tfo=0.004 cnt=2.098) snap= 1.928 srm= 64.865 sat=  5.264(set=5.202 slv=0.060 max=0.0434 n=3) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 7.459(rmp=0.233 run=7.225 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.000(d=1) stat= 1.134 rest= 3.002
+  [incr r=141 repr=1 next=0 tfo=26 active=15/353504 POs=1]
+142 : c =     805  cl = 175937  lit =  177564  p =     0  d =     1  f =     0  -  T =     0.08 sec
+  [prof 142] wall=  76.697 p=     1 | ifo=  4.887(sd=1.364 nx=1.473 tfo=0.004 cnt=2.046) snap= 2.633 srm= 57.077 sat=  1.845(set=1.818 slv=0.025 max=0.0250 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 6.431(rmp=0.231 run=6.199 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 1.116 rest= 2.707
+  [incr r=142 repr=6 next=7 tfo=54 active=25/353501 POs=11]
+143 : c =     805  cl = 175937  lit =  177560  p =     7  d =     3  f =     1  -  T =     0.09 sec
+  [prof 143] wall=  86.197 p=    11 | ifo=  4.833(sd=1.368 nx=1.454 tfo=0.005 cnt=2.006) snap= 1.937 srm= 63.916 sat=  5.736(set=5.273 slv=0.460 max=0.2713 n=11) cex=R/T/F=3/0/1 trsplit=0 pending=0 sim= 5.705(rmp=0.234 run=5.470 n=1 d=3) incr=loc/full/maxdirty/keys=1/0/82/6442338 chk= 0.001(d=1) stat= 1.119 rest= 2.950
+  [incr r=143 repr=5 next=7 tfo=40 active=19/353497 POs=7]
+144 : c =     804  cl = 175937  lit =  177557  p =     4  d =     0  f =     3  -  T =     0.08 sec
+  [prof 144] wall=  83.086 p=     7 | ifo=  4.936(sd=1.401 nx=1.494 tfo=0.004 cnt=2.037) snap= 1.942 srm= 61.893 sat=  5.547(set=5.101 slv=0.444 max=0.2065 n=7) cex=R/T/F=0/0/3 trsplit=0 pending=0 sim= 5.150(rmp=0.234 run=4.915 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.002(d=3) stat= 0.948 rest= 2.666
+  [incr r=144 repr=3 next=2 tfo=54 active=18/353494 POs=5]
+145 : c =     803  cl = 175937  lit =  177556  p =     4  d =     0  f =     1  -  T =     0.08 sec
+  [prof 145] wall=  85.055 p=     5 | ifo=  3.777(sd=1.092 nx=1.091 tfo=0.005 cnt=1.588) snap= 2.469 srm= 62.025 sat=  5.817(set=5.748 slv=0.067 max=0.0423 n=5) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 6.602(rmp=0.274 run=6.327 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.000(d=1) stat= 1.119 rest= 3.246
+  [incr r=145 repr=1 next=0 tfo=26 active=15/353493 POs=3]
+146 : c =     800  cl = 175938  lit =  177552  p =     2  d =     1  f =     0  -  T =     0.10 sec
+  [prof 146] wall= 101.869 p=     3 | ifo=  4.978(sd=1.357 nx=1.476 tfo=0.005 cnt=2.140) snap= 2.461 srm= 74.280 sat=  5.435(set=5.401 slv=0.031 max=0.0226 n=3) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim=10.887(rmp=0.271 run=10.615 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 0.957 rest= 2.870
+  [incr r=146 repr=6 next=5 tfo=54 active=23/353490 POs=7]
+147 : c =     800  cl = 175938  lit =  177550  p =     5  d =     1  f =     1  -  T =     0.09 sec
+  [prof 147] wall=  87.418 p=     7 | ifo=  4.000(sd=1.111 nx=1.106 tfo=0.004 cnt=1.779) snap= 2.437 srm= 63.059 sat=  6.411(set=6.013 slv=0.396 max=0.2594 n=7) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 7.033(rmp=0.253 run=6.779 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.002(d=1) stat= 1.150 rest= 3.326
+  [incr r=147 repr=2 next=4 tfo=26 active=19/353488 POs=3]
+148 : c =     799  cl = 175937  lit =  177548  p =     1  d =     1  f =     1  -  T =     0.08 sec
+  [prof 148] wall=  83.890 p=     3 | ifo=  5.065(sd=1.396 nx=1.455 tfo=0.004 cnt=2.210) snap= 2.007 srm= 62.518 sat=  5.524(set=5.203 slv=0.319 max=0.2851 n=3) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 5.255(rmp=0.233 run=5.021 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=1) stat= 0.937 rest= 2.583
+  [incr r=148 repr=2 next=1 tfo=40 active=18/353485 POs=3]
+149 : c =     798  cl = 175937  lit =  177547  p =     2  d =     0  f =     1  -  T =     0.08 sec
+  [prof 149] wall=  82.136 p=     3 | ifo=  3.817(sd=1.081 nx=1.038 tfo=0.004 cnt=1.694) snap= 2.025 srm= 60.708 sat=  5.389(set=5.328 slv=0.059 max=0.0430 n=3) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 5.869(rmp=0.269 run=5.599 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.000(d=1) stat= 1.589 rest= 2.739
+  [incr r=149 repr=1 next=0 tfo=26 active=15/353484 POs=1]
+150 : c =     795  cl = 175938  lit =  177543  p =     0  d =     1  f =     0  -  T =     0.07 sec
+  [prof 150] wall=  75.367 p=     1 | ifo=  3.950(sd=1.079 nx=1.115 tfo=0.004 cnt=1.752) snap= 1.940 srm= 54.744 sat=  2.316(set=2.289 slv=0.025 max=0.0249 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 8.482(rmp=0.280 run=8.202 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/80/6442338 chk= 0.001(d=0) stat= 1.121 rest= 2.812
+  [incr r=150 repr=6 next=7 tfo=54 active=25/353481 POs=11]
+151 : c =     795  cl = 175938  lit =  177539  p =     7  d =     3  f =     1  -  T =     0.09 sec
+  [prof 151] wall=  92.064 p=    11 | ifo=  4.995(sd=1.364 nx=1.446 tfo=0.004 cnt=2.180) snap= 2.445 srm= 66.800 sat=  6.154(set=5.695 slv=0.455 max=0.2647 n=11) cex=R/T/F=3/0/1 trsplit=0 pending=0 sim= 7.445(rmp=0.292 run=7.152 n=1 d=3) incr=loc/full/maxdirty/keys=1/0/82/6442338 chk= 0.001(d=1) stat= 1.136 rest= 3.088
+  [incr r=151 repr=5 next=7 tfo=40 active=19/353477 POs=7]
+152 : c =     794  cl = 175938  lit =  177536  p =     4  d =     0  f =     3  -  T =     0.09 sec
+  [prof 152] wall=  92.696 p=     7 | ifo=  4.938(sd=1.349 nx=1.502 tfo=0.004 cnt=2.083) snap= 1.942 srm= 69.142 sat=  8.095(set=7.649 slv=0.443 max=0.2096 n=7) cex=R/T/F=0/0/3 trsplit=0 pending=0 sim= 4.994(rmp=0.234 run=4.759 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.002(d=3) stat= 0.948 rest= 2.635
+  [incr r=152 repr=3 next=2 tfo=54 active=18/353474 POs=5]
+153 : c =     793  cl = 175938  lit =  177535  p =     4  d =     0  f =     1  -  T =     0.08 sec
+  [prof 153] wall=  80.137 p=     5 | ifo=  3.750(sd=1.084 nx=1.074 tfo=0.005 cnt=1.587) snap= 1.914 srm= 60.649 sat=  5.297(set=5.229 slv=0.065 max=0.0410 n=5) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 5.001(rmp=0.233 run=4.767 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.001(d=1) stat= 0.953 rest= 2.571
+  [incr r=153 repr=1 next=0 tfo=26 active=15/353473 POs=3]
+154 : c =     790  cl = 175939  lit =  177531  p =     2  d =     1  f =     0  -  T =     0.08 sec
+  [prof 154] wall=  84.398 p=     3 | ifo=  4.011(sd=1.239 nx=1.040 tfo=0.004 cnt=1.728) snap= 1.998 srm= 64.622 sat=  5.077(set=5.035 slv=0.039 max=0.0305 n=3) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 5.181(rmp=0.235 run=4.946 n=1 d=4) incr=loc/full/maxdirty/keys=1/0/72/6442338 chk= 0.001(d=0) stat= 0.995 rest= 2.513
+  [incr r=154 repr=6 next=5 tfo=46 active=16/353470 POs=7]
+155 : c =     790  cl = 175939  lit =  177529  p =     5  d =     1  f =     1  -  T =     0.08 sec
+  [prof 155] wall=  84.044 p=     7 | ifo=  4.017(sd=1.103 nx=1.084 tfo=0.004 cnt=1.825) snap= 1.911 srm= 63.348 sat=  5.996(set=5.594 slv=0.399 max=0.2617 n=7) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 5.211(rmp=0.241 run=4.969 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/72/6442338 chk= 0.001(d=1) stat= 0.955 rest= 2.605
+  [incr r=155 repr=2 next=4 tfo=18 active=12/353468 POs=3]
+156 : c =     789  cl = 175938  lit =  177527  p =     1  d =     1  f =     1  -  T =     0.08 sec
+  [prof 156] wall=  82.968 p=     3 | ifo=  3.781(sd=1.069 nx=1.021 tfo=0.005 cnt=1.686) snap= 1.992 srm= 62.057 sat=  6.232(set=5.918 slv=0.312 max=0.2743 n=3) cex=R/T/F=1/0/1 trsplit=0 pending=0 sim= 5.358(rmp=0.242 run=5.116 n=1 d=1) incr=loc/full/maxdirty/keys=1/0/72/6442338 chk= 0.001(d=1) stat= 0.983 rest= 2.563
+  [incr r=156 repr=2 next=1 tfo=32 active=11/353465 POs=3]
+157 : c =     788  cl = 175938  lit =  177526  p =     2  d =     0  f =     1  -  T =     0.09 sec
+  [prof 157] wall=  87.133 p=     3 | ifo=  3.929(sd=1.136 nx=1.016 tfo=0.004 cnt=1.774) snap= 2.438 srm= 63.957 sat=  5.671(set=5.607 slv=0.063 max=0.0245 n=3) cex=R/T/F=0/0/1 trsplit=0 pending=0 sim= 6.846(rmp=0.284 run=6.561 n=1 d=0) incr=loc/full/maxdirty/keys=1/0/0/6442338 chk= 0.001(d=1) stat= 1.132 rest= 3.158
+  [incr r=157 repr=1 next=0 tfo=18 active=8/353464 POs=1]
+158 : c =     786  cl = 175938  lit =  177524  p =     0  d =     1  f =     0  -  T =     0.07 sec
+  [prof 158] wall=  75.853 p=     1 | ifo=  4.998(sd=1.450 nx=1.460 tfo=0.003 cnt=2.084) snap= 1.914 srm= 58.442 sat=  1.946(set=1.919 slv=0.025 max=0.0252 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim= 5.242(rmp=0.233 run=5.009 n=1 d=2) incr=loc/full/maxdirty/keys=1/0/50/6442338 chk= 0.001(d=0) stat= 0.946 rest= 2.363
+  [incr r=158 repr=3 next=2 tfo=32 active=8/353462 POs=8]
+159 : c =     786  cl = 175935  lit =  177521  p =     5  d =     3  f =     0  -  T =     0.14 sec
+  [prof 159] wall= 144.077 p=     8 | ifo=  3.787(sd=1.068 nx=1.013 tfo=0.003 cnt=1.703) snap= 2.353 srm= 56.060 sat=  5.185(set=5.069 slv=0.113 max=0.0326 n=8) cex=R/T/F=3/0/0 trsplit=0 pending=0 sim=73.332(rmp=0.232 run=73.098 n=1 d=3) incr=loc/full/maxdirty/keys=1/0/1319063/6442338 chk= 0.001(d=0) stat= 0.929 rest= 2.428
+  [incr r=159 repr=3 next=3 tfo=32 active=2/353456 POs=2]
+  [prof 160] wall=  68.809 p=     2 | ifo=  3.609(sd=1.067 nx=0.952 tfo=0.004 cnt=1.587) snap= 2.476 srm= 56.966 sat=  5.471(set=5.379 slv=0.090 max=0.0525 n=2) cex=R/T/F=0/0/0 trsplit=0 pending=0 sim= 0.000(rmp=0.000 run=0.000 n=0 d=0) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.000(d=0) stat= 0.000 rest= 0.287
+160 : c =     786  cl = 175935  lit =  177521  p =     0  d =     0  f =     0  -  T =     0.07 sec
+  [prof ALL] wall=106439.460 p=2694417 | ifo=1942.066(sd=197.769 nx=170.521 tfo=1243.206 cnt=330.569) snap=336.264 srm=17858.665 sat=69085.010(set=1427.404 slv=67375.448 max=7.8683 n=2694417) cex=R/T/F=1417163/0/178482 trsplit=0 pending=804 sim=16496.917(rmp=40.499 run=16456.257 n=159 d=874868) incr=loc/full/maxdirty/keys=254/1/2634500/6442338 chk=78.266(d=130758) stat=164.085 rest=478.189
+Srm   =    20.14 sec ( 16.88 %)
+Sat   =    69.14 sec ( 57.96 %)
+Sim   =    16.68 sec ( 13.98 %)
+Other =    13.33 sec ( 11.18 %)
+Incr  =     1.94 sec (  1.63 %)
+Incr: fallback rounds = 21, skipped candidate pairs = 48873601
+TOTAL =   119.29 sec
+NBeg = 1617800. NEnd = 1419828. (Gain =  12.24 %).  RBeg = 174678. REnd = 172312. (Gain =   1.35 %).
+Flop output names are not available. Use command "&get -n".
+[1;37m/home/zxr_wsl/benchmarks/incre_spec//ILA_Flute_XORI_sanity[0m : i/o = 180287/      2  ff = 172312  [1;36mand = 1419828[0m  [1;35mlev =  281[0m [1;35m(219.59)[0m  mem =24.26 MB

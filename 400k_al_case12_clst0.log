@@ -1,0 +1,90 @@
+### benchmark: /home/zxr_wsl/berkeley/abc_fork/bug/400k_al_case12_clst0.aig
+### opts:      &scorr -v -w -i -d
+### timeout:   1800s
+### date:      Wed Jun 10 19:02:44 CST 2026
+
+======== ABC command line "&r /home/zxr_wsl/berkeley/abc_fork/bug/400k_al_case12_clst0.aig; &ps; &scorr -v -w -i -d; &ps"
+[1;37m/home/zxr_wsl/berkeley/abc_fork/bug/400k_al_case12_clst0[0m : i/o =   9834/   6882  ff =  45409  [1;36mand =  299845[0m  [1;35mlev =  160[0m [1;35m(10.45)[0m  mem = 5.07 MB
+cst =  345254  cls =      0  lit =  345254  unused =    9834  proof =     0
+cst =  277851  cls =   9104  lit =  306670  unused =   39314  proof =     0
+cst =  260826  cls =  10473  lit =  294872  unused =   49743  proof =     0
+cst =  256501  cls =  11176  lit =  290021  unused =   53891  proof =     0
+cst =  253527  cls =  11193  lit =  286017  unused =   57878  proof =     0
+cst =  250556  cls =  11462  lit =  282191  unused =   61435  proof =     0
+cst =  246381  cls =  11674  lit =  279481  unused =   63933  proof =     0
+cst =  244670  cls =  11677  lit =  277163  unused =   66248  proof =     0
+cst =  241865  cls =  11998  lit =  273956  unused =   69134  proof =     0
+cst =  241380  cls =  11858  lit =  272747  unused =   70483  proof =     0
+Obj =  407380. And =  299845. Conf =   100. Fr = 1. Lcorr = 0. Ring = 1. CSat = 1. Oracle = 1.
+  0 : c =  241380  cl =  11858  lit =  272747  p =     0  d =     0  f =     0  -  T =     0.26 sec
+BMC : c =  241359  cl =  11851  lit =  272717  p =   150  d =    23  f =     0  -  T =     0.03 sec
+  [bmc-prof   0] wall=  33.775 p=   173 | ifo=  0.000(sd=0.000 nx=0.000 tfo=0.000 cnt=0.000) snap= 0.391 srm=  8.193 sat=  0.393(set=0.219 slv=0.148 max=0.0190 n=173) cex=R/T/F=23/0/0 trsplit=0 pending=1 sim=24.060(rmp=0.799 run=23.260 n=1 d=30) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.001(d=0) stat= 0.256 rest= 0.481
+  [bmc-incr i=1 repr=56 active=11218/272717 POs=13]
+BMC : c =  241358  cl =  11850  lit =  272709  p =     5  d =     8  f =     0  -  T =     0.03 sec
+  [bmc-prof   1] wall=  26.716 p=    13 | ifo=  1.384(sd=0.212 nx=0.000 tfo=0.326 cnt=0.846) snap= 0.391 srm=  5.817 sat=  0.260(set=0.244 slv=0.014 max=0.0030 n=13) cex=R/T/F=8/0/0 trsplit=0 pending=0 sim=18.179(rmp=0.913 run=17.265 n=1 d=8) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.000(d=0) stat= 0.247 rest= 0.438
+  [bmc-incr i=2 repr=13 active=11661/272709 POs=5]
+BMC : c =  241358  cl =  11849  lit =  272706  p =     1  d =     4  f =     0  -  T =     0.03 sec
+  [bmc-prof   2] wall=  25.945 p=     5 | ifo=  1.096(sd=0.206 nx=0.000 tfo=0.172 cnt=0.719) snap= 0.329 srm=  4.384 sat=  0.171(set=0.162 slv=0.007 max=0.0024 n=5) cex=R/T/F=4/0/0 trsplit=0 pending=0 sim=19.268(rmp=0.732 run=18.534 n=1 d=3) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.001(d=0) stat= 0.252 rest= 0.445
+  [bmc-incr i=3 repr=6 active=8044/272706 POs=4]
+BMC : c =  241358  cl =  11849  lit =  272705  p =     1  d =     3  f =     0  -  T =     0.03 sec
+  [bmc-prof   3] wall=  25.798 p=     4 | ifo=  1.066(sd=0.232 nx=0.000 tfo=0.103 cnt=0.731) snap= 0.341 srm=  4.423 sat=  0.171(set=0.164 slv=0.006 max=0.0027 n=4) cex=R/T/F=3/0/0 trsplit=0 pending=0 sim=19.066(rmp=0.795 run=18.269 n=1 d=1) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.000(d=0) stat= 0.276 rest= 0.454
+  [bmc-incr i=4 repr=3 active=5274/272705 POs=2]
+BMC : c =  241358  cl =  11849  lit =  272704  p =     0  d =     2  f =     0  -  T =     0.03 sec
+  [bmc-prof   4] wall=  27.650 p=     2 | ifo=  1.115(sd=0.214 nx=0.000 tfo=0.069 cnt=0.832) snap= 0.327 srm=  4.391 sat=  0.151(set=0.147 slv=0.003 max=0.0019 n=2) cex=R/T/F=2/0/0 trsplit=0 pending=0 sim=20.934(rmp=0.768 run=20.165 n=1 d=1) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.000(d=0) stat= 0.239 rest= 0.490
+  [bmc-incr i=5 repr=2 active=3119/272704 POs=1]
+BMC : c =  241358  cl =  11849  lit =  272702  p =     0  d =     1  f =     0  -  T =     0.03 sec
+  [bmc-prof   5] wall=  25.418 p=     1 | ifo=  1.006(sd=0.241 nx=0.000 tfo=0.043 cnt=0.721) snap= 0.356 srm=  4.307 sat=  0.156(set=0.151 slv=0.003 max=0.0032 n=1) cex=R/T/F=1/0/0 trsplit=0 pending=0 sim=18.906(rmp=0.760 run=18.144 n=1 d=2) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.001(d=0) stat= 0.259 rest= 0.427
+  [bmc-incr i=6 repr=7 active=1796/272702 POs=1]
+BMC : c =  241358  cl =  11849  lit =  272702  p =     1  d =     0  f =     0  -  T =     0.01 sec
+  [bmc-prof   6] wall=   6.192 p=     1 | ifo=  0.957(sd=0.207 nx=0.000 tfo=0.028 cnt=0.721) snap= 0.341 srm=  4.417 sat=  0.159(set=0.154 slv=0.003 max=0.0031 n=1) cex=R/T/F=0/0/0 trsplit=0 pending=0 sim= 0.000(rmp=0.000 run=0.000 n=0 d=0) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.000(d=0) stat= 0.315 rest= 0.005
+  [bmc-prof ALL] wall= 171.494 p=   199 | ifo=  6.624(sd=1.312 nx=0.000 tfo=0.740 cnt=4.572) snap= 2.477 srm= 35.932 sat=  1.462(set=1.240 slv=0.183 max=0.0190 n=199) cex=R/T/F=41/0/0 trsplit=0 pending=1 sim=120.413(rmp=4.768 run=115.637 n=6 d=45) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.003(d=0) stat= 1.843 rest= 2.740
+  1 : c =  236956  cl =  11272  lit =  266275  p =  8227  d =  6727  f =    20  -  T =     0.06 sec
+  [prof   1] wall=  61.660 p= 14974 | ifo=  0.000(sd=0.000 nx=0.000 tfo=0.000 cnt=0.000) snap= 0.323 srm= 14.410 sat= 14.610(set=0.702 slv=12.927 max=0.1798 n=14974) cex=R/T/F=6727/0/20 trsplit=0 pending=1783 sim=31.493(rmp=0.885 run=30.607 n=1 d=6422) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.063(d=5) stat= 0.269 rest= 0.492
+  [incr-oracle r=1 PASS skipped=1442 all-UNSAT]
+  [incr-oracle r=1 checked=115969 build+solve=0.016 sec]
+  [incr r=1 repr=13085 next=10534 tfo=202857 active=161578/277547 POs=11831]
+  2 : c =  229820  cl =  10955  lit =  260777  p =  6199  d =  5588  f =    44  -  T =     0.08 sec
+  [prof   2] wall=  78.872 p= 11831 | ifo=  3.589(sd=0.376 nx=0.190 tfo=2.481 cnt=0.542) snap= 0.322 srm= 12.253 sat= 13.126(set=0.617 slv=11.810 max=0.1776 n=11831) cex=R/T/F=5588/0/44 trsplit=0 pending=1268 sim=32.893(rmp=0.627 run=32.265 n=1 d=5470) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.051(d=28) stat= 0.278 rest=16.359
+  [incr-oracle r=2 PASS skipped=1339 all-UNSAT]
+  [incr-oracle r=2 checked=84820 build+solve=0.012 sec]
+  [incr r=2 repr=14938 next=12255 tfo=229031 active=186912/271732 POs=15660]
+  3 : c =  218850  cl =  11512  lit =  251913  p =  7196  d =  8435  f =    29  -  T =     0.07 sec
+  [prof   3] wall=  72.432 p= 15660 | ifo=  3.568(sd=0.290 nx=0.188 tfo=2.556 cnt=0.533) snap= 0.330 srm= 11.187 sat= 13.226(set=0.658 slv=11.697 max=0.2042 n=15660) cex=R/T/F=8435/0/29 trsplit=0 pending=1276 sim=31.599(rmp=0.587 run=31.011 n=1 d=8855) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.058(d=9) stat= 0.291 rest=12.172
+  [incr-oracle r=3 PASS skipped=2008 all-UNSAT]
+  [incr-oracle r=3 checked=124590 build+solve=0.016 sec]
+  [incr r=3 repr=20638 next=16576 tfo=185746 active=138835/263425 POs=16269]
+  4 : c =  209565  cl =  11872  lit =  243694  p =  7308  d =  8949  f =    12  -  T =     0.08 sec
+  [prof   4] wall=  82.934 p= 16269 | ifo=  3.070(sd=0.290 nx=0.174 tfo=2.053 cnt=0.553) snap= 0.343 srm= 13.570 sat= 13.861(set=0.731 slv=12.209 max=0.3099 n=16269) cex=R/T/F=8949/0/12 trsplit=0 pending=1044 sim=35.310(rmp=0.621 run=34.688 n=1 d=8213) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.089(d=6) stat= 0.361 rest=16.332
+  [incr-oracle r=4 PASS skipped=2113 all-UNSAT]
+  [incr-oracle r=4 checked=117157 build+solve=0.015 sec]
+  [incr r=4 repr=20142 next=16568 tfo=191640 active=138409/255566 POs=14919]
+  5 : c =  201183  cl =  12654  lit =  237102  p =  7041  d =  7866  f =    12  -  T =     0.08 sec
+  [prof   5] wall=  76.821 p= 14919 | ifo=  3.969(sd=0.399 nx=0.244 tfo=2.668 cnt=0.657) snap= 0.350 srm= 12.048 sat= 16.305(set=0.767 slv=14.424 max=0.3191 n=14919) cex=R/T/F=7866/0/12 trsplit=0 pending=1851 sim=28.762(rmp=0.668 run=28.092 n=1 d=6583) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.068(d=9) stat= 0.287 rest=15.033
+  [incr-oracle r=5 PASS skipped=2101 all-UNSAT]
+  [incr-oracle r=5 checked=92587 build+solve=0.014 sec]
+  [incr r=5 repr=18529 next=15250 tfo=214215 active=157169/249756 POs=16371]
+  6 : c =  192280  cl =  13216  lit =  230208  p =  8642  d =  7708  f =    21  -  T =     0.07 sec
+  [prof   6] wall=  72.350 p= 16371 | ifo=  3.530(sd=0.307 nx=0.180 tfo=2.437 cnt=0.605) snap= 0.330 srm= 12.747 sat= 11.857(set=0.824 slv=10.063 max=0.0905 n=16371) cex=R/T/F=7708/0/21 trsplit=0 pending=1941 sim=28.797(rmp=0.640 run=28.155 n=1 d=6879) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.071(d=15) stat= 0.290 rest=14.728
+  [incr-oracle r=6 PASS skipped=2297 all-UNSAT]
+  [incr-oracle r=6 checked=89759 build+solve=0.018 sec]
+  [incr r=6 repr=19416 next=15408 tfo=214496 active=153665/243424 POs=18383]
+  7 : c =  181934  cl =  14210  lit =  222299  p =  9110  d =  9242  f =    31  -  T =     0.08 sec
+  [prof   7] wall=  81.652 p= 18383 | ifo=  3.453(sd=0.317 nx=0.174 tfo=2.373 cnt=0.588) snap= 0.413 srm= 14.023 sat= 14.290(set=0.952 slv=12.302 max=0.0880 n=18383) cex=R/T/F=9242/0/31 trsplit=0 pending=2280 sim=31.001(rmp=0.968 run=30.032 n=1 d=7888) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.083(d=21) stat= 0.314 rest=18.075
+  [incr-oracle r=7 PASS skipped=2831 all-UNSAT]
+  [incr-oracle r=7 checked=83650 build+solve=0.017 sec]
+  [incr r=7 repr=22023 next=17650 tfo=214422 active=152859/236509 POs=19582]
+  8 : c =  173301  cl =  14832  lit =  213914  p = 10022  d =  9454  f =   106  -  T =     0.10 sec
+  [prof   8] wall=  97.842 p= 19582 | ifo=  4.085(sd=0.331 nx=0.184 tfo=2.907 cnt=0.662) snap= 0.325 srm= 16.906 sat= 25.978(set=0.946 slv=23.843 max=0.3841 n=19582) cex=R/T/F=9454/0/106 trsplit=0 pending=2239 sim=32.070(rmp=0.847 run=31.222 n=1 d=8301) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.384(d=84) stat= 0.324 rest=17.771
+  9 : c =  165661  cl =  15040  lit =  204530  p = 13488  d =  9967  f =    58  -  T =     0.08 sec
+  [prof   9] wall=  76.955 p= 23513 | ifo=  4.003(sd=0.328 nx=0.184 tfo=2.871 cnt=0.620) snap= 0.328 srm= 16.309 sat= 25.071(set=1.075 slv=22.640 max=0.4389 n=23513) cex=R/T/F=9967/0/58 trsplit=0 pending=1912 sim=30.408(rmp=0.621 run=29.786 n=1 d=9341) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.098(d=43) stat= 0.347 rest= 0.392
+ 10 : c =  159827  cl =  14996  lit =  195063  p = 13636  d =  9177  f =    19  -  T =     0.07 sec
+  [prof  10] wall=  71.079 p= 22832 | ifo=  4.179(sd=0.434 nx=0.237 tfo=2.882 cnt=0.626) snap= 0.323 srm= 16.638 sat= 18.677(set=1.144 slv=16.273 max=0.3497 n=22832) cex=R/T/F=9177/0/19 trsplit=0 pending=2022 sim=30.440(rmp=0.650 run=29.789 n=1 d=9448) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.083(d=19) stat= 0.345 rest= 0.394
+  [incr-oracle r=10 PASS skipped=4283 all-UNSAT]
+  [incr-oracle r=10 checked=78983 build+solve=0.025 sec]
+  [incr r=10 repr=18128 next=15567 tfo=203398 active=131076/210059 POs=17828]
+ 11 : c =  153147  cl =  14633  lit =  188013  p =  9480  d =  8327  f =    21  -  T =     0.09 sec
+  [prof  11] wall=  92.132 p= 17828 | ifo=  4.058(sd=0.298 nx=0.189 tfo=2.740 cnt=0.831) snap= 0.334 srm= 14.347 sat= 18.276(set=1.288 slv=15.950 max=0.2779 n=17828) cex=R/T/F=8327/0/21 trsplit=0 pending=2126 sim=29.731(rmp=0.648 run=29.082 n=1 d=7029) incr=loc/full/maxdirty/keys=0/0/0/0 chk= 0.074(d=21) stat= 0.317 rest=24.996
+Error: 
+INCR-ORACLE BUG: round=11 output=5651 pair=(0,287560), SAT=1 UNKNOWN=0
+Error: Partial CEX over shadow-SRM CIs (13 assignments):Error:  ci18006=0Error:  ci45409=0Error:  ci18002=0Error:  ci18000=1Error:  ci1045=1Error:  ci1044=1Error:  ci1043=0Error:  ci18179=1Error:  ci18163=0Error:  ci18195=0Error:  ci18203=0Error:  ci18251=0Error:  ci18219=0Error: 
+[1;37m/home/zxr_wsl/berkeley/abc_fork/bug/400k_al_case12_clst0[0m : i/o =   9834/   6882  ff =  45409  [1;36mand =  299845[0m  [1;35mlev =  160[0m [1;35m(10.45)[0m  mem = 5.07 MB

@@ -1,0 +1,11 @@
+file	sat_total	triv_total	to_total	rounds	wall_s	NBeg	NEnd	gain_pct	exit
+ILA_Flute_BGEU_problem	0	0	0	0	118.94	1613228	1406422	12.82	ok
+ILA_Flute_BLT_problem	0	0	0	0	109.05	1613164	1403171	13.02	ok
+ILA_Flute_SRAI_problem	0	0	0	0	126.93	1614149	1408602	12.73	ok
+ILA_Flute_XORI_sanity	0	0	0	0	121.64	1617800	1413872	12.61	ok
+Problem05_label42+token_ring.04.cil-2	0	0	0	0	52.99	243358	69307	71.52	ok
+Problem05_label43+token_ring.03.cil-1	0	0	0	0	32.55	236394	62419	73.60	ok
+Problem05_label47+token_ring.13.cil-2	0	0	0	0	134.80	324370	148995	54.07	ok
+Problem05_label49+token_ring.06.cil-2	0	0	0	0	58.59	258405	84190	67.42	ok
+Problem11_label08	0	0	0	0	31.16	400072	283645	29.10	ok
+pals_lcr.3.ufo.BOUNDED-6.pals+Problem12_label01	0	0	0	0	156.14	1573287	1238099	21.30	ok
