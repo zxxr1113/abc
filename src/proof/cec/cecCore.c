@@ -195,6 +195,7 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->fLatchCorr     =       0;  // consider only latch outputs
     p->fConstCorr     =       0;  // consider only constants
     p->fUseRings      =       1;  // combine classes into rings
+    p->fIncrOracle    =       0;  // unbounded shadow SAT for pairs skipped by -i
     p->fSkipFailResim =       0;  // skip resim when a round has no real CEX (only timeout/fail)
     p->fUseCSat       =       1;  // use circuit-based solver
 //    p->fFirstStop     =       0;  // stop on the first sat output

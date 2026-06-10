@@ -231,7 +231,7 @@ int Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj )
 
   SideEffects []
 
-  SeeAlso     [Gia_ManCorrSpecReduce_Active]
+  SeeAlso     [Gia_ManCorrSpecReduce_Emit]
 
 ***********************************************************************/
 void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
@@ -381,32 +381,28 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
 
 /**Function*************************************************************
 
-  Synopsis    [Active-filter variant of Gia_ManCorrSpecReduce.]
+  Synopsis    [Emission-filtered variant of Gia_ManCorrSpecReduce.]
 
   Description [Identical to Gia_ManCorrSpecReduce in its SRM topology
-  and speculative reduction; the only difference is the PO emission
-  filter.  A candidate pair (a, b) is emitted iff pTfoMark[a] is set
-  or pTfoMark[b] is set, i.e. at least one endpoint lies in the TFO of
-  a recently-changed representative.  In ring mode, a ring edge that is
-  new or rewired since the last snapshot (Cec_IncrMgrRingEdgeChanged)
-  is also emitted even if neither endpoint is in the TFO -- the edge
-  has no prior UNSAT result to reuse and must be reproved on its own.
+  and speculative reduction; the only difference is PO emission.
+  CEC_EMIT_ACTIVE emits pairs selected by the incremental TFO filter.
+  CEC_EMIT_SKIPPED emits the exact complement for shadow validation.
+  A new or rewired ring edge is always active and can never be emitted
+  as skipped because it has no prior UNSAT result to reuse.
 
   Walking the full ring is required (rather than skipping unmarked
   members) so iPrev stays aligned with the live class order; the active
-  filter only suppresses the resulting PO when the edge is provably
-  not new and neither endpoint is reachable from a seed.  Passing
-  pTfoMark == NULL falls back to the unfiltered baseline behaviour.]
+  predicate is evaluated only after the edge endpoints are known.]
 
   SideEffects []
 
-  SeeAlso     [Gia_ManCorrSpecReduce]
+  SeeAlso     [Gia_ManCorrSpecReduce Cec_IncrMgrCountActivePairs]
 
 ***********************************************************************/
-Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr,
-                                          Vec_Int_t ** pvOutputs, int fRings,
-                                          int * pTfoMark, Cec_IncrMgr_t * pIncr,
-                                          Vec_Int_t ** pvOutLits )
+Gia_Man_t * Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr,
+                                        Vec_Int_t ** pvOutputs, int fRings,
+                                        int * pTfoMark, Cec_IncrMgr_t * pIncr,
+                                        Cec_IncrEmitMode_t Mode, Vec_Int_t ** pvOutLits )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
@@ -415,6 +411,7 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p) > 0 );
     assert( p->pReprs != NULL );
+    assert( Mode == CEC_EMIT_ALL || pTfoMark != NULL );
     Vec_IntFill( &p->vCopies, (nFrames+fScorr)*Gia_ManObjNum(p), -1 );
     Gia_ManSetPhase( p );
     pNew = Gia_ManStart( nFrames * Gia_ManObjNum(p) );
@@ -443,7 +440,11 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
         {
             if ( Gia_ObjIsConst( p, i ) )
             {
-                if ( pTfoMark && !pTfoMark[i] )
+                int fActive = pTfoMark != NULL && pTfoMark[i];
+                int fEmit = Mode == CEC_EMIT_ALL ||
+                            (Mode == CEC_EMIT_ACTIVE  &&  fActive) ||
+                            (Mode == CEC_EMIT_SKIPPED && !fActive);
+                if ( !fEmit )
                     continue;
                 iObjRaw = Gia_ManCorrSpecReal( pNew, p, pObj, nFrames, 0 );
                 iObjNew = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pObj) );
@@ -467,8 +468,12 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
                 iPrev = i;
                 Gia_ClassForEachObj1( p, i, iObj )
                 {
-                    int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj] ||
-                                Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj );
+                    int fActive = pTfoMark != NULL &&
+                                  (pTfoMark[iPrev] || pTfoMark[iObj] ||
+                                   Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj ));
+                    int fEmit = Mode == CEC_EMIT_ALL ||
+                                (Mode == CEC_EMIT_ACTIVE  &&  fActive) ||
+                                (Mode == CEC_EMIT_SKIPPED && !fActive);
                     if ( fEmit )
                     {
                         iPrevRaw = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
@@ -492,8 +497,12 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
                 // Closing edge tail -> head
                 iObj = i;
                 {
-                    int fEmit = (pTfoMark == NULL) || pTfoMark[iPrev] || pTfoMark[iObj] ||
-                                Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj );
+                    int fActive = pTfoMark != NULL &&
+                                  (pTfoMark[iPrev] || pTfoMark[iObj] ||
+                                   Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj ));
+                    int fEmit = Mode == CEC_EMIT_ALL ||
+                                (Mode == CEC_EMIT_ACTIVE  &&  fActive) ||
+                                (Mode == CEC_EMIT_SKIPPED && !fActive);
                     if ( fEmit )
                     {
                         iPrevRaw = Gia_ManCorrSpecReal( pNew, p, Gia_ManObj(p, iPrev), nFrames, 0 );
@@ -523,10 +532,13 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr
             pRepr = Gia_ObjReprObj( p, Gia_ObjId(p,pObj) );
             if ( pRepr == NULL )
                 continue;
-            if ( pTfoMark )
             {
                 int idR = Gia_ObjId(p, pRepr);
-                if ( !pTfoMark[i] && !pTfoMark[idR] )
+                int fActive = pTfoMark != NULL && (pTfoMark[i] || pTfoMark[idR]);
+                int fEmit = Mode == CEC_EMIT_ALL ||
+                            (Mode == CEC_EMIT_ACTIVE  &&  fActive) ||
+                            (Mode == CEC_EMIT_SKIPPED && !fActive);
+                if ( !fEmit )
                     continue;
             }
             iPrevRaw = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorrSpecReal( pNew, p, pRepr, nFrames, 0 );

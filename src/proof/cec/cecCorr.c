@@ -1419,6 +1419,88 @@ int Cec_ManLSCorrAnalyzeDependence( Gia_Man_t * p, Vec_Int_t * vEquivs, Vec_Str_
 
 /**Function*************************************************************
 
+  Synopsis    [Checks incrementally skipped SRM outputs without a conflict limit.]
+
+  Description [Uses a fresh SAT manager, so shadow learned clauses and
+  solve order cannot affect the active solver.  Returns 1 iff every
+  skipped output is UNSAT.  On SAT or UNKNOWN, prints the failing pair
+  and the available counterexample assignments.]
+
+  SideEffects []
+
+  SeeAlso     [Gia_ManCorrSpecReduce_Emit]
+
+***********************************************************************/
+static int Cec_ManIncrOracleCheck( Gia_Man_t * pSrm, Vec_Int_t * vOutputs, int iIter )
+{
+    Cec_ParSat_t ParsSat;
+    Vec_Str_t * vStatus = NULL;
+    Vec_Int_t * vCexStore;
+    int i, iStart, iChosen = -1, iChosenLits = -1;
+    int Out, nLits, Lit, iRepr, iObj, nSat = 0, nUnknown = 0;
+    int fProf = Cec_ScorrProfOn;
+    assert( Vec_IntSize(vOutputs) == 2 * Gia_ManCoNum(pSrm) );
+    Cec_ManSatSetDefaultParams( &ParsSat );
+    ParsSat.nBTLimit = 0;
+    ParsSat.fVerbose = 0;
+    Cec_ScorrProfOn = 0;
+    vCexStore = Cec_ManSatSolveMiter( pSrm, &ParsSat, &vStatus );
+    Cec_ScorrProfOn = fProf;
+    Vec_StrForEachEntry( vStatus, Lit, i )
+    {
+        nSat     += Lit == 0;
+        nUnknown += Lit == -1;
+    }
+    if ( nSat == 0 && nUnknown == 0 )
+    {
+        Abc_Print( 1, "  [incr-oracle r=%d PASS skipped=%d all-UNSAT]\n",
+                   iIter, Gia_ManCoNum(pSrm) );
+        Vec_IntFree( vCexStore );
+        Vec_StrFree( vStatus );
+        return 1;
+    }
+    // Prefer a concrete SAT counterexample over UNKNOWN if both occurred.
+    iStart = 0;
+    while ( iStart < Vec_IntSize(vCexStore) )
+    {
+        int iEntry = iStart;
+        Out = Vec_IntEntry( vCexStore, iStart++ );
+        nLits = Vec_IntEntry( vCexStore, iStart++ );
+        if ( iChosen == -1 || nLits >= 0 )
+        {
+            iChosen = iEntry;
+            iChosenLits = iStart;
+        }
+        if ( nLits >= 0 )
+            break;
+        assert( nLits == -1 );
+    }
+    assert( iChosen >= 0 );
+    Out = Vec_IntEntry( vCexStore, iChosen );
+    nLits = Vec_IntEntry( vCexStore, iChosen + 1 );
+    iRepr = Vec_IntEntry( vOutputs, 2*Out );
+    iObj  = Vec_IntEntry( vOutputs, 2*Out + 1 );
+    Abc_Print( -1, "\nINCR-ORACLE %s: round=%d output=%d pair=(%d,%d), SAT=%d UNKNOWN=%d\n",
+               nLits >= 0 ? "BUG" : "UNKNOWN", iIter, Out, iRepr, iObj, nSat, nUnknown );
+    if ( nLits >= 0 )
+    {
+        Abc_Print( -1, "Partial CEX over shadow-SRM CIs (%d assignments):", nLits );
+        for ( i = 0; i < Abc_MinInt(nLits, 16); i++ )
+        {
+            Lit = Vec_IntEntry( vCexStore, iChosenLits + i );
+            Abc_Print( -1, " ci%d=%d", Abc_Lit2Var(Lit), !Abc_LitIsCompl(Lit) );
+        }
+        if ( nLits > 16 )
+            Abc_Print( -1, " ..." );
+        Abc_Print( -1, "\n" );
+    }
+    Vec_IntFree( vCexStore );
+    Vec_StrFree( vStatus );
+    return 0;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Internal procedure for register correspondence.]
 
   Description []
@@ -1484,9 +1566,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
     if ( pPars->fVerbose )
     {
-        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d.\n",
+        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d.\n",
             Gia_ManObjNum(pAig), Gia_ManAndNum(pAig), 
-            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat );
+            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle );
         Cec_ManRefinedClassPrintStats( pAig, NULL, 0, Abc_Clock() - clk );
     }
     // check the base case
@@ -1543,6 +1625,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             int * pTfoMask = NULL;
             int nReprSeeds = 0, nNextChanges = 0;
             int nTotalPairs = 0, nActivePairs = 0;
+            int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
             // Skip on r==0 because the first full SRM establishes the cache.
             if ( pMgr && r > 0 )
@@ -1556,47 +1639,100 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.tNext = Abc_ClockHr() - tH;
                 if ( nReprSeeds == 0 && nNextChanges == 0 )
                 {
-                    // No class-state change since the full/active SRM just
-                    // proved these pairs; this is true convergence.
-                    clkIncr += Abc_Clock() - clkI;
-                    clkSrm  += Abc_Clock() - clk2;
-                    break;
-                }
-                tH = Abc_ClockHr();
-                Cec_IncrMgrComputeTfo( pMgr );
-                Prof.tTfo = Abc_ClockHr() - tH;
-                tH = Abc_ClockHr();
-                Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
-                Prof.tCnt = Abc_ClockHr() - tH;
-                if ( nActivePairs == 0 )
-                {
-                    // Classes changed, but no remaining candidate pair depends
-                    // on the changed reprs and no new ring edge needs proving.
-                    clkIncr += Abc_Clock() - clkI;
-                    clkSrm  += Abc_Clock() - clk2;
-                    break;
-                }
-                // Fallback is based on emitted candidate pairs, not seed count.
-                // A large pNexts-only ring rewiring may have many changed slots
-                // but only a few new edges; conversely a tiny seed can fan out
-                // to almost all pairs. Above ~70% active pairs, the full SRM is
-                // usually cheaper than filtering plus bookkeeping.
-                if ( nTotalPairs > 0 && (ABC_INT64_T)10 * nActivePairs > (ABC_INT64_T)7 * nTotalPairs )
-                {
-                    nIncrFallback++;
+                    if ( !pPars->fIncrOracle )
+                    {
+                        // No class-state change since the full/active SRM just
+                        // proved these pairs; this is true convergence.
+                        clkIncr += Abc_Clock() - clkI;
+                        clkSrm  += Abc_Clock() - clk2;
+                        break;
+                    }
+                    // Clear the previous TFO marks.  The skipped complement is
+                    // now every current pair, providing a final certificate.
+                    tH = Abc_ClockHr();
+                    Cec_IncrMgrComputeTfo( pMgr );
+                    Prof.tTfo = Abc_ClockHr() - tH;
+                    tH = Abc_ClockHr();
+                    Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                    Prof.tCnt = Abc_ClockHr() - tH;
+                    assert( nActivePairs == 0 );
+                    pTfoMask = pMgr->pTfoMark;
+                    nIncrSkipped += nTotalPairs;
+                    fStopAfterOracle = 1;
                 }
                 else
                 {
-                    pTfoMask = pMgr->pTfoMark;
-                    nIncrSkipped += nTotalPairs - nActivePairs;
+                    tH = Abc_ClockHr();
+                    Cec_IncrMgrComputeTfo( pMgr );
+                    Prof.tTfo = Abc_ClockHr() - tH;
+                    tH = Abc_ClockHr();
+                    Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                    Prof.tCnt = Abc_ClockHr() - tH;
+                    if ( nActivePairs == 0 )
+                    {
+                        if ( !pPars->fIncrOracle )
+                        {
+                            // Classes changed, but no remaining candidate pair
+                            // depends on the changes and no new ring edge exists.
+                            clkIncr += Abc_Clock() - clkI;
+                            clkSrm  += Abc_Clock() - clk2;
+                            break;
+                        }
+                        pTfoMask = pMgr->pTfoMark;
+                        nIncrSkipped += nTotalPairs;
+                        fStopAfterOracle = 1;
+                    }
+                    // Fallback is based on emitted candidate pairs, not seed count.
+                    // Above ~70% active pairs, full SRM is usually cheaper.
+                    else if ( nTotalPairs > 0 && (ABC_INT64_T)10 * nActivePairs > (ABC_INT64_T)7 * nTotalPairs )
+                    {
+                        nIncrFallback++;
+                    }
+                    else
+                    {
+                        pTfoMask = pMgr->pTfoMark;
+                        nIncrSkipped += nTotalPairs - nActivePairs;
+                    }
                 }
                 clkIncr += Abc_Clock() - clkI;
+            }
+
+            if ( pTfoMask && pPars->fIncrOracle )
+            {
+                Gia_Man_t * pShadow;
+                Vec_Int_t * vShadowOutputs;
+                tH = Abc_ClockHr();
+                pShadow = Gia_ManCorrSpecReduce_Emit( pAig, pPars->nFrames, !pPars->fLatchCorr,
+                    &vShadowOutputs, pPars->fUseRings, pTfoMask, pMgr, CEC_EMIT_SKIPPED, NULL );
+                if ( Gia_ManCoNum(pShadow) > 0 &&
+                     !Cec_ManIncrOracleCheck( pShadow, vShadowOutputs, r ) )
+                {
+                    Gia_ManStop( pShadow );
+                    Vec_IntFree( vShadowOutputs );
+                    Cec_ManSimStop( pSim );
+                    Cec_IncrMgrFree( pMgr );
+                    Cec_SeedSimFree( pSeedSim );
+                    Cec_ScorrProfOn = 0;
+                    return 0;
+                }
+                if ( Gia_ManCoNum(pShadow) == 0 )
+                    Abc_Print( 1, "  [incr-oracle r=%d PASS skipped=0 after-simplification]\n", r );
+                Gia_ManStop( pShadow );
+                Vec_IntFree( vShadowOutputs );
+                if ( pPars->fVeryVerbose )
+                    Abc_Print( 1, "  [incr-oracle r=%d checked=%d build+solve=%.3f sec]\n",
+                               r, nTotalPairs - nActivePairs, 1.0e-9 * (Abc_ClockHr() - tH) );
+            }
+            if ( fStopAfterOracle )
+            {
+                clkSrm += Abc_Clock() - clk2;
+                break;
             }
 
             tH = Abc_ClockHr();
             vOutLits = NULL;
             if ( pTfoMask )
-                pSrm = Gia_ManCorrSpecReduce_Active( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr, pSeedSim ? &vOutLits : NULL );
+                pSrm = Gia_ManCorrSpecReduce_Emit( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr, CEC_EMIT_ACTIVE, pSeedSim ? &vOutLits : NULL );
             else
                 pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pSeedSim ? &vOutLits : NULL );
             Prof.tSrm = Abc_ClockHr() - tH;

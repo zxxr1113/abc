@@ -182,6 +182,13 @@ struct Cec_IncrMgr_t_
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
 };
 
+typedef enum Cec_IncrEmitMode_t_
+{
+    CEC_EMIT_ALL,
+    CEC_EMIT_ACTIVE,
+    CEC_EMIT_SKIPPED
+} Cec_IncrEmitMode_t;
+
 // Persistent failed-endpoint TFO simulation manager for &scorr -I.
 // SAT stores the values of each disproved pair's endpoints.  These endpoints
 // seed a frame-aware TFO walk at the SAT comparison frame; only this cone is
@@ -260,7 +267,7 @@ extern int                  Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj );
 extern void                 Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern void                 Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p );
-extern Gia_Man_t *          Gia_ManCorrSpecReduce_Active( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr, Vec_Int_t ** pvOutLits );
+extern Gia_Man_t *          Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr, Cec_IncrEmitMode_t Mode, Vec_Int_t ** pvOutLits );
 extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark );
 /*=== cecCorrIncrSim.c ============================================================*/
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
