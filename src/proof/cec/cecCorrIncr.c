@@ -48,6 +48,7 @@ Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
     p->vReprPrev = Vec_IntStartFull( p->nObjs );
     p->vNextPrev = Vec_IntStart( p->nObjs );
     p->vSeeds    = Vec_IntAlloc( 64 );
+    p->vRetryPairs = Vec_IntAlloc( 64 );
     p->vTfoNodes = Vec_IntAlloc( 1024 );
     p->pTfoMark  = ABC_CALLOC( int, p->nObjs );
     p->vBfsCur   = Vec_IntAlloc( 1024 );
@@ -81,6 +82,7 @@ void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
     Vec_IntFree( p->vReprPrev );
     Vec_IntFree( p->vNextPrev );
     Vec_IntFree( p->vSeeds );
+    Vec_IntFree( p->vRetryPairs );
     Vec_IntFree( p->vTfoNodes );
     Vec_IntFree( p->vBfsCur );
     Vec_IntFree( p->vBfsNext );
@@ -120,12 +122,16 @@ void Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p )
   Synopsis    [Computes the seed set for the next TFO BFS.]
 
   Description [Returns the number of nodes whose representative changed
-  since the last snapshot; the seeds themselves are stored in vSeeds and
-  consumed by Cec_IncrMgrComputeTfo.  Does not update the snapshot --
-  the caller decides when to snapshot.  pNexts changes are intentionally
-  excluded here: a ring-link rewrite is an edge-local event that creates
-  a new ring edge to reprove, not a new fanout cone, so it is handled by
-  Cec_IncrMgrRingEdgeChanged at SRM emission time.]
+  since the last snapshot.  vSeeds also receives both endpoints of every
+  SAT/UNKNOWN pair that remained merged after the previous refinement.
+  These retry endpoints must seed their TFO even when pReprs did not
+  change: no UNSAT certificate exists for the pair or for speculative
+  reductions that depend on it.  Does not update the snapshot.
+
+  pNexts changes are intentionally excluded here: a ring-link rewrite is
+  an edge-local event that creates a new ring edge to reprove, not a new
+  fanout cone, so it is handled by Cec_IncrMgrRingEdgeChanged at SRM
+  emission time.]
 
   SideEffects []
 
@@ -135,7 +141,7 @@ void Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p )
 int Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
-    int i, reprNew, reprOld;
+    int i, reprNew, reprOld, nReprSeeds;
     Vec_IntClear( p->vSeeds );
     for ( i = 1; i < p->nObjs; i++ )
     {
@@ -144,7 +150,82 @@ int Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p )
         if ( reprNew != reprOld )
             Vec_IntPush( p->vSeeds, i );
     }
-    return Vec_IntSize( p->vSeeds );
+    nReprSeeds = Vec_IntSize( p->vSeeds );
+    for ( i = 0; i < Vec_IntSize(p->vRetryPairs); i += 3 )
+    {
+        int iRepr = Vec_IntEntry( p->vRetryPairs, i );
+        int iObj  = Vec_IntEntry( p->vRetryPairs, i + 1 );
+        if ( iRepr > 0 )
+            Vec_IntPush( p->vSeeds, iRepr );
+        if ( iObj > 0 )
+            Vec_IntPush( p->vSeeds, iObj );
+    }
+    return nReprSeeds;
+}
+
+static int Cec_IncrMgrPairStillMerged( Gia_Man_t * p, int iRepr, int iObj, int fRings )
+{
+    int iReprRoot, iObjRoot;
+    if ( !fRings )
+        return Gia_ObjHasSameRepr( p, iRepr, iObj );
+    if ( iRepr == 0 )
+        return Gia_ObjIsConst( p, iObj );
+    if ( iObj == 0 )
+        return Gia_ObjIsConst( p, iRepr );
+    if ( !Gia_ObjIsClass( p, iRepr ) || !Gia_ObjIsClass( p, iObj ) )
+        return 0;
+    iReprRoot = Gia_ObjIsHead( p, iRepr ) ? iRepr : Gia_ObjRepr( p, iRepr );
+    iObjRoot  = Gia_ObjIsHead( p, iObj  ) ? iObj  : Gia_ObjRepr( p, iObj  );
+    return iReprRoot == iObjRoot && iReprRoot != GIA_VOID;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Records non-UNSAT pairs that survived refinement.]
+
+  Description [Called after CEX resimulation and Gia_ManCheckRefinements.
+  A status-0 SAT pair may remain merged because packed resimulation did
+  not split it.  Such a pair has no reusable UNSAT certificate, so both
+  endpoints are retained as retry seeds for the next TFO computation.
+  UNKNOWN pairs are handled identically if class removal did not succeed.
+
+  The vector is replaced each round.  With fVerbose, every retained pair
+  is printed with its exact vStatus value for debug correlation.]
+
+  SideEffects []
+
+  SeeAlso     [Cec_IncrMgrComputeSeeds]
+
+***********************************************************************/
+int Cec_IncrMgrRecordStatuses( Cec_IncrMgr_t * p, Vec_Int_t * vOutputs,
+                               Vec_Str_t * vStatus, int fRings,
+                               int iIter, int fVerbose )
+{
+    int i, Status, iRepr, iObj, nSat = 0, nUnknown = 0;
+    assert( Vec_IntSize(vOutputs) == 2 * Vec_StrSize(vStatus) );
+    Vec_IntClear( p->vRetryPairs );
+    Vec_StrForEachEntry( vStatus, Status, i )
+    {
+        if ( Status == 1 )
+            continue;
+        iRepr = Vec_IntEntry( vOutputs, 2*i );
+        iObj  = Vec_IntEntry( vOutputs, 2*i + 1 );
+        if ( !Cec_IncrMgrPairStillMerged(p->pAig, iRepr, iObj, fRings) )
+            continue;
+        Vec_IntPush( p->vRetryPairs, iRepr );
+        Vec_IntPush( p->vRetryPairs, iObj );
+        Vec_IntPush( p->vRetryPairs, Status );
+        nSat     += Status == 0;
+        nUnknown += Status == -1;
+        if ( fVerbose )
+            Abc_Print( 1, "  [incr-vstatus r=%d out=%d pair=(%d,%d) status=%s(%d) retry=1]\n",
+                       iIter, i, iRepr, iObj,
+                       Status == 0 ? "SAT" : "UNKNOWN", Status );
+    }
+    if ( fVerbose )
+        Abc_Print( 1, "  [incr-vstatus r=%d retry-pairs=%d SAT=%d UNKNOWN=%d]\n",
+                   iIter, Vec_IntSize(p->vRetryPairs) / 3, nSat, nUnknown );
+    return Vec_IntSize(p->vRetryPairs) / 3;
 }
 
 /**Function*************************************************************

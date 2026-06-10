@@ -174,7 +174,8 @@ struct Cec_IncrMgr_t_
     int          nObjs;           // cached Gia_ManObjNum(pAig)
     Vec_Int_t *  vReprPrev;       // snapshot of pReprs from previous round
     Vec_Int_t *  vNextPrev;       // snapshot of pNexts from previous round
-    Vec_Int_t *  vSeeds;          // nodes whose pReprs changed since snapshot
+    Vec_Int_t *  vSeeds;          // repr-change and unresolved-pair TFO seeds
+    Vec_Int_t *  vRetryPairs;     // (repr, obj, status) still merged after SAT
     Vec_Int_t *  vTfoNodes;       // ids currently in TFO (for fast clearing)
     int *        pTfoMark;        // dense mark array, size = nObjs
     Vec_Int_t *  vBfsCur;         // BFS frontier for current frame
@@ -263,6 +264,7 @@ extern Cec_IncrMgr_t *      Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames );
 extern void                 Cec_IncrMgrFree( Cec_IncrMgr_t * p );
 extern void                 Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p );
+extern int                  Cec_IncrMgrRecordStatuses( Cec_IncrMgr_t * p, Vec_Int_t * vOutputs, Vec_Str_t * vStatus, int fRings, int iIter, int fVerbose );
 extern int                  Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj );
 extern void                 Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
