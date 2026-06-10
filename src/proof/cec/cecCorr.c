@@ -1218,7 +1218,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     for ( i = 0; fChanges && (!pPars->nLimitMax || i < pPars->nLimitMax); i++ )
     {
         int * pTfoMask = NULL;
-        int nReprSeeds = 0, nRetryPairs = 0, nTotalPairs = 0, nActivePairs = 0;
+        int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0;
         if ( Cec_ParCorShouldStop( pPars ) )
             break;
         abctime clkBmc = Abc_Clock();
@@ -1231,12 +1231,10 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         {
             tH = Abc_ClockHr();
             nReprSeeds = Cec_IncrMgrComputeSeeds( pBmcMgr );
-            nRetryPairs = Vec_IntSize(pBmcMgr->vRetryPairs) / 3;
             Prof.tSeed = Abc_ClockHr() - tH;
-            if ( nReprSeeds == 0 && nRetryPairs == 0 )
+            if ( nReprSeeds == 0 )
             {
-                // No pReprs change and no unresolved pair from the last
-                // solve.  BMC SRM topology is unchanged, so this converged.
+                // No pReprs change.  BMC SRM topology is unchanged.
                 break;
             }
             tH = Abc_ClockHr();
@@ -1262,8 +1260,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             pSrm = Gia_ManCorrSpecReduceInit( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
         Prof.tSrm = Abc_ClockHr() - tH;
         if ( pTfoMask && pPars->fVeryVerbose )
-            Abc_Print( 1, "  [bmc-incr i=%d repr=%d retry=%d active=%d/%d POs=%d]\n",
-                       i, nReprSeeds, nRetryPairs, nActivePairs, nTotalPairs, Gia_ManCoNum(pSrm) );
+            Abc_Print( 1, "  [bmc-incr i=%d repr=%d active=%d/%d POs=%d]\n",
+                       i, nReprSeeds, nActivePairs, nTotalPairs, Gia_ManCoNum(pSrm) );
         // Snapshot after SRM construction, before SAT/refine: this is the
         // class state whose pairs were just emitted.  The next iteration's
         // diff vs this snapshot tells us which pairs are stale.
@@ -1317,8 +1315,6 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             tH = Abc_ClockHr();
             Prof.nCexPending = Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
-            if ( pBmcMgr )
-                Cec_IncrMgrRecordStatuses( pBmcMgr, vOutputs, vStatus, pPars->fUseRings, i, pPars->fIncrOracle );
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;
             Prof.dChkLits = nLitsMid - nLitsPost;
@@ -1626,7 +1622,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             int * pTfoMask = NULL;
             int nReprSeeds = 0, nNextChanges = 0;
-            int nRetryPairs = 0;
             int nTotalPairs = 0, nActivePairs = 0;
             int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
@@ -1636,12 +1631,11 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 abctime clkI = Abc_Clock();
                 tH = Abc_ClockHr();
                 nReprSeeds = Cec_IncrMgrComputeSeeds( pMgr );
-                nRetryPairs = Vec_IntSize(pMgr->vRetryPairs) / 3;
                 Prof.tSeed = Abc_ClockHr() - tH;
                 tH = Abc_ClockHr();
                 nNextChanges = pPars->fUseRings ? Cec_IncrMgrCountNextChanges( pMgr ) : 0;
                 Prof.tNext = Abc_ClockHr() - tH;
-                if ( nReprSeeds == 0 && nNextChanges == 0 && nRetryPairs == 0 )
+                if ( nReprSeeds == 0 && nNextChanges == 0 )
                 {
                     if ( !pPars->fIncrOracle )
                     {
@@ -1741,8 +1735,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pSeedSim ? &vOutLits : NULL );
             Prof.tSrm = Abc_ClockHr() - tH;
             if ( pTfoMask && pPars->fVeryVerbose )
-                Abc_Print( 1, "  [incr r=%d repr=%d retry=%d next=%d tfo=%d active=%d/%d POs=%d]\n",
-                           r, nReprSeeds, nRetryPairs, nNextChanges, Vec_IntSize(pMgr->vTfoNodes),
+                Abc_Print( 1, "  [incr r=%d repr=%d next=%d tfo=%d active=%d/%d POs=%d]\n",
+                           r, nReprSeeds, nNextChanges, Vec_IntSize(pMgr->vTfoNodes),
                            nActivePairs, nTotalPairs,
                            Gia_ManCoNum(pSrm) );
             // Snapshot after SRM construction: the active builder still needs
@@ -1818,8 +1812,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             tH = Abc_ClockHr();
             Prof.nCexPending = Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
-            if ( pMgr )
-                Cec_IncrMgrRecordStatuses( pMgr, vOutputs, vStatus, pPars->fUseRings, r, pPars->fIncrOracle );
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;
             Prof.dChkLits = nLitsMid - nLitsPost;
