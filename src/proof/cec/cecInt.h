@@ -216,6 +216,7 @@ struct Cec_SeedSim_t_
     int *        pRootMark;       // per-objId "root already queued" stamp
     int          nRootVersion;
     Vec_Int_t *  vDirtyRoots;
+    Vec_Int_t *  vConstRefined;
     Vec_Int_t *  vClassOld;
     Vec_Int_t *  vClassNew;
     unsigned *   pPhase0;         // nWords of 0 (phase-0 vector, used by refine)
@@ -277,6 +278,7 @@ extern int                  Cec_SeedSimNumKeys  ( Cec_SeedSim_t * p );
 extern int                  Cec_ManSimClassRemoveOne( Cec_ManSim_t * p, int i );
 extern void                 Cec_ManSimClassCreate( Gia_Man_t * p, Vec_Int_t * vClass );
 extern int                  Cec_ManSimCompareEqual( unsigned * p0, unsigned * p1, int nWords );
+extern int                  Cec_ManSimHashKey( unsigned * pSim, int nWords, int nTableSize );
 extern int                  Cec_ManSimClassesPrepare( Cec_ManSim_t * p, int LevelMax );
 extern int                  Cec_ManSimClassesRefine( Cec_ManSim_t * p );
 extern int                  Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos );
