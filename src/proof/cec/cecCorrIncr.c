@@ -51,6 +51,8 @@ Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
     p->vRetryPairs = Vec_IntAlloc( 64 );
     p->vTfoNodes = Vec_IntAlloc( 1024 );
     p->pTfoMark  = ABC_CALLOC( int, p->nObjs );
+    p->vAliasHeads = Vec_IntStartFull( p->nObjs );
+    p->vAliasNext  = Vec_IntStartFull( p->nObjs );
     p->vBfsCur   = Vec_IntAlloc( 1024 );
     p->vBfsNext  = Vec_IntAlloc( 1024 );
     if ( pAig->vFanout == NULL )
@@ -84,6 +86,8 @@ void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
     Vec_IntFree( p->vSeeds );
     Vec_IntFree( p->vRetryPairs );
     Vec_IntFree( p->vTfoNodes );
+    Vec_IntFree( p->vAliasHeads );
+    Vec_IntFree( p->vAliasNext );
     Vec_IntFree( p->vBfsCur );
     Vec_IntFree( p->vBfsNext );
     ABC_FREE( p->pTfoMark );
@@ -368,12 +372,17 @@ void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
 
   Synopsis    [Forward TFO BFS from seeds across nFrames unrollings.]
 
-  Description [Marks pTfoMark[id]=1 for every AIG node reachable from
-  any seed within nFrames combinational+sequential steps.  Each frame
-  performs a combinational fanout BFS; RI fanouts cross to the next
-  frame by following Gia_ObjRiToRo to the corresponding register output.
-  After nFrames cross-frame jumps the search stops, since pairs deeper
-  than that cannot depend on the seeds within an nFrames-deep SRM.
+  Description [Marks pTfoMark[id]=1 for every SRM node reachable from
+  any seed within nFrames combinational+sequential steps.  Besides AIG
+  fanouts, the walk follows representative-to-member alias edges because
+  Gia_ManCorrSpecReduce_rec(member) uses repr(member) directly.  Missing
+  these edges can reuse an obsolete UNSAT result when a representative's
+  reduced value changes through another member's fanout cone.
+
+  Each frame performs a combinational fanout BFS; RI fanouts cross to the
+  next frame by following Gia_ObjRiToRo to the corresponding register
+  output.  After nFrames cross-frame jumps the search stops, since pairs
+  deeper than that cannot depend on the seeds within an nFrames-deep SRM.
 
   RI nodes themselves are intentionally not marked: SRM emission is
   keyed on AIG candidate nodes (ANDs and CIs) and never on COs, so
@@ -394,13 +403,24 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
     int * pMark = p->pTfoMark;
-    int f, i, k, Id, FanId, RoId;
+    int f, i, k, Id, FanId, RoId, ReprId, AliasId;
 
     Vec_IntForEachEntry( p->vTfoNodes, Id, i )
         pMark[Id] = 0;
     Vec_IntClear( p->vTfoNodes );
     Vec_IntClear( p->vBfsCur );
     Vec_IntClear( p->vBfsNext );
+
+    Vec_IntFill( p->vAliasHeads, p->nObjs, -1 );
+    Vec_IntFill( p->vAliasNext,  p->nObjs, -1 );
+    for ( Id = 1; Id < p->nObjs; Id++ )
+    {
+        ReprId = Gia_ObjRepr( pAig, Id );
+        if ( ReprId <= 0 || ReprId == GIA_VOID )
+            continue;
+        Vec_IntWriteEntry( p->vAliasNext, Id, Vec_IntEntry(p->vAliasHeads, ReprId) );
+        Vec_IntWriteEntry( p->vAliasHeads, ReprId, Id );
+    }
 
     Vec_IntForEachEntry( p->vSeeds, Id, i )
     {
@@ -419,6 +439,16 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
         {
             Gia_Obj_t * pFan;
             Id = Vec_IntEntry( p->vBfsCur, head++ );
+            for ( AliasId = Vec_IntEntry(p->vAliasHeads, Id);
+                  AliasId >= 0;
+                  AliasId = Vec_IntEntry(p->vAliasNext, AliasId) )
+            {
+                if ( pMark[AliasId] )
+                    continue;
+                pMark[AliasId] = 1;
+                Vec_IntPush( p->vTfoNodes, AliasId );
+                Vec_IntPush( p->vBfsCur, AliasId );
+            }
             int nFan = Gia_ObjFanoutNumId( pAig, Id );
             for ( k = 0; k < nFan; k++ )
             {

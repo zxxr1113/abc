@@ -178,6 +178,8 @@ struct Cec_IncrMgr_t_
     Vec_Int_t *  vRetryPairs;     // (repr, obj, status) still merged after SAT
     Vec_Int_t *  vTfoNodes;       // ids currently in TFO (for fast clearing)
     int *        pTfoMark;        // dense mark array, size = nObjs
+    Vec_Int_t *  vAliasHeads;     // repr -> first member using it in the SRM
+    Vec_Int_t *  vAliasNext;      // next member with the same representative
     Vec_Int_t *  vBfsCur;         // BFS frontier for current frame
     Vec_Int_t *  vBfsNext;        // BFS frontier carried to next frame
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
