@@ -6,13 +6,14 @@
 
   PackageName [Combinational equivalence checking.]
 
-  Synopsis    [Persistent failed-endpoint TFO incremental simulation for &scorr.]
+  Synopsis    [CEX-diagnosis and split-TFO incremental simulation for &scorr.]
 
-  Description [Keeps dense storage for every (frame, object) key.  SAT endpoint
-  values seed a frame-aware TFO walk.  Values needed by this TFO and its
-  affected classes are recomputed on demand from the current packed CEX inputs;
-  values from earlier batches are never consumed as side inputs.  Wide cones
-  fall back to the standard full sweep.]
+  Description [Traces each failed SRM output through the speculative equivalence
+  assumptions used to build it.  Host-AIG values are evaluated on demand from
+  the current packed CEX inputs.  Assumptions that are false under a CEX split
+  their host classes; only these real splits seed a frame-aware TFO search for
+  additional refinements.  Unexplained CEX lanes and wide cones fall back to
+  the standard full sweep.]
 
   Author      [Xiran Zhao]
 
@@ -65,8 +66,7 @@ static int Cec_SeedSimEvalWord( Cec_SeedSim_t * p, int Frame, int ObjId, int iWo
     int Key = Cec_SeedSimKey( p, Frame, ObjId );
     unsigned * pRes = Cec_SeedSimVal( p, Frame, ObjId );
     unsigned * pDone = p->pEvalMask + (size_t)Key * p->nWords;
-    unsigned Missing, Normal, SeedMask = 0, SeedValue = 0, Value = 0;
-    int iSeed = p->pSeedMark[Key] - 1;
+    unsigned Missing, Value = 0;
     if ( Mask == 0 )
         return 1;
     if ( p->pEvalMark[Key] != p->nEvalVersion )
@@ -85,65 +85,54 @@ static int Cec_SeedSimEvalWord( Cec_SeedSim_t * p, int Frame, int ObjId, int iWo
     Missing = Mask & ~pDone[iWord];
     if ( Missing == 0 )
         return 1;
-    if ( iSeed >= 0 )
+    if ( ObjId == 0 )
+        Value = 0;
+    else if ( Gia_ObjIsPi(pAig, pObj) )
     {
-        SeedMask  = ((unsigned *)Vec_IntArray(p->vSeedMasks)) [(size_t)iSeed * p->nWords + iWord];
-        SeedValue = ((unsigned *)Vec_IntArray(p->vSeedValues))[(size_t)iSeed * p->nWords + iWord];
+        int iPi = Gia_ObjCioId( pObj );
+        unsigned * pInput = (unsigned *)Vec_PtrEntry( p->vBatchInfo,
+            p->nRegs + Frame * p->nPis + iPi );
+        Value = pInput[iWord];
     }
-    Normal = Missing & ~SeedMask;
-    if ( Normal )
+    else if ( Gia_ObjIsRo(pAig, pObj) )
     {
-        if ( ObjId == 0 )
-            Value = 0;
-        else if ( Gia_ObjIsPi(pAig, pObj) )
+        if ( Frame == 0 )
         {
-            int iPi = Gia_ObjCioId( pObj );
-            unsigned * pInput = (unsigned *)Vec_PtrEntry( p->vBatchInfo,
-                p->nRegs + Frame * p->nPis + iPi );
+            int iReg = Gia_ObjCioId(pObj) - p->nPis;
+            unsigned * pInput = (unsigned *)Vec_PtrEntry( p->vBatchInfo, iReg );
             Value = pInput[iWord];
         }
-        else if ( Gia_ObjIsRo(pAig, pObj) )
-        {
-            if ( Frame == 0 )
-            {
-                int iReg = Gia_ObjCioId(pObj) - p->nPis;
-                unsigned * pInput = (unsigned *)Vec_PtrEntry( p->vBatchInfo, iReg );
-                Value = pInput[iWord];
-            }
-            else
-            {
-                Gia_Obj_t * pRi = Gia_ObjRoToRi( pAig, pObj );
-                int RiId = Gia_ObjId( pAig, pRi );
-                int DrvId = Gia_ObjFaninId0( pRi, RiId );
-                if ( !Cec_SeedSimEvalWord(p, Frame - 1, DrvId, iWord, Normal, nLimit) )
-                    return 0;
-                Value = Cec_SeedSimVal(p, Frame - 1, DrvId)[iWord];
-                if ( Gia_ObjFaninC0(pRi) )
-                    Value = ~Value;
-            }
-        }
-        else if ( Gia_ObjIsAnd(pObj) )
-        {
-            int Fan0 = Gia_ObjFaninId0( pObj, ObjId );
-            int Fan1 = Gia_ObjFaninId1( pObj, ObjId );
-            unsigned Val0, Val1;
-            if ( !Cec_SeedSimEvalWord(p, Frame, Fan0, iWord, Normal, nLimit) ||
-                 !Cec_SeedSimEvalWord(p, Frame, Fan1, iWord, Normal, nLimit) )
-                return 0;
-            Val0 = Cec_SeedSimVal(p, Frame, Fan0)[iWord];
-            Val1 = Cec_SeedSimVal(p, Frame, Fan1)[iWord];
-            if ( Gia_ObjFaninC0(pObj) )
-                Val0 = ~Val0;
-            if ( Gia_ObjFaninC1(pObj) )
-                Val1 = ~Val1;
-            Value = Val0 & Val1;
-        }
         else
-            return 0;
-        pRes[iWord] = (pRes[iWord] & ~Normal) | (Value & Normal);
+        {
+            Gia_Obj_t * pRi = Gia_ObjRoToRi( pAig, pObj );
+            int RiId = Gia_ObjId( pAig, pRi );
+            int DrvId = Gia_ObjFaninId0( pRi, RiId );
+            if ( !Cec_SeedSimEvalWord(p, Frame - 1, DrvId, iWord, Missing, nLimit) )
+                return 0;
+            Value = Cec_SeedSimVal(p, Frame - 1, DrvId)[iWord];
+            if ( Gia_ObjFaninC0(pRi) )
+                Value = ~Value;
+        }
     }
-    SeedMask &= Missing;
-    pRes[iWord] = (pRes[iWord] & ~SeedMask) | (SeedValue & SeedMask);
+    else if ( Gia_ObjIsAnd(pObj) )
+    {
+        int Fan0 = Gia_ObjFaninId0( pObj, ObjId );
+        int Fan1 = Gia_ObjFaninId1( pObj, ObjId );
+        unsigned Val0, Val1;
+        if ( !Cec_SeedSimEvalWord(p, Frame, Fan0, iWord, Missing, nLimit) ||
+             !Cec_SeedSimEvalWord(p, Frame, Fan1, iWord, Missing, nLimit) )
+            return 0;
+        Val0 = Cec_SeedSimVal(p, Frame, Fan0)[iWord];
+        Val1 = Cec_SeedSimVal(p, Frame, Fan1)[iWord];
+        if ( Gia_ObjFaninC0(pObj) )
+            Val0 = ~Val0;
+        if ( Gia_ObjFaninC1(pObj) )
+            Val1 = ~Val1;
+        Value = Val0 & Val1;
+    }
+    else
+        return 0;
+    pRes[iWord] = (pRes[iWord] & ~Missing) | (Value & Missing);
     pDone[iWord] |= Missing;
     return 1;
 }
@@ -174,17 +163,29 @@ Cec_SeedSim_t * Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame,
     p->pVal         = ABC_CALLOC( unsigned, nKeys * nWords );
     p->pEvalMask    = ABC_CALLOC( unsigned, nKeys * nWords );
     p->pActiveMask  = ABC_CALLOC( unsigned, nWords );
+    p->pFoundMask   = ABC_CALLOC( unsigned, nWords );
+    p->pDiffMask    = ABC_CALLOC( unsigned, nWords );
+    p->pTempMask    = ABC_CALLOC( unsigned, nWords );
     p->pMark        = ABC_CALLOC( int, nKeys );
-    p->pSeedMark    = ABC_CALLOC( int, nKeys );
+    p->pSpecMark    = ABC_CALLOC( int, nKeys );
+    p->pDiagMark    = ABC_CALLOC( int, nKeys );
+    p->pSplitMark   = ABC_CALLOC( int, nKeys );
+    p->pProcessMark = ABC_CALLOC( int, nKeys );
     p->pEvalMark    = ABC_CALLOC( int, nKeys );
     p->pRootMark    = ABC_CALLOC( int, p->nObjs );
+    p->vDiagPairs   = Vec_IntAlloc( 192 );
+    p->vSpecKeys    = Vec_IntAlloc( 1024 );
+    p->vSpecMasks   = Vec_IntAlloc( 1024 * nWords );
+    p->vDiagKeys    = Vec_IntAlloc( 1024 );
+    p->vDiagRoots   = Vec_IntAlloc( 1024 );
+    p->vDiagMasks   = Vec_IntAlloc( 1024 * nWords );
+    p->vSplitKeys   = Vec_IntAlloc( 1024 );
     p->vDirtyKeys   = Vec_IntAlloc( 4096 );
+    p->vWaveKeys    = Vec_IntAlloc( 4096 );
     p->vQueue       = Vec_IntAlloc( 4096 );
-    p->vSeedKeys    = Vec_IntAlloc( 64 );
-    p->vSeedMasks   = Vec_IntAlloc( 64 * nWords );
-    p->vSeedValues  = Vec_IntAlloc( 64 * nWords );
     p->vDirtyRoots  = Vec_IntAlloc( 1024 );
     p->vConstRefined = Vec_IntAlloc( 64 );
+    p->vClassAll    = Vec_IntAlloc( 64 );
     p->vClassOld    = Vec_IntAlloc( 64 );
     p->vClassNew    = Vec_IntAlloc( 64 );
     p->pPhase0      = ABC_ALLOC( unsigned, nWords );
@@ -208,21 +209,33 @@ void Cec_SeedSimFree( Cec_SeedSim_t * p )
         return;
     if ( p->fOwnsFanout )
         Gia_ManStaticFanoutStop( p->pAig );
+    Vec_IntFreeP( &p->vDiagPairs );
+    Vec_IntFreeP( &p->vSpecKeys );
+    Vec_IntFreeP( &p->vSpecMasks );
+    Vec_IntFreeP( &p->vDiagKeys );
+    Vec_IntFreeP( &p->vDiagRoots );
+    Vec_IntFreeP( &p->vDiagMasks );
+    Vec_IntFreeP( &p->vSplitKeys );
     Vec_IntFreeP( &p->vDirtyKeys );
+    Vec_IntFreeP( &p->vWaveKeys );
     Vec_IntFreeP( &p->vQueue );
-    Vec_IntFreeP( &p->vSeedKeys );
-    Vec_IntFreeP( &p->vSeedMasks );
-    Vec_IntFreeP( &p->vSeedValues );
     Vec_IntFreeP( &p->vDirtyRoots );
     Vec_IntFreeP( &p->vConstRefined );
+    Vec_IntFreeP( &p->vClassAll );
     Vec_IntFreeP( &p->vClassOld );
     Vec_IntFreeP( &p->vClassNew );
     Vec_PtrFreeP( &p->vSimInfo );
     ABC_FREE( p->pVal );
     ABC_FREE( p->pEvalMask );
     ABC_FREE( p->pActiveMask );
+    ABC_FREE( p->pFoundMask );
+    ABC_FREE( p->pDiffMask );
+    ABC_FREE( p->pTempMask );
     ABC_FREE( p->pMark );
-    ABC_FREE( p->pSeedMark );
+    ABC_FREE( p->pSpecMark );
+    ABC_FREE( p->pDiagMark );
+    ABC_FREE( p->pSplitMark );
+    ABC_FREE( p->pProcessMark );
     ABC_FREE( p->pEvalMark );
     ABC_FREE( p->pRootMark );
     ABC_FREE( p->pPhase0 );
@@ -232,95 +245,175 @@ void Cec_SeedSimFree( Cec_SeedSim_t * p )
 
 static void Cec_SeedSimReset( Cec_SeedSim_t * p )
 {
+    size_t nKeys = (size_t)p->nFrames * p->nObjs;
     int i, Key;
-    Vec_IntForEachEntry( p->vSeedKeys, Key, i )
-        p->pSeedMark[Key] = 0;
+    Vec_IntForEachEntry( p->vSpecKeys, Key, i )
+        p->pSpecMark[Key] = 0;
+    Vec_IntForEachEntry( p->vDiagKeys, Key, i )
+        p->pDiagMark[Key] = 0;
+    Vec_IntClear( p->vDiagPairs );
+    Vec_IntClear( p->vSpecKeys );
+    Vec_IntClear( p->vSpecMasks );
+    Vec_IntClear( p->vDiagKeys );
+    Vec_IntClear( p->vDiagRoots );
+    Vec_IntClear( p->vDiagMasks );
+    Vec_IntClear( p->vSplitKeys );
     Vec_IntClear( p->vDirtyKeys );
+    Vec_IntClear( p->vWaveKeys );
     Vec_IntClear( p->vQueue );
-    Vec_IntClear( p->vSeedKeys );
-    Vec_IntClear( p->vSeedMasks );
-    Vec_IntClear( p->vSeedValues );
     memset( p->pActiveMask, 0, sizeof(unsigned) * p->nWords );
+    memset( p->pFoundMask, 0, sizeof(unsigned) * p->nWords );
     p->vBatchInfo = NULL;
+    p->nSpecKeys = 0;
     p->nEvalKeys = 0;
     p->nMarkVersion++;
+    p->nSplitVersion++;
+    p->nProcessVersion++;
     p->nEvalVersion++;
     if ( p->nMarkVersion == 0 )
     {
-        memset( p->pMark, 0, sizeof(int) * (size_t)p->nFrames * p->nObjs );
+        memset( p->pMark, 0, sizeof(int) * nKeys );
         p->nMarkVersion = 1;
+    }
+    if ( p->nSplitVersion == 0 )
+    {
+        memset( p->pSplitMark, 0, sizeof(int) * nKeys );
+        p->nSplitVersion = 1;
+    }
+    if ( p->nProcessVersion == 0 )
+    {
+        memset( p->pProcessMark, 0, sizeof(int) * nKeys );
+        p->nProcessVersion = 1;
     }
     if ( p->nEvalVersion == 0 )
     {
-        memset( p->pEvalMark, 0, sizeof(int) * (size_t)p->nFrames * p->nObjs );
+        memset( p->pEvalMark, 0, sizeof(int) * nKeys );
         p->nEvalVersion = 1;
     }
 }
 
-static inline void Cec_SeedSimSetBit( unsigned * pInfo, int iBit, int Value )
+static int Cec_SeedSimAddDiagKey( Cec_SeedSim_t * p, int Frame, int ObjId )
 {
-    if ( Abc_InfoHasBit( pInfo, iBit ) != Value )
-        Abc_InfoXorBit( pInfo, iBit );
-}
-
-static int Cec_SeedSimAddSourceBit( Cec_SeedSim_t * p, int ObjId, int iBit, int Value )
-{
-    int Key, iSeed, w;
-    unsigned * pMask, * pValue;
-    if ( ObjId == 0 )
-        return Value == 0;
-    if ( ObjId < 0 || ObjId >= p->nObjs || Value < 0 )
-        return 0;
-    Key = Cec_SeedSimKey( p, p->iSeedFrame, ObjId );
-    iSeed = p->pSeedMark[Key] - 1;
-    if ( iSeed < 0 )
+    int Key, iDiag, Repr, w;
+    if ( ObjId <= 0 || ObjId >= p->nObjs )
+        return ObjId == 0;
+    Key = Cec_SeedSimKey( p, Frame, ObjId );
+    iDiag = p->pDiagMark[Key] - 1;
+    if ( iDiag < 0 )
     {
-        iSeed = Vec_IntSize( p->vSeedKeys );
-        Vec_IntPush( p->vSeedKeys, Key );
+        Repr = Gia_ObjRepr( p->pAig, ObjId );
+        iDiag = Vec_IntSize( p->vDiagKeys );
+        p->pDiagMark[Key] = iDiag + 1;
+        Vec_IntPush( p->vDiagKeys, Key );
+        Vec_IntPush( p->vDiagRoots, Repr == 0 ? 0 :
+            (Gia_ObjIsHead(p->pAig, ObjId) ? ObjId : Repr) );
         for ( w = 0; w < p->nWords; w++ )
-        {
-            Vec_IntPush( p->vSeedMasks, 0 );
-            Vec_IntPush( p->vSeedValues, 0 );
-        }
-        p->pSeedMark[Key] = iSeed + 1;
+            Vec_IntPush( p->vDiagMasks, 0 );
     }
-    pMask  = (unsigned *)Vec_IntArray(p->vSeedMasks)  + (size_t)iSeed * p->nWords;
-    pValue = (unsigned *)Vec_IntArray(p->vSeedValues) + (size_t)iSeed * p->nWords;
-    if ( Abc_InfoHasBit(pMask, iBit) )
-        return Abc_InfoHasBit(pValue, iBit) == Value;
-    Abc_InfoSetBit( pMask, iBit );
-    Cec_SeedSimSetBit( pValue, iBit, Value );
-    Abc_InfoSetBit( p->pActiveMask, iBit );
-    if ( Cec_SeedSimMark( p, p->iSeedFrame, ObjId ) )
-        Vec_IntPush( p->vQueue, Key );
     return 1;
 }
 
-static int Cec_SeedSimCollectEndpointSources( Cec_SeedSim_t * p, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits )
+static int Cec_SeedSimAddDiagBit( Cec_SeedSim_t * p, int Frame, int ObjId, int iBit )
+{
+    int Key, iDiag;
+    unsigned * pMask;
+    if ( !Cec_SeedSimAddDiagKey(p, Frame, ObjId) )
+        return 0;
+    if ( ObjId == 0 )
+        return 1;
+    Key = Cec_SeedSimKey( p, Frame, ObjId );
+    iDiag = p->pDiagMark[Key] - 1;
+    assert( iDiag >= 0 );
+    pMask = (unsigned *)Vec_IntArray(p->vDiagMasks) + (size_t)iDiag * p->nWords;
+    Abc_InfoSetBit( pMask, iBit );
+    return 1;
+}
+
+static int Cec_SeedSimCollectSpecBit( Cec_SeedSim_t * p, int Frame, int ObjId, int iBit, int nLimit );
+
+static int Cec_SeedSimCollectRealBit( Cec_SeedSim_t * p, int Frame, int ObjId, int iBit, int nLimit )
+{
+    Gia_Obj_t * pObj;
+    if ( ObjId < 0 || ObjId >= p->nObjs || Frame < 0 || Frame >= p->nFrames )
+        return 0;
+    if ( ObjId == 0 )
+        return 1;
+    pObj = Gia_ManObj( p->pAig, ObjId );
+    if ( Gia_ObjIsAnd(pObj) )
+    {
+        return Cec_SeedSimCollectSpecBit( p, Frame, Gia_ObjFaninId0(pObj, ObjId), iBit, nLimit ) &&
+               Cec_SeedSimCollectSpecBit( p, Frame, Gia_ObjFaninId1(pObj, ObjId), iBit, nLimit );
+    }
+    if ( Gia_ObjIsRo(p->pAig, pObj) && Frame > 0 )
+    {
+        Gia_Obj_t * pRi = Gia_ObjRoToRi( p->pAig, pObj );
+        int RiId = Gia_ObjId( p->pAig, pRi );
+        return Cec_SeedSimCollectSpecBit( p, Frame - 1,
+            Gia_ObjFaninId0(pRi, RiId), iBit, nLimit );
+    }
+    return 1;
+}
+
+static int Cec_SeedSimCollectSpecBit( Cec_SeedSim_t * p, int Frame, int ObjId, int iBit, int nLimit )
+{
+    int Key, Repr, iSpec, iWord = iBit >> 5, w;
+    unsigned Bit = (unsigned)1 << (iBit & 31);
+    unsigned * pMask;
+    if ( ObjId < 0 || ObjId >= p->nObjs || Frame < 0 || Frame >= p->nFrames )
+        return 0;
+    if ( ObjId == 0 )
+        return 1;
+    Key = Cec_SeedSimKey( p, Frame, ObjId );
+    iSpec = p->pSpecMark[Key] - 1;
+    if ( iSpec < 0 )
+    {
+        if ( ++p->nSpecKeys > nLimit )
+            return 0;
+        iSpec = Vec_IntSize( p->vSpecKeys );
+        p->pSpecMark[Key] = iSpec + 1;
+        Vec_IntPush( p->vSpecKeys, Key );
+        for ( w = 0; w < p->nWords; w++ )
+            Vec_IntPush( p->vSpecMasks, 0 );
+    }
+    pMask = (unsigned *)Vec_IntArray(p->vSpecMasks) + (size_t)iSpec * p->nWords;
+    if ( pMask[iWord] & Bit )
+        return 1;
+    pMask[iWord] |= Bit;
+    Repr = Gia_ObjRepr( p->pAig, ObjId );
+    if ( Repr != GIA_VOID )
+    {
+        if ( !Cec_SeedSimAddDiagBit(p, Frame, ObjId, iBit) )
+            return 0;
+        return Repr == 0 ||
+               Cec_SeedSimCollectSpecBit( p, Frame, Repr, iBit, nLimit );
+    }
+    return Cec_SeedSimCollectRealBit( p, Frame, ObjId, iBit, nLimit );
+}
+
+static int Cec_SeedSimCollectDiagnosis( Cec_SeedSim_t * p, Vec_Int_t * vOutputs, Vec_Int_t * vOutBits, int nLimit )
 {
     int i, Out, iBit;
-    if ( vOutputs == NULL || vOutVals == NULL || vOutBits == NULL )
-        return 0;
-    if ( Vec_IntSize(vOutputs) > Vec_IntSize(vOutVals) )
+    if ( vOutputs == NULL || vOutBits == NULL )
         return 0;
     Vec_IntForEachEntryDouble( vOutBits, Out, iBit, i )
     {
-        int Obj0, Obj1, Val0, Val1;
-        if ( Out < 0 || 2*Out + 1 >= Vec_IntSize(vOutputs) ||
-             2*Out + 1 >= Vec_IntSize(vOutVals) )
+        int Obj0, Obj1;
+        if ( Out < 0 || 2*Out + 1 >= Vec_IntSize(vOutputs) )
             return 0;
         Obj0 = Vec_IntEntry( vOutputs, 2*Out );
         Obj1 = Vec_IntEntry( vOutputs, 2*Out + 1 );
-        Val0 = Vec_IntEntry( vOutVals, 2*Out );
-        Val1 = Vec_IntEntry( vOutVals, 2*Out + 1 );
-        if ( Val0 < 0 || Val1 < 0 )
+        Abc_InfoSetBit( p->pActiveMask, iBit );
+        Vec_IntPush( p->vDiagPairs, Obj0 );
+        Vec_IntPush( p->vDiagPairs, Obj1 );
+        Vec_IntPush( p->vDiagPairs, iBit );
+        if ( !Cec_SeedSimAddDiagKey(p, p->iSeedFrame, Obj0) ||
+             !Cec_SeedSimAddDiagKey(p, p->iSeedFrame, Obj1) )
             return 0;
-        if ( !Cec_SeedSimAddSourceBit( p, Obj0, iBit, Val0 ) )
-            return 0;
-        if ( !Cec_SeedSimAddSourceBit( p, Obj1, iBit, Val1 ) )
+        if ( !Cec_SeedSimCollectRealBit(p, p->iSeedFrame, Obj0, iBit, nLimit) ||
+             !Cec_SeedSimCollectRealBit(p, p->iSeedFrame, Obj1, iBit, nLimit) )
             return 0;
     }
-    return 1;
+    return Vec_IntSize(vOutBits) > 0;
 }
 
 static int Cec_SeedSimComputeTfo( Cec_SeedSim_t * p, int nLimit )
@@ -369,32 +462,128 @@ static void Cec_SeedSimStartRootSet( Cec_SeedSim_t * p )
         p->nRootVersion = 1;
     }
     Vec_IntClear( p->vDirtyRoots );
+    Vec_IntClear( p->vConstRefined );
 }
 
-static void Cec_SeedSimAddDirtyRoot( Cec_SeedSim_t * p, int ObjId )
+static void Cec_SeedSimAddRoot( Cec_SeedSim_t * p, int ObjId )
 {
     Gia_Man_t * pAig = p->pAig;
     int iRoot;
-    if ( !Gia_ObjIsClass(pAig, ObjId) )
+    if ( Gia_ObjIsConst(pAig, ObjId) )
+    {
+        iRoot = ObjId;
+        if ( p->pRootMark[iRoot] != p->nRootVersion )
+        {
+            p->pRootMark[iRoot] = p->nRootVersion;
+            Vec_IntPush( p->vConstRefined, iRoot );
+        }
+    }
+    else if ( Gia_ObjIsClass(pAig, ObjId) )
+    {
+        iRoot = Gia_ObjIsHead(pAig, ObjId) ? ObjId : Gia_ObjRepr(pAig, ObjId);
+        if ( p->pRootMark[iRoot] != p->nRootVersion )
+        {
+            p->pRootMark[iRoot] = p->nRootVersion;
+            Vec_IntPush( p->vDirtyRoots, iRoot );
+        }
+    }
+    else
         return;
-    iRoot = Gia_ObjIsHead(pAig, ObjId) ? ObjId : Gia_ObjRepr(pAig, ObjId);
-    if ( p->pRootMark[iRoot] == p->nRootVersion )
-        return;
-    p->pRootMark[iRoot] = p->nRootVersion;
-    Vec_IntPush( p->vDirtyRoots, iRoot );
 }
 
-static int Cec_SeedSimPrepareFrame( Cec_SeedSim_t * p, int Frame, int iLo, int iHi, int nLimit )
+static void Cec_SeedSimDiffMask( Cec_SeedSim_t * p, unsigned * pValue0,
+    unsigned * pValue1, unsigned * pMask, unsigned * pDiff )
+{
+    int fCompl = (pValue0[0] & 1) != (pValue1[0] & 1);
+    int w;
+    for ( w = 0; w < p->nWords; w++ )
+        pDiff[w] = (pValue0[w] ^ (fCompl ? ~pValue1[w] : pValue1[w])) & pMask[w];
+}
+
+static int Cec_SeedSimMaskIsZero( unsigned * pMask, int nWords )
+{
+    int w;
+    for ( w = 0; w < nWords; w++ )
+        if ( pMask[w] )
+            return 0;
+    return 1;
+}
+
+static int Cec_SeedSimCurrentRoot( Cec_SeedSim_t * p, int ObjId )
+{
+    if ( ObjId == 0 || Gia_ObjIsConst(p->pAig, ObjId) )
+        return 0;
+    if ( Gia_ObjIsHead(p->pAig, ObjId) )
+        return ObjId;
+    if ( Gia_ObjIsClass(p->pAig, ObjId) )
+        return Gia_ObjRepr(p->pAig, ObjId);
+    return ObjId;
+}
+
+static void Cec_SeedSimCheckFailedPairs( Cec_SeedSim_t * p, int Frame )
+{
+    int i;
+    assert( Frame == p->iSeedFrame );
+    for ( i = 0; i < Vec_IntSize(p->vDiagPairs); i += 3 )
+    {
+        int Obj0 = Vec_IntEntry( p->vDiagPairs, i );
+        int Obj1 = Vec_IntEntry( p->vDiagPairs, i + 1 );
+        int iBit = Vec_IntEntry( p->vDiagPairs, i + 2 );
+        int iWord = iBit >> 5;
+        unsigned Bit = (unsigned)1 << (iBit & 31);
+        unsigned * pValue0, * pValue1;
+        if ( Cec_SeedSimCurrentRoot(p, Obj0) != Cec_SeedSimCurrentRoot(p, Obj1) )
+        {
+            p->pFoundMask[iWord] |= Bit;
+            continue;
+        }
+        pValue0 = Obj0 == 0 ? p->pPhase0 : Cec_SeedSimVal( p, Frame, Obj0 );
+        pValue1 = Obj1 == 0 ? p->pPhase0 : Cec_SeedSimVal( p, Frame, Obj1 );
+        Cec_SeedSimDiffMask( p, pValue0, pValue1, p->pActiveMask, p->pDiffMask );
+        p->pFoundMask[iWord] |= p->pDiffMask[iWord] & Bit;
+    }
+}
+
+static void Cec_SeedSimAddSplitKey( Cec_SeedSim_t * p, int Frame, int ObjId )
+{
+    int Key = Cec_SeedSimKey( p, Frame, ObjId );
+    if ( p->pSplitMark[Key] == p->nSplitVersion )
+        return;
+    p->pSplitMark[Key] = p->nSplitVersion;
+    Vec_IntPush( p->vSplitKeys, Key );
+}
+
+static int Cec_SeedSimPrepareFrame( Cec_SeedSim_t * p, Vec_Int_t * vKeys,
+    int Frame, int iLo, int iHi, int nLimit, int fDiagnosis )
 {
     Gia_Man_t * pAig = p->pAig;
-    int i, Ent;
+    int i, Key, Ent;
     Cec_SeedSimStartRootSet( p );
     for ( i = iLo; i < iHi; i++ )
     {
-        int ObjId = Vec_IntEntry(p->vDirtyKeys, i) % p->nObjs;
-        if ( !Cec_SeedSimEvalActive(p, Frame, ObjId, nLimit) )
-            return 0;
-        Cec_SeedSimAddDirtyRoot( p, ObjId );
+        int ObjId;
+        Key = Vec_IntEntry( vKeys, i );
+        ObjId = Key % p->nObjs;
+        if ( fDiagnosis )
+        {
+            int iDiag = p->pDiagMark[Key] - 1;
+            unsigned * pMask;
+            int RootOld;
+            assert( iDiag >= 0 );
+            pMask = (unsigned *)Vec_IntArray(p->vDiagMasks) + (size_t)iDiag * p->nWords;
+            RootOld = Vec_IntEntry( p->vDiagRoots, iDiag );
+            int RootNew = Gia_ObjIsConst(pAig, ObjId) ? 0 :
+                (Gia_ObjIsHead(pAig, ObjId) ? ObjId :
+                 (Gia_ObjIsClass(pAig, ObjId) ? Gia_ObjRepr(pAig, ObjId) : GIA_VOID));
+            if ( RootNew != RootOld )
+            {
+                int w;
+                for ( w = 0; w < p->nWords; w++ )
+                    p->pFoundMask[w] |= pMask[w];
+                continue;
+            }
+        }
+        Cec_SeedSimAddRoot( p, ObjId );
     }
     Vec_IntForEachEntry( p->vDirtyRoots, Ent, i )
     {
@@ -407,13 +596,50 @@ static int Cec_SeedSimPrepareFrame( Cec_SeedSim_t * p, int Frame, int iLo, int i
                 return 0;
         }
     }
+    Vec_IntForEachEntry( p->vConstRefined, Ent, i )
+        if ( !Cec_SeedSimEvalActive(p, Frame, Ent, nLimit) )
+            return 0;
+    if ( fDiagnosis )
+    {
+        for ( i = iLo; i < iHi; i++ )
+        {
+            unsigned * pMask, * pValue0, * pValue1;
+            int ObjId, RootOld, RootNew, iDiag, w;
+            Key = Vec_IntEntry( vKeys, i );
+            ObjId = Key % p->nObjs;
+            iDiag = p->pDiagMark[Key] - 1;
+            assert( iDiag >= 0 );
+            RootOld = Vec_IntEntry( p->vDiagRoots, iDiag );
+            RootNew = Gia_ObjIsConst(pAig, ObjId) ? 0 :
+                (Gia_ObjIsHead(pAig, ObjId) ? ObjId :
+                 (Gia_ObjIsClass(pAig, ObjId) ? Gia_ObjRepr(pAig, ObjId) : GIA_VOID));
+            pMask = (unsigned *)Vec_IntArray(p->vDiagMasks) + (size_t)iDiag * p->nWords;
+            if ( RootNew != RootOld )
+            {
+                for ( w = 0; w < p->nWords; w++ )
+                    p->pFoundMask[w] |= pMask[w];
+                continue;
+            }
+            if ( ObjId == RootOld )
+                continue;
+            pValue0 = Cec_SeedSimVal( p, Frame, ObjId );
+            pValue1 = RootOld == 0 ?
+                (Gia_ObjPhase(Gia_ManObj(pAig, ObjId)) ? p->pPhase1 : p->pPhase0) :
+                Cec_SeedSimVal( p, Frame, RootOld );
+            Cec_SeedSimDiffMask( p, pValue0, pValue1, pMask, p->pDiffMask );
+            for ( w = 0; w < p->nWords; w++ )
+                p->pFoundMask[w] |= p->pDiffMask[w];
+        }
+        if ( Frame == p->iSeedFrame )
+            Cec_SeedSimCheckFailedPairs( p, Frame );
+    }
     return 1;
 }
 
-static void Cec_SeedSimRefineClass( Cec_SeedSim_t * p, int Frame, int iRoot )
+static int Cec_SeedSimRefineClass_rec( Cec_SeedSim_t * p, int Frame, int iRoot )
 {
     unsigned * pSim0;
-    int Ent;
+    int Ent, Count = 0;
     Vec_IntClear( p->vClassOld );
     Vec_IntClear( p->vClassNew );
     Vec_IntPush( p->vClassOld, iRoot );
@@ -427,18 +653,62 @@ static void Cec_SeedSimRefineClass( Cec_SeedSim_t * p, int Frame, int iRoot )
             Vec_IntPush( p->vClassNew, Ent );
     }
     if ( Vec_IntSize(p->vClassNew) == 0 )
-        return;
+        return 0;
     Cec_ManSimClassCreate( p->pAig, p->vClassOld );
     Cec_ManSimClassCreate( p->pAig, p->vClassNew );
     if ( Vec_IntSize(p->vClassNew) > 1 )
-        Cec_SeedSimRefineClass( p, Frame, Vec_IntEntry(p->vClassNew, 0) );
+        Count += Cec_SeedSimRefineClass_rec( p, Frame, Vec_IntEntry(p->vClassNew, 0) );
+    return Count + 1;
 }
 
-static void Cec_SeedSimProcessRefinedConstants( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, int Frame )
+static int Cec_SeedSimRefineClass( Cec_SeedSim_t * p, int Frame, int iRoot )
+{
+    unsigned * pRoot = Cec_SeedSimVal( p, Frame, iRoot );
+    unsigned * pDiff = p->pDiffMask;
+    unsigned * pTemp = p->pTempMask;
+    int Ent, i, w, Count;
+    memset( pDiff, 0, sizeof(unsigned) * p->nWords );
+    Vec_IntClear( p->vClassAll );
+    Gia_ClassForEachObj( p->pAig, iRoot, Ent )
+    {
+        Vec_IntPush( p->vClassAll, Ent );
+        if ( Ent == iRoot )
+            continue;
+        Cec_SeedSimDiffMask( p, pRoot, Cec_SeedSimVal(p, Frame, Ent),
+                            p->pActiveMask, pTemp );
+        for ( w = 0; w < p->nWords; w++ )
+            pDiff[w] |= pTemp[w];
+    }
+    if ( Cec_SeedSimMaskIsZero(pDiff, p->nWords) )
+        return 0;
+    Count = Cec_SeedSimRefineClass_rec( p, Frame, iRoot );
+    assert( Count > 0 );
+    Vec_IntForEachEntry( p->vClassAll, Ent, i )
+        Cec_SeedSimAddSplitKey( p, Frame, Ent );
+    return Count;
+}
+
+static void Cec_SeedSimProcessRefinedConstants( Cec_SeedSim_t * p,
+    Cec_ManSim_t * pSim, int Frame )
 {
     Gia_Man_t * pAig = p->pAig;
     int * pTable;
     int i, k, Key, iPrev, nTableSize;
+    if ( Vec_IntSize(p->vConstRefined) == 0 )
+        return;
+    Vec_IntForEachEntry( p->vConstRefined, i, k )
+    {
+        unsigned * pValue = Cec_SeedSimVal( p, Frame, i );
+        unsigned * pPhase = Gia_ObjPhase(Gia_ManObj(pAig, i)) ? p->pPhase1 : p->pPhase0;
+        unsigned * pDiff = p->pDiffMask;
+        Cec_SeedSimDiffMask( p, pValue, pPhase, p->pActiveMask, pDiff );
+        if ( Cec_SeedSimMaskIsZero(pDiff, p->nWords) )
+        {
+            Vec_IntDrop( p->vConstRefined, k-- );
+            continue;
+        }
+        Cec_SeedSimAddSplitKey( p, Frame, i );
+    }
     if ( Vec_IntSize(p->vConstRefined) == 0 )
         return;
     if ( pSim->pPars->fConstCorr )
@@ -469,40 +739,80 @@ static void Cec_SeedSimProcessRefinedConstants( Cec_SeedSim_t * p, Cec_ManSim_t 
     }
     Vec_IntForEachEntry( p->vConstRefined, i, k )
         if ( Gia_ObjIsHead(pAig, i) )
-            Cec_SeedSimRefineClass( p, Frame, i );
+            Cec_SeedSimRefineClass_rec( p, Frame, i );
     ABC_FREE( pTable );
 }
 
-static void Cec_SeedSimRefineFrame( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, int Frame, int iLo, int iHi )
+static void Cec_SeedSimRefineFrame( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
+    int Frame )
 {
-    Gia_Man_t * pAig = p->pAig;
     int i, Ent;
-    Cec_SeedSimStartRootSet( p );
-    Vec_IntClear( p->vConstRefined );
-    for ( i = iLo; i < iHi; i++ )
-    {
-        int ObjId = Vec_IntEntry(p->vDirtyKeys, i) % p->nObjs;
-        if ( Gia_ObjIsConst(pAig, ObjId) )
-        {
-            unsigned * pVal = Cec_SeedSimVal( p, Frame, ObjId );
-            unsigned * pPhase = Gia_ObjPhase(Gia_ManObj(pAig, ObjId)) ? p->pPhase1 : p->pPhase0;
-            if ( !Cec_ManSimCompareEqual( pVal, pPhase, p->nWords ) )
-                Vec_IntPush( p->vConstRefined, ObjId );
-            continue;
-        }
-        Cec_SeedSimAddDirtyRoot( p, ObjId );
-    }
     Vec_IntForEachEntry( p->vDirtyRoots, Ent, i )
-        if ( Gia_ObjIsHead(pAig, Ent) )
+        if ( Gia_ObjIsHead(p->pAig, Ent) )
             Cec_SeedSimRefineClass( p, Frame, Ent );
     Cec_SeedSimProcessRefinedConstants( p, pSim, Frame );
 }
 
-int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits, int nFrames )
+static int Cec_SeedSimProcessKeys( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
+    Vec_Int_t * vKeys, int nLimit, int fDiagnosis )
+{
+    int iLo = 0;
+    Vec_IntSort( vKeys, 0 );
+    while ( iLo < Vec_IntSize(vKeys) )
+    {
+        int Frame = Vec_IntEntry(vKeys, iLo) / p->nObjs;
+        int iHi = iLo;
+        while ( iHi < Vec_IntSize(vKeys) &&
+                Vec_IntEntry(vKeys, iHi) / p->nObjs == Frame )
+            iHi++;
+        if ( !Cec_SeedSimPrepareFrame(p, vKeys, Frame, iLo, iHi, nLimit, fDiagnosis) )
+            return 0;
+        Cec_SeedSimRefineFrame( p, pSim, Frame );
+        iLo = iHi;
+    }
+    return 1;
+}
+
+static int Cec_SeedSimDiagnosisCovered( Cec_SeedSim_t * p )
+{
+    int w;
+    for ( w = 0; w < p->nWords; w++ )
+        if ( p->pActiveMask[w] & ~p->pFoundMask[w] )
+            return 0;
+    return 1;
+}
+
+static void Cec_SeedSimQueueNewSplits( Cec_SeedSim_t * p, int * piSplit )
+{
+    while ( *piSplit < Vec_IntSize(p->vSplitKeys) )
+    {
+        int Key = Vec_IntEntry( p->vSplitKeys, (*piSplit)++ );
+        int Frame = Key / p->nObjs;
+        int ObjId = Key % p->nObjs;
+        if ( Cec_SeedSimMark(p, Frame, ObjId) )
+            Vec_IntPush( p->vQueue, Key );
+    }
+}
+
+static void Cec_SeedSimCollectWave( Cec_SeedSim_t * p )
+{
+    int i, Key;
+    Vec_IntClear( p->vWaveKeys );
+    Vec_IntForEachEntry( p->vDirtyKeys, Key, i )
+    {
+        if ( p->pProcessMark[Key] == p->nProcessVersion )
+            continue;
+        p->pProcessMark[Key] = p->nProcessVersion;
+        Vec_IntPush( p->vWaveKeys, Key );
+    }
+}
+
+int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
+    Vec_Ptr_t * vSimInfo, Vec_Int_t * vOutputs, Vec_Int_t * vOutBits, int nFrames )
 {
     ABC_INT64_T nKeys = (ABC_INT64_T)p->nFrames * p->nObjs;
     int nLimit = (int)(nKeys * CEC_SEEDSIM_FRAC_NUM / CEC_SEEDSIM_FRAC_DEN);
-    int nDirty, iLo;
+    int iSplit = 0, nDirty;
     assert( nFrames == p->nFrames );
     assert( Vec_PtrSize(vSimInfo) == p->nRegs + p->nPis * p->nFrames );
     assert( Vec_PtrReadWordsSimInfo(vSimInfo) == p->nWords );
@@ -513,40 +823,33 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSi
     }
     Cec_SeedSimReset( p );
     p->vBatchInfo = vSimInfo;
-    if ( !Cec_SeedSimCollectEndpointSources( p, vOutputs, vOutVals, vOutBits ) )
+    if ( !Cec_SeedSimCollectDiagnosis(p, vOutputs, vOutBits, nLimit) ||
+         Vec_IntSize(p->vDiagKeys) > nLimit ||
+         !Cec_SeedSimProcessKeys(p, pSim, p->vDiagKeys, nLimit, 1) ||
+         !Cec_SeedSimDiagnosisCovered(p) )
     {
-        p->vBatchInfo = NULL;
-        p->nBatchFull++;
-        return 0;
-    }
-    if ( !Cec_SeedSimComputeTfo( p, nLimit ) )
-    {
-        nDirty = Vec_IntSize( p->vDirtyKeys );
+        nDirty = Abc_MaxInt( p->nSpecKeys, p->nEvalKeys );
         if ( nDirty > p->nMaxDirty )
             p->nMaxDirty = nDirty;
         p->vBatchInfo = NULL;
         p->nBatchFull++;
         return 0;
     }
-    nDirty = Vec_IntSize( p->vDirtyKeys );
-    if ( nDirty > p->nMaxDirty )
-        p->nMaxDirty = nDirty;
-    if ( nDirty == 0 )
+    while ( iSplit < Vec_IntSize(p->vSplitKeys) )
     {
-        p->vBatchInfo = NULL;
-        p->nBatchLocal++;
-        return 1;
-    }
-    Vec_IntSort( p->vDirtyKeys, 0 );
-    iLo = 0;
-    while ( iLo < Vec_IntSize(p->vDirtyKeys) )
-    {
-        int Frame = Vec_IntEntry(p->vDirtyKeys, iLo) / p->nObjs;
-        int iHi = iLo;
-        while ( iHi < Vec_IntSize(p->vDirtyKeys) &&
-                Vec_IntEntry(p->vDirtyKeys, iHi) / p->nObjs == Frame )
-            iHi++;
-        if ( !Cec_SeedSimPrepareFrame(p, Frame, iLo, iHi, nLimit) )
+        Cec_SeedSimQueueNewSplits( p, &iSplit );
+        if ( !Cec_SeedSimComputeTfo(p, nLimit) )
+        {
+            nDirty = Vec_IntSize( p->vDirtyKeys );
+            if ( nDirty > p->nMaxDirty )
+                p->nMaxDirty = nDirty;
+            p->vBatchInfo = NULL;
+            p->nBatchFull++;
+            return 0;
+        }
+        Cec_SeedSimCollectWave( p );
+        if ( Vec_IntSize(p->vWaveKeys) &&
+             !Cec_SeedSimProcessKeys(p, pSim, p->vWaveKeys, nLimit, 0) )
         {
             if ( p->nEvalKeys > p->nMaxDirty )
                 p->nMaxDirty = p->nEvalKeys;
@@ -554,11 +857,11 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSi
             p->nBatchFull++;
             return 0;
         }
-        Cec_SeedSimRefineFrame( p, pSim, Frame, iLo, iHi );
-        iLo = iHi;
     }
-    if ( p->nEvalKeys > p->nMaxDirty )
-        p->nMaxDirty = p->nEvalKeys;
+    nDirty = Abc_MaxInt( p->nSpecKeys, Vec_IntSize(p->vDirtyKeys) );
+    nDirty = Abc_MaxInt( nDirty, p->nEvalKeys );
+    if ( nDirty > p->nMaxDirty )
+        p->nMaxDirty = nDirty;
     p->vBatchInfo = NULL;
     p->nBatchLocal++;
     return 1;

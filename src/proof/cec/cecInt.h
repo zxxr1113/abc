@@ -191,11 +191,11 @@ typedef enum Cec_IncrEmitMode_t_
     CEC_EMIT_SKIPPED
 } Cec_IncrEmitMode_t;
 
-// Failed-endpoint TFO simulation manager for &scorr -I.
-// SAT endpoint values seed a frame-aware TFO walk.  Values needed by this TFO
-// and its affected classes are recomputed on demand from the current packed
-// CEX inputs; values left in pVal by an earlier batch are never used as fanins.
-// A full resimulation still refreshes pVal after fallback.
+// CEX-diagnosis and split-TFO simulation manager for &scorr -I.
+// Each failed SRM output is traced through the speculative TFI assumptions
+// used to build it.  Host-AIG values under the current packed CEX batch identify
+// the assumptions that are actually false.  Only real class splits seed the
+// subsequent frame-aware TFO search for additional simulation refinements.
 //
 // Keying uses key = frame*nObjs + objId.  pVal layout:
 //   pVal[(frame * nObjs + objId) * nWords + w]
@@ -215,26 +215,41 @@ struct Cec_SeedSim_t_
     // full sweep and is preserved while current CEX lanes are recomputed.
     unsigned *   pVal;            // size = (size_t)nFrames * nObjs * nWords
     unsigned *   pEvalMask;       // lanes computed in the current value version
-    unsigned *   pActiveMask;     // packed CEX lanes participating in refinement
+    unsigned *   pActiveMask;     // packed real-CEX lanes participating in refinement
+    unsigned *   pFoundMask;      // CEX lanes explained by a real host-AIG split
+    unsigned *   pDiffMask;       // nWords scratch for signature differences
+    unsigned *   pTempMask;       // nWords scratch
     // Dense per-key state.
-    int *        pMark;           // per-key version stamp, size = nFrames * nObjs
-    int *        pSeedMark;       // sparse endpoint record index plus one
+    int *        pMark;           // split-TFO visited stamp, size = nFrames * nObjs
+    int *        pSpecMark;       // sparse speculative-mask record index plus one
+    int *        pDiagMark;       // sparse diagnosis record index plus one
+    int *        pSplitMark;      // real-split worklist stamp
+    int *        pProcessMark;    // split-TFO key already refined stamp
     int *        pEvalMark;       // current-input value version stamp
     int          nMarkVersion;
+    int          nSplitVersion;
+    int          nProcessVersion;
     int          nEvalVersion;
+    int          nSpecKeys;       // unrolled keys visited by speculative diagnosis
     int          nEvalKeys;       // keys evaluated from current inputs this batch
-    Vec_Int_t *  vDirtyKeys;      // dirty (frame, objId) keys (sorted before eval)
-    Vec_Int_t *  vQueue;          // BFS frontier
+    Vec_Int_t *  vDiagPairs;      // failed host pairs as triples (obj0, obj1, bit)
+    Vec_Int_t *  vSpecKeys;       // sparse speculative-TFI keys
+    Vec_Int_t *  vSpecMasks;      // flat [spec record][word] lane masks
+    Vec_Int_t *  vDiagKeys;       // sparse speculative assumptions/failed endpoints
+    Vec_Int_t *  vDiagRoots;      // original class root for each diagnosis record
+    Vec_Int_t *  vDiagMasks;      // flat [diagnosis record][word] lane masks
+    Vec_Int_t *  vSplitKeys;      // nodes in classes actually split by current CEX
+    Vec_Int_t *  vDirtyKeys;      // keys reached by split-driven TFO
+    Vec_Int_t *  vWaveKeys;       // newly reached TFO keys awaiting refinement
+    Vec_Int_t *  vQueue;          // split-TFO BFS frontier
     Vec_Ptr_t *  vSimInfo;        // reusable full-simulation CI storage
     Vec_Ptr_t *  vBatchInfo;      // non-owning current packed CEX input vectors
-    Vec_Int_t *  vSeedKeys;       // sparse endpoint keys
-    Vec_Int_t *  vSeedMasks;      // endpoint lane masks, flat [seed][word]
-    Vec_Int_t *  vSeedValues;     // endpoint values under the masks
     // Class-refinement scratch.
     int *        pRootMark;       // per-objId "root already queued" stamp
     int          nRootVersion;
     Vec_Int_t *  vDirtyRoots;
     Vec_Int_t *  vConstRefined;
+    Vec_Int_t *  vClassAll;
     Vec_Int_t *  vClassOld;
     Vec_Int_t *  vClassNew;
     unsigned *   pPhase0;         // nWords of 0 (phase-0 vector, used by refine)
@@ -246,7 +261,7 @@ struct Cec_SeedSim_t_
     int          nMaxDirty;       // largest TFO/evaluated closure across this call
 };
 
-// Fall back when the failed-endpoint TFO exceeds this fraction of the unrolled AIG.
+// Fall back when diagnosis/TFO/evaluation exceeds this fraction of the unrolled AIG.
 #define CEC_SEEDSIM_FRAC_NUM 3
 #define CEC_SEEDSIM_FRAC_DEN 5
 
@@ -283,7 +298,7 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 /*=== cecCorrIncrSim.c ============================================================*/
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
 extern void                 Cec_SeedSimFree( Cec_SeedSim_t * p );
-extern int                  Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits, int nFrames );
+extern int                  Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, Vec_Int_t * vOutputs, Vec_Int_t * vOutBits, int nFrames );
 extern void                 Cec_SeedSimSaveFrameInputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCis, int Frame );
 extern void                 Cec_SeedSimSaveFrameOutputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCos, int Frame );
 extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
