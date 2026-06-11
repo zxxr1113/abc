@@ -210,12 +210,12 @@ struct Cec_SeedSim_t_
     int          nRegs;           // cached Gia_ManRegNum(pAig)
     int          nWords;          // sim words per key (= pSim->pPars->nWords)
     int          fInitialized;     // at least one standard full sweep completed
-    // Dense value storage.  Data lanes are current only when pEvalMark carries
+    // Dense value storage.  Packed lanes are current only when pEvalMark carries
     // nEvalVersion.  Bit 0 is the deterministic phase anchor established by a
-    // full sweep and is preserved while current CEX lanes are recomputed.
+    // full sweep and is preserved while the current batch is recomputed.
     unsigned *   pVal;            // size = (size_t)nFrames * nObjs * nWords
-    unsigned *   pEvalMask;       // lanes computed in the current value version
-    unsigned *   pActiveMask;     // packed real-CEX lanes participating in refinement
+    unsigned *   pActiveMask;     // all packed simulation lanes except phase bit 0
+    unsigned *   pCexMask;        // packed real-CEX lanes used for diagnosis coverage
     unsigned *   pFoundMask;      // CEX lanes explained by a real host-AIG split
     unsigned *   pDiffMask;       // nWords scratch for signature differences
     unsigned *   pTempMask;       // nWords scratch
@@ -264,6 +264,10 @@ struct Cec_SeedSim_t_
 // Fall back when diagnosis/TFO/evaluation exceeds this fraction of the unrolled AIG.
 #define CEC_SEEDSIM_FRAC_NUM 3
 #define CEC_SEEDSIM_FRAC_DEN 5
+// Local diagnosis has a much higher constant factor than a linear full sweep.
+// Reject wide speculative and complete-class evaluation cones before mutation.
+#define CEC_SEEDSIM_DIAG_FRAC_NUM 1
+#define CEC_SEEDSIM_DIAG_FRAC_DEN 10
 
 ////////////////////////////////////////////////////////////////////////
 ///                      MACRO DEFINITIONS                           ///
