@@ -752,8 +752,11 @@ static int Cec_ManSimSimulateRoundInt( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, V
                     pRes[w] = pRes0[w] & pRes1[w];
         }
         if ( pSave )
-            for ( w = 0; w < p->nWords; w++ )
-                pSave[(size_t)i * p->nWords + w] = pRes[w+1];
+        {
+            unsigned * pWord = pSave + (i >> 5);
+            unsigned Bit = 1u << (i & 31);
+            *pWord = (*pWord & ~Bit) | ((pRes[1] & 1) ? Bit : 0);
+        }
 
 references:
         // if this node is candidate constant, collect it
@@ -816,7 +819,7 @@ int Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t *
     return Cec_ManSimSimulateRoundInt( p, vInfoCis, vInfoCos, NULL );
 }
 
-int Cec_ManSimSimulateRoundSave( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave )
+int Cec_ManSimSimulateRoundSavePhase( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave )
 {
     assert( pSave != NULL );
     return Cec_ManSimSimulateRoundInt( p, vInfoCis, vInfoCos, pSave );

@@ -188,7 +188,7 @@ int Cec_ManSeqResimulateSeed( Cec_ManSim_t * p, Vec_Ptr_t * vInfo, Cec_SeedSim_t
     }
     for ( f = 0; f < p->pPars->nFrames; f++ )
     {
-        unsigned * pSave = pSeed->pVal + (size_t)f * pSeed->nObjs * pSeed->nWords;
+        unsigned * pSave = pSeed->pPhase + (size_t)f * pSeed->nPhaseWords;
         for ( i = 0; i < Gia_ManPiNum(p->pAig); i++ )
         {
             pInfo0 = (unsigned *)Vec_PtrEntry( vInfo, k++ );
@@ -204,7 +204,7 @@ int Cec_ManSeqResimulateSeed( Cec_ManSim_t * p, Vec_Ptr_t * vInfo, Cec_SeedSim_t
                 pInfo1[w] = pInfo0[w];
         }
         Cec_SeedSimSaveFrameInputs( pSeed, p->vCiSimInfo, f );
-        RetValue = Cec_ManSimSimulateRoundSave( p, p->vCiSimInfo, p->vCoSimInfo, pSave );
+        RetValue = Cec_ManSimSimulateRoundSavePhase( p, p->vCiSimInfo, p->vCoSimInfo, pSave );
         Cec_SeedSimSaveFrameOutputs( pSeed, p->vCoSimInfo, f );
         if ( RetValue )
         {

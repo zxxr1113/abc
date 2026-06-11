@@ -209,13 +209,16 @@ struct Cec_SeedSim_t_
     int          nPis;            // cached Gia_ManPiNum(pAig)
     int          nRegs;           // cached Gia_ManRegNum(pAig)
     int          nWords;          // sim words per key (= pSim->pPars->nWords)
+    int          nPhaseWords;     // bitset words per frame for persistent phase anchors
     int          fInitialized;     // at least one standard full sweep completed
-    // Dense value storage.  Packed lanes are current only when pEvalMark carries
-    // nEvalVersion.  Bit 0 is the deterministic phase anchor established by a
-    // full sweep and is preserved while the current batch is recomputed.
+    // Dense demand-value storage.  Active packed lanes are current only when
+    // pEvalMark carries nEvalVersion.  Full sweeps persist only the bit-0 phase
+    // anchor in pPhase; demand evaluation restores it into pVal as needed.
     unsigned *   pVal;            // size = (size_t)nFrames * nObjs * nWords
+    unsigned *   pPhase;          // size = (size_t)nFrames * nPhaseWords
     unsigned *   pActiveMask;     // all packed simulation lanes except phase bit 0
     unsigned *   pCexMask;        // packed real-CEX lanes used for diagnosis coverage
+    unsigned *   pRefineMask;     // non-owning mask selected for current regrouping phase
     unsigned *   pFoundMask;      // CEX lanes explained by a real host-AIG split
     unsigned *   pDiffMask;       // nWords scratch for signature differences
     unsigned *   pTempMask;       // nWords scratch
@@ -258,16 +261,22 @@ struct Cec_SeedSim_t_
     // Profile counters (reset per resim call)
     int          nBatchLocal;     // rounds handled by local TFO sim
     int          nBatchFull;      // rounds that fell back to full sweep
+    int          nBatchTrunc;     // local rounds that stopped optional TFO expansion
     int          nMaxDirty;       // largest TFO/evaluated closure across this call
 };
 
-// Fall back when diagnosis/TFO/evaluation exceeds this fraction of the unrolled AIG.
-#define CEC_SEEDSIM_FRAC_NUM 3
-#define CEC_SEEDSIM_FRAC_DEN 5
-// Local diagnosis has a much higher constant factor than a linear full sweep.
+// Recursive diagnosis has a much higher constant factor than a linear sweep.
 // Reject wide speculative and complete-class evaluation cones before mutation.
 #define CEC_SEEDSIM_DIAG_FRAC_NUM 1
-#define CEC_SEEDSIM_DIAG_FRAC_DEN 10
+#define CEC_SEEDSIM_DIAG_FRAC_DEN 20
+// Detailed lane-aware diagnosis is required for correctness, but should still
+// fall back before recursive work approaches the cost of a full linear sweep.
+#define CEC_SEEDSIM_HARD_FRAC_NUM 1
+#define CEC_SEEDSIM_HARD_FRAC_DEN 10
+// Split-driven TFO refinement is optional.  Stop it without a full fallback
+// when its structural or demand-evaluation closure exceeds this budget.
+#define CEC_SEEDSIM_TFO_FRAC_NUM 1
+#define CEC_SEEDSIM_TFO_FRAC_DEN 20
 
 ////////////////////////////////////////////////////////////////////////
 ///                      MACRO DEFINITIONS                           ///
@@ -309,6 +318,7 @@ extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumLocal ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFull  ( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumTrunc ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumDirty ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumKeys  ( Cec_SeedSim_t * p );
 /*=== cecClass.c ============================================================*/
@@ -319,7 +329,7 @@ extern int                  Cec_ManSimHashKey( unsigned * pSim, int nWords, int 
 extern int                  Cec_ManSimClassesPrepare( Cec_ManSim_t * p, int LevelMax );
 extern int                  Cec_ManSimClassesRefine( Cec_ManSim_t * p );
 extern int                  Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos );
-extern int                  Cec_ManSimSimulateRoundSave( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave );
+extern int                  Cec_ManSimSimulateRoundSavePhase( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave );
 /*=== cecIso.c ============================================================*/
 extern int *                Cec_ManDetectIsomorphism( Gia_Man_t * p );
 /*=== cecMan.c ============================================================*/
