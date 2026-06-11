@@ -805,27 +805,16 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRemap = Abc_ClockHr() - tH;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
-        int iBatchStart = iStart;
         if ( pSeed )
         {
-            int fHadPersistentState = pSeed->fInitialized;
-            // The first batch must establish the persistent table with exactly
-            // the standard full-resimulation completion: zero ROs, random PIs.
-            if ( !fHadPersistentState )
-                Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
+            // Local simulation must use one coherent input batch.  Initialize
+            // every lane, inject packed CEX literals, then remap initial ROs
+            // exactly as the standard full-resimulation path does.
+            Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
             iStart = Cec_ManLoadCounterExamplesMapped( vSimInfo, vCexStore, iStart, vOutBits );
-            if ( Cec_SeedSimTryBatch( pSeed, pSim, vOutputs, vOutVals, vOutBits, nFrames ) )
+            Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
+            if ( Cec_SeedSimTryBatch( pSeed, pSim, vSimInfo, vOutputs, vOutVals, vOutBits, nFrames ) )
                 continue;
-            // Successful local batches only need the output-to-bit mapping, so
-            // they avoid initializing every CI slot.  A later fallback reloads
-            // this batch after standard initialization before the full sweep.
-            if ( fHadPersistentState )
-            {
-                int iReload;
-                Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
-                iReload = Cec_ManLoadCounterExamplesMapped( vSimInfo, vCexStore, iBatchStart, vOutBits );
-                assert( iReload == iStart );
-            }
         }
         else
         {
@@ -842,7 +831,6 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
                 Gia_ManCreateValueRefs( pSim->pAig );
                 fValueRefs = 1;
             }
-            Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
             RetValue |= Cec_ManSeqResimulateSeed( pSim, vSimInfo, pSeed );
         }
         else

@@ -191,11 +191,11 @@ typedef enum Cec_IncrEmitMode_t_
     CEC_EMIT_SKIPPED
 } Cec_IncrEmitMode_t;
 
-// Persistent failed-endpoint TFO simulation manager for &scorr -I.
-// SAT stores the values of each disproved pair's endpoints.  These endpoints
-// seed a frame-aware TFO walk at the SAT comparison frame; only this cone is
-// re-evaluated, while side inputs are read from the dense persistent pVal array.
-// A full resimulation initializes pVal and refreshes it after fallback.
+// Failed-endpoint TFO simulation manager for &scorr -I.
+// SAT endpoint values seed a frame-aware TFO walk.  Values needed by this TFO
+// and its affected classes are recomputed on demand from the current packed
+// CEX inputs; values left in pVal by an earlier batch are never used as fanins.
+// A full resimulation still refreshes pVal after fallback.
 //
 // Keying uses key = frame*nObjs + objId.  pVal layout:
 //   pVal[(frame * nObjs + objId) * nWords + w]
@@ -209,18 +209,27 @@ struct Cec_SeedSim_t_
     int          nPis;            // cached Gia_ManPiNum(pAig)
     int          nRegs;           // cached Gia_ManRegNum(pAig)
     int          nWords;          // sim words per key (= pSim->pPars->nWords)
-    int          fInitialized;     // pVal contains a complete previous-batch sweep
-    // Persistent simulation values.  Dense: each key holds nWords unsigned
-    // words and survives across CEX batches and refinement iterations.
+    int          fInitialized;     // at least one standard full sweep completed
+    // Dense value storage.  Data lanes are current only when pEvalMark carries
+    // nEvalVersion.  Bit 0 is the deterministic phase anchor established by a
+    // full sweep and is preserved while current CEX lanes are recomputed.
     unsigned *   pVal;            // size = (size_t)nFrames * nObjs * nWords
-    // Dense per-key state (version-stamped, O(1) clear).
+    unsigned *   pEvalMask;       // lanes computed in the current value version
+    unsigned *   pActiveMask;     // packed CEX lanes participating in refinement
+    // Dense per-key state.
     int *        pMark;           // per-key version stamp, size = nFrames * nObjs
-    int *        pSeedMark;       // per-key version stamp for authoritative SAT roots
+    int *        pSeedMark;       // sparse endpoint record index plus one
+    int *        pEvalMark;       // current-input value version stamp
     int          nMarkVersion;
-    int          nSeedVersion;
+    int          nEvalVersion;
+    int          nEvalKeys;       // keys evaluated from current inputs this batch
     Vec_Int_t *  vDirtyKeys;      // dirty (frame, objId) keys (sorted before eval)
     Vec_Int_t *  vQueue;          // BFS frontier
     Vec_Ptr_t *  vSimInfo;        // reusable full-simulation CI storage
+    Vec_Ptr_t *  vBatchInfo;      // non-owning current packed CEX input vectors
+    Vec_Int_t *  vSeedKeys;       // sparse endpoint keys
+    Vec_Int_t *  vSeedMasks;      // endpoint lane masks, flat [seed][word]
+    Vec_Int_t *  vSeedValues;     // endpoint values under the masks
     // Class-refinement scratch.
     int *        pRootMark;       // per-objId "root already queued" stamp
     int          nRootVersion;
@@ -234,7 +243,7 @@ struct Cec_SeedSim_t_
     // Profile counters (reset per resim call)
     int          nBatchLocal;     // rounds handled by local TFO sim
     int          nBatchFull;      // rounds that fell back to full sweep
-    int          nMaxDirty;       // largest dirty cone across this call
+    int          nMaxDirty;       // largest TFO/evaluated closure across this call
 };
 
 // Fall back when the failed-endpoint TFO exceeds this fraction of the unrolled AIG.
@@ -274,7 +283,7 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 /*=== cecCorrIncrSim.c ============================================================*/
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
 extern void                 Cec_SeedSimFree( Cec_SeedSim_t * p );
-extern int                  Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits, int nFrames );
+extern int                  Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, Vec_Int_t * vOutputs, Vec_Int_t * vOutVals, Vec_Int_t * vOutBits, int nFrames );
 extern void                 Cec_SeedSimSaveFrameInputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCis, int Frame );
 extern void                 Cec_SeedSimSaveFrameOutputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCos, int Frame );
 extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
