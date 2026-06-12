@@ -71,6 +71,30 @@ static int     Cec_ScorrProfIncrBatchCexMax = 0; // largest packed-batch CEX cou
 static int     Cec_ScorrProfIncrDeferred = 0; // fixed-frontier splits left for later rounds
 static int     Cec_ScorrProfIncrDirty = 0; // largest dirty cone across the call
 static int     Cec_ScorrProfIncrKeys  = 0; // nFrames * nObjs (cone-size denominator)
+static abctime Cec_ScorrProfIncrTry = 0; // all incremental probes
+static abctime Cec_ScorrProfIncrTryLocal = 0; // probes completed locally
+static abctime Cec_ScorrProfIncrTryFallback = 0; // probes followed by full simulation
+static abctime Cec_ScorrProfIncrDiagShape = 0; // dry-run TFI/shape admission
+static abctime Cec_ScorrProfIncrDiagCollect = 0; // lane-aware TFI diagnosis
+static abctime Cec_ScorrProfIncrDiagEval = 0; // diagnosis evaluation shape
+static abctime Cec_ScorrProfIncrDiagSim = 0; // diagnosis value evaluation/refinement
+static abctime Cec_ScorrProfIncrTfoBuild = 0; // split-driven TFO construction
+static abctime Cec_ScorrProfIncrTfoSim = 0; // TFO value evaluation/refinement
+static abctime Cec_ScorrProfIncrTxn = 0; // transaction begin/commit/rollback
+static abctime Cec_ScorrProfIncrFullRun = 0; // full sweeps after local rejection/bypass
+static int     Cec_ScorrProfEventLocal = 0;
+static int     Cec_ScorrProfEventFallback = 0;
+static int     Cec_ScorrProfEventPopsMax = 0;
+static int     Cec_ScorrProfEventEdgesMax = 0;
+static int     Cec_ScorrProfEventInputVarsMax = 0;
+static int     Cec_ScorrProfEventInputWordsMax = 0;
+static int     Cec_ScorrProfEventFallbackWork = 0;
+static int     Cec_ScorrProfEventFallbackTime = 0;
+static abctime Cec_ScorrProfEventLoad = 0;
+static abctime Cec_ScorrProfEventProp = 0;
+static abctime Cec_ScorrProfEventRefine = 0;
+static abctime Cec_ScorrProfEventRollback = 0;
+static abctime Cec_ScorrProfEventInit = 0;
 
 // One iteration's wall-clock breakdown; all fields are nanoseconds.
 typedef struct Cec_ScorrProf_t_ Cec_ScorrProf_t;
@@ -106,6 +130,13 @@ struct Cec_ScorrProf_t_
     int     nIncrFallbackCex, nIncrFallbackBypass;
     int     nIncrTruncCone, nIncrTruncEval;
     int     nIncrBatchCex, nIncrBatchCexMax, nIncrDeferred;
+    abctime tIncrTry, tIncrTryLocal, tIncrTryFallback, tIncrFullRun;
+    abctime tIncrDiagShape, tIncrDiagCollect, tIncrDiagEval, tIncrDiagSim;
+    abctime tIncrTfoBuild, tIncrTfoSim, tIncrTxn;
+    int     nEventLocal, nEventFallback, nEventPopsMax, nEventEdgesMax;
+    int     nEventInputVarsMax, nEventInputWordsMax;
+    int     nEventFallbackWork, nEventFallbackTime;
+    abctime tEventLoad, tEventProp, tEventRefine, tEventRollback, tEventInit;
     // Lit-count deltas around the two refinement stages.
     //   dSimLits = #pairs broken by the sim call (lits before sim - lits after sim).
     //   dChkLits = #pairs broken by Gia_ManCheckRefinements (lits after sim - lits after chk).
@@ -141,6 +172,34 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->nIncrTruncEval+=pI->nIncrTruncEval;
     pT->nIncrBatchCex+=pI->nIncrBatchCex;
     pT->nIncrDeferred+=pI->nIncrDeferred;
+    pT->tIncrTry+=pI->tIncrTry;
+    pT->tIncrTryLocal+=pI->tIncrTryLocal;
+    pT->tIncrTryFallback+=pI->tIncrTryFallback;
+    pT->tIncrFullRun+=pI->tIncrFullRun;
+    pT->tIncrDiagShape+=pI->tIncrDiagShape;
+    pT->tIncrDiagCollect+=pI->tIncrDiagCollect;
+    pT->tIncrDiagEval+=pI->tIncrDiagEval;
+    pT->tIncrDiagSim+=pI->tIncrDiagSim;
+    pT->tIncrTfoBuild+=pI->tIncrTfoBuild;
+    pT->tIncrTfoSim+=pI->tIncrTfoSim;
+    pT->tIncrTxn+=pI->tIncrTxn;
+    pT->nEventLocal+=pI->nEventLocal;
+    pT->nEventFallback+=pI->nEventFallback;
+    pT->nEventFallbackWork+=pI->nEventFallbackWork;
+    pT->nEventFallbackTime+=pI->nEventFallbackTime;
+    pT->tEventLoad+=pI->tEventLoad;
+    pT->tEventProp+=pI->tEventProp;
+    pT->tEventRefine+=pI->tEventRefine;
+    pT->tEventRollback+=pI->tEventRollback;
+    pT->tEventInit+=pI->tEventInit;
+    if ( pI->nEventPopsMax > pT->nEventPopsMax )
+        pT->nEventPopsMax = pI->nEventPopsMax;
+    if ( pI->nEventEdgesMax > pT->nEventEdgesMax )
+        pT->nEventEdgesMax = pI->nEventEdgesMax;
+    if ( pI->nEventInputVarsMax > pT->nEventInputVarsMax )
+        pT->nEventInputVarsMax = pI->nEventInputVarsMax;
+    if ( pI->nEventInputWordsMax > pT->nEventInputWordsMax )
+        pT->nEventInputWordsMax = pI->nEventInputWordsMax;
     if ( pI->nIncrBatchCexMax > pT->nIncrBatchCexMax )
         pT->nIncrBatchCexMax = pI->nIncrBatchCexMax;
     if ( pI->nIncrDirty > pT->nIncrDirty ) pT->nIncrDirty = pI->nIncrDirty;
@@ -179,6 +238,22 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
     Abc_Print( 1, "tr=cone/eval=%d/%d batch=cex/max/defer=%d/%d/%d ",
         p->nIncrTruncCone, p->nIncrTruncEval, p->nIncrBatchCex,
         p->nIncrBatchCexMax, p->nIncrDeferred );
+    Abc_Print( 1, "it=try/loc/fb/full=%.3f/%.3f/%.3f/%.3f ",
+        p->tIncrTry*M, p->tIncrTryLocal*M, p->tIncrTryFallback*M,
+        p->tIncrFullRun*M );
+    Abc_Print( 1, "diag=shape/tfi/eval/sim=%.3f/%.3f/%.3f/%.3f ",
+        p->tIncrDiagShape*M, p->tIncrDiagCollect*M,
+        p->tIncrDiagEval*M, p->tIncrDiagSim*M );
+    Abc_Print( 1, "ltfo=build/sim=%.3f/%.3f tx=%.3f ",
+        p->tIncrTfoBuild*M, p->tIncrTfoSim*M, p->tIncrTxn*M );
+    Abc_Print( 1, "evt=loc/fb(w/t)/op/edge/inv/inw=%d/%d(%d/%d)/%d/%d/%d/%d ",
+        p->nEventLocal, p->nEventFallback,
+        p->nEventFallbackWork, p->nEventFallbackTime,
+        p->nEventPopsMax, p->nEventEdgesMax,
+        p->nEventInputVarsMax, p->nEventInputWordsMax );
+    Abc_Print( 1, "et=init/load/prop/ref/rb=%.3f/%.3f/%.3f/%.3f/%.3f ",
+        p->tEventInit*M, p->tEventLoad*M, p->tEventProp*M,
+        p->tEventRefine*M, p->tEventRollback*M );
     Abc_Print( 1, "chk=%6.3f(d=%d) stat=%6.3f rest=%6.3f\n",
         p->tChk*M, p->dChkLits, p->tStats*M, tRest*M );
 }
@@ -821,7 +896,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     Vec_Int_t * vPairs = NULL;
     Vec_Int_t * vOutBits = NULL;
     Vec_Ptr_t * vSimInfo = NULL;
-    int RetValue = 0, iStart = 0, fValueRefs = 0, nFallbackStreak = 0;
+    int RetValue = 0, iStart = 0, fValueRefs = 0;
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     Cec_ScorrProfSimRemap = Cec_ScorrProfSimRun = 0;
     Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrFull = Cec_ScorrProfIncrTrunc = 0;
@@ -834,15 +909,25 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     Cec_ScorrProfIncrBatchCex = Cec_ScorrProfIncrBatchCexMax = 0;
     Cec_ScorrProfIncrDeferred = 0;
     Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
+    Cec_ScorrProfIncrTry = Cec_ScorrProfIncrTryLocal = 0;
+    Cec_ScorrProfIncrTryFallback = Cec_ScorrProfIncrFullRun = 0;
+    Cec_ScorrProfIncrDiagShape = Cec_ScorrProfIncrDiagCollect = 0;
+    Cec_ScorrProfIncrDiagEval = Cec_ScorrProfIncrDiagSim = 0;
+    Cec_ScorrProfIncrTfoBuild = Cec_ScorrProfIncrTfoSim = Cec_ScorrProfIncrTxn = 0;
+    Cec_ScorrProfEventLocal = Cec_ScorrProfEventFallback = 0;
+    Cec_ScorrProfEventPopsMax = Cec_ScorrProfEventEdgesMax = 0;
+    Cec_ScorrProfEventInputVarsMax = Cec_ScorrProfEventInputWordsMax = 0;
+    Cec_ScorrProfEventFallbackWork = Cec_ScorrProfEventFallbackTime = 0;
+    Cec_ScorrProfEventLoad = Cec_ScorrProfEventProp = 0;
+    Cec_ScorrProfEventRefine = Cec_ScorrProfEventRollback = 0;
+    Cec_ScorrProfEventInit = 0;
     if ( pSeed )
         Cec_SeedSimBeginCall( pSeed );  // reset per-call local/full/maxdirty counters
-    vPairs = Gia_ManCorrCreateRemapping( pSim->pAig );
 //    pSim->pPars->nWords  = 63;
     pSim->pPars->nFrames = nFrames;
     if ( pSeed )
     {
-        if ( pSeed->vSimInfo == NULL )
-            pSeed->vSimInfo = Vec_PtrAllocSimInfo( Gia_ManRegNum(pSim->pAig) + Gia_ManPiNum(pSim->pAig) * nFrames, pSim->pPars->nWords );
+        Cec_SeedSimEnsurePersistent( pSeed, pSim );
         vSimInfo = pSeed->vSimInfo;
         vOutBits = Vec_IntAlloc( 1000 );
     }
@@ -852,52 +937,74 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         fValueRefs = 1;
         vSimInfo = Vec_PtrAllocSimInfo( Gia_ManRegNum(pSim->pAig) + Gia_ManPiNum(pSim->pAig) * nFrames, pSim->pPars->nWords );
     }
+    vPairs = Gia_ManCorrCreateRemapping( pSim->pAig );
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRemap = Abc_ClockHr() - tH;
     while ( iStart < Vec_IntSize(vCexStore) )
     {
         if ( pSeed )
         {
             int LocalStatus;
-            // Local simulation must use one coherent input batch.  Initialize
-            // every lane, inject packed CEX literals, then remap initial ROs
-            // exactly as the standard full-resimulation path does.
-            Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
-            iStart = Cec_ManLoadCounterExamplesMapped( vSimInfo, vCexStore, iStart, vOutBits );
-            Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
-            if ( nFallbackStreak >= CEC_SEEDSIM_MAX_FALLBACK_PROBES )
+            abctime tR = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
+            iStart = Cec_SeedSimLoadPersistentBatch(
+                pSeed, vCexStore, iStart, vPairs, vOutBits );
+            if ( Cec_ScorrProfOn )
+                Cec_ScorrProfSimRemap += Abc_ClockHr() - tR;
+            if ( pSeed->nFallbackCooldown > 0 )
             {
                 Cec_SeedSimBypassBatch( pSeed, Vec_IntSize(vOutBits) / 2 );
-                // Skip one expensive probe, then allow another local attempt.
-                nFallbackStreak = CEC_SEEDSIM_MAX_FALLBACK_PROBES - 1;
+                pSeed->nFallbackCooldown--;
             }
             else if ( (LocalStatus = Cec_SeedSimTryBatch(
                            pSeed, pSim, vSimInfo, vOutputs, vOutBits, nFrames )) ==
                       CEC_SEEDSIM_RESULT_LOCAL )
             {
-                nFallbackStreak = 0;
+                pSeed->nFallbackStreak = 0;
+                pSeed->nFallbackCooldown = 0;
                 continue;
             }
             else if ( LocalStatus == CEC_SEEDSIM_RESULT_FULL_WIDE )
-                nFallbackStreak++;
+            {
+                int Shift;
+                pSeed->nFallbackStreak++;
+                Shift = Abc_MinInt( pSeed->nFallbackStreak - 1, 3 );
+                pSeed->nFallbackCooldown =
+                    Abc_MinInt( (1 << Shift) - 1,
+                        CEC_SEEDSIM_MAX_FALLBACK_BACKOFF );
+            }
             else
-                nFallbackStreak = 0;
+            {
+                pSeed->nFallbackStreak = 0;
+                pSeed->nFallbackCooldown = 0;
+            }
         }
         else
         {
+            abctime tR = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
             Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
             iStart = Cec_ManLoadCounterExamples( vSimInfo, vCexStore, iStart );
             Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
+            if ( Cec_ScorrProfOn )
+                Cec_ScorrProfSimRemap += Abc_ClockHr() - tR;
         }
         // The local path returned above.  Reaching here means standard full
         // resimulation, either without -I or as an incremental fallback.
         if ( pSeed )
         {
+            abctime tF;
             if ( !fValueRefs )
             {
                 Gia_ManCreateValueRefs( pSim->pAig );
                 fValueRefs = 1;
             }
+            tF = Abc_ClockHr();
             RetValue |= Cec_ManSeqResimulateSeed( pSim, vSimInfo, pSeed );
+            {
+                abctime Elapsed = Abc_ClockHr() - tF;
+                Cec_SeedSimRecordFullTime( pSeed, Elapsed );
+                if ( Cec_ScorrProfOn )
+                    Cec_ScorrProfIncrFullRun += Elapsed;
+            }
+            Cec_SeedSimRestorePersistentInputs( pSeed );
         }
         else
             RetValue |= Cec_ManSeqResimulate( pSim, vSimInfo );
@@ -923,6 +1030,29 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         Cec_ScorrProfIncrDeferred = Cec_SeedSimNumDeferredSplits( pSeed );
         Cec_ScorrProfIncrDirty = Cec_SeedSimNumDirty( pSeed );
         Cec_ScorrProfIncrKeys  = Cec_SeedSimNumKeys( pSeed );
+        Cec_ScorrProfIncrTry = Cec_SeedSimTimeTry( pSeed );
+        Cec_ScorrProfIncrTryLocal = Cec_SeedSimTimeTryLocal( pSeed );
+        Cec_ScorrProfIncrTryFallback = Cec_SeedSimTimeTryFallback( pSeed );
+        Cec_ScorrProfIncrDiagShape = Cec_SeedSimTimeDiagShape( pSeed );
+        Cec_ScorrProfIncrDiagCollect = Cec_SeedSimTimeDiagCollect( pSeed );
+        Cec_ScorrProfIncrDiagEval = Cec_SeedSimTimeDiagEval( pSeed );
+        Cec_ScorrProfIncrDiagSim = Cec_SeedSimTimeDiagSim( pSeed );
+        Cec_ScorrProfIncrTfoBuild = Cec_SeedSimTimeTfoBuild( pSeed );
+        Cec_ScorrProfIncrTfoSim = Cec_SeedSimTimeTfoSim( pSeed );
+        Cec_ScorrProfIncrTxn = Cec_SeedSimTimeTxn( pSeed );
+        Cec_ScorrProfEventLocal = Cec_SeedSimNumEventLocal( pSeed );
+        Cec_ScorrProfEventFallback = Cec_SeedSimNumEventFallback( pSeed );
+        Cec_ScorrProfEventPopsMax = Cec_SeedSimNumEventPopsMax( pSeed );
+        Cec_ScorrProfEventEdgesMax = Cec_SeedSimNumEventEdgesMax( pSeed );
+        Cec_ScorrProfEventInputVarsMax = Cec_SeedSimNumEventInputVarsMax( pSeed );
+        Cec_ScorrProfEventInputWordsMax = Cec_SeedSimNumEventInputWordsMax( pSeed );
+        Cec_ScorrProfEventFallbackWork = Cec_SeedSimNumEventFallbackWork( pSeed );
+        Cec_ScorrProfEventFallbackTime = Cec_SeedSimNumEventFallbackTime( pSeed );
+        Cec_ScorrProfEventLoad = Cec_SeedSimTimeEventLoad( pSeed );
+        Cec_ScorrProfEventProp = Cec_SeedSimTimeEventProp( pSeed );
+        Cec_ScorrProfEventRefine = Cec_SeedSimTimeEventRefine( pSeed );
+        Cec_ScorrProfEventRollback = Cec_SeedSimTimeEventRollback( pSeed );
+        Cec_ScorrProfEventInit = Cec_SeedSimTimeEventInit( pSeed );
     }
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRun = Abc_ClockHr() - tH - Cec_ScorrProfSimRemap;
 //Gia_ManEquivPrintOne( pSim->pAig, 85, 0 );
@@ -1389,6 +1519,30 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
                 Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
                 Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                Prof.tIncrTry = Cec_ScorrProfIncrTry;
+                Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
+                Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;
+                Prof.tIncrFullRun = Cec_ScorrProfIncrFullRun;
+                Prof.tIncrDiagShape = Cec_ScorrProfIncrDiagShape;
+                Prof.tIncrDiagCollect = Cec_ScorrProfIncrDiagCollect;
+                Prof.tIncrDiagEval = Cec_ScorrProfIncrDiagEval;
+                Prof.tIncrDiagSim = Cec_ScorrProfIncrDiagSim;
+                Prof.tIncrTfoBuild = Cec_ScorrProfIncrTfoBuild;
+                Prof.tIncrTfoSim = Cec_ScorrProfIncrTfoSim;
+                Prof.tIncrTxn = Cec_ScorrProfIncrTxn;
+                Prof.nEventLocal = Cec_ScorrProfEventLocal;
+                Prof.nEventFallback = Cec_ScorrProfEventFallback;
+                Prof.nEventPopsMax = Cec_ScorrProfEventPopsMax;
+                Prof.nEventEdgesMax = Cec_ScorrProfEventEdgesMax;
+                Prof.nEventInputVarsMax = Cec_ScorrProfEventInputVarsMax;
+                Prof.nEventInputWordsMax = Cec_ScorrProfEventInputWordsMax;
+                Prof.nEventFallbackWork = Cec_ScorrProfEventFallbackWork;
+                Prof.nEventFallbackTime = Cec_ScorrProfEventFallbackTime;
+                Prof.tEventLoad = Cec_ScorrProfEventLoad;
+                Prof.tEventProp = Cec_ScorrProfEventProp;
+                Prof.tEventRefine = Cec_ScorrProfEventRefine;
+                Prof.tEventRollback = Cec_ScorrProfEventRollback;
+                Prof.tEventInit = Cec_ScorrProfEventInit;
                 Prof.nSimCalls = 1;
             }
             if ( Prof.nCexTriv > 0 )
@@ -1890,6 +2044,30 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
                 Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
                 Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                Prof.tIncrTry = Cec_ScorrProfIncrTry;
+                Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
+                Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;
+                Prof.tIncrFullRun = Cec_ScorrProfIncrFullRun;
+                Prof.tIncrDiagShape = Cec_ScorrProfIncrDiagShape;
+                Prof.tIncrDiagCollect = Cec_ScorrProfIncrDiagCollect;
+                Prof.tIncrDiagEval = Cec_ScorrProfIncrDiagEval;
+                Prof.tIncrDiagSim = Cec_ScorrProfIncrDiagSim;
+                Prof.tIncrTfoBuild = Cec_ScorrProfIncrTfoBuild;
+                Prof.tIncrTfoSim = Cec_ScorrProfIncrTfoSim;
+                Prof.tIncrTxn = Cec_ScorrProfIncrTxn;
+                Prof.nEventLocal = Cec_ScorrProfEventLocal;
+                Prof.nEventFallback = Cec_ScorrProfEventFallback;
+                Prof.nEventPopsMax = Cec_ScorrProfEventPopsMax;
+                Prof.nEventEdgesMax = Cec_ScorrProfEventEdgesMax;
+                Prof.nEventInputVarsMax = Cec_ScorrProfEventInputVarsMax;
+                Prof.nEventInputWordsMax = Cec_ScorrProfEventInputWordsMax;
+                Prof.nEventFallbackWork = Cec_ScorrProfEventFallbackWork;
+                Prof.nEventFallbackTime = Cec_ScorrProfEventFallbackTime;
+                Prof.tEventLoad = Cec_ScorrProfEventLoad;
+                Prof.tEventProp = Cec_ScorrProfEventProp;
+                Prof.tEventRefine = Cec_ScorrProfEventRefine;
+                Prof.tEventRollback = Cec_ScorrProfEventRollback;
+                Prof.tEventInit = Cec_ScorrProfEventInit;
                 Prof.nSimCalls = 1;
             }
             if ( Prof.nCexTriv > 0 )

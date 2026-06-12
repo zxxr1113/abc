@@ -191,11 +191,10 @@ typedef enum Cec_IncrEmitMode_t_
     CEC_EMIT_SKIPPED
 } Cec_IncrEmitMode_t;
 
-// CEX-diagnosis and split-TFO simulation manager for &scorr -I.
-// Each failed SRM output is traced through the speculative TFI assumptions
-// used to build it.  Host-AIG values under the current packed CEX batch identify
-// the assumptions that are actually false.  Only real class splits seed the
-// subsequent frame-aware TFO search for additional simulation refinements.
+// Persistent event-driven simulation manager for &scorr -I.
+// Packed input patterns and host-AIG values survive across CEX batches.  A
+// batch records only the input words it changes; real value deltas propagate
+// through the frame-aware fanout graph and dirty classes are fully regrouped.
 //
 // Keying uses key = frame*nObjs + objId.  pVal layout:
 //   pVal[(frame * nObjs + objId) * nWords + w]
@@ -210,10 +209,8 @@ struct Cec_SeedSim_t_
     int          nRegs;           // cached Gia_ManRegNum(pAig)
     int          nWords;          // sim words per key (= pSim->pPars->nWords)
     int          nPhaseWords;     // bitset words per frame for persistent phase anchors
-    int          fInitialized;     // at least one standard full sweep completed
-    // Dense demand-value storage.  Active packed lanes are current only when
-    // pEvalMark carries nEvalVersion.  Full sweeps persist only the bit-0 phase
-    // anchor in pPhase; demand evaluation restores it into pVal as needed.
+    int          fInitialized;     // persistent inputs/values have a refined baseline
+    // Dense persistent value storage.
     unsigned *   pVal;            // size = (size_t)nFrames * nObjs * nWords
     unsigned *   pPhase;          // size = (size_t)nFrames * nPhaseWords
     unsigned *   pActiveMask;     // all packed simulation lanes except phase bit 0
@@ -247,6 +244,24 @@ struct Cec_SeedSim_t_
     Vec_Int_t *  vQueue;          // split-TFO BFS frontier
     Vec_Ptr_t *  vSimInfo;        // reusable full-simulation CI storage
     Vec_Ptr_t *  vBatchInfo;      // non-owning current packed CEX input vectors
+    // Persistent CEX packing and event propagation.
+    unsigned *   pPackPres;       // sparse-cleared assignment-presence words
+    int *        pInputUndoMark;  // input word already journaled this batch
+    int *        pInputVarMark;   // input vector already queued this batch
+    int          nInputUndoVersion;
+    int          nInputVarVersion;
+    Vec_Int_t *  vPackTouched;    // flat input words to clear after packing
+    Vec_Int_t *  vInputUndo;      // pairs (flat input word, old value)
+    Vec_Int_t *  vChangedInputs;  // input vector indices changed by this batch
+    Vec_Int_t *  vValueUndo;      // triples (key, word, old value)
+    Vec_Int_t *  vChangedValues;  // keys whose persistent value really changed
+    unsigned *   pEventWords;     // sparse queued-word masks, indexed by key
+    int          nEventMaskWords; // words needed to represent nWords bits
+    int          nEventPops;      // evaluated node-word operations
+    int          nEventEdges;     // traversed fanout word-edges
+    abctime      tFullAvg;         // moving average used for adaptive deadline
+    int          nFallbackStreak; // persists across resimulation calls
+    int          nFallbackCooldown; // batches bypassed before next event probe
     // Class-refinement scratch.
     int *        pRootMark;       // per-objId "root already queued" stamp
     int          nRootVersion;
@@ -283,6 +298,30 @@ struct Cec_SeedSim_t_
     int          nBatchCexMax;    // largest real-CEX count in one packed batch
     int          nDeferredSplits; // TFO-created splits not re-enqueued in fixed-frontier mode
     int          nMaxDirty;       // largest TFO/evaluated closure across this call
+    int          nEventLocal;     // batches completed by value-delta propagation
+    int          nEventFallback;  // batches whose event budget was exceeded
+    int          nEventPopsMax;   // largest number of evaluated event nodes
+    int          nEventEdgesMax;  // largest number of traversed fanout edges
+    int          nEventInputVarsMax;  // largest changed-CI count in one batch
+    int          nEventInputWordsMax; // largest changed-CI-word count in one batch
+    int          nEventFallbackWork;  // structural word-operation budget exceeded
+    int          nEventFallbackTime;  // adaptive elapsed-time budget exceeded
+    // Fine-grained -w timings for the incremental batch path.
+    abctime      tTry;
+    abctime      tTryLocal;
+    abctime      tTryFallback;
+    abctime      tDiagShape;
+    abctime      tDiagCollect;
+    abctime      tDiagEval;
+    abctime      tDiagSim;
+    abctime      tTfoBuild;
+    abctime      tTfoSim;
+    abctime      tTxn;
+    abctime      tEventLoad;
+    abctime      tEventProp;
+    abctime      tEventRefine;
+    abctime      tEventRollback;
+    abctime      tEventInit;
 };
 
 // Recursive diagnosis has a much higher constant factor than a linear sweep.
@@ -300,9 +339,16 @@ struct Cec_SeedSim_t_
 // Diagnosis cost grows with the number of CEX records, even when many records
 // share the same packed bit lane.  Reject unusually dense batches cheaply.
 #define CEC_SEEDSIM_CEX_LANE_FACTOR 8
-// After this many consecutive failed batches, bypass one local probe and then
-// retry.  A successful local batch resets the streak.
-#define CEC_SEEDSIM_MAX_FALLBACK_PROBES 2
+// Consecutive wide cones use bounded exponential backoff.  A successful local
+// batch clears both the streak and cooldown immediately.
+#define CEC_SEEDSIM_MAX_FALLBACK_BACKOFF 7
+#define CEC_EVENT_NODE_WORD_FRAC_NUM 1
+#define CEC_EVENT_NODE_WORD_FRAC_DEN 10
+#define CEC_EVENT_EDGE_WORD_FRAC_NUM 1
+#define CEC_EVENT_EDGE_WORD_FRAC_DEN 5
+#define CEC_EVENT_TIME_FRAC_NUM 2
+#define CEC_EVENT_TIME_FRAC_DEN 5
+#define CEC_EVENT_CLOCK_PERIOD 2048
 #define CEC_SEEDSIM_RESULT_FULL       0
 #define CEC_SEEDSIM_RESULT_LOCAL      1
 #define CEC_SEEDSIM_RESULT_FULL_WIDE -1
@@ -346,6 +392,10 @@ extern void                 Cec_SeedSimSaveFrameOutputs( Cec_SeedSim_t * p, Vec_
 extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBypassBatch( Cec_SeedSim_t * p, int nCex );
+extern void                 Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim );
+extern int                  Cec_SeedSimLoadPersistentBatch( Cec_SeedSim_t * p, Vec_Int_t * vCexStore, int iStart, Vec_Int_t * vPairs, Vec_Int_t * vOutBits );
+extern void                 Cec_SeedSimRestorePersistentInputs( Cec_SeedSim_t * p );
+extern void                 Cec_SeedSimRecordFullTime( Cec_SeedSim_t * p, abctime Elapsed );
 extern int                  Cec_SeedSimNumLocal ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFull  ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTrunc ( Cec_SeedSim_t * p );
@@ -364,6 +414,29 @@ extern int                  Cec_SeedSimNumBatchCexMax( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumDeferredSplits( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumDirty ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumKeys  ( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeTry( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeTryLocal( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeTryFallback( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeDiagShape( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeDiagCollect( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeDiagEval( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeDiagSim( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeTfoBuild( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeTfoSim( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeTxn( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventLocal( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventFallback( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventPopsMax( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventEdgesMax( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventInputVarsMax( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventInputWordsMax( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventFallbackWork( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumEventFallbackTime( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeEventLoad( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeEventProp( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeEventRefine( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeEventRollback( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeEventInit( Cec_SeedSim_t * p );
 /*=== cecClass.c ============================================================*/
 extern int                  Cec_ManSimClassRemoveOne( Cec_ManSim_t * p, int i );
 extern void                 Cec_ManSimClassCreate( Gia_Man_t * p, Vec_Int_t * vClass );
