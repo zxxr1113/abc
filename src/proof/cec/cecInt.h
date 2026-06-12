@@ -275,8 +275,13 @@ struct Cec_SeedSim_t_
     int          nFallbackPre;    // fallback before diagnosis mutates classes
     int          nFallbackProcess; // fallback because diagnosis evaluation exceeded budget
     int          nFallbackCoverage; // fallback because diagnosis did not explain all CEX lanes
+    int          nFallbackCex;    // cheap rejection of oversized packed CEX batches
+    int          nFallbackBypass; // batches sent directly to full after repeated fallback
     int          nTruncCone;      // local TFO stopped while growing the structural cone
     int          nTruncEval;      // local TFO stopped while evaluating/refining the cone
+    int          nBatchCex;       // total real CEX records across packed batches
+    int          nBatchCexMax;    // largest real-CEX count in one packed batch
+    int          nDeferredSplits; // TFO-created splits not re-enqueued in fixed-frontier mode
     int          nMaxDirty;       // largest TFO/evaluated closure across this call
 };
 
@@ -292,6 +297,15 @@ struct Cec_SeedSim_t_
 // when its structural or demand-evaluation closure exceeds this budget.
 #define CEC_SEEDSIM_TFO_FRAC_NUM 1
 #define CEC_SEEDSIM_TFO_FRAC_DEN 20
+// Diagnosis cost grows with the number of CEX records, even when many records
+// share the same packed bit lane.  Reject unusually dense batches cheaply.
+#define CEC_SEEDSIM_CEX_LANE_FACTOR 8
+// After this many consecutive failed batches, bypass one local probe and then
+// retry.  A successful local batch resets the streak.
+#define CEC_SEEDSIM_MAX_FALLBACK_PROBES 2
+#define CEC_SEEDSIM_RESULT_FULL       0
+#define CEC_SEEDSIM_RESULT_LOCAL      1
+#define CEC_SEEDSIM_RESULT_FULL_WIDE -1
 
 ////////////////////////////////////////////////////////////////////////
 ///                      MACRO DEFINITIONS                           ///
@@ -331,6 +345,7 @@ extern void                 Cec_SeedSimSaveFrameInputs( Cec_SeedSim_t * p, Vec_P
 extern void                 Cec_SeedSimSaveFrameOutputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCos, int Frame );
 extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
+extern void                 Cec_SeedSimBypassBatch( Cec_SeedSim_t * p, int nCex );
 extern int                  Cec_SeedSimNumLocal ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFull  ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTrunc ( Cec_SeedSim_t * p );
@@ -340,8 +355,13 @@ extern int                  Cec_SeedSimNumCoverageMiss( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFallbackPre( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFallbackProcess( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFallbackCoverage( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumFallbackCex( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumFallbackBypass( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTruncCone( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTruncEval( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumBatchCex( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumBatchCexMax( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumDeferredSplits( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumDirty ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumKeys  ( Cec_SeedSim_t * p );
 /*=== cecClass.c ============================================================*/

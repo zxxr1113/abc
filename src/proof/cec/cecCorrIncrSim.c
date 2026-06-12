@@ -1119,11 +1119,19 @@ static int Cec_SeedSimDiagnosisMissing( Cec_SeedSim_t * p )
     return Count;
 }
 
-static void Cec_SeedSimQueueNewSplits( Cec_SeedSim_t * p, int * piSplit )
+static void Cec_SeedSimRecordBatch( Cec_SeedSim_t * p, int nCex )
 {
-    while ( *piSplit < Vec_IntSize(p->vSplitKeys) )
+    p->nBatchCex += nCex;
+    if ( nCex > p->nBatchCexMax )
+        p->nBatchCexMax = nCex;
+}
+
+static void Cec_SeedSimQueueInitialSplits( Cec_SeedSim_t * p, int nInitialSplits )
+{
+    int i, Key;
+    for ( i = 0; i < nInitialSplits; i++ )
     {
-        int Key = Vec_IntEntry( p->vSplitKeys, (*piSplit)++ );
+        Key = Vec_IntEntry( p->vSplitKeys, i );
         int Frame = Key / p->nObjs;
         int ObjId = Key % p->nObjs;
         if ( Cec_SeedSimMark(p, Frame, ObjId) )
@@ -1151,15 +1159,24 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     int nLimit = (int)(nKeys * CEC_SEEDSIM_HARD_FRAC_NUM / CEC_SEEDSIM_HARD_FRAC_DEN);
     int nDiagLimit = (int)(nKeys * CEC_SEEDSIM_DIAG_FRAC_NUM / CEC_SEEDSIM_DIAG_FRAC_DEN);
     int nTfoLimit = (int)(nKeys * CEC_SEEDSIM_TFO_FRAC_NUM / CEC_SEEDSIM_TFO_FRAC_DEN);
-    int iSplit = 0, nDirty;
+    int nBatchCex = Vec_IntSize(vOutBits) / 2;
+    int nPackedLanes = 32 * p->nWords - 1;
+    int nInitialSplits, nDirty;
     assert( nFrames == p->nFrames );
     assert( Vec_PtrSize(vSimInfo) == p->nRegs + p->nPis * p->nFrames );
     assert( Vec_PtrReadWordsSimInfo(vSimInfo) == p->nWords );
+    Cec_SeedSimRecordBatch( p, nBatchCex );
     if ( !p->fInitialized )
     {
         p->nFallbackPre++;
         p->nBatchFull++;
-        return 0;
+        return CEC_SEEDSIM_RESULT_FULL;
+    }
+    if ( nBatchCex > CEC_SEEDSIM_CEX_LANE_FACTOR * nPackedLanes )
+    {
+        p->nFallbackCex++;
+        p->nBatchFull++;
+        return CEC_SEEDSIM_RESULT_FULL_WIDE;
     }
     Cec_SeedSimReset( p );
     p->vBatchInfo = vSimInfo;
@@ -1171,7 +1188,7 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         p->vBatchInfo = NULL;
         p->nFallbackPre++;
         p->nBatchFull++;
-        return 0;
+        return CEC_SEEDSIM_RESULT_FULL_WIDE;
     }
     Cec_SeedSimRestartTfoMarks( p );
     if ( !Cec_SeedSimCollectDiagnosis(p, vOutputs, vOutBits, nLimit) ||
@@ -1183,7 +1200,7 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         p->vBatchInfo = NULL;
         p->nFallbackPre++;
         p->nBatchFull++;
-        return 0;
+        return CEC_SEEDSIM_RESULT_FULL_WIDE;
     }
     if ( !Cec_SeedSimDiagnosisEvalShapeSmall(p, p->vDiagKeys, nDiagLimit) )
     {
@@ -1193,7 +1210,7 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         p->vBatchInfo = NULL;
         p->nFallbackPre++;
         p->nBatchFull++;
-        return 0;
+        return CEC_SEEDSIM_RESULT_FULL_WIDE;
     }
     Cec_SeedSimRestartTfoMarks( p );
     Cec_SeedSimUseCexLanes( p );
@@ -1207,7 +1224,7 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         p->vBatchInfo = NULL;
         p->nFallbackProcess++;
         p->nBatchFull++;
-        return 0;
+        return CEC_SEEDSIM_RESULT_FULL;
     }
     {
         int nMissing = Cec_SeedSimDiagnosisMissing( p );
@@ -1221,45 +1238,45 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
             p->nCoverageMiss += nMissing;
             p->nFallbackCoverage++;
             p->nBatchFull++;
-            return 0;
+            return CEC_SEEDSIM_RESULT_FULL;
         }
     }
     Cec_SeedSimTxnCommit( p );
     Cec_SeedSimUsePackedLanes( p );
-    while ( iSplit < Vec_IntSize(p->vSplitKeys) )
+    nInitialSplits = Vec_IntSize( p->vSplitKeys );
+    Cec_SeedSimQueueInitialSplits( p, nInitialSplits );
+    if ( !Cec_SeedSimComputeTfo(p, nTfoLimit) )
     {
-        Cec_SeedSimQueueNewSplits( p, &iSplit );
-        if ( !Cec_SeedSimComputeTfo(p, nTfoLimit) )
-        {
-            nDirty = Vec_IntSize( p->vDirtyKeys );
-            if ( nDirty > p->nMaxDirty )
-                p->nMaxDirty = nDirty;
-            p->vBatchInfo = NULL;
-            p->nBatchTrunc++;
-            p->nTruncCone++;
-            p->nBatchLocal++;
-            return 1;
-        }
-        Cec_SeedSimCollectWave( p );
-        if ( Vec_IntSize(p->vWaveKeys) &&
-             !Cec_SeedSimProcessKeys(p, pSim, p->vWaveKeys, nTfoLimit, 0) )
-        {
-            if ( p->nEvalKeys > p->nMaxDirty )
-                p->nMaxDirty = p->nEvalKeys;
-            p->vBatchInfo = NULL;
-            p->nBatchTrunc++;
-            p->nTruncEval++;
-            p->nBatchLocal++;
-            return 1;
-        }
+        nDirty = Vec_IntSize( p->vDirtyKeys );
+        if ( nDirty > p->nMaxDirty )
+            p->nMaxDirty = nDirty;
+        p->vBatchInfo = NULL;
+        p->nBatchTrunc++;
+        p->nTruncCone++;
+        p->nBatchLocal++;
+        return CEC_SEEDSIM_RESULT_LOCAL;
     }
+    Cec_SeedSimCollectWave( p );
+    if ( Vec_IntSize(p->vWaveKeys) &&
+         !Cec_SeedSimProcessKeys(p, pSim, p->vWaveKeys, nTfoLimit, 0) )
+    {
+        p->nDeferredSplits += Vec_IntSize(p->vSplitKeys) - nInitialSplits;
+        if ( p->nEvalKeys > p->nMaxDirty )
+            p->nMaxDirty = p->nEvalKeys;
+        p->vBatchInfo = NULL;
+        p->nBatchTrunc++;
+        p->nTruncEval++;
+        p->nBatchLocal++;
+        return CEC_SEEDSIM_RESULT_LOCAL;
+    }
+    p->nDeferredSplits += Vec_IntSize(p->vSplitKeys) - nInitialSplits;
     nDirty = Abc_MaxInt( p->nSpecKeys, Vec_IntSize(p->vDirtyKeys) );
     nDirty = Abc_MaxInt( nDirty, p->nEvalKeys );
     if ( nDirty > p->nMaxDirty )
         p->nMaxDirty = nDirty;
     p->vBatchInfo = NULL;
     p->nBatchLocal++;
-    return 1;
+    return CEC_SEEDSIM_RESULT_LOCAL;
 }
 
 void Cec_SeedSimSaveFrameInputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCis, int Frame )
@@ -1297,7 +1314,16 @@ void Cec_SeedSimBeginCall( Cec_SeedSim_t * p )
     p->nBatchLocal = p->nBatchFull = p->nBatchTrunc = p->nMaxDirty = 0;
     p->nBatchRollback = p->nRollbackObjs = p->nCoverageMiss = 0;
     p->nFallbackPre = p->nFallbackProcess = p->nFallbackCoverage = 0;
+    p->nFallbackCex = p->nFallbackBypass = 0;
     p->nTruncCone = p->nTruncEval = 0;
+    p->nBatchCex = p->nBatchCexMax = p->nDeferredSplits = 0;
+}
+
+void Cec_SeedSimBypassBatch( Cec_SeedSim_t * p, int nCex )
+{
+    Cec_SeedSimRecordBatch( p, nCex );
+    p->nFallbackBypass++;
+    p->nBatchFull++;
 }
 
 int Cec_SeedSimNumLocal( Cec_SeedSim_t * p ) { return p->nBatchLocal; }
@@ -1309,8 +1335,13 @@ int Cec_SeedSimNumCoverageMiss( Cec_SeedSim_t * p ) { return p->nCoverageMiss; }
 int Cec_SeedSimNumFallbackPre( Cec_SeedSim_t * p ) { return p->nFallbackPre; }
 int Cec_SeedSimNumFallbackProcess( Cec_SeedSim_t * p ) { return p->nFallbackProcess; }
 int Cec_SeedSimNumFallbackCoverage( Cec_SeedSim_t * p ) { return p->nFallbackCoverage; }
+int Cec_SeedSimNumFallbackCex( Cec_SeedSim_t * p ) { return p->nFallbackCex; }
+int Cec_SeedSimNumFallbackBypass( Cec_SeedSim_t * p ) { return p->nFallbackBypass; }
 int Cec_SeedSimNumTruncCone( Cec_SeedSim_t * p ) { return p->nTruncCone; }
 int Cec_SeedSimNumTruncEval( Cec_SeedSim_t * p ) { return p->nTruncEval; }
+int Cec_SeedSimNumBatchCex( Cec_SeedSim_t * p ) { return p->nBatchCex; }
+int Cec_SeedSimNumBatchCexMax( Cec_SeedSim_t * p ) { return p->nBatchCexMax; }
+int Cec_SeedSimNumDeferredSplits( Cec_SeedSim_t * p ) { return p->nDeferredSplits; }
 int Cec_SeedSimNumDirty( Cec_SeedSim_t * p ) { return p->nMaxDirty; }
 int Cec_SeedSimNumKeys ( Cec_SeedSim_t * p ) { return p->nFrames * p->nObjs; }
 
