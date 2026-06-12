@@ -255,6 +255,13 @@ struct Cec_SeedSim_t_
     Vec_Int_t *  vClassAll;
     Vec_Int_t *  vClassOld;
     Vec_Int_t *  vClassNew;
+    // Sparse undo journal for diagnosis-time class refinement.
+    int *        pTxnMark;        // object already saved in the current transaction
+    int          nTxnVersion;
+    int          fTxnActive;
+    Vec_Int_t *  vTxnObjs;
+    Vec_Int_t *  vTxnReprs;
+    Vec_Int_t *  vTxnNexts;
     unsigned *   pPhase0;         // nWords of 0 (phase-0 vector, used by refine)
     unsigned *   pPhase1;         // nWords of ~0 (phase-1 vector)
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
@@ -262,6 +269,14 @@ struct Cec_SeedSim_t_
     int          nBatchLocal;     // rounds handled by local TFO sim
     int          nBatchFull;      // rounds that fell back to full sweep
     int          nBatchTrunc;     // local rounds that stopped optional TFO expansion
+    int          nBatchRollback;  // diagnosis transactions rolled back before full sweep
+    int          nRollbackObjs;   // class entries restored by transaction rollback
+    int          nCoverageMiss;   // packed CEX lanes unexplained by local diagnosis
+    int          nFallbackPre;    // fallback before diagnosis mutates classes
+    int          nFallbackProcess; // fallback because diagnosis evaluation exceeded budget
+    int          nFallbackCoverage; // fallback because diagnosis did not explain all CEX lanes
+    int          nTruncCone;      // local TFO stopped while growing the structural cone
+    int          nTruncEval;      // local TFO stopped while evaluating/refining the cone
     int          nMaxDirty;       // largest TFO/evaluated closure across this call
 };
 
@@ -319,6 +334,14 @@ extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumLocal ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFull  ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTrunc ( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumRollback( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumRollbackObjs( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumCoverageMiss( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumFallbackPre( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumFallbackProcess( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumFallbackCoverage( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumTruncCone( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumTruncEval( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumDirty ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumKeys  ( Cec_SeedSim_t * p );
 /*=== cecClass.c ============================================================*/

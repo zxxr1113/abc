@@ -56,6 +56,14 @@ static abctime Cec_ScorrProfSimRun   = 0; // actual bit-parallel resimulation
 static int     Cec_ScorrProfIncrSrc   = 0; // # batches handled by local TFO sim
 static int     Cec_ScorrProfIncrFull  = 0; // # batches that fell back to full sweep
 static int     Cec_ScorrProfIncrTrunc = 0; // # local batches with optional TFO truncated
+static int     Cec_ScorrProfIncrRollback = 0; // # diagnosis transactions rolled back
+static int     Cec_ScorrProfIncrRollbackObjs = 0; // # class entries restored
+static int     Cec_ScorrProfIncrCoverageMiss = 0; // # unexplained packed CEX lanes
+static int     Cec_ScorrProfIncrFallbackPre = 0; // fallback before class mutation
+static int     Cec_ScorrProfIncrFallbackProcess = 0; // diagnosis budget fallback
+static int     Cec_ScorrProfIncrFallbackCoverage = 0; // diagnosis coverage fallback
+static int     Cec_ScorrProfIncrTruncCone = 0; // optional TFO structural truncation
+static int     Cec_ScorrProfIncrTruncEval = 0; // optional TFO evaluation truncation
 static int     Cec_ScorrProfIncrDirty = 0; // largest dirty cone across the call
 static int     Cec_ScorrProfIncrKeys  = 0; // nFrames * nObjs (cone-size denominator)
 
@@ -88,6 +96,9 @@ struct Cec_ScorrProf_t_
     //   nIncrDirty = largest dirty cone seen across the call's batches
     //   nIncrKeys  = nFrames*nObjs (the cone-size denominator)
     int     nIncrSrc, nIncrFull, nIncrTrunc, nIncrDirty, nIncrKeys;
+    int     nIncrRollback, nIncrRollbackObjs, nIncrCoverageMiss;
+    int     nIncrFallbackPre, nIncrFallbackProcess, nIncrFallbackCoverage;
+    int     nIncrTruncCone, nIncrTruncEval;
     // Lit-count deltas around the two refinement stages.
     //   dSimLits = #pairs broken by the sim call (lits before sim - lits after sim).
     //   dChkLits = #pairs broken by Gia_ManCheckRefinements (lits after sim - lits after chk).
@@ -111,6 +122,14 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     // local/full batch counts accumulate; dirty is a max; keys is constant
     pT->nIncrSrc+=pI->nIncrSrc; pT->nIncrFull+=pI->nIncrFull;
     pT->nIncrTrunc+=pI->nIncrTrunc;
+    pT->nIncrRollback+=pI->nIncrRollback;
+    pT->nIncrRollbackObjs+=pI->nIncrRollbackObjs;
+    pT->nIncrCoverageMiss+=pI->nIncrCoverageMiss;
+    pT->nIncrFallbackPre+=pI->nIncrFallbackPre;
+    pT->nIncrFallbackProcess+=pI->nIncrFallbackProcess;
+    pT->nIncrFallbackCoverage+=pI->nIncrFallbackCoverage;
+    pT->nIncrTruncCone+=pI->nIncrTruncCone;
+    pT->nIncrTruncEval+=pI->nIncrTruncEval;
     if ( pI->nIncrDirty > pT->nIncrDirty ) pT->nIncrDirty = pI->nIncrDirty;
     if ( pI->nIncrKeys  > pT->nIncrKeys  ) pT->nIncrKeys  = pI->nIncrKeys;
     if ( pI->tSatMax > pT->tSatMax ) pT->tSatMax = pI->tSatMax;
@@ -140,6 +159,10 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
         p->tSim*M, p->tSimRemap*M, p->tSimRun*M, p->nSimCalls, p->dSimLits );
     Abc_Print( 1, "incr=loc/full/maxdirty/keys=%d/%d/%d/%d trunc=%d ",
         p->nIncrSrc, p->nIncrFull, p->nIncrDirty, p->nIncrKeys, p->nIncrTrunc );
+    Abc_Print( 1, "txn=rb/objs/miss=%d/%d/%d fb=pre/proc/cov=%d/%d/%d tr=cone/eval=%d/%d ",
+        p->nIncrRollback, p->nIncrRollbackObjs, p->nIncrCoverageMiss,
+        p->nIncrFallbackPre, p->nIncrFallbackProcess, p->nIncrFallbackCoverage,
+        p->nIncrTruncCone, p->nIncrTruncEval );
     Abc_Print( 1, "chk=%6.3f(d=%d) stat=%6.3f rest=%6.3f\n",
         p->tChk*M, p->dChkLits, p->tStats*M, tRest*M );
 }
@@ -786,6 +809,11 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     abctime tH = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     Cec_ScorrProfSimRemap = Cec_ScorrProfSimRun = 0;
     Cec_ScorrProfIncrSrc = Cec_ScorrProfIncrFull = Cec_ScorrProfIncrTrunc = 0;
+    Cec_ScorrProfIncrRollback = Cec_ScorrProfIncrRollbackObjs = 0;
+    Cec_ScorrProfIncrCoverageMiss = 0;
+    Cec_ScorrProfIncrFallbackPre = Cec_ScorrProfIncrFallbackProcess = 0;
+    Cec_ScorrProfIncrFallbackCoverage = 0;
+    Cec_ScorrProfIncrTruncCone = Cec_ScorrProfIncrTruncEval = 0;
     Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
     if ( pSeed )
         Cec_SeedSimBeginCall( pSeed );  // reset per-call local/full/maxdirty counters
@@ -845,6 +873,14 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         Cec_ScorrProfIncrSrc   = Cec_SeedSimNumLocal( pSeed );
         Cec_ScorrProfIncrFull  = Cec_SeedSimNumFull( pSeed );
         Cec_ScorrProfIncrTrunc = Cec_SeedSimNumTrunc( pSeed );
+        Cec_ScorrProfIncrRollback = Cec_SeedSimNumRollback( pSeed );
+        Cec_ScorrProfIncrRollbackObjs = Cec_SeedSimNumRollbackObjs( pSeed );
+        Cec_ScorrProfIncrCoverageMiss = Cec_SeedSimNumCoverageMiss( pSeed );
+        Cec_ScorrProfIncrFallbackPre = Cec_SeedSimNumFallbackPre( pSeed );
+        Cec_ScorrProfIncrFallbackProcess = Cec_SeedSimNumFallbackProcess( pSeed );
+        Cec_ScorrProfIncrFallbackCoverage = Cec_SeedSimNumFallbackCoverage( pSeed );
+        Cec_ScorrProfIncrTruncCone = Cec_SeedSimNumTruncCone( pSeed );
+        Cec_ScorrProfIncrTruncEval = Cec_SeedSimNumTruncEval( pSeed );
         Cec_ScorrProfIncrDirty = Cec_SeedSimNumDirty( pSeed );
         Cec_ScorrProfIncrKeys  = Cec_SeedSimNumKeys( pSeed );
     }
@@ -1299,6 +1335,14 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
                 Prof.nIncrTrunc = Cec_ScorrProfIncrTrunc;
+                Prof.nIncrRollback = Cec_ScorrProfIncrRollback;
+                Prof.nIncrRollbackObjs = Cec_ScorrProfIncrRollbackObjs;
+                Prof.nIncrCoverageMiss = Cec_ScorrProfIncrCoverageMiss;
+                Prof.nIncrFallbackPre = Cec_ScorrProfIncrFallbackPre;
+                Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
+                Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
+                Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
+                Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;
                 Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.nSimCalls = 1;
             }
@@ -1787,6 +1831,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
                 Prof.nIncrTrunc = Cec_ScorrProfIncrTrunc;
+                Prof.nIncrRollback = Cec_ScorrProfIncrRollback;
+                Prof.nIncrRollbackObjs = Cec_ScorrProfIncrRollbackObjs;
+                Prof.nIncrCoverageMiss = Cec_ScorrProfIncrCoverageMiss;
+                Prof.nIncrFallbackPre = Cec_ScorrProfIncrFallbackPre;
+                Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
+                Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
+                Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
+                Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;
                 Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.nSimCalls = 1;
             }
