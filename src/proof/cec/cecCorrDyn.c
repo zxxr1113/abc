@@ -31,6 +31,7 @@ struct Cec_DynSrm_t_
     Gia_Man_t *      pCore;         // persistent SRM core without COs
     Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
     Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
+    Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
     Vec_Int_t *      vPiMap;        // host obj id -> PI index
     Vec_Int_t *      vRoMap;        // host obj id -> RO index
     Vec_Int_t *      vPendingPairs; // SAT obligations still merged after resim
@@ -189,6 +190,7 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
     p->pCore = NULL;
     Vec_IntFreeP( &p->vSpecLits );
     Vec_IntFreeP( &p->vOutLits );
+    Vec_IntFreeP( &p->vCopyTouched );
     Vec_IntFreeP( &p->vPiMap );
     Vec_IntFreeP( &p->vRoMap );
     p->nObjs = p->nPis = p->nRegs = p->nFramesTotal = p->nCoreCiNum = 0;
@@ -211,6 +213,7 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     p->nFramesTotal = nFramesTotal;
     p->vSpecLits = Vec_IntStartFull( p->nFramesTotal * p->nObjs );
     p->vOutLits = Vec_IntAlloc( 1000 );
+    p->vCopyTouched = Vec_IntAlloc( 1000 );
     p->vPiMap = Vec_IntStartFull( p->nObjs );
     p->vRoMap = Vec_IntStartFull( p->nObjs );
     p->pCore = Gia_ManStart( Abc_MaxInt( p->nFramesTotal * p->nObjs, 1000 ) );
@@ -317,22 +320,28 @@ static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPr
     return iLit;
 }
 
-static int Cec_DynSrmCopyLit_rec( Gia_Man_t * pCore, Gia_Man_t * pView, int iLit )
+static int Cec_DynSrmCopyLit_rec( Gia_Man_t * pCore, Gia_Man_t * pView, Vec_Int_t * vTouched, int iLit )
 {
     Gia_Obj_t * pObj;
     int iObj, iLitCopy, iLit0, iLit1;
     if ( iLit < 2 )
         return iLit;
     iObj = Abc_Lit2Var( iLit );
+    pObj = Gia_ManObj( pCore, iObj );
+    if ( Gia_ObjIsCi(pObj) )
+    {
+        assert( Gia_ManCiIdToId(pView, Gia_ObjCioId(pObj)) == iObj );
+        return iLit;
+    }
     iLitCopy = Gia_ObjCopyArray( pCore, iObj );
     if ( iLitCopy >= 0 )
         return Abc_LitNotCond( iLitCopy, Abc_LitIsCompl(iLit) );
-    pObj = Gia_ManObj( pCore, iObj );
     assert( Gia_ObjIsAnd(pObj) );
-    iLit0 = Cec_DynSrmCopyLit_rec( pCore, pView, Gia_ObjFaninLit0p(pCore, pObj) );
-    iLit1 = Cec_DynSrmCopyLit_rec( pCore, pView, Gia_ObjFaninLit1p(pCore, pObj) );
+    iLit0 = Cec_DynSrmCopyLit_rec( pCore, pView, vTouched, Gia_ObjFaninLit0p(pCore, pObj) );
+    iLit1 = Cec_DynSrmCopyLit_rec( pCore, pView, vTouched, Gia_ObjFaninLit1p(pCore, pObj) );
     iLitCopy = Gia_ManHashAnd( pView, iLit0, iLit1 );
     Gia_ObjSetCopyArray( pCore, iObj, iLitCopy );
+    Vec_IntPush( vTouched, iObj );
     return Abc_LitNotCond( iLitCopy, Abc_LitIsCompl(iLit) );
 }
 
@@ -345,17 +354,19 @@ static Gia_Man_t * Cec_DynSrmBuildView( Cec_DynSrm_t * p )
     pView->pName = Abc_UtilStrsav( p->pAig->pName );
     pView->pSpec = Abc_UtilStrsav( p->pAig->pSpec );
     Gia_ManHashAlloc( pView );
-    Vec_IntFill( &p->pCore->vCopies, Gia_ManObjNum(p->pCore), -1 );
-    Gia_ObjSetCopyArray( p->pCore, 0, 0 );
+    Vec_IntFillExtra( &p->pCore->vCopies, Gia_ManObjNum(p->pCore), -1 );
+    Vec_IntClear( p->vCopyTouched );
     Gia_ManForEachCi( p->pCore, pObj, i )
-        Gia_ObjSetCopyArray( p->pCore, Gia_ObjId(p->pCore, pObj), Gia_ManAppendCi(pView) );
+        Gia_ManAppendCi( pView );
     Vec_IntForEachEntry( p->vOutLits, iLit, i )
     {
-        iLitCopy = Cec_DynSrmCopyLit_rec( p->pCore, pView, iLit );
+        iLitCopy = Cec_DynSrmCopyLit_rec( p->pCore, pView, p->vCopyTouched, iLit );
         Gia_ManAppendCo( pView, iLitCopy );
     }
+    Vec_IntForEachEntry( p->vCopyTouched, iLit, i )
+        Gia_ObjSetCopyArray( p->pCore, iLit, -1 );
+    Vec_IntClear( p->vCopyTouched );
     Gia_ManHashStop( pView );
-    Vec_IntErase( &p->pCore->vCopies );
     p->nViewBuilds++;
     p->nViewObjsLast = Gia_ManObjNum( pView );
     p->nViewObjsMax = Abc_MaxInt( p->nViewObjsMax, p->nViewObjsLast );
