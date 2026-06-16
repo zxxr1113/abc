@@ -324,6 +324,15 @@ struct Cec_SeedSim_t_
     abctime      tEventInit;
 };
 
+// Dynamic SRM manager shell for &scorr -D.
+//
+// The first implementation keeps proof-obligation state and force-active
+// bookkeeping persistent while delegating graph construction to the existing
+// SRM builders.  This gives the main loop a stable manager boundary: future
+// append-only/local-update SRM storage can replace the delegated builder
+// without changing the convergence and SAT/resim control flow again.
+typedef struct Cec_DynSrm_t_ Cec_DynSrm_t;
+
 // Recursive diagnosis has a much higher constant factor than a linear sweep.
 // Reject wide speculative and complete-class evaluation cones before mutation.
 #define CEC_SEEDSIM_DIAG_FRAC_NUM 1
@@ -365,6 +374,7 @@ struct Cec_SeedSim_t_
 extern void                 Cec_ManRefinedClassPrintStats( Gia_Man_t * p, Vec_Str_t * vStatus, int iIter, abctime Time );
 extern int                  Gia_ManCorrSpecReal( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
 extern void                 Gia_ManCorrSpecReduce_rec( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
+extern Gia_Man_t *          Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, Vec_Int_t ** pvOutLits );
 /* &scorr per-proof profiling counters: defined in cecCorr.c, written by the    */
 /* SAT/CSAT miter solvers, reset+read by the &scorr loop. All times in ns.      */
 extern int                  Cec_ScorrProfOn;     // master enable (gates all profiling work)
@@ -383,6 +393,16 @@ extern void                 Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int 
 extern void                 Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p );
 extern Gia_Man_t *          Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr, Cec_IncrEmitMode_t Mode, Vec_Int_t ** pvOutLits );
 extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark );
+/*=== cecCorrDyn.c ============================================================*/
+extern Cec_DynSrm_t *       Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr );
+extern void                 Cec_DynSrmFree( Cec_DynSrm_t * p );
+extern int                  Cec_DynSrmPendingNum( Cec_DynSrm_t * p );
+extern void                 Cec_DynSrmPrintStats( Cec_DynSrm_t * p );
+extern int                  Cec_DynSrmPrunePending( Cec_DynSrm_t * p, int fRings );
+extern void                 Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive, int * pnPendingActive );
+extern void                 Cec_DynSrmClearPending( Cec_DynSrm_t * p );
+extern int                  Cec_DynSrmUpdatePending( Cec_DynSrm_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOutputs, int fRings );
+extern Gia_Man_t *          Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode );
 /*=== cecCorrIncrSim.c ============================================================*/
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
 extern void                 Cec_SeedSimFree( Cec_SeedSim_t * p );

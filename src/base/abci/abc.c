@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZpkrecqdiIoswvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZDpkrecqdiIoswvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41264,6 +41264,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'I':
             pPars->fIncrSim ^= 1;
             break;
+        case 'D':
+            pPars->fDynSrm ^= 1;
+            break;
         case 's':
             pPars->fSkipFailResim ^= 1;
             break;
@@ -41284,6 +41287,11 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     if ( pPars->fIncrOracle && !pPars->fIncremental )
     {
         Abc_Print( -1, "The incremental shadow oracle (-d) requires -i.\n" );
+        return 1;
+    }
+    if ( pPars->fDynSrm && !pPars->fIncremental )
+    {
+        Abc_Print( -1, "The dynamic SRM manager (-D) requires -i.\n" );
         return 1;
     }
     if ( pAbc->pGia == NULL )
@@ -41346,7 +41354,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqdiIoswvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqdiIosDwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
@@ -41364,6 +41372,7 @@ usage:
     Abc_Print( -2, "\t-i     : toggle incremental TFO-triggered re-proof in main loop [default = %s]\n", pPars->fIncremental? "yes": "no" );
     Abc_Print( -2, "\t-d     : toggle unbounded shadow SAT for pairs skipped by -i [default = %s]\n", pPars->fIncrOracle? "yes": "no" );
     Abc_Print( -2, "\t-I     : toggle persistent CEX-TFO-only resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
+    Abc_Print( -2, "\t-D     : toggle dynamic SRM manager bookkeeping [default = %s]\n", pPars->fDynSrm? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle detailed profiling and verbose info about equivalent flops [default = %s]\n", pPars->fVeryVerbose? "yes": "no" );

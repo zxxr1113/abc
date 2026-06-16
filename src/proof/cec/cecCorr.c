@@ -1762,6 +1762,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clk2, clk = Abc_Clock();
     // Incremental active-list manager (NULL if -i not set)
     Cec_IncrMgr_t * pMgr = NULL;
+    // Persistent SRM/proof-obligation manager (NULL if -D not set)
+    Cec_DynSrm_t * pDynSrm = NULL;
     // CEX-diagnosis and split-TFO local-sim manager (NULL if -I not set).
     Cec_SeedSim_t * pSeedSim = NULL;
     abctime clkIncr = 0;
@@ -1799,9 +1801,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
     if ( pPars->fVerbose )
     {
-        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d.\n",
+        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d.\n",
             Gia_ManObjNum(pAig), Gia_ManAndNum(pAig), 
-            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle );
+            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm );
         Cec_ManRefinedClassPrintStats( pAig, NULL, 0, Abc_Clock() - clk );
     }
     // check the base case
@@ -1826,6 +1828,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames );
         Cec_IncrMgrSnapshotClasses( pMgr );  // initial snapshot (post-BMC classes)
     }
+    if ( pPars->fDynSrm && pMgr )
+        pDynSrm = Cec_DynSrmAlloc( pAig, pMgr );
     // Resident local-sim manager sized for the main-loop resim depth.
     if ( pPars->fIncrSim )
         pSeedSim = Cec_SeedSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pPars->nFrames, pParsSim->nWords );
@@ -1836,6 +1840,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( Cec_ParCorShouldStop( pPars ) )
         {
             Cec_ManSimStop( pSim );
+            Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             return 1;
@@ -1843,6 +1848,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( pPars->nStepsMax == r )
         {
             Cec_ManSimStop( pSim );
+            Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             Abc_Print( 1, "Stopped signal correspondence after %d refiment iterations.\n", r );
@@ -1857,19 +1863,22 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             int * pTfoMask = NULL;
             int nReprSeeds = 0, nNextChanges = 0;
             int nTotalPairs = 0, nActivePairs = 0;
+            int nPendingPairs = 0, nPendingActive = 0;
             int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
             // Skip on r==0 because the first full SRM establishes the cache.
             if ( pMgr && r > 0 )
             {
                 abctime clkI = Abc_Clock();
+                if ( pDynSrm )
+                    nPendingPairs = Cec_DynSrmPrunePending( pDynSrm, pPars->fUseRings );
                 tH = Abc_ClockHr();
                 nReprSeeds = Cec_IncrMgrComputeSeeds( pMgr );
                 Prof.tSeed = Abc_ClockHr() - tH;
                 tH = Abc_ClockHr();
                 nNextChanges = pPars->fUseRings ? Cec_IncrMgrCountNextChanges( pMgr ) : 0;
                 Prof.tNext = Abc_ClockHr() - tH;
-                if ( nReprSeeds == 0 && nNextChanges == 0 )
+                if ( nReprSeeds == 0 && nNextChanges == 0 && nPendingPairs == 0 )
                 {
                     if ( !pPars->fIncrOracle )
                     {
@@ -1885,7 +1894,10 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     Cec_IncrMgrComputeTfo( pMgr );
                     Prof.tTfo = Abc_ClockHr() - tH;
                     tH = Abc_ClockHr();
-                    Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                    if ( pDynSrm )
+                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs, &nPendingActive );
+                    else
+                        Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
                     Prof.tCnt = Abc_ClockHr() - tH;
                     assert( nActivePairs == 0 );
                     pTfoMask = pMgr->pTfoMark;
@@ -1898,21 +1910,34 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     Cec_IncrMgrComputeTfo( pMgr );
                     Prof.tTfo = Abc_ClockHr() - tH;
                     tH = Abc_ClockHr();
-                    Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                    if ( pDynSrm )
+                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs, &nPendingActive );
+                    else
+                        Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
                     Prof.tCnt = Abc_ClockHr() - tH;
                     if ( nActivePairs == 0 )
                     {
-                        if ( !pPars->fIncrOracle )
+                        if ( nPendingPairs > 0 )
                         {
-                            // Classes changed, but no remaining candidate pair
-                            // depends on the changes and no new ring edge exists.
-                            clkIncr += Abc_Clock() - clkI;
-                            clkSrm  += Abc_Clock() - clk2;
-                            break;
+                            // A stale pending obligation no longer maps to a
+                            // current active edge.  Build a full SRM rather
+                            // than silently converging.
+                            nIncrFallback++;
                         }
-                        pTfoMask = pMgr->pTfoMark;
-                        nIncrSkipped += nTotalPairs;
-                        fStopAfterOracle = 1;
+                        else
+                        {
+                            if ( !pPars->fIncrOracle )
+                            {
+                                // Classes changed, but no remaining candidate pair
+                                // depends on the changes and no new ring edge exists.
+                                clkIncr += Abc_Clock() - clkI;
+                                clkSrm  += Abc_Clock() - clk2;
+                                break;
+                            }
+                            pTfoMask = pMgr->pTfoMark;
+                            nIncrSkipped += nTotalPairs;
+                            fStopAfterOracle = 1;
+                        }
                     }
                     // Fallback is based on emitted candidate pairs, not seed count.
                     // Above ~70% active pairs, full SRM is usually cheaper.
@@ -1934,14 +1959,19 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Gia_Man_t * pShadow;
                 Vec_Int_t * vShadowOutputs;
                 tH = Abc_ClockHr();
-                pShadow = Gia_ManCorrSpecReduce_Emit( pAig, pPars->nFrames, !pPars->fLatchCorr,
-                    &vShadowOutputs, pPars->fUseRings, pTfoMask, pMgr, CEC_EMIT_SKIPPED, NULL );
+                if ( pDynSrm )
+                    pShadow = Cec_DynSrmBuild( pDynSrm, pPars->nFrames, !pPars->fLatchCorr,
+                        &vShadowOutputs, pPars->fUseRings, pTfoMask, CEC_EMIT_SKIPPED );
+                else
+                    pShadow = Gia_ManCorrSpecReduce_Emit( pAig, pPars->nFrames, !pPars->fLatchCorr,
+                        &vShadowOutputs, pPars->fUseRings, pTfoMask, pMgr, CEC_EMIT_SKIPPED, NULL );
                 if ( Gia_ManCoNum(pShadow) > 0 &&
                      !Cec_ManIncrOracleCheck( pShadow, vShadowOutputs, r ) )
                 {
                     Gia_ManStop( pShadow );
                     Vec_IntFree( vShadowOutputs );
                     Cec_ManSimStop( pSim );
+                    Cec_DynSrmFree( pDynSrm );
                     Cec_IncrMgrFree( pMgr );
                     Cec_SeedSimFree( pSeedSim );
                     Cec_ScorrProfOn = 0;
@@ -1962,15 +1992,17 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             }
 
             tH = Abc_ClockHr();
-            if ( pTfoMask )
+            if ( pDynSrm )
+                pSrm = Cec_DynSrmBuild( pDynSrm, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pTfoMask ? CEC_EMIT_ACTIVE : CEC_EMIT_ALL );
+            else if ( pTfoMask )
                 pSrm = Gia_ManCorrSpecReduce_Emit( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr, CEC_EMIT_ACTIVE, NULL );
             else
                 pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, NULL );
             Prof.tSrm = Abc_ClockHr() - tH;
             if ( pTfoMask && pPars->fVeryVerbose )
-                Abc_Print( 1, "  [incr r=%d repr=%d next=%d tfo=%d active=%d/%d POs=%d]\n",
-                           r, nReprSeeds, nNextChanges, Vec_IntSize(pMgr->vTfoNodes),
-                           nActivePairs, nTotalPairs,
+                Abc_Print( 1, "  [incr r=%d repr=%d next=%d pend=%d pact=%d tfo=%d active=%d/%d POs=%d]\n",
+                           r, nReprSeeds, nNextChanges, nPendingPairs, nPendingActive,
+                           Vec_IntSize(pMgr->vTfoNodes), nActivePairs, nTotalPairs,
                            Gia_ManCoNum(pSrm) );
             // Snapshot after SRM construction: the active builder still needs
             // the old pNexts snapshot to recognize newly-created ring edges.
@@ -1986,6 +2018,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clkSrm += Abc_Clock() - clk2;
         if ( Gia_ManCoNum(pSrm) == 0 )
         {
+            Cec_DynSrmClearPending( pDynSrm );
             Vec_IntFree( vOutputs );
             Gia_ManStop( pSrm );            
             break;
@@ -2005,6 +2038,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clkSat += Abc_Clock() - clk2;
         if ( Vec_IntSize(vCexStore) == 0 )
         {
+            Cec_DynSrmClearPending( pDynSrm );
             Vec_IntFree( vCexStore );
             Vec_StrFree( vStatus );
             Vec_IntFree( vOutputs );
@@ -2077,6 +2111,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
             Prof.nCexPending = Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
+            if ( pDynSrm )
+                Prof.nCexPending = Cec_DynSrmUpdatePending( pDynSrm, vStatus, vOutputs, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;
@@ -2098,6 +2134,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( Cec_ParCorShouldStop( pPars ) )
         {
             Cec_ManSimStop( pSim );
+            Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             return 1;
@@ -2108,6 +2145,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             printf( "Iterative refinement is stopped after iteration %d\n", r );
             printf( "because the property output is no longer a candidate constant.\n" );
             Cec_ManSimStop( pSim );
+            Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             return 0;
@@ -2120,6 +2158,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 printf( "Iterative refinement is stopped after iteration %d\n", r );
                 printf( "because refinement does not proceed quickly.\n" );
                 Cec_ManSimStop( pSim );
+                Cec_DynSrmFree( pDynSrm );
                 Cec_IncrMgrFree( pMgr );
                 Cec_SeedSimFree( pSeedSim );
                 ABC_FREE( pAig->pReprs );
@@ -2157,9 +2196,12 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             ABC_PRTP( "Incr ", clkIncr, clkTotal );
             Abc_Print( 1, "Incr: fallback rounds = %d, skipped candidate pairs = %d\n", nIncrFallback, nIncrSkipped );
         }
+        if ( pDynSrm )
+            Cec_DynSrmPrintStats( pDynSrm );
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }
     Cec_IncrMgrFree( pMgr );
+    Cec_DynSrmFree( pDynSrm );
     Cec_SeedSimFree( pSeedSim );
     return 1;
 }
