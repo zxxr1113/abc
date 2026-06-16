@@ -28,9 +28,19 @@ struct Cec_DynSrm_t_
 {
     Gia_Man_t *      pAig;          // host AIG; owned by caller
     Cec_IncrMgr_t *  pIncr;         // active-list manager; owned by caller
+    Gia_Man_t *      pCore;         // persistent SRM core without COs
+    Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
+    Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
+    Vec_Int_t *      vPiMap;        // host obj id -> PI index
+    Vec_Int_t *      vRoMap;        // host obj id -> RO index
     Vec_Int_t *      vPendingPairs; // SAT obligations still merged after resim
     Vec_Int_t *      vPendingNodes; // endpoints of pending obligations
     int *            pPendingMark;  // dense endpoint mark, size = Gia_ManObjNum
+    int              nObjs;
+    int              nPis;
+    int              nRegs;
+    int              nFramesTotal;
+    int              nCoreCiNum;
     int              nPendingMax;
     int              nPendingAdded;
     int              nPendingCleared;
@@ -38,6 +48,18 @@ struct Cec_DynSrm_t_
     int              nPendingActiveMax;
     int              nBuilds;
     int              nBuildsActive;
+    int              nCoreResets;
+    int              nCoreBuilds;
+    int              nViewBuilds;
+    int              nCacheFullClears;
+    int              nCacheLocalClears;
+    int              nCacheLocalEntries;
+    int              nOutLitsLast;
+    int              nOutLitsMax;
+    int              nCoreObjsLast;
+    int              nCoreObjsMax;
+    int              nViewObjsLast;
+    int              nViewObjsMax;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -126,6 +148,220 @@ static int Cec_DynSrmEmitModeAccept( int fActive, Cec_IncrEmitMode_t Mode )
            (Mode == CEC_EMIT_SKIPPED && !fActive);
 }
 
+static int Cec_DynSrmCacheIndex( Cec_DynSrm_t * p, int f, int ObjId )
+{
+    assert( f >= 0 && f < p->nFramesTotal );
+    assert( ObjId >= 0 && ObjId < p->nObjs );
+    return f * p->nObjs + ObjId;
+}
+
+static int Cec_DynSrmCacheRead( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj )
+{
+    return Vec_IntEntry( p->vSpecLits, Cec_DynSrmCacheIndex(p, f, Gia_ObjId(p->pAig, pObj)) );
+}
+
+static void Cec_DynSrmCacheWrite( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj, int Lit )
+{
+    Vec_IntWriteEntry( p->vSpecLits, Cec_DynSrmCacheIndex(p, f, Gia_ObjId(p->pAig, pObj)), Lit );
+}
+
+static int Cec_DynSrmHostPiLit( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj )
+{
+    int ObjId = Gia_ObjId( p->pAig, pObj );
+    int iPi = Vec_IntEntry( p->vPiMap, ObjId );
+    assert( iPi >= 0 && iPi < p->nPis );
+    assert( f >= 0 && f < p->nFramesTotal );
+    return Gia_ManCiLit( p->pCore, p->nRegs + f * p->nPis + iPi );
+}
+
+static int Cec_DynSrmHostRoLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj )
+{
+    int ObjId = Gia_ObjId( p->pAig, pObj );
+    int iRo = Vec_IntEntry( p->vRoMap, ObjId );
+    assert( iRo >= 0 && iRo < p->nRegs );
+    return Gia_ManCiLit( p->pCore, iRo );
+}
+
+static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
+{
+    if ( p->pCore )
+        Gia_ManStop( p->pCore );
+    p->pCore = NULL;
+    Vec_IntFreeP( &p->vSpecLits );
+    Vec_IntFreeP( &p->vOutLits );
+    Vec_IntFreeP( &p->vPiMap );
+    Vec_IntFreeP( &p->vRoMap );
+    p->nObjs = p->nPis = p->nRegs = p->nFramesTotal = p->nCoreCiNum = 0;
+}
+
+static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
+{
+    Gia_Obj_t * pObj;
+    int f, i, nFramesTotal = nFrames + fScorr;
+    if ( p->pCore != NULL &&
+         p->nObjs == Gia_ManObjNum(p->pAig) &&
+         p->nPis == Gia_ManPiNum(p->pAig) &&
+         p->nRegs == Gia_ManRegNum(p->pAig) &&
+         p->nFramesTotal == nFramesTotal )
+        return;
+    Cec_DynSrmResetCore( p );
+    p->nObjs = Gia_ManObjNum( p->pAig );
+    p->nPis = Gia_ManPiNum( p->pAig );
+    p->nRegs = Gia_ManRegNum( p->pAig );
+    p->nFramesTotal = nFramesTotal;
+    p->vSpecLits = Vec_IntStartFull( p->nFramesTotal * p->nObjs );
+    p->vOutLits = Vec_IntAlloc( 1000 );
+    p->vPiMap = Vec_IntStartFull( p->nObjs );
+    p->vRoMap = Vec_IntStartFull( p->nObjs );
+    p->pCore = Gia_ManStart( Abc_MaxInt( p->nFramesTotal * p->nObjs, 1000 ) );
+    p->pCore->pName = Abc_UtilStrsav( p->pAig->pName );
+    p->pCore->pSpec = Abc_UtilStrsav( p->pAig->pSpec );
+    Gia_ManHashAlloc( p->pCore );
+    Gia_ManForEachRo( p->pAig, pObj, i )
+    {
+        Vec_IntWriteEntry( p->vRoMap, Gia_ObjId(p->pAig, pObj), i );
+        Gia_ManAppendCi( p->pCore );
+    }
+    Gia_ManForEachPi( p->pAig, pObj, i )
+        Vec_IntWriteEntry( p->vPiMap, Gia_ObjId(p->pAig, pObj), i );
+    for ( f = 0; f < p->nFramesTotal; f++ )
+        Gia_ManForEachPi( p->pAig, pObj, i )
+            Gia_ManAppendCi( p->pCore );
+    p->nCoreCiNum = Gia_ManCiNum( p->pCore );
+    assert( p->nCoreCiNum == p->nRegs + p->nFramesTotal * p->nPis );
+    p->nCoreResets++;
+}
+
+static void Cec_DynSrmInvalidateCache( Cec_DynSrm_t * p, int * pTfoMask )
+{
+    int f, i, Counter = 0;
+    assert( p->vSpecLits != NULL );
+    if ( pTfoMask == NULL )
+    {
+        Vec_IntFill( p->vSpecLits, p->nFramesTotal * p->nObjs, -1 );
+        p->nCacheFullClears++;
+        return;
+    }
+    for ( i = 0; i < p->nObjs; i++ )
+    {
+        if ( !pTfoMask[i] )
+            continue;
+        for ( f = 0; f < p->nFramesTotal; f++ )
+        {
+            Vec_IntWriteEntry( p->vSpecLits, Cec_DynSrmCacheIndex(p, f, i), -1 );
+            Counter++;
+        }
+    }
+    p->nCacheLocalClears++;
+    p->nCacheLocalEntries += Counter;
+}
+
+static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
+
+static int Cec_DynSrmRealLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix )
+{
+    if ( Gia_ObjIsAnd(pObj) )
+    {
+        int iLit0 = Cec_DynSrmSpecLit( p, Gia_ObjFanin0(pObj), f, nPrefix );
+        int iLit1 = Cec_DynSrmSpecLit( p, Gia_ObjFanin1(pObj), f, nPrefix );
+        iLit0 = Abc_LitNotCond( iLit0, Gia_ObjFaninC0(pObj) );
+        iLit1 = Abc_LitNotCond( iLit1, Gia_ObjFaninC1(pObj) );
+        return Gia_ManHashAnd( p->pCore, iLit0, iLit1 );
+    }
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+        return Cec_DynSrmHostPiLit( p, f, pObj );
+    if ( f == 0 )
+    {
+        assert( Gia_ObjIsRo(p->pAig, pObj) );
+        return Cec_DynSrmSpecLit( p, pObj, f, nPrefix );
+    }
+    assert( Gia_ObjIsRo(p->pAig, pObj) );
+    pObj = Gia_ObjRoToRi( p->pAig, pObj );
+    {
+        int iLit = Cec_DynSrmSpecLit( p, Gia_ObjFanin0(pObj), f-1, nPrefix );
+        return Abc_LitNotCond( iLit, Gia_ObjFaninC0(pObj) );
+    }
+}
+
+static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix )
+{
+    Gia_Obj_t * pRepr;
+    int iLit;
+    if ( Gia_ObjIsConst0(pObj) )
+        return 0;
+    iLit = Cec_DynSrmCacheRead( p, f, pObj );
+    if ( iLit >= 0 )
+        return iLit;
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+    {
+        iLit = Cec_DynSrmHostPiLit( p, f, pObj );
+        Cec_DynSrmCacheWrite( p, f, pObj, iLit );
+        return iLit;
+    }
+    if ( f >= nPrefix && (pRepr = Gia_ObjReprObj(p->pAig, Gia_ObjId(p->pAig, pObj))) )
+    {
+        iLit = Cec_DynSrmSpecLit( p, pRepr, f, nPrefix );
+        iLit = Abc_LitNotCond( iLit, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
+        Cec_DynSrmCacheWrite( p, f, pObj, iLit );
+        return iLit;
+    }
+    if ( f == 0 && Gia_ObjIsRo(p->pAig, pObj) )
+    {
+        iLit = Cec_DynSrmHostRoLit( p, pObj );
+        Cec_DynSrmCacheWrite( p, f, pObj, iLit );
+        return iLit;
+    }
+    assert( Gia_ObjIsCand(pObj) );
+    iLit = Cec_DynSrmRealLit( p, pObj, f, nPrefix );
+    Cec_DynSrmCacheWrite( p, f, pObj, iLit );
+    return iLit;
+}
+
+static int Cec_DynSrmCopyLit_rec( Gia_Man_t * pCore, Gia_Man_t * pView, int iLit )
+{
+    Gia_Obj_t * pObj;
+    int iObj, iLitCopy, iLit0, iLit1;
+    if ( iLit < 2 )
+        return iLit;
+    iObj = Abc_Lit2Var( iLit );
+    iLitCopy = Gia_ObjCopyArray( pCore, iObj );
+    if ( iLitCopy >= 0 )
+        return Abc_LitNotCond( iLitCopy, Abc_LitIsCompl(iLit) );
+    pObj = Gia_ManObj( pCore, iObj );
+    assert( Gia_ObjIsAnd(pObj) );
+    iLit0 = Cec_DynSrmCopyLit_rec( pCore, pView, Gia_ObjFaninLit0p(pCore, pObj) );
+    iLit1 = Cec_DynSrmCopyLit_rec( pCore, pView, Gia_ObjFaninLit1p(pCore, pObj) );
+    iLitCopy = Gia_ManHashAnd( pView, iLit0, iLit1 );
+    Gia_ObjSetCopyArray( pCore, iObj, iLitCopy );
+    return Abc_LitNotCond( iLitCopy, Abc_LitIsCompl(iLit) );
+}
+
+static Gia_Man_t * Cec_DynSrmBuildView( Cec_DynSrm_t * p )
+{
+    Gia_Man_t * pView;
+    Gia_Obj_t * pObj;
+    int i, iLit, iLitCopy;
+    pView = Gia_ManStart( Abc_MaxInt( p->nCoreCiNum + 100 * Vec_IntSize(p->vOutLits) + 100, 1000 ) );
+    pView->pName = Abc_UtilStrsav( p->pAig->pName );
+    pView->pSpec = Abc_UtilStrsav( p->pAig->pSpec );
+    Gia_ManHashAlloc( pView );
+    Vec_IntFill( &p->pCore->vCopies, Gia_ManObjNum(p->pCore), -1 );
+    Gia_ObjSetCopyArray( p->pCore, 0, 0 );
+    Gia_ManForEachCi( p->pCore, pObj, i )
+        Gia_ObjSetCopyArray( p->pCore, Gia_ObjId(p->pCore, pObj), Gia_ManAppendCi(pView) );
+    Vec_IntForEachEntry( p->vOutLits, iLit, i )
+    {
+        iLitCopy = Cec_DynSrmCopyLit_rec( p->pCore, pView, iLit );
+        Gia_ManAppendCo( pView, iLitCopy );
+    }
+    Gia_ManHashStop( pView );
+    Vec_IntErase( &p->pCore->vCopies );
+    p->nViewBuilds++;
+    p->nViewObjsLast = Gia_ManObjNum( pView );
+    p->nViewObjsMax = Abc_MaxInt( p->nViewObjsMax, p->nViewObjsLast );
+    return pView;
+}
+
 Cec_DynSrm_t * Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr )
 {
     Cec_DynSrm_t * p = ABC_CALLOC( Cec_DynSrm_t, 1 );
@@ -141,6 +377,7 @@ void Cec_DynSrmFree( Cec_DynSrm_t * p )
 {
     if ( p == NULL )
         return;
+    Cec_DynSrmResetCore( p );
     Vec_IntFree( p->vPendingPairs );
     Vec_IntFree( p->vPendingNodes );
     ABC_FREE( p->pPendingMark );
@@ -160,6 +397,13 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nBuilds, p->nBuildsActive, p->nPendingAdded, p->nPendingCleared,
         p->nPendingPruned, p->nPendingMax, p->nPendingActiveMax,
         Vec_IntSize(p->vPendingPairs) / 2 );
+    Abc_Print( 1, "DynSRM: core_resets = %d, core_builds = %d, view_builds = %d, out_lits_last/max = %d/%d, core_objs_last/max = %d/%d, view_objs_last/max = %d/%d\n",
+        p->nCoreResets, p->nCoreBuilds, p->nViewBuilds,
+        p->nOutLitsLast, p->nOutLitsMax,
+        p->nCoreObjsLast, p->nCoreObjsMax,
+        p->nViewObjsLast, p->nViewObjsMax );
+    Abc_Print( 1, "DynSRM: cache_full_clears = %d, cache_local_clears = %d, cache_local_entries = %d\n",
+        p->nCacheFullClears, p->nCacheLocalClears, p->nCacheLocalEntries );
 }
 
 int Cec_DynSrmPrunePending( Cec_DynSrm_t * p, int fRings )
@@ -280,10 +524,8 @@ int Cec_DynSrmUpdatePending( Cec_DynSrm_t * p, Vec_Str_t * vStatus, Vec_Int_t * 
 Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
     Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode )
 {
-    Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
-    Vec_Int_t * vXorLits;
-    int f, i, iPrev, iObj, iPrevNew, iObjNew, iPrevRaw, iObjRaw;
+    int i, iPrev, iObj, iPrevNew, iObjNew, iPrevRaw, iObjRaw;
     assert( p != NULL );
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p->pAig) > 0 );
@@ -292,26 +534,11 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
     p->nBuilds++;
     if ( Mode == CEC_EMIT_ACTIVE )
         p->nBuildsActive++;
-    Vec_IntFill( &p->pAig->vCopies, (nFrames+fScorr)*Gia_ManObjNum(p->pAig), -1 );
+    Cec_DynSrmEnsureCore( p, nFrames, fScorr );
+    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
     Gia_ManSetPhase( p->pAig );
-    pNew = Gia_ManStart( nFrames * Gia_ManObjNum(p->pAig) );
-    pNew->pName = Abc_UtilStrsav( p->pAig->pName );
-    pNew->pSpec = Abc_UtilStrsav( p->pAig->pSpec );
-    Gia_ManHashAlloc( pNew );
-    Gia_ObjSetCopyF( p->pAig, 0, Gia_ManConst0(p->pAig), 0 );
-    Gia_ManForEachRo( p->pAig, pObj, i )
-        Gia_ObjSetCopyF( p->pAig, 0, pObj, Gia_ManAppendCi(pNew) );
-    Gia_ManForEachRo( p->pAig, pObj, i )
-        if ( (pRepr = Gia_ObjReprObj(p->pAig, Gia_ObjId(p->pAig, pObj))) )
-            Gia_ObjSetCopyF( p->pAig, 0, pObj, Gia_ObjCopyF(p->pAig, 0, pRepr) );
-    for ( f = 0; f < nFrames+fScorr; f++ )
-    {
-        Gia_ObjSetCopyF( p->pAig, f, Gia_ManConst0(p->pAig), 0 );
-        Gia_ManForEachPi( p->pAig, pObj, i )
-            Gia_ObjSetCopyF( p->pAig, f, pObj, Gia_ManAppendCi(pNew) );
-    }
     *pvOutputs = Vec_IntAlloc( 1000 );
-    vXorLits = Vec_IntAlloc( 1000 );
+    Vec_IntClear( p->vOutLits );
     if ( fRings )
     {
         Gia_ManForEachObj1( p->pAig, pObj, i )
@@ -321,13 +548,13 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
                 int fActive = Cec_DynSrmActiveConst( p, pTfoMask, i );
                 if ( !Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     continue;
-                iObjRaw = Gia_ManCorrSpecReal( pNew, p->pAig, pObj, nFrames, 0 );
+                iObjRaw = Cec_DynSrmRealLit( p, pObj, nFrames, 0 );
                 iObjNew = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pObj) );
                 if ( iObjNew != 0 )
                 {
                     Vec_IntPush( *pvOutputs, 0 );
                     Vec_IntPush( *pvOutputs, i );
-                    Vec_IntPush( vXorLits, iObjNew );
+                    Vec_IntPush( p->vOutLits, iObjNew );
                 }
             }
             else if ( Gia_ObjIsHead( p->pAig, i ) )
@@ -338,15 +565,15 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
                     int fActive = Cec_DynSrmActivePair( p, pTfoMask, 1, iPrev, iObj );
                     if ( Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     {
-                        iPrevRaw = Gia_ManCorrSpecReal( pNew, p->pAig, Gia_ManObj(p->pAig, iPrev), nFrames, 0 );
-                        iObjRaw  = Gia_ManCorrSpecReal( pNew, p->pAig, Gia_ManObj(p->pAig, iObj), nFrames, 0 );
+                        iPrevRaw = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iPrev), nFrames, 0 );
+                        iObjRaw  = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iObj), nFrames, 0 );
                         iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iPrev)) );
                         iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iObj)) );
                         if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
                         {
                             Vec_IntPush( *pvOutputs, iPrev );
                             Vec_IntPush( *pvOutputs, iObj );
-                            Vec_IntPush( vXorLits, Gia_ManHashAnd(pNew, iPrevNew, Abc_LitNot(iObjNew)) );
+                            Vec_IntPush( p->vOutLits, Gia_ManHashAnd(p->pCore, iPrevNew, Abc_LitNot(iObjNew)) );
                         }
                     }
                     iPrev = iObj;
@@ -356,15 +583,15 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
                     int fActive = Cec_DynSrmActivePair( p, pTfoMask, 1, iPrev, iObj );
                     if ( Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     {
-                        iPrevRaw = Gia_ManCorrSpecReal( pNew, p->pAig, Gia_ManObj(p->pAig, iPrev), nFrames, 0 );
-                        iObjRaw  = Gia_ManCorrSpecReal( pNew, p->pAig, Gia_ManObj(p->pAig, iObj), nFrames, 0 );
+                        iPrevRaw = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iPrev), nFrames, 0 );
+                        iObjRaw  = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iObj), nFrames, 0 );
                         iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iPrev)) );
                         iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iObj)) );
                         if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
                         {
                             Vec_IntPush( *pvOutputs, iPrev );
                             Vec_IntPush( *pvOutputs, iObj );
-                            Vec_IntPush( vXorLits, Gia_ManHashAnd(pNew, iPrevNew, Abc_LitNot(iObjNew)) );
+                            Vec_IntPush( p->vOutLits, Gia_ManHashAnd(p->pCore, iPrevNew, Abc_LitNot(iObjNew)) );
                         }
                     }
                 }
@@ -384,26 +611,24 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
                 if ( !Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     continue;
             }
-            iPrevRaw = Gia_ObjIsConst(p->pAig, i)? 0 : Gia_ManCorrSpecReal( pNew, p->pAig, pRepr, nFrames, 0 );
-            iObjRaw  = Gia_ManCorrSpecReal( pNew, p->pAig, pObj, nFrames, 0 );
+            iPrevRaw = Gia_ObjIsConst(p->pAig, i)? 0 : Cec_DynSrmRealLit( p, pRepr, nFrames, 0 );
+            iObjRaw  = Cec_DynSrmRealLit( p, pObj, nFrames, 0 );
             iPrevNew = iPrevRaw;
             iObjNew  = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
             if ( iPrevNew != iObjNew )
             {
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p->pAig, pRepr) );
                 Vec_IntPush( *pvOutputs, Gia_ObjId(p->pAig, pObj) );
-                Vec_IntPush( vXorLits, Gia_ManHashXor(pNew, iPrevNew, iObjNew) );
+                Vec_IntPush( p->vOutLits, Gia_ManHashXor(p->pCore, iPrevNew, iObjNew) );
             }
         }
     }
-    Vec_IntForEachEntry( vXorLits, iObjNew, i )
-        Gia_ManAppendCo( pNew, iObjNew );
-    Vec_IntFree( vXorLits );
-    Gia_ManHashStop( pNew );
-    Vec_IntErase( &p->pAig->vCopies );
-    pNew = Gia_ManCleanup( pTemp = pNew );
-    Gia_ManStop( pTemp );
-    return pNew;
+    p->nCoreBuilds++;
+    p->nOutLitsLast = Vec_IntSize( p->vOutLits );
+    p->nOutLitsMax = Abc_MaxInt( p->nOutLitsMax, p->nOutLitsLast );
+    p->nCoreObjsLast = Gia_ManObjNum( p->pCore );
+    p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
+    return Cec_DynSrmBuildView( p );
 }
 
 ////////////////////////////////////////////////////////////////////////
