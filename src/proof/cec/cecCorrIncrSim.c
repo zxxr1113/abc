@@ -1917,10 +1917,7 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
             p->nEventFallbackWork++;
         p->nFallbackPre++;
         p->nBatchFull++;
-        // A time miss is an adaptive-budget decision for this batch, not
-        // evidence that the structural cone is too wide for following batches.
-        return Cec_SeedSimProfReturn( p,
-            fTime ? CEC_SEEDSIM_RESULT_FULL : Status, tTry );
+        return Cec_SeedSimProfReturn( p, Status, tTry );
     }
     tPhase = Cec_SeedSimProfStart();
     Cec_SeedSimTxnBegin( p );
