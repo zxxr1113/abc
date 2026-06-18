@@ -170,7 +170,7 @@ struct Cec_ParCor_t_
     int              fIncremental;  // active-list/TFO-triggered reproof in main loop
     int              fIncrOracle;   // unbounded shadow SAT for pairs skipped by -i
     int              fIncrSim;      // persistent CEX-TFO-only resimulation after SAT
-    int              fDynSrm;       // persistent SRM manager/proof-obligation bookkeeping
+    int              fDynSrm;       // persistent dynamic SRM and true-unroll resimulation
     int              fSkipFailResim;// skip resim in rounds with no real CEX (only timeout/fail)
     int              fVerboseFlops; // verbose stats
     int              fVeryVerbose;  // verbose stats

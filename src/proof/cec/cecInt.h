@@ -324,13 +324,9 @@ struct Cec_SeedSim_t_
     abctime      tEventInit;
 };
 
-// Dynamic SRM manager shell for &scorr -D.
-//
-// The first implementation keeps proof-obligation state and force-active
-// bookkeeping persistent while delegating graph construction to the existing
-// SRM builders.  This gives the main loop a stable manager boundary: future
-// append-only/local-update SRM storage can replace the delegated builder
-// without changing the convergence and SAT/resim control flow again.
+// Dynamic SRM manager for &scorr -D.  It keeps the speculative SRM core and a
+// separate true-value unrolling persistent; SAT counterexamples are simulated
+// on the latter and fed directly into the class-refinement engine.
 typedef struct Cec_DynSrm_t_ Cec_DynSrm_t;
 
 // Recursive diagnosis has a much higher constant factor than a linear sweep.
@@ -357,6 +353,12 @@ typedef struct Cec_DynSrm_t_ Cec_DynSrm_t;
 #define CEC_EVENT_EDGE_WORD_FRAC_DEN 5
 #define CEC_EVENT_TIME_FRAC_NUM 2
 #define CEC_EVENT_TIME_FRAC_DEN 5
+// Up-front density gate for the event path.  When a batch's changed-CI seed
+// exceeds this fraction of all unrolled inputs, its dirty closure approaches a
+// full sweep and bit-parallel full resim wins; reject the batch before doing
+// any propagation work that a mid-flight budget abort would otherwise discard.
+#define CEC_EVENT_INPUT_FRAC_NUM 1
+#define CEC_EVENT_INPUT_FRAC_DEN 8
 #define CEC_EVENT_CLOCK_PERIOD 2048
 #define CEC_SEEDSIM_RESULT_FULL       0
 #define CEC_SEEDSIM_RESULT_LOCAL      1
@@ -372,6 +374,10 @@ typedef struct Cec_DynSrm_t_ Cec_DynSrm_t;
 
 /*=== cecCorr.c ============================================================*/
 extern void                 Cec_ManRefinedClassPrintStats( Gia_Man_t * p, Vec_Str_t * vStatus, int iIter, abctime Time );
+extern void                 Cec_ManStartSimInfo( Vec_Ptr_t * vInfo, int nFlops );
+extern Vec_Int_t *          Gia_ManCorrCreateRemapping( Gia_Man_t * p );
+extern void                 Gia_ManCorrPerformRemapping( Vec_Int_t * vPairs, Vec_Ptr_t * vInfo );
+extern int                  Cec_ManLoadCounterExamples( Vec_Ptr_t * vInfo, Vec_Int_t * vCexStore, int iStart );
 extern int                  Gia_ManCorrSpecReal( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
 extern void                 Gia_ManCorrSpecReduce_rec( Gia_Man_t * pNew, Gia_Man_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
 extern Gia_Man_t *          Gia_ManCorrSpecReduce( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, Vec_Int_t ** pvOutLits );
@@ -396,13 +402,11 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 /*=== cecCorrDyn.c ============================================================*/
 extern Cec_DynSrm_t *       Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr );
 extern void                 Cec_DynSrmFree( Cec_DynSrm_t * p );
-extern int                  Cec_DynSrmPendingNum( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmPrintStats( Cec_DynSrm_t * p );
-extern int                  Cec_DynSrmPrunePending( Cec_DynSrm_t * p, int fRings );
-extern void                 Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive, int * pnPendingActive );
-extern void                 Cec_DynSrmClearPending( Cec_DynSrm_t * p );
-extern int                  Cec_DynSrmUpdatePending( Cec_DynSrm_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOutputs, int fRings );
+extern void                 Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern Gia_Man_t *          Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode );
+extern int                  Cec_DynSrmResimulate( Cec_DynSrm_t * p, Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames );
+extern void                 Cec_DynSrmRecordSimFallback( Cec_DynSrm_t * p );
 /*=== cecCorrIncrSim.c ============================================================*/
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
 extern void                 Cec_SeedSimFree( Cec_SeedSim_t * p );
@@ -466,6 +470,7 @@ extern int                  Cec_ManSimClassesPrepare( Cec_ManSim_t * p, int Leve
 extern int                  Cec_ManSimClassesRefine( Cec_ManSim_t * p );
 extern int                  Cec_ManSimSimulateRound( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos );
 extern int                  Cec_ManSimSimulateRoundSavePhase( Cec_ManSim_t * p, Vec_Ptr_t * vInfoCis, Vec_Ptr_t * vInfoCos, unsigned * pSave );
+extern int                  Cec_ManSimRefineMappedFrame( Cec_ManSim_t * p, unsigned * pValues, Vec_Int_t * vLits, int iBase, int nWords );
 /*=== cecIso.c ============================================================*/
 extern int *                Cec_ManDetectIsomorphism( Gia_Man_t * p );
 /*=== cecMan.c ============================================================*/

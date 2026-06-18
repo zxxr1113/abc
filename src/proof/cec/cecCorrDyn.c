@@ -34,19 +34,22 @@ struct Cec_DynSrm_t_
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
     Vec_Int_t *      vPiMap;        // host obj id -> PI index
     Vec_Int_t *      vRoMap;        // host obj id -> RO index
-    Vec_Int_t *      vPendingPairs; // SAT obligations still merged after resim
-    Vec_Int_t *      vPendingNodes; // endpoints of pending obligations
-    int *            pPendingMark;  // dense endpoint mark, size = Gia_ManObjNum
+    Gia_Man_t *      pTrue;         // persistent true-value unrolling (no repr substitution)
+    Vec_Int_t *      vTrueLits;     // (frame,host object) -> literal in pTrue
+    Vec_Ptr_t *      vTrueInputs;   // packed CEX/random values for pTrue CIs
+    unsigned *       pTrueSims;     // object-major bit-parallel values for pTrue
+    size_t           nTrueSimsAlloc;
+    int              nTrueFrames;
+    int              nTrueWords;
+    // Phase-2 measurement (behavior-preserving): per-key stamp used to count the
+    // union of true-value (no repr substitution) cones of the active pairs.
+    int *            pTrueMark;     // size = nFramesTotal * nObjs; 0 = unvisited
+    int              nTrueStamp;    // current visit stamp
     int              nObjs;
     int              nPis;
     int              nRegs;
     int              nFramesTotal;
     int              nCoreCiNum;
-    int              nPendingMax;
-    int              nPendingAdded;
-    int              nPendingCleared;
-    int              nPendingPruned;
-    int              nPendingActiveMax;
     int              nBuilds;
     int              nBuildsActive;
     int              nCoreResets;
@@ -61,85 +64,40 @@ struct Cec_DynSrm_t_
     int              nCoreObjsMax;
     int              nViewObjsLast;
     int              nViewObjsMax;
+    int              nTrueBuilds;
+    int              nTrueBatches;
+    int              nTrueChanges;
+    int              nTrueFallbacks;
+    int              nTrueObjsLast;
+    abctime          tTrueBuild;
+    abctime          tTrueSim;
+    abctime          tTrueRefine;
 };
 
 ////////////////////////////////////////////////////////////////////////
 ///                     FUNCTION DEFINITIONS                         ///
 ////////////////////////////////////////////////////////////////////////
 
-static int Cec_DynSrmObjsStillMerged( Gia_Man_t * p, int iRepr, int iObj, int fRings )
-{
-    int iReprRoot, iObjRoot;
-    if ( !fRings )
-        return Gia_ObjHasSameRepr( p, iRepr, iObj );
-    if ( iRepr == 0 )
-        return Gia_ObjIsConst( p, iObj );
-    iReprRoot = Gia_ObjIsHead( p, iRepr ) ? iRepr : Gia_ObjRepr( p, iRepr );
-    iObjRoot  = Gia_ObjIsHead( p, iObj  ) ? iObj  : Gia_ObjRepr( p, iObj  );
-    return iReprRoot == iObjRoot && iReprRoot != GIA_VOID;
-}
-
-static void Cec_DynSrmClearPendingMarks( Cec_DynSrm_t * p )
-{
-    int i, ObjId;
-    Vec_IntForEachEntry( p->vPendingNodes, ObjId, i )
-        p->pPendingMark[ObjId] = 0;
-    Vec_IntClear( p->vPendingNodes );
-}
-
-static void Cec_DynSrmMarkPendingNode( Cec_DynSrm_t * p, int ObjId )
-{
-    if ( ObjId <= 0 || ObjId >= Gia_ManObjNum(p->pAig) )
-        return;
-    if ( p->pPendingMark[ObjId] )
-        return;
-    p->pPendingMark[ObjId] = 1;
-    Vec_IntPush( p->vPendingNodes, ObjId );
-}
-
-static int Cec_DynSrmPairExists( Vec_Int_t * vPairs, int iRepr, int iObj )
-{
-    int i, Entry0, Entry1;
-    Vec_IntForEachEntryDouble( vPairs, Entry0, Entry1, i )
-        if ( Entry0 == iRepr && Entry1 == iObj )
-            return 1;
-    return 0;
-}
-
-static void Cec_DynSrmAddPendingPair( Cec_DynSrm_t * p, int iRepr, int iObj )
-{
-    if ( Cec_DynSrmPairExists(p->vPendingPairs, iRepr, iObj) )
-        return;
-    Vec_IntPush( p->vPendingPairs, iRepr );
-    Vec_IntPush( p->vPendingPairs, iObj );
-    Cec_DynSrmMarkPendingNode( p, iRepr );
-    Cec_DynSrmMarkPendingNode( p, iObj );
-    p->nPendingAdded++;
-    p->nPendingMax = Abc_MaxInt( p->nPendingMax, Vec_IntSize(p->vPendingPairs) / 2 );
-}
-
-static int Cec_DynSrmNodePending( Cec_DynSrm_t * p, int ObjId )
-{
-    return ObjId > 0 && ObjId < Gia_ManObjNum(p->pAig) && p->pPendingMark[ObjId];
-}
-
+// Active-pair selection mirrors -i exactly: a pair is active iff an endpoint is
+// in the alias-aware TFO (or, in ring mode, the ring edge itself changed).  The
+// earlier "pending" set that force-re-emitted still-merged SAT pairs has been
+// removed: per md/scorr_i_correctness_bug_report.md the alias-aware TFO is the
+// real fix, and the retry/pending protection was shown to be both unnecessary
+// (alias-only passes -d) and incomplete.  -d (incr-oracle) certifies soundness.
 static int Cec_DynSrmActiveConst( Cec_DynSrm_t * p, int * pTfoMark, int ObjId )
 {
-    return (pTfoMark && pTfoMark[ObjId]) || Cec_DynSrmNodePending( p, ObjId );
+    (void)p;
+    return pTfoMark != NULL && pTfoMark[ObjId];
 }
 
 static int Cec_DynSrmActivePair( Cec_DynSrm_t * p, int * pTfoMark, int fRings, int iPrev, int iObj )
 {
-    int fActive;
+    if ( pTfoMark == NULL )
+        return 0;
     if ( !fRings )
-    {
-        fActive = pTfoMark != NULL && (pTfoMark[iPrev] || pTfoMark[iObj]);
-        return fActive || Cec_DynSrmNodePending(p, iPrev) || Cec_DynSrmNodePending(p, iObj);
-    }
-    fActive = pTfoMark != NULL &&
-              (pTfoMark[iPrev] || pTfoMark[iObj] ||
-               Cec_IncrMgrRingEdgeChanged( p->pIncr, iPrev, iObj ));
-    return fActive || Cec_DynSrmNodePending(p, iPrev) || Cec_DynSrmNodePending(p, iObj);
+        return pTfoMark[iPrev] || pTfoMark[iObj];
+    return pTfoMark[iPrev] || pTfoMark[iObj] ||
+           Cec_IncrMgrRingEdgeChanged( p->pIncr, iPrev, iObj );
 }
 
 static int Cec_DynSrmEmitModeAccept( int fActive, Cec_IncrEmitMode_t Mode )
@@ -183,8 +141,21 @@ static int Cec_DynSrmHostRoLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj )
     return Gia_ManCiLit( p->pCore, iRo );
 }
 
+static void Cec_DynSrmResetTrue( Cec_DynSrm_t * p )
+{
+    if ( p->pTrue )
+        Gia_ManStop( p->pTrue );
+    p->pTrue = NULL;
+    Vec_IntFreeP( &p->vTrueLits );
+    Vec_PtrFreeP( &p->vTrueInputs );
+    ABC_FREE( p->pTrueSims );
+    p->nTrueSimsAlloc = 0;
+    p->nTrueFrames = p->nTrueWords = 0;
+}
+
 static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
 {
+    Cec_DynSrmResetTrue( p );
     if ( p->pCore )
         Gia_ManStop( p->pCore );
     p->pCore = NULL;
@@ -193,7 +164,151 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
     Vec_IntFreeP( &p->vCopyTouched );
     Vec_IntFreeP( &p->vPiMap );
     Vec_IntFreeP( &p->vRoMap );
+    ABC_FREE( p->pTrueMark );
+    p->nTrueStamp = 0;
     p->nObjs = p->nPis = p->nRegs = p->nFramesTotal = p->nCoreCiNum = 0;
+}
+
+static int Cec_DynSrmTrueIndex( Cec_DynSrm_t * p, int f, int ObjId )
+{
+    assert( f >= 0 && f < p->nTrueFrames );
+    assert( ObjId >= 0 && ObjId < p->nObjs );
+    return f * p->nObjs + ObjId;
+}
+
+static void Cec_DynSrmEnsureTrue( Cec_DynSrm_t * p, int nFrames, int nWords )
+{
+    Gia_Obj_t * pObj;
+    int f, i;
+    if ( p->pTrue != NULL && p->nTrueFrames == nFrames &&
+         p->nTrueWords == nWords )
+        return;
+    Cec_DynSrmResetTrue( p );
+    p->nTrueFrames = nFrames;
+    p->nTrueWords = nWords;
+    p->vTrueLits = Vec_IntStartFull( p->nTrueFrames * p->nObjs );
+    p->vTrueInputs = Vec_PtrAllocSimInfo(
+        p->nRegs + p->nTrueFrames * p->nPis, p->nTrueWords );
+    p->pTrue = Gia_ManStart( Abc_MaxInt(p->nTrueFrames * p->nObjs, 1000) );
+    p->pTrue->pName = Abc_UtilStrsav( p->pAig->pName );
+    p->pTrue->pSpec = Abc_UtilStrsav( p->pAig->pSpec );
+    Gia_ManHashAlloc( p->pTrue );
+    Gia_ManForEachRo( p->pAig, pObj, i )
+        Gia_ManAppendCi( p->pTrue );
+    for ( f = 0; f < p->nTrueFrames; f++ )
+        Gia_ManForEachPi( p->pAig, pObj, i )
+            Gia_ManAppendCi( p->pTrue );
+    assert( Gia_ManCiNum(p->pTrue) ==
+        p->nRegs + p->nTrueFrames * p->nPis );
+    p->nTrueBuilds++;
+}
+
+static int Cec_DynSrmTrueLit_rec( Cec_DynSrm_t * p, int ObjId, int f )
+{
+    Gia_Obj_t * pObj;
+    int Index, Lit, Lit0, Lit1;
+    if ( ObjId == 0 )
+        return 0;
+    Index = Cec_DynSrmTrueIndex( p, f, ObjId );
+    Lit = Vec_IntEntry( p->vTrueLits, Index );
+    if ( Lit >= 0 )
+        return Lit;
+    pObj = Gia_ManObj( p->pAig, ObjId );
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+    {
+        int iPi = Vec_IntEntry( p->vPiMap, ObjId );
+        assert( iPi >= 0 && iPi < p->nPis );
+        Lit = Gia_ManCiLit( p->pTrue, p->nRegs + f * p->nPis + iPi );
+    }
+    else if ( Gia_ObjIsRo(p->pAig, pObj) )
+    {
+        if ( f == 0 )
+        {
+            int iRo = Vec_IntEntry( p->vRoMap, ObjId );
+            assert( iRo >= 0 && iRo < p->nRegs );
+            Lit = Gia_ManCiLit( p->pTrue, iRo );
+        }
+        else
+        {
+            Gia_Obj_t * pRi = Gia_ObjRoToRi( p->pAig, pObj );
+            Lit = Cec_DynSrmTrueLit_rec( p,
+                Gia_ObjFaninId0p(p->pAig, pRi), f - 1 );
+            Lit = Abc_LitNotCond( Lit, Gia_ObjFaninC0(pRi) );
+        }
+    }
+    else
+    {
+        assert( Gia_ObjIsAnd(pObj) );
+        Lit0 = Cec_DynSrmTrueLit_rec( p,
+            Gia_ObjFaninId0p(p->pAig, pObj), f );
+        Lit1 = Cec_DynSrmTrueLit_rec( p,
+            Gia_ObjFaninId1p(p->pAig, pObj), f );
+        Lit0 = Abc_LitNotCond( Lit0, Gia_ObjFaninC0(pObj) );
+        Lit1 = Abc_LitNotCond( Lit1, Gia_ObjFaninC1(pObj) );
+        Lit = Gia_ManHashAnd( p->pTrue, Lit0, Lit1 );
+    }
+    Vec_IntWriteEntry( p->vTrueLits, Index, Lit );
+    return Lit;
+}
+
+static void Cec_DynSrmTrueBuildClassCones( Cec_DynSrm_t * p )
+{
+    Gia_Obj_t * pObj;
+    int f, i;
+    abctime t = Abc_ClockHr();
+    for ( f = 0; f < p->nTrueFrames; f++ )
+        Gia_ManForEachObj1( p->pAig, pObj, i )
+            if ( Gia_ObjIsConst(p->pAig, i) || Gia_ObjIsClass(p->pAig, i) )
+                Cec_DynSrmTrueLit_rec( p, i, f );
+    p->nTrueObjsLast = Gia_ManObjNum( p->pTrue );
+    p->tTrueBuild += Abc_ClockHr() - t;
+}
+
+static void Cec_DynSrmTrueSimulate( Cec_DynSrm_t * p )
+{
+    Gia_Obj_t * pObj;
+    size_t nNeed = (size_t)Gia_ManObjNum(p->pTrue) * p->nTrueWords;
+    unsigned * pSim0, * pSim1, * pSim;
+    int i, w;
+    abctime t = Abc_ClockHr();
+    if ( p->nTrueSimsAlloc < nNeed )
+    {
+        p->pTrueSims = ABC_REALLOC( unsigned, p->pTrueSims, nNeed );
+        p->nTrueSimsAlloc = nNeed;
+    }
+    memset( p->pTrueSims, 0, sizeof(unsigned) * p->nTrueWords );
+    Gia_ManForEachCi( p->pTrue, pObj, i )
+    {
+        pSim = p->pTrueSims + (size_t)Gia_ObjId(p->pTrue, pObj) * p->nTrueWords;
+        pSim0 = (unsigned *)Vec_PtrEntry( p->vTrueInputs, i );
+        for ( w = 0; w < p->nTrueWords; w++ )
+            pSim[w] = pSim0[w];
+        pSim[0] &= ~(unsigned)1;
+    }
+    Gia_ManForEachAnd( p->pTrue, pObj, i )
+    {
+        pSim0 = p->pTrueSims +
+            (size_t)Gia_ObjFaninId0p(p->pTrue, pObj) * p->nTrueWords;
+        pSim1 = p->pTrueSims +
+            (size_t)Gia_ObjFaninId1p(p->pTrue, pObj) * p->nTrueWords;
+        pSim = p->pTrueSims + (size_t)i * p->nTrueWords;
+        if ( Gia_ObjFaninC0(pObj) )
+        {
+            if ( Gia_ObjFaninC1(pObj) )
+                for ( w = 0; w < p->nTrueWords; w++ )
+                    pSim[w] = ~pSim0[w] & ~pSim1[w];
+            else
+                for ( w = 0; w < p->nTrueWords; w++ )
+                    pSim[w] = ~pSim0[w] & pSim1[w];
+        }
+        else if ( Gia_ObjFaninC1(pObj) )
+            for ( w = 0; w < p->nTrueWords; w++ )
+                pSim[w] = pSim0[w] & ~pSim1[w];
+        else
+            for ( w = 0; w < p->nTrueWords; w++ )
+                pSim[w] = pSim0[w] & pSim1[w];
+    }
+    p->tTrueSim += Abc_ClockHr() - t;
 }
 
 static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
@@ -216,6 +331,8 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     p->vCopyTouched = Vec_IntAlloc( 1000 );
     p->vPiMap = Vec_IntStartFull( p->nObjs );
     p->vRoMap = Vec_IntStartFull( p->nObjs );
+    p->pTrueMark = ABC_CALLOC( int, p->nFramesTotal * p->nObjs );
+    p->nTrueStamp = 0;
     p->pCore = Gia_ManStart( Abc_MaxInt( p->nFramesTotal * p->nObjs, 1000 ) );
     p->pCore->pName = Abc_UtilStrsav( p->pAig->pName );
     p->pCore->pSpec = Abc_UtilStrsav( p->pAig->pSpec );
@@ -378,9 +495,6 @@ Cec_DynSrm_t * Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr )
     Cec_DynSrm_t * p = ABC_CALLOC( Cec_DynSrm_t, 1 );
     p->pAig = pAig;
     p->pIncr = pIncr;
-    p->vPendingPairs = Vec_IntAlloc( 64 );
-    p->vPendingNodes = Vec_IntAlloc( 64 );
-    p->pPendingMark = ABC_CALLOC( int, Gia_ManObjNum(pAig) );
     return p;
 }
 
@@ -389,25 +503,15 @@ void Cec_DynSrmFree( Cec_DynSrm_t * p )
     if ( p == NULL )
         return;
     Cec_DynSrmResetCore( p );
-    Vec_IntFree( p->vPendingPairs );
-    Vec_IntFree( p->vPendingNodes );
-    ABC_FREE( p->pPendingMark );
     ABC_FREE( p );
-}
-
-int Cec_DynSrmPendingNum( Cec_DynSrm_t * p )
-{
-    return p ? Vec_IntSize(p->vPendingPairs) / 2 : 0;
 }
 
 void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
 {
     if ( p == NULL )
         return;
-    Abc_Print( 1, "DynSRM: builds = %d, active_builds = %d, pending_add = %d, pending_clear = %d, pending_prune = %d, pending_max = %d, pending_active_max = %d, pending_now = %d\n",
-        p->nBuilds, p->nBuildsActive, p->nPendingAdded, p->nPendingCleared,
-        p->nPendingPruned, p->nPendingMax, p->nPendingActiveMax,
-        Vec_IntSize(p->vPendingPairs) / 2 );
+    Abc_Print( 1, "DynSRM: builds = %d, active_builds = %d\n",
+        p->nBuilds, p->nBuildsActive );
     Abc_Print( 1, "DynSRM: core_resets = %d, core_builds = %d, view_builds = %d, out_lits_last/max = %d/%d, core_objs_last/max = %d/%d, view_objs_last/max = %d/%d\n",
         p->nCoreResets, p->nCoreBuilds, p->nViewBuilds,
         p->nOutLitsLast, p->nOutLitsMax,
@@ -415,40 +519,56 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nViewObjsLast, p->nViewObjsMax );
     Abc_Print( 1, "DynSRM: cache_full_clears = %d, cache_local_clears = %d, cache_local_entries = %d\n",
         p->nCacheFullClears, p->nCacheLocalClears, p->nCacheLocalEntries );
+    Abc_Print( 1, "DynSRM-sim: true_builds = %d, batches = %d, changes = %d, fallbacks = %d, true_objs = %d, build/sim/refine = %.3f/%.3f/%.3f sec\n",
+        p->nTrueBuilds, p->nTrueBatches, p->nTrueChanges, p->nTrueFallbacks,
+        p->nTrueObjsLast, 1.0e-9 * p->tTrueBuild, 1.0e-9 * p->tTrueSim,
+        1.0e-9 * p->tTrueRefine );
 }
 
-int Cec_DynSrmPrunePending( Cec_DynSrm_t * p, int fRings )
+int Cec_DynSrmResimulate( Cec_DynSrm_t * p, Cec_ManSim_t * pSim,
+    Vec_Int_t * vCexStore, int nFrames )
 {
-    Vec_Int_t * vOld;
-    int i, iRepr, iObj;
-    if ( p == NULL )
-        return 0;
-    vOld = p->vPendingPairs;
-    p->vPendingPairs = Vec_IntAlloc( Vec_IntSize(vOld) );
-    Cec_DynSrmClearPendingMarks( p );
-    Vec_IntForEachEntryDouble( vOld, iRepr, iObj, i )
+    Vec_Int_t * vPairs;
+    int iStart = 0, f, nChanges = 0;
+    assert( p != NULL );
+    assert( p->pAig == pSim->pAig );
+    assert( nFrames > 0 );
+    Cec_DynSrmEnsureTrue( p, nFrames, pSim->pPars->nWords );
+    Cec_DynSrmTrueBuildClassCones( p );
+    vPairs = Gia_ManCorrCreateRemapping( p->pAig );
+    while ( iStart < Vec_IntSize(vCexStore) )
     {
-        if ( !Cec_DynSrmObjsStillMerged(p->pAig, iRepr, iObj, fRings) )
-        {
-            p->nPendingCleared++;
-            p->nPendingPruned++;
-            continue;
-        }
-        Vec_IntPush( p->vPendingPairs, iRepr );
-        Vec_IntPush( p->vPendingPairs, iObj );
-        Cec_DynSrmMarkPendingNode( p, iRepr );
-        Cec_DynSrmMarkPendingNode( p, iObj );
+        abctime t;
+        Cec_ManStartSimInfo( p->vTrueInputs, p->nRegs );
+        iStart = Cec_ManLoadCounterExamples(
+            p->vTrueInputs, vCexStore, iStart );
+        Gia_ManCorrPerformRemapping( vPairs, p->vTrueInputs );
+        Cec_DynSrmTrueSimulate( p );
+        t = Abc_ClockHr();
+        for ( f = 0; f < p->nTrueFrames; f++ )
+            nChanges += Cec_ManSimRefineMappedFrame( pSim, p->pTrueSims,
+                p->vTrueLits, f * p->nObjs, p->nTrueWords );
+        p->tTrueRefine += Abc_ClockHr() - t;
+        p->nTrueBatches++;
     }
-    Vec_IntFree( vOld );
-    return Vec_IntSize( p->vPendingPairs ) / 2;
+    assert( iStart == Vec_IntSize(vCexStore) );
+    p->nTrueChanges += nChanges;
+    Vec_IntFree( vPairs );
+    return nChanges;
+}
+
+void Cec_DynSrmRecordSimFallback( Cec_DynSrm_t * p )
+{
+    if ( p )
+        p->nTrueFallbacks++;
 }
 
 void Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark,
-    int * pnTotal, int * pnActive, int * pnPendingActive )
+    int * pnTotal, int * pnActive )
 {
     Gia_Man_t * pAig = p->pAig;
     Gia_Obj_t * pObj, * pRepr;
-    int i, iPrev, iObj, PendingActive = 0;
+    int i, iPrev, iObj;
     *pnTotal = *pnActive = 0;
     assert( pAig->pReprs != NULL );
     if ( fRings )
@@ -457,28 +577,22 @@ void Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark,
         {
             if ( Gia_ObjIsConst( pAig, i ) )
             {
-                int fPending = Cec_DynSrmNodePending( p, i );
                 (*pnTotal)++;
                 (*pnActive) += Cec_DynSrmActiveConst( p, pTfoMark, i );
-                PendingActive += fPending;
             }
             else if ( Gia_ObjIsHead( pAig, i ) )
             {
                 iPrev = i;
                 Gia_ClassForEachObj1( pAig, i, iObj )
                 {
-                    int fPending = Cec_DynSrmNodePending(p, iPrev) || Cec_DynSrmNodePending(p, iObj);
                     (*pnTotal)++;
                     (*pnActive) += Cec_DynSrmActivePair( p, pTfoMark, 1, iPrev, iObj );
-                    PendingActive += fPending;
                     iPrev = iObj;
                 }
                 iObj = i;
                 {
-                    int fPending = Cec_DynSrmNodePending(p, iPrev) || Cec_DynSrmNodePending(p, iObj);
                     (*pnTotal)++;
                     (*pnActive) += Cec_DynSrmActivePair( p, pTfoMark, 1, iPrev, iObj );
-                    PendingActive += fPending;
                 }
             }
         }
@@ -494,42 +608,104 @@ void Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark,
             idR = Gia_ObjId( pAig, pRepr );
             (*pnTotal)++;
             (*pnActive) += Cec_DynSrmActivePair( p, pTfoMark, 0, idR, i );
-            PendingActive += Cec_DynSrmNodePending(p, idR) || Cec_DynSrmNodePending(p, i);
         }
     }
-    if ( pnPendingActive )
-    {
-        *pnPendingActive = PendingActive;
-        p->nPendingActiveMax = Abc_MaxInt( p->nPendingActiveMax, PendingActive );
-    }
 }
 
-void Cec_DynSrmClearPending( Cec_DynSrm_t * p )
+// Phase-2 measurement only (gated on -w; never mutates pCore or classes).
+// Marks the union of true-value cones (NO repr substitution) of one host
+// endpoint at one frame, counting the distinct (frame,obj) keys a sim-on-SRM
+// true-value resim would have to evaluate for this endpoint.
+static void Cec_DynSrmTrueConeMark_rec( Cec_DynSrm_t * p, int ObjId, int f, int * pnKeys )
 {
-    if ( p == NULL )
+    Gia_Obj_t * pObj;
+    int Key;
+    if ( ObjId == 0 )
         return;
-    p->nPendingCleared += Vec_IntSize(p->vPendingPairs) / 2;
-    Vec_IntClear( p->vPendingPairs );
-    Cec_DynSrmClearPendingMarks( p );
+    Key = f * p->nObjs + ObjId;
+    if ( p->pTrueMark[Key] == p->nTrueStamp )
+        return;
+    p->pTrueMark[Key] = p->nTrueStamp;
+    (*pnKeys)++;
+    pObj = Gia_ManObj( p->pAig, ObjId );
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+        return;
+    if ( Gia_ObjIsRo(p->pAig, pObj) )
+    {
+        if ( f == 0 )
+            return;
+        Cec_DynSrmTrueConeMark_rec( p,
+            Gia_ObjFaninId0p(p->pAig, Gia_ObjRoToRi(p->pAig, pObj)), f - 1, pnKeys );
+        return;
+    }
+    assert( Gia_ObjIsAnd(pObj) );
+    Cec_DynSrmTrueConeMark_rec( p, Gia_ObjFaninId0p(p->pAig, pObj), f, pnKeys );
+    Cec_DynSrmTrueConeMark_rec( p, Gia_ObjFaninId1p(p->pAig, pObj), f, pnKeys );
 }
 
-int Cec_DynSrmUpdatePending( Cec_DynSrm_t * p, Vec_Str_t * vStatus, Vec_Int_t * vOutputs, int fRings )
+// Reports the size of the active pairs' true-value cone versus the full host
+// unrolling (design doc 20.2 go/no-go: sim-on-SRM only pays when ratio << 1).
+static void Cec_DynSrmReportTrueCone( Cec_DynSrm_t * p, int nFrames, int fRings, int * pTfoMask )
 {
-    int i, Status, iRepr, iObj;
-    if ( p == NULL )
-        return 0;
-    Cec_DynSrmClearPending( p );
-    assert( 2 * Vec_StrSize(vStatus) == Vec_IntSize(vOutputs) );
-    Vec_StrForEachEntry( vStatus, Status, i )
+    Gia_Man_t * pAig = p->pAig;
+    Gia_Obj_t * pObj, * pRepr;
+    int i, iPrev, iObj, nKeys = 0;
+    ABC_INT64_T nFull;
+    if ( p->pTrueMark == NULL )
+        return;
+    if ( ++p->nTrueStamp == 0 )
     {
-        if ( Status != 0 )
-            continue;
-        iRepr = Vec_IntEntry( vOutputs, 2*i );
-        iObj  = Vec_IntEntry( vOutputs, 2*i + 1 );
-        if ( Cec_DynSrmObjsStillMerged(p->pAig, iRepr, iObj, fRings) )
-            Cec_DynSrmAddPendingPair( p, iRepr, iObj );
+        memset( p->pTrueMark, 0, sizeof(int) * p->nFramesTotal * p->nObjs );
+        p->nTrueStamp = 1;
     }
-    return Vec_IntSize( p->vPendingPairs ) / 2;
+    if ( fRings )
+    {
+        Gia_ManForEachObj1( pAig, pObj, i )
+        {
+            if ( Gia_ObjIsConst( pAig, i ) )
+            {
+                if ( Cec_DynSrmActiveConst( p, pTfoMask, i ) )
+                    Cec_DynSrmTrueConeMark_rec( p, i, nFrames, &nKeys );
+            }
+            else if ( Gia_ObjIsHead( pAig, i ) )
+            {
+                iPrev = i;
+                Gia_ClassForEachObj1( pAig, i, iObj )
+                {
+                    if ( Cec_DynSrmActivePair( p, pTfoMask, 1, iPrev, iObj ) )
+                    {
+                        Cec_DynSrmTrueConeMark_rec( p, iPrev, nFrames, &nKeys );
+                        Cec_DynSrmTrueConeMark_rec( p, iObj,  nFrames, &nKeys );
+                    }
+                    iPrev = iObj;
+                }
+                if ( Cec_DynSrmActivePair( p, pTfoMask, 1, iPrev, i ) )
+                {
+                    Cec_DynSrmTrueConeMark_rec( p, iPrev, nFrames, &nKeys );
+                    Cec_DynSrmTrueConeMark_rec( p, i,     nFrames, &nKeys );
+                }
+            }
+        }
+    }
+    else
+    {
+        Gia_ManForEachObj1( pAig, pObj, i )
+        {
+            int idR;
+            pRepr = Gia_ObjReprObj( pAig, Gia_ObjId(pAig,pObj) );
+            if ( pRepr == NULL )
+                continue;
+            idR = Gia_ObjId( pAig, pRepr );
+            if ( !Cec_DynSrmActivePair( p, pTfoMask, 0, idR, i ) )
+                continue;
+            if ( !Gia_ObjIsConst(pAig, i) )
+                Cec_DynSrmTrueConeMark_rec( p, idR, nFrames, &nKeys );
+            Cec_DynSrmTrueConeMark_rec( p, i, nFrames, &nKeys );
+        }
+    }
+    nFull = (ABC_INT64_T)p->nFramesTotal * p->nObjs;
+    Abc_Print( 1, "  [dyn-truecone b=%d] active_true_keys=%d full_unroll_keys=%lld ratio=%.4f\n",
+        p->nBuilds, nKeys, nFull, nFull ? (double)nKeys / (double)nFull : 0.0 );
 }
 
 Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
@@ -639,6 +815,8 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
     p->nOutLitsMax = Abc_MaxInt( p->nOutLitsMax, p->nOutLitsLast );
     p->nCoreObjsLast = Gia_ManObjNum( p->pCore );
     p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
+    if ( Cec_ScorrProfOn && Mode == CEC_EMIT_ACTIVE )
+        Cec_DynSrmReportTrueCone( p, nFrames, fRings, pTfoMask );
     return Cec_DynSrmBuildView( p );
 }
 

@@ -1762,7 +1762,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clk2, clk = Abc_Clock();
     // Incremental active-list manager (NULL if -i not set)
     Cec_IncrMgr_t * pMgr = NULL;
-    // Persistent SRM/proof-obligation manager (NULL if -D not set)
+    // Persistent dynamic SRM and true-unroll simulation manager (NULL without -D).
     Cec_DynSrm_t * pDynSrm = NULL;
     // CEX-diagnosis and split-TFO local-sim manager (NULL if -I not set).
     Cec_SeedSim_t * pSeedSim = NULL;
@@ -1863,22 +1863,19 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             int * pTfoMask = NULL;
             int nReprSeeds = 0, nNextChanges = 0;
             int nTotalPairs = 0, nActivePairs = 0;
-            int nPendingPairs = 0, nPendingActive = 0;
             int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
             // Skip on r==0 because the first full SRM establishes the cache.
             if ( pMgr && r > 0 )
             {
                 abctime clkI = Abc_Clock();
-                if ( pDynSrm )
-                    nPendingPairs = Cec_DynSrmPrunePending( pDynSrm, pPars->fUseRings );
                 tH = Abc_ClockHr();
                 nReprSeeds = Cec_IncrMgrComputeSeeds( pMgr );
                 Prof.tSeed = Abc_ClockHr() - tH;
                 tH = Abc_ClockHr();
                 nNextChanges = pPars->fUseRings ? Cec_IncrMgrCountNextChanges( pMgr ) : 0;
                 Prof.tNext = Abc_ClockHr() - tH;
-                if ( nReprSeeds == 0 && nNextChanges == 0 && nPendingPairs == 0 )
+                if ( nReprSeeds == 0 && nNextChanges == 0 )
                 {
                     if ( !pPars->fIncrOracle )
                     {
@@ -1895,7 +1892,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     Prof.tTfo = Abc_ClockHr() - tH;
                     tH = Abc_ClockHr();
                     if ( pDynSrm )
-                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs, &nPendingActive );
+                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
                     else
                         Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
                     Prof.tCnt = Abc_ClockHr() - tH;
@@ -1911,33 +1908,23 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     Prof.tTfo = Abc_ClockHr() - tH;
                     tH = Abc_ClockHr();
                     if ( pDynSrm )
-                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs, &nPendingActive );
+                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
                     else
                         Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
                     Prof.tCnt = Abc_ClockHr() - tH;
                     if ( nActivePairs == 0 )
                     {
-                        if ( nPendingPairs > 0 )
+                        if ( !pPars->fIncrOracle )
                         {
-                            // A stale pending obligation no longer maps to a
-                            // current active edge.  Build a full SRM rather
-                            // than silently converging.
-                            nIncrFallback++;
+                            // Classes changed, but no remaining candidate pair
+                            // depends on the changes and no new ring edge exists.
+                            clkIncr += Abc_Clock() - clkI;
+                            clkSrm  += Abc_Clock() - clk2;
+                            break;
                         }
-                        else
-                        {
-                            if ( !pPars->fIncrOracle )
-                            {
-                                // Classes changed, but no remaining candidate pair
-                                // depends on the changes and no new ring edge exists.
-                                clkIncr += Abc_Clock() - clkI;
-                                clkSrm  += Abc_Clock() - clk2;
-                                break;
-                            }
-                            pTfoMask = pMgr->pTfoMark;
-                            nIncrSkipped += nTotalPairs;
-                            fStopAfterOracle = 1;
-                        }
+                        pTfoMask = pMgr->pTfoMark;
+                        nIncrSkipped += nTotalPairs;
+                        fStopAfterOracle = 1;
                     }
                     // Fallback is based on emitted candidate pairs, not seed count.
                     // Above ~70% active pairs, full SRM is usually cheaper.
@@ -2000,8 +1987,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 pSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, NULL );
             Prof.tSrm = Abc_ClockHr() - tH;
             if ( pTfoMask && pPars->fVeryVerbose )
-                Abc_Print( 1, "  [incr r=%d repr=%d next=%d pend=%d pact=%d tfo=%d active=%d/%d POs=%d]\n",
-                           r, nReprSeeds, nNextChanges, nPendingPairs, nPendingActive,
+                Abc_Print( 1, "  [incr r=%d repr=%d next=%d tfo=%d active=%d/%d POs=%d]\n",
+                           r, nReprSeeds, nNextChanges,
                            Vec_IntSize(pMgr->vTfoNodes), nActivePairs, nTotalPairs,
                            Gia_ManCoNum(pSrm) );
             // Snapshot after SRM construction: the active builder still needs
@@ -2018,9 +2005,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clkSrm += Abc_Clock() - clk2;
         if ( Gia_ManCoNum(pSrm) == 0 )
         {
-            Cec_DynSrmClearPending( pDynSrm );
             Vec_IntFree( vOutputs );
-            Gia_ManStop( pSrm );            
+            Gia_ManStop( pSrm );
             break;
         }
 //Gia_DumpAiger( pSrm, "corrsrm", r, 2 );
@@ -2038,7 +2024,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clkSat += Abc_Clock() - clk2;
         if ( Vec_IntSize(vCexStore) == 0 )
         {
-            Cec_DynSrmClearPending( pDynSrm );
             Vec_IntFree( vCexStore );
             Vec_StrFree( vStatus );
             Vec_IntFree( vOutputs );
@@ -2054,55 +2039,81 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clk2 = Abc_Clock();
         {
             int nLitsPre = 0, nLitsMid = 0, nLitsPost = 0;
+            int fDynSimUsed = 0;
             Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
             if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
             if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
                 tH = Abc_ClockHr();
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nAddFrames, pSeedSim, vOutputs );
+                if ( pDynSrm && pSeedSim == NULL )
+                {
+                    int nDynChanges = Cec_DynSrmResimulate( pDynSrm, pSim,
+                        vCexStore, pPars->nFrames + 1 + nAddFrames );
+                    fDynSimUsed = 1;
+                    // A real SAT CEX must invalidate at least one speculative
+                    // relation in its cone.  Preserve the established host
+                    // simulation as a safety net for packing/mapping bugs.
+                    if ( Prof.nCexReal > 0 && nDynChanges == 0 )
+                    {
+                        Cec_DynSrmRecordSimFallback( pDynSrm );
+                        RetValue = Cec_ManResimulateCounterExamples( pSim,
+                            vCexStore, pPars->nFrames + 1 + nAddFrames,
+                            NULL, NULL );
+                        fDynSimUsed = 0;
+                    }
+                    else
+                        RetValue = 0;
+                }
+                else
+                    RetValue = Cec_ManResimulateCounterExamples( pSim,
+                        vCexStore, pPars->nFrames + 1 + nAddFrames,
+                        pSeedSim, vOutputs );
                 Prof.tSim = Abc_ClockHr() - tH;
-                Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
-                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
-                Prof.nIncrTrunc = Cec_ScorrProfIncrTrunc;
-                Prof.nIncrRollback = Cec_ScorrProfIncrRollback;
-                Prof.nIncrRollbackObjs = Cec_ScorrProfIncrRollbackObjs;
-                Prof.nIncrCoverageMiss = Cec_ScorrProfIncrCoverageMiss;
-                Prof.nIncrFallbackPre = Cec_ScorrProfIncrFallbackPre;
-                Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
-                Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
-                Prof.nIncrFallbackCex = Cec_ScorrProfIncrFallbackCex;
-                Prof.nIncrFallbackBypass = Cec_ScorrProfIncrFallbackBypass;
-                Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
-                Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;
-                Prof.nIncrBatchCex = Cec_ScorrProfIncrBatchCex;
-                Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
-                Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
-                Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
-                Prof.tIncrTry = Cec_ScorrProfIncrTry;
-                Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
-                Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;
-                Prof.tIncrFullRun = Cec_ScorrProfIncrFullRun;
-                Prof.tIncrDiagShape = Cec_ScorrProfIncrDiagShape;
-                Prof.tIncrDiagCollect = Cec_ScorrProfIncrDiagCollect;
-                Prof.tIncrDiagEval = Cec_ScorrProfIncrDiagEval;
-                Prof.tIncrDiagSim = Cec_ScorrProfIncrDiagSim;
-                Prof.tIncrTfoBuild = Cec_ScorrProfIncrTfoBuild;
-                Prof.tIncrTfoSim = Cec_ScorrProfIncrTfoSim;
-                Prof.tIncrTxn = Cec_ScorrProfIncrTxn;
-                Prof.nEventLocal = Cec_ScorrProfEventLocal;
-                Prof.nEventFallback = Cec_ScorrProfEventFallback;
-                Prof.nEventPopsMax = Cec_ScorrProfEventPopsMax;
-                Prof.nEventEdgesMax = Cec_ScorrProfEventEdgesMax;
-                Prof.nEventInputVarsMax = Cec_ScorrProfEventInputVarsMax;
-                Prof.nEventInputWordsMax = Cec_ScorrProfEventInputWordsMax;
-                Prof.nEventFallbackWork = Cec_ScorrProfEventFallbackWork;
-                Prof.nEventFallbackTime = Cec_ScorrProfEventFallbackTime;
-                Prof.tEventLoad = Cec_ScorrProfEventLoad;
-                Prof.tEventProp = Cec_ScorrProfEventProp;
-                Prof.tEventRefine = Cec_ScorrProfEventRefine;
-                Prof.tEventRollback = Cec_ScorrProfEventRollback;
-                Prof.tEventInit = Cec_ScorrProfEventInit;
                 Prof.nSimCalls = 1;
+                if ( !fDynSimUsed )
+                {
+                    Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+                    Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
+                    Prof.nIncrTrunc = Cec_ScorrProfIncrTrunc;
+                    Prof.nIncrRollback = Cec_ScorrProfIncrRollback;
+                    Prof.nIncrRollbackObjs = Cec_ScorrProfIncrRollbackObjs;
+                    Prof.nIncrCoverageMiss = Cec_ScorrProfIncrCoverageMiss;
+                    Prof.nIncrFallbackPre = Cec_ScorrProfIncrFallbackPre;
+                    Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
+                    Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
+                    Prof.nIncrFallbackCex = Cec_ScorrProfIncrFallbackCex;
+                    Prof.nIncrFallbackBypass = Cec_ScorrProfIncrFallbackBypass;
+                    Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
+                    Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;
+                    Prof.nIncrBatchCex = Cec_ScorrProfIncrBatchCex;
+                    Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
+                    Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
+                    Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                    Prof.tIncrTry = Cec_ScorrProfIncrTry;
+                    Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
+                    Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;
+                    Prof.tIncrFullRun = Cec_ScorrProfIncrFullRun;
+                    Prof.tIncrDiagShape = Cec_ScorrProfIncrDiagShape;
+                    Prof.tIncrDiagCollect = Cec_ScorrProfIncrDiagCollect;
+                    Prof.tIncrDiagEval = Cec_ScorrProfIncrDiagEval;
+                    Prof.tIncrDiagSim = Cec_ScorrProfIncrDiagSim;
+                    Prof.tIncrTfoBuild = Cec_ScorrProfIncrTfoBuild;
+                    Prof.tIncrTfoSim = Cec_ScorrProfIncrTfoSim;
+                    Prof.tIncrTxn = Cec_ScorrProfIncrTxn;
+                    Prof.nEventLocal = Cec_ScorrProfEventLocal;
+                    Prof.nEventFallback = Cec_ScorrProfEventFallback;
+                    Prof.nEventPopsMax = Cec_ScorrProfEventPopsMax;
+                    Prof.nEventEdgesMax = Cec_ScorrProfEventEdgesMax;
+                    Prof.nEventInputVarsMax = Cec_ScorrProfEventInputVarsMax;
+                    Prof.nEventInputWordsMax = Cec_ScorrProfEventInputWordsMax;
+                    Prof.nEventFallbackWork = Cec_ScorrProfEventFallbackWork;
+                    Prof.nEventFallbackTime = Cec_ScorrProfEventFallbackTime;
+                    Prof.tEventLoad = Cec_ScorrProfEventLoad;
+                    Prof.tEventProp = Cec_ScorrProfEventProp;
+                    Prof.tEventRefine = Cec_ScorrProfEventRefine;
+                    Prof.tEventRollback = Cec_ScorrProfEventRollback;
+                    Prof.tEventInit = Cec_ScorrProfEventInit;
+                }
             }
             if ( Prof.nCexTriv > 0 )
                 Prof.nTrivSplits = Cec_ManTrivialSatSplit( pAig, pSim, vCexStore, vStatus, vOutputs, pPars->fUseRings );
@@ -2111,8 +2122,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             if ( Cec_ScorrProfOn ) nLitsMid = Gia_ManEquivCountLitsAll( pAig );
             tH = Abc_ClockHr();
             Prof.nCexPending = Gia_ManCheckRefinements( pAig, vStatus, vOutputs, pSim, pPars->fUseRings );
-            if ( pDynSrm )
-                Prof.nCexPending = Cec_DynSrmUpdatePending( pDynSrm, vStatus, vOutputs, pPars->fUseRings );
             Prof.tChk = Abc_ClockHr() - tH;
             if ( Cec_ScorrProfOn ) nLitsPost = Gia_ManEquivCountLitsAll( pAig );
             Prof.dSimLits = nLitsPre - nLitsMid;

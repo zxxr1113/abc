@@ -1857,6 +1857,7 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     int nEdgeLimit = nEdgeLimit64 > 0x7fffffff ? 0x7fffffff : (int)nEdgeLimit64;
     int nInputVars = Vec_IntSize( p->vChangedInputs );
     int nInputWords = Vec_IntSize( p->vInputUndo ) / 2;
+    int nTotalInputs = p->nRegs + p->nPis * p->nFrames;
     int i, iVar, Key, nNextClock = CEC_EVENT_CLOCK_PERIOD;
     int Status = CEC_SEEDSIM_RESULT_LOCAL, fTime = 0;
     abctime tTry = Cec_SeedSimProfStart(), tPhase;
@@ -1869,6 +1870,18 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     Cec_SeedSimRecordBatch( p, Vec_IntSize(vOutBits) / 2 );
     p->nEventInputVarsMax = Abc_MaxInt( p->nEventInputVarsMax, nInputVars );
     p->nEventInputWordsMax = Abc_MaxInt( p->nEventInputWordsMax, nInputWords );
+    // Up-front density gate.  A batch whose changed-CI seed is a large fraction
+    // of all unrolled inputs will dirty a near-full closure, so event
+    // propagation cannot beat a bit-parallel full sweep.  Reject it here before
+    // mutating any persistent value, instead of propagating until a mid-flight
+    // budget abort discards the work (and then still falling back to full).
+    if ( (ABC_INT64_T)nInputVars * CEC_EVENT_INPUT_FRAC_DEN >
+         (ABC_INT64_T)nTotalInputs * CEC_EVENT_INPUT_FRAC_NUM )
+    {
+        p->nFallbackCex++;
+        p->nBatchFull++;
+        return Cec_SeedSimProfReturn( p, CEC_SEEDSIM_RESULT_FULL_WIDE, tTry );
+    }
     Cec_SeedSimReset( p );
     Vec_IntClear( p->vValueUndo );
     Vec_IntClear( p->vChangedValues );
