@@ -259,6 +259,12 @@ struct Cec_SeedSim_t_
     int          nEventMaskWords; // words needed to represent nWords bits
     int          nEventPops;      // evaluated node-word operations
     int          nEventEdges;     // traversed fanout word-edges
+    // Frame-aware class-cone filter.  When enabled, event propagation only
+    // visits keys in the true TFI of current class/constant candidates.
+    unsigned *   pCone;           // bitset indexed by key = frame*nObjs+objId
+    int          nConeWords;      // bitset words for pCone
+    int          nConeKeys;       // marked keys in the current cone
+    int          fUseCone;        // 1 after pCone was built for this resim call
     abctime      tFullAvg;         // moving average used for adaptive deadline
     int          nFallbackStreak; // persists across resimulation calls
     int          nFallbackCooldown; // batches bypassed before next event probe
@@ -417,6 +423,7 @@ extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBypassBatch( Cec_SeedSim_t * p, int nCex );
 extern void                 Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim );
+extern void                 Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimLoadPersistentBatch( Cec_SeedSim_t * p, Vec_Int_t * vCexStore, int iStart, Vec_Int_t * vPairs, Vec_Int_t * vOutBits );
 extern void                 Cec_SeedSimRestorePersistentInputs( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimRecordFullTime( Cec_SeedSim_t * p, abctime Elapsed );

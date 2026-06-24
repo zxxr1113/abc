@@ -928,6 +928,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( pSeed )
     {
         Cec_SeedSimEnsurePersistent( pSeed, pSim );
+        Cec_SeedSimBuildClassCone( pSeed );
         vSimInfo = pSeed->vSimInfo;
         vOutBits = Vec_IntAlloc( 1000 );
     }

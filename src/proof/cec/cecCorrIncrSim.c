@@ -67,6 +67,69 @@ static inline int Cec_SeedSimMark( Cec_SeedSim_t * p, int frame, int objId )
     return 1;
 }
 
+static inline int Cec_SeedSimConeHasKey( Cec_SeedSim_t * p, int Key )
+{
+    return !p->fUseCone || Abc_InfoHasBit( p->pCone, Key );
+}
+
+static inline int Cec_SeedSimConeHas( Cec_SeedSim_t * p, int Frame, int ObjId )
+{
+    return Cec_SeedSimConeHasKey( p, Cec_SeedSimKey(p, Frame, ObjId) );
+}
+
+static void Cec_SeedSimConeMark_rec( Cec_SeedSim_t * p, int Frame, int ObjId )
+{
+    Gia_Obj_t * pObj;
+    int Key;
+    if ( Frame < 0 || Frame >= p->nFrames || ObjId < 0 || ObjId >= p->nObjs )
+        return;
+    Key = Cec_SeedSimKey( p, Frame, ObjId );
+    if ( Abc_InfoHasBit(p->pCone, Key) )
+        return;
+    Abc_InfoSetBit( p->pCone, Key );
+    p->nConeKeys++;
+    if ( ObjId == 0 )
+        return;
+    pObj = Gia_ManObj( p->pAig, ObjId );
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+        return;
+    if ( Gia_ObjIsRo(p->pAig, pObj) )
+    {
+        Gia_Obj_t * pRi;
+        int RiId;
+        if ( Frame == 0 )
+            return;
+        pRi = Gia_ObjRoToRi( p->pAig, pObj );
+        RiId = Gia_ObjId( p->pAig, pRi );
+        Cec_SeedSimConeMark_rec( p, Frame - 1,
+            Gia_ObjFaninId0(pRi, RiId) );
+        return;
+    }
+    if ( Gia_ObjIsAnd(pObj) )
+    {
+        Cec_SeedSimConeMark_rec( p, Frame,
+            Gia_ObjFaninId0(pObj, ObjId) );
+        Cec_SeedSimConeMark_rec( p, Frame,
+            Gia_ObjFaninId1(pObj, ObjId) );
+    }
+}
+
+void Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p )
+{
+    Gia_Obj_t * pObj;
+    int Frame, i;
+    memset( p->pCone, 0, sizeof(unsigned) * p->nConeWords );
+    p->nConeKeys = 0;
+    p->fUseCone = 1;
+    Gia_ManForEachObj1( p->pAig, pObj, i )
+    {
+        if ( !Gia_ObjIsConst(p->pAig, i) && !Gia_ObjIsClass(p->pAig, i) )
+            continue;
+        for ( Frame = 0; Frame < p->nFrames; Frame++ )
+            Cec_SeedSimConeMark_rec( p, Frame, i );
+    }
+}
+
 static int Cec_SeedSimEvalActive( Cec_SeedSim_t * p, int Frame, int ObjId, int nLimit )
 {
     Gia_Man_t * pAig = p->pAig;
@@ -166,6 +229,7 @@ Cec_SeedSim_t * Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame,
     p->nWords  = nWords;
     p->nPhaseWords = Abc_BitWordNum( p->nObjs );
     p->nEventMaskWords = Abc_BitWordNum( nWords );
+    p->nConeWords = Abc_BitWordNum( (int)nKeys );
     p->pVal         = ABC_CALLOC( unsigned, nKeys * nWords );
     p->pPhase       = ABC_CALLOC( unsigned, (size_t)nFrames * p->nPhaseWords );
     p->pActiveMask  = ABC_CALLOC( unsigned, nWords );
@@ -180,6 +244,7 @@ Cec_SeedSim_t * Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame,
     p->pProcessMark = ABC_CALLOC( int, nKeys );
     p->pEvalMark    = ABC_CALLOC( int, nKeys );
     p->pEventWords  = ABC_CALLOC( unsigned, nKeys * p->nEventMaskWords );
+    p->pCone        = ABC_CALLOC( unsigned, p->nConeWords );
     p->pRootMark    = ABC_CALLOC( int, p->nObjs );
     p->pTxnMark     = ABC_CALLOC( int, p->nObjs );
     p->pInputVarMark = ABC_CALLOC( int, p->nRegs + p->nPis * p->nFrames );
@@ -265,6 +330,7 @@ void Cec_SeedSimFree( Cec_SeedSim_t * p )
     ABC_FREE( p->pProcessMark );
     ABC_FREE( p->pEvalMark );
     ABC_FREE( p->pEventWords );
+    ABC_FREE( p->pCone );
     ABC_FREE( p->pRootMark );
     ABC_FREE( p->pTxnMark );
     ABC_FREE( p->pPackPres );
@@ -1485,12 +1551,19 @@ static int Cec_SeedSimEventQueueFanouts( Cec_SeedSim_t * p,
         if ( ++p->nEventEdges > nEdgeLimit )
             return 0;
         if ( Gia_ObjIsAnd(pFan) )
-            Cec_SeedSimEventHeapPushWord(
-                p, Cec_SeedSimKey(p, Frame, FanId), w );
+        {
+            int FanKey = Cec_SeedSimKey(p, Frame, FanId);
+            if ( Cec_SeedSimConeHasKey(p, FanKey) )
+                Cec_SeedSimEventHeapPushWord( p, FanKey, w );
+        }
         else if ( Gia_ObjIsRi(p->pAig, pFan) &&
                   Frame + 1 < p->nFrames )
-            Cec_SeedSimEventHeapPushWord( p, Cec_SeedSimKey(
-                p, Frame + 1, Gia_ObjRiToRoId(p->pAig, FanId)), w );
+        {
+            int RoKey = Cec_SeedSimKey(
+                p, Frame + 1, Gia_ObjRiToRoId(p->pAig, FanId));
+            if ( Cec_SeedSimConeHasKey(p, RoKey) )
+                Cec_SeedSimEventHeapPushWord( p, RoKey, w );
+        }
     }
     return 1;
 }
@@ -1512,6 +1585,8 @@ static int Cec_SeedSimEventUpdateInput( Cec_SeedSim_t * p,
         ObjId = Gia_ObjId( p->pAig, Gia_ManPi(p->pAig, iPi) );
     }
     Key = Cec_SeedSimKey( p, Frame, ObjId );
+    if ( !Cec_SeedSimConeHasKey(p, Key) )
+        return 1;
     pInput = (unsigned *)Vec_PtrEntry( p->vSimInfo, iVar );
     for ( w = 0; w < p->nWords; w++ )
     {
