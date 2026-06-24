@@ -1762,9 +1762,11 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clk2, clk = Abc_Clock();
     // Incremental active-list manager (NULL if -i not set)
     Cec_IncrMgr_t * pMgr = NULL;
-    // Persistent dynamic SRM and true-unroll simulation manager (NULL without -D).
+    // Persistent dynamic SRM construction manager (NULL without -D).
+    // Resimulation is controlled only by -I: without -I, counterexamples are
+    // replayed by the original host-AIG resimulation path.
     Cec_DynSrm_t * pDynSrm = NULL;
-    // CEX-diagnosis and split-TFO local-sim manager (NULL if -I not set).
+    // Unified CEX event-resimulation manager (NULL if -I not set).
     Cec_SeedSim_t * pSeedSim = NULL;
     abctime clkIncr = 0;
     int nIncrSkipped = 0, nIncrFallback = 0;
@@ -2039,81 +2041,57 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clk2 = Abc_Clock();
         {
             int nLitsPre = 0, nLitsMid = 0, nLitsPost = 0;
-            int fDynSimUsed = 0;
             Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
             if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
             if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
                 tH = Abc_ClockHr();
-                if ( pDynSrm && pSeedSim == NULL )
-                {
-                    int nDynChanges = Cec_DynSrmResimulate( pDynSrm, pSim,
-                        vCexStore, pPars->nFrames + 1 + nAddFrames );
-                    fDynSimUsed = 1;
-                    // A real SAT CEX must invalidate at least one speculative
-                    // relation in its cone.  Preserve the established host
-                    // simulation as a safety net for packing/mapping bugs.
-                    if ( Prof.nCexReal > 0 && nDynChanges == 0 )
-                    {
-                        Cec_DynSrmRecordSimFallback( pDynSrm );
-                        RetValue = Cec_ManResimulateCounterExamples( pSim,
-                            vCexStore, pPars->nFrames + 1 + nAddFrames,
-                            NULL, NULL );
-                        fDynSimUsed = 0;
-                    }
-                    else
-                        RetValue = 0;
-                }
-                else
-                    RetValue = Cec_ManResimulateCounterExamples( pSim,
-                        vCexStore, pPars->nFrames + 1 + nAddFrames,
-                        pSeedSim, vOutputs );
+                RetValue = Cec_ManResimulateCounterExamples( pSim,
+                    vCexStore, pPars->nFrames + 1 + nAddFrames,
+                    pSeedSim, vOutputs );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.nSimCalls = 1;
-                if ( !fDynSimUsed )
-                {
-                    Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
-                    Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
-                    Prof.nIncrTrunc = Cec_ScorrProfIncrTrunc;
-                    Prof.nIncrRollback = Cec_ScorrProfIncrRollback;
-                    Prof.nIncrRollbackObjs = Cec_ScorrProfIncrRollbackObjs;
-                    Prof.nIncrCoverageMiss = Cec_ScorrProfIncrCoverageMiss;
-                    Prof.nIncrFallbackPre = Cec_ScorrProfIncrFallbackPre;
-                    Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
-                    Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
-                    Prof.nIncrFallbackCex = Cec_ScorrProfIncrFallbackCex;
-                    Prof.nIncrFallbackBypass = Cec_ScorrProfIncrFallbackBypass;
-                    Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
-                    Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;
-                    Prof.nIncrBatchCex = Cec_ScorrProfIncrBatchCex;
-                    Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
-                    Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
-                    Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
-                    Prof.tIncrTry = Cec_ScorrProfIncrTry;
-                    Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
-                    Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;
-                    Prof.tIncrFullRun = Cec_ScorrProfIncrFullRun;
-                    Prof.tIncrDiagShape = Cec_ScorrProfIncrDiagShape;
-                    Prof.tIncrDiagCollect = Cec_ScorrProfIncrDiagCollect;
-                    Prof.tIncrDiagEval = Cec_ScorrProfIncrDiagEval;
-                    Prof.tIncrDiagSim = Cec_ScorrProfIncrDiagSim;
-                    Prof.tIncrTfoBuild = Cec_ScorrProfIncrTfoBuild;
-                    Prof.tIncrTfoSim = Cec_ScorrProfIncrTfoSim;
-                    Prof.tIncrTxn = Cec_ScorrProfIncrTxn;
-                    Prof.nEventLocal = Cec_ScorrProfEventLocal;
-                    Prof.nEventFallback = Cec_ScorrProfEventFallback;
-                    Prof.nEventPopsMax = Cec_ScorrProfEventPopsMax;
-                    Prof.nEventEdgesMax = Cec_ScorrProfEventEdgesMax;
-                    Prof.nEventInputVarsMax = Cec_ScorrProfEventInputVarsMax;
-                    Prof.nEventInputWordsMax = Cec_ScorrProfEventInputWordsMax;
-                    Prof.nEventFallbackWork = Cec_ScorrProfEventFallbackWork;
-                    Prof.nEventFallbackTime = Cec_ScorrProfEventFallbackTime;
-                    Prof.tEventLoad = Cec_ScorrProfEventLoad;
-                    Prof.tEventProp = Cec_ScorrProfEventProp;
-                    Prof.tEventRefine = Cec_ScorrProfEventRefine;
-                    Prof.tEventRollback = Cec_ScorrProfEventRollback;
-                    Prof.tEventInit = Cec_ScorrProfEventInit;
-                }
+                Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
+                Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
+                Prof.nIncrTrunc = Cec_ScorrProfIncrTrunc;
+                Prof.nIncrRollback = Cec_ScorrProfIncrRollback;
+                Prof.nIncrRollbackObjs = Cec_ScorrProfIncrRollbackObjs;
+                Prof.nIncrCoverageMiss = Cec_ScorrProfIncrCoverageMiss;
+                Prof.nIncrFallbackPre = Cec_ScorrProfIncrFallbackPre;
+                Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
+                Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
+                Prof.nIncrFallbackCex = Cec_ScorrProfIncrFallbackCex;
+                Prof.nIncrFallbackBypass = Cec_ScorrProfIncrFallbackBypass;
+                Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
+                Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;
+                Prof.nIncrBatchCex = Cec_ScorrProfIncrBatchCex;
+                Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
+                Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
+                Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                Prof.tIncrTry = Cec_ScorrProfIncrTry;
+                Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
+                Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;
+                Prof.tIncrFullRun = Cec_ScorrProfIncrFullRun;
+                Prof.tIncrDiagShape = Cec_ScorrProfIncrDiagShape;
+                Prof.tIncrDiagCollect = Cec_ScorrProfIncrDiagCollect;
+                Prof.tIncrDiagEval = Cec_ScorrProfIncrDiagEval;
+                Prof.tIncrDiagSim = Cec_ScorrProfIncrDiagSim;
+                Prof.tIncrTfoBuild = Cec_ScorrProfIncrTfoBuild;
+                Prof.tIncrTfoSim = Cec_ScorrProfIncrTfoSim;
+                Prof.tIncrTxn = Cec_ScorrProfIncrTxn;
+                Prof.nEventLocal = Cec_ScorrProfEventLocal;
+                Prof.nEventFallback = Cec_ScorrProfEventFallback;
+                Prof.nEventPopsMax = Cec_ScorrProfEventPopsMax;
+                Prof.nEventEdgesMax = Cec_ScorrProfEventEdgesMax;
+                Prof.nEventInputVarsMax = Cec_ScorrProfEventInputVarsMax;
+                Prof.nEventInputWordsMax = Cec_ScorrProfEventInputWordsMax;
+                Prof.nEventFallbackWork = Cec_ScorrProfEventFallbackWork;
+                Prof.nEventFallbackTime = Cec_ScorrProfEventFallbackTime;
+                Prof.tEventLoad = Cec_ScorrProfEventLoad;
+                Prof.tEventProp = Cec_ScorrProfEventProp;
+                Prof.tEventRefine = Cec_ScorrProfEventRefine;
+                Prof.tEventRollback = Cec_ScorrProfEventRollback;
+                Prof.tEventInit = Cec_ScorrProfEventInit;
             }
             if ( Prof.nCexTriv > 0 )
                 Prof.nTrivSplits = Cec_ManTrivialSatSplit( pAig, pSim, vCexStore, vStatus, vOutputs, pPars->fUseRings );

@@ -324,9 +324,9 @@ struct Cec_SeedSim_t_
     abctime      tEventInit;
 };
 
-// Dynamic SRM manager for &scorr -D.  It keeps the speculative SRM core and a
-// separate true-value unrolling persistent; SAT counterexamples are simulated
-// on the latter and fed directly into the class-refinement engine.
+// Dynamic SRM construction manager for &scorr -D.  It keeps the speculative SRM
+// core used by SAT; counterexample resimulation is selected independently by
+// -I and otherwise uses the original host-AIG path.
 typedef struct Cec_DynSrm_t_ Cec_DynSrm_t;
 
 // Recursive diagnosis has a much higher constant factor than a linear sweep.
