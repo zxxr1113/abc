@@ -412,8 +412,6 @@ extern void                 Cec_DynSrmFree( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmPrintStats( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern Gia_Man_t *          Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode );
-extern int                  Cec_DynSrmResimulate( Cec_DynSrm_t * p, Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames );
-extern void                 Cec_DynSrmRecordSimFallback( Cec_DynSrm_t * p );
 /*=== cecCorrIncrSim.c ============================================================*/
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
 extern void                 Cec_SeedSimFree( Cec_SeedSim_t * p );

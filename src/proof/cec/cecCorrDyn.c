@@ -34,13 +34,6 @@ struct Cec_DynSrm_t_
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
     Vec_Int_t *      vPiMap;        // host obj id -> PI index
     Vec_Int_t *      vRoMap;        // host obj id -> RO index
-    Gia_Man_t *      pTrue;         // persistent true-value unrolling (no repr substitution)
-    Vec_Int_t *      vTrueLits;     // (frame,host object) -> literal in pTrue
-    Vec_Ptr_t *      vTrueInputs;   // packed CEX/random values for pTrue CIs
-    unsigned *       pTrueSims;     // object-major bit-parallel values for pTrue
-    size_t           nTrueSimsAlloc;
-    int              nTrueFrames;
-    int              nTrueWords;
     // Phase-2 measurement (behavior-preserving): per-key stamp used to count the
     // union of true-value (no repr substitution) cones of the active pairs.
     int *            pTrueMark;     // size = nFramesTotal * nObjs; 0 = unvisited
@@ -64,14 +57,6 @@ struct Cec_DynSrm_t_
     int              nCoreObjsMax;
     int              nViewObjsLast;
     int              nViewObjsMax;
-    int              nTrueBuilds;
-    int              nTrueBatches;
-    int              nTrueChanges;
-    int              nTrueFallbacks;
-    int              nTrueObjsLast;
-    abctime          tTrueBuild;
-    abctime          tTrueSim;
-    abctime          tTrueRefine;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -141,21 +126,8 @@ static int Cec_DynSrmHostRoLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj )
     return Gia_ManCiLit( p->pCore, iRo );
 }
 
-static void Cec_DynSrmResetTrue( Cec_DynSrm_t * p )
-{
-    if ( p->pTrue )
-        Gia_ManStop( p->pTrue );
-    p->pTrue = NULL;
-    Vec_IntFreeP( &p->vTrueLits );
-    Vec_PtrFreeP( &p->vTrueInputs );
-    ABC_FREE( p->pTrueSims );
-    p->nTrueSimsAlloc = 0;
-    p->nTrueFrames = p->nTrueWords = 0;
-}
-
 static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
 {
-    Cec_DynSrmResetTrue( p );
     if ( p->pCore )
         Gia_ManStop( p->pCore );
     p->pCore = NULL;
@@ -167,148 +139,6 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
     ABC_FREE( p->pTrueMark );
     p->nTrueStamp = 0;
     p->nObjs = p->nPis = p->nRegs = p->nFramesTotal = p->nCoreCiNum = 0;
-}
-
-static int Cec_DynSrmTrueIndex( Cec_DynSrm_t * p, int f, int ObjId )
-{
-    assert( f >= 0 && f < p->nTrueFrames );
-    assert( ObjId >= 0 && ObjId < p->nObjs );
-    return f * p->nObjs + ObjId;
-}
-
-static void Cec_DynSrmEnsureTrue( Cec_DynSrm_t * p, int nFrames, int nWords )
-{
-    Gia_Obj_t * pObj;
-    int f, i;
-    if ( p->pTrue != NULL && p->nTrueFrames == nFrames &&
-         p->nTrueWords == nWords )
-        return;
-    Cec_DynSrmResetTrue( p );
-    p->nTrueFrames = nFrames;
-    p->nTrueWords = nWords;
-    p->vTrueLits = Vec_IntStartFull( p->nTrueFrames * p->nObjs );
-    p->vTrueInputs = Vec_PtrAllocSimInfo(
-        p->nRegs + p->nTrueFrames * p->nPis, p->nTrueWords );
-    p->pTrue = Gia_ManStart( Abc_MaxInt(p->nTrueFrames * p->nObjs, 1000) );
-    p->pTrue->pName = Abc_UtilStrsav( p->pAig->pName );
-    p->pTrue->pSpec = Abc_UtilStrsav( p->pAig->pSpec );
-    Gia_ManHashAlloc( p->pTrue );
-    Gia_ManForEachRo( p->pAig, pObj, i )
-        Gia_ManAppendCi( p->pTrue );
-    for ( f = 0; f < p->nTrueFrames; f++ )
-        Gia_ManForEachPi( p->pAig, pObj, i )
-            Gia_ManAppendCi( p->pTrue );
-    assert( Gia_ManCiNum(p->pTrue) ==
-        p->nRegs + p->nTrueFrames * p->nPis );
-    p->nTrueBuilds++;
-}
-
-static int Cec_DynSrmTrueLit_rec( Cec_DynSrm_t * p, int ObjId, int f )
-{
-    Gia_Obj_t * pObj;
-    int Index, Lit, Lit0, Lit1;
-    if ( ObjId == 0 )
-        return 0;
-    Index = Cec_DynSrmTrueIndex( p, f, ObjId );
-    Lit = Vec_IntEntry( p->vTrueLits, Index );
-    if ( Lit >= 0 )
-        return Lit;
-    pObj = Gia_ManObj( p->pAig, ObjId );
-    if ( Gia_ObjIsPi(p->pAig, pObj) )
-    {
-        int iPi = Vec_IntEntry( p->vPiMap, ObjId );
-        assert( iPi >= 0 && iPi < p->nPis );
-        Lit = Gia_ManCiLit( p->pTrue, p->nRegs + f * p->nPis + iPi );
-    }
-    else if ( Gia_ObjIsRo(p->pAig, pObj) )
-    {
-        if ( f == 0 )
-        {
-            int iRo = Vec_IntEntry( p->vRoMap, ObjId );
-            assert( iRo >= 0 && iRo < p->nRegs );
-            Lit = Gia_ManCiLit( p->pTrue, iRo );
-        }
-        else
-        {
-            Gia_Obj_t * pRi = Gia_ObjRoToRi( p->pAig, pObj );
-            Lit = Cec_DynSrmTrueLit_rec( p,
-                Gia_ObjFaninId0p(p->pAig, pRi), f - 1 );
-            Lit = Abc_LitNotCond( Lit, Gia_ObjFaninC0(pRi) );
-        }
-    }
-    else
-    {
-        assert( Gia_ObjIsAnd(pObj) );
-        Lit0 = Cec_DynSrmTrueLit_rec( p,
-            Gia_ObjFaninId0p(p->pAig, pObj), f );
-        Lit1 = Cec_DynSrmTrueLit_rec( p,
-            Gia_ObjFaninId1p(p->pAig, pObj), f );
-        Lit0 = Abc_LitNotCond( Lit0, Gia_ObjFaninC0(pObj) );
-        Lit1 = Abc_LitNotCond( Lit1, Gia_ObjFaninC1(pObj) );
-        Lit = Gia_ManHashAnd( p->pTrue, Lit0, Lit1 );
-    }
-    Vec_IntWriteEntry( p->vTrueLits, Index, Lit );
-    return Lit;
-}
-
-static void Cec_DynSrmTrueBuildClassCones( Cec_DynSrm_t * p )
-{
-    Gia_Obj_t * pObj;
-    int f, i;
-    abctime t = Abc_ClockHr();
-    for ( f = 0; f < p->nTrueFrames; f++ )
-        Gia_ManForEachObj1( p->pAig, pObj, i )
-            if ( Gia_ObjIsConst(p->pAig, i) || Gia_ObjIsClass(p->pAig, i) )
-                Cec_DynSrmTrueLit_rec( p, i, f );
-    p->nTrueObjsLast = Gia_ManObjNum( p->pTrue );
-    p->tTrueBuild += Abc_ClockHr() - t;
-}
-
-static void Cec_DynSrmTrueSimulate( Cec_DynSrm_t * p )
-{
-    Gia_Obj_t * pObj;
-    size_t nNeed = (size_t)Gia_ManObjNum(p->pTrue) * p->nTrueWords;
-    unsigned * pSim0, * pSim1, * pSim;
-    int i, w;
-    abctime t = Abc_ClockHr();
-    if ( p->nTrueSimsAlloc < nNeed )
-    {
-        p->pTrueSims = ABC_REALLOC( unsigned, p->pTrueSims, nNeed );
-        p->nTrueSimsAlloc = nNeed;
-    }
-    memset( p->pTrueSims, 0, sizeof(unsigned) * p->nTrueWords );
-    Gia_ManForEachCi( p->pTrue, pObj, i )
-    {
-        pSim = p->pTrueSims + (size_t)Gia_ObjId(p->pTrue, pObj) * p->nTrueWords;
-        pSim0 = (unsigned *)Vec_PtrEntry( p->vTrueInputs, i );
-        for ( w = 0; w < p->nTrueWords; w++ )
-            pSim[w] = pSim0[w];
-        pSim[0] &= ~(unsigned)1;
-    }
-    Gia_ManForEachAnd( p->pTrue, pObj, i )
-    {
-        pSim0 = p->pTrueSims +
-            (size_t)Gia_ObjFaninId0p(p->pTrue, pObj) * p->nTrueWords;
-        pSim1 = p->pTrueSims +
-            (size_t)Gia_ObjFaninId1p(p->pTrue, pObj) * p->nTrueWords;
-        pSim = p->pTrueSims + (size_t)i * p->nTrueWords;
-        if ( Gia_ObjFaninC0(pObj) )
-        {
-            if ( Gia_ObjFaninC1(pObj) )
-                for ( w = 0; w < p->nTrueWords; w++ )
-                    pSim[w] = ~pSim0[w] & ~pSim1[w];
-            else
-                for ( w = 0; w < p->nTrueWords; w++ )
-                    pSim[w] = ~pSim0[w] & pSim1[w];
-        }
-        else if ( Gia_ObjFaninC1(pObj) )
-            for ( w = 0; w < p->nTrueWords; w++ )
-                pSim[w] = pSim0[w] & ~pSim1[w];
-        else
-            for ( w = 0; w < p->nTrueWords; w++ )
-                pSim[w] = pSim0[w] & pSim1[w];
-    }
-    p->tTrueSim += Abc_ClockHr() - t;
 }
 
 static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
@@ -519,48 +349,6 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nViewObjsLast, p->nViewObjsMax );
     Abc_Print( 1, "DynSRM: cache_full_clears = %d, cache_local_clears = %d, cache_local_entries = %d\n",
         p->nCacheFullClears, p->nCacheLocalClears, p->nCacheLocalEntries );
-    Abc_Print( 1, "DynSRM-sim: true_builds = %d, batches = %d, changes = %d, fallbacks = %d, true_objs = %d, build/sim/refine = %.3f/%.3f/%.3f sec\n",
-        p->nTrueBuilds, p->nTrueBatches, p->nTrueChanges, p->nTrueFallbacks,
-        p->nTrueObjsLast, 1.0e-9 * p->tTrueBuild, 1.0e-9 * p->tTrueSim,
-        1.0e-9 * p->tTrueRefine );
-}
-
-int Cec_DynSrmResimulate( Cec_DynSrm_t * p, Cec_ManSim_t * pSim,
-    Vec_Int_t * vCexStore, int nFrames )
-{
-    Vec_Int_t * vPairs;
-    int iStart = 0, f, nChanges = 0;
-    assert( p != NULL );
-    assert( p->pAig == pSim->pAig );
-    assert( nFrames > 0 );
-    Cec_DynSrmEnsureTrue( p, nFrames, pSim->pPars->nWords );
-    Cec_DynSrmTrueBuildClassCones( p );
-    vPairs = Gia_ManCorrCreateRemapping( p->pAig );
-    while ( iStart < Vec_IntSize(vCexStore) )
-    {
-        abctime t;
-        Cec_ManStartSimInfo( p->vTrueInputs, p->nRegs );
-        iStart = Cec_ManLoadCounterExamples(
-            p->vTrueInputs, vCexStore, iStart );
-        Gia_ManCorrPerformRemapping( vPairs, p->vTrueInputs );
-        Cec_DynSrmTrueSimulate( p );
-        t = Abc_ClockHr();
-        for ( f = 0; f < p->nTrueFrames; f++ )
-            nChanges += Cec_ManSimRefineMappedFrame( pSim, p->pTrueSims,
-                p->vTrueLits, f * p->nObjs, p->nTrueWords );
-        p->tTrueRefine += Abc_ClockHr() - t;
-        p->nTrueBatches++;
-    }
-    assert( iStart == Vec_IntSize(vCexStore) );
-    p->nTrueChanges += nChanges;
-    Vec_IntFree( vPairs );
-    return nChanges;
-}
-
-void Cec_DynSrmRecordSimFallback( Cec_DynSrm_t * p )
-{
-    if ( p )
-        p->nTrueFallbacks++;
 }
 
 void Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark,
