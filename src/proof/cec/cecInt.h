@@ -265,6 +265,7 @@ struct Cec_SeedSim_t_
     int          nConeWords;      // bitset words for pCone
     int          nConeKeys;       // marked keys in the current cone
     int          fUseCone;        // 1 after pCone was built for this resim call
+    Vec_Int_t *  vConeQueue;      // newly marked keys used to class-close pCone
     abctime      tFullAvg;         // moving average used for adaptive deadline
     int          nFallbackStreak; // persists across resimulation calls
     int          nFallbackCooldown; // batches bypassed before next event probe
@@ -423,7 +424,7 @@ extern void                 Cec_SeedSimFinishFull( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBypassBatch( Cec_SeedSim_t * p, int nCex );
 extern void                 Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim );
-extern void                 Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p );
+extern void                 Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p, Vec_Int_t * vOutputs );
 extern int                  Cec_SeedSimLoadPersistentBatch( Cec_SeedSim_t * p, Vec_Int_t * vCexStore, int iStart, Vec_Int_t * vPairs, Vec_Int_t * vOutBits );
 extern void                 Cec_SeedSimRestorePersistentInputs( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimRecordFullTime( Cec_SeedSim_t * p, abctime Elapsed );
@@ -444,6 +445,7 @@ extern int                  Cec_SeedSimNumBatchCex( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumBatchCexMax( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumDeferredSplits( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumDirty ( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumConeKeys( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumKeys  ( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeTry( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeTryLocal( Cec_SeedSim_t * p );

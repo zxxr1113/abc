@@ -70,6 +70,7 @@ static int     Cec_ScorrProfIncrBatchCex = 0; // total real CEX records across b
 static int     Cec_ScorrProfIncrBatchCexMax = 0; // largest packed-batch CEX count
 static int     Cec_ScorrProfIncrDeferred = 0; // fixed-frontier splits left for later rounds
 static int     Cec_ScorrProfIncrDirty = 0; // largest dirty cone across the call
+static int     Cec_ScorrProfIncrConeKeys = 0; // active/class cone keys used by event resim
 static int     Cec_ScorrProfIncrKeys  = 0; // nFrames * nObjs (cone-size denominator)
 static abctime Cec_ScorrProfIncrTry = 0; // all incremental probes
 static abctime Cec_ScorrProfIncrTryLocal = 0; // probes completed locally
@@ -123,8 +124,9 @@ struct Cec_ScorrProf_t_
     //   nIncrSrc   = #batches handled by local TFO sim
     //   nIncrFull  = #batches that fell back to the full sweep (cone too wide)
     //   nIncrDirty = largest dirty cone seen across the call's batches
+    //   nIncrConeKeys = active/class cone keys used by event resim
     //   nIncrKeys  = nFrames*nObjs (the cone-size denominator)
-    int     nIncrSrc, nIncrFull, nIncrTrunc, nIncrDirty, nIncrKeys;
+    int     nIncrSrc, nIncrFull, nIncrTrunc, nIncrDirty, nIncrConeKeys, nIncrKeys;
     int     nIncrRollback, nIncrRollbackObjs, nIncrCoverageMiss;
     int     nIncrFallbackPre, nIncrFallbackProcess, nIncrFallbackCoverage;
     int     nIncrFallbackCex, nIncrFallbackBypass;
@@ -203,6 +205,7 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     if ( pI->nIncrBatchCexMax > pT->nIncrBatchCexMax )
         pT->nIncrBatchCexMax = pI->nIncrBatchCexMax;
     if ( pI->nIncrDirty > pT->nIncrDirty ) pT->nIncrDirty = pI->nIncrDirty;
+    if ( pI->nIncrConeKeys > pT->nIncrConeKeys ) pT->nIncrConeKeys = pI->nIncrConeKeys;
     if ( pI->nIncrKeys  > pT->nIncrKeys  ) pT->nIncrKeys  = pI->nIncrKeys;
     if ( pI->tSatMax > pT->tSatMax ) pT->tSatMax = pI->tSatMax;
 }
@@ -229,8 +232,9 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
         p->nCexReal, p->nCexTriv, p->nCexFail, p->nTrivSplits, p->nCexPending );
     Abc_Print( 1, "sim=%6.3f(rmp=%.3f run=%.3f n=%d d=%d) ",
         p->tSim*M, p->tSimRemap*M, p->tSimRun*M, p->nSimCalls, p->dSimLits );
-    Abc_Print( 1, "incr=loc/full/maxdirty/keys=%d/%d/%d/%d trunc=%d ",
-        p->nIncrSrc, p->nIncrFull, p->nIncrDirty, p->nIncrKeys, p->nIncrTrunc );
+    Abc_Print( 1, "incr=loc/full/maxdirty/cone/keys=%d/%d/%d/%d/%d trunc=%d ",
+        p->nIncrSrc, p->nIncrFull, p->nIncrDirty,
+        p->nIncrConeKeys, p->nIncrKeys, p->nIncrTrunc );
     Abc_Print( 1, "txn=rb/objs/miss=%d/%d/%d fb=cex/pre/proc/cov/skip=%d/%d/%d/%d/%d ",
         p->nIncrRollback, p->nIncrRollbackObjs, p->nIncrCoverageMiss,
         p->nIncrFallbackCex, p->nIncrFallbackPre, p->nIncrFallbackProcess,
@@ -908,7 +912,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     Cec_ScorrProfIncrTruncCone = Cec_ScorrProfIncrTruncEval = 0;
     Cec_ScorrProfIncrBatchCex = Cec_ScorrProfIncrBatchCexMax = 0;
     Cec_ScorrProfIncrDeferred = 0;
-    Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrKeys = 0;
+    Cec_ScorrProfIncrDirty = Cec_ScorrProfIncrConeKeys = Cec_ScorrProfIncrKeys = 0;
     Cec_ScorrProfIncrTry = Cec_ScorrProfIncrTryLocal = 0;
     Cec_ScorrProfIncrTryFallback = Cec_ScorrProfIncrFullRun = 0;
     Cec_ScorrProfIncrDiagShape = Cec_ScorrProfIncrDiagCollect = 0;
@@ -928,7 +932,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( pSeed )
     {
         Cec_SeedSimEnsurePersistent( pSeed, pSim );
-        Cec_SeedSimBuildClassCone( pSeed );
+        Cec_SeedSimBuildClassCone( pSeed, vOutputs );
         vSimInfo = pSeed->vSimInfo;
         vOutBits = Vec_IntAlloc( 1000 );
     }
@@ -1030,6 +1034,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         Cec_ScorrProfIncrBatchCexMax = Cec_SeedSimNumBatchCexMax( pSeed );
         Cec_ScorrProfIncrDeferred = Cec_SeedSimNumDeferredSplits( pSeed );
         Cec_ScorrProfIncrDirty = Cec_SeedSimNumDirty( pSeed );
+        Cec_ScorrProfIncrConeKeys = Cec_SeedSimNumConeKeys( pSeed );
         Cec_ScorrProfIncrKeys  = Cec_SeedSimNumKeys( pSeed );
         Cec_ScorrProfIncrTry = Cec_SeedSimTimeTry( pSeed );
         Cec_ScorrProfIncrTryLocal = Cec_SeedSimTimeTryLocal( pSeed );
@@ -1519,7 +1524,9 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 Prof.nIncrBatchCex = Cec_ScorrProfIncrBatchCex;
                 Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
                 Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
-                Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
+                Prof.nIncrConeKeys = Cec_ScorrProfIncrConeKeys;
+                Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.tIncrTry = Cec_ScorrProfIncrTry;
                 Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
                 Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;
@@ -2068,7 +2075,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.nIncrBatchCex = Cec_ScorrProfIncrBatchCex;
                 Prof.nIncrBatchCexMax = Cec_ScorrProfIncrBatchCexMax;
                 Prof.nIncrDeferred = Cec_ScorrProfIncrDeferred;
-                Prof.nIncrDirty = Cec_ScorrProfIncrDirty; Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
+                Prof.nIncrDirty = Cec_ScorrProfIncrDirty;
+                Prof.nIncrConeKeys = Cec_ScorrProfIncrConeKeys;
+                Prof.nIncrKeys = Cec_ScorrProfIncrKeys;
                 Prof.tIncrTry = Cec_ScorrProfIncrTry;
                 Prof.tIncrTryLocal = Cec_ScorrProfIncrTryLocal;
                 Prof.tIncrTryFallback = Cec_ScorrProfIncrTryFallback;

@@ -88,6 +88,7 @@ static void Cec_SeedSimConeMark_rec( Cec_SeedSim_t * p, int Frame, int ObjId )
         return;
     Abc_InfoSetBit( p->pCone, Key );
     p->nConeKeys++;
+    Vec_IntPush( p->vConeQueue, Key );
     if ( ObjId == 0 )
         return;
     pObj = Gia_ManObj( p->pAig, ObjId );
@@ -114,13 +115,33 @@ static void Cec_SeedSimConeMark_rec( Cec_SeedSim_t * p, int Frame, int ObjId )
     }
 }
 
-void Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p )
+static void Cec_SeedSimConeCloseClasses( Cec_SeedSim_t * p )
+{
+    int i;
+    for ( i = 0; i < Vec_IntSize(p->vConeQueue); i++ )
+    {
+        int Key = Vec_IntEntry( p->vConeQueue, i );
+        int Frame = Key / p->nObjs;
+        int ObjId = Key % p->nObjs;
+        int Root, Member;
+        if ( ObjId == 0 )
+            continue;
+        if ( Gia_ObjIsConst(p->pAig, ObjId) )
+            continue;
+        if ( !Gia_ObjIsClass(p->pAig, ObjId) )
+            continue;
+        Root = Gia_ObjIsHead(p->pAig, ObjId) ? ObjId :
+            Gia_ObjRepr(p->pAig, ObjId);
+        Cec_SeedSimConeMark_rec( p, Frame, Root );
+        Gia_ClassForEachObj1( p->pAig, Root, Member )
+            Cec_SeedSimConeMark_rec( p, Frame, Member );
+    }
+}
+
+static void Cec_SeedSimBuildFullClassCone( Cec_SeedSim_t * p )
 {
     Gia_Obj_t * pObj;
     int Frame, i;
-    memset( p->pCone, 0, sizeof(unsigned) * p->nConeWords );
-    p->nConeKeys = 0;
-    p->fUseCone = 1;
     Gia_ManForEachObj1( p->pAig, pObj, i )
     {
         if ( !Gia_ObjIsConst(p->pAig, i) && !Gia_ObjIsClass(p->pAig, i) )
@@ -128,6 +149,28 @@ void Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p )
         for ( Frame = 0; Frame < p->nFrames; Frame++ )
             Cec_SeedSimConeMark_rec( p, Frame, i );
     }
+    Cec_SeedSimConeCloseClasses( p );
+}
+
+void Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p, Vec_Int_t * vOutputs )
+{
+    int i, Obj0, Obj1;
+    memset( p->pCone, 0, sizeof(unsigned) * p->nConeWords );
+    Vec_IntClear( p->vConeQueue );
+    p->nConeKeys = 0;
+    p->fUseCone = 1;
+    if ( vOutputs && Vec_IntSize(vOutputs) > 0 )
+    {
+        Vec_IntForEachEntryDouble( vOutputs, Obj0, Obj1, i )
+        {
+            Cec_SeedSimConeMark_rec( p, p->iSeedFrame, Obj0 );
+            Cec_SeedSimConeMark_rec( p, p->iSeedFrame, Obj1 );
+        }
+        Cec_SeedSimConeCloseClasses( p );
+        if ( p->nConeKeys > 0 )
+            return;
+    }
+    Cec_SeedSimBuildFullClassCone( p );
 }
 
 static int Cec_SeedSimEvalActive( Cec_SeedSim_t * p, int Frame, int ObjId, int nLimit )
@@ -271,6 +314,7 @@ Cec_SeedSim_t * Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame,
     p->vChangedInputs = Vec_IntAlloc( 1024 );
     p->vValueUndo   = Vec_IntAlloc( 4096 );
     p->vChangedValues = Vec_IntAlloc( 4096 );
+    p->vConeQueue   = Vec_IntAlloc( 4096 );
     p->pPhase0      = ABC_ALLOC( unsigned, nWords );
     p->pPhase1      = ABC_ALLOC( unsigned, nWords );
     for ( w = 0; w < nWords; w++ )
@@ -315,6 +359,7 @@ void Cec_SeedSimFree( Cec_SeedSim_t * p )
     Vec_IntFreeP( &p->vChangedInputs );
     Vec_IntFreeP( &p->vValueUndo );
     Vec_IntFreeP( &p->vChangedValues );
+    Vec_IntFreeP( &p->vConeQueue );
     Vec_PtrFreeP( &p->vSimInfo );
     ABC_FREE( p->pVal );
     ABC_FREE( p->pPhase );
@@ -2104,6 +2149,7 @@ int Cec_SeedSimNumBatchCex( Cec_SeedSim_t * p ) { return p->nBatchCex; }
 int Cec_SeedSimNumBatchCexMax( Cec_SeedSim_t * p ) { return p->nBatchCexMax; }
 int Cec_SeedSimNumDeferredSplits( Cec_SeedSim_t * p ) { return p->nDeferredSplits; }
 int Cec_SeedSimNumDirty( Cec_SeedSim_t * p ) { return p->nMaxDirty; }
+int Cec_SeedSimNumConeKeys( Cec_SeedSim_t * p ) { return p->nConeKeys; }
 int Cec_SeedSimNumKeys ( Cec_SeedSim_t * p ) { return p->nFrames * p->nObjs; }
 abctime Cec_SeedSimTimeTry( Cec_SeedSim_t * p ) { return p->tTry; }
 abctime Cec_SeedSimTimeTryLocal( Cec_SeedSim_t * p ) { return p->tTryLocal; }
