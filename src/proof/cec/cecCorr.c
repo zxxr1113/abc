@@ -96,6 +96,7 @@ static abctime Cec_ScorrProfEventProp = 0;
 static abctime Cec_ScorrProfEventRefine = 0;
 static abctime Cec_ScorrProfEventRollback = 0;
 static abctime Cec_ScorrProfEventInit = 0;
+static abctime Cec_ScorrProfEventCone = 0;
 
 // One iteration's wall-clock breakdown; all fields are nanoseconds.
 typedef struct Cec_ScorrProf_t_ Cec_ScorrProf_t;
@@ -139,6 +140,7 @@ struct Cec_ScorrProf_t_
     int     nEventInputVarsMax, nEventInputWordsMax;
     int     nEventFallbackWork, nEventFallbackTime;
     abctime tEventLoad, tEventProp, tEventRefine, tEventRollback, tEventInit;
+    abctime tEventCone;
     // Lit-count deltas around the two refinement stages.
     //   dSimLits = #pairs broken by the sim call (lits before sim - lits after sim).
     //   dChkLits = #pairs broken by Gia_ManCheckRefinements (lits after sim - lits after chk).
@@ -194,6 +196,7 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->tEventRefine+=pI->tEventRefine;
     pT->tEventRollback+=pI->tEventRollback;
     pT->tEventInit+=pI->tEventInit;
+    pT->tEventCone+=pI->tEventCone;
     if ( pI->nEventPopsMax > pT->nEventPopsMax )
         pT->nEventPopsMax = pI->nEventPopsMax;
     if ( pI->nEventEdgesMax > pT->nEventEdgesMax )
@@ -255,9 +258,9 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
         p->nEventFallbackWork, p->nEventFallbackTime,
         p->nEventPopsMax, p->nEventEdgesMax,
         p->nEventInputVarsMax, p->nEventInputWordsMax );
-    Abc_Print( 1, "et=init/load/prop/ref/rb=%.3f/%.3f/%.3f/%.3f/%.3f ",
+    Abc_Print( 1, "et=init/load/prop/ref/rb/cone=%.3f/%.3f/%.3f/%.3f/%.3f/%.3f ",
         p->tEventInit*M, p->tEventLoad*M, p->tEventProp*M,
-        p->tEventRefine*M, p->tEventRollback*M );
+        p->tEventRefine*M, p->tEventRollback*M, p->tEventCone*M );
     Abc_Print( 1, "chk=%6.3f(d=%d) stat=%6.3f rest=%6.3f\n",
         p->tChk*M, p->dChkLits, p->tStats*M, tRest*M );
 }
@@ -925,6 +928,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     Cec_ScorrProfEventLoad = Cec_ScorrProfEventProp = 0;
     Cec_ScorrProfEventRefine = Cec_ScorrProfEventRollback = 0;
     Cec_ScorrProfEventInit = 0;
+    Cec_ScorrProfEventCone = 0;
     if ( pSeed )
         Cec_SeedSimBeginCall( pSeed );  // reset per-call local/full/maxdirty counters
 //    pSim->pPars->nWords  = 63;
@@ -932,7 +936,10 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     if ( pSeed )
     {
         Cec_SeedSimEnsurePersistent( pSeed, pSim );
-        Cec_SeedSimBuildClassCone( pSeed, vOutputs );
+        // Defer the (possibly full-unroll-sized) class cone: it is built lazily
+        // inside Cec_SeedSimTryBatch() only once a batch passes the density gate,
+        // so rounds that fall back to full resim never pay for it.
+        pSeed->fUseCone = 0;
         vSimInfo = pSeed->vSimInfo;
         vOutBits = Vec_IntAlloc( 1000 );
     }
@@ -954,6 +961,9 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
                 pSeed, vCexStore, iStart, vPairs, vOutBits );
             if ( Cec_ScorrProfOn )
                 Cec_ScorrProfSimRemap += Abc_ClockHr() - tR;
+            // (-V) snapshot the pre-batch partition for the soundness oracle
+            if ( pSeed->fVerify )
+                Cec_SeedSimVerifySnapshot( pSeed );
             if ( pSeed->nFallbackCooldown > 0 )
             {
                 Cec_SeedSimBypassBatch( pSeed, Vec_IntSize(vOutBits) / 2 );
@@ -965,6 +975,20 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
             {
                 pSeed->nFallbackStreak = 0;
                 pSeed->nFallbackCooldown = 0;
+                if ( pSeed->fVerify )
+                {
+                    // strict oracle: check the value cache AND, decisively, that
+                    // the committed partition has no split missed vs full resim
+                    int nBad = Cec_SeedSimVerifyValues( pSeed );
+                    nBad += Cec_SeedSimVerifyRefine( pSeed, pSim, vSimInfo, nFrames );
+                    if ( nBad > 0 )
+                    {
+                        Abc_Print( -1, "[resim-oracle] FATAL: incremental resim is "
+                            "unsound (%d violations); aborting -V verification.\n", nBad );
+                        fflush( stdout );
+                        assert( 0 );
+                    }
+                }
                 continue;
             }
             else if ( LocalStatus == CEC_SEEDSIM_RESULT_FULL_WIDE )
@@ -1059,6 +1083,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         Cec_ScorrProfEventRefine = Cec_SeedSimTimeEventRefine( pSeed );
         Cec_ScorrProfEventRollback = Cec_SeedSimTimeEventRollback( pSeed );
         Cec_ScorrProfEventInit = Cec_SeedSimTimeEventInit( pSeed );
+        Cec_ScorrProfEventCone = Cec_SeedSimTimeEventCone( pSeed );
     }
     if ( Cec_ScorrProfOn ) Cec_ScorrProfSimRun = Abc_ClockHr() - tH - Cec_ScorrProfSimRemap;
 //Gia_ManEquivPrintOne( pSim->pAig, 85, 0 );
@@ -1551,6 +1576,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 Prof.tEventRefine = Cec_ScorrProfEventRefine;
                 Prof.tEventRollback = Cec_ScorrProfEventRollback;
                 Prof.tEventInit = Cec_ScorrProfEventInit;
+                Prof.tEventCone = Cec_ScorrProfEventCone;
                 Prof.nSimCalls = 1;
             }
             if ( Prof.nCexTriv > 0 )
@@ -1842,7 +1868,10 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pDynSrm = Cec_DynSrmAlloc( pAig, pMgr );
     // Resident local-sim manager sized for the main-loop resim depth.
     if ( pPars->fIncrSim )
+    {
         pSeedSim = Cec_SeedSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pPars->nFrames, pParsSim->nWords );
+        pSeedSim->fVerify = pPars->fVerifyResim;
+    }
     Cec_ScorrProfOn = pPars->fVeryVerbose;
     // perform refinement of equivalence classes
     for ( r = 0; r < nIterMax; r++ )
@@ -2102,6 +2131,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.tEventRefine = Cec_ScorrProfEventRefine;
                 Prof.tEventRollback = Cec_ScorrProfEventRollback;
                 Prof.tEventInit = Cec_ScorrProfEventInit;
+                Prof.tEventCone = Cec_ScorrProfEventCone;
             }
             if ( Prof.nCexTriv > 0 )
                 Prof.nTrivSplits = Cec_ManTrivialSatSplit( pAig, pSim, vCexStore, vStatus, vOutputs, pPars->fUseRings );

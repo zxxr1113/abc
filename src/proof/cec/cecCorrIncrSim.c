@@ -123,7 +123,7 @@ static void Cec_SeedSimConeCloseClasses( Cec_SeedSim_t * p )
         int Key = Vec_IntEntry( p->vConeQueue, i );
         int Frame = Key / p->nObjs;
         int ObjId = Key % p->nObjs;
-        int Root, Member;
+        int Root, Member, RootKey;
         if ( ObjId == 0 )
             continue;
         if ( Gia_ObjIsConst(p->pAig, ObjId) )
@@ -132,6 +132,12 @@ static void Cec_SeedSimConeCloseClasses( Cec_SeedSim_t * p )
             continue;
         Root = Gia_ObjIsHead(p->pAig, ObjId) ? ObjId :
             Gia_ObjRepr(p->pAig, ObjId);
+        // close each (frame, class-root) at most once: members and frames repeat
+        // in the queue, and re-closing a large class is quadratic
+        RootKey = Frame * p->nObjs + Root;
+        if ( p->pConeClose[RootKey] == p->nConeCloseVer )
+            continue;
+        p->pConeClose[RootKey] = p->nConeCloseVer;
         Cec_SeedSimConeMark_rec( p, Frame, Root );
         Gia_ClassForEachObj1( p->pAig, Root, Member )
             Cec_SeedSimConeMark_rec( p, Frame, Member );
@@ -159,6 +165,11 @@ void Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p, Vec_Int_t * vOutputs )
     Vec_IntClear( p->vConeQueue );
     p->nConeKeys = 0;
     p->fUseCone = 1;
+    if ( ++p->nConeCloseVer == 0 )   // fresh "class already closed" stamps
+    {
+        memset( p->pConeClose, 0, sizeof(int) * (size_t)p->nFrames * p->nObjs );
+        p->nConeCloseVer = 1;
+    }
     if ( vOutputs && Vec_IntSize(vOutputs) > 0 )
     {
         Vec_IntForEachEntryDouble( vOutputs, Obj0, Obj1, i )
@@ -288,6 +299,7 @@ Cec_SeedSim_t * Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame,
     p->pEvalMark    = ABC_CALLOC( int, nKeys );
     p->pEventWords  = ABC_CALLOC( unsigned, nKeys * p->nEventMaskWords );
     p->pCone        = ABC_CALLOC( unsigned, p->nConeWords );
+    p->pConeClose   = ABC_CALLOC( int, nKeys );
     p->pRootMark    = ABC_CALLOC( int, p->nObjs );
     p->pTxnMark     = ABC_CALLOC( int, p->nObjs );
     p->pInputVarMark = ABC_CALLOC( int, p->nRegs + p->nPis * p->nFrames );
@@ -376,6 +388,9 @@ void Cec_SeedSimFree( Cec_SeedSim_t * p )
     ABC_FREE( p->pEvalMark );
     ABC_FREE( p->pEventWords );
     ABC_FREE( p->pCone );
+    ABC_FREE( p->pConeClose );
+    ABC_FREE( p->pReprPre );
+    ABC_FREE( p->pNextPre );
     ABC_FREE( p->pRootMark );
     ABC_FREE( p->pTxnMark );
     ABC_FREE( p->pPackPres );
@@ -1331,6 +1346,121 @@ static void Cec_SeedSimBuildPersistentValues( Cec_SeedSim_t * p )
     }
 }
 
+// (-V) Oracle for incremental-resim correctness.  The maintained pVal must equal
+// the true value of every IN-CONE key under the current persistent inputs.  We
+// snapshot the under-test values, recompute the trusted values by a full sweep
+// from vSimInfo (no class side effects), compare on cone keys, then restore the
+// under-test values so the run trajectory is unchanged (purely observational).
+// Out-of-cone keys are intentionally stale and are not checked.
+int Cec_SeedSimVerifyValues( Cec_SeedSim_t * p )
+{
+    size_t nKeys, nVals;
+    unsigned * pTest;
+    int Key, w, nBad = 0;
+    if ( p->pVal == NULL )
+        return 0;
+    nKeys = (size_t)p->nFrames * p->nObjs;
+    nVals = nKeys * (size_t)p->nWords;
+    pTest = ABC_ALLOC( unsigned, nVals );
+    memcpy( pTest, p->pVal, sizeof(unsigned) * nVals );   // maintained (under test)
+    Cec_SeedSimBuildPersistentValues( p );                // p->pVal := true values
+    for ( Key = 0; Key < (int)nKeys; Key++ )
+    {
+        if ( p->fUseCone && !Abc_InfoHasBit(p->pCone, Key) )
+            continue;
+        for ( w = 0; w < p->nWords; w++ )
+        {
+            size_t Flat = (size_t)Key * p->nWords + w;
+            if ( pTest[Flat] != p->pVal[Flat] )
+            {
+                if ( nBad < 20 )
+                    Abc_Print( 1, "  [resim-oracle] STALE key f=%d obj=%d w=%d "
+                        "maintained=%08x true=%08x\n",
+                        Key / p->nObjs, Key % p->nObjs, w,
+                        pTest[Flat], p->pVal[Flat] );
+                nBad++;
+                break;
+            }
+        }
+    }
+    if ( nBad )
+        Abc_Print( 1, "  [resim-oracle] %d in-cone keys STALE "
+            "(maintained != true under persistent inputs)\n", nBad );
+    memcpy( p->pVal, pTest, sizeof(unsigned) * nVals );   // restore: stay observational
+    ABC_FREE( pTest );
+    return nBad;
+}
+
+// (-V) Capture the class partition (pReprs/pNexts) before a batch is resimulated.
+// Cec_SeedSimVerifyRefine() replays the trusted full resim from this snapshot.
+void Cec_SeedSimVerifySnapshot( Cec_SeedSim_t * p )
+{
+    int nObjs = p->nObjs;
+    if ( p->pAig->pReprs == NULL || p->pAig->pNexts == NULL )
+        return;
+    if ( p->pReprPre == NULL )
+    {
+        p->pReprPre = ABC_ALLOC( int, nObjs );
+        p->pNextPre = ABC_ALLOC( int, nObjs );
+    }
+    memcpy( p->pReprPre, p->pAig->pReprs, sizeof(int) * nObjs );
+    memcpy( p->pNextPre, p->pAig->pNexts, sizeof(int) * nObjs );
+}
+
+// (-V) Soundness oracle for class refinement (not just the value cache).  The
+// incremental resim has just committed its splits for this batch (P_incr).  We
+// re-run the TRUSTED full resim on the SAME packed CEX inputs starting from the
+// pre-batch partition (P0), giving the reference partition P_full.  Any pair
+// that P_incr left MERGED but P_full SPLITS is a missed split: with -i that pair
+// is no longer an active SAT obligation, so the false equivalence could survive.
+// The check reuses the production refinement code (correct phase/const handling),
+// then restores P_incr so the run stays observational.  Returns #missed splits.
+int Cec_SeedSimVerifyRefine( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
+    Vec_Ptr_t * vSimInfo, int nFrames )
+{
+    Gia_Man_t * pAig = p->pAig;
+    int nObjs = p->nObjs;
+    int * pReprIncr, * pNextIncr;
+    int i, nBad = 0;
+    if ( pAig->pReprs == NULL || p->pReprPre == NULL )
+        return 0;
+    pReprIncr = ABC_ALLOC( int, nObjs );
+    pNextIncr = ABC_ALLOC( int, nObjs );
+    memcpy( pReprIncr, pAig->pReprs, sizeof(int) * nObjs );   // P_incr (committed)
+    memcpy( pNextIncr, pAig->pNexts, sizeof(int) * nObjs );
+    // restore the pre-batch partition and run the trusted full resim
+    memcpy( pAig->pReprs, p->pReprPre, sizeof(int) * nObjs );
+    memcpy( pAig->pNexts, p->pNextPre, sizeof(int) * nObjs );
+    Gia_ManCreateValueRefs( pAig );
+    pSim->pPars->nFrames = nFrames;
+    Cec_ManSeqResimulate( pSim, vSimInfo );                   // pAig now holds P_full
+    // a pair merged in P_incr but split in P_full is a missed (unsound) split
+    for ( i = 1; i < nObjs; i++ )
+    {
+        int rIncr = pReprIncr[i], ci, cr;
+        if ( rIncr == GIA_VOID )
+            continue;                                         // i was a head/none in P_incr
+        ci = Gia_ObjRepr(pAig, i)     == GIA_VOID ? i     : Gia_ObjRepr(pAig, i);
+        cr = Gia_ObjRepr(pAig, rIncr) == GIA_VOID ? rIncr : Gia_ObjRepr(pAig, rIncr);
+        if ( ci != cr )
+        {
+            if ( nBad < 20 )
+                Abc_Print( 1, "  [resim-oracle] MISSED SPLIT obj=%d repr=%d "
+                    "(merged by incremental, split by full resim)\n", i, rIncr );
+            nBad++;
+        }
+    }
+    // restore the committed (incremental) partition: stay observational
+    memcpy( pAig->pReprs, pReprIncr, sizeof(int) * nObjs );
+    memcpy( pAig->pNexts, pNextIncr, sizeof(int) * nObjs );
+    ABC_FREE( pReprIncr );
+    ABC_FREE( pNextIncr );
+    if ( nBad )
+        Abc_Print( 1, "  [resim-oracle] %d MISSED SPLITS this batch "
+            "(incremental coarser than full resim)\n", nBad );
+    return nBad;
+}
+
 void Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim )
 {
     int nInputs = p->nRegs + p->nPis * p->nFrames;
@@ -1986,7 +2116,6 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         p->tFullAvg * CEC_EVENT_TIME_FRAC_NUM / CEC_EVENT_TIME_FRAC_DEN : 0;
     assert( nFrames == p->nFrames );
     assert( vSimInfo == p->vSimInfo );
-    (void)vOutputs;
     Cec_SeedSimRecordBatch( p, Vec_IntSize(vOutBits) / 2 );
     p->nEventInputVarsMax = Abc_MaxInt( p->nEventInputVarsMax, nInputVars );
     p->nEventInputWordsMax = Abc_MaxInt( p->nEventInputWordsMax, nInputWords );
@@ -2001,6 +2130,16 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         p->nFallbackCex++;
         p->nBatchFull++;
         return Cec_SeedSimProfReturn( p, CEC_SEEDSIM_RESULT_FULL_WIDE, tTry );
+    }
+    // The batch is narrow enough to try event-local resim, so build the
+    // frame-aware class cone now (lazily, once per resim call).  Building it
+    // before the density gate above wasted a near-full-unroll traversal on
+    // rounds that fall back anyway -- the original -I performance bug.
+    if ( !p->fUseCone )
+    {
+        abctime tCone = Cec_SeedSimProfStart();
+        Cec_SeedSimBuildClassCone( p, vOutputs );
+        Cec_SeedSimProfStop( &p->tEventCone, tCone );
     }
     Cec_SeedSimReset( p );
     Vec_IntClear( p->vValueUndo );
@@ -2123,6 +2262,7 @@ void Cec_SeedSimBeginCall( Cec_SeedSim_t * p )
     p->tTfoBuild = p->tTfoSim = p->tTxn = 0;
     p->tEventLoad = p->tEventProp = p->tEventRefine = p->tEventRollback = 0;
     p->tEventInit = 0;
+    p->tEventCone = 0;
 }
 
 void Cec_SeedSimBypassBatch( Cec_SeedSim_t * p, int nCex )
@@ -2174,6 +2314,7 @@ abctime Cec_SeedSimTimeEventProp( Cec_SeedSim_t * p ) { return p->tEventProp; }
 abctime Cec_SeedSimTimeEventRefine( Cec_SeedSim_t * p ) { return p->tEventRefine; }
 abctime Cec_SeedSimTimeEventRollback( Cec_SeedSim_t * p ) { return p->tEventRollback; }
 abctime Cec_SeedSimTimeEventInit( Cec_SeedSim_t * p ) { return p->tEventInit; }
+abctime Cec_SeedSimTimeEventCone( Cec_SeedSim_t * p ) { return p->tEventCone; }
 
 ////////////////////////////////////////////////////////////////////////
 ///                       END OF FILE                                ///

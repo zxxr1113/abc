@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZDpkrecqdiIoswvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZDpkrecqdiIVoswvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41264,6 +41264,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'I':
             pPars->fIncrSim ^= 1;
             break;
+        case 'V':
+            pPars->fVerifyResim ^= 1;
+            break;
         case 'D':
             pPars->fDynSrm ^= 1;
             break;
@@ -41292,6 +41295,11 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     if ( pPars->fDynSrm && !pPars->fIncremental )
     {
         Abc_Print( -1, "The dynamic SRM manager (-D) requires -i.\n" );
+        return 1;
+    }
+    if ( pPars->fVerifyResim && !pPars->fIncrSim )
+    {
+        Abc_Print( -1, "The resim value oracle (-V) requires -I.\n" );
         return 1;
     }
     if ( pAbc->pGia == NULL )
@@ -41373,6 +41381,7 @@ usage:
     Abc_Print( -2, "\t-d     : toggle unbounded shadow SAT for pairs skipped by -i [default = %s]\n", pPars->fIncrOracle? "yes": "no" );
     Abc_Print( -2, "\t-I     : toggle unified persistent event resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-D     : toggle dynamic SRM construction for SAT; resim is controlled by -I [default = %s]\n", pPars->fDynSrm? "yes": "no" );
+    Abc_Print( -2, "\t-V     : toggle (-I) strict resim oracle: aborts if incremental resim misses any split vs full resim [default = %s]\n", pPars->fVerifyResim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle detailed profiling and verbose info about equivalent flops [default = %s]\n", pPars->fVeryVerbose? "yes": "no" );

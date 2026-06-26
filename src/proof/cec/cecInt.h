@@ -266,6 +266,11 @@ struct Cec_SeedSim_t_
     int          nConeKeys;       // marked keys in the current cone
     int          fUseCone;        // 1 after pCone was built for this resim call
     Vec_Int_t *  vConeQueue;      // newly marked keys used to class-close pCone
+    int *        pConeClose;      // (frame,root) stamp: class already closed this build
+    int          nConeCloseVer;   // version for pConeClose
+    int          fVerify;         // (-V) check maintained values vs full sweep each batch
+    int *        pReprPre;        // (-V) class-repr snapshot captured before a batch
+    int *        pNextPre;        // (-V) class-next snapshot captured before a batch
     abctime      tFullAvg;         // moving average used for adaptive deadline
     int          nFallbackStreak; // persists across resimulation calls
     int          nFallbackCooldown; // batches bypassed before next event probe
@@ -329,6 +334,7 @@ struct Cec_SeedSim_t_
     abctime      tEventRefine;
     abctime      tEventRollback;
     abctime      tEventInit;
+    abctime      tEventCone;       // time building the frame-aware class cone
 };
 
 // Dynamic SRM construction manager for &scorr -D.  It keeps the speculative SRM
@@ -423,6 +429,9 @@ extern void                 Cec_SeedSimBeginCall( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimBypassBatch( Cec_SeedSim_t * p, int nCex );
 extern void                 Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim );
 extern void                 Cec_SeedSimBuildClassCone( Cec_SeedSim_t * p, Vec_Int_t * vOutputs );
+extern int                  Cec_SeedSimVerifyValues( Cec_SeedSim_t * p );
+extern void                 Cec_SeedSimVerifySnapshot( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimVerifyRefine( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, int nFrames );
 extern int                  Cec_SeedSimLoadPersistentBatch( Cec_SeedSim_t * p, Vec_Int_t * vCexStore, int iStart, Vec_Int_t * vPairs, Vec_Int_t * vOutBits );
 extern void                 Cec_SeedSimRestorePersistentInputs( Cec_SeedSim_t * p );
 extern void                 Cec_SeedSimRecordFullTime( Cec_SeedSim_t * p, abctime Elapsed );
@@ -468,6 +477,7 @@ extern abctime              Cec_SeedSimTimeEventProp( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeEventRefine( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeEventRollback( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeEventInit( Cec_SeedSim_t * p );
+extern abctime              Cec_SeedSimTimeEventCone( Cec_SeedSim_t * p );
 /*=== cecClass.c ============================================================*/
 extern int                  Cec_ManSimClassRemoveOne( Cec_ManSim_t * p, int i );
 extern void                 Cec_ManSimClassCreate( Gia_Man_t * p, Vec_Int_t * vClass );

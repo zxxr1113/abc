@@ -172,6 +172,7 @@ struct Cec_ParCor_t_
     int              fIncrSim;      // persistent CEX-TFO-only resimulation after SAT
     int              fDynSrm;       // persistent dynamic SRM and true-unroll resimulation
     int              fSkipFailResim;// skip resim in rounds with no real CEX (only timeout/fail)
+    int              fVerifyResim;  // (-V) oracle: check incremental resim values vs full sweep
     int              fVerboseFlops; // verbose stats
     int              fVeryVerbose;  // verbose stats
     int              fVerbose;      // verbose stats
