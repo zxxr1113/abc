@@ -29,6 +29,8 @@ struct Cec_DynSrm_t_
     Gia_Man_t *      pAig;          // host AIG; owned by caller
     Cec_IncrMgr_t *  pIncr;         // active-list manager; owned by caller
     Gia_Man_t *      pCore;         // persistent SRM core without COs
+    Cbs_Man_t *      pCbs;          // resident circuit-SAT manager on pCore (-D direct solving)
+    int              nCoreObjsAtReset; // pCore size right after the last (re)build, for compaction
     Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
     Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
@@ -46,6 +48,7 @@ struct Cec_DynSrm_t_
     int              nBuilds;
     int              nBuildsActive;
     int              nCoreResets;
+    int              nCoreCompactions;
     int              nCoreBuilds;
     int              nViewBuilds;
     int              nCacheFullClears;
@@ -128,9 +131,13 @@ static int Cec_DynSrmHostRoLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj )
 
 static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
 {
+    if ( p->pCbs )       // stop resident solver before its pCore is freed
+        Cbs_ManStop( p->pCbs );
+    p->pCbs = NULL;
     if ( p->pCore )
         Gia_ManStop( p->pCore );
     p->pCore = NULL;
+    p->nCoreObjsAtReset = 0;
     Vec_IntFreeP( &p->vSpecLits );
     Vec_IntFreeP( &p->vOutLits );
     Vec_IntFreeP( &p->vCopyTouched );
@@ -141,16 +148,34 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
     p->nObjs = p->nPis = p->nRegs = p->nFramesTotal = p->nCoreCiNum = 0;
 }
 
+// pCore is append-only (strash never frees stale nodes from earlier rounds'
+// reductions), so under long refinement it grows unboundedly and the resident
+// solver's per-round sync/solve walks an ever-larger graph.  At a quiescent
+// point (start of a build) cold-rebuild once it exceeds a multiple of its
+// post-build size; the rebuilt core re-materializes only the live active cones.
+#define CEC_DYN_COMPACT_MULT 4
+
+static int Cec_DynSrmShouldCompact( Cec_DynSrm_t * p )
+{
+    // 64-bit multiply: nCoreObjsAtReset can reach tens of millions (the growth
+    // case this guards), so CEC_DYN_COMPACT_MULT * it must not overflow int.
+    return p->nCoreObjsAtReset > 0 &&
+           Gia_ManObjNum(p->pCore) > (ABC_INT64_T)CEC_DYN_COMPACT_MULT * p->nCoreObjsAtReset;
+}
+
 static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
 {
     Gia_Obj_t * pObj;
     int f, i, nFramesTotal = nFrames + fScorr;
-    if ( p->pCore != NULL &&
+    int fSameShape = ( p->pCore != NULL &&
          p->nObjs == Gia_ManObjNum(p->pAig) &&
          p->nPis == Gia_ManPiNum(p->pAig) &&
          p->nRegs == Gia_ManRegNum(p->pAig) &&
-         p->nFramesTotal == nFramesTotal )
+         p->nFramesTotal == nFramesTotal );
+    if ( fSameShape && !Cec_DynSrmShouldCompact(p) )
         return;
+    if ( fSameShape )            // reusable shape but bloated: cold-rebuild
+        p->nCoreCompactions++;
     Cec_DynSrmResetCore( p );
     p->nObjs = Gia_ManObjNum( p->pAig );
     p->nPis = Gia_ManPiNum( p->pAig );
@@ -179,6 +204,7 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
             Gia_ManAppendCi( p->pCore );
     p->nCoreCiNum = Gia_ManCiNum( p->pCore );
     assert( p->nCoreCiNum == p->nRegs + p->nFramesTotal * p->nPis );
+    p->nCoreObjsAtReset = Gia_ManObjNum( p->pCore );
     p->nCoreResets++;
 }
 
@@ -342,8 +368,8 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         return;
     Abc_Print( 1, "DynSRM: builds = %d, active_builds = %d\n",
         p->nBuilds, p->nBuildsActive );
-    Abc_Print( 1, "DynSRM: core_resets = %d, core_builds = %d, view_builds = %d, out_lits_last/max = %d/%d, core_objs_last/max = %d/%d, view_objs_last/max = %d/%d\n",
-        p->nCoreResets, p->nCoreBuilds, p->nViewBuilds,
+    Abc_Print( 1, "DynSRM: core_resets = %d, compactions = %d, core_builds = %d, view_builds = %d, out_lits_last/max = %d/%d, core_objs_last/max = %d/%d, view_objs_last/max = %d/%d\n",
+        p->nCoreResets, p->nCoreCompactions, p->nCoreBuilds, p->nViewBuilds,
         p->nOutLitsLast, p->nOutLitsMax,
         p->nCoreObjsLast, p->nCoreObjsMax,
         p->nViewObjsLast, p->nViewObjsMax );
@@ -617,9 +643,22 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
     return Cec_DynSrmBuildView( p );
 }
 
-// Persistent COless core and its current root literals (for -D direct solving).
-Gia_Man_t * Cec_DynSrmCore( Cec_DynSrm_t * p )    { return p->pCore;    }
+// This round's active-pair root literals (used by the main loop for counts).
 Vec_Int_t * Cec_DynSrmOutLits( Cec_DynSrm_t * p ) { return p->vOutLits; }
+
+// Solves this round's root literals on the persistent pCore with the resident
+// circuit-SAT manager (allocated lazily; re-created after a core reset/compaction
+// since its pAig is freed there).  The CI-layout assert guards the CEX CioId ->
+// resim-input contract that the discarded view used to enforce in the main loop.
+Vec_Int_t * Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus )
+{
+    assert( Gia_ManRegNum(p->pCore) == 0 );
+    assert( Gia_ManCiNum(p->pCore) == p->nRegs + p->nFramesTotal * p->nPis );
+    if ( p->pCbs == NULL )
+        p->pCbs = Cbs_ManAlloc( p->pCore );
+    Cbs_ManSetConflictNum( p->pCbs, nConfs );
+    return Cbs_ManSolveRoots( p->pCbs, p->vOutLits, pvStatus, 0 );
+}
 
 ////////////////////////////////////////////////////////////////////////
 ///                       END OF FILE                                ///

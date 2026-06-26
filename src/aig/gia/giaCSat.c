@@ -64,6 +64,7 @@ struct Cbs_Man_t_
 {
     Cbs_Par_t     Pars;         // parameters
     Gia_Man_t *   pAig;         // AIG manager
+    int           nSyncedObjs;  // pAig objects already prepped (Value/marks/refs) for resident reuse
     Cbs_Que_t     pProp;        // propagation queue
     Cbs_Que_t     pJust;        // justification queue
     Cbs_Que_t     pClauses;     // clause queue
@@ -1203,49 +1204,83 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
 
 /**Function*************************************************************
 
-  Synopsis    [Solves a set of root literals directly on a persistent AIG.]
+  Synopsis    [Incrementally prepares newly appended objects of a persistent AIG.]
 
-  Description [Same prover as Cbs_ManSolveMiterNc, but each problem is a root
-  literal of pAig (no CO needed) instead of a CO of a freshly built view.  Used
-  by &scorr -D persistence: the dynamic SRM keeps a persistent COless pCore, and
-  vRootLits are its active-pair miter literals - so the per-round throwaway view
-  (alloc + copy-all-CIs + cone copy) is skipped.  Output index i corresponds to
-  vRootLits[i]; vCexStore / vStatus format matches Cbs_ManSolveMiterNc.  CEX is
-  saved by CioId, which on pCore equals the view's CI numbering.]
+  Description [The pAig of a resident manager is append-only across solve calls.
+  Cbs needs every unassigned object to carry Value=~0 and clean marks, and reads
+  Gia_ObjRefNum during branching.  After a clean solve Cbs restores Value/marks
+  of the nodes it touched, and freshly appended nodes are zero-initialized, so we
+  only have to prep the suffix [nSyncedObjs, ObjNum): set Value=~0, clear marks,
+  grow pRefs and bump each new AND's fanin refs (= the global fanout counts that
+  Gia_ManCreateRefs would produce, computed incrementally).  This replaces the
+  per-round O(|pAig|) refs/marks/value rebuild with O(newly appended).]
 
-  SideEffects [pAig is persistent: refs are rebuilt (stale refs freed first) and
-  marks/Value are reset every call; new nodes appended since last call get a
-  valid Value=~0 here.]
+  SideEffects [Allocates/grows pAig->pRefs (freed by Gia_ManStop).]
 
   SeeAlso     []
 
 ***********************************************************************/
-Vec_Int_t * Cbs_ManSolveRoots( Gia_Man_t * pAig, Vec_Int_t * vRootLits, int nConfs, Vec_Str_t ** pvStatus, int fVerbose )
+void Cbs_ManSyncCore( Cbs_Man_t * p )
+{
+    Gia_Man_t * pAig = p->pAig;
+    Gia_Obj_t * pObj;
+    int i, nObjs = Gia_ManObjNum( pAig );
+    assert( p->nSyncedObjs <= nObjs );
+    if ( p->nSyncedObjs == nObjs )
+        return;
+    pAig->pRefs = ABC_REALLOC( int, pAig->pRefs, nObjs );
+    memset( pAig->pRefs + p->nSyncedObjs, 0, sizeof(int) * (nObjs - p->nSyncedObjs) );
+    for ( i = p->nSyncedObjs; i < nObjs; i++ )
+    {
+        pObj = Gia_ManObj( pAig, i );
+        pObj->fMark0 = pObj->fMark1 = 0;
+        pObj->Value  = ~0;
+        if ( Gia_ObjIsAnd(pObj) )
+        {
+            pAig->pRefs[Gia_ObjFaninId0(pObj, i)]++;
+            pAig->pRefs[Gia_ObjFaninId1(pObj, i)]++;
+        }
+    }
+    p->nSyncedObjs = nObjs;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Solves a set of root literals directly on a persistent AIG.]
+
+  Description [Same prover as Cbs_ManSolveMiterNc, but each problem is a root
+  literal of p->pAig (no CO needed) instead of a CO of a freshly built view, and
+  the manager is resident: it is allocated once on the persistent COless pCore
+  and reused across rounds, only Cbs_ManSyncCore-ing the objects appended since
+  the last call - so neither the throwaway view (alloc + copy-all-CIs + cone
+  copy) nor the per-round whole-AIG prep is paid.  Output index i corresponds to
+  vRootLits[i]; vCexStore / vStatus format matches Cbs_ManSolveMiterNc.  CEX is
+  saved by CioId, which on pCore equals the view's CI numbering.]
+
+  SideEffects [Prepares newly appended objects via Cbs_ManSyncCore.]
+
+  SeeAlso     []
+
+***********************************************************************/
+Vec_Int_t * Cbs_ManSolveRoots( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose )
 {
     extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
     extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
     extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
-    Cbs_Man_t * p;
+    Gia_Man_t * pAig = p->pAig;
     Vec_Int_t * vCex, * vCexStore;
     Vec_Str_t * vStatus;
     int i, iLit, status;
     abctime clk, clkTotal = Abc_Clock();
     abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     assert( Gia_ManRegNum(pAig) == 0 );
-    // prepare AIG (pCore is persistent: drop stale refs before rebuilding)
-    ABC_FREE( pAig->pRefs );
-    Gia_ManCreateRefs( pAig );
-    Gia_ManCleanMark0( pAig );
-    Gia_ManCleanMark1( pAig );
-    Gia_ManFillValue( pAig ); // maps nodes into trail ids (incl. newly appended)
-    p = Cbs_ManAlloc( pAig );
-    p->Pars.nBTLimit = nConfs;
+    Cbs_ManSyncCore( p ); // prep only objects appended since the last solve
     vStatus   = Vec_StrAlloc( Vec_IntSize(vRootLits) );
     vCexStore = Vec_IntAlloc( 10000 );
     vCex      = Cbs_ReadModel( p );
     if ( Cec_ScorrProfOn )
     {
-        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // solver alloc + AIG prep
+        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // incremental sync of new objects
         Cec_ScorrProfSolve = Cec_ScorrProfMax = 0;
         Cec_ScorrProfCalls = 0;
     }
@@ -1300,7 +1335,7 @@ Vec_Int_t * Cbs_ManSolveRoots( Gia_Man_t * pAig, Vec_Int_t * vRootLits, int nCon
     p->timeTotal = Abc_Clock() - clkTotal;
     if ( fVerbose )
         Cbs_ManSatPrintStats( p );
-    Cbs_ManStop( p );
+    // manager is resident: caller (Cec_DynSrm) owns its lifetime
     *pvStatus = vStatus;
     return vCexStore;
 }

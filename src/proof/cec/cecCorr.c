@@ -2065,7 +2065,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clk2 = Abc_Clock();
         tH = Abc_ClockHr();
         if ( fPersist )
-            vCexStore = Cbs_ManSolveRoots( Cec_DynSrmCore(pDynSrm), Cec_DynSrmOutLits(pDynSrm), pPars->nBTLimit, &vStatus, 0 );
+            vCexStore = Cec_DynSrmSolve( pDynSrm, pPars->nBTLimit, &vStatus );
         else if ( pPars->fUseCSat )
             vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
         else
