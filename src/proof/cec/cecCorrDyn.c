@@ -496,7 +496,10 @@ static void Cec_DynSrmReportTrueCone( Cec_DynSrm_t * p, int nFrames, int fRings,
         p->nBuilds, nKeys, nFull, nFull ? (double)nKeys / (double)nFull : 0.0 );
 }
 
-Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
+// Builds (or extends) the persistent COless pCore and selects this round's
+// active-pair root literals into p->vOutLits / *pvOutputs.  Shared by the view
+// path (Cec_DynSrmBuild) and the -D persistence path (solve pCore directly).
+void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode )
 {
     Gia_Obj_t * pObj, * pRepr;
@@ -605,8 +608,18 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
     p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
     if ( Cec_ScorrProfOn && Mode == CEC_EMIT_ACTIVE )
         Cec_DynSrmReportTrueCone( p, nFrames, fRings, pTfoMask );
+}
+
+Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
+    Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode )
+{
+    Cec_DynSrmBuildCore( p, nFrames, fScorr, pvOutputs, fRings, pTfoMask, Mode );
     return Cec_DynSrmBuildView( p );
 }
+
+// Persistent COless core and its current root literals (for -D direct solving).
+Gia_Man_t * Cec_DynSrmCore( Cec_DynSrm_t * p )    { return p->pCore;    }
+Vec_Int_t * Cec_DynSrmOutLits( Cec_DynSrm_t * p ) { return p->vOutLits; }
 
 ////////////////////////////////////////////////////////////////////////
 ///                       END OF FILE                                ///

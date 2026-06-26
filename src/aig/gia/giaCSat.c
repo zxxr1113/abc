@@ -1201,6 +1201,110 @@ Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvSt
     return Cbs_ManSolveMiterNcOutVals( pAig, nConfs, pvStatus, f0Proved, fVerbose, NULL, NULL );
 }
 
+/**Function*************************************************************
+
+  Synopsis    [Solves a set of root literals directly on a persistent AIG.]
+
+  Description [Same prover as Cbs_ManSolveMiterNc, but each problem is a root
+  literal of pAig (no CO needed) instead of a CO of a freshly built view.  Used
+  by &scorr -D persistence: the dynamic SRM keeps a persistent COless pCore, and
+  vRootLits are its active-pair miter literals - so the per-round throwaway view
+  (alloc + copy-all-CIs + cone copy) is skipped.  Output index i corresponds to
+  vRootLits[i]; vCexStore / vStatus format matches Cbs_ManSolveMiterNc.  CEX is
+  saved by CioId, which on pCore equals the view's CI numbering.]
+
+  SideEffects [pAig is persistent: refs are rebuilt (stale refs freed first) and
+  marks/Value are reset every call; new nodes appended since last call get a
+  valid Value=~0 here.]
+
+  SeeAlso     []
+
+***********************************************************************/
+Vec_Int_t * Cbs_ManSolveRoots( Gia_Man_t * pAig, Vec_Int_t * vRootLits, int nConfs, Vec_Str_t ** pvStatus, int fVerbose )
+{
+    extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
+    extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
+    extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
+    Cbs_Man_t * p;
+    Vec_Int_t * vCex, * vCexStore;
+    Vec_Str_t * vStatus;
+    int i, iLit, status;
+    abctime clk, clkTotal = Abc_Clock();
+    abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
+    assert( Gia_ManRegNum(pAig) == 0 );
+    // prepare AIG (pCore is persistent: drop stale refs before rebuilding)
+    ABC_FREE( pAig->pRefs );
+    Gia_ManCreateRefs( pAig );
+    Gia_ManCleanMark0( pAig );
+    Gia_ManCleanMark1( pAig );
+    Gia_ManFillValue( pAig ); // maps nodes into trail ids (incl. newly appended)
+    p = Cbs_ManAlloc( pAig );
+    p->Pars.nBTLimit = nConfs;
+    vStatus   = Vec_StrAlloc( Vec_IntSize(vRootLits) );
+    vCexStore = Vec_IntAlloc( 10000 );
+    vCex      = Cbs_ReadModel( p );
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // solver alloc + AIG prep
+        Cec_ScorrProfSolve = Cec_ScorrProfMax = 0;
+        Cec_ScorrProfCalls = 0;
+    }
+    Vec_IntForEachEntry( vRootLits, iLit, i )
+    {
+        Vec_IntClear( vCex );
+        if ( Abc_Lit2Var(iLit) == 0 ) // structural constant root
+        {
+            if ( Abc_LitIsCompl(iLit) ) // const 1: trivial counter-example
+            {
+                Cec_ManSatAddToStore( vCexStore, vCex, i );
+                Vec_StrPush( vStatus, 0 );
+            }
+            else                        // const 0: proved
+                Vec_StrPush( vStatus, 1 );
+            continue;
+        }
+        clk = Abc_Clock();
+        clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
+        p->Pars.fUseHighest = 1;
+        p->Pars.fUseLowest  = 0;
+        status = Cbs_ManSolve( p, Gia_ObjFromLit(pAig, iLit) );
+        if ( Cec_ScorrProfOn )
+        {
+            abctime dHr = Abc_ClockHr() - clkHr;
+            Cec_ScorrProfSolve += dHr;
+            if ( dHr > Cec_ScorrProfMax ) Cec_ScorrProfMax = dHr;
+            Cec_ScorrProfCalls++;
+        }
+        Vec_StrPush( vStatus, (char)status );
+        if ( status == -1 )
+        {
+            p->nSatUndec++;
+            p->nConfUndec += p->Pars.nBTThis;
+            Cec_ManSatAddToStore( vCexStore, NULL, i ); // timeout
+            p->timeSatUndec += Abc_Clock() - clk;
+            continue;
+        }
+        if ( status == 1 )
+        {
+            p->nSatUnsat++;
+            p->nConfUnsat += p->Pars.nBTThis;
+            p->timeSatUnsat += Abc_Clock() - clk;
+            continue;
+        }
+        p->nSatSat++;
+        p->nConfSat += p->Pars.nBTThis;
+        Cec_ManSatAddToStore( vCexStore, vCex, i );
+        p->timeSatSat += Abc_Clock() - clk;
+    }
+    p->nSatTotal = Vec_IntSize( vRootLits );
+    p->timeTotal = Abc_Clock() - clkTotal;
+    if ( fVerbose )
+        Cbs_ManSatPrintStats( p );
+    Cbs_ManStop( p );
+    *pvStatus = vStatus;
+    return vCexStore;
+}
+
 
 ////////////////////////////////////////////////////////////////////////
 ///                       END OF FILE                                ///

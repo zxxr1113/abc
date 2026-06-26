@@ -1800,6 +1800,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     // Resimulation is controlled only by -I: without -I, counterexamples are
     // replayed by the original host-AIG resimulation path.
     Cec_DynSrm_t * pDynSrm = NULL;
+    int fPersist = 0;          // -D + circuit-SAT: solve persistent pCore directly
     // Unified CEX event-resimulation manager (NULL if -I not set).
     Cec_SeedSim_t * pSeedSim = NULL;
     abctime clkIncr = 0;
@@ -1866,6 +1867,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     }
     if ( pPars->fDynSrm && pMgr )
         pDynSrm = Cec_DynSrmAlloc( pAig, pMgr );
+    // -D persistence path: solve the persistent COless pCore directly (circuit
+    // SAT only), skipping the per-round throwaway view that BuildView copies.
+    fPersist = ( pDynSrm != NULL && pPars->fUseCSat );
     // Resident local-sim manager sized for the main-loop resim depth.
     if ( pPars->fIncrSim )
     {
@@ -2018,7 +2022,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             }
 
             tH = Abc_ClockHr();
-            if ( pDynSrm )
+            // -D persistence under circuit-SAT: build the COless pCore and solve
+            // its root literals directly below; skip the per-round throwaway view.
+            if ( fPersist )
+            {
+                Cec_DynSrmBuildCore( pDynSrm, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pTfoMask ? CEC_EMIT_ACTIVE : CEC_EMIT_ALL );
+                pSrm = NULL;
+            }
+            else if ( pDynSrm )
                 pSrm = Cec_DynSrmBuild( pDynSrm, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pTfoMask ? CEC_EMIT_ACTIVE : CEC_EMIT_ALL );
             else if ( pTfoMask )
                 pSrm = Gia_ManCorrSpecReduce_Emit( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr, CEC_EMIT_ACTIVE, NULL );
@@ -2029,7 +2040,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Abc_Print( 1, "  [incr r=%d repr=%d next=%d tfo=%d active=%d/%d POs=%d]\n",
                            r, nReprSeeds, nNextChanges,
                            Vec_IntSize(pMgr->vTfoNodes), nActivePairs, nTotalPairs,
-                           Gia_ManCoNum(pSrm) );
+                           fPersist ? Vec_IntSize(Cec_DynSrmOutLits(pDynSrm)) : Gia_ManCoNum(pSrm) );
             // Snapshot after SRM construction: the active builder still needs
             // the old pNexts snapshot to recognize newly-created ring edges.
             // SAT/sim refinement below is what creates the next iteration's diff.
@@ -2040,26 +2051,30 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.tSnap = Abc_ClockHr() - tH;
             }
         }
-        assert( Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig) );
+        assert( fPersist || (Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig)) );
         clkSrm += Abc_Clock() - clk2;
-        if ( Gia_ManCoNum(pSrm) == 0 )
+        if ( (fPersist ? Vec_IntSize(Cec_DynSrmOutLits(pDynSrm)) : Gia_ManCoNum(pSrm)) == 0 )
         {
             Vec_IntFree( vOutputs );
-            Gia_ManStop( pSrm );
+            if ( pSrm )
+                Gia_ManStop( pSrm );
             break;
         }
 //Gia_DumpAiger( pSrm, "corrsrm", r, 2 );
         // found counter-examples to speculation
         clk2 = Abc_Clock();
         tH = Abc_ClockHr();
-        if ( pPars->fUseCSat )
+        if ( fPersist )
+            vCexStore = Cbs_ManSolveRoots( Cec_DynSrmCore(pDynSrm), Cec_DynSrmOutLits(pDynSrm), pPars->nBTLimit, &vStatus, 0 );
+        else if ( pPars->fUseCSat )
             vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
         Prof.tSat = Abc_ClockHr() - tH;
         Prof.tSatSetup = Cec_ScorrProfSetup; Prof.tSatSolve = Cec_ScorrProfSolve;
         Prof.tSatMax   = Cec_ScorrProfMax;   Prof.nSatCalls = Cec_ScorrProfCalls;
-        Gia_ManStop( pSrm );
+        if ( pSrm )
+            Gia_ManStop( pSrm );
         clkSat += Abc_Clock() - clk2;
         if ( Vec_IntSize(vCexStore) == 0 )
         {
