@@ -1467,7 +1467,7 @@ void Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim )
     size_t nInputWords = (size_t)nInputs * p->nWords;
     size_t nKeys = (size_t)p->nFrames * p->nObjs;
     int i, w;
-    abctime tInit, tFull;
+    abctime tInit;
     if ( p->vSimInfo == NULL )
     {
         p->vSimInfo = Vec_PtrAllocSimInfo( nInputs, p->nWords );
@@ -1499,9 +1499,7 @@ void Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim )
     // The baseline full sweep makes every current class consistent with the
     // persistent patterns.  It is paid once; later fallbacks are rolled back
     // to this evolving persistent state without copying the dense value cache.
-    tFull = Abc_ClockHr();
     Cec_ManSeqResimulateSeed( pSim, p->vSimInfo, p );
-    Cec_SeedSimRecordFullTime( p, Abc_ClockHr() - tFull );
     Cec_SeedSimBuildPersistentValues( p );
     p->fInitialized = 1;
     Cec_SeedSimProfStop( &p->tEventInit, tInit );
@@ -2108,12 +2106,9 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     int nInputVars = Vec_IntSize( p->vChangedInputs );
     int nInputWords = Vec_IntSize( p->vInputUndo ) / 2;
     int nTotalInputs = p->nRegs + p->nPis * p->nFrames;
-    int i, iVar, Key, nNextClock = CEC_EVENT_CLOCK_PERIOD;
-    int Status = CEC_SEEDSIM_RESULT_LOCAL, fTime = 0;
+    int i, iVar, Key;
+    int Status = CEC_SEEDSIM_RESULT_LOCAL;
     abctime tTry = Cec_SeedSimProfStart(), tPhase;
-    abctime tEventStart = Abc_ClockHr();
-    abctime tDeadline = p->tFullAvg ? tEventStart +
-        p->tFullAvg * CEC_EVENT_TIME_FRAC_NUM / CEC_EVENT_TIME_FRAC_DEN : 0;
     assert( nFrames == p->nFrames );
     assert( vSimInfo == p->vSimInfo );
     Cec_SeedSimRecordBatch( p, Vec_IntSize(vOutBits) / 2 );
@@ -2131,16 +2126,18 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         p->nBatchFull++;
         return Cec_SeedSimProfReturn( p, CEC_SEEDSIM_RESULT_FULL_WIDE, tTry );
     }
-    // The batch is narrow enough to try event-local resim, so build the
-    // frame-aware class cone now (lazily, once per resim call).  Building it
-    // before the density gate above wasted a near-full-unroll traversal on
-    // rounds that fall back anyway -- the original -I performance bug.
-    if ( !p->fUseCone )
-    {
-        abctime tCone = Cec_SeedSimProfStart();
-        Cec_SeedSimBuildClassCone( p, vOutputs );
-        Cec_SeedSimProfStop( &p->tEventCone, tCone );
-    }
+    // No class-cone gate.  Event propagation below follows the full forward TFO of
+    // this batch's changed CIs (bounded only by the deterministic nNodeLimit /
+    // nEdgeLimit work budget; exceeding it falls back to a full sweep without
+    // committing).  This keeps the persistent pVal globally consistent with the
+    // committed inputs, so Cec_SeedSimEventRefine() never reads a stale value and
+    // never misses a split.  pSeed->fUseCone stays 0 (reset in
+    // Cec_ManResimulateCounterExamples), so Cec_SeedSimConeHasKey() is always true.
+    // The old per-call active-pair cone was too narrow -> stale values across calls
+    // -> missed splits -> unsound merges; see md/I_resim_soundness_bug.md.  The
+    // cone scaffolding (Cec_SeedSimBuildClassCone / pCone / ...) is retained, unused,
+    // for a future adaptive *full-candidate* cone on sparse-candidate designs.
+    (void)vOutputs;
     Cec_SeedSimReset( p );
     Vec_IntClear( p->vValueUndo );
     Vec_IntClear( p->vChangedValues );
@@ -2163,16 +2160,6 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
             Status = CEC_SEEDSIM_RESULT_FULL_WIDE;
             break;
         }
-        if ( tDeadline && p->nEventPops >= nNextClock )
-        {
-            nNextClock = p->nEventPops + CEC_EVENT_CLOCK_PERIOD;
-            if ( Abc_ClockHr() >= tDeadline )
-            {
-                Status = CEC_SEEDSIM_RESULT_FULL_WIDE;
-                fTime = 1;
-                break;
-            }
-        }
     }
     Cec_SeedSimProfStop( &p->tEventProp, tPhase );
     p->nEventPopsMax = Abc_MaxInt( p->nEventPopsMax, p->nEventPops );
@@ -2183,10 +2170,7 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     {
         Cec_SeedSimEventRollbackValues( p );
         p->nEventFallback++;
-        if ( fTime )
-            p->nEventFallbackTime++;
-        else
-            p->nEventFallbackWork++;
+        p->nEventFallbackWork++;
         p->nFallbackPre++;
         p->nBatchFull++;
         return Cec_SeedSimProfReturn( p, Status, tTry );
@@ -2232,16 +2216,6 @@ void Cec_SeedSimSaveFrameOutputs( Cec_SeedSim_t * p, Vec_Ptr_t * vInfoCos, int F
 void Cec_SeedSimFinishFull( Cec_SeedSim_t * p )
 {
     p->fInitialized = 1;
-}
-
-void Cec_SeedSimRecordFullTime( Cec_SeedSim_t * p, abctime Elapsed )
-{
-    if ( Elapsed == 0 )
-        return;
-    if ( p->tFullAvg == 0 )
-        p->tFullAvg = Elapsed;
-    else
-        p->tFullAvg = (7 * p->tFullAvg + Elapsed) / 8;
 }
 
 void Cec_SeedSimBeginCall( Cec_SeedSim_t * p )

@@ -271,7 +271,6 @@ struct Cec_SeedSim_t_
     int          fVerify;         // (-V) check maintained values vs full sweep each batch
     int *        pReprPre;        // (-V) class-repr snapshot captured before a batch
     int *        pNextPre;        // (-V) class-next snapshot captured before a batch
-    abctime      tFullAvg;         // moving average used for adaptive deadline
     int          nFallbackStreak; // persists across resimulation calls
     int          nFallbackCooldown; // batches bypassed before next event probe
     // Class-refinement scratch.
@@ -364,15 +363,12 @@ typedef struct Cec_DynSrm_t_ Cec_DynSrm_t;
 #define CEC_EVENT_NODE_WORD_FRAC_DEN 10
 #define CEC_EVENT_EDGE_WORD_FRAC_NUM 1
 #define CEC_EVENT_EDGE_WORD_FRAC_DEN 5
-#define CEC_EVENT_TIME_FRAC_NUM 2
-#define CEC_EVENT_TIME_FRAC_DEN 5
 // Up-front density gate for the event path.  When a batch's changed-CI seed
 // exceeds this fraction of all unrolled inputs, its dirty closure approaches a
 // full sweep and bit-parallel full resim wins; reject the batch before doing
 // any propagation work that a mid-flight budget abort would otherwise discard.
 #define CEC_EVENT_INPUT_FRAC_NUM 1
 #define CEC_EVENT_INPUT_FRAC_DEN 8
-#define CEC_EVENT_CLOCK_PERIOD 2048
 #define CEC_SEEDSIM_RESULT_FULL       0
 #define CEC_SEEDSIM_RESULT_LOCAL      1
 #define CEC_SEEDSIM_RESULT_FULL_WIDE -1
@@ -437,7 +433,6 @@ extern void                 Cec_SeedSimVerifySnapshot( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimVerifyRefine( Cec_SeedSim_t * p, Cec_ManSim_t * pSim, Vec_Ptr_t * vSimInfo, int nFrames );
 extern int                  Cec_SeedSimLoadPersistentBatch( Cec_SeedSim_t * p, Vec_Int_t * vCexStore, int iStart, Vec_Int_t * vPairs, Vec_Int_t * vOutBits );
 extern void                 Cec_SeedSimRestorePersistentInputs( Cec_SeedSim_t * p );
-extern void                 Cec_SeedSimRecordFullTime( Cec_SeedSim_t * p, abctime Elapsed );
 extern int                  Cec_SeedSimNumLocal ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFull  ( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTrunc ( Cec_SeedSim_t * p );

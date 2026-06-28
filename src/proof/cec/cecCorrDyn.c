@@ -30,7 +30,7 @@ struct Cec_DynSrm_t_
     Cec_IncrMgr_t *  pIncr;         // active-list manager; owned by caller
     Gia_Man_t *      pCore;         // persistent SRM core without COs
     Cbs_Man_t *      pCbs;          // resident circuit-SAT manager on pCore (-D direct solving)
-    int              nCoreObjsAtReset; // pCore size right after the last (re)build, for compaction
+    int              nCoreObjsAtReset; // real post-build pCore size after the last cold (re)build, for compaction (0 until that build finishes)
     Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
     Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
@@ -204,7 +204,9 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
             Gia_ManAppendCi( p->pCore );
     p->nCoreCiNum = Gia_ManCiNum( p->pCore );
     assert( p->nCoreCiNum == p->nRegs + p->nFramesTotal * p->nPis );
-    p->nCoreObjsAtReset = Gia_ManObjNum( p->pCore );
+    // leave nCoreObjsAtReset == 0 (set by ResetCore): only the CIs exist here, the
+    // live cones are materialized later in BuildCore, so the real post-build size
+    // is recorded there.
     p->nCoreResets++;
 }
 
@@ -631,6 +633,8 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     p->nOutLitsLast = Vec_IntSize( p->vOutLits );
     p->nOutLitsMax = Abc_MaxInt( p->nOutLitsMax, p->nOutLitsLast );
     p->nCoreObjsLast = Gia_ManObjNum( p->pCore );
+    if ( p->nCoreObjsAtReset == 0 )      // first build after a cold (re)set: record the
+        p->nCoreObjsAtReset = p->nCoreObjsLast;   // real post-build size as the compaction baseline
     p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
     if ( Cec_ScorrProfOn && Mode == CEC_EMIT_ACTIVE )
         Cec_DynSrmReportTrueCone( p, nFrames, fRings, pTfoMask );

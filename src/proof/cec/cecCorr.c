@@ -1029,7 +1029,6 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
             RetValue |= Cec_ManSeqResimulateSeed( pSim, vSimInfo, pSeed );
             {
                 abctime Elapsed = Abc_ClockHr() - tF;
-                Cec_SeedSimRecordFullTime( pSeed, Elapsed );
                 if ( Cec_ScorrProfOn )
                     Cec_ScorrProfIncrFullRun += Elapsed;
             }
