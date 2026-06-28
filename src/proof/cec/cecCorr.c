@@ -1411,6 +1411,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     Cec_ManSim_t * pSim;
     Gia_Man_t * pSrm;
     int fChanges, RetValue, i;
+    int nBmcResimFrames = pPars->nFrames + 1 + nPrefs;
+    int fBmcPersist = 0;
     // fine-grained profiling (-w only); zero-cost when fVeryVerbose is off
     Cec_ScorrProf_t Prof, Total; abctime tWall0 = 0, tH = 0;
     memset( &Total, 0, sizeof(Total) );
@@ -1421,6 +1423,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     // closing edges to reprove -- BMC is structurally simpler than the
     // main inductive loop.
     Cec_IncrMgr_t * pBmcMgr = NULL;
+    Cec_DynSrm_t * pBmcDynSrm = NULL;
+    Cec_SeedSim_t * pBmcSeed = NULL;
     // prepare simulation manager
     Cec_ManSimSetDefaultParams( pParsSim );
     pParsSim->nWords     = pPars->nWords;
@@ -1442,11 +1446,15 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         pBmcMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames + nPrefs );
         Cec_IncrMgrSnapshotClasses( pBmcMgr );
     }
+    if ( pPars->fDynSrm && pBmcMgr )
+        pBmcDynSrm = Cec_DynSrmAlloc( pAig, pBmcMgr );
+    fBmcPersist = ( pBmcDynSrm != NULL && pPars->fUseCSat );
     fChanges = 1;
     for ( i = 0; fChanges && (!pPars->nLimitMax || i < pPars->nLimitMax); i++ )
     {
         int * pTfoMask = NULL;
         int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0;
+        int nBmcPos = 0;
         if ( Cec_ParCorShouldStop( pPars ) )
             break;
         abctime clkBmc = Abc_Clock();
@@ -1471,7 +1479,10 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             // BMC SRM is non-ring; pass fRings=0 so we count (head, member)
             // pairs only and skip any ring-edge bookkeeping.
             tH = Abc_ClockHr();
-            Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+            if ( pBmcDynSrm )
+                Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+            else
+                Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
             Prof.tCnt = Abc_ClockHr() - tH;
             if ( nActivePairs == 0 )
                 break;
@@ -1482,14 +1493,20 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 pTfoMask = pBmcMgr->pTfoMark;
         }
         tH = Abc_ClockHr();
-        if ( pTfoMask )
+        pSrm = NULL;
+        if ( fBmcPersist )
+            Cec_DynSrmBuildCoreInit( pBmcDynSrm, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pTfoMask, pTfoMask ? CEC_EMIT_ACTIVE : CEC_EMIT_ALL );
+        else if ( pBmcDynSrm )
+            pSrm = Cec_DynSrmBuildInit( pBmcDynSrm, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pTfoMask, pTfoMask ? CEC_EMIT_ACTIVE : CEC_EMIT_ALL );
+        else if ( pTfoMask )
             pSrm = Gia_ManCorrSpecReduceInit_Active( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pTfoMask );
         else
             pSrm = Gia_ManCorrSpecReduceInit( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
         Prof.tSrm = Abc_ClockHr() - tH;
+        nBmcPos = fBmcPersist ? Vec_IntSize(Cec_DynSrmOutLits(pBmcDynSrm)) : Gia_ManCoNum(pSrm);
         if ( pTfoMask && pPars->fVeryVerbose )
             Abc_Print( 1, "  [bmc-incr i=%d repr=%d active=%d/%d POs=%d]\n",
-                       i, nReprSeeds, nActivePairs, nTotalPairs, Gia_ManCoNum(pSrm) );
+                       i, nReprSeeds, nActivePairs, nTotalPairs, nBmcPos );
         // Snapshot after SRM construction, before SAT/refine: this is the
         // class state whose pairs were just emitted.  The next iteration's
         // diff vs this snapshot tells us which pairs are stale.
@@ -1499,15 +1516,18 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             Cec_IncrMgrSnapshotClasses( pBmcMgr );
             Prof.tSnap = Abc_ClockHr() - tH;
         }
-        if ( Gia_ManPoNum(pSrm) == 0 )
+        if ( nBmcPos == 0 )
         {
-            Gia_ManStop( pSrm );
+            if ( pSrm )
+                Gia_ManStop( pSrm );
             Vec_IntFree( vOutputs );
             break;
         }
         pParsSat->nBTLimit *= 10;
         tH = Abc_ClockHr();
-        if ( pPars->fUseCSat )
+        if ( fBmcPersist )
+            vCexStore = Cec_DynSrmSolve( pBmcDynSrm, pPars->nBTLimit, &vStatus );
+        else if ( pPars->fUseCSat )
             vCexStore = Tas_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
@@ -1527,10 +1547,18 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
                 tH = Abc_ClockHr();
-                // BMC base-case resim stays on the full sweep (NULL manager):
-                // its unroll depth grows with the prefix, so a resident dense
-                // cone array is not worth it here.  -I only affects the main loop.
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, pPars->nFrames + 1 + nPrefs, NULL, NULL );
+                if ( pPars->fIncrSim && pBmcSeed == NULL )
+                {
+                    int iSeedFrame = Abc_MaxInt( nPrefs, pPars->nFrames + nPrefs - 1 );
+                    // BMC can emit obligations from several endpoint frames.
+                    // The event-resim path keeps values globally consistent
+                    // from changed CIs and does not use vOutputs/iSeedFrame
+                    // for a narrow diagnosis cone; keep iSeedFrame within the
+                    // real endpoint range for retained oracle/legacy helpers.
+                    pBmcSeed = Cec_SeedSimAlloc( pAig, nBmcResimFrames, iSeedFrame, pParsSim->nWords );
+                    pBmcSeed->fVerify = pPars->fVerifyResim;
+                }
+                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, nBmcResimFrames, pBmcSeed, vOutputs );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
@@ -1598,7 +1626,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         // recycle
         Vec_IntFree( vCexStore );
         Vec_StrFree( vStatus );
-        Gia_ManStop( pSrm );
+        if ( pSrm )
+            Gia_ManStop( pSrm );
         Vec_IntFree( vOutputs );
         Prof.tWall = Abc_ClockHr() - tWall0;
         if ( pPars->fVeryVerbose )
@@ -1610,6 +1639,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     if ( pPars->fVeryVerbose )
         Cec_ScorrProfPrint( "bmc-prof", -1, Total.nSatCalls, &Total );
     Cec_ScorrProfOn = 0;
+    Cec_DynSrmFree( pBmcDynSrm );
+    Cec_SeedSimFree( pBmcSeed );
     Cec_IncrMgrFree( pBmcMgr );
     Cec_ManSimStop( pSim );
 }

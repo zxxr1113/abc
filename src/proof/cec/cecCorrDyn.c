@@ -235,6 +235,7 @@ static void Cec_DynSrmInvalidateCache( Cec_DynSrm_t * p, int * pTfoMask )
 }
 
 static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
+static int Cec_DynSrmSpecLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix );
 
 static int Cec_DynSrmRealLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix )
 {
@@ -291,6 +292,68 @@ static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPr
     }
     assert( Gia_ObjIsCand(pObj) );
     iLit = Cec_DynSrmRealLit( p, pObj, f, nPrefix );
+    Cec_DynSrmCacheWrite( p, f, pObj, iLit );
+    return iLit;
+}
+
+static int Cec_DynSrmRealLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix )
+{
+    if ( Gia_ObjIsAnd(pObj) )
+    {
+        int iLit0 = Cec_DynSrmSpecLitInit( p, Gia_ObjFanin0(pObj), f, nPrefix );
+        int iLit1 = Cec_DynSrmSpecLitInit( p, Gia_ObjFanin1(pObj), f, nPrefix );
+        iLit0 = Abc_LitNotCond( iLit0, Gia_ObjFaninC0(pObj) );
+        iLit1 = Abc_LitNotCond( iLit1, Gia_ObjFaninC1(pObj) );
+        return Gia_ManHashAnd( p->pCore, iLit0, iLit1 );
+    }
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+        return Cec_DynSrmHostPiLit( p, f, pObj );
+    if ( f == 0 )
+    {
+        assert( Gia_ObjIsRo(p->pAig, pObj) );
+        return Cec_DynSrmSpecLitInit( p, pObj, f, nPrefix );
+    }
+    assert( Gia_ObjIsRo(p->pAig, pObj) );
+    pObj = Gia_ObjRoToRi( p->pAig, pObj );
+    {
+        int iLit = Cec_DynSrmSpecLitInit( p, Gia_ObjFanin0(pObj), f-1, nPrefix );
+        return Abc_LitNotCond( iLit, Gia_ObjFaninC0(pObj) );
+    }
+}
+
+// BMC/init SRM semantics differ from the inductive SRM in one important way:
+// frame-0 ROs are fixed to the all-zero initial state.  The core still keeps
+// RO CIs first to preserve the CEX-input layout expected by resimulation, but
+// these CIs are intentionally unused in init-mode cones.
+static int Cec_DynSrmSpecLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPrefix )
+{
+    Gia_Obj_t * pRepr;
+    int iLit;
+    if ( Gia_ObjIsConst0(pObj) )
+        return 0;
+    iLit = Cec_DynSrmCacheRead( p, f, pObj );
+    if ( iLit >= 0 )
+        return iLit;
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+    {
+        iLit = Cec_DynSrmHostPiLit( p, f, pObj );
+        Cec_DynSrmCacheWrite( p, f, pObj, iLit );
+        return iLit;
+    }
+    if ( f >= nPrefix && (pRepr = Gia_ObjReprObj(p->pAig, Gia_ObjId(p->pAig, pObj))) )
+    {
+        iLit = Cec_DynSrmSpecLitInit( p, pRepr, f, nPrefix );
+        iLit = Abc_LitNotCond( iLit, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
+        Cec_DynSrmCacheWrite( p, f, pObj, iLit );
+        return iLit;
+    }
+    if ( f == 0 && Gia_ObjIsRo(p->pAig, pObj) )
+    {
+        Cec_DynSrmCacheWrite( p, f, pObj, 0 );
+        return 0;
+    }
+    assert( Gia_ObjIsCand(pObj) );
+    iLit = Cec_DynSrmRealLitInit( p, pObj, f, nPrefix );
     Cec_DynSrmCacheWrite( p, f, pObj, iLit );
     return iLit;
 }
@@ -644,6 +707,68 @@ Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
     Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode )
 {
     Cec_DynSrmBuildCore( p, nFrames, fScorr, pvOutputs, fRings, pTfoMask, Mode );
+    return Cec_DynSrmBuildView( p );
+}
+
+// BMC/init variant of Cec_DynSrmBuildCore.  It mirrors
+// Gia_ManCorrSpecReduceInit(): ROs at frame 0 are constants, representatives
+// are applied only at frames >= nPrefix, and every BMC endpoint frame in
+// [nPrefix, nPrefix+nFrames) emits the current (repr,obj) candidates.
+void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fScorr,
+    Vec_Int_t ** pvOutputs, int * pTfoMask, Cec_IncrEmitMode_t Mode )
+{
+    Gia_Obj_t * pObj, * pRepr;
+    int f, i, iPrevNew, iObjNew;
+    assert( p != NULL );
+    assert( (!fScorr && nFrames > 1) || (fScorr && nFrames > 0) || nPrefix );
+    assert( Gia_ManRegNum(p->pAig) > 0 );
+    assert( p->pAig->pReprs != NULL );
+    assert( Mode == CEC_EMIT_ALL || pTfoMask != NULL );
+    p->nBuilds++;
+    if ( Mode == CEC_EMIT_ACTIVE )
+        p->nBuildsActive++;
+    Cec_DynSrmEnsureCore( p, nFrames + nPrefix, fScorr );
+    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
+    Gia_ManSetPhase( p->pAig );
+    *pvOutputs = Vec_IntAlloc( 1000 );
+    Vec_IntClear( p->vOutLits );
+    for ( f = nPrefix; f < nFrames + nPrefix; f++ )
+    {
+        Gia_ManForEachObj1( p->pAig, pObj, i )
+        {
+            pRepr = Gia_ObjReprObj( p->pAig, Gia_ObjId(p->pAig,pObj) );
+            if ( pRepr == NULL )
+                continue;
+            {
+                int idR = Gia_ObjId(p->pAig, pRepr);
+                int fActive = pTfoMask != NULL && (pTfoMask[i] || pTfoMask[idR]);
+                if ( !Cec_DynSrmEmitModeAccept(fActive, Mode) )
+                    continue;
+            }
+            iPrevNew = Gia_ObjIsConst(p->pAig, i)? 0 : Cec_DynSrmRealLitInit( p, pRepr, f, nPrefix );
+            iObjNew  = Cec_DynSrmRealLitInit( p, pObj, f, nPrefix );
+            iObjNew  = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
+            if ( iPrevNew != iObjNew )
+            {
+                Vec_IntPush( *pvOutputs, Gia_ObjId(p->pAig, pRepr) );
+                Vec_IntPush( *pvOutputs, Gia_ObjId(p->pAig, pObj) );
+                Vec_IntPush( p->vOutLits, Gia_ManHashXor(p->pCore, iPrevNew, iObjNew) );
+            }
+        }
+    }
+    p->nCoreBuilds++;
+    p->nOutLitsLast = Vec_IntSize( p->vOutLits );
+    p->nOutLitsMax = Abc_MaxInt( p->nOutLitsMax, p->nOutLitsLast );
+    p->nCoreObjsLast = Gia_ManObjNum( p->pCore );
+    if ( p->nCoreObjsAtReset == 0 )
+        p->nCoreObjsAtReset = p->nCoreObjsLast;
+    p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
+}
+
+Gia_Man_t * Cec_DynSrmBuildInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fScorr,
+    Vec_Int_t ** pvOutputs, int * pTfoMask, Cec_IncrEmitMode_t Mode )
+{
+    Cec_DynSrmBuildCoreInit( p, nFrames, nPrefix, fScorr, pvOutputs, pTfoMask, Mode );
     return Cec_DynSrmBuildView( p );
 }
 

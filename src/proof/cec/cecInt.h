@@ -415,6 +415,8 @@ extern void                 Cec_DynSrmPrintStats( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern Gia_Man_t *          Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode );
 extern void                 Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode );
+extern Gia_Man_t *          Cec_DynSrmBuildInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMask, Cec_IncrEmitMode_t Mode );
+extern void                 Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMask, Cec_IncrEmitMode_t Mode );
 extern Vec_Int_t *          Cec_DynSrmOutLits( Cec_DynSrm_t * p );
 extern Vec_Int_t *          Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus );
 /*=== cecCorrIncrSim.c ============================================================*/
