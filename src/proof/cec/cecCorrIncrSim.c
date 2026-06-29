@@ -872,10 +872,20 @@ static inline unsigned Cec_SeedSimRefineMaskWord( Cec_SeedSim_t * p, int w )
 static int Cec_SeedSimCompareRefine( Cec_SeedSim_t * p,
     unsigned * pValue0, unsigned * pValue1 )
 {
+    int fCompl = (pValue0[0] & 1) != (pValue1[0] & 1);
     int w;
-    for ( w = 0; w < p->nWords; w++ )
-        if ( (pValue0[w] ^ pValue1[w]) & Cec_SeedSimRefineMaskWord(p, w) )
-            return 0;
+    if ( fCompl )
+    {
+        for ( w = 0; w < p->nWords; w++ )
+            if ( (pValue0[w] ^ ~pValue1[w]) & Cec_SeedSimRefineMaskWord(p, w) )
+                return 0;
+    }
+    else
+    {
+        for ( w = 0; w < p->nWords; w++ )
+            if ( (pValue0[w] ^ pValue1[w]) & Cec_SeedSimRefineMaskWord(p, w) )
+                return 0;
+    }
     return 1;
 }
 
@@ -1144,7 +1154,6 @@ static int Cec_SeedSimRefineClass( Cec_SeedSim_t * p, int Frame, int iRoot )
             continue;
         Cec_SeedSimDiffMask( p, pRoot, Cec_SeedSimVal(p, Frame, Ent),
                             p->pRefineMask, pTemp );
-        pTemp[0] |= (pRoot[0] ^ Cec_SeedSimVal(p, Frame, Ent)[0]) & 1;
         for ( w = 0; w < p->nWords; w++ )
             pDiff[w] |= pTemp[w];
     }
@@ -1171,7 +1180,6 @@ static void Cec_SeedSimProcessRefinedConstants( Cec_SeedSim_t * p,
         unsigned * pPhase = Gia_ObjPhase(Gia_ManObj(pAig, i)) ? p->pPhase1 : p->pPhase0;
         unsigned * pDiff = p->pDiffMask;
         Cec_SeedSimDiffMask( p, pValue, pPhase, p->pRefineMask, pDiff );
-        pDiff[0] |= (pValue[0] ^ pPhase[0]) & 1;
         if ( Cec_SeedSimMaskIsZero(pDiff, p->nWords) )
         {
             Vec_IntDrop( p->vConstRefined, k-- );
@@ -1407,21 +1415,29 @@ void Cec_SeedSimVerifySnapshot( Cec_SeedSim_t * p )
     memcpy( p->pNextPre, p->pAig->pNexts, sizeof(int) * nObjs );
 }
 
-// (-V) Soundness oracle for class refinement (not just the value cache).  The
-// incremental resim has just committed its splits for this batch (P_incr).  We
-// re-run the TRUSTED full resim on the SAME packed CEX inputs starting from the
-// pre-batch partition (P0), giving the reference partition P_full.  Any pair
-// that P_incr left MERGED but P_full SPLITS is a missed split: with -i that pair
-// is no longer an active SAT obligation, so the false equivalence could survive.
+static inline int Cec_SeedSimSavedRoot( int * pReprs, int ObjId )
+{
+    return pReprs[ObjId] == GIA_VOID ? ObjId : pReprs[ObjId];
+}
+
+// (-V) Oracle for class refinement (not just the value cache).  The incremental
+// resim has just committed its splits for this batch (P_incr).  We re-run the
+// TRUSTED full resim on the SAME packed CEX inputs starting from the pre-batch
+// partition (P0), giving the reference partition P_full.
+//
+// Both directions matter:
+//   * P_incr merged, P_full split: missed split, a correctness risk.
+//   * P_incr split,  P_full merged: extra split, a QoR regression.
+//
 // The check reuses the production refinement code (correct phase/const handling),
-// then restores P_incr so the run stays observational.  Returns #missed splits.
+// then restores P_incr so the run stays observational.  Returns #mismatches.
 int Cec_SeedSimVerifyRefine( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     Vec_Ptr_t * vSimInfo, int nFrames )
 {
     Gia_Man_t * pAig = p->pAig;
     int nObjs = p->nObjs;
     int * pReprIncr, * pNextIncr;
-    int i, nBad = 0;
+    int i, nMissed = 0, nExtra = 0;
     if ( pAig->pReprs == NULL || p->pReprPre == NULL )
         return 0;
     pReprIncr = ABC_ALLOC( int, nObjs );
@@ -1444,10 +1460,27 @@ int Cec_SeedSimVerifyRefine( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
         cr = Gia_ObjRepr(pAig, rIncr) == GIA_VOID ? rIncr : Gia_ObjRepr(pAig, rIncr);
         if ( ci != cr )
         {
-            if ( nBad < 20 )
+            if ( nMissed < 20 )
                 Abc_Print( 1, "  [resim-oracle] MISSED SPLIT obj=%d repr=%d "
                     "(merged by incremental, split by full resim)\n", i, rIncr );
-            nBad++;
+            nMissed++;
+        }
+    }
+    // a pair split in P_incr but merged in P_full is an extra split (QoR loss)
+    for ( i = 1; i < nObjs; i++ )
+    {
+        int rFull = Gia_ObjRepr(pAig, i), ci, cr;
+        if ( rFull == GIA_VOID )
+            continue;                                         // i was a head/none in P_full
+        ci = Cec_SeedSimSavedRoot( pReprIncr, i );
+        cr = Cec_SeedSimSavedRoot( pReprIncr, rFull );
+        if ( ci != cr )
+        {
+            if ( nExtra < 20 )
+                Abc_Print( 1, "  [resim-oracle] EXTRA SPLIT obj=%d repr=%d "
+                    "(split by incremental roots %d/%d, merged by full resim)\n",
+                    i, rFull, ci, cr );
+            nExtra++;
         }
     }
     // restore the committed (incremental) partition: stay observational
@@ -1455,10 +1488,13 @@ int Cec_SeedSimVerifyRefine( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     memcpy( pAig->pNexts, pNextIncr, sizeof(int) * nObjs );
     ABC_FREE( pReprIncr );
     ABC_FREE( pNextIncr );
-    if ( nBad )
+    if ( nMissed )
         Abc_Print( 1, "  [resim-oracle] %d MISSED SPLITS this batch "
-            "(incremental coarser than full resim)\n", nBad );
-    return nBad;
+            "(incremental coarser than full resim)\n", nMissed );
+    if ( nExtra )
+        Abc_Print( 1, "  [resim-oracle] %d EXTRA SPLITS this batch "
+            "(incremental finer than full resim; QoR regression)\n", nExtra );
+    return nMissed + nExtra;
 }
 
 void Cec_SeedSimEnsurePersistent( Cec_SeedSim_t * p, Cec_ManSim_t * pSim )
@@ -2114,6 +2150,15 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     Cec_SeedSimRecordBatch( p, Vec_IntSize(vOutBits) / 2 );
     p->nEventInputVarsMax = Abc_MaxInt( p->nEventInputVarsMax, nInputVars );
     p->nEventInputWordsMax = Abc_MaxInt( p->nEventInputWordsMax, nInputWords );
+    // Full resim treats SAT assignments to initial register variables as
+    // batch-local.  Do not commit them into the persistent -I background.
+    Vec_IntForEachEntry( p->vChangedInputs, iVar, i )
+        if ( iVar < p->nRegs )
+        {
+            p->nFallbackReg++;
+            p->nBatchFull++;
+            return Cec_SeedSimProfReturn( p, CEC_SEEDSIM_RESULT_FULL, tTry );
+        }
     // Up-front density gate.  A batch whose changed-CI seed is a large fraction
     // of all unrolled inputs will dirty a near-full closure, so event
     // propagation cannot beat a bit-parallel full sweep.  Reject it here before
@@ -2224,7 +2269,7 @@ void Cec_SeedSimBeginCall( Cec_SeedSim_t * p )
     p->nBatchLocal = p->nBatchFull = p->nBatchTrunc = p->nMaxDirty = 0;
     p->nBatchRollback = p->nRollbackObjs = p->nCoverageMiss = 0;
     p->nFallbackPre = p->nFallbackProcess = p->nFallbackCoverage = 0;
-    p->nFallbackCex = p->nFallbackBypass = 0;
+    p->nFallbackCex = p->nFallbackReg = p->nFallbackBypass = 0;
     p->nTruncCone = p->nTruncEval = 0;
     p->nBatchCex = p->nBatchCexMax = p->nDeferredSplits = 0;
     p->nEventLocal = p->nEventFallback = 0;
@@ -2256,6 +2301,7 @@ int Cec_SeedSimNumFallbackPre( Cec_SeedSim_t * p ) { return p->nFallbackPre; }
 int Cec_SeedSimNumFallbackProcess( Cec_SeedSim_t * p ) { return p->nFallbackProcess; }
 int Cec_SeedSimNumFallbackCoverage( Cec_SeedSim_t * p ) { return p->nFallbackCoverage; }
 int Cec_SeedSimNumFallbackCex( Cec_SeedSim_t * p ) { return p->nFallbackCex; }
+int Cec_SeedSimNumFallbackReg( Cec_SeedSim_t * p ) { return p->nFallbackReg; }
 int Cec_SeedSimNumFallbackBypass( Cec_SeedSim_t * p ) { return p->nFallbackBypass; }
 int Cec_SeedSimNumTruncCone( Cec_SeedSim_t * p ) { return p->nTruncCone; }
 int Cec_SeedSimNumTruncEval( Cec_SeedSim_t * p ) { return p->nTruncEval; }
