@@ -302,7 +302,6 @@ struct Cec_SeedSim_t_
     int          nFallbackProcess; // fallback because diagnosis evaluation exceeded budget
     int          nFallbackCoverage; // fallback because diagnosis did not explain all CEX lanes
     int          nFallbackCex;    // cheap rejection of oversized packed CEX batches
-    int          nFallbackReg;    // fallback for batches changing initial register vars
     int          nFallbackBypass; // batches sent directly to full after repeated fallback
     int          nTruncCone;      // local TFO stopped while growing the structural cone
     int          nTruncEval;      // local TFO stopped while evaluating/refining the cone
@@ -446,7 +445,6 @@ extern int                  Cec_SeedSimNumFallbackPre( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFallbackProcess( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFallbackCoverage( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFallbackCex( Cec_SeedSim_t * p );
-extern int                  Cec_SeedSimNumFallbackReg( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumFallbackBypass( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTruncCone( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumTruncEval( Cec_SeedSim_t * p );

@@ -63,7 +63,6 @@ static int     Cec_ScorrProfIncrFallbackPre = 0; // fallback before class mutati
 static int     Cec_ScorrProfIncrFallbackProcess = 0; // diagnosis budget fallback
 static int     Cec_ScorrProfIncrFallbackCoverage = 0; // diagnosis coverage fallback
 static int     Cec_ScorrProfIncrFallbackCex = 0; // oversized packed CEX batch
-static int     Cec_ScorrProfIncrFallbackReg = 0; // batch changes initial register vars
 static int     Cec_ScorrProfIncrFallbackBypass = 0; // repeated-fallback circuit breaker
 static int     Cec_ScorrProfIncrTruncCone = 0; // optional TFO structural truncation
 static int     Cec_ScorrProfIncrTruncEval = 0; // optional TFO evaluation truncation
@@ -131,7 +130,7 @@ struct Cec_ScorrProf_t_
     int     nIncrSrc, nIncrFull, nIncrTrunc, nIncrDirty, nIncrConeKeys, nIncrKeys;
     int     nIncrRollback, nIncrRollbackObjs, nIncrCoverageMiss;
     int     nIncrFallbackPre, nIncrFallbackProcess, nIncrFallbackCoverage;
-    int     nIncrFallbackCex, nIncrFallbackReg, nIncrFallbackBypass;
+    int     nIncrFallbackCex, nIncrFallbackBypass;
     int     nIncrTruncCone, nIncrTruncEval;
     int     nIncrBatchCex, nIncrBatchCexMax, nIncrDeferred;
     abctime tIncrTry, tIncrTryLocal, tIncrTryFallback, tIncrFullRun;
@@ -172,7 +171,6 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     pT->nIncrFallbackProcess+=pI->nIncrFallbackProcess;
     pT->nIncrFallbackCoverage+=pI->nIncrFallbackCoverage;
     pT->nIncrFallbackCex+=pI->nIncrFallbackCex;
-    pT->nIncrFallbackReg+=pI->nIncrFallbackReg;
     pT->nIncrFallbackBypass+=pI->nIncrFallbackBypass;
     pT->nIncrTruncCone+=pI->nIncrTruncCone;
     pT->nIncrTruncEval+=pI->nIncrTruncEval;
@@ -240,9 +238,9 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
     Abc_Print( 1, "incr=loc/full/maxdirty/cone/keys=%d/%d/%d/%d/%d trunc=%d ",
         p->nIncrSrc, p->nIncrFull, p->nIncrDirty,
         p->nIncrConeKeys, p->nIncrKeys, p->nIncrTrunc );
-    Abc_Print( 1, "txn=rb/objs/miss=%d/%d/%d fb=cex/reg/pre/proc/cov/skip=%d/%d/%d/%d/%d/%d ",
+    Abc_Print( 1, "txn=rb/objs/miss=%d/%d/%d fb=cex/pre/proc/cov/skip=%d/%d/%d/%d/%d ",
         p->nIncrRollback, p->nIncrRollbackObjs, p->nIncrCoverageMiss,
-        p->nIncrFallbackCex, p->nIncrFallbackReg, p->nIncrFallbackPre, p->nIncrFallbackProcess,
+        p->nIncrFallbackCex, p->nIncrFallbackPre, p->nIncrFallbackProcess,
         p->nIncrFallbackCoverage, p->nIncrFallbackBypass );
     Abc_Print( 1, "tr=cone/eval=%d/%d batch=cex/max/defer=%d/%d/%d ",
         p->nIncrTruncCone, p->nIncrTruncEval, p->nIncrBatchCex,
@@ -913,8 +911,7 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     Cec_ScorrProfIncrCoverageMiss = 0;
     Cec_ScorrProfIncrFallbackPre = Cec_ScorrProfIncrFallbackProcess = 0;
     Cec_ScorrProfIncrFallbackCoverage = 0;
-    Cec_ScorrProfIncrFallbackCex = Cec_ScorrProfIncrFallbackReg = 0;
-    Cec_ScorrProfIncrFallbackBypass = 0;
+    Cec_ScorrProfIncrFallbackCex = Cec_ScorrProfIncrFallbackBypass = 0;
     Cec_ScorrProfIncrTruncCone = Cec_ScorrProfIncrTruncEval = 0;
     Cec_ScorrProfIncrBatchCex = Cec_ScorrProfIncrBatchCexMax = 0;
     Cec_ScorrProfIncrDeferred = 0;
@@ -1053,7 +1050,6 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         Cec_ScorrProfIncrFallbackProcess = Cec_SeedSimNumFallbackProcess( pSeed );
         Cec_ScorrProfIncrFallbackCoverage = Cec_SeedSimNumFallbackCoverage( pSeed );
         Cec_ScorrProfIncrFallbackCex = Cec_SeedSimNumFallbackCex( pSeed );
-        Cec_ScorrProfIncrFallbackReg = Cec_SeedSimNumFallbackReg( pSeed );
         Cec_ScorrProfIncrFallbackBypass = Cec_SeedSimNumFallbackBypass( pSeed );
         Cec_ScorrProfIncrTruncCone = Cec_SeedSimNumTruncCone( pSeed );
         Cec_ScorrProfIncrTruncEval = Cec_SeedSimNumTruncEval( pSeed );
@@ -1568,7 +1564,6 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
                 Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
                 Prof.nIncrFallbackCex = Cec_ScorrProfIncrFallbackCex;
-                Prof.nIncrFallbackReg = Cec_ScorrProfIncrFallbackReg;
                 Prof.nIncrFallbackBypass = Cec_ScorrProfIncrFallbackBypass;
                 Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
                 Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;
@@ -2141,7 +2136,6 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Prof.nIncrFallbackProcess = Cec_ScorrProfIncrFallbackProcess;
                 Prof.nIncrFallbackCoverage = Cec_ScorrProfIncrFallbackCoverage;
                 Prof.nIncrFallbackCex = Cec_ScorrProfIncrFallbackCex;
-                Prof.nIncrFallbackReg = Cec_ScorrProfIncrFallbackReg;
                 Prof.nIncrFallbackBypass = Cec_ScorrProfIncrFallbackBypass;
                 Prof.nIncrTruncCone = Cec_ScorrProfIncrTruncCone;
                 Prof.nIncrTruncEval = Cec_ScorrProfIncrTruncEval;

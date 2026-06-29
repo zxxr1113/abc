@@ -2150,15 +2150,6 @@ int Cec_SeedSimTryBatch( Cec_SeedSim_t * p, Cec_ManSim_t * pSim,
     Cec_SeedSimRecordBatch( p, Vec_IntSize(vOutBits) / 2 );
     p->nEventInputVarsMax = Abc_MaxInt( p->nEventInputVarsMax, nInputVars );
     p->nEventInputWordsMax = Abc_MaxInt( p->nEventInputWordsMax, nInputWords );
-    // Full resim treats SAT assignments to initial register variables as
-    // batch-local.  Do not commit them into the persistent -I background.
-    Vec_IntForEachEntry( p->vChangedInputs, iVar, i )
-        if ( iVar < p->nRegs )
-        {
-            p->nFallbackReg++;
-            p->nBatchFull++;
-            return Cec_SeedSimProfReturn( p, CEC_SEEDSIM_RESULT_FULL, tTry );
-        }
     // Up-front density gate.  A batch whose changed-CI seed is a large fraction
     // of all unrolled inputs will dirty a near-full closure, so event
     // propagation cannot beat a bit-parallel full sweep.  Reject it here before
@@ -2269,7 +2260,7 @@ void Cec_SeedSimBeginCall( Cec_SeedSim_t * p )
     p->nBatchLocal = p->nBatchFull = p->nBatchTrunc = p->nMaxDirty = 0;
     p->nBatchRollback = p->nRollbackObjs = p->nCoverageMiss = 0;
     p->nFallbackPre = p->nFallbackProcess = p->nFallbackCoverage = 0;
-    p->nFallbackCex = p->nFallbackReg = p->nFallbackBypass = 0;
+    p->nFallbackCex = p->nFallbackBypass = 0;
     p->nTruncCone = p->nTruncEval = 0;
     p->nBatchCex = p->nBatchCexMax = p->nDeferredSplits = 0;
     p->nEventLocal = p->nEventFallback = 0;
@@ -2301,7 +2292,6 @@ int Cec_SeedSimNumFallbackPre( Cec_SeedSim_t * p ) { return p->nFallbackPre; }
 int Cec_SeedSimNumFallbackProcess( Cec_SeedSim_t * p ) { return p->nFallbackProcess; }
 int Cec_SeedSimNumFallbackCoverage( Cec_SeedSim_t * p ) { return p->nFallbackCoverage; }
 int Cec_SeedSimNumFallbackCex( Cec_SeedSim_t * p ) { return p->nFallbackCex; }
-int Cec_SeedSimNumFallbackReg( Cec_SeedSim_t * p ) { return p->nFallbackReg; }
 int Cec_SeedSimNumFallbackBypass( Cec_SeedSim_t * p ) { return p->nFallbackBypass; }
 int Cec_SeedSimNumTruncCone( Cec_SeedSim_t * p ) { return p->nTruncCone; }
 int Cec_SeedSimNumTruncEval( Cec_SeedSim_t * p ) { return p->nTruncEval; }
