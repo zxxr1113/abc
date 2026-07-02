@@ -273,6 +273,9 @@ struct Cec_SeedSim_t_
     int *        pNextPre;        // (-V) class-next snapshot captured before a batch
     int          nFallbackStreak; // persists across resimulation calls
     int          nFallbackCooldown; // batches bypassed before next event probe
+    int          nAdaptLocal;     // decaying window: recent successful event batches
+    int          nAdaptFail;      // decaying window: recent event batches that fell back
+    int          nAdaptTrips;     // per-call adaptive cooldown activations
     // Class-refinement scratch.
     int *        pRootMark;       // per-objId "root already queued" stamp
     int          nRootVersion;
@@ -359,6 +362,15 @@ typedef struct Cec_DynSrm_t_ Cec_DynSrm_t;
 // Consecutive wide cones use bounded exponential backoff.  A successful local
 // batch clears both the streak and cooldown immediately.
 #define CEC_SEEDSIM_MAX_FALLBACK_BACKOFF 7
+// Adaptive event-resim circuit breaker.  Logs showed good cases are strongly
+// local-heavy (400k: 161/0, fermat: 451/6) while bad cases are fallback-heavy
+// (RAV: 122/1335).  Use a small decaying window to probe again after cooldown
+// without repeatedly paying the failed event propagation cost.
+#define CEC_SEEDSIM_ADAPT_WINDOW 16
+#define CEC_SEEDSIM_ADAPT_MIN_SAMPLES 8
+#define CEC_SEEDSIM_ADAPT_FAIL_MUL 2
+#define CEC_SEEDSIM_ADAPT_FAIL_EXTRA 4
+#define CEC_SEEDSIM_ADAPT_MAX_COOLDOWN 31
 #define CEC_EVENT_NODE_WORD_FRAC_NUM 1
 #define CEC_EVENT_NODE_WORD_FRAC_DEN 10
 #define CEC_EVENT_EDGE_WORD_FRAC_NUM 1
@@ -412,6 +424,7 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 extern Cec_DynSrm_t *       Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr );
 extern void                 Cec_DynSrmFree( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmPrintStats( Cec_DynSrm_t * p );
+extern void                 Cec_DynSrmRecordSolveStats( Cec_DynSrm_t * p, int nCalls, int nReal, int nTriv, int nFail );
 extern void                 Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern Gia_Man_t *          Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode );
 extern void                 Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode );
@@ -472,6 +485,10 @@ extern int                  Cec_SeedSimNumEventInputVarsMax( Cec_SeedSim_t * p )
 extern int                  Cec_SeedSimNumEventInputWordsMax( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumEventFallbackWork( Cec_SeedSim_t * p );
 extern int                  Cec_SeedSimNumEventFallbackTime( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumAdaptLocal( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumAdaptFail( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumAdaptTrips( Cec_SeedSim_t * p );
+extern int                  Cec_SeedSimNumAdaptCooldown( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeEventLoad( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeEventProp( Cec_SeedSim_t * p );
 extern abctime              Cec_SeedSimTimeEventRefine( Cec_SeedSim_t * p );

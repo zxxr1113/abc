@@ -2267,6 +2267,7 @@ void Cec_SeedSimBeginCall( Cec_SeedSim_t * p )
     p->nEventPopsMax = p->nEventEdgesMax = 0;
     p->nEventInputVarsMax = p->nEventInputWordsMax = 0;
     p->nEventFallbackWork = p->nEventFallbackTime = 0;
+    p->nAdaptTrips = 0;
     p->tTry = p->tTryLocal = p->tTryFallback = 0;
     p->tDiagShape = p->tDiagCollect = p->tDiagEval = p->tDiagSim = 0;
     p->tTfoBuild = p->tTfoSim = p->tTxn = 0;
@@ -2319,6 +2320,10 @@ int Cec_SeedSimNumEventInputVarsMax( Cec_SeedSim_t * p ) { return p->nEventInput
 int Cec_SeedSimNumEventInputWordsMax( Cec_SeedSim_t * p ) { return p->nEventInputWordsMax; }
 int Cec_SeedSimNumEventFallbackWork( Cec_SeedSim_t * p ) { return p->nEventFallbackWork; }
 int Cec_SeedSimNumEventFallbackTime( Cec_SeedSim_t * p ) { return p->nEventFallbackTime; }
+int Cec_SeedSimNumAdaptLocal( Cec_SeedSim_t * p ) { return p->nAdaptLocal; }
+int Cec_SeedSimNumAdaptFail( Cec_SeedSim_t * p ) { return p->nAdaptFail; }
+int Cec_SeedSimNumAdaptTrips( Cec_SeedSim_t * p ) { return p->nAdaptTrips; }
+int Cec_SeedSimNumAdaptCooldown( Cec_SeedSim_t * p ) { return p->nFallbackCooldown; }
 abctime Cec_SeedSimTimeEventLoad( Cec_SeedSim_t * p ) { return p->tEventLoad; }
 abctime Cec_SeedSimTimeEventProp( Cec_SeedSim_t * p ) { return p->tEventProp; }
 abctime Cec_SeedSimTimeEventRefine( Cec_SeedSim_t * p ) { return p->tEventRefine; }

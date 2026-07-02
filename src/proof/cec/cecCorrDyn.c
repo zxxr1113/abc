@@ -47,6 +47,7 @@ struct Cec_DynSrm_t_
     int              nCoreCiNum;
     int              nBuilds;
     int              nBuildsActive;
+    int              nBuildsFull;
     int              nCoreResets;
     int              nCoreCompactions;
     int              nCoreBuilds;
@@ -60,6 +61,24 @@ struct Cec_DynSrm_t_
     int              nCoreObjsMax;
     int              nViewObjsLast;
     int              nViewObjsMax;
+    int              nCoreDeltaLast;
+    int              nCoreDeltaMax;
+    int              nCoreBloatLastPermil;
+    int              nCoreBloatMaxPermil;
+    ABC_INT64_T      nOutLitsActiveSum;
+    ABC_INT64_T      nOutLitsFullSum;
+    ABC_INT64_T      nCoreObjsActiveSum;
+    ABC_INT64_T      nCoreObjsFullSum;
+    ABC_INT64_T      nSolveIters;
+    ABC_INT64_T      nSolveCalls;
+    ABC_INT64_T      nSolveReal;
+    ABC_INT64_T      nSolveTriv;
+    ABC_INT64_T      nSolveFail;
+    ABC_INT64_T      nSolveFailIters;
+    ABC_INT64_T      nFailCoreObjSum;
+    ABC_INT64_T      nFailOutLitSum;
+    int              nFailCoreObjMax;
+    int              nFailOutLitMax;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -411,6 +430,46 @@ static Gia_Man_t * Cec_DynSrmBuildView( Cec_DynSrm_t * p )
     return pView;
 }
 
+static const char * Cec_DynSrmModeName( Cec_IncrEmitMode_t Mode )
+{
+    if ( Mode == CEC_EMIT_ACTIVE )
+        return "active";
+    if ( Mode == CEC_EMIT_SKIPPED )
+        return "skipped";
+    return "full";
+}
+
+static void Cec_DynSrmRecordBuildStats( Cec_DynSrm_t * p,
+    Cec_IncrEmitMode_t Mode, int nCoreObjsBefore, int nCoreResetsBefore )
+{
+    int fReset = p->nCoreResets > nCoreResetsBefore;
+    if ( Mode == CEC_EMIT_ACTIVE )
+    {
+        p->nOutLitsActiveSum += p->nOutLitsLast;
+        p->nCoreObjsActiveSum += p->nCoreObjsLast;
+    }
+    else if ( Mode == CEC_EMIT_ALL )
+    {
+        p->nBuildsFull++;
+        p->nOutLitsFullSum += p->nOutLitsLast;
+        p->nCoreObjsFullSum += p->nCoreObjsLast;
+    }
+    p->nCoreDeltaLast = Abc_MaxInt( 0, p->nCoreObjsLast - nCoreObjsBefore );
+    p->nCoreDeltaMax = Abc_MaxInt( p->nCoreDeltaMax, p->nCoreDeltaLast );
+    if ( p->nCoreObjsAtReset > 0 )
+    {
+        p->nCoreBloatLastPermil =
+            (int)((ABC_INT64_T)1000 * p->nCoreObjsLast / p->nCoreObjsAtReset);
+        p->nCoreBloatMaxPermil =
+            Abc_MaxInt( p->nCoreBloatMaxPermil, p->nCoreBloatLastPermil );
+    }
+    if ( Cec_ScorrProfOn )
+        Abc_Print( 1, "  [dyn-build b=%d mode=%s reset=%d out=%d core=%d delta=%d bloat=%.3f]\n",
+            p->nBuilds, Cec_DynSrmModeName(Mode), fReset,
+            p->nOutLitsLast, p->nCoreObjsLast, p->nCoreDeltaLast,
+            0.001 * p->nCoreBloatLastPermil );
+}
+
 Cec_DynSrm_t * Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr )
 {
     Cec_DynSrm_t * p = ABC_CALLOC( Cec_DynSrm_t, 1 );
@@ -429,6 +488,8 @@ void Cec_DynSrmFree( Cec_DynSrm_t * p )
 
 void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
 {
+    ABC_INT64_T nActive = p ? p->nBuildsActive : 0;
+    ABC_INT64_T nFull = p ? p->nBuildsFull : 0;
     if ( p == NULL )
         return;
     Abc_Print( 1, "DynSRM: builds = %d, active_builds = %d\n",
@@ -440,6 +501,45 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nViewObjsLast, p->nViewObjsMax );
     Abc_Print( 1, "DynSRM: cache_full_clears = %d, cache_local_clears = %d, cache_local_entries = %d\n",
         p->nCacheFullClears, p->nCacheLocalClears, p->nCacheLocalEntries );
+    Abc_Print( 1, "DynSRM: build_modes full/active = %d/%d, avg_out full/active = %.1f/%.1f, avg_core full/active = %.1f/%.1f\n",
+        p->nBuildsFull, p->nBuildsActive,
+        nFull ? (double)p->nOutLitsFullSum / (double)nFull : 0.0,
+        nActive ? (double)p->nOutLitsActiveSum / (double)nActive : 0.0,
+        nFull ? (double)p->nCoreObjsFullSum / (double)nFull : 0.0,
+        nActive ? (double)p->nCoreObjsActiveSum / (double)nActive : 0.0 );
+    Abc_Print( 1, "DynSRM: core_delta_last/max = %d/%d, core_bloat_last/max = %.3f/%.3f\n",
+        p->nCoreDeltaLast, p->nCoreDeltaMax,
+        0.001 * p->nCoreBloatLastPermil,
+        0.001 * p->nCoreBloatMaxPermil );
+    Abc_Print( 1, "DynSRM: solve iters/calls = %lld/%lld, cex_real/triv/fail = %lld/%lld/%lld, fail_iters = %lld\n",
+        (long long)p->nSolveIters, (long long)p->nSolveCalls,
+        (long long)p->nSolveReal, (long long)p->nSolveTriv,
+        (long long)p->nSolveFail, (long long)p->nSolveFailIters );
+    Abc_Print( 1, "DynSRM: fail_core_avg/max = %.1f/%d, fail_out_avg/max = %.1f/%d\n",
+        p->nSolveFail ? (double)p->nFailCoreObjSum / (double)p->nSolveFail : 0.0,
+        p->nFailCoreObjMax,
+        p->nSolveFail ? (double)p->nFailOutLitSum / (double)p->nSolveFail : 0.0,
+        p->nFailOutLitMax );
+}
+
+void Cec_DynSrmRecordSolveStats( Cec_DynSrm_t * p,
+    int nCalls, int nReal, int nTriv, int nFail )
+{
+    if ( p == NULL )
+        return;
+    p->nSolveIters++;
+    p->nSolveCalls += nCalls;
+    p->nSolveReal += nReal;
+    p->nSolveTriv += nTriv;
+    p->nSolveFail += nFail;
+    if ( nFail > 0 )
+    {
+        p->nSolveFailIters++;
+        p->nFailCoreObjSum += (ABC_INT64_T)nFail * p->nCoreObjsLast;
+        p->nFailOutLitSum += (ABC_INT64_T)nFail * p->nOutLitsLast;
+        p->nFailCoreObjMax = Abc_MaxInt( p->nFailCoreObjMax, p->nCoreObjsLast );
+        p->nFailOutLitMax = Abc_MaxInt( p->nFailOutLitMax, p->nOutLitsLast );
+    }
 }
 
 void Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark,
@@ -595,6 +695,7 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
 {
     Gia_Obj_t * pObj, * pRepr;
     int i, iPrev, iObj, iPrevNew, iObjNew, iPrevRaw, iObjRaw;
+    int nCoreResetsBefore, nCoreObjsBefore;
     assert( p != NULL );
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p->pAig) > 0 );
@@ -603,7 +704,9 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     p->nBuilds++;
     if ( Mode == CEC_EMIT_ACTIVE )
         p->nBuildsActive++;
+    nCoreResetsBefore = p->nCoreResets;
     Cec_DynSrmEnsureCore( p, nFrames, fScorr );
+    nCoreObjsBefore = Gia_ManObjNum( p->pCore );
     Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
     Gia_ManSetPhase( p->pAig );
     *pvOutputs = Vec_IntAlloc( 1000 );
@@ -699,6 +802,7 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     if ( p->nCoreObjsAtReset == 0 )      // first build after a cold (re)set: record the
         p->nCoreObjsAtReset = p->nCoreObjsLast;   // real post-build size as the compaction baseline
     p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
+    Cec_DynSrmRecordBuildStats( p, Mode, nCoreObjsBefore, nCoreResetsBefore );
     if ( Cec_ScorrProfOn && Mode == CEC_EMIT_ACTIVE )
         Cec_DynSrmReportTrueCone( p, nFrames, fRings, pTfoMask );
 }
@@ -719,6 +823,7 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
 {
     Gia_Obj_t * pObj, * pRepr;
     int f, i, iPrevNew, iObjNew;
+    int nCoreResetsBefore, nCoreObjsBefore;
     assert( p != NULL );
     assert( (!fScorr && nFrames > 1) || (fScorr && nFrames > 0) || nPrefix );
     assert( Gia_ManRegNum(p->pAig) > 0 );
@@ -727,7 +832,9 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
     p->nBuilds++;
     if ( Mode == CEC_EMIT_ACTIVE )
         p->nBuildsActive++;
+    nCoreResetsBefore = p->nCoreResets;
     Cec_DynSrmEnsureCore( p, nFrames + nPrefix, fScorr );
+    nCoreObjsBefore = Gia_ManObjNum( p->pCore );
     Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
     Gia_ManSetPhase( p->pAig );
     *pvOutputs = Vec_IntAlloc( 1000 );
@@ -763,6 +870,7 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
     if ( p->nCoreObjsAtReset == 0 )
         p->nCoreObjsAtReset = p->nCoreObjsLast;
     p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
+    Cec_DynSrmRecordBuildStats( p, Mode, nCoreObjsBefore, nCoreResetsBefore );
 }
 
 Gia_Man_t * Cec_DynSrmBuildInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fScorr,
