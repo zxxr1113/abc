@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZDpkrecqdiIVoswvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZDpkrecqdiIVosgwvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41270,6 +41270,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'D':
             pPars->fDynSrm ^= 1;
             break;
+        case 'g':
+            pPars->fDynSrmNoAdapt ^= 1;
+            break;
         case 's':
             pPars->fSkipFailResim ^= 1;
             break;
@@ -41362,7 +41365,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqdiIosDwvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqdiIosDgwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
@@ -41381,6 +41384,7 @@ usage:
     Abc_Print( -2, "\t-d     : toggle unbounded shadow SAT for pairs skipped by -i [default = %s]\n", pPars->fIncrOracle? "yes": "no" );
     Abc_Print( -2, "\t-I     : toggle unified persistent event resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-D     : toggle dynamic SRM construction for SAT; resim is controlled by -I [default = %s]\n", pPars->fDynSrm? "yes": "no" );
+    Abc_Print( -2, "\t-g     : toggle disabling adaptive DynSRM cold-rebuild heuristic [default = %s]\n", pPars->fDynSrmNoAdapt? "yes": "no" );
     Abc_Print( -2, "\t-V     : toggle (-I) strict resim oracle: aborts if incremental resim misses any split vs full resim [default = %s]\n", pPars->fVerifyResim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );

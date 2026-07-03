@@ -171,6 +171,7 @@ struct Cec_ParCor_t_
     int              fIncrOracle;   // unbounded shadow SAT for pairs skipped by -i
     int              fIncrSim;      // persistent CEX-TFO-only resimulation after SAT
     int              fDynSrm;       // persistent dynamic SRM and true-unroll resimulation
+    int              fDynSrmNoAdapt;// disable adaptive cold-rebuilds in DynSRM
     int              fSkipFailResim;// skip resim in rounds with no real CEX (only timeout/fail)
     int              fVerifyResim;  // (-V) oracle: check incremental resim values vs full sweep
     int              fVerboseFlops; // verbose stats

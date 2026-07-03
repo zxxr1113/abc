@@ -31,6 +31,7 @@ struct Cec_DynSrm_t_
     Gia_Man_t *      pCore;         // persistent SRM core without COs
     Cbs_Man_t *      pCbs;          // resident circuit-SAT manager on pCore (-D direct solving)
     int              nCoreObjsAtReset; // real post-build pCore size after the last cold (re)build, for compaction (0 until that build finishes)
+    int              fUseAdaptive;  // use timing-guided cold rebuilds in addition to the hard bloat guard
     Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
     Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
@@ -50,6 +51,15 @@ struct Cec_DynSrm_t_
     int              nBuildsFull;
     int              nCoreResets;
     int              nCoreCompactions;
+    int              nAdaptiveResets;
+    int              nAdaptiveBurstResets;
+    int              nAdaptiveBurstLeft;
+    int              nBuildsSinceReset;
+    int              nLastBuildReset;
+    int              nLastResetReason;
+    int              nLastResetSpan;
+    int              nAdaptResetSamples;
+    int              nAdaptReuseSamples;
     int              nCoreBuilds;
     int              nViewBuilds;
     int              nCacheFullClears;
@@ -79,6 +89,24 @@ struct Cec_DynSrm_t_
     ABC_INT64_T      nFailOutLitSum;
     int              nFailCoreObjMax;
     int              nFailOutLitMax;
+    double           dAdaptResetCost;
+    double           dAdaptReuseCost;
+    double           dAdaptLastCost;
+    abctime          tBuildLast;
+    abctime          tBuildEnsureLast;
+    abctime          tBuildInvalidateLast;
+    abctime          tBuildEmitLast;
+    abctime          tBuildTrueConeLast;
+    abctime          tBuildTotal;
+    abctime          tBuildResetTotal;
+    abctime          tBuildReuseTotal;
+    abctime          tBuildEnsureTotal;
+    abctime          tBuildInvalidateTotal;
+    abctime          tBuildEmitTotal;
+    abctime          tBuildTrueConeTotal;
+    abctime          tViewLast;
+    abctime          tViewTotal;
+    abctime          tSolveLast;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -173,6 +201,43 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
 // point (start of a build) cold-rebuild once it exceeds a multiple of its
 // post-build size; the rebuilt core re-materializes only the live active cones.
 #define CEC_DYN_COMPACT_MULT 4
+#define CEC_DYN_ADAPT_BLOAT_PERMIL       3000
+#define CEC_DYN_ADAPT_WORSE_PERMIL       1500
+#define CEC_DYN_ADAPT_RESET_BETTER_PERMIL 750
+#define CEC_DYN_ADAPT_MIN_REUSE_SAMPLES     8
+#define CEC_DYN_ADAPT_MIN_CALLS            16
+#define CEC_DYN_ADAPT_MIN_BUILDS_SINCE_RESET 2
+#define CEC_DYN_ADAPT_FAST_GROW_SPAN        4
+#define CEC_DYN_ADAPT_BURST_ROUNDS          2
+#define CEC_DYN_ADAPT_FAST_COMPACT_SPAN     2
+
+enum {
+    CEC_DYN_RESET_NONE    = 0,
+    CEC_DYN_RESET_SHAPE   = 1,
+    CEC_DYN_RESET_COMPACT = 2,
+    CEC_DYN_RESET_ADAPT   = 3,
+    CEC_DYN_RESET_BURST   = 4
+};
+
+static const char * Cec_DynSrmResetReasonName( int Reason )
+{
+    if ( Reason == CEC_DYN_RESET_SHAPE )
+        return "shape";
+    if ( Reason == CEC_DYN_RESET_COMPACT )
+        return "compact";
+    if ( Reason == CEC_DYN_RESET_ADAPT )
+        return "adapt";
+    if ( Reason == CEC_DYN_RESET_BURST )
+        return "burst";
+    return "reuse";
+}
+
+static int Cec_DynSrmCurrentBloatPermil( Cec_DynSrm_t * p )
+{
+    if ( p->nCoreObjsAtReset <= 0 || p->pCore == NULL )
+        return 1000;
+    return (int)((ABC_INT64_T)1000 * Gia_ManObjNum(p->pCore) / p->nCoreObjsAtReset);
+}
 
 static int Cec_DynSrmShouldCompact( Cec_DynSrm_t * p )
 {
@@ -182,20 +247,60 @@ static int Cec_DynSrmShouldCompact( Cec_DynSrm_t * p )
            Gia_ManObjNum(p->pCore) > (ABC_INT64_T)CEC_DYN_COMPACT_MULT * p->nCoreObjsAtReset;
 }
 
+static int Cec_DynSrmShouldAdaptiveReset( Cec_DynSrm_t * p )
+{
+    int nBloat;
+    if ( !p->fUseAdaptive )
+        return CEC_DYN_RESET_NONE;
+    if ( p->nAdaptiveBurstLeft > 0 )
+    {
+        p->nAdaptiveBurstLeft--;
+        p->nAdaptiveBurstResets++;
+        return CEC_DYN_RESET_BURST;
+    }
+    if ( p->nBuildsSinceReset < CEC_DYN_ADAPT_MIN_BUILDS_SINCE_RESET )
+        return CEC_DYN_RESET_NONE;
+    if ( p->nBuildsSinceReset > CEC_DYN_ADAPT_FAST_GROW_SPAN )
+        return CEC_DYN_RESET_NONE;
+    if ( p->nAdaptResetSamples == 0 || p->nAdaptReuseSamples < CEC_DYN_ADAPT_MIN_REUSE_SAMPLES )
+        return CEC_DYN_RESET_NONE;
+    nBloat = Cec_DynSrmCurrentBloatPermil( p );
+    if ( nBloat < CEC_DYN_ADAPT_BLOAT_PERMIL )
+        return CEC_DYN_RESET_NONE;
+    if ( 1000.0 * p->dAdaptReuseCost > (double)CEC_DYN_ADAPT_WORSE_PERMIL * p->dAdaptResetCost )
+        return CEC_DYN_RESET_ADAPT;
+    return CEC_DYN_RESET_NONE;
+}
+
 static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
 {
     Gia_Obj_t * pObj;
     int f, i, nFramesTotal = nFrames + fScorr;
+    int ResetReason = CEC_DYN_RESET_NONE;
     int fSameShape = ( p->pCore != NULL &&
          p->nObjs == Gia_ManObjNum(p->pAig) &&
          p->nPis == Gia_ManPiNum(p->pAig) &&
          p->nRegs == Gia_ManRegNum(p->pAig) &&
          p->nFramesTotal == nFramesTotal );
-    if ( fSameShape && !Cec_DynSrmShouldCompact(p) )
+    p->nLastBuildReset = 0;
+    p->nLastResetReason = CEC_DYN_RESET_NONE;
+    if ( !fSameShape )
+        ResetReason = CEC_DYN_RESET_SHAPE;
+    else if ( Cec_DynSrmShouldCompact(p) )
+        ResetReason = CEC_DYN_RESET_COMPACT;
+    else
+        ResetReason = Cec_DynSrmShouldAdaptiveReset( p );
+    if ( fSameShape && ResetReason == CEC_DYN_RESET_NONE )
         return;
-    if ( fSameShape )            // reusable shape but bloated: cold-rebuild
+    if ( ResetReason == CEC_DYN_RESET_COMPACT )            // reusable shape but bloated: cold-rebuild
         p->nCoreCompactions++;
+    if ( ResetReason == CEC_DYN_RESET_ADAPT )
+        p->nAdaptiveResets++;
+    p->nLastResetSpan = p->nBuildsSinceReset;
     Cec_DynSrmResetCore( p );
+    p->nLastBuildReset = 1;
+    p->nLastResetReason = ResetReason;
+    p->nBuildsSinceReset = 0;
     p->nObjs = Gia_ManObjNum( p->pAig );
     p->nPis = Gia_ManPiNum( p->pAig );
     p->nRegs = Gia_ManRegNum( p->pAig );
@@ -440,9 +545,13 @@ static const char * Cec_DynSrmModeName( Cec_IncrEmitMode_t Mode )
 }
 
 static void Cec_DynSrmRecordBuildStats( Cec_DynSrm_t * p,
-    Cec_IncrEmitMode_t Mode, int nCoreObjsBefore, int nCoreResetsBefore )
+    Cec_IncrEmitMode_t Mode, int nCoreObjsBefore, int nCoreResetsBefore,
+    abctime tBuild, abctime tEnsure, abctime tInvalidate, abctime tEmit,
+    abctime tTrueCone )
 {
     int fReset = p->nCoreResets > nCoreResetsBefore;
+    int ResetReason = fReset ? p->nLastResetReason : CEC_DYN_RESET_NONE;
+    p->nBuildsSinceReset++;
     if ( Mode == CEC_EMIT_ACTIVE )
     {
         p->nOutLitsActiveSum += p->nOutLitsLast;
@@ -463,18 +572,38 @@ static void Cec_DynSrmRecordBuildStats( Cec_DynSrm_t * p,
         p->nCoreBloatMaxPermil =
             Abc_MaxInt( p->nCoreBloatMaxPermil, p->nCoreBloatLastPermil );
     }
+    if ( tBuild )
+    {
+        p->tBuildLast = tBuild;
+        p->tBuildEnsureLast = tEnsure;
+        p->tBuildInvalidateLast = tInvalidate;
+        p->tBuildEmitLast = tEmit;
+        p->tBuildTrueConeLast = tTrueCone;
+        p->tBuildTotal += tBuild;
+        if ( fReset )
+            p->tBuildResetTotal += tBuild;
+        else
+            p->tBuildReuseTotal += tBuild;
+        p->tBuildEnsureTotal += tEnsure;
+        p->tBuildInvalidateTotal += tInvalidate;
+        p->tBuildEmitTotal += tEmit;
+        p->tBuildTrueConeTotal += tTrueCone;
+    }
     if ( Cec_ScorrProfOn )
-        Abc_Print( 1, "  [dyn-build b=%d mode=%s reset=%d out=%d core=%d delta=%d bloat=%.3f]\n",
-            p->nBuilds, Cec_DynSrmModeName(Mode), fReset,
+        Abc_Print( 1, "  [dyn-build b=%d mode=%s reset=%d reason=%s out=%d core=%d delta=%d bloat=%.3f time=%.3f ensure=%.3f inv=%.3f emit=%.3f true=%.3f]\n",
+            p->nBuilds, Cec_DynSrmModeName(Mode), fReset, Cec_DynSrmResetReasonName(ResetReason),
             p->nOutLitsLast, p->nCoreObjsLast, p->nCoreDeltaLast,
-            0.001 * p->nCoreBloatLastPermil );
+            0.001 * p->nCoreBloatLastPermil,
+            1.0e-6 * tBuild, 1.0e-6 * tEnsure, 1.0e-6 * tInvalidate,
+            1.0e-6 * tEmit, 1.0e-6 * tTrueCone );
 }
 
-Cec_DynSrm_t * Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr )
+Cec_DynSrm_t * Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr, int fUseAdaptive )
 {
     Cec_DynSrm_t * p = ABC_CALLOC( Cec_DynSrm_t, 1 );
     p->pAig = pAig;
     p->pIncr = pIncr;
+    p->fUseAdaptive = fUseAdaptive;
     return p;
 }
 
@@ -499,6 +628,11 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nOutLitsLast, p->nOutLitsMax,
         p->nCoreObjsLast, p->nCoreObjsMax,
         p->nViewObjsLast, p->nViewObjsMax );
+    Abc_Print( 1, "DynSRM: adapt enable/resets/burst/span = %d/%d/%d/%d, samples reset/reuse = %d/%d, cost reset/reuse/last = %.6f/%.6f/%.6f ns/call\n",
+        p->fUseAdaptive, p->nAdaptiveResets, p->nAdaptiveBurstResets,
+        p->nLastResetSpan,
+        p->nAdaptResetSamples, p->nAdaptReuseSamples,
+        p->dAdaptResetCost, p->dAdaptReuseCost, p->dAdaptLastCost );
     Abc_Print( 1, "DynSRM: cache_full_clears = %d, cache_local_clears = %d, cache_local_entries = %d\n",
         p->nCacheFullClears, p->nCacheLocalClears, p->nCacheLocalEntries );
     Abc_Print( 1, "DynSRM: build_modes full/active = %d/%d, avg_out full/active = %.1f/%.1f, avg_core full/active = %.1f/%.1f\n",
@@ -520,11 +654,32 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nFailCoreObjMax,
         p->nSolveFail ? (double)p->nFailOutLitSum / (double)p->nSolveFail : 0.0,
         p->nFailOutLitMax );
+    if ( p->tBuildTotal || p->tViewTotal )
+        Abc_Print( 1, "DynSRM: build_time total/reset/reuse/view = %.3f/%.3f/%.3f/%.3f sec, parts ensure/inv/emit/true = %.3f/%.3f/%.3f/%.3f sec\n",
+            1.0e-9 * p->tBuildTotal,
+            1.0e-9 * p->tBuildResetTotal,
+            1.0e-9 * p->tBuildReuseTotal,
+            1.0e-9 * p->tViewTotal,
+            1.0e-9 * p->tBuildEnsureTotal,
+            1.0e-9 * p->tBuildInvalidateTotal,
+            1.0e-9 * p->tBuildEmitTotal,
+            1.0e-9 * p->tBuildTrueConeTotal );
+}
+
+static void Cec_DynSrmUpdateAdaptCost( double * pCost, int * pSamples, double Value )
+{
+    if ( *pSamples == 0 )
+        *pCost = Value;
+    else
+        *pCost = 0.75 * *pCost + 0.25 * Value;
+    (*pSamples)++;
 }
 
 void Cec_DynSrmRecordSolveStats( Cec_DynSrm_t * p,
-    int nCalls, int nReal, int nTriv, int nFail )
+    int nCalls, int nReal, int nTriv, int nFail, abctime tSat )
 {
+    int nDen;
+    double dCost;
     if ( p == NULL )
         return;
     p->nSolveIters++;
@@ -540,6 +695,28 @@ void Cec_DynSrmRecordSolveStats( Cec_DynSrm_t * p,
         p->nFailCoreObjMax = Abc_MaxInt( p->nFailCoreObjMax, p->nCoreObjsLast );
         p->nFailOutLitMax = Abc_MaxInt( p->nFailOutLitMax, p->nOutLitsLast );
     }
+    p->tSolveLast = tSat;
+    if ( !p->fUseAdaptive || p->tBuildLast == 0 )
+        return;
+    nDen = nCalls > 0 ? nCalls : p->nOutLitsLast;
+    if ( nDen < CEC_DYN_ADAPT_MIN_CALLS )
+        return;
+    dCost = (double)(p->tBuildLast + tSat) / (double)nDen;
+    p->dAdaptLastCost = dCost;
+    if ( p->nLastBuildReset )
+    {
+        if ( p->nLastResetReason != CEC_DYN_RESET_SHAPE )
+        {
+            Cec_DynSrmUpdateAdaptCost( &p->dAdaptResetCost, &p->nAdaptResetSamples, dCost );
+            if ( p->nAdaptReuseSamples >= CEC_DYN_ADAPT_MIN_REUSE_SAMPLES &&
+                 p->nLastResetReason == CEC_DYN_RESET_COMPACT &&
+                 p->nLastResetSpan <= CEC_DYN_ADAPT_FAST_COMPACT_SPAN &&
+                 1000.0 * dCost < (double)CEC_DYN_ADAPT_RESET_BETTER_PERMIL * p->dAdaptReuseCost )
+                p->nAdaptiveBurstLeft = CEC_DYN_ADAPT_BURST_ROUNDS;
+        }
+    }
+    else
+        Cec_DynSrmUpdateAdaptCost( &p->dAdaptReuseCost, &p->nAdaptReuseSamples, dCost );
 }
 
 void Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark,
@@ -696,6 +873,9 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     Gia_Obj_t * pObj, * pRepr;
     int i, iPrev, iObj, iPrevNew, iObjNew, iPrevRaw, iObjRaw;
     int nCoreResetsBefore, nCoreObjsBefore;
+    int fMeasure = Cec_ScorrProfOn || p->fUseAdaptive;
+    abctime tBuild = fMeasure ? Abc_ClockHr() : 0;
+    abctime tStep, tEnsure = 0, tInvalidate = 0, tEmit = 0, tTrueCone = 0;
     assert( p != NULL );
     assert( nFrames > 0 );
     assert( Gia_ManRegNum(p->pAig) > 0 );
@@ -705,9 +885,14 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     if ( Mode == CEC_EMIT_ACTIVE )
         p->nBuildsActive++;
     nCoreResetsBefore = p->nCoreResets;
+    tStep = fMeasure ? Abc_ClockHr() : 0;
     Cec_DynSrmEnsureCore( p, nFrames, fScorr );
+    if ( fMeasure ) tEnsure = Abc_ClockHr() - tStep;
     nCoreObjsBefore = Gia_ManObjNum( p->pCore );
+    tStep = fMeasure ? Abc_ClockHr() : 0;
     Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
+    if ( fMeasure ) tInvalidate = Abc_ClockHr() - tStep;
+    tStep = fMeasure ? Abc_ClockHr() : 0;
     Gia_ManSetPhase( p->pAig );
     *pvOutputs = Vec_IntAlloc( 1000 );
     Vec_IntClear( p->vOutLits );
@@ -802,16 +987,35 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     if ( p->nCoreObjsAtReset == 0 )      // first build after a cold (re)set: record the
         p->nCoreObjsAtReset = p->nCoreObjsLast;   // real post-build size as the compaction baseline
     p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
-    Cec_DynSrmRecordBuildStats( p, Mode, nCoreObjsBefore, nCoreResetsBefore );
+    if ( fMeasure ) tEmit = Abc_ClockHr() - tStep;
     if ( Cec_ScorrProfOn && Mode == CEC_EMIT_ACTIVE )
+    {
+        tStep = Abc_ClockHr();
         Cec_DynSrmReportTrueCone( p, nFrames, fRings, pTfoMask );
+        tTrueCone = Abc_ClockHr() - tStep;
+    }
+    if ( fMeasure ) tBuild = Abc_ClockHr() - tBuild;
+    Cec_DynSrmRecordBuildStats( p, Mode, nCoreObjsBefore, nCoreResetsBefore,
+        tBuild, tEnsure, tInvalidate, tEmit, tTrueCone );
 }
 
 Gia_Man_t * Cec_DynSrmBuild( Cec_DynSrm_t * p, int nFrames, int fScorr,
     Vec_Int_t ** pvOutputs, int fRings, int * pTfoMask, Cec_IncrEmitMode_t Mode )
 {
+    Gia_Man_t * pView;
+    abctime tView;
     Cec_DynSrmBuildCore( p, nFrames, fScorr, pvOutputs, fRings, pTfoMask, Mode );
-    return Cec_DynSrmBuildView( p );
+    tView = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
+    pView = Cec_DynSrmBuildView( p );
+    if ( Cec_ScorrProfOn )
+    {
+        p->tViewLast = Abc_ClockHr() - tView;
+        p->tViewTotal += p->tViewLast;
+        Abc_Print( 1, "  [dyn-view b=%d out=%d view=%d time=%.3f]\n",
+            p->nBuilds, Vec_IntSize(p->vOutLits), p->nViewObjsLast,
+            1.0e-6 * p->tViewLast );
+    }
+    return pView;
 }
 
 // BMC/init variant of Cec_DynSrmBuildCore.  It mirrors
@@ -824,6 +1028,9 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
     Gia_Obj_t * pObj, * pRepr;
     int f, i, iPrevNew, iObjNew;
     int nCoreResetsBefore, nCoreObjsBefore;
+    int fMeasure = Cec_ScorrProfOn || p->fUseAdaptive;
+    abctime tBuild = fMeasure ? Abc_ClockHr() : 0;
+    abctime tStep, tEnsure = 0, tInvalidate = 0, tEmit = 0;
     assert( p != NULL );
     assert( (!fScorr && nFrames > 1) || (fScorr && nFrames > 0) || nPrefix );
     assert( Gia_ManRegNum(p->pAig) > 0 );
@@ -833,9 +1040,14 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
     if ( Mode == CEC_EMIT_ACTIVE )
         p->nBuildsActive++;
     nCoreResetsBefore = p->nCoreResets;
+    tStep = fMeasure ? Abc_ClockHr() : 0;
     Cec_DynSrmEnsureCore( p, nFrames + nPrefix, fScorr );
+    if ( fMeasure ) tEnsure = Abc_ClockHr() - tStep;
     nCoreObjsBefore = Gia_ManObjNum( p->pCore );
+    tStep = fMeasure ? Abc_ClockHr() : 0;
     Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
+    if ( fMeasure ) tInvalidate = Abc_ClockHr() - tStep;
+    tStep = fMeasure ? Abc_ClockHr() : 0;
     Gia_ManSetPhase( p->pAig );
     *pvOutputs = Vec_IntAlloc( 1000 );
     Vec_IntClear( p->vOutLits );
@@ -870,7 +1082,13 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
     if ( p->nCoreObjsAtReset == 0 )
         p->nCoreObjsAtReset = p->nCoreObjsLast;
     p->nCoreObjsMax = Abc_MaxInt( p->nCoreObjsMax, p->nCoreObjsLast );
-    Cec_DynSrmRecordBuildStats( p, Mode, nCoreObjsBefore, nCoreResetsBefore );
+    if ( fMeasure )
+    {
+        tEmit = Abc_ClockHr() - tStep;
+        tBuild = Abc_ClockHr() - tBuild;
+    }
+    Cec_DynSrmRecordBuildStats( p, Mode, nCoreObjsBefore, nCoreResetsBefore,
+        tBuild, tEnsure, tInvalidate, tEmit, 0 );
 }
 
 Gia_Man_t * Cec_DynSrmBuildInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fScorr,

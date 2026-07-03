@@ -1507,7 +1507,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         Cec_IncrMgrSnapshotClasses( pBmcMgr );
     }
     if ( pPars->fDynSrm && pBmcMgr )
-        pBmcDynSrm = Cec_DynSrmAlloc( pAig, pBmcMgr );
+        pBmcDynSrm = Cec_DynSrmAlloc( pAig, pBmcMgr, 0 );
     fBmcPersist = ( pBmcDynSrm != NULL && pPars->fUseCSat );
     fChanges = 1;
     for ( i = 0; fChanges && (!pPars->nLimitMax || i < pPars->nLimitMax); i++ )
@@ -1595,7 +1595,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         Prof.tSatSetup = Cec_ScorrProfSetup; Prof.tSatSolve = Cec_ScorrProfSolve;
         Prof.tSatMax   = Cec_ScorrProfMax;   Prof.nSatCalls = Cec_ScorrProfCalls;
         if ( pBmcDynSrm && Vec_IntSize(vCexStore) == 0 )
-            Cec_DynSrmRecordSolveStats( pBmcDynSrm, Prof.nSatCalls, 0, 0, 0 );
+            Cec_DynSrmRecordSolveStats( pBmcDynSrm, Prof.nSatCalls, 0, 0, 0, Prof.tSat );
         // refine classes with these counter-examples
         if ( Vec_IntSize(vCexStore) )
         {
@@ -1604,7 +1604,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
             if ( pBmcDynSrm )
                 Cec_DynSrmRecordSolveStats( pBmcDynSrm, Prof.nSatCalls,
-                    Prof.nCexReal, Prof.nCexTriv, Prof.nCexFail );
+                    Prof.nCexReal, Prof.nCexTriv, Prof.nCexFail, Prof.tSat );
             if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
             // only invoke resim when there is a real CEX (nLits>0).  Trivial
             // (nLits==0) and fail (==-1) entries carry no literals; trivial
@@ -1931,9 +1931,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
     if ( pPars->fVerbose )
     {
-        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d.\n",
+        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d.\n",
             Gia_ManObjNum(pAig), Gia_ManAndNum(pAig), 
-            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm );
+            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt );
         Cec_ManRefinedClassPrintStats( pAig, NULL, 0, Abc_Clock() - clk );
     }
     // check the base case
@@ -1959,7 +1959,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Cec_IncrMgrSnapshotClasses( pMgr );  // initial snapshot (post-BMC classes)
     }
     if ( pPars->fDynSrm && pMgr )
-        pDynSrm = Cec_DynSrmAlloc( pAig, pMgr );
+        pDynSrm = Cec_DynSrmAlloc( pAig, pMgr, !pPars->fDynSrmNoAdapt );
     // -D persistence path: solve the persistent COless pCore directly (circuit
     // SAT only), skipping the per-round throwaway view that BuildView copies.
     fPersist = ( pDynSrm != NULL && pPars->fUseCSat );
@@ -2172,7 +2172,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         if ( Vec_IntSize(vCexStore) == 0 )
         {
             if ( pDynSrm )
-                Cec_DynSrmRecordSolveStats( pDynSrm, Prof.nSatCalls, 0, 0, 0 );
+                Cec_DynSrmRecordSolveStats( pDynSrm, Prof.nSatCalls, 0, 0, 0, Prof.tSat );
             Vec_IntFree( vCexStore );
             Vec_StrFree( vStatus );
             Vec_IntFree( vOutputs );
@@ -2191,7 +2191,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             Cec_ManCexStoreClassify( vCexStore, &Prof.nCexReal, &Prof.nCexTriv, &Prof.nCexFail );
             if ( pDynSrm )
                 Cec_DynSrmRecordSolveStats( pDynSrm, Prof.nSatCalls,
-                    Prof.nCexReal, Prof.nCexTriv, Prof.nCexFail );
+                    Prof.nCexReal, Prof.nCexTriv, Prof.nCexFail, Prof.tSat );
             if ( Cec_ScorrProfOn ) nLitsPre = Gia_ManEquivCountLitsAll( pAig );
             if ( Prof.nCexReal > 0 || !pPars->fSkipFailResim )
             {
