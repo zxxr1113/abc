@@ -1549,16 +1549,18 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             Prof.tCnt = Abc_ClockHr() - tH;
             if ( nActivePairs == 0 )
                 break;
-            // Same fallback heuristic as the main loop: above the configured
-            // active-pair percentage, the mask plus emission filter costs more
-            // than just rebuilding the full SRM.
-            if ( nTotalPairs > 0 && (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nIncrFallbackPct * nTotalPairs )
             {
-                if ( pBmcDynSrm )
-                    Cec_DynSrmForceRebuild( pBmcDynSrm );
+                int fIncrFallback = nTotalPairs > 0 &&
+                    (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nIncrFallbackPct * nTotalPairs;
+                int fDynRebuild = nTotalPairs > 0 &&
+                    (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nDynSrmRebuildPct * nTotalPairs;
+                if ( pBmcDynSrm && (fIncrFallback || fDynRebuild) )
+                    Cec_DynSrmForceRebuild( pBmcDynSrm, fIncrFallback );
+                // The -i fallback threshold controls whether to drop the
+                // active mask.  The -D threshold only controls cold rebuild.
+                if ( !fIncrFallback )
+                    pTfoMask = pBmcMgr->pTfoMark;
             }
-            else
-                pTfoMask = pBmcMgr->pTfoMark;
         }
         tH = Abc_ClockHr();
         pSrm = NULL;
@@ -1939,9 +1941,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
     if ( pPars->fVerbose )
     {
-        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d. IncrFb = %d%%.\n",
+        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d. IncrFb = %d%%. DynRb = %d%%.\n",
             Gia_ManObjNum(pAig), Gia_ManAndNum(pAig), 
-            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt, pPars->nIncrFallbackPct );
+            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt, pPars->nIncrFallbackPct, pPars->nDynSrmRebuildPct );
         Cec_ManRefinedClassPrintStats( pAig, NULL, 0, Abc_Clock() - clk );
     }
     // check the base case
@@ -2073,19 +2075,23 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                         nIncrSkipped += nTotalPairs;
                         fStopAfterOracle = 1;
                     }
-                    // Fallback is based on emitted candidate pairs, not seed count.
-                    // Above the configured active-pair percentage, full SRM is
-                    // usually cheaper.
-                    else if ( nTotalPairs > 0 && (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nIncrFallbackPct * nTotalPairs )
-                    {
-                        if ( pDynSrm )
-                            Cec_DynSrmForceRebuild( pDynSrm );
-                        nIncrFallback++;
-                    }
                     else
                     {
-                        pTfoMask = pMgr->pTfoMark;
-                        nIncrSkipped += nTotalPairs - nActivePairs;
+                        int fIncrFallback = nTotalPairs > 0 &&
+                            (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nIncrFallbackPct * nTotalPairs;
+                        int fDynRebuild = nTotalPairs > 0 &&
+                            (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nDynSrmRebuildPct * nTotalPairs;
+                        if ( pDynSrm && (fIncrFallback || fDynRebuild) )
+                            Cec_DynSrmForceRebuild( pDynSrm, fIncrFallback );
+                        // Fallback is based on emitted candidate pairs, not seed count.
+                        // Above the configured -A percentage, full SRM is usually cheaper.
+                        if ( fIncrFallback )
+                            nIncrFallback++;
+                        else
+                        {
+                            pTfoMask = pMgr->pTfoMark;
+                            nIncrSkipped += nTotalPairs - nActivePairs;
+                        }
                     }
                 }
                 clkIncr += Abc_Clock() - clkI;

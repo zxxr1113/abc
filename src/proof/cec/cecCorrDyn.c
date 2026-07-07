@@ -53,13 +53,15 @@ struct Cec_DynSrm_t_
     int              nBuildsFull;
     int              nCoreResets;
     int              nCoreCompactions;
-    int              nFallbackResets;
+    int              nIncrFallbackResets;
+    int              nDynActiveResets;
     int              nAdaptiveResets;
     int              nAdaptiveBurstResets;
     int              nAdaptiveBurstLeft;
     int              nBuildsSinceReset;
     int              nLastBuildReset;
     int              nLastResetReason;
+    int              nForceResetReason;
     int              nLastResetSpan;
     int              nAdaptResetSamples;
     int              nAdaptReuseSamples;
@@ -220,7 +222,8 @@ enum {
     CEC_DYN_RESET_COMPACT = 2,
     CEC_DYN_RESET_ADAPT   = 3,
     CEC_DYN_RESET_BURST   = 4,
-    CEC_DYN_RESET_FALLBACK = 5
+    CEC_DYN_RESET_IFALLBACK = 5,
+    CEC_DYN_RESET_DACTIVE = 6
 };
 
 static const char * Cec_DynSrmResetReasonName( int Reason )
@@ -233,8 +236,10 @@ static const char * Cec_DynSrmResetReasonName( int Reason )
         return "adapt";
     if ( Reason == CEC_DYN_RESET_BURST )
         return "burst";
-    if ( Reason == CEC_DYN_RESET_FALLBACK )
-        return "fallback";
+    if ( Reason == CEC_DYN_RESET_IFALLBACK )
+        return "ifallback";
+    if ( Reason == CEC_DYN_RESET_DACTIVE )
+        return "dactive";
     return "reuse";
 }
 
@@ -293,7 +298,7 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     if ( !fSameShape )
         ResetReason = CEC_DYN_RESET_SHAPE;
     else if ( p->fForceRebuild )
-        ResetReason = CEC_DYN_RESET_FALLBACK;
+        ResetReason = p->nForceResetReason;
     else if ( Cec_DynSrmShouldCompact(p) )
         ResetReason = CEC_DYN_RESET_COMPACT;
     else
@@ -301,10 +306,13 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     if ( fSameShape && ResetReason == CEC_DYN_RESET_NONE )
         return;
     p->fForceRebuild = 0;
+    p->nForceResetReason = CEC_DYN_RESET_NONE;
     if ( ResetReason == CEC_DYN_RESET_COMPACT )            // reusable shape but bloated: cold-rebuild
         p->nCoreCompactions++;
-    if ( ResetReason == CEC_DYN_RESET_FALLBACK )
-        p->nFallbackResets++;
+    if ( ResetReason == CEC_DYN_RESET_IFALLBACK )
+        p->nIncrFallbackResets++;
+    if ( ResetReason == CEC_DYN_RESET_DACTIVE )
+        p->nDynActiveResets++;
     if ( ResetReason == CEC_DYN_RESET_ADAPT )
         p->nAdaptiveResets++;
     p->nLastResetSpan = p->nBuildsSinceReset;
@@ -626,10 +634,15 @@ void Cec_DynSrmSetParams( Cec_DynSrm_t * p, Cec_ParCor_t * pPars )
     p->nCompactMult = Abc_MaxInt( 1, pPars->nDynSrmCompactMult );
 }
 
-void Cec_DynSrmForceRebuild( Cec_DynSrm_t * p )
+void Cec_DynSrmForceRebuild( Cec_DynSrm_t * p, int fIncrFallback )
 {
-    if ( p )
-        p->fForceRebuild = 1;
+    if ( p == NULL )
+        return;
+    p->fForceRebuild = 1;
+    if ( fIncrFallback )
+        p->nForceResetReason = CEC_DYN_RESET_IFALLBACK;
+    else if ( p->nForceResetReason != CEC_DYN_RESET_IFALLBACK )
+        p->nForceResetReason = CEC_DYN_RESET_DACTIVE;
 }
 
 void Cec_DynSrmFree( Cec_DynSrm_t * p )
@@ -653,8 +666,8 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nOutLitsLast, p->nOutLitsMax,
         p->nCoreObjsLast, p->nCoreObjsMax,
         p->nViewObjsLast, p->nViewObjsMax );
-    Abc_Print( 1, "DynSRM: fallback_resets = %d, compact_mult = %d\n",
-        p->nFallbackResets, p->nCompactMult );
+    Abc_Print( 1, "DynSRM: force_resets ifallback/dactive = %d/%d, compact_mult = %d\n",
+        p->nIncrFallbackResets, p->nDynActiveResets, p->nCompactMult );
     Abc_Print( 1, "DynSRM: adapt enable/resets/burst/span = %d/%d/%d/%d, samples reset/reuse = %d/%d, cost reset/reuse/last = %.6f/%.6f/%.6f ns/call\n",
         p->fUseAdaptive, p->nAdaptiveResets, p->nAdaptiveBurstResets,
         p->nLastResetSpan,

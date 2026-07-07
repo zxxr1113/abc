@@ -423,7 +423,7 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 /*=== cecCorrDyn.c ============================================================*/
 extern Cec_DynSrm_t *       Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr, int fUseAdaptive );
 extern void                 Cec_DynSrmSetParams( Cec_DynSrm_t * p, Cec_ParCor_t * pPars );
-extern void                 Cec_DynSrmForceRebuild( Cec_DynSrm_t * p );
+extern void                 Cec_DynSrmForceRebuild( Cec_DynSrm_t * p, int fIncrFallback );
 extern void                 Cec_DynSrmFree( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmPrintStats( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmRecordSolveStats( Cec_DynSrm_t * p, int nCalls, int nReal, int nTriv, int nFail, abctime tSat );

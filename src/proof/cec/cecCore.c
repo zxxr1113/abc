@@ -193,12 +193,14 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->nLevelMax      =      -1;  // (scorr only) the max number of levels
     p->nStepsMax      =      -1;  // (scorr only) the max number of induction steps
     p->nIncrFallbackPct =    70;  // (-i) fall back to full SRM when active pairs exceed this percent
+    p->nDynSrmRebuildPct =   70;  // (-D) cold-rebuild when active pairs exceed this percent
     p->nDynSrmCompactMult =  4;   // (-D) cold-compact when core exceeds this multiple of reset size
     p->fLatchCorr     =       0;  // consider only latch outputs
     p->fConstCorr     =       0;  // consider only constants
     p->fUseRings      =       1;  // combine classes into rings
     p->fIncrOracle    =       0;  // unbounded shadow SAT for pairs skipped by -i
     p->fSkipFailResim =       0;  // skip resim when a round has no real CEX (only timeout/fail)
+    p->fDynSrmNoAdapt =       1;  // timing-guided DynSRM rebuild heuristic is opt-in
     p->fUseCSat       =       1;  // use circuit-based solver
 //    p->fFirstStop     =       0;  // stop on the first sat output
     p->fUseSmartCnf   =       0;  // use smart CNF computation

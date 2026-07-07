@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "ACFGMPSXZDpkrecqdiIVosgwvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "ABCFGMPSXZDpkrecqdiIVosgwvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41169,6 +41169,17 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nIncrFallbackPct = atoi(argv[globalUtilOptind]);
             globalUtilOptind++;
             if ( pPars->nIncrFallbackPct < 0 || pPars->nIncrFallbackPct > 100 )
+                goto usage;
+            break;
+        case 'B':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-B\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            pPars->nDynSrmRebuildPct = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nDynSrmRebuildPct < 0 || pPars->nDynSrmRebuildPct > 100 )
                 goto usage;
             break;
         case 'F':
@@ -41387,9 +41398,10 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-ACFGMPSXZ num] [-pkrecqdiIosDgwvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-ABCFGMPSXZ num] [-pkrecqdiIosDgwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-A num : active-pair fallback threshold for -i, percent [default = %d]\n", pPars->nIncrFallbackPct );
+    Abc_Print( -2, "\t-B num : (-D) active-pair cold-rebuild threshold, percent [default = %d]\n", pPars->nDynSrmRebuildPct );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-G num : the number of timeframes in the prefix [default = %d]\n", pPars->nPrefix );
@@ -41408,7 +41420,7 @@ usage:
     Abc_Print( -2, "\t-d     : toggle unbounded shadow SAT for pairs skipped by -i [default = %s]\n", pPars->fIncrOracle? "yes": "no" );
     Abc_Print( -2, "\t-I     : toggle unified persistent event resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-D     : toggle dynamic SRM construction for SAT; resim is controlled by -I [default = %s]\n", pPars->fDynSrm? "yes": "no" );
-    Abc_Print( -2, "\t-g     : toggle disabling adaptive DynSRM cold-rebuild heuristic [default = %s]\n", pPars->fDynSrmNoAdapt? "yes": "no" );
+    Abc_Print( -2, "\t-g     : toggle enabling adaptive DynSRM cold-rebuild heuristic [default = %s]\n", pPars->fDynSrmNoAdapt? "no": "yes" );
     Abc_Print( -2, "\t-V     : toggle (-I) strict resim oracle: aborts if incremental resim misses any split vs full resim [default = %s]\n", pPars->fVerifyResim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
