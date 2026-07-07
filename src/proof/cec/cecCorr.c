@@ -1507,7 +1507,10 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         Cec_IncrMgrSnapshotClasses( pBmcMgr );
     }
     if ( pPars->fDynSrm && pBmcMgr )
+    {
         pBmcDynSrm = Cec_DynSrmAlloc( pAig, pBmcMgr, 0 );
+        Cec_DynSrmSetParams( pBmcDynSrm, pPars );
+    }
     fBmcPersist = ( pBmcDynSrm != NULL && pPars->fUseCSat );
     fChanges = 1;
     for ( i = 0; fChanges && (!pPars->nLimitMax || i < pPars->nLimitMax); i++ )
@@ -1546,10 +1549,15 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             Prof.tCnt = Abc_ClockHr() - tH;
             if ( nActivePairs == 0 )
                 break;
-            // Same fallback heuristic as the main loop: above ~70% active,
-            // the mask plus emission filter costs more than just rebuilding
-            // the full SRM.
-            if ( !( nTotalPairs > 0 && (ABC_INT64_T)10 * nActivePairs > (ABC_INT64_T)7 * nTotalPairs ) )
+            // Same fallback heuristic as the main loop: above the configured
+            // active-pair percentage, the mask plus emission filter costs more
+            // than just rebuilding the full SRM.
+            if ( nTotalPairs > 0 && (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nIncrFallbackPct * nTotalPairs )
+            {
+                if ( pBmcDynSrm )
+                    Cec_DynSrmForceRebuild( pBmcDynSrm );
+            }
+            else
                 pTfoMask = pBmcMgr->pTfoMark;
         }
         tH = Abc_ClockHr();
@@ -1931,9 +1939,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
     if ( pPars->fVerbose )
     {
-        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d.\n",
+        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d. IncrFb = %d%%.\n",
             Gia_ManObjNum(pAig), Gia_ManAndNum(pAig), 
-            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt );
+            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt, pPars->nIncrFallbackPct );
         Cec_ManRefinedClassPrintStats( pAig, NULL, 0, Abc_Clock() - clk );
     }
     // check the base case
@@ -1959,7 +1967,10 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Cec_IncrMgrSnapshotClasses( pMgr );  // initial snapshot (post-BMC classes)
     }
     if ( pPars->fDynSrm && pMgr )
+    {
         pDynSrm = Cec_DynSrmAlloc( pAig, pMgr, !pPars->fDynSrmNoAdapt );
+        Cec_DynSrmSetParams( pDynSrm, pPars );
+    }
     // -D persistence path: solve the persistent COless pCore directly (circuit
     // SAT only), skipping the per-round throwaway view that BuildView copies.
     fPersist = ( pDynSrm != NULL && pPars->fUseCSat );
@@ -2063,9 +2074,12 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                         fStopAfterOracle = 1;
                     }
                     // Fallback is based on emitted candidate pairs, not seed count.
-                    // Above ~70% active pairs, full SRM is usually cheaper.
-                    else if ( nTotalPairs > 0 && (ABC_INT64_T)10 * nActivePairs > (ABC_INT64_T)7 * nTotalPairs )
+                    // Above the configured active-pair percentage, full SRM is
+                    // usually cheaper.
+                    else if ( nTotalPairs > 0 && (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nIncrFallbackPct * nTotalPairs )
                     {
+                        if ( pDynSrm )
+                            Cec_DynSrmForceRebuild( pDynSrm );
                         nIncrFallback++;
                     }
                     else

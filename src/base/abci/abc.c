@@ -41156,10 +41156,21 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZDpkrecqdiIVosgwvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "ACFGMPSXZDpkrecqdiIVosgwvh" ) ) != EOF )
     {
         switch ( c )
         {
+        case 'A':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-A\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            pPars->nIncrFallbackPct = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nIncrFallbackPct < 0 || pPars->nIncrFallbackPct > 100 )
+                goto usage;
+            break;
         case 'F':
             if ( globalUtilOptind >= argc )
             {
@@ -41237,6 +41248,17 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( nFlopIncFreq < 0 )
                 goto usage;
             break;            
+        case 'M':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-M\" should be followed by an integer.\n" );
+                goto usage;
+            }
+            pPars->nDynSrmCompactMult = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nDynSrmCompactMult < 1 )
+                goto usage;
+            break;
         case 'p':
             fPartition ^= 1;
             break;
@@ -41365,11 +41387,13 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqdiIosDgwvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-ACFGMPSXZ num] [-pkrecqdiIosDgwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
+    Abc_Print( -2, "\t-A num : active-pair fallback threshold for -i, percent [default = %d]\n", pPars->nIncrFallbackPct );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-G num : the number of timeframes in the prefix [default = %d]\n", pPars->nPrefix );
+    Abc_Print( -2, "\t-M num : (-D) hard compact multiple of post-reset core size [default = %d]\n", pPars->nDynSrmCompactMult );
     Abc_Print( -2, "\t-X num : the number of iterations of little or no improvement [default = %d]\n", pPars->nLimitMax );
     Abc_Print( -2, "\t-P num : the number of concurrent processes [default = %d]\n", pPars->nProcs );
     Abc_Print( -2, "\t-S num : the number of flops in one partition [default = %d]\n", pPars->nPartSize );

@@ -32,6 +32,8 @@ struct Cec_DynSrm_t_
     Cbs_Man_t *      pCbs;          // resident circuit-SAT manager on pCore (-D direct solving)
     int              nCoreObjsAtReset; // real post-build pCore size after the last cold (re)build, for compaction (0 until that build finishes)
     int              fUseAdaptive;  // use timing-guided cold rebuilds in addition to the hard bloat guard
+    int              nCompactMult;
+    int              fForceRebuild;
     Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
     Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
@@ -51,6 +53,7 @@ struct Cec_DynSrm_t_
     int              nBuildsFull;
     int              nCoreResets;
     int              nCoreCompactions;
+    int              nFallbackResets;
     int              nAdaptiveResets;
     int              nAdaptiveBurstResets;
     int              nAdaptiveBurstLeft;
@@ -200,10 +203,10 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
 // solver's per-round sync/solve walks an ever-larger graph.  At a quiescent
 // point (start of a build) cold-rebuild once it exceeds a multiple of its
 // post-build size; the rebuilt core re-materializes only the live active cones.
-#define CEC_DYN_COMPACT_MULT 4
-#define CEC_DYN_ADAPT_BLOAT_PERMIL       3000
-#define CEC_DYN_ADAPT_WORSE_PERMIL       1500
-#define CEC_DYN_ADAPT_RESET_BETTER_PERMIL 750
+#define CEC_DYN_COMPACT_MULT                 4
+#define CEC_DYN_ADAPT_BLOAT_PERMIL        3000
+#define CEC_DYN_ADAPT_WORSE_PERMIL        1500
+#define CEC_DYN_ADAPT_RESET_BETTER_PERMIL  750
 #define CEC_DYN_ADAPT_MIN_REUSE_SAMPLES     8
 #define CEC_DYN_ADAPT_MIN_CALLS            16
 #define CEC_DYN_ADAPT_MIN_BUILDS_SINCE_RESET 2
@@ -216,7 +219,8 @@ enum {
     CEC_DYN_RESET_SHAPE   = 1,
     CEC_DYN_RESET_COMPACT = 2,
     CEC_DYN_RESET_ADAPT   = 3,
-    CEC_DYN_RESET_BURST   = 4
+    CEC_DYN_RESET_BURST   = 4,
+    CEC_DYN_RESET_FALLBACK = 5
 };
 
 static const char * Cec_DynSrmResetReasonName( int Reason )
@@ -229,6 +233,8 @@ static const char * Cec_DynSrmResetReasonName( int Reason )
         return "adapt";
     if ( Reason == CEC_DYN_RESET_BURST )
         return "burst";
+    if ( Reason == CEC_DYN_RESET_FALLBACK )
+        return "fallback";
     return "reuse";
 }
 
@@ -242,9 +248,9 @@ static int Cec_DynSrmCurrentBloatPermil( Cec_DynSrm_t * p )
 static int Cec_DynSrmShouldCompact( Cec_DynSrm_t * p )
 {
     // 64-bit multiply: nCoreObjsAtReset can reach tens of millions (the growth
-    // case this guards), so CEC_DYN_COMPACT_MULT * it must not overflow int.
+    // case this guards), so nCompactMult * it must not overflow int.
     return p->nCoreObjsAtReset > 0 &&
-           Gia_ManObjNum(p->pCore) > (ABC_INT64_T)CEC_DYN_COMPACT_MULT * p->nCoreObjsAtReset;
+           Gia_ManObjNum(p->pCore) > (ABC_INT64_T)p->nCompactMult * p->nCoreObjsAtReset;
 }
 
 static int Cec_DynSrmShouldAdaptiveReset( Cec_DynSrm_t * p )
@@ -286,14 +292,19 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     p->nLastResetReason = CEC_DYN_RESET_NONE;
     if ( !fSameShape )
         ResetReason = CEC_DYN_RESET_SHAPE;
+    else if ( p->fForceRebuild )
+        ResetReason = CEC_DYN_RESET_FALLBACK;
     else if ( Cec_DynSrmShouldCompact(p) )
         ResetReason = CEC_DYN_RESET_COMPACT;
     else
         ResetReason = Cec_DynSrmShouldAdaptiveReset( p );
     if ( fSameShape && ResetReason == CEC_DYN_RESET_NONE )
         return;
+    p->fForceRebuild = 0;
     if ( ResetReason == CEC_DYN_RESET_COMPACT )            // reusable shape but bloated: cold-rebuild
         p->nCoreCompactions++;
+    if ( ResetReason == CEC_DYN_RESET_FALLBACK )
+        p->nFallbackResets++;
     if ( ResetReason == CEC_DYN_RESET_ADAPT )
         p->nAdaptiveResets++;
     p->nLastResetSpan = p->nBuildsSinceReset;
@@ -604,7 +615,21 @@ Cec_DynSrm_t * Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr, int fUs
     p->pAig = pAig;
     p->pIncr = pIncr;
     p->fUseAdaptive = fUseAdaptive;
+    p->nCompactMult = CEC_DYN_COMPACT_MULT;
     return p;
+}
+
+void Cec_DynSrmSetParams( Cec_DynSrm_t * p, Cec_ParCor_t * pPars )
+{
+    if ( p == NULL || pPars == NULL )
+        return;
+    p->nCompactMult = Abc_MaxInt( 1, pPars->nDynSrmCompactMult );
+}
+
+void Cec_DynSrmForceRebuild( Cec_DynSrm_t * p )
+{
+    if ( p )
+        p->fForceRebuild = 1;
 }
 
 void Cec_DynSrmFree( Cec_DynSrm_t * p )
@@ -628,6 +653,8 @@ void Cec_DynSrmPrintStats( Cec_DynSrm_t * p )
         p->nOutLitsLast, p->nOutLitsMax,
         p->nCoreObjsLast, p->nCoreObjsMax,
         p->nViewObjsLast, p->nViewObjsMax );
+    Abc_Print( 1, "DynSRM: fallback_resets = %d, compact_mult = %d\n",
+        p->nFallbackResets, p->nCompactMult );
     Abc_Print( 1, "DynSRM: adapt enable/resets/burst/span = %d/%d/%d/%d, samples reset/reuse = %d/%d, cost reset/reuse/last = %.6f/%.6f/%.6f ns/call\n",
         p->fUseAdaptive, p->nAdaptiveResets, p->nAdaptiveBurstResets,
         p->nLastResetSpan,

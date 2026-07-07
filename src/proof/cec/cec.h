@@ -159,6 +159,8 @@ struct Cec_ParCor_t_
     int              nLevelMax;     // (scorr only) the max number of levels
     int              nStepsMax;     // (scorr only) the max number of induction steps
     int              nLimitMax;     // (scorr only) stop after this many iterations if little or no improvement
+    int              nIncrFallbackPct; // (-i) fall back to full SRM when active pairs exceed this percent
+    int              nDynSrmCompactMult; // (-D) cold-compact when core exceeds this multiple of reset size
     int              fLatchCorr;    // consider only latch outputs
     int              fConstCorr;    // consider only constants
     int              fUseRings;     // use rings
