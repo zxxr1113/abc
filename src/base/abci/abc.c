@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "ABCFGMPSXZDpkrecqdiIVosgwvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "ABCFGMPSXZTDpkrecqdiIVosgwvh" ) ) != EOF )
     {
         switch ( c )
         {
