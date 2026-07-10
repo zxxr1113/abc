@@ -83,6 +83,7 @@ struct Tas_Man_t_
 {
     Tas_Par_t     Pars;         // parameters
     Gia_Man_t *   pAig;         // AIG manager
+    int           nSyncedObjs;  // pAig objects already prepped (Value/marks/refs) for resident reuse
     Tas_Que_t     pProp;        // propagation queue
     Tas_Que_t     pJust;        // justification queue
     Tas_Que_t     pClauses;     // clause queue
@@ -1849,6 +1850,158 @@ void Tas_ManSolveMiterNc2( Gia_Man_t * pAig, int nConfs, Gia_Man_t * pAigOld, Ve
     Vec_StrFree( vStatus );
 }
 
+
+/**Function*************************************************************
+
+  Synopsis    [Sets the conflict limit.]
+
+  Description []
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Tas_ManSetConflictNum( Tas_Man_t * p, int Num )
+{
+    p->Pars.nBTLimit = Num;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Syncs newly appended pAig objects for resident reuse.]
+
+  Description [Prepares objects appended since the last sync so the
+  persistent solver can reuse the same manager across rounds.  Mirrors
+  Cbs_ManSyncCore but also resizes the TAS-specific watched-literal and
+  activity arrays.]
+
+  SideEffects []
+
+  SeeAlso     []
+
+***********************************************************************/
+void Tas_ManSyncCore( Tas_Man_t * p )
+{
+    Gia_Man_t * pAig = p->pAig;
+    Gia_Obj_t * pObj;
+    int i, nObjs = Gia_ManObjNum( pAig );
+    assert( p->nSyncedObjs <= nObjs );
+    if ( p->nSyncedObjs == nObjs )
+        return;
+    pAig->pRefs = ABC_REALLOC( int, pAig->pRefs, nObjs );
+    memset( pAig->pRefs + p->nSyncedObjs, 0, sizeof(int) * (nObjs - p->nSyncedObjs) );
+    p->pWatches = ABC_REALLOC( int, p->pWatches, 2 * nObjs );
+    memset( p->pWatches + 2 * p->nSyncedObjs, 0, sizeof(int) * 2 * (nObjs - p->nSyncedObjs) );
+    p->pActivity = ABC_REALLOC( float, p->pActivity, nObjs );
+    memset( p->pActivity + p->nSyncedObjs, 0, sizeof(float) * (nObjs - p->nSyncedObjs) );
+    for ( i = p->nSyncedObjs; i < nObjs; i++ )
+    {
+        pObj = Gia_ManObj( pAig, i );
+        pObj->fMark0 = pObj->fMark1 = 0;
+        pObj->Value  = ~0;
+        pObj->fPhase = 0;
+        if ( Gia_ObjIsAnd(pObj) )
+        {
+            pAig->pRefs[Gia_ObjFaninId0(pObj, i)]++;
+            pAig->pRefs[Gia_ObjFaninId1(pObj, i)]++;
+        }
+    }
+    p->nSyncedObjs = nObjs;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Solves a set of root literals directly on a persistent AIG.]
+
+  Description [Same prover as Tas_ManSolveMiterNc, but each problem is a root
+  literal of p->pAig (no CO needed) instead of a CO of a freshly built view, and
+  the manager is resident: it is allocated once on the persistent COless pCore
+  and reused across rounds, only Tas_ManSyncCore-ing the objects appended since
+  the last call.  Output index i corresponds to vRootLits[i]; vCexStore / vStatus
+  format matches Tas_ManSolveMiterNc.  CEX is saved by CioId, which on pCore
+  equals the view's CI numbering.]
+
+  SideEffects [Prepares newly appended objects via Tas_ManSyncCore.]
+
+  SeeAlso     []
+
+***********************************************************************/
+Vec_Int_t * Tas_ManSolveRoots( Tas_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose )
+{
+    extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
+    extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
+    extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
+    Gia_Man_t * pAig = p->pAig;
+    Vec_Int_t * vCex, * vCexStore;
+    Vec_Str_t * vStatus;
+    int i, iLit, status;
+    abctime clk, clkTotal = Abc_Clock();
+    abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
+    assert( Gia_ManRegNum(pAig) == 0 );
+    Tas_ManSyncCore( p ); // prep only objects appended since the last solve
+    vStatus   = Vec_StrAlloc( Vec_IntSize(vRootLits) );
+    vCexStore = Vec_IntAlloc( 10000 );
+    vCex      = Tas_ReadModel( p );
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // incremental sync of new objects
+        Cec_ScorrProfSolve = Cec_ScorrProfMax = 0;
+        Cec_ScorrProfCalls = 0;
+    }
+    Vec_IntForEachEntry( vRootLits, iLit, i )
+    {
+        Vec_IntClear( vCex );
+        if ( Abc_Lit2Var(iLit) == 0 ) // structural constant root
+        {
+            if ( Abc_LitIsCompl(iLit) ) // const 1: trivial counter-example
+            {
+                Cec_ManSatAddToStore( vCexStore, vCex, i );
+                Vec_StrPush( vStatus, 0 );
+            }
+            else                        // const 0: proved
+                Vec_StrPush( vStatus, 1 );
+            continue;
+        }
+        clk = Abc_Clock();
+        clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
+        p->Pars.fUseHighest = 1;
+        p->Pars.fUseLowest  = 0;
+        status = Tas_ManSolve( p, Gia_ObjFromLit(pAig, iLit), NULL );
+        if ( Cec_ScorrProfOn )
+        {
+            abctime dHr = Abc_ClockHr() - clkHr;
+            Cec_ScorrProfSolve += dHr;
+            if ( dHr > Cec_ScorrProfMax ) Cec_ScorrProfMax = dHr;
+            Cec_ScorrProfCalls++;
+        }
+        Vec_StrPush( vStatus, (char)status );
+        if ( status == -1 )
+        {
+            p->nSatUndec++;
+            p->nConfUndec += p->Pars.nBTThis;
+            Cec_ManSatAddToStore( vCexStore, NULL, i ); // timeout
+            p->timeSatUndec += Abc_Clock() - clk;
+            continue;
+        }
+        if ( status == 0 )
+        {
+            p->nSatSat++;
+            p->nConfSat += p->Pars.nBTThis;
+            Cec_ManSatAddToStore( vCexStore, vCex, i );
+            p->timeSatSat += Abc_Clock() - clk;
+            continue;
+        }
+        assert( status == 1 );
+        p->nSatUnsat++;
+        p->nConfUnsat += p->Pars.nBTThis;
+        p->timeSatUnsat += Abc_Clock() - clk;
+    }
+    p->nSatTotal += Vec_IntSize(vRootLits);
+    p->timeTotal += Abc_Clock() - clkTotal;
+    *pvStatus = vStatus;
+    return vCexStore;
+}
 
 ////////////////////////////////////////////////////////////////////////
 ///                       END OF FILE                                ///

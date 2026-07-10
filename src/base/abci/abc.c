@@ -41303,6 +41303,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'D':
             pPars->fDynSrm ^= 1;
             break;
+        case 'T':
+            pPars->fUseTas ^= 1;
+            break;
         case 'g':
             pPars->fDynSrmNoAdapt ^= 1;
             break;
@@ -41398,14 +41401,14 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-ABCFGMPSXZ num] [-pkrecqdiIosDgwvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-ABCFGMPSXZ num] [-pkrecqdiIosDTgwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-A num : active-pair fallback threshold for -i, percent [default = %d]\n", pPars->nIncrFallbackPct );
     Abc_Print( -2, "\t-B num : (-D) active-pair cold-rebuild threshold, percent [default = %d]\n", pPars->nDynSrmRebuildPct );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-G num : the number of timeframes in the prefix [default = %d]\n", pPars->nPrefix );
-    Abc_Print( -2, "\t-M num : (-D) hard compact multiple of post-reset core size [default = %d]\n", pPars->nDynSrmCompactMult );
+    Abc_Print( -2, "\t-M num : (-D) compact when pCore exceeds num times its post-reset size [default = %d]\n", pPars->nDynSrmCompactMult );
     Abc_Print( -2, "\t-X num : the number of iterations of little or no improvement [default = %d]\n", pPars->nLimitMax );
     Abc_Print( -2, "\t-P num : the number of concurrent processes [default = %d]\n", pPars->nProcs );
     Abc_Print( -2, "\t-S num : the number of flops in one partition [default = %d]\n", pPars->nPartSize );
@@ -41420,6 +41423,7 @@ usage:
     Abc_Print( -2, "\t-d     : toggle unbounded shadow SAT for pairs skipped by -i [default = %s]\n", pPars->fIncrOracle? "yes": "no" );
     Abc_Print( -2, "\t-I     : toggle unified persistent event resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-D     : toggle dynamic SRM construction for SAT; resim is controlled by -I [default = %s]\n", pPars->fDynSrm? "yes": "no" );
+    Abc_Print( -2, "\t-T     : toggle using TAS (vs CBS) for persistent SAT solving under -D [default = %s]\n", pPars->fUseTas? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle enabling adaptive DynSRM cold-rebuild heuristic [default = %s]\n", pPars->fDynSrmNoAdapt? "no": "yes" );
     Abc_Print( -2, "\t-V     : toggle (-I) strict resim oracle: aborts if incremental resim misses any split vs full resim [default = %s]\n", pPars->fVerifyResim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );

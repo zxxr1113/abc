@@ -30,6 +30,7 @@ struct Cec_DynSrm_t_
     Cec_IncrMgr_t *  pIncr;         // active-list manager; owned by caller
     Gia_Man_t *      pCore;         // persistent SRM core without COs
     Cbs_Man_t *      pCbs;          // resident circuit-SAT manager on pCore (-D direct solving)
+    Tas_Man_t *      pTas;          // resident TAS manager on pCore (-D direct solving)
     int              nCoreObjsAtReset; // real post-build pCore size after the last cold (re)build, for compaction (0 until that build finishes)
     int              fUseAdaptive;  // use timing-guided cold rebuilds in addition to the hard bloat guard
     int              nCompactMult;
@@ -186,6 +187,9 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
     if ( p->pCbs )       // stop resident solver before its pCore is freed
         Cbs_ManStop( p->pCbs );
     p->pCbs = NULL;
+    if ( p->pTas )
+        Tas_ManStop( p->pTas );
+    p->pTas = NULL;
     if ( p->pCore )
         Gia_ManStop( p->pCore );
     p->pCore = NULL;
@@ -1145,10 +1149,17 @@ Vec_Int_t * Cec_DynSrmOutLits( Cec_DynSrm_t * p ) { return p->vOutLits; }
 // circuit-SAT manager (allocated lazily; re-created after a core reset/compaction
 // since its pAig is freed there).  The CI-layout assert guards the CEX CioId ->
 // resim-input contract that the discarded view used to enforce in the main loop.
-Vec_Int_t * Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus )
+Vec_Int_t * Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus, int fUseTas )
 {
     assert( Gia_ManRegNum(p->pCore) == 0 );
     assert( Gia_ManCiNum(p->pCore) == p->nRegs + p->nFramesTotal * p->nPis );
+    if ( fUseTas )
+    {
+        if ( p->pTas == NULL )
+            p->pTas = Tas_ManAlloc( p->pCore, nConfs );
+        Tas_ManSetConflictNum( p->pTas, nConfs );
+        return Tas_ManSolveRoots( p->pTas, p->vOutLits, pvStatus, 0 );
+    }
     if ( p->pCbs == NULL )
         p->pCbs = Cbs_ManAlloc( p->pCore );
     Cbs_ManSetConflictNum( p->pCbs, nConfs );
