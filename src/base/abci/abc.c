@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "ABCFGMPSXZKTDpkrecqdiIVosgwvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "ABCFGMPSXZKYTDpkrecqdiIVosgwvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41309,6 +41309,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'K':
             pPars->fKissatCert ^= 1;
             break;
+        case 'Y':
+            pPars->fBmcTasAdaptive ^= 1;
+            break;
         case 'g':
             pPars->fDynSrmNoAdapt ^= 1;
             break;
@@ -41337,6 +41340,16 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     if ( pPars->fDynSrm && !pPars->fIncremental )
     {
         Abc_Print( -1, "The dynamic SRM manager (-D) requires -i.\n" );
+        return 1;
+    }
+    if ( pPars->fBmcTasAdaptive && !pPars->fDynSrm )
+    {
+        Abc_Print( -1, "The adaptive BMC solver policy (-Y) requires -D.\n" );
+        return 1;
+    }
+    if ( pPars->fBmcTasAdaptive && pPars->fUseTas )
+    {
+        Abc_Print( -1, "Choose either adaptive BMC rescue (-Y) or forced TAS (-T), not both.\n" );
         return 1;
     }
     if ( pPars->fVerifyResim && !pPars->fIncrSim )
@@ -41409,7 +41422,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-ABCFGMPSXZ num] [-pkrecqdiIosKDTgwvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-ABCFGMPSXZ num] [-pkrecqdiIosKYDTgwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-A num : active-pair fallback threshold for -i, percent [default = %d]\n", pPars->nIncrFallbackPct );
     Abc_Print( -2, "\t-B num : (-D) active-pair cold-rebuild threshold, percent [default = %d]\n", pPars->nDynSrmRebuildPct );
@@ -41433,6 +41446,7 @@ usage:
     Abc_Print( -2, "\t-D     : toggle dynamic SRM construction for SAT; resim is controlled by -I [default = %s]\n", pPars->fDynSrm? "yes": "no" );
     Abc_Print( -2, "\t-T     : toggle using TAS (vs CBS) for persistent SAT solving under -D [default = %s]\n", pPars->fUseTas? "yes": "no" );
     Abc_Print( -2, "\t-K     : toggle strict unbounded Kissat audit of final base+step pairs [default = %s]\n", pPars->fKissatCert? "yes": "no" );
+    Abc_Print( -2, "\t-Y     : toggle guarded CBS-first/TAS-rescue heuristic in -D BMC [default = %s]\n", pPars->fBmcTasAdaptive? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle enabling adaptive DynSRM cold-rebuild heuristic [default = %s]\n", pPars->fDynSrmNoAdapt? "no": "yes" );
     Abc_Print( -2, "\t-V     : toggle (-I) strict resim oracle: aborts if incremental resim misses any split vs full resim [default = %s]\n", pPars->fVerifyResim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );

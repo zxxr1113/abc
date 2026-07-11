@@ -20,6 +20,11 @@
 
 ABC_NAMESPACE_IMPL_START
 
+#define CEC_BMC_TAS_PROBE_ROOTS          8
+#define CEC_BMC_TAS_PROBE_SUCCESS_PCT   75
+#define CEC_BMC_TAS_CORE_NORM_MAX     50000
+#define CEC_BMC_TAS_CORE_ABS_MAX     200000
+
 ////////////////////////////////////////////////////////////////////////
 ///                        DECLARATIONS                              ///
 ////////////////////////////////////////////////////////////////////////
@@ -113,6 +118,17 @@ struct Cec_DynSrm_t_
     abctime          tViewLast;
     abctime          tViewTotal;
     abctime          tSolveLast;
+    ABC_INT64_T      nBmcAdaptiveRounds;
+    ABC_INT64_T      nBmcCbsRoots;
+    ABC_INT64_T      nBmcCbsUnknown;
+    ABC_INT64_T      nBmcTasProbeRoots;
+    ABC_INT64_T      nBmcTasRetryRoots;
+    ABC_INT64_T      nBmcTasResolved;
+    ABC_INT64_T      nBmcTasUnknown;
+    ABC_INT64_T      nBmcTasEnabledRounds;
+    ABC_INT64_T      nBmcTasSkippedLarge;
+    abctime          tBmcCbs;
+    abctime          tBmcTas;
 };
 
 ////////////////////////////////////////////////////////////////////////
@@ -1164,6 +1180,242 @@ Vec_Int_t * Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus
         p->pCbs = Cbs_ManAlloc( p->pCore );
     Cbs_ManSetConflictNum( p->pCbs, nConfs );
     return Cbs_ManSolveRoots( p->pCbs, p->vOutLits, pvStatus, 0 );
+}
+
+static void Cec_DynSrmStoreCopyEntry( Vec_Int_t * vDest, Vec_Int_t * vSrc, int iStart, int iOut )
+{
+    int k, nLits = Vec_IntEntry( vSrc, iStart + 1 );
+    Vec_IntPush( vDest, iOut );
+    Vec_IntPush( vDest, nLits );
+    for ( k = 0; k < nLits; k++ )
+        Vec_IntPush( vDest, Vec_IntEntry(vSrc, iStart + 2 + k) );
+}
+
+static Vec_Int_t * Cec_DynSrmStoreIndex( Vec_Int_t * vStore, int nRoots )
+{
+    Vec_Int_t * vStarts = Vec_IntStartFull( nRoots );
+    int iStart = 0, iOut, nLits;
+    while ( iStart < Vec_IntSize(vStore) )
+    {
+        iOut = Vec_IntEntry( vStore, iStart );
+        nLits = Vec_IntEntry( vStore, iStart + 1 );
+        assert( iOut >= 0 && iOut < nRoots );
+        assert( nLits >= -1 );
+        Vec_IntWriteEntry( vStarts, iOut, iStart );
+        iStart += 2 + Abc_MaxInt( nLits, 0 );
+    }
+    assert( iStart == Vec_IntSize(vStore) );
+    return vStarts;
+}
+
+// Runs TAS on a subset of roots and merges its local output indices into the
+// original CBS status/store namespace.  Returns the number of SAT/UNSAT roots.
+static int Cec_DynSrmTasRetryBatch( Cec_DynSrm_t * p, int nConfs,
+    Vec_Int_t * vRoots, Vec_Int_t * vRootToOrig, Vec_Str_t * vFinalStatus,
+    Vec_Int_t * vTasStore, Vec_Int_t * vTasStarts )
+{
+    Vec_Str_t * vStatus = NULL;
+    Vec_Int_t * vStore;
+    abctime clk = Abc_ClockHr();
+    int i, iStart = 0, iLocal, iOrig, nLits, Status, nResolved = 0;
+    assert( Vec_IntSize(vRoots) == Vec_IntSize(vRootToOrig) );
+    if ( p->pTas == NULL )
+        p->pTas = Tas_ManAlloc( p->pCore, nConfs );
+    Tas_ManSetConflictNum( p->pTas, nConfs );
+    vStore = Tas_ManSolveRoots( p->pTas, vRoots, &vStatus, 0 );
+    p->tBmcTas += Abc_ClockHr() - clk;
+    Vec_StrForEachEntry( vStatus, Status, i )
+    {
+        iOrig = Vec_IntEntry( vRootToOrig, i );
+        if ( Status != -1 )
+        {
+            Vec_StrWriteEntry( vFinalStatus, iOrig, (char)Status );
+            nResolved++;
+        }
+    }
+    while ( iStart < Vec_IntSize(vStore) )
+    {
+        iLocal = Vec_IntEntry( vStore, iStart );
+        nLits  = Vec_IntEntry( vStore, iStart + 1 );
+        assert( iLocal >= 0 && iLocal < Vec_IntSize(vRootToOrig) );
+        iOrig = Vec_IntEntry( vRootToOrig, iLocal );
+        Vec_IntWriteEntry( vTasStarts, iOrig, Vec_IntSize(vTasStore) );
+        Cec_DynSrmStoreCopyEntry( vTasStore, vStore, iStart, iOrig );
+        iStart += 2 + Abc_MaxInt( nLits, 0 );
+    }
+    assert( iStart == Vec_IntSize(vStore) );
+    Vec_IntFree( vStore );
+    Vec_StrFree( vStatus );
+    return nResolved;
+}
+
+static void Cec_DynSrmProfAccumulate( int * pnCalls, abctime * ptSetup,
+    abctime * ptSolve, abctime * ptMax )
+{
+    if ( !Cec_ScorrProfOn )
+        return;
+    *pnCalls += Cec_ScorrProfCalls;
+    *ptSetup += Cec_ScorrProfSetup;
+    *ptSolve += Cec_ScorrProfSolve;
+    if ( *ptMax < Cec_ScorrProfMax )
+        *ptMax = Cec_ScorrProfMax;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [CBS-first BMC solving with guarded TAS rescue.]
+
+  Description [Forced -T remains TAS-only.  The default path solves every
+  root with CBS, then considers only CBS UNKNOWN roots.  Large cores are
+  rejected using both absolute and frame-normalized size.  Otherwise TAS is
+  sampled on eight roots; only a 75% successful probe enables retrying the
+  remainder.  The final status/CEX arrays preserve original root indices.]
+
+***********************************************************************/
+Vec_Int_t * Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs,
+    Vec_Str_t ** pvStatus, int fUseTas )
+{
+    Vec_Str_t * vStatus = NULL;
+    Vec_Int_t * vCbsStore, * vCbsStarts, * vUnknown;
+    Vec_Int_t * vProbeRoots, * vProbeMap, * vRetryRoots, * vRetryMap;
+    Vec_Int_t * vTasStore, * vTasStarts, * vFinalStore;
+    abctime clk;
+    abctime tProfSetup = 0, tProfSolve = 0, tProfMax = 0;
+    int i, Status, nRoots = Vec_IntSize(p->vOutLits), nProbe, nProbeResolved;
+    int nProfCalls = 0;
+    int nFrames = Abc_MaxInt( 1, p->nFramesTotal );
+    int nCore = Gia_ManObjNum( p->pCore );
+    int fCoreEligible;
+
+    if ( fUseTas )
+        return Cec_DynSrmSolve( p, nConfs, pvStatus, 1 );
+    p->nBmcAdaptiveRounds++;
+    p->nBmcCbsRoots += nRoots;
+    clk = Abc_ClockHr();
+    vCbsStore = Cec_DynSrmSolve( p, nConfs, &vStatus, 0 );
+    p->tBmcCbs += Abc_ClockHr() - clk;
+    Cec_DynSrmProfAccumulate( &nProfCalls, &tProfSetup, &tProfSolve, &tProfMax );
+    vUnknown = Vec_IntAlloc( 64 );
+    Vec_StrForEachEntry( vStatus, Status, i )
+        if ( Status == -1 )
+            Vec_IntPush( vUnknown, i );
+    p->nBmcCbsUnknown += Vec_IntSize(vUnknown);
+    if ( Vec_IntSize(vUnknown) == 0 )
+    {
+        Vec_IntFree( vUnknown );
+        *pvStatus = vStatus;
+        return vCbsStore;
+    }
+
+    fCoreEligible = nCore <= CEC_BMC_TAS_CORE_ABS_MAX &&
+        nCore / nFrames <= CEC_BMC_TAS_CORE_NORM_MAX;
+    if ( !fCoreEligible )
+    {
+        p->nBmcTasSkippedLarge += Vec_IntSize(vUnknown);
+        Vec_IntFree( vUnknown );
+        *pvStatus = vStatus;
+        return vCbsStore;
+    }
+
+    vCbsStarts = Cec_DynSrmStoreIndex( vCbsStore, nRoots );
+    vTasStore = Vec_IntAlloc( 64 );
+    vTasStarts = Vec_IntStartFull( nRoots );
+    nProbe = Abc_MinInt( CEC_BMC_TAS_PROBE_ROOTS, Vec_IntSize(vUnknown) );
+    vProbeRoots = Vec_IntAlloc( nProbe );
+    vProbeMap = Vec_IntAlloc( nProbe );
+    for ( i = 0; i < nProbe; i++ )
+    {
+        int iOrig = Vec_IntEntry( vUnknown, i );
+        Vec_IntPush( vProbeRoots, Vec_IntEntry(p->vOutLits, iOrig) );
+        Vec_IntPush( vProbeMap, iOrig );
+    }
+    p->nBmcTasProbeRoots += nProbe;
+    nProbeResolved = Cec_DynSrmTasRetryBatch( p, nConfs, vProbeRoots, vProbeMap,
+        vStatus, vTasStore, vTasStarts );
+    Cec_DynSrmProfAccumulate( &nProfCalls, &tProfSetup, &tProfSolve, &tProfMax );
+    p->nBmcTasResolved += nProbeResolved;
+    p->nBmcTasUnknown += nProbe - nProbeResolved;
+    Vec_IntFree( vProbeRoots );
+    Vec_IntFree( vProbeMap );
+
+    if ( nProbeResolved * 100 >= CEC_BMC_TAS_PROBE_SUCCESS_PCT * nProbe &&
+         Vec_IntSize(vUnknown) > nProbe )
+    {
+        vRetryRoots = Vec_IntAlloc( Vec_IntSize(vUnknown) - nProbe );
+        vRetryMap = Vec_IntAlloc( Vec_IntSize(vUnknown) - nProbe );
+        for ( i = nProbe; i < Vec_IntSize(vUnknown); i++ )
+        {
+            int iOrig = Vec_IntEntry( vUnknown, i );
+            Vec_IntPush( vRetryRoots, Vec_IntEntry(p->vOutLits, iOrig) );
+            Vec_IntPush( vRetryMap, iOrig );
+        }
+        p->nBmcTasEnabledRounds++;
+        p->nBmcTasRetryRoots += Vec_IntSize(vRetryRoots);
+        i = Cec_DynSrmTasRetryBatch( p, nConfs, vRetryRoots, vRetryMap,
+            vStatus, vTasStore, vTasStarts );
+        Cec_DynSrmProfAccumulate( &nProfCalls, &tProfSetup, &tProfSolve, &tProfMax );
+        p->nBmcTasResolved += i;
+        p->nBmcTasUnknown += Vec_IntSize(vRetryRoots) - i;
+        Vec_IntFree( vRetryRoots );
+        Vec_IntFree( vRetryMap );
+    }
+
+    // Rebuild the CEX store once so a TAS answer cleanly replaces the CBS
+    // UNKNOWN entry instead of leaving both records for Gia_ManCheckRefinements.
+    vFinalStore = Vec_IntAlloc( Vec_IntSize(vCbsStore) + Vec_IntSize(vTasStore) );
+    Vec_StrForEachEntry( vStatus, Status, i )
+    {
+        int iStart;
+        if ( Status == 1 )
+            continue;
+        if ( Status == -1 )
+        {
+            Vec_IntPush( vFinalStore, i );
+            Vec_IntPush( vFinalStore, -1 );
+            continue;
+        }
+        iStart = Vec_IntEntry( vCbsStarts, i );
+        if ( iStart >= 0 && Vec_StrEntry(vStatus, i) == 0 &&
+             Vec_IntEntry(vCbsStore, iStart + 1) >= 0 )
+            Cec_DynSrmStoreCopyEntry( vFinalStore, vCbsStore, iStart, i );
+        else
+        {
+            iStart = Vec_IntEntry( vTasStarts, i );
+            assert( iStart >= 0 );
+            Cec_DynSrmStoreCopyEntry( vFinalStore, vTasStore, iStart, i );
+        }
+    }
+    Vec_IntFree( vCbsStore );
+    Vec_IntFree( vCbsStarts );
+    Vec_IntFree( vTasStore );
+    Vec_IntFree( vTasStarts );
+    Vec_IntFree( vUnknown );
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_ScorrProfCalls = nProfCalls;
+        Cec_ScorrProfSetup = tProfSetup;
+        Cec_ScorrProfSolve = tProfSolve;
+        Cec_ScorrProfMax = tProfMax;
+    }
+    *pvStatus = vStatus;
+    return vFinalStore;
+}
+
+void Cec_DynSrmPrintBmcSolverStats( Cec_DynSrm_t * p )
+{
+    if ( p == NULL )
+        return;
+    Abc_Print( 1, "BMC-solver: adaptive_rounds=%lld cbs_roots=%lld cbs_unknown=%lld skipped_large=%lld\n",
+        (long long)p->nBmcAdaptiveRounds, (long long)p->nBmcCbsRoots,
+        (long long)p->nBmcCbsUnknown, (long long)p->nBmcTasSkippedLarge );
+    Abc_Print( 1, "BMC-solver: tas_probe=%lld tas_retry=%lld resolved=%lld unknown=%lld enabled_rounds=%lld\n",
+        (long long)p->nBmcTasProbeRoots, (long long)p->nBmcTasRetryRoots,
+        (long long)p->nBmcTasResolved, (long long)p->nBmcTasUnknown,
+        (long long)p->nBmcTasEnabledRounds );
+    Abc_Print( 1, "BMC-solver: time_cbs=%.3f sec time_tas=%.3f sec core_abs_max=%d core_norm_limit=%d probe=%d pass=%d%%\n",
+        1.0e-9 * p->tBmcCbs, 1.0e-9 * p->tBmcTas,
+        CEC_BMC_TAS_CORE_ABS_MAX, CEC_BMC_TAS_CORE_NORM_MAX,
+        CEC_BMC_TAS_PROBE_ROOTS, CEC_BMC_TAS_PROBE_SUCCESS_PCT );
 }
 
 ////////////////////////////////////////////////////////////////////////

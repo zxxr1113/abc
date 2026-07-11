@@ -176,6 +176,7 @@ struct Cec_ParCor_t_
     int              fDynSrm;       // persistent dynamic SRM and true-unroll resimulation
     int              fDynSrmNoAdapt;// disable adaptive cold-rebuilds in DynSRM
     int              fUseTas;       // use TAS (vs CBS) for persistent solving (-D)
+    int              fBmcTasAdaptive;// use guarded CBS-first/TAS-rescue policy in BMC
     int              fKissatCert;   // strictly audit final base+step obligations with Kissat
     int              fSkipFailResim;// skip resim in rounds with no real CEX (only timeout/fail)
     int              fVerifyResim;  // (-V) oracle: check incremental resim values vs full sweep

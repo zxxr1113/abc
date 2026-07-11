@@ -1595,8 +1595,10 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         }
         pParsSat->nBTLimit *= 10;
         tH = Abc_ClockHr();
-        if ( fBmcPersist )
-            vCexStore = Cec_DynSrmSolve( pBmcDynSrm, pPars->nBTLimit, &vStatus, pPars->fUseTas );
+        if ( fBmcPersist && (pPars->fUseTas || pPars->fBmcTasAdaptive) )
+            vCexStore = Cec_DynSrmSolveBmcAdaptive( pBmcDynSrm, pPars->nBTLimit, &vStatus, pPars->fUseTas );
+        else if ( fBmcPersist )
+            vCexStore = Cec_DynSrmSolve( pBmcDynSrm, pPars->nBTLimit, &vStatus, 0 );
         else if ( pPars->fUseCSat )
             vCexStore = Tas_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0 );
         else
@@ -1712,6 +1714,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     }
     if ( pPars->fVeryVerbose )
         Cec_ScorrProfPrint( "bmc-prof", -1, Total.nSatCalls, &Total );
+    if ( pPars->fVerbose && pBmcDynSrm && pPars->fBmcTasAdaptive && !pPars->fUseTas )
+        Cec_DynSrmPrintBmcSolverStats( pBmcDynSrm );
     Cec_ScorrProfOn = 0;
     Cec_DynSrmFree( pBmcDynSrm );
     Cec_IncrMgrFree( pBmcMgr );
