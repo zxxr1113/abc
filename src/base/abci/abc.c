@@ -41156,7 +41156,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "ABCFGMPSXZTDpkrecqdiIVosgwvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "ABCFGMPSXZKTDpkrecqdiIVosgwvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41306,6 +41306,9 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'T':
             pPars->fUseTas ^= 1;
             break;
+        case 'K':
+            pPars->fKissatCert ^= 1;
+            break;
         case 'g':
             pPars->fDynSrmNoAdapt ^= 1;
             break;
@@ -41339,6 +41342,11 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     if ( pPars->fVerifyResim && !pPars->fIncrSim )
     {
         Abc_Print( -1, "The resim value oracle (-V) requires -I.\n" );
+        return 1;
+    }
+    if ( pPars->fKissatCert && (fUseOld || fPartition || pPars->nPartSize > 0 || nFlopIncFreq > 0 || pPars->nPrefix > 0) )
+    {
+        Abc_Print( -1, "The strict fixed-point oracle (-K) currently supports the direct &scorr engine with -G 0 only.\n" );
         return 1;
     }
     if ( pAbc->pGia == NULL )
@@ -41401,7 +41409,7 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-ABCFGMPSXZ num] [-pkrecqdiIosDTgwvh]\n" );
+    Abc_Print( -2, "usage: &scorr [-ABCFGMPSXZ num] [-pkrecqdiIosKDTgwvh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation\n" );
     Abc_Print( -2, "\t-A num : active-pair fallback threshold for -i, percent [default = %d]\n", pPars->nIncrFallbackPct );
     Abc_Print( -2, "\t-B num : (-D) active-pair cold-rebuild threshold, percent [default = %d]\n", pPars->nDynSrmRebuildPct );
@@ -41424,6 +41432,7 @@ usage:
     Abc_Print( -2, "\t-I     : toggle unified persistent event resimulation after SAT [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-D     : toggle dynamic SRM construction for SAT; resim is controlled by -I [default = %s]\n", pPars->fDynSrm? "yes": "no" );
     Abc_Print( -2, "\t-T     : toggle using TAS (vs CBS) for persistent SAT solving under -D [default = %s]\n", pPars->fUseTas? "yes": "no" );
+    Abc_Print( -2, "\t-K     : toggle strict unbounded Kissat audit of final base+step pairs [default = %s]\n", pPars->fKissatCert? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle enabling adaptive DynSRM cold-rebuild heuristic [default = %s]\n", pPars->fDynSrmNoAdapt? "no": "yes" );
     Abc_Print( -2, "\t-V     : toggle (-I) strict resim oracle: aborts if incremental resim misses any split vs full resim [default = %s]\n", pPars->fVerifyResim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resim in rounds with no real CEX (only timeout/fail) [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );

@@ -1894,6 +1894,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ManSim_t * pSim;
     Gia_Man_t * pSrm;
     int r, RetValue, nPrev[4] = {0};
+    int fCertFailed = 0;
     abctime clkTotal = Abc_Clock();
     abctime clkSat = 0, clkSim = 0, clkSrm = 0;
     abctime clk2, clk = Abc_Clock();
@@ -2334,6 +2335,81 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             nPrev[2] = nPrev[3];
             nPrev[3] = nCur;
         }
+    }
+    // Optional strict final oracle.  The ordinary loop may stop because an
+    // incremental frontier is empty; rebuild the complete current SRM here so
+    // no skipped pair can escape the audit.  This is deliberately a checker,
+    // not a repair pass: SAT means the optimized run produced a wrong fixed
+    // point, so report the bug and refuse to create a reduced network.
+    if ( pPars->fKissatCert && r < nIterMax )
+    {
+        Vec_Int_t * vCertOutputs = NULL, * vCertCex = NULL;
+        Vec_Str_t * vCertStatus = NULL;
+        Gia_Man_t * pCertSrm;
+        int iCertOut = -1, CertStatus;
+        if ( Cec_ParCorShouldStop(pPars) )
+            fCertFailed = 1;
+        else
+        {
+            Abc_Print( 1, "SCORR-CERT: auditing the complete inductive-step pair set.\n" );
+            pCertSrm = Gia_ManCorrSpecReduce( pAig, pPars->nFrames,
+                !pPars->fLatchCorr, &vCertOutputs, pPars->fUseRings, NULL );
+            CertStatus = Cec_ManCorrKissatCertify( pCertSrm, vCertOutputs,
+                &vCertCex, &vCertStatus, &iCertOut, 1 );
+            Gia_ManStop( pCertSrm );
+            if ( CertStatus != 1 )
+            {
+                fCertFailed = 1;
+                if ( CertStatus == 0 )
+                    Abc_Print( -1, "SCORR-CERT BUG (step): the optimized fixed point contains a non-inductive equivalence.\n" );
+                else
+                    Abc_Print( -1, "SCORR-CERT UNKNOWN (step): Kissat did not complete.\n" );
+            }
+            Vec_IntFree( vCertCex );
+            Vec_StrFree( vCertStatus );
+            Vec_IntFree( vCertOutputs );
+            vCertCex = NULL;
+            vCertStatus = NULL;
+            vCertOutputs = NULL;
+
+            // Audit the base/init obligations on the final classes as well.
+            // This is required to catch bugs in the optimized BMC phase; an
+            // inductive relation alone need not hold in the initial behavior.
+            if ( !fCertFailed )
+            {
+                iCertOut = -1;
+                Abc_Print( 1, "SCORR-CERT: auditing the complete base/init pair set.\n" );
+                pCertSrm = Gia_ManCorrSpecReduceInit( pAig, pPars->nFrames, 0,
+                    !pPars->fLatchCorr, &vCertOutputs, pPars->fUseRings );
+                CertStatus = Cec_ManCorrKissatCertify( pCertSrm, vCertOutputs,
+                    &vCertCex, &vCertStatus, &iCertOut, 1 );
+                Gia_ManStop( pCertSrm );
+                if ( CertStatus != 1 )
+                {
+                    fCertFailed = 1;
+                    if ( CertStatus == 0 )
+                        Abc_Print( -1, "SCORR-CERT BUG (base): the optimized BMC phase retained a false equivalence.\n" );
+                    else
+                        Abc_Print( -1, "SCORR-CERT UNKNOWN (base): Kissat did not complete.\n" );
+                }
+                Vec_IntFree( vCertCex );
+                Vec_StrFree( vCertStatus );
+                Vec_IntFree( vCertOutputs );
+            }
+            if ( !fCertFailed )
+                Abc_Print( 1, "SCORR-CERT PASS: complete base and inductive-step obligations are UNSAT.\n" );
+            else
+                Abc_Print( -1, "SCORR-CERT FAIL: refusing to create an uncertified reduction.\n" );
+        }
+    }
+    if ( fCertFailed )
+    {
+        Cec_ScorrProfOn = 0;
+        Cec_ManSimStop( pSim );
+        Cec_IncrMgrFree( pMgr );
+        Cec_DynSrmFree( pDynSrm );
+        Cec_SeedSimFree( pSeedSim );
+        return 0;
     }
     if ( pPars->fVerbose )
         Cec_ManRefinedClassPrintStats( pAig, NULL, r+1, Abc_Clock() - clk );

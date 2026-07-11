@@ -202,6 +202,7 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->fSkipFailResim =       0;  // skip resim when a round has no real CEX (only timeout/fail)
     p->fDynSrmNoAdapt =       1;  // timing-guided DynSRM rebuild heuristic is opt-in
     p->fUseTas        =       0;  // use CBS by default for persistent solving
+    p->fKissatCert    =       0;  // strict final base+step Kissat audit is opt-in
     p->fUseCSat       =       1;  // use circuit-based solver
 //    p->fFirstStop     =       0;  // stop on the first sat output
     p->fUseSmartCnf   =       0;  // use smart CNF computation

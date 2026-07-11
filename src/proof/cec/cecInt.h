@@ -409,6 +409,8 @@ extern int                  Cec_ScorrProfCalls;  // # of per-PO solve calls in t
 extern abctime              Cec_ScorrProfSetup;  // solver alloc + AIG prep before the PO loop
 extern abctime              Cec_ScorrProfSolve;  // summed over every per-PO solve call
 extern abctime              Cec_ScorrProfMax;    // slowest single per-PO solve call
+/*=== cecCorrCert.c =========================================================*/
+extern int                  Cec_ManCorrKissatCertify( Gia_Man_t * pSrm, Vec_Int_t * vOutputs, Vec_Int_t ** pvCexStore, Vec_Str_t ** pvStatus, int * piOut, int fVerbose );
 /*=== cecCorrIncr.c ============================================================*/
 extern Cec_IncrMgr_t *      Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames );
 extern void                 Cec_IncrMgrFree( Cec_IncrMgr_t * p );
