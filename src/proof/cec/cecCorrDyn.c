@@ -22,8 +22,10 @@ ABC_NAMESPACE_IMPL_START
 
 #define CEC_BMC_TAS_PROBE_ROOTS          8
 #define CEC_BMC_TAS_PROBE_SUCCESS_PCT   75
-#define CEC_BMC_TAS_CORE_NORM_MAX     50000
+#define CEC_BMC_TAS_CORE_NORM_MAX     25000
 #define CEC_BMC_TAS_CORE_ABS_MAX     200000
+#define CEC_BMC_TAS_RETRY_ROOTS_MAX    8192
+#define CEC_BMC_TAS_STRUCT_WORK_MAX  64000000LL
 
 ////////////////////////////////////////////////////////////////////////
 ///                        DECLARATIONS                              ///
@@ -127,6 +129,9 @@ struct Cec_DynSrm_t_
     ABC_INT64_T      nBmcTasUnknown;
     ABC_INT64_T      nBmcTasEnabledRounds;
     ABC_INT64_T      nBmcTasSkippedLarge;
+    ABC_INT64_T      nBmcTasSkippedWork;
+    ABC_INT64_T      nBmcTasSkippedBudget;
+    ABC_INT64_T      nBmcTasStructWork;
     abctime          tBmcCbs;
     abctime          tBmcTas;
 };
@@ -1269,7 +1274,9 @@ static void Cec_DynSrmProfAccumulate( int * pnCalls, abctime * ptSetup,
   root with CBS, then considers only CBS UNKNOWN roots.  Large cores are
   rejected using both absolute and frame-normalized size.  Otherwise TAS is
   sampled on eight roots; only a 75% successful probe enables retrying the
-  remainder.  The final status/CEX arrays preserve original root indices.]
+  remainder.  A deterministic node-root work budget and a retry-root cap bound
+  TAS use without consulting machine-dependent wall time.  The final status/CEX
+  arrays preserve original root indices.]
 
 ***********************************************************************/
 Vec_Int_t * Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs,
@@ -1285,6 +1292,7 @@ Vec_Int_t * Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs,
     int nProfCalls = 0;
     int nFrames = Abc_MaxInt( 1, p->nFramesTotal );
     int nCore = Gia_ManObjNum( p->pCore );
+    int nCoreNorm = (nCore + nFrames - 1) / nFrames;
     int fCoreEligible;
 
     if ( fUseTas )
@@ -1308,7 +1316,7 @@ Vec_Int_t * Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs,
     }
 
     fCoreEligible = nCore <= CEC_BMC_TAS_CORE_ABS_MAX &&
-        nCore / nFrames <= CEC_BMC_TAS_CORE_NORM_MAX;
+        nCoreNorm <= CEC_BMC_TAS_CORE_NORM_MAX;
     if ( !fCoreEligible )
     {
         p->nBmcTasSkippedLarge += Vec_IntSize(vUnknown);
@@ -1321,6 +1329,17 @@ Vec_Int_t * Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs,
     vTasStore = Vec_IntAlloc( 64 );
     vTasStarts = Vec_IntStartFull( nRoots );
     nProbe = Abc_MinInt( CEC_BMC_TAS_PROBE_ROOTS, Vec_IntSize(vUnknown) );
+    if ( p->nBmcTasStructWork + (ABC_INT64_T)nCoreNorm * nProbe >
+         CEC_BMC_TAS_STRUCT_WORK_MAX )
+    {
+        p->nBmcTasSkippedWork += Vec_IntSize(vUnknown);
+        Vec_IntFree( vCbsStarts );
+        Vec_IntFree( vTasStore );
+        Vec_IntFree( vTasStarts );
+        Vec_IntFree( vUnknown );
+        *pvStatus = vStatus;
+        return vCbsStore;
+    }
     vProbeRoots = Vec_IntAlloc( nProbe );
     vProbeMap = Vec_IntAlloc( nProbe );
     for ( i = 0; i < nProbe; i++ )
@@ -1332,6 +1351,7 @@ Vec_Int_t * Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs,
     p->nBmcTasProbeRoots += nProbe;
     nProbeResolved = Cec_DynSrmTasRetryBatch( p, nConfs, vProbeRoots, vProbeMap,
         vStatus, vTasStore, vTasStarts );
+    p->nBmcTasStructWork += (ABC_INT64_T)nCoreNorm * nProbe;
     Cec_DynSrmProfAccumulate( &nProfCalls, &tProfSetup, &tProfSolve, &tProfMax );
     p->nBmcTasResolved += nProbeResolved;
     p->nBmcTasUnknown += nProbe - nProbeResolved;
@@ -1341,23 +1361,44 @@ Vec_Int_t * Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs,
     if ( nProbeResolved * 100 >= CEC_BMC_TAS_PROBE_SUCCESS_PCT * nProbe &&
          Vec_IntSize(vUnknown) > nProbe )
     {
-        vRetryRoots = Vec_IntAlloc( Vec_IntSize(vUnknown) - nProbe );
-        vRetryMap = Vec_IntAlloc( Vec_IntSize(vUnknown) - nProbe );
-        for ( i = nProbe; i < Vec_IntSize(vUnknown); i++ )
+        int nRetryAvail = Vec_IntSize(vUnknown) - nProbe;
+        int nRetryBudget = CEC_BMC_TAS_RETRY_ROOTS_MAX - (int)p->nBmcTasRetryRoots;
+        ABC_INT64_T nWorkLeft = CEC_BMC_TAS_STRUCT_WORK_MAX - p->nBmcTasStructWork;
+        int nRetryWork = nWorkLeft > 0 ? (int)(nWorkLeft / nCoreNorm) : 0;
+        int nRetry = Abc_MinInt( nRetryAvail,
+            Abc_MinInt( Abc_MaxInt(0, nRetryBudget), Abc_MaxInt(0, nRetryWork) ) );
+        if ( nRetryBudget <= 0 )
+            p->nBmcTasSkippedBudget += nRetryAvail;
+        else if ( nRetryWork <= 0 )
+            p->nBmcTasSkippedWork += nRetryAvail;
+        else
         {
-            int iOrig = Vec_IntEntry( vUnknown, i );
-            Vec_IntPush( vRetryRoots, Vec_IntEntry(p->vOutLits, iOrig) );
-            Vec_IntPush( vRetryMap, iOrig );
+            vRetryRoots = Vec_IntAlloc( nRetry );
+            vRetryMap = Vec_IntAlloc( nRetry );
+            for ( i = nProbe; i < nProbe + nRetry; i++ )
+            {
+                int iOrig = Vec_IntEntry( vUnknown, i );
+                Vec_IntPush( vRetryRoots, Vec_IntEntry(p->vOutLits, iOrig) );
+                Vec_IntPush( vRetryMap, iOrig );
+            }
+            p->nBmcTasEnabledRounds++;
+            p->nBmcTasRetryRoots += Vec_IntSize(vRetryRoots);
+            i = Cec_DynSrmTasRetryBatch( p, nConfs, vRetryRoots, vRetryMap,
+                vStatus, vTasStore, vTasStarts );
+            Cec_DynSrmProfAccumulate( &nProfCalls, &tProfSetup, &tProfSolve, &tProfMax );
+            p->nBmcTasResolved += i;
+            p->nBmcTasUnknown += Vec_IntSize(vRetryRoots) - i;
+            p->nBmcTasStructWork += (ABC_INT64_T)nCoreNorm * nRetry;
+            if ( nRetry < nRetryAvail )
+            {
+                if ( nRetry == nRetryBudget )
+                    p->nBmcTasSkippedBudget += nRetryAvail - nRetry;
+                else
+                    p->nBmcTasSkippedWork += nRetryAvail - nRetry;
+            }
+            Vec_IntFree( vRetryRoots );
+            Vec_IntFree( vRetryMap );
         }
-        p->nBmcTasEnabledRounds++;
-        p->nBmcTasRetryRoots += Vec_IntSize(vRetryRoots);
-        i = Cec_DynSrmTasRetryBatch( p, nConfs, vRetryRoots, vRetryMap,
-            vStatus, vTasStore, vTasStarts );
-        Cec_DynSrmProfAccumulate( &nProfCalls, &tProfSetup, &tProfSolve, &tProfMax );
-        p->nBmcTasResolved += i;
-        p->nBmcTasUnknown += Vec_IntSize(vRetryRoots) - i;
-        Vec_IntFree( vRetryRoots );
-        Vec_IntFree( vRetryMap );
     }
 
     // Rebuild the CEX store once so a TAS answer cleanly replaces the CBS
@@ -1412,6 +1453,10 @@ void Cec_DynSrmPrintBmcSolverStats( Cec_DynSrm_t * p )
         (long long)p->nBmcTasProbeRoots, (long long)p->nBmcTasRetryRoots,
         (long long)p->nBmcTasResolved, (long long)p->nBmcTasUnknown,
         (long long)p->nBmcTasEnabledRounds );
+    Abc_Print( 1, "BMC-solver: skipped_work=%lld skipped_budget=%lld struct_work=%lld/%lld retry_budget=%d\n",
+        (long long)p->nBmcTasSkippedWork, (long long)p->nBmcTasSkippedBudget,
+        (long long)p->nBmcTasStructWork, (long long)CEC_BMC_TAS_STRUCT_WORK_MAX,
+        CEC_BMC_TAS_RETRY_ROOTS_MAX );
     Abc_Print( 1, "BMC-solver: time_cbs=%.3f sec time_tas=%.3f sec core_abs_max=%d core_norm_limit=%d probe=%d pass=%d%%\n",
         1.0e-9 * p->tBmcCbs, 1.0e-9 * p->tBmcTas,
         CEC_BMC_TAS_CORE_ABS_MAX, CEC_BMC_TAS_CORE_NORM_MAX,
