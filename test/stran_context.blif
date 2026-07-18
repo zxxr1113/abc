@@ -1,0 +1,19 @@
+.model stran_context
+.inputs a b d e
+.outputs y
+.latch a c 0
+.latch b r 0
+.latch s_next s 0
+
+# In every reachable state, c=1 implies r=s, while r and s may differ at c=0.
+.names a b d s_next
+11- 1
+0-1 1
+
+# A replacement at this mux branch is safe only under the branch context.
+# It is therefore a small sequential ODC/transduction regression, not a
+# global equivalence merge between the two latch outputs.
+.names c r e y
+11- 1
+0-1 1
+.end
