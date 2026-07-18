@@ -101,71 +101,139 @@ static int Cec_TranGain( Gia_Man_t * p, Gia_Man_t * pCand )
          - Gia_ManAndNum(pCand) - Gia_ManRegNum(pCand);
 }
 
-static int Cec_TranTryDry( Gia_Man_t * p, Cec_ParTran_t * pPars,
-    int iTarget, int iFanin, int iDiv0, int iDiv1, int * pnPos )
+static int Cec_TranAllPosAreZero( Gia_Man_t * p )
 {
-    Gia_Man_t * pCand;
+    Gia_Obj_t * pObj;
+    int i;
+    Gia_ManForEachPo( p, pObj, i )
+        if ( Gia_ObjFaninId0p(p, pObj) != 0 || Gia_ObjFaninC0(pObj) )
+            return 0;
+    return 1;
+}
+
+// This is intentionally the same sequential proof engine used by &scorr:
+// bounded reset-reachable BMC followed by its inductive correspondence
+// refinement.  The difference is the query: &stran proves a proposed
+// transduction transaction, rather than asking scorr to merge an equivalence
+// class in the original network.
+static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pCand,
+    Cec_ParTran_t * pPars )
+{
+    Cec_ParCor_t Cor;
+    Gia_Man_t * pMiter, * pReduced;
+    int fProved;
+    pMiter = Gia_ManMiter( p, pCand, 0, 0, 1, 0, 0 );
+    if ( pMiter == NULL )
+        return 0;
+    Cec_ManCorSetDefaultParams( &Cor );
+    Cor.nFrames   = pPars->nFrames;
+    Cor.nBTLimit  = pPars->nBTLimit;
+    Cor.nStepsMax = pPars->nStepsMax;
+    Cor.fVerbose  = 0;
+    pReduced = Cec_ManLSCorrespondence( pMiter, &Cor );
+    fProved = Cec_TranAllPosAreZero( pReduced );
+    Gia_ManStop( pReduced );
+    Gia_ManStop( pMiter );
+    return fProved;
+}
+
+// The candidate has already passed the exact structural-gain test.  This
+// routine is the transactional boundary: no speculative wiring reaches p
+// unless the sequential miter is discharged by scorr's proof infrastructure.
+static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
+    int iTarget, int iFanin, int iDiv0, int iDiv1, int * pnTried,
+    int * pnPositive, int * pnAccepted )
+{
+    Gia_Man_t * p = *pp, * pCand;
     int Gain;
     pCand = Cec_TranDupFanin( p, iTarget, iFanin, iDiv0, iDiv1 );
     Gain = Cec_TranGain( p, pCand );
-    if ( Gain >= pPars->nGainMin && Gia_ManRegNum(pCand) > 0 )
+    if ( Gain < pPars->nGainMin || Gia_ManRegNum(pCand) == 0 )
     {
-        (*pnPos)++;
-        if ( pPars->fVerbose )
-            Abc_Print( 1, "  candidate: n%d.f%d <- %d%s%d  gain=%d\n", iTarget,
-                iFanin, iDiv0, iDiv1 == -1 ? "" : " & ",
-                iDiv1 == -1 ? 0 : iDiv1, Gain );
+        Gia_ManStop( pCand );
+        return 0;
     }
-    Gia_ManStop( pCand );
-    return Gain;
+    (*pnPositive)++;
+    (*pnTried)++;
+    if ( pPars->fVerbose )
+    {
+        if ( iDiv1 == -1 )
+            Abc_Print( 1, "  proof %d: n%d.f%d <- lit%d  gain=%d\n",
+                *pnTried, iTarget, iFanin, iDiv0, Gain );
+        else
+            Abc_Print( 1, "  proof %d: n%d.f%d <- (lit%d & lit%d)  gain=%d\n",
+                *pnTried, iTarget, iFanin, iDiv0, iDiv1, Gain );
+    }
+    if ( !Cec_TranProveTransaction(p, pCand, pPars) )
+    {
+        Gia_ManStop( pCand );
+        return 0;
+    }
+    if ( pPars->fVerbose )
+        Abc_Print( 1, "  accepted transaction: obj %d fanin %d, gain=%d.\n",
+            iTarget, iFanin, Gain );
+    Gia_ManStop( p );
+    *pp = pCand;
+    (*pnAccepted)++;
+    return 1;
 }
 
 Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
 {
+    Gia_Man_t * p;
     Gia_Obj_t * pObj;
     int i, f, d, e, iDiv0, iDiv1, nConstructedOne;
-    int nExisting = 0, nConstructed = 0, nPositive = 0, nTried = 0;
+    int nExisting = 0, nConstructed = 0, nPositive = 0, nTried = 0, nAccepted = 0;
+    int fChanged;
+    abctime clk = Abc_Clock();
     assert( Gia_ManRegNum(pGia) > 0 );
     Abc_Print( 1, "Sequential transduction: AND = %d, Reg = %d, frames = %d, conf = %d.\n",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nFrames, pPars->nBTLimit );
-    // Structural filtering is free: a topologically earlier object cannot be
-    // in the target's TFO, so it cannot create a combinational cycle.  The
-    // exact sequential/SODC test is deliberately deferred to the next stage.
-    Gia_ManForEachAnd( pGia, pObj, i )
+    p = Gia_ManDup( pGia );
+    do
     {
-        for ( f = 0; f < 2; f++ )
+        fChanged = 0;
+        // Structural filtering is free: a topologically earlier object cannot
+        // be in the target's TFO, so it cannot create a combinational cycle.
+        Gia_ManForEachAnd( p, pObj, i )
         {
-            nConstructedOne = 0;
-            for ( d = 1; d <= pPars->nDivsMax && i - d > 0 && nTried < pPars->nCandMax; d++ )
+            for ( f = 0; f < 2 && !fChanged; f++ )
             {
-                iDiv0 = Abc_Var2Lit( i - d, d & 1 );
-                if ( iDiv0 == (f ? Gia_ObjFaninLit1(pObj, i) : Gia_ObjFaninLit0(pObj, i)) )
-                    continue;
-                nExisting++;
-                nTried++;
-                Cec_TranTryDry( pGia, pPars, i, f, iDiv0, -1, &nPositive );
-            }
-            if ( !pPars->fUseConstr )
-                continue;
-            for ( d = 1; d <= pPars->nDivsMax && i - d > 1 && nConstructedOne < pPars->nConstrMax && nTried < pPars->nCandMax; d++ )
-            {
-                for ( e = d + 1; e <= pPars->nDivsMax && i - e > 0 && nConstructedOne < pPars->nConstrMax && nTried < pPars->nCandMax; e++ )
+                nConstructedOne = 0;
+                for ( d = 1; d <= pPars->nDivsMax && i - d > 0 && nTried < pPars->nCandMax && !fChanged; d++ )
                 {
-                    iDiv0 = Abc_Var2Lit( i - d, 0 );
-                    iDiv1 = Abc_Var2Lit( i - e, 0 );
-                    nConstructed++;
-                    nConstructedOne++;
-                    nTried++;
-                    Cec_TranTryDry( pGia, pPars, i, f, iDiv0, iDiv1, &nPositive );
+                    iDiv0 = Abc_Var2Lit( i - d, d & 1 );
+                    if ( iDiv0 == (f ? Gia_ObjFaninLit1(pObj, i) : Gia_ObjFaninLit0(pObj, i)) )
+                        continue;
+                    nExisting++;
+                    fChanged = Cec_TranTryCommit( &p, pPars, i, f, iDiv0, -1,
+                        &nTried, &nPositive, &nAccepted );
+                }
+                if ( !pPars->fUseConstr || fChanged )
+                    continue;
+                for ( d = 1; d <= pPars->nDivsMax && i - d > 1 && nConstructedOne < pPars->nConstrMax && nTried < pPars->nCandMax && !fChanged; d++ )
+                {
+                    for ( e = d + 1; e <= pPars->nDivsMax && i - e > 0 && nConstructedOne < pPars->nConstrMax && nTried < pPars->nCandMax && !fChanged; e++ )
+                    {
+                        iDiv0 = Abc_Var2Lit( i - d, 0 );
+                        iDiv1 = Abc_Var2Lit( i - e, 0 );
+                        nConstructed++;
+                        nConstructedOne++;
+                        fChanged = Cec_TranTryCommit( &p, pPars, i, f, iDiv0, iDiv1,
+                            &nTried, &nPositive, &nAccepted );
+                    }
                 }
             }
+            if ( fChanged || nTried >= pPars->nCandMax || nAccepted >= pPars->nChangesMax )
+                break;
         }
-        if ( nTried >= pPars->nCandMax )
-            break;
     }
-    Abc_Print( 1, "Sequential transduction candidates: tried=%d existing=%d constructed=%d positive-gain=%d.\n",
-        nTried, nExisting, nConstructed, nPositive );
-    return Gia_ManDup( pGia );
+    while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
+    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d gain-filtered=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
+        nTried, nExisting, nConstructed, nPositive, nAccepted,
+        Gia_ManAndNum(pGia), Gia_ManAndNum(p),
+        1.0 * (Abc_Clock() - clk) / CLOCKS_PER_SEC );
+    return p;
 }
 
 ABC_NAMESPACE_IMPL_END
