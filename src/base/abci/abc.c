@@ -496,6 +496,7 @@ static int Abc_CommandAbc9Lcorr              ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9Scorr              ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Scorr2             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sodc               ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9Stran              ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Choice             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sat                ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9SatEnum            ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -1349,6 +1350,7 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr",        Abc_CommandAbc9Scorr,        0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr2",       Abc_CommandAbc9Scorr2,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sodc",         Abc_CommandAbc9Sodc,         0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&stran",        Abc_CommandAbc9Stran,        0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&choice",       Abc_CommandAbc9Choice,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sat",          Abc_CommandAbc9Sat,          0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&satenum",      Abc_CommandAbc9SatEnum,      0 );
@@ -42171,6 +42173,102 @@ usage:
     Abc_Print( -2, "\t-D num : preceding AND divisors per fanin [default = %d]\n", pPars->nDivsMax );
     Abc_Print( -2, "\t-s     : toggle ordinary scorr before/after SODC [default = %s]\n", pPars->fUseScorr? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose output [default = %s]\n", pPars->fVerbose? "yes": "no" );
+    Abc_Print( -2, "\t-h     : print command usage\n" );
+    return 1;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Performs bounded sequential transduction.]
+
+***********************************************************************/
+int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    Cec_ParTran_t Pars, * pPars = &Pars;
+    Gia_Man_t * pTemp;
+    int c;
+    Cec_ManTranSetDefaultParams( pPars );
+    Extra_UtilGetoptReset();
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGxvh")) != EOF )
+    {
+        switch ( c )
+        {
+        case 'F':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nFrames = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nFrames < 1 ) goto usage;
+            break;
+        case 'C':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nBTLimit = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nBTLimit < 0 ) goto usage;
+            break;
+        case 'S':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nStepsMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nStepsMax < -1 ) goto usage;
+            break;
+        case 'T':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nCandMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nCandMax < 0 ) goto usage;
+            break;
+        case 'N':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nChangesMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nChangesMax < 0 ) goto usage;
+            break;
+        case 'D':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nDivsMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nDivsMax < 0 ) goto usage;
+            break;
+        case 'G':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nGainMin = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nGainMin < 1 ) goto usage;
+            break;
+        case 'x':
+            pPars->fUseConstr ^= 1;
+            break;
+        case 'v':
+            pPars->fVerbose ^= 1;
+            break;
+        default:
+            goto usage;
+        }
+    }
+    if ( pAbc->pGia == NULL )
+    {
+        Abc_Print( -1, "&stran: There is no AIG.\n" );
+        return 1;
+    }
+    if ( Gia_ManRegNum(pAbc->pGia) == 0 )
+    {
+        Abc_Print( -1, "&stran: The network is combinational.\n" );
+        return 1;
+    }
+    if ( Gia_ManBoxNum(pAbc->pGia) )
+    {
+        Abc_Print( -1, "&stran: Boxes are not supported.\n" );
+        return 1;
+    }
+    pTemp = Cec_ManSequentialTransduction( pAbc->pGia, pPars );
+    Abc_FrameUpdateGia( pAbc, pTemp );
+    return 0;
+
+usage:
+    Abc_Print( -2, "usage: &stran [-FCSTNDG num] [-xvh]\n" );
+    Abc_Print( -2, "\t         performs bounded sequential transduction using scorr proof infrastructure\n" );
+    Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
+    Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
+    Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
+    Abc_Print( -2, "\t-T num : maximum exact candidate proofs [default = %d]\n", pPars->nCandMax );
+    Abc_Print( -2, "\t-N num : maximum committed transactions [default = %d]\n", pPars->nChangesMax );
+    Abc_Print( -2, "\t-D num : local existing divisors per victim [default = %d]\n", pPars->nDivsMax );
+    Abc_Print( -2, "\t-G num : minimum predicted AND+register gain [default = %d]\n", pPars->nGainMin );
+    Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
+    Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;
 }

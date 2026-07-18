@@ -273,6 +273,26 @@ extern int           Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCo
 extern Gia_Man_t *   Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars );
 extern void          Cec_ManSodcSetDefaultParams( Cec_ParSodc_t * pPars );
 extern Gia_Man_t *   Cec_ManSodcSynthesis( Gia_Man_t * pAig, Cec_ParSodc_t * pPars );
+
+// Sequential transduction parameters.  The command is deliberately separate
+// from &sodc: it uses scorr's proof machinery but searches speculative
+// redundancy-addition transactions rather than global correspondences.
+typedef struct Cec_ParTran_t_ Cec_ParTran_t;
+struct Cec_ParTran_t_
+{
+    int              nFrames;       // BMC/induction depth in the scorr oracle
+    int              nBTLimit;      // conflict limit per proof obligation
+    int              nStepsMax;     // scorr induction refinement limit
+    int              nCandMax;      // total number of exact proof attempts
+    int              nDivsMax;      // local existing divisors per victim
+    int              nConstrMax;    // constructed AND divisors per victim
+    int              nChangesMax;   // accepted transactions
+    int              nGainMin;      // minimum AND+register gain to prove
+    int              fUseConstr;    // enable one-AND constructed divisors
+    int              fVerbose;
+};
+extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );
+extern Gia_Man_t *   Cec_ManSequentialTransduction( Gia_Man_t * pAig, Cec_ParTran_t * pPars );
 /*=== cecCore.c ==========================================================*/
 extern void          Cec_ManSatSetDefaultParams( Cec_ParSat_t * p );
 extern void          Cec_ManSimSetDefaultParams( Cec_ParSim_t * p );
