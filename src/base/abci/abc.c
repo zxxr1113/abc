@@ -494,6 +494,8 @@ static int Abc_CommandAbc9Append             ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9Scl                ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Lcorr              ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Scorr              ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9Scorr2             ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9Sodc               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Choice             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sat                ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9SatEnum            ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -1345,6 +1347,8 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&scl",          Abc_CommandAbc9Scl,          0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&lcorr",        Abc_CommandAbc9Lcorr,        0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr",        Abc_CommandAbc9Scorr,        0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&scorr2",       Abc_CommandAbc9Scorr2,       0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&sodc",         Abc_CommandAbc9Sodc,         0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&choice",       Abc_CommandAbc9Choice,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sat",          Abc_CommandAbc9Sat,          0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&satenum",      Abc_CommandAbc9SatEnum,      0 );
@@ -41797,7 +41801,7 @@ usage:
   SeeAlso     []
 
 ***********************************************************************/
-int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
+static int Abc_CommandAbc9ScorrInternal( Abc_Frame_t * pAbc, int argc, char ** argv, int fScorr2 )
 {
     extern Gia_Man_t * Cec_ManScorrCorrespondence( Gia_Man_t * p, Cec_ParCor_t * pPars );
     extern Gia_Man_t * Gia_ManScorrDivideTest( Gia_Man_t * p, Cec_ParCor_t * pPars );
@@ -41807,10 +41811,19 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     int fPartition = 0;
     int nFlopIncFreq = 0;
     int fUseOld = 0, c;
+    const char * pCommandName = fScorr2 ? "&scorr2" : "&scorr";
     Cec_ManCorSetDefaultParams( pPars );
     pPars->nProcs = 1;
+    if ( fScorr2 )
+    {
+        pPars->fIncremental   = 1;
+        pPars->fDynSrm        = 1;
+        pPars->fIncrSim       = 1;
+        pPars->fSkipFailResim = 1;
+    }
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZpkrecqiowvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv,
+        fScorr2 ? "FCGXPSZKYDpkrecqiIoswvh" : "FCGXPSZpkrecqiowvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -41912,11 +41925,29 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'i':
             pPars->fIncremental ^= 1;
             break;
+        case 'D':
+            pPars->fDynSrm ^= 1;
+            break;
+        case 'I':
+            pPars->fIncrSim ^= 1;
+            break;
+        case 's':
+            pPars->fSkipFailResim ^= 1;
+            break;
+        case 'Y':
+            pPars->fBmcTasAdaptive ^= 1;
+            break;
+        case 'K':
+            pPars->fKissatCert ^= 1;
+            break;
         case 'o':
             fUseOld ^= 1;
             break;
         case 'w':
-            pPars->fVerboseFlops ^= 1;
+            if ( fScorr2 )
+                pPars->fVeryVerbose ^= 1;
+            else
+                pPars->fVerboseFlops ^= 1;
             break;
         case 'v':
             pPars->fVerbose ^= 1;
@@ -41925,16 +41956,33 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
             goto usage;
         }
     }
-    if ( pPars->fIncremental )
+    if ( !fScorr2 && pPars->fIncremental )
     {
         //preserve for incremental mode, maybe should be a separate command
         pPars->fDynSrm = 1; //dynamic SRM
         pPars->fIncrSim = 1; //incremental simulation
         pPars->fSkipFailResim = 1; //skip resimulation of failed flops
     }
+    if ( pPars->fDynSrm && !pPars->fIncremental )
+    {
+        Abc_Print( -1, "The dynamic SRM manager (-D) requires -i.\n" );
+        return 1;
+    }
+    if ( pPars->fBmcTasAdaptive && !pPars->fDynSrm )
+    {
+        Abc_Print( -1, "The adaptive BMC solver policy (-Y) requires -D.\n" );
+        return 1;
+    }
+    if ( pPars->fKissatCert &&
+         (fUseOld || fPartition || pPars->nPartSize > 0 ||
+          nFlopIncFreq > 0 || pPars->nPrefix > 0) )
+    {
+        Abc_Print( -1, "The strict fixed-point oracle (-K) supports the direct engine with -G 0 only.\n" );
+        return 1;
+    }
     if ( pAbc->pGia == NULL )
     {
-        Abc_Print( -1, "Abc_CommandAbc9Scorr(): There is no AIG.\n" );
+        Abc_Print( -1, "%s: There is no AIG.\n", pCommandName );
         return 1;
     }
     if ( Gia_ManBoxNum(pAbc->pGia) && Gia_ManRegBoxNum(pAbc->pGia) )
@@ -41992,8 +42040,10 @@ int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr [-FCGXPSZ num] [-pkrecqiowvh]\n" );
-    Abc_Print( -2, "\t         performs signal correpondence computation\n" );
+    Abc_Print( -2, "usage: %s [-FCGXPSZ num] [%s]\n", pCommandName,
+        fScorr2 ? "-pkrecqiDIsYKnowvh" : "-pkrecqiowvh" );
+    Abc_Print( -2, "\t         performs signal correspondence computation%s\n",
+        fScorr2 ? " using the incremental scorr2 engine" : "" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-G num : the number of timeframes in the prefix [default = %d]\n", pPars->nPrefix );
@@ -42007,11 +42057,121 @@ usage:
     Abc_Print( -2, "\t-e     : toggle using equivalences as choices [default = %s]\n", pPars->fMakeChoices? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle using circuit-based SAT solver [default = %s]\n", pPars->fUseCSat? "yes": "no" );
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
-    Abc_Print( -2, "\t-i     : toggle integrated incremental SRM/re-proof/resimulation [default = %s]\n", pPars->fIncremental? "yes": "no" );
+    Abc_Print( -2, "\t-i     : toggle incremental TFO-triggered re-proof [default = %s]\n", pPars->fIncremental? "yes": "no" );
+    if ( fScorr2 )
+    {
+        Abc_Print( -2, "\t-D     : toggle persistent dynamic SRM construction [default = %s]\n", pPars->fDynSrm? "yes": "no" );
+        Abc_Print( -2, "\t-I     : toggle persistent event-driven resimulation [default = %s]\n", pPars->fIncrSim? "yes": "no" );
+        Abc_Print( -2, "\t-s     : toggle skipping resimulation without a real CEX [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );
+        Abc_Print( -2, "\t-Y     : toggle guarded CBS-first/TAS-rescue BMC policy [default = %s]\n", pPars->fBmcTasAdaptive? "yes": "no" );
+        Abc_Print( -2, "\t-K     : toggle strict final fixed-point Kissat audit [default = %s]\n", pPars->fKissatCert? "yes": "no" );
+    }
     Abc_Print( -2, "\t-o     : toggle calling old engine [default = %s]\n", fUseOld? "yes": "no" );
-    Abc_Print( -2, "\t-w     : toggle printing verbose info about equivalent flops [default = %s]\n", pPars->fVerboseFlops? "yes": "no" );
+    Abc_Print( -2, "\t-w     : toggle %s [default = %s]\n",
+        fScorr2 ? "scorr2 profiling report" : "printing verbose info about equivalent flops",
+        (fScorr2 ? pPars->fVeryVerbose : pPars->fVerboseFlops) ? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");
+    return 1;
+}
+
+int Abc_CommandAbc9Scorr( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    return Abc_CommandAbc9ScorrInternal( pAbc, argc, argv, 0 );
+}
+
+int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    return Abc_CommandAbc9ScorrInternal( pAbc, argc, argv, 1 );
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Performs sequential ODC rewriting using scorr proofs.]
+
+***********************************************************************/
+int Abc_CommandAbc9Sodc( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    Cec_ParSodc_t Pars, * pPars = &Pars;
+    Gia_Man_t * pTemp;
+    int c;
+    Cec_ManSodcSetDefaultParams( pPars );
+    Extra_UtilGetoptReset();
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCSTNDsvh" ) ) != EOF )
+    {
+        switch ( c )
+        {
+        case 'F':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nFrames = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nFrames < 1 ) goto usage;
+            break;
+        case 'C':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nConfLimit = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nConfLimit < 0 ) goto usage;
+            break;
+        case 'S':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nStepsMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nStepsMax < -1 ) goto usage;
+            break;
+        case 'T':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nCandMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nCandMax < 0 ) goto usage;
+            break;
+        case 'N':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nChangesMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nChangesMax < 0 ) goto usage;
+            break;
+        case 'D':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nDivsMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nDivsMax < 0 ) goto usage;
+            break;
+        case 's':
+            pPars->fUseScorr ^= 1;
+            break;
+        case 'v':
+            pPars->fVerbose ^= 1;
+            break;
+        default:
+            goto usage;
+        }
+    }
+    if ( pAbc->pGia == NULL )
+    {
+        Abc_Print( -1, "&sodc: There is no AIG.\n" );
+        return 1;
+    }
+    if ( Gia_ManRegNum(pAbc->pGia) == 0 )
+    {
+        Abc_Print( -1, "&sodc: The network is combinational.\n" );
+        return 1;
+    }
+    if ( Gia_ManBoxNum(pAbc->pGia) )
+    {
+        Abc_Print( -1, "&sodc: Boxes are not supported by this prototype.\n" );
+        return 1;
+    }
+    pTemp = Cec_ManSodcSynthesis( pAbc->pGia, pPars );
+    Abc_FrameUpdateGia( pAbc, pTemp );
+    return 0;
+
+usage:
+    Abc_Print( -2, "usage: &sodc [-FCSTND num] [-svh]\n" );
+    Abc_Print( -2, "\t         performs conservative SODC rewriting with sequential-miter scorr proofs\n" );
+    Abc_Print( -2, "\t-F num : induction depth [default = %d]\n", pPars->nFrames );
+    Abc_Print( -2, "\t-C num : conflict limit per node [default = %d]\n", pPars->nConfLimit );
+    Abc_Print( -2, "\t-S num : scorr refinement-round limit; -1 is unlimited [default = %d]\n", pPars->nStepsMax );
+    Abc_Print( -2, "\t-T num : maximum candidate proofs [default = %d]\n", pPars->nCandMax );
+    Abc_Print( -2, "\t-N num : maximum accepted transformations [default = %d]\n", pPars->nChangesMax );
+    Abc_Print( -2, "\t-D num : preceding AND divisors per fanin [default = %d]\n", pPars->nDivsMax );
+    Abc_Print( -2, "\t-s     : toggle ordinary scorr before/after SODC [default = %s]\n", pPars->fUseScorr? "yes": "no" );
+    Abc_Print( -2, "\t-v     : toggle verbose output [default = %s]\n", pPars->fVerbose? "yes": "no" );
+    Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;
 }
 

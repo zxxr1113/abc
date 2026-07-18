@@ -1103,6 +1103,7 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
     Gia_Obj_t * pObj;
     int i, status;
     abctime clk = Abc_Clock();
+    abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     // prepare AIG
     Gia_ManSetPhase( pAig );
     Gia_ManLevelNum( pAig );
@@ -1119,6 +1120,12 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
     // perform solving
     p = Cec_ManSatCreate( pAig, pPars );
     pProgress = Bar_ProgressStart( stdout, Gia_ManPoNum(pAig) );
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // solver create + AIG prep
+        Cec_ScorrProfSolve = Cec_ScorrProfMax = 0;
+        Cec_ScorrProfCalls = 0;
+    }
     Gia_ManForEachCo( pAig, pObj, i )
     {
         Vec_IntClear( p->vCex );
@@ -1138,7 +1145,15 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
             }
             continue;
         }
+        clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
         status = Cec_ManSatCheckNode( p, Gia_ObjChild0(pObj) );
+        if ( Cec_ScorrProfOn )
+        {
+            abctime dHr = Abc_ClockHr() - clkHr;
+            Cec_ScorrProfSolve += dHr;
+            if ( dHr > Cec_ScorrProfMax ) Cec_ScorrProfMax = dHr;
+            Cec_ScorrProfCalls++;
+        }
         Vec_StrPush( vStatus, (char)status );
         if ( status == -1 )
         {
@@ -1181,4 +1196,3 @@ Vec_Int_t * Cec_ManSatSolveMiter( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_St
 
 
 ABC_NAMESPACE_IMPL_END
-

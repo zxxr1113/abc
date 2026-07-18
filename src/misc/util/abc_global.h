@@ -351,6 +351,21 @@ static inline abctime Abc_Clock()
     return (abctime) clock();
 #endif
 }
+// counting high-resolution wall time in NANOSECONDS (for fine-grained profiling)
+// Abc_Clock() returns CLOCKS_PER_SEC units and on macOS falls back to clock()
+// (CPU time, coarse); Abc_ClockHr() always uses CLOCK_MONOTONIC when available,
+// which gives true wall time at nanosecond resolution on modern macOS and Linux.
+static inline abctime Abc_ClockHr()
+{
+#if defined(CLOCK_MONOTONIC)
+    struct timespec ts;
+    if ( clock_gettime( CLOCK_MONOTONIC, &ts ) < 0 )
+        return (abctime)-1;
+    return ((abctime) ts.tv_sec) * 1000000000 + (abctime) ts.tv_nsec;
+#else
+    return (abctime)( (double)Abc_Clock() * 1.0e9 / CLOCKS_PER_SEC );
+#endif
+}
 // counting thread time
 static inline abctime Abc_ThreadClock()
 {

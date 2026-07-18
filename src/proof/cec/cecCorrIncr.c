@@ -10,7 +10,7 @@
 
   Author      [Xiran Zhao]
 
-  Affiliation [University of Chinese Academy of Sciences]
+  Affiliation [UC Berkeley]
 
   Date        [Ver. 1.0. Started - May 2026.]
 

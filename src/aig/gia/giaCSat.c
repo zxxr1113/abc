@@ -1068,12 +1068,16 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
 {
     extern void Gia_ManCollectTest( Gia_Man_t * pAig );
     extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
+    // &scorr fine-grained profiling hooks (defined in cecCorr.c)
+    extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
+    extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
     Cbs_Man_t * p;
     Vec_Int_t * vCex, * vVisit, * vCexStore, * vOutVals = NULL;
     Vec_Str_t * vStatus;
     Gia_Obj_t * pRoot;
     int i, status;
     abctime clk, clkTotal = Abc_Clock();
+    abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     assert( Gia_ManRegNum(pAig) == 0 );
 //    Gia_ManCollectTest( pAig );
     // prepare AIG
@@ -1096,6 +1100,12 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
     }
     vVisit    = Vec_IntAlloc( 100 );
     vCex      = Cbs_ReadModel( p );
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // solver alloc + AIG prep
+        Cec_ScorrProfSolve = Cec_ScorrProfMax = 0;
+        Cec_ScorrProfCalls = 0;
+    }
     // solve for each output
     Gia_ManForEachCo( pAig, pRoot, i )
     {
@@ -1118,6 +1128,7 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
             continue;
         }
         clk = Abc_Clock();
+        clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
         p->Pars.fUseHighest = 1;
         p->Pars.fUseLowest  = 0;
         p->vOutLits = vOutLits;
@@ -1127,6 +1138,13 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
         p->vOutLits = NULL;
         p->vOutVals = NULL;
         p->iOutVal  = -1;
+        if ( Cec_ScorrProfOn )
+        {
+            abctime dHr = Abc_ClockHr() - clkHr;
+            Cec_ScorrProfSolve += dHr;
+            if ( dHr > Cec_ScorrProfMax ) Cec_ScorrProfMax = dHr;
+            Cec_ScorrProfCalls++;
+        }
 //        printf( "\n" );
 /*
         if ( status == -1 )
@@ -1247,16 +1265,25 @@ void Cbs_ManSyncCore( Cbs_Man_t * p )
 Vec_Int_t * Cbs_ManSolveRoots( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose )
 {
     extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
+    extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
+    extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
     Gia_Man_t * pAig = p->pAig;
     Vec_Int_t * vCex, * vCexStore;
     Vec_Str_t * vStatus;
     int i, iLit, status;
     abctime clk, clkTotal = Abc_Clock();
+    abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     assert( Gia_ManRegNum(pAig) == 0 );
     Cbs_ManSyncCore( p ); // prep only objects appended since the last solve
     vStatus   = Vec_StrAlloc( Vec_IntSize(vRootLits) );
     vCexStore = Vec_IntAlloc( 10000 );
     vCex      = Cbs_ReadModel( p );
+    if ( Cec_ScorrProfOn )
+    {
+        Cec_ScorrProfSetup = Abc_ClockHr() - clkHr;   // incremental sync of new objects
+        Cec_ScorrProfSolve = Cec_ScorrProfMax = 0;
+        Cec_ScorrProfCalls = 0;
+    }
     Vec_IntForEachEntry( vRootLits, iLit, i )
     {
         Vec_IntClear( vCex );
@@ -1272,9 +1299,17 @@ Vec_Int_t * Cbs_ManSolveRoots( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t *
             continue;
         }
         clk = Abc_Clock();
+        clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
         p->Pars.fUseHighest = 1;
         p->Pars.fUseLowest  = 0;
         status = Cbs_ManSolve( p, Gia_ObjFromLit(pAig, iLit) );
+        if ( Cec_ScorrProfOn )
+        {
+            abctime dHr = Abc_ClockHr() - clkHr;
+            Cec_ScorrProfSolve += dHr;
+            if ( dHr > Cec_ScorrProfMax ) Cec_ScorrProfMax = dHr;
+            Cec_ScorrProfCalls++;
+        }
         Vec_StrPush( vStatus, (char)status );
         if ( status == -1 )
         {
