@@ -80,7 +80,7 @@ For server experiments:
 ```
 python3 scripts/bench_scorr_then_stran.py \
   --aig-dir <input-aig-dir> --abc ./abc --out results.csv \
-  --jobs 64 --timeout 12800
+  --jobs 64 --timeout 12800 --scorr-args '-F 1 -C 200'
 ```
 
 The script runs `&scorr` first, then runs `&stran` on the resulting AIG, and

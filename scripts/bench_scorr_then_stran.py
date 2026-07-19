@@ -44,7 +44,9 @@ DEFAULT_ABC = os.path.expanduser("~/abc/abc")
 DEFAULT_TIMEOUT = 12800
 DEFAULT_JOBS = 64
 DEFAULT_OUT = "scorr_then_stran.csv"
-DEFAULT_SCORR_ARGS = "-i -r -F 1 -C 1000"
+# Keep the baseline at the user's normal &scorr defaults.  Do not add -r:
+# it toggles implication rings *off* because they are enabled by default.
+DEFAULT_SCORR_ARGS = "-F 1 -C 200"
 DEFAULT_STRAN_ARGS = "-M 1 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8"
 NA = "N/A"
 
@@ -133,8 +135,11 @@ def worker(task: Tuple[str, str, str, str, int, str, bool, str]) -> Dict[str, An
         "stran_and": NA,
         "stran_latches": NA,
         "scorr_and_reduction": NA,
+        "scorr_latch_reduction": NA,
         "stran_extra_and_reduction": NA,
+        "stran_extra_latch_reduction": NA,
         "total_and_reduction": NA,
+        "total_latch_reduction": NA,
         "victim_sets": NA,
         "proofs": NA,
         "sig_matched": NA,
@@ -178,6 +183,7 @@ def worker(task: Tuple[str, str, str, str, int, str, bool, str]) -> Dict[str, An
             return row
         row["scorr_and"], row["scorr_latches"] = aig_stats(scorr)
         row["scorr_and_reduction"] = subtract(source_and, row["scorr_and"])
+        row["scorr_latch_reduction"] = subtract(source_latches, row["scorr_latches"])
 
         # This starts strictly from the completed &scorr output.  &stran's
         # own time includes its per-candidate sequential proof calls.
@@ -192,7 +198,9 @@ def worker(task: Tuple[str, str, str, str, int, str, bool, str]) -> Dict[str, An
             return row
         row["stran_and"], row["stran_latches"] = aig_stats(final)
         row["stran_extra_and_reduction"] = subtract(row["scorr_and"], row["stran_and"])
+        row["stran_extra_latch_reduction"] = subtract(row["scorr_latches"], row["stran_latches"])
         row["total_and_reduction"] = subtract(source_and, row["stran_and"])
+        row["total_latch_reduction"] = subtract(source_latches, row["stran_latches"])
 
         dsec_out, dsec_err, dsec_rc, dsec_ms = run_abc(
             abc, f"dsec {base} {final}", timeout
@@ -224,7 +232,9 @@ CSV_FIELDS = [
     "file", "source_and", "source_latches", "scorr_status", "stran_status", "dsec_status",
     "normalize_time_ms", "scorr_time_ms", "stran_time_ms", "dsec_time_ms", "total_time_ms",
     "scorr_and", "scorr_latches", "stran_and", "stran_latches",
-    "scorr_and_reduction", "stran_extra_and_reduction", "total_and_reduction",
+    "scorr_and_reduction", "scorr_latch_reduction",
+    "stran_extra_and_reduction", "stran_extra_latch_reduction",
+    "total_and_reduction", "total_latch_reduction",
     "victim_sets", "proofs", "sig_matched", "gain_positive", "gain_rejected",
     "retain_unproved", "final_unproved", "accepted", "error",
 ]
@@ -281,9 +291,10 @@ def main() -> None:
             row["error"] = repr(exc)
         rows.append(row)
         print(
-            f"[{done:>4}/{len(tasks)}] {name:45s} "
-            f"scorr={row['scorr_time_ms']}ms stran={row['stran_time_ms']}ms "
-            f"extraAND={row['stran_extra_and_reduction']} dsec={row['dsec_status']}"
+                f"[{done:>4}/{len(tasks)}] {name:45s} "
+                f"scorr={row['scorr_time_ms']}ms stran={row['stran_time_ms']}ms "
+                f"extraAND={row['stran_extra_and_reduction']} "
+                f"extraLatch={row['stran_extra_latch_reduction']} dsec={row['dsec_status']}"
         )
 
     if args.jobs == 1:

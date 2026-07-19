@@ -583,8 +583,9 @@ CEX 的证明接口，最后扩展 transaction 与增量优化。
 normalized input -> &scorr -> scorr.aig -> &stran -> final.aig -> dsec
 ```
 
-因此 CSV 的 `stran_extra_and_reduction = scorr_and - stran_and` 直接回答：在已经完成 `&scorr` 后，
-transduction 又找到了多少额外缩减；`scorr_time_ms`、`stran_time_ms` 和 `dsec_status` 分别给出代价与最终
+因此 CSV 的 `stran_extra_and_reduction = scorr_and - stran_and` 与
+`stran_extra_latch_reduction = scorr_latches - stran_latches` 直接回答：在已经完成 `&scorr` 后，
+transduction 又找到了多少额外 AND/latch 缩减；`scorr_time_ms`、`stran_time_ms` 和 `dsec_status` 分别给出代价与最终
 正确性。`--jobs` 控制 benchmark 级并行，`--timeout` 是每个 ABC 子任务的超时，`--scorr-args` 和
 `--stran-args` 可直接指定完整参数串。`--keep-artifacts` 用于保留失败 case 的 AIG 和日志。
 
