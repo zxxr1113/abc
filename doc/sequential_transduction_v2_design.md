@@ -591,6 +591,10 @@ care、existing/constructed divisor、显式 add/remove、local proof、whole-mi
 没有给出可接受的证明；该计数尚不能区分真实反例和 conflict/timeout unknown，正是后续导出 CEX 接口后
 需要消除的观测盲区。
 
+`scripts/run_stran_v2_sweep.sh` 默认用完全相同的 formal/simulation budget 对比 `-M 1` 和 `-M 2`，并汇总为
+`sweep.tsv`。可用环境变量 `STRAN_SWEEP_CONFIGS` 传入按行书写的 `name|&stran arguments`，从而做固定预算下
+的 `-D/-B/-K/-Q/-W/-M` 扫描；每个配置仍保留自身的 AIG、日志和 `dsec` 结果。
+
 ## 17. 正确性注意事项清单
 
 实现和review时必须逐项确认：

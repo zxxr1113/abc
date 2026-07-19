@@ -40,7 +40,7 @@ for benchmark_path in "$@"; do
     "$abc_bin" -q "r $benchmark_path; write_aiger $before_path; &get; &stran $stran_args $shadow_args; &write $after_path; dsec $before_path $after_path" >"$log_path" 2>&1
     status=$?
     set -e
-    final_stat=$(grep 'Sequential transduction: proofs=' "$log_path" | tail -1 || true)
+    final_stat=$(grep 'Sequential transduction:.*proofs=' "$log_path" | tail -1 || true)
     if (( status == 0 )) && grep -q 'Networks are equivalent' "$log_path"; then
         printf '%s\tPASS\t%s\n' "$benchmark_path" "$final_stat" >> "$summary"
     else
