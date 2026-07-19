@@ -618,16 +618,18 @@ static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
 // unless the sequential miter is discharged by scorr's proof infrastructure.
 static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     int iTarget, int iFanin, int iDiv0, int iDiv1, int fDivCompl, int * pnTried,
-    int * pnPositive, int * pnAccepted )
+    int * pnPositive, int * pnGainRejected, int * pnRetainUnproved,
+    int * pnRemoveUnproved, int * pnAccepted )
 {
     Gia_Man_t * p = *pp, * pAdd, * pFinal, * pCand;
-    int Gain;
+    int Gain, fRetain, fRemove;
     pAdd   = Cec_TranDupEdit( p, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 1 );
     pFinal = Cec_TranDupEdit( p, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 0 );
     pCand  = Cec_TranCleanup( pFinal );
     Gain = Cec_TranGain( p, pCand );
     if ( Gain < pPars->nGainMin || Gia_ManRegNum(pCand) == 0 )
     {
+        (*pnGainRejected)++;
         Gia_ManStop( pAdd );
         Gia_ManStop( pFinal );
         Gia_ManStop( pCand );
@@ -651,9 +653,16 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     // prove removal.  The local miter shares p's state transition: after the
     // retention proof, p and pAdd have the same reachable states, so proving
     // add-vs-final differences on that state relation is exact.
-    if ( !Cec_TranProveTransaction(p, p, pAdd, pPars, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 0) ||
-         !Cec_TranProveTransaction(p, pAdd, pFinal, pPars, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 1) )
+    fRetain = Cec_TranProveTransaction(p, p, pAdd, pPars,
+        iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 0);
+    fRemove = fRetain && Cec_TranProveTransaction(p, pAdd, pFinal, pPars,
+        iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 1);
+    if ( !fRemove )
     {
+        if ( !fRetain )
+            (*pnRetainUnproved)++;
+        else
+            (*pnRemoveUnproved)++;
         Gia_ManStop( pAdd );
         Gia_ManStop( pFinal );
         Gia_ManStop( pCand );
@@ -681,7 +690,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Vec_Wrd_t * vConstrSigs;
     word * pConstrSig;
     int i, f, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
-    int nExisting = 0, nConstructed = 0, nPositive = 0, nTried = 0, nAccepted = 0;
+    int nExisting = 0, nConstructed = 0, nPositive = 0, nGainRejected = 0;
+    int nRetainUnproved = 0, nRemoveUnproved = 0, nTried = 0, nAccepted = 0;
     int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0, nSigDuplicate = 0;
     int nCareBits = 0;
     int nVictim, nBaseLimit, nConstrLimit;
@@ -744,7 +754,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                     if ( nTried >= pPars->nCandMax )
                         break;
                     fChanged = Cec_TranTryCommit( &p, pPars, i, f, iDiv0, -1, 0,
-                        &nTried, &nPositive, &nAccepted );
+                        &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
+                        &nRemoveUnproved, &nAccepted );
                     if ( fChanged )
                         break;
                 }
@@ -808,7 +819,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                     iDiv1 = Vec_IntEntry( vConstr, j + 1 );
                     iEntry = Vec_IntEntry( vConstr, j + 2 );
                     fChanged = Cec_TranTryCommit( &p, pPars, i, f, iDiv0, iDiv1, iEntry,
-                        &nTried, &nPositive, &nAccepted );
+                        &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
+                        &nRemoveUnproved, &nAccepted );
                 }
                 Vec_IntFree( vConstr );
                 Vec_WrdFree( vConstrSigs );
@@ -824,8 +836,9 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         Cec_TranSimStop( pSim );
     }
     while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
-    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-filtered=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
-        nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nSigDuplicate, nPositive, nAccepted,
+    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-positive=%d gain-rejected=%d retain-unproved=%d remove-unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
+        nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nSigDuplicate,
+        nPositive, nGainRejected, nRetainUnproved, nRemoveUnproved, nAccepted,
         Gia_ManAndNum(pGia), Gia_ManAndNum(p),
         1.0 * (Abc_Clock() - clk) / CLOCKS_PER_SEC );
     return p;

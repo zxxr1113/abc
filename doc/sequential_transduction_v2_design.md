@@ -562,6 +562,11 @@ care、existing/constructed divisor、显式 add/remove、local proof、whole-mi
 - `-K`：constructed candidate 的 formal-proof 保留数；
 - `-Q/-W`：每批 trace 的 bit-parallel 宽度和时序长度。
 
+每次运行还将候选漏斗分解为 `sig-matched`、`sig-duplicates`、`gain-positive`、`gain-rejected`、
+`retain-unproved`、`remove-unproved` 和 `accepted`。其中 `*-unproved` 表示当前受限 `&scorr` oracle
+没有给出可接受的证明；该计数尚不能区分真实反例和 conflict/timeout unknown，正是后续导出 CEX 接口后
+需要消除的观测盲区。
+
 ## 17. 正确性注意事项清单
 
 实现和review时必须逐项确认：
