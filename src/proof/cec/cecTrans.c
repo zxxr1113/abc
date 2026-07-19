@@ -32,12 +32,42 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nConstrMax  = 16;
     p->nConstrBaseMax = 64;
     p->nVictimsMax = 1;
+    p->nProfileTop = 20;
     p->nChangesMax = 100;
     p->nGainMin    = 1;
     p->nSimWords   = 4;
     p->nSimFrames  = 8;
     p->fUseConstr  = 1;
 }
+
+typedef struct Cec_TranTargetProf_t_ Cec_TranTargetProf_t;
+struct Cec_TranTargetProf_t_
+{
+    abctime timeTotal;
+    abctime timeCare;
+    abctime timeSearch;
+    abctime timeGain;
+    abctime timeProof;
+    int     iRound;
+    int     iTarget;
+    int     nSuperLeaves;
+    int     nCareBits;
+    int     nVictimSets;
+    int     nExistingChecks;
+    int     nExistingMatched;
+    int     nExistingRetained;
+    int     nConstructChecks;
+    int     nConstructMatched;
+    int     nConstructRetained;
+    int     nDuplicates;
+    int     nGainCalls;
+    int     nGainPositive;
+    int     nGainRejected;
+    int     nProofs;
+    int     nRetainUnproved;
+    int     nFinalUnproved;
+    int     nAccepted;
+};
 
 typedef struct Cec_TranProf_t_ Cec_TranProf_t;
 struct Cec_TranProf_t_
@@ -61,6 +91,23 @@ struct Cec_TranProf_t_
     int     nRetainCalls;
     int     nFinalCalls;
     int     nShadowCalls;
+    int     nTargets;
+    int     nTargetVictimSets;
+    int     nTargetExistingChecks;
+    int     nTargetExistingMatched;
+    int     nTargetExistingRetained;
+    int     nTargetConstructChecks;
+    int     nTargetConstructMatched;
+    int     nTargetConstructRetained;
+    int     nTargetDuplicates;
+    int     nTargetGainCalls;
+    int     nTargetGainPositive;
+    int     nTargetGainRejected;
+    int     nTargetProofs;
+    int     nTargetRetainUnproved;
+    int     nTargetFinalUnproved;
+    int     nTargetAccepted;
+    int     nTargetMaxChecks;
 };
 
 static double Cec_TranTimeSec( abctime Time )
@@ -68,8 +115,57 @@ static double Cec_TranTimeSec( abctime Time )
     return 1.0 * Time / CLOCKS_PER_SEC;
 }
 
-static void Cec_TranPrintProfile( Cec_TranProf_t * p )
+static void Cec_TranTargetProfAdd( Cec_TranProf_t * p, Cec_TranTargetProf_t * pTop,
+    int * pnTop, int nTopMax, Cec_TranTargetProf_t * pTarget )
 {
+    int i, iMin = 0, nChecks = pTarget->nExistingChecks + pTarget->nConstructChecks;
+    p->nTargets++;
+    p->nTargetVictimSets       += pTarget->nVictimSets;
+    p->nTargetExistingChecks   += pTarget->nExistingChecks;
+    p->nTargetExistingMatched  += pTarget->nExistingMatched;
+    p->nTargetExistingRetained += pTarget->nExistingRetained;
+    p->nTargetConstructChecks  += pTarget->nConstructChecks;
+    p->nTargetConstructMatched += pTarget->nConstructMatched;
+    p->nTargetConstructRetained += pTarget->nConstructRetained;
+    p->nTargetDuplicates       += pTarget->nDuplicates;
+    p->nTargetGainCalls        += pTarget->nGainCalls;
+    p->nTargetGainPositive     += pTarget->nGainPositive;
+    p->nTargetGainRejected     += pTarget->nGainRejected;
+    p->nTargetProofs           += pTarget->nProofs;
+    p->nTargetRetainUnproved   += pTarget->nRetainUnproved;
+    p->nTargetFinalUnproved    += pTarget->nFinalUnproved;
+    p->nTargetAccepted         += pTarget->nAccepted;
+    if ( p->nTargetMaxChecks < nChecks )
+        p->nTargetMaxChecks = nChecks;
+    if ( nTopMax == 0 )
+        return;
+    if ( *pnTop < nTopMax )
+    {
+        pTop[(*pnTop)++] = *pTarget;
+        return;
+    }
+    for ( i = 1; i < *pnTop; i++ )
+        if ( pTop[i].timeTotal < pTop[iMin].timeTotal )
+            iMin = i;
+    if ( pTop[iMin].timeTotal < pTarget->timeTotal )
+        pTop[iMin] = *pTarget;
+}
+
+static int Cec_TranTargetProfCompare( const void * p0, const void * p1 )
+{
+    Cec_TranTargetProf_t const * pT0 = (Cec_TranTargetProf_t const *)p0;
+    Cec_TranTargetProf_t const * pT1 = (Cec_TranTargetProf_t const *)p1;
+    if ( pT0->timeTotal < pT1->timeTotal )
+        return 1;
+    if ( pT0->timeTotal > pT1->timeTotal )
+        return -1;
+    return 0;
+}
+
+static void Cec_TranPrintProfile( Cec_TranProf_t * p, Cec_TranTargetProf_t * pTop, int nTop )
+{
+    Cec_TranTargetProf_t * pT;
+    int i;
     abctime Accounted = p->timeSim + p->timeCare + p->timeSpec +
         p->timeExisting + p->timeConstruct + p->timeGain +
         p->timeRetainMiter + p->timeRetainCorr +
@@ -85,6 +181,32 @@ static void Cec_TranPrintProfile( Cec_TranProf_t * p )
         p->nRetainCalls, Cec_TranTimeSec(p->timeRetainMiter), Cec_TranTimeSec(p->timeRetainCorr),
         p->nFinalCalls, Cec_TranTimeSec(p->timeFinalMiter), Cec_TranTimeSec(p->timeFinalCorr),
         p->nShadowCalls, Cec_TranTimeSec(p->timeShadow) );
+    Abc_Print( 1, "Sequential transduction target aggregate: targets=%d victim-sets=%d existing=%d/%d/%d constructed=%d/%d/%d duplicates=%d gain=%d/%d/%d proofs=%d retain-unproved=%d final-unproved=%d accepted=%d avg-checks=%.1f max-checks=%d.\n",
+        p->nTargets, p->nTargetVictimSets,
+        p->nTargetExistingChecks, p->nTargetExistingMatched, p->nTargetExistingRetained,
+        p->nTargetConstructChecks, p->nTargetConstructMatched, p->nTargetConstructRetained,
+        p->nTargetDuplicates, p->nTargetGainCalls, p->nTargetGainPositive, p->nTargetGainRejected,
+        p->nTargetProofs, p->nTargetRetainUnproved, p->nTargetFinalUnproved, p->nTargetAccepted,
+        p->nTargets ? 1.0 * (p->nTargetExistingChecks + p->nTargetConstructChecks) / p->nTargets : 0.0,
+        p->nTargetMaxChecks );
+    if ( nTop > 1 )
+        qsort( pTop, nTop, sizeof(Cec_TranTargetProf_t), Cec_TranTargetProfCompare );
+    for ( i = 0; i < nTop; i++ )
+    {
+        abctime AccountedTarget, OtherTarget;
+        pT = pTop + i;
+        AccountedTarget = pT->timeCare + pT->timeSearch + pT->timeGain + pT->timeProof;
+        OtherTarget = pT->timeTotal > AccountedTarget ? pT->timeTotal - AccountedTarget : 0;
+        Abc_Print( 1, "Sequential transduction target profile: rank=%d round=%d obj=%d leaves=%d care-bits=%d victim-sets=%d existing=%d/%d/%d constructed=%d/%d/%d duplicates=%d gain=%d/%d/%d proofs=%d retain-unproved=%d final-unproved=%d accepted=%d total=%.3f care=%.3f search=%.3f gain-time=%.3f proof=%.3f other=%.3f sec.\n",
+            i + 1, pT->iRound, pT->iTarget, pT->nSuperLeaves, pT->nCareBits, pT->nVictimSets,
+            pT->nExistingChecks, pT->nExistingMatched, pT->nExistingRetained,
+            pT->nConstructChecks, pT->nConstructMatched, pT->nConstructRetained,
+            pT->nDuplicates, pT->nGainCalls, pT->nGainPositive, pT->nGainRejected,
+            pT->nProofs, pT->nRetainUnproved, pT->nFinalUnproved, pT->nAccepted,
+            Cec_TranTimeSec(pT->timeTotal), Cec_TranTimeSec(pT->timeCare),
+            Cec_TranTimeSec(pT->timeSearch), Cec_TranTimeSec(pT->timeGain),
+            Cec_TranTimeSec(pT->timeProof), Cec_TranTimeSec(OtherTarget) );
+    }
 }
 
 // A signature is a collection of independent reset-reachable random traces.
@@ -779,6 +901,7 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
 Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
 {
     Cec_TranProf_t Prof = {0};
+    Cec_TranTargetProf_t Target, Snap, * pTop;
     Gia_Man_t * p;
     Gia_Obj_t * pObj, * pDiv;
     Cec_TranSim_t * pSim;
@@ -788,17 +911,21 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Vec_Wrd_t * vConstrSigs;
     word * pConstrSig;
     int i, f, f2, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
-    int nExisting = 0, nConstructed = 0, nPositive = 0, nGainRejected = 0;
+    int nExisting = 0, nExistingMatched = 0, nExistingRetained = 0;
+    int nConstructed = 0, nConstructMatched = 0, nConstructRetained = 0;
+    int nPositive = 0, nGainRejected = 0;
     int nRetainUnproved = 0, nFinalUnproved = 0, nTried = 0, nAccepted = 0;
     int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0, nSigDuplicate = 0;
-    int nCareBits = 0;
+    int nCareBits = 0, nThisCareBits, nTop = 0, nRound = 0;
     int nVictim, nVictim2, iFanin1, nBaseLimit, nConstrLimit, nVictimSets = 0;
     int fChanged;
-    abctime clk = Abc_Clock(), clkPhase;
+    abctime clk = Abc_Clock(), clkPhase, clkTarget;
     assert( Gia_ManRegNum(pGia) > 0 );
     Abc_Print( 1, "Sequential transduction: AND = %d, Reg = %d, frames = %d, conf = %d.\n",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nFrames, pPars->nBTLimit );
     p = Gia_ManDup( pGia );
+    pTop = pPars->fProfile && pPars->nProfileTop ?
+        ABC_ALLOC( Cec_TranTargetProf_t, pPars->nProfileTop ) : NULL;
     do
     {
         fChanged = 0;
@@ -815,12 +942,45 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         {
             if ( Gia_ObjIsXor(pObj) )
                 continue;
+            if ( pPars->fProfile )
+            {
+                memset( &Target, 0, sizeof(Target) );
+                memset( &Snap, 0, sizeof(Snap) );
+                clkTarget = Abc_Clock();
+                Target.iRound = nRound;
+                Target.iTarget = i;
+                Snap.nVictimSets = nVictimSets;
+                Snap.nExistingChecks = nExisting;
+                Snap.nExistingMatched = nExistingMatched;
+                Snap.nExistingRetained = nExistingRetained;
+                Snap.nConstructChecks = nConstructed;
+                Snap.nConstructMatched = nConstructMatched;
+                Snap.nConstructRetained = nConstructRetained;
+                Snap.nDuplicates = nSigDuplicate;
+                Snap.nGainCalls = Prof.nGainCalls;
+                Snap.nGainPositive = nPositive;
+                Snap.nGainRejected = nGainRejected;
+                Snap.nProofs = nTried;
+                Snap.nRetainUnproved = nRetainUnproved;
+                Snap.nFinalUnproved = nFinalUnproved;
+                Snap.nAccepted = nAccepted;
+                Snap.timeCare = Prof.timeCare;
+                Snap.timeSearch = Prof.timeSpec + Prof.timeExisting + Prof.timeConstruct;
+                Snap.timeGain = Prof.timeGain;
+                Snap.timeProof = Prof.timeRetainMiter + Prof.timeRetainCorr +
+                    Prof.timeFinalMiter + Prof.timeFinalCorr + Prof.timeShadow;
+            }
             vSuper = Cec_TranCollectSuper( p, i );
+            if ( pPars->fProfile )
+                Target.nSuperLeaves = Vec_IntSize(vSuper);
             clkPhase = Abc_Clock();
             pCare = Cec_TranSimComputeCare( pSim, i );
             Prof.timeCare += Abc_Clock() - clkPhase;
             Prof.nCareCalls++;
-            nCareBits += Cec_TranCountOnes( pCare, pSim->nSlots );
+            nThisCareBits = Cec_TranCountOnes( pCare, pSim->nSlots );
+            nCareBits += nThisCareBits;
+            if ( pPars->fProfile )
+                Target.nCareBits = nThisCareBits;
             for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged; f++ )
             {
                 // A transaction may replace either one leaf or a pair of
@@ -867,11 +1027,13 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                             continue;
                         }
                         nSigMatched++;
+                        nExistingMatched++;
                         if ( pPars->nDivsMax == 0 || Vec_IntSize(vMatches) < pPars->nDivsMax )
                             Vec_IntPush( vMatches, iDiv0 );
                     }
                 }
                 Prof.timeExisting += Abc_Clock() - clkPhase;
+                nExistingRetained += Vec_IntSize(vMatches);
                 Vec_IntForEachEntry( vMatches, iDiv0, j )
                 {
                     if ( nTried >= pPars->nCandMax )
@@ -922,6 +1084,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                                 continue;
                             }
                             nSigMatched++;
+                            nConstructMatched++;
                             if ( Vec_IntSize(vConstr) < 3 * nConstrLimit )
                             {
                                 Cec_TranSpecCompute( pSpec, iDiv0, iDiv1, fDivCompl, pConstrSig );
@@ -938,6 +1101,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                     }
                 }
                 Prof.timeConstruct += Abc_Clock() - clkPhase;
+                nConstructRetained += Vec_IntSize(vConstr) / 3;
                 for ( j = 0; j < Vec_IntSize(vConstr) && !fChanged && nTried < pPars->nCandMax; j += 3 )
                 {
                     iDiv0 = Vec_IntEntry( vConstr, j );
@@ -956,10 +1120,36 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
             }
             ABC_FREE( pCare );
             Vec_IntFree( vSuper );
+            if ( pPars->fProfile )
+            {
+                Target.timeTotal = Abc_Clock() - clkTarget;
+                Target.timeCare = Prof.timeCare - Snap.timeCare;
+                Target.timeSearch = Prof.timeSpec + Prof.timeExisting + Prof.timeConstruct - Snap.timeSearch;
+                Target.timeGain = Prof.timeGain - Snap.timeGain;
+                Target.timeProof = Prof.timeRetainMiter + Prof.timeRetainCorr +
+                    Prof.timeFinalMiter + Prof.timeFinalCorr + Prof.timeShadow - Snap.timeProof;
+                Target.nVictimSets = nVictimSets - Snap.nVictimSets;
+                Target.nExistingChecks = nExisting - Snap.nExistingChecks;
+                Target.nExistingMatched = nExistingMatched - Snap.nExistingMatched;
+                Target.nExistingRetained = nExistingRetained - Snap.nExistingRetained;
+                Target.nConstructChecks = nConstructed - Snap.nConstructChecks;
+                Target.nConstructMatched = nConstructMatched - Snap.nConstructMatched;
+                Target.nConstructRetained = nConstructRetained - Snap.nConstructRetained;
+                Target.nDuplicates = nSigDuplicate - Snap.nDuplicates;
+                Target.nGainCalls = Prof.nGainCalls - Snap.nGainCalls;
+                Target.nGainPositive = nPositive - Snap.nGainPositive;
+                Target.nGainRejected = nGainRejected - Snap.nGainRejected;
+                Target.nProofs = nTried - Snap.nProofs;
+                Target.nRetainUnproved = nRetainUnproved - Snap.nRetainUnproved;
+                Target.nFinalUnproved = nFinalUnproved - Snap.nFinalUnproved;
+                Target.nAccepted = nAccepted - Snap.nAccepted;
+                Cec_TranTargetProfAdd( &Prof, pTop, &nTop, pPars->nProfileTop, &Target );
+            }
             if ( fChanged || nTried >= pPars->nCandMax || nAccepted >= pPars->nChangesMax )
                 break;
         }
         Cec_TranSimStop( pSim );
+        nRound++;
     }
     while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
     Prof.timeTotal = Abc_Clock() - clk;
@@ -969,7 +1159,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         Gia_ManAndNum(pGia), Gia_ManAndNum(p),
         Cec_TranTimeSec(Prof.timeTotal) );
     if ( pPars->fProfile )
-        Cec_TranPrintProfile( &Prof );
+        Cec_TranPrintProfile( &Prof, pTop, nTop );
+    ABC_FREE( pTop );
     return p;
 }
 

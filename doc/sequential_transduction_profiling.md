@@ -2,17 +2,34 @@
 
 ## Command
 
-`&stran -p` prints two machine-readable summary lines after the normal result:
+`&stran -p` prints phase summaries, one target aggregate, and the slowest target-gate rows after the normal result.
+`-P num` controls how many target rows are retained and printed (default 20, and 0 disables only the rows):
 
 ```text
 Sequential transduction profile: total=... sim=... care=... spec=... existing=... construct=... gain=... other=... sec.
 Sequential transduction proof profile: retain=... miter=... corr=... final=... miter=... corr=... shadow=... time=... sec.
+Sequential transduction target aggregate: targets=... victim-sets=... existing=checked/matched/retained constructed=checked/matched/retained ...
+Sequential transduction target profile: rank=... round=... obj=... leaves=... care-bits=... victim-sets=... existing=checked/matched/retained constructed=checked/matched/retained ...
 ```
 
 The counters in parentheses are invocation counts.  `gain` includes speculative add/final duplication,
 cleanup, and exact gain computation.  `corr` is the time inside `Cec_ManLSCorrespondence`; `miter` is local
 TFO miter construction.  `other` is uninstrumented control, supergate collection, deallocation, and commit
 overhead.  Profiling uses ABC's internal clock and does not include the later independent `dsec` audit.
+
+For each target gate, the candidate counters have deliberately different meanings:
+
+- `checked` is the number of literals or constructed functions evaluated against the bit-parallel Must0/Must1 masks;
+- `matched` passes those necessary signature constraints;
+- `retained` survives the `-D`/`-K` cap and, for constructed functions, signature deduplication;
+- `gain=calls/positive/rejected` counts exact structural-gain evaluations, candidates that reach formal proof,
+  and candidates rejected before proof;
+- `proofs`, `retain-unproved`, `final-unproved`, and `accepted` show the formal funnel for that target.
+
+The target rows are ranked by `total` time.  `search` includes specification construction plus existing and
+constructed divisor scans; `proof` includes local miter construction, correspondence, and optional shadow audit.
+`round` matters because a successful transaction rebuilds the AIG and starts another scan, so the same numeric
+object ID in different rounds does not necessarily denote the same structure.
 
 ## Current CSV diagnosis
 
@@ -50,7 +67,7 @@ bench_root=/absolute/path/to/all_test/all
 case_rel=bitlevel/safety/2019/beem/collision.1.prop1-func-interl.aig
 case_tag=collision
 mkdir -p profiles/$case_tag
-./abc -q "&read $bench_root/$case_rel; &write profiles/$case_tag/base.aig; &scorr -F 1 -C 200; &write profiles/$case_tag/scorr.aig; &stran -M 1 -F 1 -C 1000 -S -1 -T 200 -N 20 -D 32 -B 64 -K 32 -Q 4 -W 8 -p; &write profiles/$case_tag/final.aig" 2>&1 | tee profiles/$case_tag/run.log
+./abc -q "&read $bench_root/$case_rel; &write profiles/$case_tag/base.aig; &scorr -F 1 -C 200; &write profiles/$case_tag/scorr.aig; &stran -M 1 -F 1 -C 1000 -S -1 -T 200 -N 20 -D 32 -B 64 -K 32 -Q 4 -W 8 -p -P 20; &write profiles/$case_tag/final.aig" 2>&1 | tee profiles/$case_tag/run.log
 ./abc -q "dsec profiles/$case_tag/base.aig profiles/$case_tag/final.aig" 2>&1 | tee -a profiles/$case_tag/run.log
 ```
 

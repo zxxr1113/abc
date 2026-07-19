@@ -288,13 +288,14 @@ struct Cec_ParTran_t_
     int              nConstrMax;    // signature-matched one-gate divisors per victim
     int              nConstrBaseMax;// literals in one-gate construction pool (0 = all)
     int              nVictimsMax;   // leaves removed by one added divisor (exactly 1 or 2)
+    int              nProfileTop;   // target-gate rows printed by profiling
     int              nChangesMax;   // accepted transactions
     int              nGainMin;      // minimum AND+register gain to prove
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              fUseConstr;    // enable one-AND constructed divisors
     int              fShadow;       // whole-miter shadow audit for local proofs
-    int              fProfile;      // print phase-level runtime profile
+    int              fProfile;      // print phase and target-gate profiles
     int              fVerbose;
 };
 extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );
