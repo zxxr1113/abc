@@ -291,6 +291,7 @@ struct Cec_ParTran_t_
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              fUseConstr;    // enable one-AND constructed divisors
+    int              fShadow;       // whole-miter shadow audit for local proofs
     int              fVerbose;
 };
 extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );

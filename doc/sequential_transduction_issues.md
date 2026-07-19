@@ -36,9 +36,13 @@ Known limitations and follow-up work:
    exhaustive all-pairs construction over the full network.
 5. Duplicate constructed signatures are not canonicalized.  Add a signature
    hash plus an exact structural-cost tie-break before increasing `-D`.
-6. Formal proof is still whole miter per obligation.  This is sound but not the
-   intended performance path; replace it with the union of original/add/final
-   sequential TFOs, then retain whole miter only as a shadow oracle.
+6. The implementation now uses a shared-state local miter: it duplicates the
+   target's complete combinational TFO and emits every affected PO and RI as a
+   proof boundary, while retaining the original transition relation.  This is
+   exact for the current single-target combinational edit.  It does not yet
+   construct the explicit union of original/add/final supergate TFOs needed for
+   future multi-wire or structural-hash-changing edits.  `&stran -f` runs the
+   previous whole-miter proof as a shadow audit.
 7. `Cec_ManLSCorrespondence` currently yields a boolean accept/reject to this
    command.  SAT versus UNKNOWN and the resulting CEX are not surfaced, so the
    CEGIS loop cannot yet refine `M1/M0`.

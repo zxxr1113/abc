@@ -234,13 +234,160 @@ static int Cec_TranAllPosAreZero( Gia_Man_t * p )
     return 1;
 }
 
+static inline int Cec_TranVecLit( Vec_Int_t * vLits, int iLit )
+{
+    int iCopy = Vec_IntEntry( vLits, Abc_Lit2Var(iLit) );
+    assert( iCopy >= 0 );
+    return Abc_LitNotCond( iCopy, Abc_LitIsCompl(iLit) );
+}
+
+static inline int Cec_TranHashGate( Gia_Man_t * pNew, Gia_Obj_t * pObj, int iLit0, int iLit1 )
+{
+    return Gia_ObjIsXor(pObj) ? Gia_ManHashXor(pNew, iLit0, iLit1) :
+        Gia_ManHashAnd(pNew, iLit0, iLit1);
+}
+
+// Mark the complete combinational TFO of the edited target, including the
+// PO/RI boundaries.  A marked RI is emitted as a difference PO by the local
+// miter; its corresponding RO is then related inductively by the common
+// source-state machine built below.
+static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget )
+{
+    Gia_Obj_t * pObj;
+    Vec_Int_t * vQueue = Vec_IntAlloc( 100 );
+    char * pMark = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    int i, k, iFan;
+    Gia_ManStaticFanoutStart( p );
+    pMark[iTarget] = 1;
+    Vec_IntPush( vQueue, iTarget );
+    for ( i = 0; i < Vec_IntSize(vQueue); i++ )
+    {
+        int iObj = Vec_IntEntry( vQueue, i );
+        for ( k = 0; k < Gia_ObjFanoutNumId(p, iObj); k++ )
+        {
+            iFan = Gia_ObjFanoutId( p, iObj, k );
+            if ( pMark[iFan] )
+                continue;
+            pMark[iFan] = 1;
+            pObj = Gia_ManObj( p, iFan );
+            if ( !Gia_ObjIsCo(pObj) )
+                Vec_IntPush( vQueue, iFan );
+        }
+    }
+    Gia_ManStaticFanoutStop( p );
+    Vec_IntFree( vQueue );
+    return pMark;
+}
+
+// Construct a single-state sequential difference machine.  It shares the
+// original transition relation, duplicates only the target's combinational
+// TFO for the edited variant, and emits differences at all affected PO/RI
+// boundaries.  Equality of the affected RIs, together with unchanged
+// unmarked RIs, inductively establishes a common state trajectory.  Thus this
+// is an exact COI reduction for these pure combinational edits, not a bounded
+// window approximation.
+static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFanin,
+    int iDiv0, int iDiv1, int fDivCompl, int fRemove )
+{
+    Gia_Man_t * pNew, * pTemp;
+    Gia_Obj_t * pObj;
+    Vec_Int_t * vBase, * vEdit;
+    char * pMark;
+    int i, iLit0, iLit1, iOld, iOther, iRep, iEdit, nOuts = 0;
+    assert( !Gia_ObjIsXor(Gia_ManObj(p, iTarget)) );
+    pMark = Cec_TranMarkTfo( p, iTarget );
+    vBase = Vec_IntStartFull( Gia_ManObjNum(p) );
+    vEdit = Vec_IntStartFull( Gia_ManObjNum(p) );
+    pNew = Gia_ManStart( Gia_ManObjNum(p) + Gia_ManAndNum(p) / 4 + 100 );
+    pNew->pName = Abc_UtilStrsav( "stran_local_miter" );
+    Gia_ManHashAlloc( pNew );
+    Vec_IntWriteEntry( vBase, 0, 0 );
+    Vec_IntWriteEntry( vEdit, 0, 0 );
+    Gia_ManForEachCi( p, pObj, i )
+    {
+        iEdit = Gia_ManAppendCi( pNew );
+        Vec_IntWriteEntry( vBase, Gia_ObjId(p, pObj), iEdit );
+        Vec_IntWriteEntry( vEdit, Gia_ObjId(p, pObj), iEdit );
+    }
+    Gia_ManForEachAnd( p, pObj, i )
+    {
+        iLit0 = Cec_TranVecLit( vBase, Gia_ObjFaninLit0p(p, pObj) );
+        iLit1 = Cec_TranVecLit( vBase, Gia_ObjFaninLit1p(p, pObj) );
+        iOld = Cec_TranHashGate( pNew, pObj, iLit0, iLit1 );
+        Vec_IntWriteEntry( vBase, i, iOld );
+        if ( !pMark[i] )
+        {
+            Vec_IntWriteEntry( vEdit, i, iOld );
+            continue;
+        }
+        if ( i == iTarget )
+        {
+            iRep = Cec_TranVecLit( vBase, iDiv0 );
+            if ( iDiv1 != -1 )
+                iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranVecLit(vBase, iDiv1) );
+            if ( fDivCompl )
+                iRep = Abc_LitNot( iRep );
+            if ( !fRemove )
+                iEdit = Gia_ManHashAnd( pNew, iOld, iRep );
+            else
+            {
+                iOther = iFanin ? iLit0 : iLit1;
+                iEdit = Gia_ManHashAnd( pNew, iOther, iRep );
+            }
+        }
+        else
+        {
+            iLit0 = Cec_TranVecLit( vEdit, Gia_ObjFaninLit0p(p, pObj) );
+            iLit1 = Cec_TranVecLit( vEdit, Gia_ObjFaninLit1p(p, pObj) );
+            iEdit = Cec_TranHashGate( pNew, pObj, iLit0, iLit1 );
+        }
+        Vec_IntWriteEntry( vEdit, i, iEdit );
+    }
+    // PO and affected-RI difference outputs must precede all RIs in a Gia.
+    Gia_ManForEachPo( p, pObj, i )
+    {
+        int iDriver = Gia_ObjFaninId0p( p, pObj );
+        if ( !pMark[iDriver] )
+            continue;
+        Gia_ManAppendCo( pNew, Gia_ManHashXor(pNew,
+            Cec_TranVecLit(vBase, Gia_ObjFaninLit0p(p, pObj)),
+            Cec_TranVecLit(vEdit, Gia_ObjFaninLit0p(p, pObj))) );
+        nOuts++;
+    }
+    Gia_ManForEachRi( p, pObj, i )
+    {
+        int iDriver = Gia_ObjFaninId0p( p, pObj );
+        if ( !pMark[iDriver] )
+            continue;
+        Gia_ManAppendCo( pNew, Gia_ManHashXor(pNew,
+            Cec_TranVecLit(vBase, Gia_ObjFaninLit0p(p, pObj)),
+            Cec_TranVecLit(vEdit, Gia_ObjFaninLit0p(p, pObj))) );
+        nOuts++;
+    }
+    assert( nOuts > 0 );
+    Gia_ManForEachRi( p, pObj, i )
+        Gia_ManAppendCo( pNew, Cec_TranVecLit(vBase, Gia_ObjFaninLit0p(p, pObj)) );
+    Gia_ManHashStop( pNew );
+    Gia_ManSetRegNum( pNew, Gia_ManRegNum(p) );
+    Vec_IntFree( vBase );
+    Vec_IntFree( vEdit );
+    ABC_FREE( pMark );
+    // Normalization installs the object-copy/value metadata expected by the
+    // scorr simulation manager and also removes any structurally-zero local
+    // difference output.
+    pNew = Gia_ManCleanup( pTemp = pNew );
+    Gia_ManStop( pTemp );
+    pNew = Gia_ManDupNormalize( pTemp = pNew, 0 );
+    Gia_ManStop( pTemp );
+    return pNew;
+}
+
 // This is intentionally the same sequential proof engine used by &scorr:
 // bounded reset-reachable BMC followed by its inductive correspondence
 // refinement.  The difference is the query: &stran proves a proposed
 // transduction transaction, rather than asking scorr to merge an equivalence
 // class in the original network.
-static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pCand,
-    Cec_ParTran_t * pPars )
+static int Cec_TranProveWhole( Gia_Man_t * p, Gia_Man_t * pCand, Cec_ParTran_t * pPars )
 {
     Cec_ParCor_t Cor;
     Gia_Man_t * pMiter, * pReduced;
@@ -257,6 +404,28 @@ static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pCand,
     fProved = Cec_TranAllPosAreZero( pReduced );
     Gia_ManStop( pReduced );
     Gia_ManStop( pMiter );
+    return fProved;
+}
+
+static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
+    Gia_Man_t * pWhole1, Cec_ParTran_t * pPars, int iTarget, int iFanin,
+    int iDiv0, int iDiv1, int fDivCompl, int fRemove )
+{
+    Cec_ParCor_t Cor;
+    Gia_Man_t * pMiter, * pReduced;
+    int fProved;
+    pMiter = Cec_TranBuildLocalMiter( p, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, fRemove );
+    Cec_ManCorSetDefaultParams( &Cor );
+    Cor.nFrames   = pPars->nFrames;
+    Cor.nBTLimit  = pPars->nBTLimit;
+    Cor.nStepsMax = pPars->nStepsMax;
+    Cor.fVerbose  = 0;
+    pReduced = Cec_ManLSCorrespondence( pMiter, &Cor );
+    fProved = Cec_TranAllPosAreZero( pReduced );
+    Gia_ManStop( pReduced );
+    Gia_ManStop( pMiter );
+    if ( fProved && pPars->fShadow )
+        fProved = Cec_TranProveWhole( pWhole0, pWhole1, pPars );
     return fProved;
 }
 
@@ -295,9 +464,11 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
                 *pnTried, iTarget, iFanin, iDiv0, iDiv1, Gain );
     }
     // Strict transduction proof: first retain the newly added wire, then
-    // prove that the selected old fanin is removable in the added network.
-    if ( !Cec_TranProveTransaction(p, pAdd, pPars) ||
-         !Cec_TranProveTransaction(pAdd, pFinal, pPars) )
+    // prove removal.  The local miter shares p's state transition: after the
+    // retention proof, p and pAdd have the same reachable states, so proving
+    // add-vs-final differences on that state relation is exact.
+    if ( !Cec_TranProveTransaction(p, p, pAdd, pPars, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 0) ||
+         !Cec_TranProveTransaction(p, pAdd, pFinal, pPars, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 1) )
     {
         Gia_ManStop( pAdd );
         Gia_ManStop( pFinal );
@@ -342,6 +513,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         // be in the target's TFO, so it cannot create a combinational cycle.
         Gia_ManForEachAnd( p, pObj, i )
         {
+            if ( Gia_ObjIsXor(pObj) )
+                continue;
             for ( f = 0; f < 2 && !fChanged; f++ )
             {
                 nVictim = f ? Gia_ObjFaninLit1(pObj, i) : Gia_ObjFaninLit0(pObj, i);

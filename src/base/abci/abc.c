@@ -42189,7 +42189,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWxvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWxfvh")) != EOF )
     {
         switch ( c )
         {
@@ -42241,6 +42241,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'x':
             pPars->fUseConstr ^= 1;
             break;
+        case 'f':
+            pPars->fShadow ^= 1;
+            break;
         case 'v':
             pPars->fVerbose ^= 1;
             break;
@@ -42268,7 +42271,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQW num] [-xvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQW num] [-xfvh]\n" );
     Abc_Print( -2, "\t         performs bounded sequential transduction using scorr proof infrastructure\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
@@ -42280,6 +42283,7 @@ usage:
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
+    Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;

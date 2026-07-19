@@ -515,22 +515,24 @@ $$
 | constructed divisor | 已完成一门 `AND` 及输出反相（覆盖 AND/OR/AND-NOT） signature matching | 需扩展 signature hash、成本去重和更大函数 |
 | structural hash/cleanup | 已完成 | 可直接复用 |
 | exact `AND+Reg` gain | 已完成 | 可复用并扩展 level/MFFC cost |
-| final sequential miter | 已完成 | 只作为开发 shadow oracle 和最终审计 |
+| local sequential proof | 已完成：共享原 transition relation、复制受影响组合 TFO、比较 PO/RI 边界 | 每次 transaction 后保守重建；尚未复用 `-i` cache |
+| final sequential miter | 已完成 | `-f` 开发 shadow oracle 和最终审计 |
 | proof result | 当前只有 proved/reject 两类，UNKNOWN 被安全拒绝 | 需增加 SAT/UNSAT/UNKNOWN 分类和 CEX 输出 |
-| 分步 retention/removal proof | 未实现 | 新增 |
-| AND supergate wire addition | 未实现 | 新增 |
+| 分步 retention/removal proof | 已完成：local proof 分别检查 add 与 remove，`-f` 可逐步 whole-miter 对照 | 可复用 |
+| AND supergate wire addition | 已完成 binary AIG AND 的 add/remove | 需 flatten 为任意 AND supergate |
 | victim-first MFFC ranking | 未实现 | 新增 |
 | `M1/M0` 计算 | 已实现二输入 AND target 上的保守 sampled `M1=k&other`、`M0=!k&other` | 需接入完整 `C_i^{seq}` |
 | reachable simulation signatures | 已实现：随机 PI、zero-reset RO、RI-to-RO 状态推进、bit-parallel word signatures | 需合并真实 reset/init 语义和 `&scorr` CEX |
 | CEGIS | 未实现 | 核心新增 |
-| local/window proof | 未实现，当前为 whole miter | 核心新增 |
+| local/window proof | 已实现完整组合 TFO 边界 proof；affected RI 作为跨帧归纳边界 | 需扩展到 supergate/multi-wire union TFO |
 | `-i` structural-edit integration | 未实现 | 核心新增，但 TFO/active-list 机制已有参考 |
 | 回归和服务器脚本 | 已有 V1 | 需增加 V2 定向测试和统计 |
 
-现有实现完成了命令外壳、显式 add/remove speculative rewrite、gain、whole-miter proof、commit/rollback、
+现有实现完成了命令外壳、显式 add/remove speculative rewrite、gain、local sequential proof 与可选
+whole-miter shadow audit、commit/rollback、
 分步证明，以及基于 reset-reachable signature 的约束反推、existing divisor matching 和一门构造 divisor。
-目前真正未完成的核心是精确 sequential ODC、CEX-driven CEGIS、完整时序 TFO local proof 和结构修改的
-增量 metadata。
+目前真正未完成的核心是精确 sequential ODC、CEX-driven CEGIS、supergate/multi-wire 的 TFO union 和
+结构修改的增量 metadata。
 
 若以完整 V2 研究原型为 100%，当前可复用工程约占 25%--30%；剩余 70%--75% 包含几乎全部核心
 算法和性能优化。实现顺序是先完成 Phase A+B+C，得到功能完整且保守重建的正确版本；Phase D 的
