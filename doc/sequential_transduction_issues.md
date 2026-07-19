@@ -10,7 +10,7 @@ Implemented:
 
 - bit-parallel simulation of random PI traces from all-zero register state;
 - RI-to-RO state propagation across simulated frames;
-- `M1 = k & other` and `M0 = !k & other` matching for binary AND targets;
+- `M1 = k & P` and `M0 = !k & P` matching for positive AND supergate targets;
 - matching of both phases of all topologically earlier CI/AND divisors;
 - one-gate `h = d0 & d1` and `h = !(d0 & d1)` candidates, which cover AND,
   OR, and AND-NOT forms when input phases are selected;
@@ -27,9 +27,10 @@ Known limitations and follow-up work:
    initialization semantics used by `&scorr` have not yet been imported.  A
    future implementation must either simulate those semantics exactly or use
    signatures only after a proof-engine-provided reachable-state seed.
-3. The target is still a binary AIG AND, not a flattened supergate.  `P` is
-   therefore the other immediate fanin, rather than a conjunction of all
-   supergate fanins.  Supergate flattening and MFFC victim scoring remain open.
+3. Positive-polarity AND supergates are now flattened, so `P` is the
+   conjunction of all leaves other than the selected victim.  Complemented
+   children correctly remain leaves.  Multi-wire/multi-victim transactions and
+   MFFC-based victim scoring remain open.
 4. Existing-literal matching tests the full topologically earlier CI/AND pool,
    but retains only `-D` nearest matches for formal proof.  Constructed search
    uses a bounded nearest literal base pool of size `-D`; it is not yet an

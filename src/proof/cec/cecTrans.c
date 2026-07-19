@@ -112,6 +112,30 @@ static void Cec_TranSimStop( Cec_TranSim_t * p )
     ABC_FREE( p );
 }
 
+// Collect the positive-polarity AND supergate rooted at iTarget.  A
+// complemented child is a literal rather than an AND factor because flattening
+// through it would apply De Morgan's law.  XOR nodes are never supergate
+// members.  The vector contains leaf literals, including their phases.
+static void Cec_TranCollectSuper_rec( Gia_Man_t * p, int iLit, Vec_Int_t * vSuper )
+{
+    Gia_Obj_t * pObj = Gia_ManObj( p, Abc_Lit2Var(iLit) );
+    if ( Abc_LitIsCompl(iLit) || !Gia_ObjIsAnd(pObj) || Gia_ObjIsXor(pObj) )
+    {
+        Vec_IntPush( vSuper, iLit );
+        return;
+    }
+    Cec_TranCollectSuper_rec( p, Gia_ObjFaninLit0p(p, pObj), vSuper );
+    Cec_TranCollectSuper_rec( p, Gia_ObjFaninLit1p(p, pObj), vSuper );
+}
+
+static Vec_Int_t * Cec_TranCollectSuper( Gia_Man_t * p, int iTarget )
+{
+    Vec_Int_t * vSuper = Vec_IntAlloc( 8 );
+    Cec_TranCollectSuper_rec( p, Abc_Var2Lit(iTarget, 0), vSuper );
+    assert( Vec_IntSize(vSuper) >= 2 );
+    return vSuper;
+}
+
 // This is the conservative first implementation of the specification from
 // the design document.  It deliberately takes C_i=1, so it recognizes
 // requirements at the target itself and never treats sampled ODC as proof.
@@ -119,23 +143,29 @@ static void Cec_TranSimStop( Cec_TranSim_t * p )
 static int Cec_TranSigMatches( Cec_TranSim_t * p, int iTarget, int iFanin,
     int iDiv0, int iDiv1, int fDivCompl )
 {
-    Gia_Obj_t * pTarget = Gia_ManObj( p->pGia, iTarget );
-    int iVictim = iFanin ? Gia_ObjFaninLit1p(p->pGia, pTarget) : Gia_ObjFaninLit0p(p->pGia, pTarget);
-    int iOther  = iFanin ? Gia_ObjFaninLit0p(p->pGia, pTarget) : Gia_ObjFaninLit1p(p->pGia, pTarget);
-    int s;
+    Vec_Int_t * vSuper = Cec_TranCollectSuper( p->pGia, iTarget );
+    int iVictim = Vec_IntEntry( vSuper, iFanin );
+    int s, i, iLeaf;
     word k, q, h;
     for ( s = 0; s < p->nSlots; s++ )
     {
         k = Cec_TranSimLit( p, iVictim, s );
-        q = Cec_TranSimLit( p, iOther, s );
+        q = ~(word)0;
+        Vec_IntForEachEntry( vSuper, iLeaf, i )
+            if ( i != iFanin )
+                q &= Cec_TranSimLit( p, iLeaf, s );
         h = Cec_TranSimLit( p, iDiv0, s );
         if ( iDiv1 != -1 )
             h &= Cec_TranSimLit( p, iDiv1, s );
         if ( fDivCompl )
             h = ~h;
         if ( (k & q & ~h) || (~k & q & h) )
+        {
+            Vec_IntFree( vSuper );
             return 0;
+        }
     }
+    Vec_IntFree( vSuper );
     return 1;
 }
 
@@ -158,8 +188,9 @@ static Gia_Man_t * Cec_TranDupEdit( Gia_Man_t * p, int iTarget, int iFanin,
 {
     Gia_Man_t * pNew;
     Gia_Obj_t * pObj;
-    int i, iLit0, iLit1, iOld, iOther, iRep;
-    assert( iFanin == 0 || iFanin == 1 );
+    Vec_Int_t * vSuper = Cec_TranCollectSuper( p, iTarget );
+    int i, k, iLit0, iLit1, iOld, iRep, iLeaf;
+    assert( iFanin >= 0 && iFanin < Vec_IntSize(vSuper) );
     assert( fDivCompl == 0 || fDivCompl == 1 );
     assert( Abc_Lit2Var(iDiv0) < iTarget );
     assert( iDiv1 == -1 || Abc_Lit2Var(iDiv1) < iTarget );
@@ -189,8 +220,10 @@ static Gia_Man_t * Cec_TranDupEdit( Gia_Man_t * p, int iTarget, int iFanin,
             }
             else
             {
-                iOther = iFanin == 0 ? iLit1 : iLit0;
-                pObj->Value = Gia_ManHashAnd( pNew, iOther, iRep );
+                Vec_IntForEachEntry( vSuper, iLeaf, k )
+                    if ( k != iFanin )
+                        iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranCopyLit(p, iLeaf) );
+                pObj->Value = iRep;
             }
             continue;
         }
@@ -200,6 +233,7 @@ static Gia_Man_t * Cec_TranDupEdit( Gia_Man_t * p, int iTarget, int iFanin,
         Gia_ManAppendCo( pNew, Gia_ObjFanin0Copy(pObj) );
     Gia_ManHashStop( pNew );
     Gia_ManSetRegNum( pNew, Gia_ManRegNum(p) );
+    Vec_IntFree( vSuper );
     return pNew;
 }
 
@@ -291,10 +325,12 @@ static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFan
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj;
-    Vec_Int_t * vBase, * vEdit;
+    Vec_Int_t * vBase, * vEdit, * vSuper;
     char * pMark;
-    int i, iLit0, iLit1, iOld, iOther, iRep, iEdit, nOuts = 0;
+    int i, k, iLit0, iLit1, iOld, iRep, iEdit, iLeaf, nOuts = 0;
     assert( !Gia_ObjIsXor(Gia_ManObj(p, iTarget)) );
+    vSuper = Cec_TranCollectSuper( p, iTarget );
+    assert( iFanin >= 0 && iFanin < Vec_IntSize(vSuper) );
     pMark = Cec_TranMarkTfo( p, iTarget );
     vBase = Vec_IntStartFull( Gia_ManObjNum(p) );
     vEdit = Vec_IntStartFull( Gia_ManObjNum(p) );
@@ -331,8 +367,10 @@ static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFan
                 iEdit = Gia_ManHashAnd( pNew, iOld, iRep );
             else
             {
-                iOther = iFanin ? iLit0 : iLit1;
-                iEdit = Gia_ManHashAnd( pNew, iOther, iRep );
+                Vec_IntForEachEntry( vSuper, iLeaf, k )
+                    if ( k != iFanin )
+                        iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranVecLit(vBase, iLeaf) );
+                iEdit = iRep;
             }
         }
         else
@@ -371,6 +409,7 @@ static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFan
     Gia_ManSetRegNum( pNew, Gia_ManRegNum(p) );
     Vec_IntFree( vBase );
     Vec_IntFree( vEdit );
+    Vec_IntFree( vSuper );
     ABC_FREE( pMark );
     // Normalization installs the object-copy/value metadata expected by the
     // scorr simulation manager and also removes any structurally-zero local
@@ -491,7 +530,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Gia_Man_t * p;
     Gia_Obj_t * pObj, * pDiv;
     Cec_TranSim_t * pSim;
-    Vec_Int_t * vMatches, * vBases, * vConstr;
+    Vec_Int_t * vMatches, * vBases, * vConstr, * vSuper;
     int i, f, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
     int nExisting = 0, nConstructed = 0, nPositive = 0, nTried = 0, nAccepted = 0;
     int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0;
@@ -515,9 +554,10 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         {
             if ( Gia_ObjIsXor(pObj) )
                 continue;
-            for ( f = 0; f < 2 && !fChanged; f++ )
+            vSuper = Cec_TranCollectSuper( p, i );
+            for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged; f++ )
             {
-                nVictim = f ? Gia_ObjFaninLit1(pObj, i) : Gia_ObjFaninLit0(pObj, i);
+                nVictim = Vec_IntEntry( vSuper, f );
                 vMatches = Vec_IntAlloc( pPars->nDivsMax );
                 // Test the full topologically-safe pool with bit-parallel
                 // Must1/Must0 masks, but retain only the nearest matching
@@ -607,6 +647,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 Vec_IntFree( vConstr );
                 Vec_IntFree( vBases );
             }
+            Vec_IntFree( vSuper );
             if ( fChanged || nTried >= pPars->nCandMax || nAccepted >= pPars->nChangesMax )
                 break;
         }

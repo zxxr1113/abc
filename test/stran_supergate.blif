@@ -1,0 +1,13 @@
+.model stran_supergate
+.inputs a b c
+.outputs y
+.latch a ra 0
+
+# The output root has the positive AND supergate {ra, b, c}.  This regression
+# exercises non-immediate victim leaves even when no profitable transaction is
+# found under the small proof budget.
+.names ra b n1
+11 1
+.names n1 c y
+11 1
+.end

@@ -510,7 +510,7 @@ $$
 | 模块 | 当前状态 | V2 是否可直接复用 |
 |---|---|---|
 | `&stran` 命令、参数、统计 | 已完成 | 可复用，需增加 V2 参数 |
-| speculative GIA duplicate | 已完成单 fanin replacement | 部分复用，需加入真正 add/remove supergate transaction |
+| speculative GIA duplicate | 已完成正相 AND supergate 的 explicit add/remove transaction | 可复用，multi-wire 仍待扩展 |
 | existing literal 枚举 | 已完成：对完整拓扑安全 pool 做 `M1/M0` 位并行匹配，只保留近邻匹配项送 formal proof | 已可用；精确 sequential care 仍待接入 |
 | constructed divisor | 已完成一门 `AND` 及输出反相（覆盖 AND/OR/AND-NOT） signature matching | 需扩展 signature hash、成本去重和更大函数 |
 | structural hash/cleanup | 已完成 | 可直接复用 |
@@ -519,9 +519,9 @@ $$
 | final sequential miter | 已完成 | `-f` 开发 shadow oracle 和最终审计 |
 | proof result | 当前只有 proved/reject 两类，UNKNOWN 被安全拒绝 | 需增加 SAT/UNSAT/UNKNOWN 分类和 CEX 输出 |
 | 分步 retention/removal proof | 已完成：local proof 分别检查 add 与 remove，`-f` 可逐步 whole-miter 对照 | 可复用 |
-| AND supergate wire addition | 已完成 binary AIG AND 的 add/remove | 需 flatten 为任意 AND supergate |
+| AND supergate wire addition | 已完成正相 AIG AND supergate 的 add/remove | 需扩展到 multi-wire transaction |
 | victim-first MFFC ranking | 未实现 | 新增 |
-| `M1/M0` 计算 | 已实现二输入 AND target 上的保守 sampled `M1=k&other`、`M0=!k&other` | 需接入完整 `C_i^{seq}` |
+| `M1/M0` 计算 | 已实现正相 AND supergate 上的保守 sampled `M1=k&P`、`M0=!k&P` | 需接入完整 `C_i^{seq}` |
 | reachable simulation signatures | 已实现：随机 PI、zero-reset RO、RI-to-RO 状态推进、bit-parallel word signatures | 需合并真实 reset/init 语义和 `&scorr` CEX |
 | CEGIS | 未实现 | 核心新增 |
 | local/window proof | 已实现完整组合 TFO 边界 proof；affected RI 作为跨帧归纳边界 | 需扩展到 supergate/multi-wire union TFO |
