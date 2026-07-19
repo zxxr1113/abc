@@ -526,7 +526,7 @@ $$
 | CEGIS | 未实现 | 核心新增 |
 | local/window proof | 已实现完整组合 TFO 边界 proof；affected RI 作为跨帧归纳边界 | 需扩展到 supergate/multi-wire union TFO |
 | `-i` structural-edit integration | 未实现 | 核心新增，但 TFO/active-list 机制已有参考 |
-| 回归和服务器脚本 | 已有 V1 | 需增加 V2 定向测试和统计 |
+| 回归和服务器脚本 | 已完成 V2：`scripts/run_stran_v2_bench.sh` 保存 before/after AIG、完整日志、汇总 TSV，并对每个结果执行独立 `dsec` 审计 | 需增加参数扫描、baseline 对比和更大规模统计 |
 
 现有实现完成了命令外壳、显式 add/remove speculative rewrite、gain、local sequential proof 与可选
 whole-miter shadow audit、commit/rollback、
@@ -534,9 +534,11 @@ whole-miter shadow audit、commit/rollback、
 目前真正未完成的核心是精确 sequential ODC、CEX-driven CEGIS、supergate/multi-wire 的 TFO union 和
 结构修改的增量 metadata。
 
-若以完整 V2 研究原型为 100%，当前可复用工程约占 25%--30%；剩余 70%--75% 包含几乎全部核心
-算法和性能优化。实现顺序是先完成 Phase A+B+C，得到功能完整且保守重建的正确版本；Phase D 的
-复杂增量优化在完整版本通过 local/whole oracle 对照后再开始。
+若以完整 V2 研究原型为 100%，当前的单线、单 victim 研究原型约完成 55%--60%：已有时序 sampled
+care、existing/constructed divisor、显式 add/remove、local proof、whole-miter shadow 和可复现实验入口。
+剩余主要是 CEX-driven CEGIS、multi-wire/multi-victim transaction、formal care 和增量 metadata；这些不应
+以牺牲证明语义的方式简化。实现顺序是先完成单线原型的候选排序和统计，再完成可导出 CEX 的证明接口，
+最后扩展 transaction 与增量优化。
 
 ## 16. 成功判据
 
@@ -548,6 +550,17 @@ whole-miter shadow audit、commit/rollback、
 4. 基于修改点时序 TFO 的 proof 是否与 whole-miter oracle 一致，同时明显减少 SAT obligations。
 
 只有同时证明候选机会密度和增量证明收益，才扩展 multi-wire、multi-victim 和两门以上构造。
+
+### 16.1 当前实验入口
+
+`scripts/run_stran_v2_bench.sh` 对每个输入 AIG 保存 `before.aig`、`after.aig`、完整 `run.log` 和
+汇总 `summary.tsv`。默认启用 `-f` whole-miter shadow audit，并对每个最终结果运行 `dsec`。建议先固定
+`-F/-C/-T/-N`，分别扫描 `-D/-B/-K/-Q/-W`：
+
+- `-D`：existing divisor 的 formal-proof 保留数；
+- `-B`：constructed divisor base literal 数，`0` 为全池 all-pairs；
+- `-K`：constructed candidate 的 formal-proof 保留数；
+- `-Q/-W`：每批 trace 的 bit-parallel 宽度和时序长度。
 
 ## 17. 正确性注意事项清单
 
