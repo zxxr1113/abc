@@ -42189,7 +42189,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGxvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWxvh")) != EOF )
     {
         switch ( c )
         {
@@ -42228,6 +42228,16 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nGainMin = atoi(argv[globalUtilOptind++]);
             if ( pPars->nGainMin < 1 ) goto usage;
             break;
+        case 'Q':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nSimWords = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nSimWords < 1 ) goto usage;
+            break;
+        case 'W':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nSimFrames = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nSimFrames < 1 ) goto usage;
+            break;
         case 'x':
             pPars->fUseConstr ^= 1;
             break;
@@ -42258,7 +42268,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDG num] [-xvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQW num] [-xvh]\n" );
     Abc_Print( -2, "\t         performs bounded sequential transduction using scorr proof infrastructure\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
@@ -42267,6 +42277,8 @@ usage:
     Abc_Print( -2, "\t-N num : maximum committed transactions [default = %d]\n", pPars->nChangesMax );
     Abc_Print( -2, "\t-D num : local existing divisors per victim [default = %d]\n", pPars->nDivsMax );
     Abc_Print( -2, "\t-G num : minimum predicted AND+register gain [default = %d]\n", pPars->nGainMin );
+    Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
+    Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );

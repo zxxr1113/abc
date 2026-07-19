@@ -448,7 +448,9 @@ $$
 - `-G`：最小净 gain；
 - `-K`：每个 victim 保留的构造候选数；
 - `-R`：每个 victim 的 CEGIS 反例轮数；
-- `-W`：初始/最大 window 大小；
+- `-Q`：每个 reachable simulation frame 的 64-bit signature word 数；
+- `-W`：当前实现中每批随机 reset-reachable trace 的 frame 数；将来 local proof window 参数应另设，不能
+  与随机仿真长度混用；
 - `-L`：constructed divisor 最大 AIG gate 数；
 - `-a`：要求严格 retention + removal 两步证明；
 - `-f`：开发/审计模式，对 accepted candidate 启用 whole-miter shadow oracle；正式运行默认关闭。
@@ -509,8 +511,8 @@ $$
 |---|---|---|
 | `&stran` 命令、参数、统计 | 已完成 | 可复用，需增加 V2 参数 |
 | speculative GIA duplicate | 已完成单 fanin replacement | 部分复用，需加入真正 add/remove supergate transaction |
-| existing literal 枚举 | 已有按 GIA 编号邻近枚举 | 需改为 `M1/M0` 匹配和正规 divisor pool |
-| constructed divisor | 已有盲枚举 `d0 & d1` | 只能复用 AIG 构造函数，搜索策略需重写 |
+| existing literal 枚举 | 已完成：对完整拓扑安全 pool 做 `M1/M0` 位并行匹配，只保留近邻匹配项送 formal proof | 已可用；精确 sequential care 仍待接入 |
+| constructed divisor | 已完成一门 `AND` 及输出反相（覆盖 AND/OR/AND-NOT） signature matching | 需扩展 signature hash、成本去重和更大函数 |
 | structural hash/cleanup | 已完成 | 可直接复用 |
 | exact `AND+Reg` gain | 已完成 | 可复用并扩展 level/MFFC cost |
 | final sequential miter | 已完成 | 只作为开发 shadow oracle 和最终审计 |
@@ -518,16 +520,17 @@ $$
 | 分步 retention/removal proof | 未实现 | 新增 |
 | AND supergate wire addition | 未实现 | 新增 |
 | victim-first MFFC ranking | 未实现 | 新增 |
-| `M1/M0` 计算 | 未实现 | 核心新增 |
-| reachable simulation signatures | 未实现于 `&stran` | 可借用 `&scorr` simulation/CEX 基础设施 |
+| `M1/M0` 计算 | 已实现二输入 AND target 上的保守 sampled `M1=k&other`、`M0=!k&other` | 需接入完整 `C_i^{seq}` |
+| reachable simulation signatures | 已实现：随机 PI、zero-reset RO、RI-to-RO 状态推进、bit-parallel word signatures | 需合并真实 reset/init 语义和 `&scorr` CEX |
 | CEGIS | 未实现 | 核心新增 |
 | local/window proof | 未实现，当前为 whole miter | 核心新增 |
 | `-i` structural-edit integration | 未实现 | 核心新增，但 TFO/active-list 机制已有参考 |
 | 回归和服务器脚本 | 已有 V1 | 需增加 V2 定向测试和统计 |
 
-现有实现完成了命令外壳、speculative rewrite、gain、whole-miter proof、commit/rollback 和回归，约等于
-V2 的安全执行框架。V2 真正具有研究新意的部分——约束反推、divisor matching/synthesis、分步证明、
-结构修改的增量时序 TFO——尚未实现。
+现有实现完成了命令外壳、显式 add/remove speculative rewrite、gain、whole-miter proof、commit/rollback、
+分步证明，以及基于 reset-reachable signature 的约束反推、existing divisor matching 和一门构造 divisor。
+目前真正未完成的核心是精确 sequential ODC、CEX-driven CEGIS、完整时序 TFO local proof 和结构修改的
+增量 metadata。
 
 若以完整 V2 研究原型为 100%，当前可复用工程约占 25%--30%；剩余 70%--75% 包含几乎全部核心
 算法和性能优化。实现顺序是先完成 Phase A+B+C，得到功能完整且保守重建的正确版本；Phase D 的

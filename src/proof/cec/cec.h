@@ -288,6 +288,8 @@ struct Cec_ParTran_t_
     int              nConstrMax;    // constructed AND divisors per victim
     int              nChangesMax;   // accepted transactions
     int              nGainMin;      // minimum AND+register gain to prove
+    int              nSimWords;     // 64-bit words per reachable simulation frame
+    int              nSimFrames;    // random reset-reachable frames per signature batch
     int              fUseConstr;    // enable one-AND constructed divisors
     int              fVerbose;
 };
