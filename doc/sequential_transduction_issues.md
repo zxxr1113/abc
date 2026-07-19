@@ -18,7 +18,11 @@ Implemented:
   existing-divisor scan and the bounded constructed-divisor scan;
 - sampled sequential care: flip a target at one trace/frame and resimulate the
   remaining suffix; changed POs or RIs make that target pattern care;
-- conservative rebuild of signatures after every accepted transaction.
+- conservative rebuild of signatures after every accepted transaction;
+- persistent CEX pattern bank: a failed complete local proof is replayed by bounded BMC; a real SAT witness is
+  injected into the next bit-parallel batch and restarts candidate screening on the same network snapshot;
+- adaptive proof: a depth-limited TFO miter emits every cut edge as a boundary. A proved window is sound; otherwise
+  the candidate expands to the complete local TFO. No window failure can reject a candidate.
 
 Known limitations and follow-up work:
 
@@ -53,9 +57,13 @@ Known limitations and follow-up work:
    construct the explicit union of original/add/final supergate TFOs needed for
    future multi-wire or structural-hash-changing edits.  `&stran -f` runs the
    previous whole-miter proof as a shadow audit.
-7. `Cec_ManLSCorrespondence` currently yields a boolean accept/reject to this
-   command.  SAT versus UNKNOWN and the resulting CEX are not surfaced, so the
-   CEGIS loop cannot yet refine `M1/M0`.
+7. `Cec_ManLSCorrespondence` still exposes only proved/reject to this command.
+   The CEGIS implementation therefore runs a separate bounded BMC only after a rejected **complete** local proof.
+   It adds a pattern only on a concrete SAT witness; no bounded witness is classified as UNKNOWN and cannot prune a
+   candidate. Exposing the original `&scorr` SAT CEX would remove this replay cost and remains future work.
+8. The pattern bank preserves PI traces across transactions. If sequential cleanup changes the register interface,
+   only a CEX whose register width still matches is used to seed initial RO values; its PI trace remains reusable
+   under the reset-based prototype. Exact remapping of nonzero initial state is future work.
 
 ## Invariants to preserve while addressing these issues
 

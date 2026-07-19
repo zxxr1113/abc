@@ -654,3 +654,17 @@ victim 计算出来，再寻找或构造满足该规格的 `h`。
 
 只有前一门成立才增加 constructed divisor 深度或 multi-wire transaction。这样可以把效果差的原因
 明确归因为：规格没有机会、候选构造不足，还是时序证明开销，而不是把三者混在一次大搜索里。
+
+### 18.3 已实现的第一轮闭环（2026-07-19）
+
+- **Batch/PatternDB：** 每个 simulation batch 仍以随机 reset-reachable lanes 为底，但已保留最多 `-R`
+  条 BMC CEX。CEX 的 PI trace（以及 register width 相符时的初始 state）被注入下一批 bit-parallel
+  simulation；network transaction 后不会丢失这些 pattern。
+- **CEGIS：** 当完整 local-TFO `&scorr` proof 未通过时，以 `-E` 帧 bounded BMC 尝试提取真实 SAT witness。
+  只有 SAT witness 入库，并立即从相同 network snapshot 重新生成 `M1/M0`、筛选全部 candidates；没有
+  witness 的失败只是不剪枝的 inconclusive 结果，绝不据此提交。
+- **Adaptive proof：** `-A` 控制先验 TFO 深度。window 的每条 cut edge 都作为差异 boundary，因此 window
+  PASS 是更强且 sound 的证明；window 未 PASS 一律扩展到原有完整 TFO，不会错误拒绝优化。
+- **Profiling：** `&stran -p` 已分开报告 simulation、care/spec/search、gain、window miter/corr、完整
+  retention/removal proof、CEX-BMC，以及 `stored-cex/restarts/sat/inconclusive`。target 行也给出该 gate 的
+  window 命中和 CEX 产生情况。

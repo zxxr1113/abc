@@ -207,7 +207,7 @@ static void Cec_TranPrintProfile( Cec_TranProf_t * p, Cec_TranTargetProf_t * pTo
         p->nRetainCalls, Cec_TranTimeSec(p->timeRetainMiter), Cec_TranTimeSec(p->timeRetainCorr),
         p->nFinalCalls, Cec_TranTimeSec(p->timeFinalMiter), Cec_TranTimeSec(p->timeFinalCorr),
         p->nShadowCalls, Cec_TranTimeSec(p->timeShadow) );
-    Abc_Print( 1, "Sequential transduction CEGIS profile: stored-cex=%d restarts=%d bmc=%d sat=%d unknown=%d time=%.3f sec.\n",
+    Abc_Print( 1, "Sequential transduction CEGIS profile: stored-cex=%d restarts=%d bmc=%d sat=%d inconclusive=%d time=%.3f sec.\n",
         p->nCexStored, p->nCegisRestarts, p->nCexBmcCalls, p->nCexBmcSat,
         p->nCexBmcUnknown, Cec_TranTimeSec(p->timeCexBmc) );
     Abc_Print( 1, "Sequential transduction target aggregate: targets=%d victim-sets=%d existing=%d/%d/%d constructed=%d/%d/%d duplicates=%d gain=%d/%d/%d proofs=%d retain-unproved=%d final-unproved=%d accepted=%d avg-checks=%.1f max-checks=%d.\n",
