@@ -558,11 +558,11 @@ whole-miter shadow audit、commit/rollback、
 目前真正未完成的核心是精确 sequential ODC、CEX-driven CEGIS、supergate/multi-wire 的 TFO union 和
 结构修改的增量 metadata。
 
-若以完整 V2 研究原型为 100%，当前的单线、单 victim 研究原型约完成 55%--60%：已有时序 sampled
-care、existing/constructed divisor、显式 add/remove、local proof、whole-miter shadow 和可复现实验入口。
-剩余主要是 CEX-driven CEGIS、multi-wire/multi-victim transaction、formal care 和增量 metadata；这些不应
-以牺牲证明语义的方式简化。实现顺序是先完成单线原型的候选排序和统计，再完成可导出 CEX 的证明接口，
-最后扩展 transaction 与增量优化。
+若以完整 V2 研究原型为 100%，当前的小 transaction 原型约完成 60%--65%：已有时序 sampled care、
+existing/constructed divisor、显式 add/remove、单 leaf 与双 leaf 替代、local proof、whole-miter shadow、
+候选漏斗统计和可复现实验入口。剩余主要是 CEX-driven CEGIS、多个新增 divisor 的 general transaction、
+formal care 和增量 metadata；这些不应以牺牲证明语义的方式简化。实现顺序是先完成候选排序，再完成可导出
+CEX 的证明接口，最后扩展 transaction 与增量优化。
 
 ## 16. 成功判据
 
