@@ -39,6 +39,54 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseConstr  = 1;
 }
 
+typedef struct Cec_TranProf_t_ Cec_TranProf_t;
+struct Cec_TranProf_t_
+{
+    abctime timeTotal;
+    abctime timeSim;
+    abctime timeCare;
+    abctime timeSpec;
+    abctime timeExisting;
+    abctime timeConstruct;
+    abctime timeGain;
+    abctime timeRetainMiter;
+    abctime timeRetainCorr;
+    abctime timeFinalMiter;
+    abctime timeFinalCorr;
+    abctime timeShadow;
+    int     nSimCalls;
+    int     nCareCalls;
+    int     nSpecCalls;
+    int     nGainCalls;
+    int     nRetainCalls;
+    int     nFinalCalls;
+    int     nShadowCalls;
+};
+
+static double Cec_TranTimeSec( abctime Time )
+{
+    return 1.0 * Time / CLOCKS_PER_SEC;
+}
+
+static void Cec_TranPrintProfile( Cec_TranProf_t * p )
+{
+    abctime Accounted = p->timeSim + p->timeCare + p->timeSpec +
+        p->timeExisting + p->timeConstruct + p->timeGain +
+        p->timeRetainMiter + p->timeRetainCorr +
+        p->timeFinalMiter + p->timeFinalCorr + p->timeShadow;
+    abctime Other = p->timeTotal > Accounted ? p->timeTotal - Accounted : 0;
+    Abc_Print( 1, "Sequential transduction profile: total=%.3f sim=%.3f(%d) care=%.3f(%d) spec=%.3f(%d) existing=%.3f construct=%.3f gain=%.3f(%d) other=%.3f sec.\n",
+        Cec_TranTimeSec(p->timeTotal), Cec_TranTimeSec(p->timeSim), p->nSimCalls,
+        Cec_TranTimeSec(p->timeCare), p->nCareCalls,
+        Cec_TranTimeSec(p->timeSpec), p->nSpecCalls,
+        Cec_TranTimeSec(p->timeExisting), Cec_TranTimeSec(p->timeConstruct),
+        Cec_TranTimeSec(p->timeGain), p->nGainCalls, Cec_TranTimeSec(Other) );
+    Abc_Print( 1, "Sequential transduction proof profile: retain=%d miter=%.3f corr=%.3f final=%d miter=%.3f corr=%.3f shadow=%d time=%.3f sec.\n",
+        p->nRetainCalls, Cec_TranTimeSec(p->timeRetainMiter), Cec_TranTimeSec(p->timeRetainCorr),
+        p->nFinalCalls, Cec_TranTimeSec(p->timeFinalMiter), Cec_TranTimeSec(p->timeFinalCorr),
+        p->nShadowCalls, Cec_TranTimeSec(p->timeShadow) );
+}
+
 // A signature is a collection of independent reset-reachable random traces.
 // Every word carries 64 traces in parallel; consecutive frame groups carry
 // the successive states of each trace.  These signatures only guide search:
@@ -598,24 +646,39 @@ static int Cec_TranProveWhole( Gia_Man_t * p, Gia_Man_t * pCand, Cec_ParTran_t *
 
 static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
     Gia_Man_t * pWhole1, Cec_ParTran_t * pPars, int iTarget, int iFanin0, int iFanin1,
-    int iDiv0, int iDiv1, int fDivCompl, int fRemove )
+    int iDiv0, int iDiv1, int fDivCompl, int fRemove, Cec_TranProf_t * pProf )
 {
     Cec_ParCor_t Cor;
     Gia_Man_t * pMiter, * pReduced;
     int fProved;
+    abctime clk = Abc_Clock();
     pMiter = Cec_TranBuildLocalMiter( p, iTarget, iFanin0, iFanin1,
         iDiv0, iDiv1, fDivCompl, fRemove );
+    if ( fRemove )
+        pProf->timeFinalMiter += Abc_Clock() - clk, pProf->nFinalCalls++;
+    else
+        pProf->timeRetainMiter += Abc_Clock() - clk, pProf->nRetainCalls++;
     Cec_ManCorSetDefaultParams( &Cor );
     Cor.nFrames   = pPars->nFrames;
     Cor.nBTLimit  = pPars->nBTLimit;
     Cor.nStepsMax = pPars->nStepsMax;
     Cor.fVerbose  = 0;
+    clk = Abc_Clock();
     pReduced = Cec_ManLSCorrespondence( pMiter, &Cor );
+    if ( fRemove )
+        pProf->timeFinalCorr += Abc_Clock() - clk;
+    else
+        pProf->timeRetainCorr += Abc_Clock() - clk;
     fProved = Cec_TranAllPosAreZero( pReduced );
     Gia_ManStop( pReduced );
     Gia_ManStop( pMiter );
     if ( fProved && pPars->fShadow )
+    {
+        clk = Abc_Clock();
         fProved = Cec_TranProveWhole( pWhole0, pWhole1, pPars );
+        pProf->timeShadow += Abc_Clock() - clk;
+        pProf->nShadowCalls++;
+    }
     return fProved;
 }
 
@@ -625,14 +688,17 @@ static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
 static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     int iTarget, int iFanin0, int iFanin1, int iDiv0, int iDiv1, int fDivCompl, int * pnTried,
     int * pnPositive, int * pnGainRejected, int * pnRetainUnproved,
-    int * pnFinalUnproved, int * pnAccepted )
+    int * pnFinalUnproved, int * pnAccepted, Cec_TranProf_t * pProf )
 {
     Gia_Man_t * p = *pp, * pAdd, * pFinal, * pCand;
     int Gain, fRetain, fRemove;
+    abctime clk = Abc_Clock();
     pAdd   = Cec_TranDupEdit( p, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1 );
     pFinal = Cec_TranDupEdit( p, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0 );
     pCand  = Cec_TranCleanup( pFinal );
     Gain = Cec_TranGain( p, pCand );
+    pProf->timeGain += Abc_Clock() - clk;
+    pProf->nGainCalls++;
     if ( Gain < pPars->nGainMin || Gia_ManRegNum(pCand) == 0 )
     {
         (*pnGainRejected)++;
@@ -679,9 +745,9 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     // establishes the intended add-then-remove transaction.  When -f is on,
     // Cec_TranProveTransaction additionally shadows the direct whole miter.
     fRetain = Cec_TranProveTransaction(p, p, pAdd, pPars,
-        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0);
+        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0, pProf);
     fRemove = fRetain && Cec_TranProveTransaction(p, pAdd, pFinal, pPars,
-        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1);
+        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1, pProf);
     if ( !fRemove )
     {
         if ( !fRetain )
@@ -712,6 +778,7 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
 
 Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
 {
+    Cec_TranProf_t Prof = {0};
     Gia_Man_t * p;
     Gia_Obj_t * pObj, * pDiv;
     Cec_TranSim_t * pSim;
@@ -727,7 +794,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     int nCareBits = 0;
     int nVictim, nVictim2, iFanin1, nBaseLimit, nConstrLimit, nVictimSets = 0;
     int fChanged;
-    abctime clk = Abc_Clock();
+    abctime clk = Abc_Clock(), clkPhase;
     assert( Gia_ManRegNum(pGia) > 0 );
     Abc_Print( 1, "Sequential transduction: AND = %d, Reg = %d, frames = %d, conf = %d.\n",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nFrames, pPars->nBTLimit );
@@ -738,7 +805,10 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         // Signatures are rebuilt after every committed transaction.  This is
         // intentionally conservative while structural edit caches do not yet
         // exist; no candidate is ever proved against a stale snapshot.
+        clkPhase = Abc_Clock();
         pSim = Cec_TranSimStart( p, pPars );
+        Prof.timeSim += Abc_Clock() - clkPhase;
+        Prof.nSimCalls++;
         // Structural filtering is free: a topologically earlier object cannot
         // be in the target's TFO, so it cannot create a combinational cycle.
         Gia_ManForEachAnd( p, pObj, i )
@@ -746,7 +816,10 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
             if ( Gia_ObjIsXor(pObj) )
                 continue;
             vSuper = Cec_TranCollectSuper( p, i );
+            clkPhase = Abc_Clock();
             pCare = Cec_TranSimComputeCare( pSim, i );
+            Prof.timeCare += Abc_Clock() - clkPhase;
+            Prof.nCareCalls++;
             nCareBits += Cec_TranCountOnes( pCare, pSim->nSlots );
             for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged; f++ )
             {
@@ -767,11 +840,15 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 nVictimSets++;
                 // Compute the specification once.  Every existing divisor
                 // and every one-gate construction below shares these masks.
+                clkPhase = Abc_Clock();
                 pSpec = Cec_TranSpecStart( pSim, pCare, i, f, iFanin1 );
+                Prof.timeSpec += Abc_Clock() - clkPhase;
+                Prof.nSpecCalls++;
                 vMatches = Vec_IntAlloc( pPars->nDivsMax );
                 // Test the full topologically-safe pool with bit-parallel
                 // Must1/Must0 masks, but retain only the nearest matching
                 // literals for expensive formal proof attempts.
+                clkPhase = Abc_Clock();
                 for ( d = i - 1; d > 0; d-- )
                 {
                     pDiv = Gia_ManObj( p, d );
@@ -794,13 +871,14 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                             Vec_IntPush( vMatches, iDiv0 );
                     }
                 }
+                Prof.timeExisting += Abc_Clock() - clkPhase;
                 Vec_IntForEachEntry( vMatches, iDiv0, j )
                 {
                     if ( nTried >= pPars->nCandMax )
                         break;
                     fChanged = Cec_TranTryCommit( &p, pPars, i, f, iFanin1, iDiv0, -1, 0,
                         &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
-                        &nFinalUnproved, &nAccepted );
+                        &nFinalUnproved, &nAccepted, &Prof );
                     if ( fChanged )
                         break;
                 }
@@ -814,6 +892,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 // A bounded base pool makes the O(D^2 W) construction pass
                 // predictable.  Its literals include both phases, so AND and
                 // complemented-AND cover AND/OR/AND-NOT forms.
+                clkPhase = Abc_Clock();
                 nBaseLimit = pPars->nConstrBaseMax;
                 nConstrLimit = pPars->nConstrMax;
                 vBases = Vec_IntAlloc( nBaseLimit ? nBaseLimit : 100 );
@@ -858,6 +937,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                         }
                     }
                 }
+                Prof.timeConstruct += Abc_Clock() - clkPhase;
                 for ( j = 0; j < Vec_IntSize(vConstr) && !fChanged && nTried < pPars->nCandMax; j += 3 )
                 {
                     iDiv0 = Vec_IntEntry( vConstr, j );
@@ -865,7 +945,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                     iEntry = Vec_IntEntry( vConstr, j + 2 );
                     fChanged = Cec_TranTryCommit( &p, pPars, i, f, iFanin1, iDiv0, iDiv1, iEntry,
                         &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
-                        &nFinalUnproved, &nAccepted );
+                        &nFinalUnproved, &nAccepted, &Prof );
                 }
                 Vec_IntFree( vConstr );
                 Vec_WrdFree( vConstrSigs );
@@ -882,11 +962,14 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         Cec_TranSimStop( pSim );
     }
     while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
+    Prof.timeTotal = Abc_Clock() - clk;
     Abc_Print( 1, "Sequential transduction: victim-sets=%d proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-positive=%d gain-rejected=%d retain-unproved=%d final-unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
         nVictimSets, nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nSigDuplicate,
         nPositive, nGainRejected, nRetainUnproved, nFinalUnproved, nAccepted,
         Gia_ManAndNum(pGia), Gia_ManAndNum(p),
-        1.0 * (Abc_Clock() - clk) / CLOCKS_PER_SEC );
+        Cec_TranTimeSec(Prof.timeTotal) );
+    if ( pPars->fProfile )
+        Cec_TranPrintProfile( &Prof );
     return p;
 }
 

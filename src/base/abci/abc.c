@@ -42189,7 +42189,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMxfvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMxfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42259,6 +42259,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'f':
             pPars->fShadow ^= 1;
             break;
+        case 'p':
+            pPars->fProfile ^= 1;
+            break;
         case 'v':
             pPars->fVerbose ^= 1;
             break;
@@ -42286,7 +42289,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBM num] [-xfvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBM num] [-xfpvh]\n" );
     Abc_Print( -2, "\t         performs bounded sequential transduction using scorr proof infrastructure\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
@@ -42302,6 +42305,7 @@ usage:
     Abc_Print( -2, "\t-M num : exactly 1 or 2 leaves replaced by one divisor [default = %d]\n", pPars->nVictimsMax );
     Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
+    Abc_Print( -2, "\t-p     : toggle phase-level runtime profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;

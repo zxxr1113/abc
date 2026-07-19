@@ -294,6 +294,7 @@ struct Cec_ParTran_t_
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              fUseConstr;    // enable one-AND constructed divisors
     int              fShadow;       // whole-miter shadow audit for local proofs
+    int              fProfile;      // print phase-level runtime profile
     int              fVerbose;
 };
 extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );
