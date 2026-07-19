@@ -320,7 +320,7 @@ static void Cec_TranPatDbInjectInit( Cec_TranPatDb_t * pDb, Cec_TranSim_t * p )
             continue;
         w = c >> 6;
         iLane = c & 63;
-        for ( r = 0; r < pDb->nRegs; r++ )
+        for ( r = 0; r < pCex->nRegs; r++ )
             p->pState[r * p->nWords + w] = Cec_TranSetLane(
                 p->pState[r * p->nWords + w], iLane, Abc_InfoHasBit(pCex->pData, r) );
     }
