@@ -240,6 +240,17 @@ CSV_FIELDS = [
 ]
 
 
+def write_csv_atomic(output: Path, rows: list[Dict[str, Any]]) -> None:
+    """Checkpoint completed cases without exposing a partially written CSV."""
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary = output.with_name(output.name + ".tmp")
+    with temporary.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
+        writer.writeheader()
+        writer.writerows(rows)
+    os.replace(temporary, output)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Benchmark &scorr followed by &stran.")
     parser.add_argument("--aig-dir", default=DEFAULT_AIG_DIR)
@@ -258,6 +269,7 @@ def main() -> None:
     aig_dir = Path(args.aig_dir).expanduser().resolve()
     abc = str(Path(args.abc).expanduser().resolve())
     output = Path(args.out).expanduser()
+    output.parent.mkdir(parents=True, exist_ok=True)
     if not aig_dir.is_dir():
         sys.exit(f"[ERROR] AIG directory not found: {aig_dir}")
     if args.timeout < 1 or args.jobs < 1:
@@ -290,6 +302,7 @@ def main() -> None:
             row["file"] = name
             row["error"] = repr(exc)
         rows.append(row)
+        write_csv_atomic(output, rows)
         print(
                 f"[{done:>4}/{len(tasks)}] {name:45s} "
                 f"scorr={row['scorr_time_ms']}ms stran={row['stran_time_ms']}ms "
@@ -297,21 +310,37 @@ def main() -> None:
                 f"extraLatch={row['stran_extra_latch_reduction']} dsec={row['dsec_status']}"
         )
 
-    if args.jobs == 1:
-        for done, task in enumerate(tasks, start=1):
-            collect(task[1], lambda task=task: worker(task), done)
-    else:
-        with ProcessPoolExecutor(max_workers=args.jobs) as pool:
+    try:
+        if args.jobs == 1:
+            for done, task in enumerate(tasks, start=1):
+                collect(task[1], lambda task=task: worker(task), done)
+        else:
+            pool = ProcessPoolExecutor(max_workers=args.jobs)
             futures = {pool.submit(worker, task): task[1] for task in tasks}
-            for done, future in enumerate(as_completed(futures), start=1):
-                collect(futures[future], future, done)
+            try:
+                for done, future in enumerate(as_completed(futures), start=1):
+                    collect(futures[future], future, done)
+            except KeyboardInterrupt:
+                # Queued cases are cancelled.  The up-to-jobs active ABC
+                # processes may finish, but their results are not needed for
+                # the already checkpointed partial CSV.
+                for future in futures:
+                    future.cancel()
+                try:
+                    pool.shutdown(wait=False, cancel_futures=True)
+                except TypeError:  # Python < 3.9
+                    pool.shutdown(wait=False)
+                raise
+            else:
+                pool.shutdown(wait=True)
+    except KeyboardInterrupt:
+        rows.sort(key=lambda row: row["file"])
+        write_csv_atomic(output, rows)
+        print(f"\n[STOP] Stopped by user. Partial CSV with {len(rows)} completed cases: {output}")
+        return
 
     rows.sort(key=lambda row: row["file"])
-    output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
-        writer.writeheader()
-        writer.writerows(rows)
+    write_csv_atomic(output, rows)
     elapsed = time.perf_counter() - started
     print(f"[INFO] Done in {elapsed:.1f}s. CSV: {output}")
 

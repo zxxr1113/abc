@@ -589,6 +589,10 @@ transduction 又找到了多少额外 AND/latch 缩减；`scorr_time_ms`、`stra
 正确性。`--jobs` 控制 benchmark 级并行，`--timeout` 是每个 ABC 子任务的超时，`--scorr-args` 和
 `--stran-args` 可直接指定完整参数串。`--keep-artifacts` 用于保留失败 case 的 AIG 和日志。
 
+CSV 在每完成一个 benchmark 后原子更新。运行中第一次按 `Ctrl-C` 会取消尚未开始的 queued case，并将已完成
+case 写成可直接分析的 partial CSV；最多只有当前并行运行的 `--jobs` 个 case 仍可能在后台收尾。不要对旧版
+脚本使用这一约定：旧版只在全部结束后写 CSV。
+
 脚本不默认添加 `&stran -f`，因为 whole-miter shadow 属于开发期审计成本；最终 `dsec` 对每个 benchmark
 仍然是强制的。对固定 `&scorr` 参数，扫描 `&stran` 的 `-M/-D/-B/-K/-Q/-W/-C/-T` 即可得到质量-时间曲线。
 
