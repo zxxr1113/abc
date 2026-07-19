@@ -17,7 +17,10 @@ abc_bin=${ABC_BIN:-./abc}
 result_dir=$1
 shift
 stran_args=${STRAN_ARGS:--F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8}
-shadow_args=${STRAN_SHADOW:--f}
+shadow_args=-f
+if [[ ${STRAN_SHADOW+x} ]]; then
+    shadow_args=$STRAN_SHADOW
+fi
 
 mkdir -p "$result_dir"
 summary="$result_dir/summary.tsv"

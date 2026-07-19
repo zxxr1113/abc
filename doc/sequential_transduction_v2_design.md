@@ -595,6 +595,9 @@ CEX 的证明接口，最后扩展 transaction 与增量优化。
 `sweep.tsv`。可用环境变量 `STRAN_SWEEP_CONFIGS` 传入按行书写的 `name|&stran arguments`，从而做固定预算下
 的 `-D/-B/-K/-Q/-W/-M` 扫描；每个配置仍保留自身的 AIG、日志和 `dsec` 结果。
 
+两个脚本默认开启 `-f`，适合作为开发期双重审计。做 runtime/QoR 实验时设 `STRAN_SHADOW=''` 关闭 whole-miter
+shadow；独立 `dsec` 仍会运行，故不会降低最终结果的等价审计强度。
+
 ## 17. 正确性注意事项清单
 
 实现和review时必须逐项确认：

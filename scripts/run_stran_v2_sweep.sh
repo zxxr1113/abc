@@ -20,7 +20,10 @@ fi
 result_dir=$1
 shift
 abc_bin=${ABC_BIN:-./abc}
-shadow_args=${STRAN_SHADOW:--f}
+shadow_args=-f
+if [[ ${STRAN_SHADOW+x} ]]; then
+    shadow_args=$STRAN_SHADOW
+fi
 configs=${STRAN_SWEEP_CONFIGS:-$'single|-M 1 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8\npair|-M 2 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8'}
 
 mkdir -p "$result_dir"
