@@ -521,7 +521,7 @@ $$
 | 分步 retention/removal proof | 已完成：local proof 分别检查 add 与 remove，`-f` 可逐步 whole-miter 对照 | 可复用 |
 | AND supergate wire addition | 已完成正相 AIG AND supergate 的 add/remove | 需扩展到 multi-wire transaction |
 | victim-first MFFC ranking | 未实现 | 新增 |
-| `M1/M0` 计算 | 已实现正相 AND supergate 上的保守 sampled `M1=k&P`、`M0=!k&P` | 需接入完整 `C_i^{seq}` |
+| `M1/M0` 计算 | 已实现 sampled sequential care：翻转 target 后沿 trace suffix 重仿真，PO 或 RI 差异形成 `C_i^{seq}`；据此计算 `M1=C_i&k&P`、`M0=C_i&!k&P` | 需接入 formal/CEX care |
 | reachable simulation signatures | 已实现：随机 PI、zero-reset RO、RI-to-RO 状态推进、bit-parallel word signatures；每个 victim 一次生成 Must masks，整池 divisor 共享匹配 | 需合并真实 reset/init 语义和 `&scorr` CEX |
 | CEGIS | 未实现 | 核心新增 |
 | local/window proof | 已实现完整组合 TFO 边界 proof；affected RI 作为跨帧归纳边界 | 需扩展到 supergate/multi-wire union TFO |

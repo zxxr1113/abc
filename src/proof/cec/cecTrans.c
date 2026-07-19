@@ -63,6 +63,14 @@ static inline word Cec_TranSimLit( Cec_TranSim_t * p, int iLit, int iSlot )
         (Abc_LitIsCompl(iLit) ? ~(word)0 : 0);
 }
 
+static int Cec_TranCountOnes( word * pData, int nWords )
+{
+    int i, Count = 0;
+    for ( i = 0; i < nWords; i++ )
+        Count += (int)__builtin_popcountll( pData[i] );
+    return Count;
+}
+
 static Cec_TranSim_t * Cec_TranSimStart( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
 {
     Cec_TranSim_t * p;
@@ -136,6 +144,81 @@ static Vec_Int_t * Cec_TranCollectSuper( Gia_Man_t * p, int iTarget )
     return vSuper;
 }
 
+static inline word Cec_TranTempLit( word * pVals, int nWords, int iLit, int w )
+{
+    return pVals[(size_t)Abc_Lit2Var(iLit) * nWords + w] ^
+        (Abc_LitIsCompl(iLit) ? ~(word)0 : 0);
+}
+
+// For each sampled trace/timepoint, flip the target exactly at that frame and
+// resimulate the remaining suffix.  A changed PO proves observability.  A
+// changed RI is conservatively treated as observable too: its future RO may
+// affect a PO beyond the sampled suffix.  The result is a sampled sequential
+// care mask C_i^seq, not a formal proof and never a commit criterion.
+static word * Cec_TranSimComputeCare( Cec_TranSim_t * p, int iTarget )
+{
+    Gia_Man_t * pGia = p->pGia;
+    Gia_Obj_t * pObj;
+    word * pCare, * pVals, * pState, * pNext;
+    int fStart, f, w, i, iSlot, iFan0, iFan1, iDriver;
+    word v0, v1, v;
+    pCare  = ABC_CALLOC( word, p->nSlots );
+    pVals  = ABC_CALLOC( word, (size_t)Gia_ManObjNum(pGia) * p->nWords );
+    pState = ABC_ALLOC( word, (size_t)Gia_ManRegNum(pGia) * p->nWords );
+    pNext  = ABC_ALLOC( word, (size_t)Gia_ManRegNum(pGia) * p->nWords );
+    for ( fStart = 0; fStart < p->nFrames; fStart++ )
+    {
+        Gia_ManForEachRo( pGia, pObj, i )
+            for ( w = 0; w < p->nWords; w++ )
+                pState[i * p->nWords + w] =
+                    Cec_TranSimObj(p, Gia_ObjId(pGia, pObj))[fStart * p->nWords + w];
+        for ( f = fStart; f < p->nFrames; f++ )
+        {
+            for ( w = 0; w < p->nWords; w++ )
+            {
+                iSlot = f * p->nWords + w;
+                Gia_ManForEachPi( pGia, pObj, i )
+                    pVals[(size_t)Gia_ObjId(pGia, pObj) * p->nWords + w] =
+                        Cec_TranSimObj(p, Gia_ObjId(pGia, pObj))[iSlot];
+                Gia_ManForEachRo( pGia, pObj, i )
+                    pVals[(size_t)Gia_ObjId(pGia, pObj) * p->nWords + w] =
+                        pState[i * p->nWords + w];
+                Gia_ManForEachAnd( pGia, pObj, i )
+                {
+                    iFan0 = Gia_ObjFaninId0p( pGia, pObj );
+                    iFan1 = Gia_ObjFaninId1p( pGia, pObj );
+                    v0 = pVals[(size_t)iFan0 * p->nWords + w] ^ (Gia_ObjFaninC0(pObj) ? ~(word)0 : 0);
+                    v1 = pVals[(size_t)iFan1 * p->nWords + w] ^ (Gia_ObjFaninC1(pObj) ? ~(word)0 : 0);
+                    v = Gia_ObjIsXor(pObj) ? (v0 ^ v1) : (v0 & v1);
+                    if ( i == iTarget && f == fStart )
+                        v = ~Cec_TranSimObj(p, iTarget)[iSlot];
+                    pVals[(size_t)i * p->nWords + w] = v;
+                }
+                Gia_ManForEachPo( pGia, pObj, i )
+                {
+                    iDriver = Gia_ObjFaninLit0p( pGia, pObj );
+                    v = Cec_TranTempLit( pVals, p->nWords, iDriver, w );
+                    pCare[fStart * p->nWords + w] |= v ^ Cec_TranSimObj(p, Gia_ObjId(pGia, pObj))[iSlot];
+                }
+                Gia_ManForEachRi( pGia, pObj, i )
+                {
+                    iDriver = Gia_ObjFaninLit0p( pGia, pObj );
+                    v = Cec_TranTempLit( pVals, p->nWords, iDriver, w );
+                    pVals[(size_t)Gia_ObjId(pGia, pObj) * p->nWords + w] = v;
+                    pCare[fStart * p->nWords + w] |= v ^ Cec_TranSimObj(p, Gia_ObjId(pGia, pObj))[iSlot];
+                    pNext[i * p->nWords + w] = v;
+                }
+            }
+            for ( i = 0; i < Gia_ManRegNum(pGia) * p->nWords; i++ )
+                pState[i] = pNext[i];
+        }
+    }
+    ABC_FREE( pVals );
+    ABC_FREE( pState );
+    ABC_FREE( pNext );
+    return pCare;
+}
+
 // This is the conservative first implementation of the specification from
 // the design document.  It deliberately takes C_i=1, so it recognizes
 // requirements at the target itself and never treats sampled ODC as proof.
@@ -148,7 +231,7 @@ struct Cec_TranSpec_t_
     word *          pMust0;
 };
 
-static Cec_TranSpec_t * Cec_TranSpecStart( Cec_TranSim_t * p, int iTarget, int iFanin )
+static Cec_TranSpec_t * Cec_TranSpecStart( Cec_TranSim_t * p, word * pCare, int iTarget, int iFanin )
 {
     Cec_TranSpec_t * pSpec = ABC_CALLOC( Cec_TranSpec_t, 1 );
     Vec_Int_t * vSuper = Cec_TranCollectSuper( p->pGia, iTarget );
@@ -165,8 +248,8 @@ static Cec_TranSpec_t * Cec_TranSpecStart( Cec_TranSim_t * p, int iTarget, int i
         Vec_IntForEachEntry( vSuper, iLeaf, i )
             if ( i != iFanin )
                 q &= Cec_TranSimLit( p, iLeaf, s );
-        pSpec->pMust1[s] = k & q;
-        pSpec->pMust0[s] = ~k & q;
+        pSpec->pMust1[s] = (pCare ? pCare[s] : ~(word)0) & k & q;
+        pSpec->pMust0[s] = (pCare ? pCare[s] : ~(word)0) & ~k & q;
     }
     Vec_IntFree( vSuper );
     return pSpec;
@@ -558,10 +641,12 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Gia_Obj_t * pObj, * pDiv;
     Cec_TranSim_t * pSim;
     Cec_TranSpec_t * pSpec;
+    word * pCare;
     Vec_Int_t * vMatches, * vBases, * vConstr, * vSuper;
     int i, f, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
     int nExisting = 0, nConstructed = 0, nPositive = 0, nTried = 0, nAccepted = 0;
     int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0;
+    int nCareBits = 0;
     int nVictim, nBaseLimit, nConstrLimit;
     int fChanged;
     abctime clk = Abc_Clock();
@@ -583,12 +668,14 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
             if ( Gia_ObjIsXor(pObj) )
                 continue;
             vSuper = Cec_TranCollectSuper( p, i );
+            pCare = Cec_TranSimComputeCare( pSim, i );
+            nCareBits += Cec_TranCountOnes( pCare, pSim->nSlots );
             for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged; f++ )
             {
                 nVictim = Vec_IntEntry( vSuper, f );
                 // Compute the specification once.  Every existing divisor
                 // and every one-gate construction below shares these masks.
-                pSpec = Cec_TranSpecStart( pSim, i, f );
+                pSpec = Cec_TranSpecStart( pSim, pCare, i, f );
                 vMatches = Vec_IntAlloc( pPars->nDivsMax );
                 // Test the full topologically-safe pool with bit-parallel
                 // Must1/Must0 masks, but retain only the nearest matching
@@ -682,6 +769,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 Vec_IntFree( vBases );
                 Cec_TranSpecStop( pSpec );
             }
+            ABC_FREE( pCare );
             Vec_IntFree( vSuper );
             if ( fChanged || nTried >= pPars->nCandMax || nAccepted >= pPars->nChangesMax )
                 break;
@@ -689,8 +777,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         Cec_TranSimStop( pSim );
     }
     while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
-    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d sig-checks=%d sig-rejected=%d sig-matched=%d gain-filtered=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
-        nTried, nExisting, nConstructed, nSigChecks, nSigRejected, nSigMatched, nPositive, nAccepted,
+    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d gain-filtered=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
+        nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nPositive, nAccepted,
         Gia_ManAndNum(pGia), Gia_ManAndNum(p),
         1.0 * (Abc_Clock() - clk) / CLOCKS_PER_SEC );
     return p;

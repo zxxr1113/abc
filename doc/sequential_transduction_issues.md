@@ -16,14 +16,18 @@ Implemented:
   OR, and AND-NOT forms when input phases are selected;
 - one precomputed `Must1/Must0` bitset pair per victim, shared by the full
   existing-divisor scan and the bounded constructed-divisor scan;
+- sampled sequential care: flip a target at one trace/frame and resimulate the
+  remaining suffix; changed POs or RIs make that target pattern care;
 - conservative rebuild of signatures after every accepted transaction.
 
 Known limitations and follow-up work:
 
-1. The sampled care is deliberately `C_i=1`.  It does not yet derive the
-   sequential observability condition through PO and RI-to-RO paths.  This
-   loses optimization opportunities but is safe because formal retention and
-   removal proofs remain mandatory.
+1. Sequential care is still sampled rather than formal.  It observes changed
+   POs across each recorded trace suffix and conservatively marks an immediate
+   RI difference as care.  It therefore improves on `C_i=1`, but it may miss
+   reachable traces or care beyond the sampled horizon.  This only affects
+   candidate quality because formal retention and removal proofs remain
+   mandatory.
 2. Simulation initializes every RO to zero.  This agrees with the current
    intended reset-based prototype, but GIA register-init metadata and the exact
    initialization semantics used by `&scorr` have not yet been imported.  A
