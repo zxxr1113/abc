@@ -140,13 +140,24 @@ static Vec_Int_t * Cec_TranCollectSuper( Gia_Man_t * p, int iTarget )
 // the design document.  It deliberately takes C_i=1, so it recognizes
 // requirements at the target itself and never treats sampled ODC as proof.
 // Phase C will replace this with exact sequential-TFO care masks.
-static int Cec_TranSigMatches( Cec_TranSim_t * p, int iTarget, int iFanin,
-    int iDiv0, int iDiv1, int fDivCompl )
+typedef struct Cec_TranSpec_t_ Cec_TranSpec_t;
+struct Cec_TranSpec_t_
 {
+    Cec_TranSim_t * pSim;
+    word *          pMust1;
+    word *          pMust0;
+};
+
+static Cec_TranSpec_t * Cec_TranSpecStart( Cec_TranSim_t * p, int iTarget, int iFanin )
+{
+    Cec_TranSpec_t * pSpec = ABC_CALLOC( Cec_TranSpec_t, 1 );
     Vec_Int_t * vSuper = Cec_TranCollectSuper( p->pGia, iTarget );
     int iVictim = Vec_IntEntry( vSuper, iFanin );
     int s, i, iLeaf;
-    word k, q, h;
+    word k, q;
+    pSpec->pSim = p;
+    pSpec->pMust1 = ABC_ALLOC( word, p->nSlots );
+    pSpec->pMust0 = ABC_ALLOC( word, p->nSlots );
     for ( s = 0; s < p->nSlots; s++ )
     {
         k = Cec_TranSimLit( p, iVictim, s );
@@ -154,18 +165,34 @@ static int Cec_TranSigMatches( Cec_TranSim_t * p, int iTarget, int iFanin,
         Vec_IntForEachEntry( vSuper, iLeaf, i )
             if ( i != iFanin )
                 q &= Cec_TranSimLit( p, iLeaf, s );
-        h = Cec_TranSimLit( p, iDiv0, s );
-        if ( iDiv1 != -1 )
-            h &= Cec_TranSimLit( p, iDiv1, s );
-        if ( fDivCompl )
-            h = ~h;
-        if ( (k & q & ~h) || (~k & q & h) )
-        {
-            Vec_IntFree( vSuper );
-            return 0;
-        }
+        pSpec->pMust1[s] = k & q;
+        pSpec->pMust0[s] = ~k & q;
     }
     Vec_IntFree( vSuper );
+    return pSpec;
+}
+
+static void Cec_TranSpecStop( Cec_TranSpec_t * p )
+{
+    ABC_FREE( p->pMust1 );
+    ABC_FREE( p->pMust0 );
+    ABC_FREE( p );
+}
+
+static int Cec_TranSpecMatches( Cec_TranSpec_t * p, int iDiv0, int iDiv1, int fDivCompl )
+{
+    int s;
+    word h;
+    for ( s = 0; s < p->pSim->nSlots; s++ )
+    {
+        h = Cec_TranSimLit( p->pSim, iDiv0, s );
+        if ( iDiv1 != -1 )
+            h &= Cec_TranSimLit( p->pSim, iDiv1, s );
+        if ( fDivCompl )
+            h = ~h;
+        if ( (p->pMust1[s] & ~h) || (p->pMust0[s] & h) )
+            return 0;
+    }
     return 1;
 }
 
@@ -530,6 +557,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Gia_Man_t * p;
     Gia_Obj_t * pObj, * pDiv;
     Cec_TranSim_t * pSim;
+    Cec_TranSpec_t * pSpec;
     Vec_Int_t * vMatches, * vBases, * vConstr, * vSuper;
     int i, f, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
     int nExisting = 0, nConstructed = 0, nPositive = 0, nTried = 0, nAccepted = 0;
@@ -558,6 +586,9 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
             for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged; f++ )
             {
                 nVictim = Vec_IntEntry( vSuper, f );
+                // Compute the specification once.  Every existing divisor
+                // and every one-gate construction below shares these masks.
+                pSpec = Cec_TranSpecStart( pSim, i, f );
                 vMatches = Vec_IntAlloc( pPars->nDivsMax );
                 // Test the full topologically-safe pool with bit-parallel
                 // Must1/Must0 masks, but retain only the nearest matching
@@ -574,7 +605,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                             continue;
                         nExisting++;
                         nSigChecks++;
-                        if ( !Cec_TranSigMatches(pSim, i, f, iDiv0, -1, 0) )
+                        if ( !Cec_TranSpecMatches(pSpec, iDiv0, -1, 0) )
                         {
                             nSigRejected++;
                             continue;
@@ -595,7 +626,10 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 }
                 Vec_IntFree( vMatches );
                 if ( !pPars->fUseConstr || fChanged || pPars->nConstrMax == 0 )
+                {
+                    Cec_TranSpecStop( pSpec );
                     continue;
+                }
 
                 // A bounded base pool makes the O(D^2 W) construction pass
                 // predictable.  Its literals include both phases, so AND and
@@ -621,7 +655,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                         {
                             nConstructed++;
                             nSigChecks++;
-                            if ( !Cec_TranSigMatches(pSim, i, f, iDiv0, iDiv1, fDivCompl) )
+                            if ( !Cec_TranSpecMatches(pSpec, iDiv0, iDiv1, fDivCompl) )
                             {
                                 nSigRejected++;
                                 continue;
@@ -646,6 +680,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 }
                 Vec_IntFree( vConstr );
                 Vec_IntFree( vBases );
+                Cec_TranSpecStop( pSpec );
             }
             Vec_IntFree( vSuper );
             if ( fChanged || nTried >= pPars->nCandMax || nAccepted >= pPars->nChangesMax )

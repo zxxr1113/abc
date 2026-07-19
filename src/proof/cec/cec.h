@@ -285,7 +285,7 @@ struct Cec_ParTran_t_
     int              nStepsMax;     // scorr induction refinement limit
     int              nCandMax;      // total number of exact proof attempts
     int              nDivsMax;      // local existing divisors per victim
-    int              nConstrMax;    // constructed AND divisors per victim
+    int              nConstrMax;    // signature-matched one-gate divisors per victim
     int              nChangesMax;   // accepted transactions
     int              nGainMin;      // minimum AND+register gain to prove
     int              nSimWords;     // 64-bit words per reachable simulation frame

@@ -14,6 +14,8 @@ Implemented:
 - matching of both phases of all topologically earlier CI/AND divisors;
 - one-gate `h = d0 & d1` and `h = !(d0 & d1)` candidates, which cover AND,
   OR, and AND-NOT forms when input phases are selected;
+- one precomputed `Must1/Must0` bitset pair per victim, shared by the full
+  existing-divisor scan and the bounded constructed-divisor scan;
 - conservative rebuild of signatures after every accepted transaction.
 
 Known limitations and follow-up work:

@@ -522,7 +522,7 @@ $$
 | AND supergate wire addition | 已完成正相 AIG AND supergate 的 add/remove | 需扩展到 multi-wire transaction |
 | victim-first MFFC ranking | 未实现 | 新增 |
 | `M1/M0` 计算 | 已实现正相 AND supergate 上的保守 sampled `M1=k&P`、`M0=!k&P` | 需接入完整 `C_i^{seq}` |
-| reachable simulation signatures | 已实现：随机 PI、zero-reset RO、RI-to-RO 状态推进、bit-parallel word signatures | 需合并真实 reset/init 语义和 `&scorr` CEX |
+| reachable simulation signatures | 已实现：随机 PI、zero-reset RO、RI-to-RO 状态推进、bit-parallel word signatures；每个 victim 一次生成 Must masks，整池 divisor 共享匹配 | 需合并真实 reset/init 语义和 `&scorr` CEX |
 | CEGIS | 未实现 | 核心新增 |
 | local/window proof | 已实现完整组合 TFO 边界 proof；affected RI 作为跨帧归纳边界 | 需扩展到 supergate/multi-wire union TFO |
 | `-i` structural-edit integration | 未实现 | 核心新增，但 TFO/active-list 机制已有参考 |
