@@ -42189,7 +42189,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBxfvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMxfvh")) != EOF )
     {
         switch ( c )
         {
@@ -42248,6 +42248,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nConstrBaseMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nConstrBaseMax < 0 ) goto usage;
             break;
+        case 'M':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nVictimsMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nVictimsMax < 1 || pPars->nVictimsMax > 2 ) goto usage;
+            break;
         case 'x':
             pPars->fUseConstr ^= 1;
             break;
@@ -42281,7 +42286,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKB num] [-xfvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBM num] [-xfvh]\n" );
     Abc_Print( -2, "\t         performs bounded sequential transduction using scorr proof infrastructure\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
@@ -42294,6 +42299,7 @@ usage:
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : matching one-gate constructed divisors per victim [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : literals in construction base pool (0 = all) [default = %d]\n", pPars->nConstrBaseMax );
+    Abc_Print( -2, "\t-M num : exactly 1 or 2 leaves replaced by one divisor [default = %d]\n", pPars->nVictimsMax );
     Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );

@@ -31,6 +31,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nDivsMax    = 16;
     p->nConstrMax  = 16;
     p->nConstrBaseMax = 64;
+    p->nVictimsMax = 1;
     p->nChangesMax = 100;
     p->nGainMin    = 1;
     p->nSimWords   = 4;
@@ -232,11 +233,11 @@ struct Cec_TranSpec_t_
     word *          pMust0;
 };
 
-static Cec_TranSpec_t * Cec_TranSpecStart( Cec_TranSim_t * p, word * pCare, int iTarget, int iFanin )
+static Cec_TranSpec_t * Cec_TranSpecStart( Cec_TranSim_t * p, word * pCare,
+    int iTarget, int iFanin0, int iFanin1 )
 {
     Cec_TranSpec_t * pSpec = ABC_CALLOC( Cec_TranSpec_t, 1 );
     Vec_Int_t * vSuper = Cec_TranCollectSuper( p->pGia, iTarget );
-    int iVictim = Vec_IntEntry( vSuper, iFanin );
     int s, i, iLeaf;
     word k, q;
     pSpec->pSim = p;
@@ -244,10 +245,12 @@ static Cec_TranSpec_t * Cec_TranSpecStart( Cec_TranSim_t * p, word * pCare, int 
     pSpec->pMust0 = ABC_ALLOC( word, p->nSlots );
     for ( s = 0; s < p->nSlots; s++ )
     {
-        k = Cec_TranSimLit( p, iVictim, s );
+        k = Cec_TranSimLit( p, Vec_IntEntry(vSuper, iFanin0), s );
+        if ( iFanin1 >= 0 )
+            k &= Cec_TranSimLit( p, Vec_IntEntry(vSuper, iFanin1), s );
         q = ~(word)0;
         Vec_IntForEachEntry( vSuper, iLeaf, i )
-            if ( i != iFanin )
+            if ( i != iFanin0 && i != iFanin1 )
                 q &= Cec_TranSimLit( p, iLeaf, s );
         pSpec->pMust1[s] = (pCare ? pCare[s] : ~(word)0) & k & q;
         pSpec->pMust0[s] = (pCare ? pCare[s] : ~(word)0) & ~k & q;
@@ -328,14 +331,15 @@ static inline int Cec_TranCopyLit( Gia_Man_t * p, int iLit )
 // target = old_target & h.  In removal mode, target = other_fanin & h, which
 // is the result of removing the selected victim fanin after h was added.
 // div1 == -1 selects an existing literal; otherwise h = div0 & div1.
-static Gia_Man_t * Cec_TranDupEdit( Gia_Man_t * p, int iTarget, int iFanin,
+static Gia_Man_t * Cec_TranDupEdit( Gia_Man_t * p, int iTarget, int iFanin0, int iFanin1,
     int iDiv0, int iDiv1, int fDivCompl, int fAdd )
 {
     Gia_Man_t * pNew;
     Gia_Obj_t * pObj;
     Vec_Int_t * vSuper = Cec_TranCollectSuper( p, iTarget );
     int i, k, iLit0, iLit1, iOld, iRep, iLeaf;
-    assert( iFanin >= 0 && iFanin < Vec_IntSize(vSuper) );
+    assert( iFanin0 >= 0 && iFanin0 < Vec_IntSize(vSuper) );
+    assert( iFanin1 == -1 || (iFanin1 > iFanin0 && iFanin1 < Vec_IntSize(vSuper)) );
     assert( fDivCompl == 0 || fDivCompl == 1 );
     assert( Abc_Lit2Var(iDiv0) < iTarget );
     assert( iDiv1 == -1 || Abc_Lit2Var(iDiv1) < iTarget );
@@ -366,7 +370,7 @@ static Gia_Man_t * Cec_TranDupEdit( Gia_Man_t * p, int iTarget, int iFanin,
             else
             {
                 Vec_IntForEachEntry( vSuper, iLeaf, k )
-                    if ( k != iFanin )
+                    if ( k != iFanin0 && k != iFanin1 )
                         iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranCopyLit(p, iLeaf) );
                 pObj->Value = iRep;
             }
@@ -465,7 +469,7 @@ static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget )
 // unmarked RIs, inductively establishes a common state trajectory.  Thus this
 // is an exact COI reduction for these pure combinational edits, not a bounded
 // window approximation.
-static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFanin,
+static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFanin0, int iFanin1,
     int iDiv0, int iDiv1, int fDivCompl, int fRemove )
 {
     Gia_Man_t * pNew, * pTemp;
@@ -475,7 +479,8 @@ static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFan
     int i, k, iLit0, iLit1, iOld, iRep, iEdit, iLeaf, nOuts = 0;
     assert( !Gia_ObjIsXor(Gia_ManObj(p, iTarget)) );
     vSuper = Cec_TranCollectSuper( p, iTarget );
-    assert( iFanin >= 0 && iFanin < Vec_IntSize(vSuper) );
+    assert( iFanin0 >= 0 && iFanin0 < Vec_IntSize(vSuper) );
+    assert( iFanin1 == -1 || (iFanin1 > iFanin0 && iFanin1 < Vec_IntSize(vSuper)) );
     pMark = Cec_TranMarkTfo( p, iTarget );
     vBase = Vec_IntStartFull( Gia_ManObjNum(p) );
     vEdit = Vec_IntStartFull( Gia_ManObjNum(p) );
@@ -513,7 +518,7 @@ static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFan
             else
             {
                 Vec_IntForEachEntry( vSuper, iLeaf, k )
-                    if ( k != iFanin )
+                    if ( k != iFanin0 && k != iFanin1 )
                         iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranVecLit(vBase, iLeaf) );
                 iEdit = iRep;
             }
@@ -592,13 +597,14 @@ static int Cec_TranProveWhole( Gia_Man_t * p, Gia_Man_t * pCand, Cec_ParTran_t *
 }
 
 static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
-    Gia_Man_t * pWhole1, Cec_ParTran_t * pPars, int iTarget, int iFanin,
+    Gia_Man_t * pWhole1, Cec_ParTran_t * pPars, int iTarget, int iFanin0, int iFanin1,
     int iDiv0, int iDiv1, int fDivCompl, int fRemove )
 {
     Cec_ParCor_t Cor;
     Gia_Man_t * pMiter, * pReduced;
     int fProved;
-    pMiter = Cec_TranBuildLocalMiter( p, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, fRemove );
+    pMiter = Cec_TranBuildLocalMiter( p, iTarget, iFanin0, iFanin1,
+        iDiv0, iDiv1, fDivCompl, fRemove );
     Cec_ManCorSetDefaultParams( &Cor );
     Cor.nFrames   = pPars->nFrames;
     Cor.nBTLimit  = pPars->nBTLimit;
@@ -617,14 +623,14 @@ static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
 // routine is the transactional boundary: no speculative wiring reaches p
 // unless the sequential miter is discharged by scorr's proof infrastructure.
 static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
-    int iTarget, int iFanin, int iDiv0, int iDiv1, int fDivCompl, int * pnTried,
+    int iTarget, int iFanin0, int iFanin1, int iDiv0, int iDiv1, int fDivCompl, int * pnTried,
     int * pnPositive, int * pnGainRejected, int * pnRetainUnproved,
-    int * pnRemoveUnproved, int * pnAccepted )
+    int * pnFinalUnproved, int * pnAccepted )
 {
     Gia_Man_t * p = *pp, * pAdd, * pFinal, * pCand;
     int Gain, fRetain, fRemove;
-    pAdd   = Cec_TranDupEdit( p, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 1 );
-    pFinal = Cec_TranDupEdit( p, iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 0 );
+    pAdd   = Cec_TranDupEdit( p, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1 );
+    pFinal = Cec_TranDupEdit( p, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0 );
     pCand  = Cec_TranCleanup( pFinal );
     Gain = Cec_TranGain( p, pCand );
     if ( Gain < pPars->nGainMin || Gia_ManRegNum(pCand) == 0 )
@@ -640,37 +646,62 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     if ( pPars->fVerbose )
     {
         if ( iDiv1 == -1 )
-            Abc_Print( 1, "  proof %d: n%d.f%d <- lit%d  gain=%d\n",
-                *pnTried, iTarget, iFanin, iDiv0, Gain );
+        {
+            if ( iFanin1 < 0 )
+                Abc_Print( 1, "  proof %d: n%d.f%d <- lit%d  gain=%d\n",
+                    *pnTried, iTarget, iFanin0, iDiv0, Gain );
+            else
+                Abc_Print( 1, "  proof %d: n%d.f%d+f%d <- lit%d  gain=%d\n",
+                    *pnTried, iTarget, iFanin0, iFanin1, iDiv0, Gain );
+        }
         else if ( !fDivCompl )
-            Abc_Print( 1, "  proof %d: n%d.f%d <- (lit%d & lit%d)  gain=%d\n",
-                *pnTried, iTarget, iFanin, iDiv0, iDiv1, Gain );
+        {
+            if ( iFanin1 < 0 )
+                Abc_Print( 1, "  proof %d: n%d.f%d <- (lit%d & lit%d)  gain=%d\n",
+                    *pnTried, iTarget, iFanin0, iDiv0, iDiv1, Gain );
+            else
+                Abc_Print( 1, "  proof %d: n%d.f%d+f%d <- (lit%d & lit%d)  gain=%d\n",
+                    *pnTried, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, Gain );
+        }
         else
-            Abc_Print( 1, "  proof %d: n%d.f%d <- !(lit%d & lit%d)  gain=%d\n",
-                *pnTried, iTarget, iFanin, iDiv0, iDiv1, Gain );
+        {
+            if ( iFanin1 < 0 )
+                Abc_Print( 1, "  proof %d: n%d.f%d <- !(lit%d & lit%d)  gain=%d\n",
+                    *pnTried, iTarget, iFanin0, iDiv0, iDiv1, Gain );
+            else
+                Abc_Print( 1, "  proof %d: n%d.f%d+f%d <- !(lit%d & lit%d)  gain=%d\n",
+                    *pnTried, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, Gain );
+        }
     }
-    // Strict transduction proof: first retain the newly added wire, then
-    // prove removal.  The local miter shares p's state transition: after the
-    // retention proof, p and pAdd have the same reachable states, so proving
-    // add-vs-final differences on that state relation is exact.
+    // Prove the explicit add stage, then prove the final removal network
+    // against the same original source machine.  This second local query is
+    // stronger than C_add == C_final; together with retention, transitivity
+    // establishes the intended add-then-remove transaction.  When -f is on,
+    // Cec_TranProveTransaction additionally shadows the direct whole miter.
     fRetain = Cec_TranProveTransaction(p, p, pAdd, pPars,
-        iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 0);
+        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0);
     fRemove = fRetain && Cec_TranProveTransaction(p, pAdd, pFinal, pPars,
-        iTarget, iFanin, iDiv0, iDiv1, fDivCompl, 1);
+        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1);
     if ( !fRemove )
     {
         if ( !fRetain )
             (*pnRetainUnproved)++;
         else
-            (*pnRemoveUnproved)++;
+            (*pnFinalUnproved)++;
         Gia_ManStop( pAdd );
         Gia_ManStop( pFinal );
         Gia_ManStop( pCand );
         return 0;
     }
     if ( pPars->fVerbose )
-        Abc_Print( 1, "  accepted transaction: obj %d fanin %d, gain=%d.\n",
-            iTarget, iFanin, Gain );
+    {
+        if ( iFanin1 < 0 )
+            Abc_Print( 1, "  accepted transaction: obj %d fanin %d, gain=%d.\n",
+                iTarget, iFanin0, Gain );
+        else
+            Abc_Print( 1, "  accepted transaction: obj %d fanins %d+%d, gain=%d.\n",
+                iTarget, iFanin0, iFanin1, Gain );
+    }
     Gia_ManStop( p );
     Gia_ManStop( pAdd );
     Gia_ManStop( pFinal );
@@ -689,12 +720,12 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Vec_Int_t * vMatches, * vBases, * vConstr, * vSuper;
     Vec_Wrd_t * vConstrSigs;
     word * pConstrSig;
-    int i, f, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
+    int i, f, f2, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
     int nExisting = 0, nConstructed = 0, nPositive = 0, nGainRejected = 0;
-    int nRetainUnproved = 0, nRemoveUnproved = 0, nTried = 0, nAccepted = 0;
+    int nRetainUnproved = 0, nFinalUnproved = 0, nTried = 0, nAccepted = 0;
     int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0, nSigDuplicate = 0;
     int nCareBits = 0;
-    int nVictim, nBaseLimit, nConstrLimit;
+    int nVictim, nVictim2, iFanin1, nBaseLimit, nConstrLimit, nVictimSets = 0;
     int fChanged;
     abctime clk = Abc_Clock();
     assert( Gia_ManRegNum(pGia) > 0 );
@@ -719,10 +750,24 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
             nCareBits += Cec_TranCountOnes( pCare, pSim->nSlots );
             for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged; f++ )
             {
+                // A transaction may replace either one leaf or a pair of
+                // leaves in the same positive AND supergate.  The latter is
+                // the smallest multi-victim extension: h is required to
+                // equal the conjunction of the removed leaves wherever the
+                // remaining product is sequentially observable.
+                for ( f2 = f; f2 < Vec_IntSize(vSuper) && !fChanged; f2++ )
+                {
+                if ( pPars->nVictimsMax == 1 && f2 != f )
+                    break;
+                if ( pPars->nVictimsMax == 2 && f2 == f )
+                    continue;
+                iFanin1 = f2 == f ? -1 : f2;
                 nVictim = Vec_IntEntry( vSuper, f );
+                nVictim2 = iFanin1 < 0 ? -1 : Vec_IntEntry( vSuper, iFanin1 );
+                nVictimSets++;
                 // Compute the specification once.  Every existing divisor
                 // and every one-gate construction below shares these masks.
-                pSpec = Cec_TranSpecStart( pSim, pCare, i, f );
+                pSpec = Cec_TranSpecStart( pSim, pCare, i, f, iFanin1 );
                 vMatches = Vec_IntAlloc( pPars->nDivsMax );
                 // Test the full topologically-safe pool with bit-parallel
                 // Must1/Must0 masks, but retain only the nearest matching
@@ -735,7 +780,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                     for ( fDivCompl = 0; fDivCompl < 2; fDivCompl++ )
                     {
                         iDiv0 = Abc_Var2Lit( d, fDivCompl );
-                        if ( iDiv0 == nVictim )
+                        if ( iDiv0 == nVictim || iDiv0 == nVictim2 )
                             continue;
                         nExisting++;
                         nSigChecks++;
@@ -753,9 +798,9 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 {
                     if ( nTried >= pPars->nCandMax )
                         break;
-                    fChanged = Cec_TranTryCommit( &p, pPars, i, f, iDiv0, -1, 0,
+                    fChanged = Cec_TranTryCommit( &p, pPars, i, f, iFanin1, iDiv0, -1, 0,
                         &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
-                        &nRemoveUnproved, &nAccepted );
+                        &nFinalUnproved, &nAccepted );
                     if ( fChanged )
                         break;
                 }
@@ -818,15 +863,16 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                     iDiv0 = Vec_IntEntry( vConstr, j );
                     iDiv1 = Vec_IntEntry( vConstr, j + 1 );
                     iEntry = Vec_IntEntry( vConstr, j + 2 );
-                    fChanged = Cec_TranTryCommit( &p, pPars, i, f, iDiv0, iDiv1, iEntry,
+                    fChanged = Cec_TranTryCommit( &p, pPars, i, f, iFanin1, iDiv0, iDiv1, iEntry,
                         &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
-                        &nRemoveUnproved, &nAccepted );
+                        &nFinalUnproved, &nAccepted );
                 }
                 Vec_IntFree( vConstr );
                 Vec_WrdFree( vConstrSigs );
                 ABC_FREE( pConstrSig );
                 Vec_IntFree( vBases );
                 Cec_TranSpecStop( pSpec );
+                }
             }
             ABC_FREE( pCare );
             Vec_IntFree( vSuper );
@@ -836,9 +882,9 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         Cec_TranSimStop( pSim );
     }
     while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
-    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-positive=%d gain-rejected=%d retain-unproved=%d remove-unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
-        nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nSigDuplicate,
-        nPositive, nGainRejected, nRetainUnproved, nRemoveUnproved, nAccepted,
+    Abc_Print( 1, "Sequential transduction: victim-sets=%d proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-positive=%d gain-rejected=%d retain-unproved=%d final-unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
+        nVictimSets, nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nSigDuplicate,
+        nPositive, nGainRejected, nRetainUnproved, nFinalUnproved, nAccepted,
         Gia_ManAndNum(pGia), Gia_ManAndNum(p),
         1.0 * (Abc_Clock() - clk) / CLOCKS_PER_SEC );
     return p;

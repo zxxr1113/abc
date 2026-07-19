@@ -287,6 +287,7 @@ struct Cec_ParTran_t_
     int              nDivsMax;      // local existing divisors per victim
     int              nConstrMax;    // signature-matched one-gate divisors per victim
     int              nConstrBaseMax;// literals in one-gate construction pool (0 = all)
+    int              nVictimsMax;   // leaves removed by one added divisor (exactly 1 or 2)
     int              nChangesMax;   // accepted transactions
     int              nGainMin;      // minimum AND+register gain to prove
     int              nSimWords;     // 64-bit words per reachable simulation frame

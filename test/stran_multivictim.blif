@@ -1,0 +1,18 @@
+.model stran_multivictim
+.inputs a b c
+.outputs y q
+
+# h is an already available divisor.  The output supergate is
+# {h, a, b, c}; replacing a and b together by h reduces four ANDs to two.
+# Replacing either leaf alone has gain one, so the regression uses -G 2 to
+# force the two-victim path.
+.names a b h
+11 1
+.names h a n1
+11 1
+.names n1 b n2
+11 1
+.names n2 c y
+11 1
+.latch y q 0
+.end

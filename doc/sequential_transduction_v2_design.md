@@ -19,7 +19,7 @@
 
 - target 是可展开的 AND supergate；
 - 添加一条正相或反相 divisor wire；
-- 删除同一 supergate 的一个 victim fanin；
+- 删除同一 supergate 的一个 victim fanin；实验性 `-M 2` 也可由一个 divisor 同时替代两个 fanin；
 - divisor 为已有 literal，或已有节点上的一门小 AIG；
 - 每次只提交一个已证明且净面积收益为正的 transaction；
 - 不支持 box、多时钟、未建模约束和任意 state recoding。
@@ -144,6 +144,20 @@ $$
 与 `M0` 由 `k` 和 `!k` 区分，通常不会直接重叠；真正的冲突常出现在受限 divisor support 上，或者
 multi-wire/multi-victim 联合约束中。
 
+### 3.4 两个 victim 的同门推广
+
+对同一 positive AND supergate 选择集合 `V={k_0,k_1}`，令 `K=k_0\land k_1`，`P` 为其余 leaf 的合取。
+交易仍是先加 `h`，再把两个 leaf 一起删除，因而只需将单 victim 公式中的 `k` 替换为 `K`：
+
+$$
+M_1=C_i\land K\land P,\qquad M_0=C_i\land\neg K\land P.
+$$
+
+实现中的 `-M 2` 只枚举这一种大小为二的集合（默认 `-M 1` 只枚举单 leaf），随后分别证明
+`C\rightarrow C_{add}` 与更强的 `C\rightarrow C_{final}`；二者由传递性推出 `C_{add}\rightarrow C_{final}`。
+它不是任意 multi-wire transaction：尚不共享多个
+新增 divisor，也不跨 target 合并；候选数会从每个 supergate 的 $O(d)$ victim 集合增至 $O(d^2)$。
+
 ## 4. 时序提升
 
 组合 pattern `u` 在时序电路中变为一个从 reset 可达的 trace/time point：
@@ -224,7 +238,7 @@ for each optimization round:
 
             build uncleaned C_final = C_add - k -> i
             build a cleaned preview and compute exact gain
-            prove removal on the explicit add/remove structure: C_add == C_final
+            prove final removal network against source: C == C_final
 
             SAT: add the real counterexample trace to M1/M0 and resynthesize
             UNKNOWN: do not commit
@@ -361,6 +375,16 @@ $$
 
 这确认 victim 在加线后的网络中可删除。
 
+当前局部 miter 实现不直接复制 `C_add` 的编辑 TFO；它改为证明更强的：
+
+$$
+C\equiv C_{final}.
+$$
+
+与 10.1 的 $C\equiv C_{add}$ 合用即可由等价传递性得到目标式。开启 `-f` 时还会额外运行直接的
+whole miter `C_add\equiv C_final` 作为影子审计。因此当前实现没有依赖“只检查 final 却未证明 add”的
+不安全假设；只是尚未实现更小的 direct-add local miter。
+
 ### 10.3 完整时序 TFO 已经足够
 
 前两步传递地推出：
@@ -446,8 +470,8 @@ $$
 - `-N`：accepted transactions 上限；
 - `-D`：divisor pool 上限；
 - `-G`：最小净 gain；
-- `-K`：每个 victim 保留的构造候选数；
-- `-R`：每个 victim 的 CEGIS 反例轮数；
+- `-K`：每个 victim 集合保留的构造候选数；
+- `-M`：一个 divisor 替代的 leaf 数（当前为 1 或 2）；
 - `-Q`：每个 reachable simulation frame 的 64-bit signature word 数；
 - `-W`：当前实现中每批随机 reset-reachable trace 的 frame 数；将来 local proof window 参数应另设，不能
   与随机仿真长度混用；
@@ -518,9 +542,9 @@ $$
 | local sequential proof | 已完成：共享原 transition relation、复制受影响组合 TFO、比较 PO/RI 边界 | 每次 transaction 后保守重建；尚未复用 `-i` cache |
 | final sequential miter | 已完成 | `-f` 开发 shadow oracle 和最终审计 |
 | proof result | 当前只有 proved/reject 两类，UNKNOWN 被安全拒绝 | 需增加 SAT/UNSAT/UNKNOWN 分类和 CEX 输出 |
-| 分步 retention/removal proof | 已完成：local proof 分别检查 add 与 remove，`-f` 可逐步 whole-miter 对照 | 可复用 |
-| AND supergate wire addition | 已完成正相 AIG AND supergate 的 add/remove | 需扩展到 multi-wire transaction |
-| victim-first MFFC ranking | 未实现 | 新增 |
+| 分步 retention/removal proof | 已完成：local proof 检查 `C==Cadd` 和更强的 `C==Cfinal`；`-f` 额外 direct whole-miter 审计 `Cadd==Cfinal` | direct-add local miter 仍可缩小第二个 proof |
+| AND supergate wire addition | 已完成正相 AIG AND supergate 的 add/remove；`-M 2` 可用一个 divisor 同时替代同一 supergate 的两个 leaf | 需扩展到多个新增 divisor 的 general multi-wire transaction |
+| victim-first MFFC ranking | 未实现；当前输出 candidate funnel 统计以区分结构收益和证明瓶颈 | 新增 |
 | `M1/M0` 计算 | 已实现 sampled sequential care：翻转 target 后沿 trace suffix 重仿真，PO 或 RI 差异形成 `C_i^{seq}`；据此计算 `M1=C_i&k&P`、`M0=C_i&!k&P` | 需接入 formal/CEX care |
 | reachable simulation signatures | 已实现：随机 PI、zero-reset RO、RI-to-RO 状态推进、bit-parallel word signatures；每个 victim 一次生成 Must masks，整池 divisor 共享匹配 | 需合并真实 reset/init 语义和 `&scorr` CEX |
 | CEGIS | 未实现 | 核心新增 |
@@ -563,7 +587,7 @@ care、existing/constructed divisor、显式 add/remove、local proof、whole-mi
 - `-Q/-W`：每批 trace 的 bit-parallel 宽度和时序长度。
 
 每次运行还将候选漏斗分解为 `sig-matched`、`sig-duplicates`、`gain-positive`、`gain-rejected`、
-`retain-unproved`、`remove-unproved` 和 `accepted`。其中 `*-unproved` 表示当前受限 `&scorr` oracle
+`retain-unproved`、`final-unproved` 和 `accepted`。其中 `*-unproved` 表示当前受限 `&scorr` oracle
 没有给出可接受的证明；该计数尚不能区分真实反例和 conflict/timeout unknown，正是后续导出 CEX 接口后
 需要消除的观测盲区。
 
