@@ -11,9 +11,9 @@
   Description [This command is intentionally independent of &sodc.  It uses
   the BMC/induction machinery behind signal correspondence only as a bounded
   sequential proof oracle.  Its search space is speculative transduction:
-  find a costly victim fanin, replace it with an existing or constructed
-  divisor, clean up the speculative network, and commit only a proved,
-  positive-gain transaction.]
+  find a costly victim fanin, derive an added divisor, prove that adding it
+  is redundant, prove that it makes the victim removable, and commit only a
+  proved positive-gain transaction.]
 
 ***********************************************************************/
 
@@ -45,16 +45,16 @@ static inline int Cec_TranCopyLit( Gia_Man_t * p, int iLit )
     return Abc_LitNotCond( pObj->Value, Abc_LitIsCompl(iLit) );
 }
 
-// Build one speculative transaction.  div1 == -1 means that the victim is
-// replaced by an existing literal div0.  Otherwise the replacement is the
-// constructed one-AND divisor (div0 & div1).  Cleanup gives the exact local
-// structural gain, rather than an unreliable MFFC estimate.
-static Gia_Man_t * Cec_TranDupFanin( Gia_Man_t * p, int iTarget, int iFanin,
-    int iDiv0, int iDiv1 )
+// Build one explicit stage of an add-then-remove transaction.  In add mode,
+// target = old_target & h.  In removal mode, target = other_fanin & h, which
+// is the result of removing the selected victim fanin after h was added.
+// div1 == -1 selects an existing literal; otherwise h = div0 & div1.
+static Gia_Man_t * Cec_TranDupEdit( Gia_Man_t * p, int iTarget, int iFanin,
+    int iDiv0, int iDiv1, int fAdd )
 {
-    Gia_Man_t * pNew, * pTemp;
+    Gia_Man_t * pNew;
     Gia_Obj_t * pObj;
-    int i, iLit0, iLit1, iRep;
+    int i, iLit0, iLit1, iOld, iOther, iRep;
     assert( iFanin == 0 || iFanin == 1 );
     assert( Abc_Lit2Var(iDiv0) < iTarget );
     assert( iDiv1 == -1 || Abc_Lit2Var(iDiv1) < iTarget );
@@ -75,10 +75,17 @@ static Gia_Man_t * Cec_TranDupFanin( Gia_Man_t * p, int iTarget, int iFanin,
             iRep = Cec_TranCopyLit( p, iDiv0 );
             if ( iDiv1 != -1 )
                 iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranCopyLit(p, iDiv1) );
-            if ( iFanin == 0 )
-                iLit0 = iRep;
+            if ( fAdd )
+            {
+                iOld = Gia_ManHashAnd( pNew, iLit0, iLit1 );
+                pObj->Value = Gia_ManHashAnd( pNew, iOld, iRep );
+            }
             else
-                iLit1 = iRep;
+            {
+                iOther = iFanin == 0 ? iLit1 : iLit0;
+                pObj->Value = Gia_ManHashAnd( pNew, iOther, iRep );
+            }
+            continue;
         }
         pObj->Value = Gia_ManHashAnd( pNew, iLit0, iLit1 );
     }
@@ -86,7 +93,16 @@ static Gia_Man_t * Cec_TranDupFanin( Gia_Man_t * p, int iTarget, int iFanin,
         Gia_ManAppendCo( pNew, Gia_ObjFanin0Copy(pObj) );
     Gia_ManHashStop( pNew );
     Gia_ManSetRegNum( pNew, Gia_ManRegNum(p) );
-    pNew = Gia_ManCleanup( pTemp = pNew );
+    return pNew;
+}
+
+// Cleanup is deliberately separated from the logical transaction.  Formal
+// obligations are proved on the explicit add/remove structures; the cleaned
+// copy is used only for exact cost and, after both proofs, for commit.
+static Gia_Man_t * Cec_TranCleanup( Gia_Man_t * p )
+{
+    Gia_Man_t * pNew, * pTemp;
+    pNew = Gia_ManCleanup( pTemp = Gia_ManDup(p) );
     Gia_ManStop( pTemp );
     pNew = Gia_ManDupNormalize( pTemp = pNew, 0 );
     Gia_ManStop( pTemp );
@@ -144,12 +160,16 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     int iTarget, int iFanin, int iDiv0, int iDiv1, int * pnTried,
     int * pnPositive, int * pnAccepted )
 {
-    Gia_Man_t * p = *pp, * pCand;
+    Gia_Man_t * p = *pp, * pAdd, * pFinal, * pCand;
     int Gain;
-    pCand = Cec_TranDupFanin( p, iTarget, iFanin, iDiv0, iDiv1 );
+    pAdd   = Cec_TranDupEdit( p, iTarget, iFanin, iDiv0, iDiv1, 1 );
+    pFinal = Cec_TranDupEdit( p, iTarget, iFanin, iDiv0, iDiv1, 0 );
+    pCand  = Cec_TranCleanup( pFinal );
     Gain = Cec_TranGain( p, pCand );
     if ( Gain < pPars->nGainMin || Gia_ManRegNum(pCand) == 0 )
     {
+        Gia_ManStop( pAdd );
+        Gia_ManStop( pFinal );
         Gia_ManStop( pCand );
         return 0;
     }
@@ -164,8 +184,13 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
             Abc_Print( 1, "  proof %d: n%d.f%d <- (lit%d & lit%d)  gain=%d\n",
                 *pnTried, iTarget, iFanin, iDiv0, iDiv1, Gain );
     }
-    if ( !Cec_TranProveTransaction(p, pCand, pPars) )
+    // Strict transduction proof: first retain the newly added wire, then
+    // prove that the selected old fanin is removable in the added network.
+    if ( !Cec_TranProveTransaction(p, pAdd, pPars) ||
+         !Cec_TranProveTransaction(pAdd, pFinal, pPars) )
     {
+        Gia_ManStop( pAdd );
+        Gia_ManStop( pFinal );
         Gia_ManStop( pCand );
         return 0;
     }
@@ -173,6 +198,8 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
         Abc_Print( 1, "  accepted transaction: obj %d fanin %d, gain=%d.\n",
             iTarget, iFanin, Gain );
     Gia_ManStop( p );
+    Gia_ManStop( pAdd );
+    Gia_ManStop( pFinal );
     *pp = pCand;
     (*pnAccepted)++;
     return 1;
