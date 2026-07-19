@@ -615,3 +615,42 @@ case 写成可直接分析的 partial CSV；最多只有当前并行运行的 `-
 13. simulation 和全divisor bit-parallel matching 只负责候选生成，不能替代 formal proof。
 14. 开发阶段 local proof 必须与 whole-miter shadow oracle 对照；正式算法稳定后关闭逐candidate audit。
 15. 每个最终benchmark输出仍运行一次独立 `dsec/PDR`，用于发现实现错误，不作为主算法proof步骤。
+
+## 18. 下一步实现框架：specification-driven divisor synthesis
+
+下一阶段的研究重点不是继续盲枚举 divisor，而是把每个 victim 推导出的
+`M1 => h=1`、`M0 => h=0` 当作一个不完全规格，并用它指导 divisor 的筛选与构造。
+这对应两篇工作的结合：SODC 提供时序可观测性/局部证明的语义边界；randomized transduction
+说明“加线再删线”可创造新的 don’t-care。这里的区别是：新增线 `h` 的目标函数先由待删
+victim 计算出来，再寻找或构造满足该规格的 `h`。
+
+### 18.1 迭代顺序
+
+1. **基线与日志。** 先完成常数 `h=0/1` 的 redundancy baseline，区分 `SAT/UNSAT/UNKNOWN`，
+   记录每个 victim 的规格大小、候选漏斗、证明时间和净 gain；这给出与 SODC 的直接比较点。
+2. **持久 PatternDB。** 保留 random reachable trace、`&scorr`/local proof 的 CEX 以及后续
+   定向 SAT pattern。每次提交 transaction 后重新模拟已有 PI trace，而不是清空样本；bit-parallel
+   signature 只作安全的候选过滤。
+3. **规格驱动的候选。** 依次尝试 existing literal、哈希等价 literal 和小构造函数。对于
+   `h=a&b`，先要求 `a,b` 均覆盖 `M1`，再检查 `M0 & a & b = 0`；由此可在构造前剪枝，
+   而不是为每对 divisor 建网并跑 proof。固定 support、level、AIG-cost 和 `top-K` 预算。
+4. **CEGIS。** formal proof 的反例转成新 pattern，并一次淘汰所有违反该 pattern 的候选；
+   只有 `UNSAT` transaction 才能提交，`SAT/UNKNOWN` 均不提交。
+5. **逐级证明。** 先在完整 boundary 的小 TFO window 上证明；小 window 的 `SAT` 只表示
+   “需要扩大 window”，不能据此否定候选。高分 survivor 扩大到完整时序 TFO，再使用复用
+   `&scorr` 的 base + induction/CBS 基础设施作最终提交证明。
+6. **性能化。** 在语义稳定后再接入 `-i` 的 structural-edit seed、active TFO、persistent
+   unrolling/SAT；candidate 可以并行筛选或证明，但 commit 必须串行并在当前网络重新验证。
+
+### 18.2 实验决策门
+
+每一阶段先回答一个可证伪的问题，再扩展搜索空间：
+
+- constant/SODC baseline 是否已有可观测的额外缩减？
+- PatternDB + M1/M0 是否显著提高“通过 simulation 的候选 / 全部候选”比例？
+- CEX 是否能在一次 proof 后批量删掉候选？
+- existing divisor 不足时，一门/两门构造的净 gain 是否超过其 proof 成本？
+- `-i` 风格局部证明能否与 whole-miter/dsec 审计一致，同时降低 proof time？
+
+只有前一门成立才增加 constructed divisor 深度或 multi-wire transaction。这样可以把效果差的原因
+明确归因为：规格没有机会、候选构造不足，还是时序证明开销，而不是把三者混在一次大搜索里。
