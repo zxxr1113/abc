@@ -39,18 +39,17 @@ It commits only if every miter output is reduced to constant zero.  A SAT
 counterexample, an unresolved correspondence, or a conflict-limited timeout
 therefore rejects the candidate; it never changes the current network.
 
-This is sound but conservative.  The current prototype uses a whole-design
-sequential miter, not the TCAD paper's local TFO window and explicit
-SODC-care-set SAT query.  It is intended as an auditable reference point for
-the question “what does transduction add beyond `&scorr`?”, not as the final
-scalable algorithm.  The next research step is to retain this transaction
-interface while replacing the coarse prefilter/oracle with windowed,
-counterexample-guided SODC checks.
+This is sound but conservative.  The current prototype uses a complete
+combinational-TFO local miter whose affected RI boundaries are included as
+proof outputs; `-f` optionally shadows it with a whole-design miter.  The
+care prefilter is still sampled rather than a formal SODC-care-set SAT query.
+It is intended as an auditable reference point for the question “what does
+transduction add beyond `&scorr`?”, not as the final scalable algorithm.
 
 ## Command line
 
 ```
-&stran [-FCSTNDG num] [-xvh]
+&stran [-FCSTNDGQWKBM num] [-xfvh]
 ```
 
 - `-F`: BMC/induction depth.
@@ -58,9 +57,13 @@ counterexample-guided SODC checks.
 - `-S`: maximum correspondence refinement rounds (`-1` is unbounded).
 - `-T`: maximum exact candidate proofs.
 - `-N`: maximum accepted transactions.
-- `-D`: preceding divisors examined per target fanin.
+- `-D`: existing divisors retained per victim set.
 - `-G`: minimum exact `AND + register` gain needed before proof.
+- `-Q` / `-W`: 64-bit words and sequential frames in the random signature batch.
+- `-K` / `-B`: constructed-candidate limit and construction base pool (`-B 0` is all-pairs).
+- `-M`: exactly one or two leaves replaced by one divisor.
 - `-x`: toggle constructed one-AND divisors.
+- `-f`: whole-miter shadow audit for every accepted local proof.
 - `-v`: candidate/proof trace.
 
 For a quick regression from the repository root:
@@ -75,13 +78,18 @@ checks the original/result pair with independent `dsec`.
 For server experiments:
 
 ```
-bash scripts/run_stran_bench.sh <input-aig-dir> <result-dir> ./abc
-bash scripts/verify_stran_results.sh <input-aig-dir> <result-dir> ./abc
+python3 scripts/bench_scorr_then_stran.py \
+  --aig-dir <input-aig-dir> --abc ./abc --out results.csv \
+  --jobs 64 --timeout 12800
 ```
 
-Set `STRAN_ARGS` to override the command's proof/search budget, for example:
+The script runs `&scorr` first, then runs `&stran` on the resulting AIG, and
+finally runs `dsec`.  Its `stran_extra_and_reduction` CSV column is therefore
+the exact extra AND reduction beyond the baseline `&scorr` result.  Override
+the search/proof budget directly, for example:
 
 ```
-STRAN_ARGS='-F 2 -C 5000 -S -1 -T 2000 -N 100 -D 24' \
-  bash scripts/run_stran_bench.sh benchmarks results ./abc
+python3 scripts/bench_scorr_then_stran.py \
+  --aig-dir benchmarks --abc ./abc --out results.csv --jobs 64 --timeout 12800 \
+  --stran-args '-M 2 -F 2 -C 5000 -S -1 -T 2000 -N 100 -D 24 -B 64 -K 32 -Q 4 -W 8'
 ```

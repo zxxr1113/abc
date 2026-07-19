@@ -550,7 +550,7 @@ $$
 | CEGIS | 未实现 | 核心新增 |
 | local/window proof | 已实现完整组合 TFO 边界 proof；affected RI 作为跨帧归纳边界 | 需扩展到 supergate/multi-wire union TFO |
 | `-i` structural-edit integration | 未实现 | 核心新增，但 TFO/active-list 机制已有参考 |
-| 回归和服务器脚本 | 已完成 V2：`scripts/run_stran_v2_bench.sh` 保存 before/after AIG、完整日志、汇总 TSV，并对每个结果执行独立 `dsec` 审计 | 需增加参数扫描、baseline 对比和更大规模统计 |
+| 回归和服务器脚本 | 已完成：`scripts/bench_scorr_then_stran.py` 并行执行 `&scorr -> &stran -> dsec`，输出 CSV 中的 baseline、额外缩减、分阶段时间和证明漏斗 | 需做大规模统计 |
 
 现有实现完成了命令外壳、显式 add/remove speculative rewrite、gain、local sequential proof 与可选
 whole-miter shadow audit、commit/rollback、
@@ -577,26 +577,19 @@ CEX 的证明接口，最后扩展 transaction 与增量优化。
 
 ### 16.1 当前实验入口
 
-`scripts/run_stran_v2_bench.sh` 对每个输入 AIG 保存 `before.aig`、`after.aig`、完整 `run.log` 和
-汇总 `summary.tsv`。默认启用 `-f` whole-miter shadow audit，并对每个最终结果运行 `dsec`。建议先固定
-`-F/-C/-T/-N`，分别扫描 `-D/-B/-K/-Q/-W`：
+`scripts/bench_scorr_then_stran.py` 对每个输入严格执行：
 
-- `-D`：existing divisor 的 formal-proof 保留数；
-- `-B`：constructed divisor base literal 数，`0` 为全池 all-pairs；
-- `-K`：constructed candidate 的 formal-proof 保留数；
-- `-Q/-W`：每批 trace 的 bit-parallel 宽度和时序长度。
+```text
+normalized input -> &scorr -> scorr.aig -> &stran -> final.aig -> dsec
+```
 
-每次运行还将候选漏斗分解为 `sig-matched`、`sig-duplicates`、`gain-positive`、`gain-rejected`、
-`retain-unproved`、`final-unproved` 和 `accepted`。其中 `*-unproved` 表示当前受限 `&scorr` oracle
-没有给出可接受的证明；该计数尚不能区分真实反例和 conflict/timeout unknown，正是后续导出 CEX 接口后
-需要消除的观测盲区。
+因此 CSV 的 `stran_extra_and_reduction = scorr_and - stran_and` 直接回答：在已经完成 `&scorr` 后，
+transduction 又找到了多少额外缩减；`scorr_time_ms`、`stran_time_ms` 和 `dsec_status` 分别给出代价与最终
+正确性。`--jobs` 控制 benchmark 级并行，`--timeout` 是每个 ABC 子任务的超时，`--scorr-args` 和
+`--stran-args` 可直接指定完整参数串。`--keep-artifacts` 用于保留失败 case 的 AIG 和日志。
 
-`scripts/run_stran_v2_sweep.sh` 默认用完全相同的 formal/simulation budget 对比 `-M 1` 和 `-M 2`，并汇总为
-`sweep.tsv`。可用环境变量 `STRAN_SWEEP_CONFIGS` 传入按行书写的 `name|&stran arguments`，从而做固定预算下
-的 `-D/-B/-K/-Q/-W/-M` 扫描；每个配置仍保留自身的 AIG、日志和 `dsec` 结果。
-
-两个脚本默认开启 `-f`，适合作为开发期双重审计。做 runtime/QoR 实验时设 `STRAN_SHADOW=''` 关闭 whole-miter
-shadow；独立 `dsec` 仍会运行，故不会降低最终结果的等价审计强度。
+脚本不默认添加 `&stran -f`，因为 whole-miter shadow 属于开发期审计成本；最终 `dsec` 对每个 benchmark
+仍然是强制的。对固定 `&scorr` 参数，扫描 `&stran` 的 `-M/-D/-B/-K/-Q/-W/-C/-T` 即可得到质量-时间曲线。
 
 ## 17. 正确性注意事项清单
 
