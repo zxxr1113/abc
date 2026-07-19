@@ -177,6 +177,29 @@ modified gate @ frame t
 相等会禁止合法的寄存器合并和删除。但局部有限窗口不能忽略 RI：它必须把 RI 当作保守 boundary，
 或者像 `&scorr -i` 一样跨寄存器继续传播。
 
+### 4.1 `&scorr` 的时序证明语义
+
+`&scorr` 不是只检查一个状态或前 `F` 个 frame 的组合等价。`F` 是 base/induction proof 使用的展开
+深度：base case 从 reset 检查可达前缀，inductive case 检查 correspondence relation 能否跨时间保持。
+当 base 和 inductive obligations 都完成且目标 difference 被证明为 0 时，结论是：
+
+$$
+\forall t\ge0,\ \forall(x_0,\ldots,x_t),\quad
+PO_C(t)=PO_{C'}(t)
+$$
+
+也就是所有未来时间、所有输入序列上的时序行为不变，而不是只保证前 `F` 帧。
+
+必须区分以下情况：
+
+- 完成 base + induction 并得到 UNSAT/proved：可作为无限时序证明；
+- SAT：存在真实反例 trace；
+- conflict/time/refinement limit 耗尽：UNKNOWN，不能提交；
+- `nStepsMax=0` 只停在 BMC：只能排除已展开深度内的反例，不能当作无限证明。
+
+因此新命令复用的是 `&scorr` 的完整时序证明基础设施。有限 `F` 决定 induction strength 和 TFO
+展开范围，但不把最终正确性限制为有限 horizon。
+
 ## 5. 总体算法
 
 ```text
@@ -199,16 +222,15 @@ for each optimization round:
             reject by structural cycle/level/gain filters
             prove retention: C == C_add
 
-            build C_final = C_add - k -> i
-            cleanup and compute exact gain
-            prove removal: C_add == C_final
-            optionally audit C == C_final
+            build uncleaned C_final = C_add - k -> i
+            build a cleaned preview and compute exact gain
+            prove removal on the explicit add/remove structure: C_add == C_final
 
             SAT: add the real counterexample trace to M1/M0 and resynthesize
             UNKNOWN: do not commit
             UNSAT for all required obligations:
-                commit C_final
-                invalidate only affected TFO caches
+                commit the cleaned C_final preview
+                first complete version rebuilds affected metadata conservatively
                 restart from the updated network
 ```
 
@@ -339,15 +361,38 @@ $$
 
 这确认 victim 在加线后的网络中可删除。
 
-### 10.3 Final audit
+### 10.3 完整时序 TFO 已经足够
 
-理论上前两步传递地推出 `C == C_final`。实现调试和实验输出仍建议进行独立 whole-design audit：
+前两步传递地推出：
 
 $$
 C\equiv C_{final}
 $$
 
-最终审计只比较 PO traces；局部快速证明必须追踪 RI 跨帧影响或使用 sound boundary。
+如果 local proof 使用修改点在原网络和候选网络中的完整时序 TFO，并覆盖所有 PO、RI-to-RO 跨帧
+传播和归纳边界，那么它就是 whole miter 的精确 cone-of-influence reduction。TFO 外的逻辑不可能依赖
+修改，删除它们不会改变 SAT/UNSAT。因此正式算法不需要为每个 candidate 再运行 whole-miter。
+
+完整受影响区域必须使用：
+
+$$
+TFO_{affected}=TFO_C(i)\cup TFO_{C_{add}}(i)\cup TFO_{C_{final}}(i)
+$$
+
+不能只遍历原网络。新边、删除边、结构哈希产生的映射和跨帧 RI/RO 路径都必须被覆盖。若 TFO 或
+boundary 无法被确定为完整，候选应 fallback 到完整 SRM，而不是在截断窗口上接受。
+
+### 10.4 Whole-miter 的定位
+
+whole-miter 只用于：
+
+- 开发阶段作为 shadow oracle，对照 local TFO proof；
+- 随机抽查 accepted transactions；
+- pass 结束后对最终网络做一次独立 `dsec/PDR` 审计；
+- 定位 structural-edit seed、boundary 或 cache invalidation 的实现错误。
+
+稳定版本的 candidate critical path 不包含 whole-miter。出现 `local UNSAT / whole SAT` 必须视为 local
+proof 实现 bug。
 
 所有 proof 返回 `SAT / UNSAT / UNKNOWN`。只有 `UNSAT` 可以提交；conflict limit、time limit 和未完成
 归纳都属于 `UNKNOWN`。
@@ -369,7 +414,8 @@ transduction 修改 fanin graph，需要新增 structural-edit seed 或 candidat
 映射和 alias edges 与 speculative network 一致。
 
 建议新增 `Cec_TranIncr_t`，复用 TFO BFS/active-mask 思路，但不把结构修改伪装成 equivalence-class 变化。
-第一版可先在每个 accepted transaction 后重建 fanout/TFO metadata，确认正确后再实现局部失效。
+功能完整的第一版在每个 accepted transaction 后重建 fanout/TFO/proof metadata，不依赖复杂 cache
+invalidation。与 whole-miter shadow oracle 对照稳定后，再实现只失效受影响 TFO 的增量版本。
 
 ## 12. 成本与提交规则
 
@@ -405,9 +451,12 @@ $$
 - `-W`：初始/最大 window 大小；
 - `-L`：constructed divisor 最大 AIG gate 数；
 - `-a`：要求严格 retention + removal 两步证明；
-- `-f`：对 accepted candidate 强制 whole-miter audit。
+- `-f`：开发/审计模式，对 accepted candidate 启用 whole-miter shadow oracle；正式运行默认关闭。
 
 ## 14. 实现阶段
+
+实现策略是 correctness-complete first：先完成所有功能并在每次提交后保守重建数据，不把增量缓存、
+多线程和极限性能放在第一版关键路径。完整版本稳定后，再逐项替换为 `-i` 风格的增量实现。
 
 ### Phase A：结构和事务语义
 
@@ -425,14 +474,18 @@ $$
 4. 一门 constructed divisor；
 5. small combinational benchmark 上与 full truth table 对照。
 
-### Phase C：保守时序 baseline
+### Phase C：完整正确性版本
 
-1. retention whole-miter proof；
-2. removal whole-miter proof；
-3. final whole-miter audit；
-4. CEX 分类和有限 CEGIS。
+1. 构造原/加线/删线网络的 TFO union；
+2. retention 的完整时序 TFO proof；
+3. removal 的完整时序 TFO proof；
+4. 正确的 base + induction obligations；
+5. SAT/UNSAT/UNKNOWN 和 CEX 分类；
+6. 有限 CEGIS；
+7. 每次 accepted transaction 后保守重建 metadata；
+8. 开发模式使用 whole-miter shadow oracle 对照。
 
-### Phase D：增量时序 TFO
+### Phase D：增量性能版本
 
 1. structural edit seeds；
 2. 复用 `-i` 的 RI-to-RO 跨帧 BFS；
@@ -460,7 +513,7 @@ $$
 | constructed divisor | 已有盲枚举 `d0 & d1` | 只能复用 AIG 构造函数，搜索策略需重写 |
 | structural hash/cleanup | 已完成 | 可直接复用 |
 | exact `AND+Reg` gain | 已完成 | 可复用并扩展 level/MFFC cost |
-| final sequential miter | 已完成 | 可作为 final audit 和 Phase C 基线 |
+| final sequential miter | 已完成 | 只作为开发 shadow oracle 和最终审计 |
 | proof result | 当前只有 proved/reject 两类，UNKNOWN 被安全拒绝 | 需增加 SAT/UNSAT/UNKNOWN 分类和 CEX 输出 |
 | 分步 retention/removal proof | 未实现 | 新增 |
 | AND supergate wire addition | 未实现 | 新增 |
@@ -477,9 +530,8 @@ V2 的安全执行框架。V2 真正具有研究新意的部分——约束反�
 结构修改的增量时序 TFO——尚未实现。
 
 若以完整 V2 研究原型为 100%，当前可复用工程约占 25%--30%；剩余 70%--75% 包含几乎全部核心
-算法和性能优化。最先应完成 Phase A+B，因为它们能在组合 truth-table 小电路上验证“反推 divisor”
-是否确实比 randomized addition 提高机会密度。只有机会普查为正，才值得投入 Phase D 的复杂增量
-证明实现。
+算法和性能优化。实现顺序是先完成 Phase A+B+C，得到功能完整且保守重建的正确版本；Phase D 的
+复杂增量优化在完整版本通过 local/whole oracle 对照后再开始。
 
 ## 16. 成功判据
 
@@ -491,3 +543,23 @@ V2 的安全执行框架。V2 真正具有研究新意的部分——约束反�
 4. 基于修改点时序 TFO 的 proof 是否与 whole-miter oracle 一致，同时明显减少 SAT obligations。
 
 只有同时证明候选机会密度和增量证明收益，才扩展 multi-wire、multi-victim 和两门以上构造。
+
+## 17. 正确性注意事项清单
+
+实现和review时必须逐项确认：
+
+1. `&scorr` proof 必须完成 base + induction；有限 BMC 不能冒充无限时序证明。
+2. conflict/refinement/time limit 返回 UNKNOWN，永不提交。
+3. TFO 使用原、加线、删线三个结构的并集，不能漏掉新边或删除后的替代路径。
+4. 修改到达 RI 后必须跨到下一帧 RO；只比较当前 PO 不正确。
+5. 最终语义比较 PO traces，不强制所有内部 RO 一一相等。
+6. inductive frontier 必须有sound relation/obligation，不能在第 `F` 帧直接截断。
+7. divisor 不能位于 target 的组合 TFO，避免组合环。
+8. local window 的每个离开边都必须成为 boundary；boundary 不完整时只能扩大或 fallback。
+9. 小窗口 SAT 可能在更远下游被屏蔽，可扩大窗口；UNSAT 只有在 boundary 完整时才可接受。
+10. structural cleanup 在显式 add/remove proof 之后执行；cleanup 必须使用ABC已有的等价保持操作。
+11. accepted transaction 后第一版保守重建 fanout、TFO、signature 和proof metadata。
+12. 并行候选基于旧snapshot时只能并行筛选/证明，提交必须串行并在当前网络上重新验证。
+13. simulation 和全divisor bit-parallel matching 只负责候选生成，不能替代 formal proof。
+14. 开发阶段 local proof 必须与 whole-miter shadow oracle 对照；正式算法稳定后关闭逐candidate audit。
+15. 每个最终benchmark输出仍运行一次独立 `dsec/PDR`，用于发现实现错误，不作为主算法proof步骤。
