@@ -293,6 +293,9 @@ struct Cec_ParTran_t_
     int              nGainMin;      // minimum AND+register gain to prove
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
+    int              nCexFrames;    // BMC depth used to recover a rejected-candidate witness (0 = off)
+    int              nCexMax;       // persistent witness traces injected into each simulation batch
+    int              nProofWindow;  // initial TFO depth for adaptive local proof (0 = full TFO only)
     int              fUseConstr;    // enable one-AND constructed divisors
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles

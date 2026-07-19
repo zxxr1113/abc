@@ -18,6 +18,8 @@
 ***********************************************************************/
 
 #include "cecInt.h"
+#include "aig/gia/giaAig.h"
+#include "sat/bmc/bmc.h"
 
 ABC_NAMESPACE_IMPL_START
 
@@ -37,6 +39,9 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nGainMin    = 1;
     p->nSimWords   = 4;
     p->nSimFrames  = 8;
+    p->nCexFrames  = 4;
+    p->nCexMax     = 64;
+    p->nProofWindow = 8;
     p->fUseConstr  = 1;
 }
 
@@ -47,6 +52,8 @@ struct Cec_TranTargetProf_t_
     abctime timeCare;
     abctime timeSearch;
     abctime timeGain;
+    abctime timeWindow;
+    abctime timeCexBmc;
     abctime timeProof;
     int     iRound;
     int     iTarget;
@@ -67,6 +74,11 @@ struct Cec_TranTargetProf_t_
     int     nRetainUnproved;
     int     nFinalUnproved;
     int     nAccepted;
+    int     nWindowCalls;
+    int     nWindowProved;
+    int     nWindowExpanded;
+    int     nCexBmcCalls;
+    int     nCexBmcSat;
 };
 
 typedef struct Cec_TranProf_t_ Cec_TranProf_t;
@@ -79,11 +91,14 @@ struct Cec_TranProf_t_
     abctime timeExisting;
     abctime timeConstruct;
     abctime timeGain;
+    abctime timeWindowMiter;
+    abctime timeWindowCorr;
     abctime timeRetainMiter;
     abctime timeRetainCorr;
     abctime timeFinalMiter;
     abctime timeFinalCorr;
     abctime timeShadow;
+    abctime timeCexBmc;
     int     nSimCalls;
     int     nCareCalls;
     int     nSpecCalls;
@@ -91,6 +106,14 @@ struct Cec_TranProf_t_
     int     nRetainCalls;
     int     nFinalCalls;
     int     nShadowCalls;
+    int     nWindowCalls;
+    int     nWindowProved;
+    int     nWindowExpanded;
+    int     nCexBmcCalls;
+    int     nCexBmcSat;
+    int     nCexBmcUnknown;
+    int     nCegisRestarts;
+    int     nCexStored;
     int     nTargets;
     int     nTargetVictimSets;
     int     nTargetExistingChecks;
@@ -168,8 +191,9 @@ static void Cec_TranPrintProfile( Cec_TranProf_t * p, Cec_TranTargetProf_t * pTo
     int i;
     abctime Accounted = p->timeSim + p->timeCare + p->timeSpec +
         p->timeExisting + p->timeConstruct + p->timeGain +
+        p->timeWindowMiter + p->timeWindowCorr +
         p->timeRetainMiter + p->timeRetainCorr +
-        p->timeFinalMiter + p->timeFinalCorr + p->timeShadow;
+        p->timeFinalMiter + p->timeFinalCorr + p->timeShadow + p->timeCexBmc;
     abctime Other = p->timeTotal > Accounted ? p->timeTotal - Accounted : 0;
     Abc_Print( 1, "Sequential transduction profile: total=%.3f sim=%.3f(%d) care=%.3f(%d) spec=%.3f(%d) existing=%.3f construct=%.3f gain=%.3f(%d) other=%.3f sec.\n",
         Cec_TranTimeSec(p->timeTotal), Cec_TranTimeSec(p->timeSim), p->nSimCalls,
@@ -177,10 +201,15 @@ static void Cec_TranPrintProfile( Cec_TranProf_t * p, Cec_TranTargetProf_t * pTo
         Cec_TranTimeSec(p->timeSpec), p->nSpecCalls,
         Cec_TranTimeSec(p->timeExisting), Cec_TranTimeSec(p->timeConstruct),
         Cec_TranTimeSec(p->timeGain), p->nGainCalls, Cec_TranTimeSec(Other) );
-    Abc_Print( 1, "Sequential transduction proof profile: retain=%d miter=%.3f corr=%.3f final=%d miter=%.3f corr=%.3f shadow=%d time=%.3f sec.\n",
+    Abc_Print( 1, "Sequential transduction proof profile: window=%d proved=%d expanded=%d miter=%.3f corr=%.3f retain=%d miter=%.3f corr=%.3f final=%d miter=%.3f corr=%.3f shadow=%d time=%.3f sec.\n",
+        p->nWindowCalls, p->nWindowProved, p->nWindowExpanded,
+        Cec_TranTimeSec(p->timeWindowMiter), Cec_TranTimeSec(p->timeWindowCorr),
         p->nRetainCalls, Cec_TranTimeSec(p->timeRetainMiter), Cec_TranTimeSec(p->timeRetainCorr),
         p->nFinalCalls, Cec_TranTimeSec(p->timeFinalMiter), Cec_TranTimeSec(p->timeFinalCorr),
         p->nShadowCalls, Cec_TranTimeSec(p->timeShadow) );
+    Abc_Print( 1, "Sequential transduction CEGIS profile: stored-cex=%d restarts=%d bmc=%d sat=%d unknown=%d time=%.3f sec.\n",
+        p->nCexStored, p->nCegisRestarts, p->nCexBmcCalls, p->nCexBmcSat,
+        p->nCexBmcUnknown, Cec_TranTimeSec(p->timeCexBmc) );
     Abc_Print( 1, "Sequential transduction target aggregate: targets=%d victim-sets=%d existing=%d/%d/%d constructed=%d/%d/%d duplicates=%d gain=%d/%d/%d proofs=%d retain-unproved=%d final-unproved=%d accepted=%d avg-checks=%.1f max-checks=%d.\n",
         p->nTargets, p->nTargetVictimSets,
         p->nTargetExistingChecks, p->nTargetExistingMatched, p->nTargetExistingRetained,
@@ -195,16 +224,20 @@ static void Cec_TranPrintProfile( Cec_TranProf_t * p, Cec_TranTargetProf_t * pTo
     {
         abctime AccountedTarget, OtherTarget;
         pT = pTop + i;
-        AccountedTarget = pT->timeCare + pT->timeSearch + pT->timeGain + pT->timeProof;
+        AccountedTarget = pT->timeCare + pT->timeSearch + pT->timeGain +
+            pT->timeWindow + pT->timeCexBmc + pT->timeProof;
         OtherTarget = pT->timeTotal > AccountedTarget ? pT->timeTotal - AccountedTarget : 0;
-        Abc_Print( 1, "Sequential transduction target profile: rank=%d round=%d obj=%d leaves=%d care-bits=%d victim-sets=%d existing=%d/%d/%d constructed=%d/%d/%d duplicates=%d gain=%d/%d/%d proofs=%d retain-unproved=%d final-unproved=%d accepted=%d total=%.3f care=%.3f search=%.3f gain-time=%.3f proof=%.3f other=%.3f sec.\n",
+        Abc_Print( 1, "Sequential transduction target profile: rank=%d round=%d obj=%d leaves=%d care-bits=%d victim-sets=%d existing=%d/%d/%d constructed=%d/%d/%d duplicates=%d gain=%d/%d/%d proofs=%d retain-unproved=%d final-unproved=%d accepted=%d window=%d/%d/%d cex-bmc=%d/%d total=%.3f care=%.3f search=%.3f gain-time=%.3f window-time=%.3f cex-time=%.3f proof=%.3f other=%.3f sec.\n",
             i + 1, pT->iRound, pT->iTarget, pT->nSuperLeaves, pT->nCareBits, pT->nVictimSets,
             pT->nExistingChecks, pT->nExistingMatched, pT->nExistingRetained,
             pT->nConstructChecks, pT->nConstructMatched, pT->nConstructRetained,
             pT->nDuplicates, pT->nGainCalls, pT->nGainPositive, pT->nGainRejected,
             pT->nProofs, pT->nRetainUnproved, pT->nFinalUnproved, pT->nAccepted,
+            pT->nWindowCalls, pT->nWindowProved, pT->nWindowExpanded,
+            pT->nCexBmcCalls, pT->nCexBmcSat,
             Cec_TranTimeSec(pT->timeTotal), Cec_TranTimeSec(pT->timeCare),
             Cec_TranTimeSec(pT->timeSearch), Cec_TranTimeSec(pT->timeGain),
+            Cec_TranTimeSec(pT->timeWindow), Cec_TranTimeSec(pT->timeCexBmc),
             Cec_TranTimeSec(pT->timeProof), Cec_TranTimeSec(OtherTarget) );
     }
 }
@@ -223,6 +256,91 @@ struct Cec_TranSim_t_
     word *          pSims;          // [object ID][frame * nWords + word]
     word *          pState;         // current values of the ROs
 };
+
+// The pattern database owns concrete bounded counterexamples discovered while
+// rejecting transactions.  It deliberately stores only PI/state traces, not
+// object values: after a committed structural edit the next simulation batch
+// evaluates the same traces on the new snapshot.  This makes the bank valid
+// across transactions without retaining stale node IDs.
+typedef struct Cec_TranPatDb_t_ Cec_TranPatDb_t;
+struct Cec_TranPatDb_t_
+{
+    Vec_Ptr_t *      vCexes;
+    int              nPis;
+    int              nRegs;
+    int              nMax;
+};
+
+static Cec_TranPatDb_t * Cec_TranPatDbStart( Gia_Man_t * p, int nMax )
+{
+    Cec_TranPatDb_t * pDb = ABC_CALLOC( Cec_TranPatDb_t, 1 );
+    pDb->vCexes = Vec_PtrAlloc( nMax );
+    pDb->nPis = Gia_ManPiNum(p);
+    pDb->nRegs = Gia_ManRegNum(p);
+    pDb->nMax = nMax;
+    return pDb;
+}
+
+static void Cec_TranPatDbStop( Cec_TranPatDb_t * pDb )
+{
+    Abc_Cex_t * pCex;
+    int i;
+    Vec_PtrForEachEntry( Abc_Cex_t *, pDb->vCexes, pCex, i )
+        Abc_CexFree( pCex );
+    Vec_PtrFree( pDb->vCexes );
+    ABC_FREE( pDb );
+}
+
+// Returns 1 only when a new trace was retained.  A CEX with incompatible
+// interface dimensions cannot be injected into the original design and is
+// ignored; this is a quality loss, never a soundness issue.
+static int Cec_TranPatDbAddCex( Cec_TranPatDb_t * pDb, Abc_Cex_t * pCex )
+{
+    if ( pDb->nMax == 0 || pCex == NULL || pCex->nPis != pDb->nPis ||
+         Vec_PtrSize(pDb->vCexes) >= pDb->nMax )
+        return 0;
+    Vec_PtrPush( pDb->vCexes, Abc_CexDup(pCex, -1) );
+    return 1;
+}
+
+static inline word Cec_TranSetLane( word Value, int iLane, int fValue )
+{
+    word Mask = ((word)1) << iLane;
+    return fValue ? (Value | Mask) : (Value & ~Mask);
+}
+
+static void Cec_TranPatDbInjectInit( Cec_TranPatDb_t * pDb, Cec_TranSim_t * p )
+{
+    Abc_Cex_t * pCex;
+    int c, r, w, iLane, nInject = Abc_MinInt( Vec_PtrSize(pDb->vCexes), p->nWords * 64 );
+    for ( c = 0; c < nInject; c++ )
+    {
+        pCex = (Abc_Cex_t *)Vec_PtrEntry( pDb->vCexes, c );
+        if ( pCex->nRegs != Gia_ManRegNum(p->pGia) )
+            continue;
+        w = c >> 6;
+        iLane = c & 63;
+        for ( r = 0; r < pDb->nRegs; r++ )
+            p->pState[r * p->nWords + w] = Cec_TranSetLane(
+                p->pState[r * p->nWords + w], iLane, Abc_InfoHasBit(pCex->pData, r) );
+    }
+}
+
+static word Cec_TranPatDbInjectPi( Cec_TranPatDb_t * pDb, int f, int iPi, int w, word Value )
+{
+    Abc_Cex_t * pCex;
+    int c, iLane, nInject = Abc_MinInt( Vec_PtrSize(pDb->vCexes), (w + 1) * 64 );
+    for ( c = w * 64; c < nInject; c++ )
+    {
+        pCex = (Abc_Cex_t *)Vec_PtrEntry( pDb->vCexes, c );
+        if ( f > pCex->iFrame )
+            continue;
+        iLane = c & 63;
+        Value = Cec_TranSetLane( Value, iLane,
+            Abc_InfoHasBit(pCex->pData, pCex->nRegs + f * pCex->nPis + iPi) );
+    }
+    return Value;
+}
 
 static inline word * Cec_TranSimObj( Cec_TranSim_t * p, int iObj )
 {
@@ -243,7 +361,8 @@ static int Cec_TranCountOnes( word * pData, int nWords )
     return Count;
 }
 
-static Cec_TranSim_t * Cec_TranSimStart( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
+static Cec_TranSim_t * Cec_TranSimStart( Gia_Man_t * pGia, Cec_ParTran_t * pPars,
+    Cec_TranPatDb_t * pDb )
 {
     Cec_TranSim_t * p;
     Gia_Obj_t * pObj, * pObjRi, * pObjRo;
@@ -256,6 +375,7 @@ static Cec_TranSim_t * Cec_TranSimStart( Gia_Man_t * pGia, Cec_ParTran_t * pPars
     p->nSlots = p->nWords * p->nFrames;
     p->pSims = ABC_CALLOC( word, (size_t)Gia_ManObjNum(pGia) * p->nSlots );
     p->pState = ABC_CALLOC( word, (size_t)Gia_ManRegNum(pGia) * p->nWords );
+    Cec_TranPatDbInjectInit( pDb, p );
     Abc_RandomW( 1 );
     for ( f = 0; f < p->nFrames; f++ )
     {
@@ -263,7 +383,8 @@ static Cec_TranSim_t * Cec_TranSimStart( Gia_Man_t * pGia, Cec_ParTran_t * pPars
         {
             iSlot = f * p->nWords + w;
             Gia_ManForEachPi( pGia, pObj, i )
-                Cec_TranSimObj(p, Gia_ObjId(pGia, pObj))[iSlot] = Abc_RandomW(0);
+                Cec_TranSimObj(p, Gia_ObjId(pGia, pObj))[iSlot] =
+                    Cec_TranPatDbInjectPi( pDb, f, i, w, Abc_RandomW(0) );
             Gia_ManForEachRo( pGia, pObj, i )
                 Cec_TranSimObj(p, Gia_ObjId(pGia, pObj))[iSlot] = p->pState[i * p->nWords + w];
             Gia_ManForEachAnd( pGia, pObj, i )
@@ -604,18 +725,21 @@ static inline int Cec_TranHashGate( Gia_Man_t * pNew, Gia_Obj_t * pObj, int iLit
 // PO/RI boundaries.  A marked RI is emitted as a difference PO by the local
 // miter; its corresponding RO is then related inductively by the common
 // source-state machine built below.
-static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget )
+static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget, int nDepth )
 {
     Gia_Obj_t * pObj;
     Vec_Int_t * vQueue = Vec_IntAlloc( 100 );
+    Vec_Int_t * vDepth = Vec_IntAlloc( 100 );
     char * pMark = ABC_CALLOC( char, Gia_ManObjNum(p) );
     int i, k, iFan;
     Gia_ManStaticFanoutStart( p );
     pMark[iTarget] = 1;
     Vec_IntPush( vQueue, iTarget );
+    Vec_IntPush( vDepth, 0 );
     for ( i = 0; i < Vec_IntSize(vQueue); i++ )
     {
         int iObj = Vec_IntEntry( vQueue, i );
+        int iDepth = Vec_IntEntry( vDepth, i );
         for ( k = 0; k < Gia_ObjFanoutNumId(p, iObj); k++ )
         {
             iFan = Gia_ObjFanoutId( p, iObj, k );
@@ -623,12 +747,16 @@ static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget )
                 continue;
             pMark[iFan] = 1;
             pObj = Gia_ManObj( p, iFan );
-            if ( !Gia_ObjIsCo(pObj) )
+            if ( !Gia_ObjIsCo(pObj) && (!nDepth || iDepth < nDepth) )
+            {
                 Vec_IntPush( vQueue, iFan );
+                Vec_IntPush( vDepth, iDepth + 1 );
+            }
         }
     }
     Gia_ManStaticFanoutStop( p );
     Vec_IntFree( vQueue );
+    Vec_IntFree( vDepth );
     return pMark;
 }
 
@@ -640,7 +768,7 @@ static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget )
 // is an exact COI reduction for these pure combinational edits, not a bounded
 // window approximation.
 static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFanin0, int iFanin1,
-    int iDiv0, int iDiv1, int fDivCompl, int fRemove )
+    int iDiv0, int iDiv1, int fDivCompl, int fRemove, int nTfoDepth )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj;
@@ -651,7 +779,7 @@ static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFan
     vSuper = Cec_TranCollectSuper( p, iTarget );
     assert( iFanin0 >= 0 && iFanin0 < Vec_IntSize(vSuper) );
     assert( iFanin1 == -1 || (iFanin1 > iFanin0 && iFanin1 < Vec_IntSize(vSuper)) );
-    pMark = Cec_TranMarkTfo( p, iTarget );
+    pMark = Cec_TranMarkTfo( p, iTarget, nTfoDepth );
     vBase = Vec_IntStartFull( Gia_ManObjNum(p) );
     vEdit = Vec_IntStartFull( Gia_ManObjNum(p) );
     pNew = Gia_ManStart( Gia_ManObjNum(p) + Gia_ManAndNum(p) / 4 + 100 );
@@ -700,6 +828,29 @@ static Gia_Man_t * Cec_TranBuildLocalMiter( Gia_Man_t * p, int iTarget, int iFan
             iEdit = Cec_TranHashGate( pNew, pObj, iLit0, iLit1 );
         }
         Vec_IntWriteEntry( vEdit, i, iEdit );
+    }
+    // For a bounded TFO, every marked AND with an unmarked fanout is a cut
+    // boundary.  Proving equality at these boundaries is stronger than the
+    // full-TFO query and therefore sound; a failing bounded proof merely
+    // triggers expansion and never rejects the transaction.
+    if ( nTfoDepth )
+    {
+        Gia_ManStaticFanoutStart( p );
+        Gia_ManForEachAnd( p, pObj, i )
+        {
+            if ( !pMark[i] )
+                continue;
+            for ( k = 0; k < Gia_ObjFanoutNumId(p, i); k++ )
+                if ( !pMark[Gia_ObjFanoutId(p, i, k)] )
+                    break;
+            if ( k == Gia_ObjFanoutNumId(p, i) )
+                continue;
+            Gia_ManAppendCo( pNew, Gia_ManHashXor(pNew,
+                Cec_TranVecLit(vBase, Abc_Var2Lit(i, 0)),
+                Cec_TranVecLit(vEdit, Abc_Var2Lit(i, 0))) );
+            nOuts++;
+        }
+        Gia_ManStaticFanoutStop( p );
     }
     // PO and affected-RI difference outputs must precede all RIs in a Gia.
     Gia_ManForEachPo( p, pObj, i )
@@ -766,34 +917,95 @@ static int Cec_TranProveWhole( Gia_Man_t * p, Gia_Man_t * pCand, Cec_ParTran_t *
     return fProved;
 }
 
-static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
-    Gia_Man_t * pWhole1, Cec_ParTran_t * pPars, int iTarget, int iFanin0, int iFanin1,
-    int iDiv0, int iDiv1, int fDivCompl, int fRemove, Cec_TranProf_t * pProf )
+// Recover a concrete bounded counterexample only after the complete local
+// proof has rejected a transaction.  The main &scorr oracle remains the
+// acceptance proof; this BMC is solely a witness extractor for CEGIS.  A
+// timeout/UNKNOWN cannot refine the pattern bank and is kept conservative.
+static int Cec_TranHarvestCex( Gia_Man_t * pMiter, Cec_ParTran_t * pPars,
+    Cec_TranPatDb_t * pDb, Cec_TranProf_t * pProf )
+{
+    Aig_Man_t * pAig;
+    int RetValue, fAdded = 0;
+    abctime clk;
+    if ( pPars->nCexFrames == 0 || pDb->nMax == 0 ||
+         Vec_PtrSize(pDb->vCexes) >= pDb->nMax )
+        return 0;
+    clk = Abc_Clock();
+    pAig = Gia_ManToAigSimple( pMiter );
+    RetValue = Saig_ManBmcSimple( pAig, pPars->nCexFrames, 0,
+        pPars->nBTLimit, 0, 0, NULL, 0, 0 );
+    pProf->timeCexBmc += Abc_Clock() - clk;
+    pProf->nCexBmcCalls++;
+    if ( RetValue == 0 && pAig->pSeqModel )
+    {
+        fAdded = Cec_TranPatDbAddCex( pDb, pAig->pSeqModel );
+        pProf->nCexBmcSat += fAdded;
+    }
+    else if ( RetValue == -1 )
+        pProf->nCexBmcUnknown++;
+    Aig_ManStop( pAig );
+    return fAdded;
+}
+
+static int Cec_TranProveLocalMiter( Gia_Man_t * pMiter, Cec_ParTran_t * pPars,
+    Cec_TranProf_t * pProf, int fRemove, int fWindow )
 {
     Cec_ParCor_t Cor;
-    Gia_Man_t * pMiter, * pReduced;
+    Gia_Man_t * pReduced;
     int fProved;
     abctime clk = Abc_Clock();
-    pMiter = Cec_TranBuildLocalMiter( p, iTarget, iFanin0, iFanin1,
-        iDiv0, iDiv1, fDivCompl, fRemove );
-    if ( fRemove )
-        pProf->timeFinalMiter += Abc_Clock() - clk, pProf->nFinalCalls++;
-    else
-        pProf->timeRetainMiter += Abc_Clock() - clk, pProf->nRetainCalls++;
     Cec_ManCorSetDefaultParams( &Cor );
     Cor.nFrames   = pPars->nFrames;
     Cor.nBTLimit  = pPars->nBTLimit;
     Cor.nStepsMax = pPars->nStepsMax;
     Cor.fVerbose  = 0;
-    clk = Abc_Clock();
     pReduced = Cec_ManLSCorrespondence( pMiter, &Cor );
-    if ( fRemove )
+    if ( fWindow )
+        pProf->timeWindowCorr += Abc_Clock() - clk;
+    else if ( fRemove )
         pProf->timeFinalCorr += Abc_Clock() - clk;
     else
         pProf->timeRetainCorr += Abc_Clock() - clk;
     fProved = Cec_TranAllPosAreZero( pReduced );
     Gia_ManStop( pReduced );
+    return fProved;
+}
+
+static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
+    Gia_Man_t * pWhole1, Cec_ParTran_t * pPars, int iTarget, int iFanin0, int iFanin1,
+    int iDiv0, int iDiv1, int fDivCompl, int fRemove, Cec_TranPatDb_t * pDb,
+    int * pfCexAdded, Cec_TranProf_t * pProf )
+{
+    Gia_Man_t * pMiter;
+    int fProved;
+    abctime clk = Abc_Clock();
+    if ( pPars->nProofWindow )
+    {
+        pMiter = Cec_TranBuildLocalMiter( p, iTarget, iFanin0, iFanin1,
+            iDiv0, iDiv1, fDivCompl, fRemove, pPars->nProofWindow );
+        pProf->timeWindowMiter += Abc_Clock() - clk;
+        pProf->nWindowCalls++;
+        fProved = Cec_TranProveLocalMiter( pMiter, pPars, pProf, fRemove, 1 );
+        Gia_ManStop( pMiter );
+        if ( fProved )
+        {
+            pProf->nWindowProved++;
+            goto shadow;
+        }
+        pProf->nWindowExpanded++;
+        clk = Abc_Clock();
+    }
+    pMiter = Cec_TranBuildLocalMiter( p, iTarget, iFanin0, iFanin1,
+        iDiv0, iDiv1, fDivCompl, fRemove, 0 );
+    if ( fRemove )
+        pProf->timeFinalMiter += Abc_Clock() - clk, pProf->nFinalCalls++;
+    else
+        pProf->timeRetainMiter += Abc_Clock() - clk, pProf->nRetainCalls++;
+    fProved = Cec_TranProveLocalMiter( pMiter, pPars, pProf, fRemove, 0 );
+    if ( !fProved )
+        *pfCexAdded |= Cec_TranHarvestCex( pMiter, pPars, pDb, pProf );
     Gia_ManStop( pMiter );
+shadow:
     if ( fProved && pPars->fShadow )
     {
         clk = Abc_Clock();
@@ -810,10 +1022,11 @@ static int Cec_TranProveTransaction( Gia_Man_t * p, Gia_Man_t * pWhole0,
 static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     int iTarget, int iFanin0, int iFanin1, int iDiv0, int iDiv1, int fDivCompl, int * pnTried,
     int * pnPositive, int * pnGainRejected, int * pnRetainUnproved,
-    int * pnFinalUnproved, int * pnAccepted, Cec_TranProf_t * pProf )
+    int * pnFinalUnproved, int * pnAccepted, Cec_TranPatDb_t * pDb,
+    int * pfCegisRestart, Cec_TranProf_t * pProf )
 {
     Gia_Man_t * p = *pp, * pAdd, * pFinal, * pCand;
-    int Gain, fRetain, fRemove;
+    int Gain, fRetain, fRemove, fCexAdded = 0;
     abctime clk = Abc_Clock();
     pAdd   = Cec_TranDupEdit( p, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1 );
     pFinal = Cec_TranDupEdit( p, iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0 );
@@ -867,9 +1080,9 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     // establishes the intended add-then-remove transaction.  When -f is on,
     // Cec_TranProveTransaction additionally shadows the direct whole miter.
     fRetain = Cec_TranProveTransaction(p, p, pAdd, pPars,
-        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0, pProf);
+        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 0, pDb, &fCexAdded, pProf);
     fRemove = fRetain && Cec_TranProveTransaction(p, pAdd, pFinal, pPars,
-        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1, pProf);
+        iTarget, iFanin0, iFanin1, iDiv0, iDiv1, fDivCompl, 1, pDb, &fCexAdded, pProf);
     if ( !fRemove )
     {
         if ( !fRetain )
@@ -879,6 +1092,8 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
         Gia_ManStop( pAdd );
         Gia_ManStop( pFinal );
         Gia_ManStop( pCand );
+        if ( fCexAdded )
+            *pfCegisRestart = 1;
         return 0;
     }
     if ( pPars->fVerbose )
@@ -905,6 +1120,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Gia_Man_t * p;
     Gia_Obj_t * pObj, * pDiv;
     Cec_TranSim_t * pSim;
+    Cec_TranPatDb_t * pDb;
     Cec_TranSpec_t * pSpec;
     word * pCare;
     Vec_Int_t * vMatches, * vBases, * vConstr, * vSuper;
@@ -918,22 +1134,24 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0, nSigDuplicate = 0;
     int nCareBits = 0, nThisCareBits, nTop = 0, nRound = 0;
     int nVictim, nVictim2, iFanin1, nBaseLimit, nConstrLimit, nVictimSets = 0;
-    int fChanged;
+    int fChanged, fCegisRestart;
     abctime clk = Abc_Clock(), clkPhase, clkTarget;
     assert( Gia_ManRegNum(pGia) > 0 );
     Abc_Print( 1, "Sequential transduction: AND = %d, Reg = %d, frames = %d, conf = %d.\n",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nFrames, pPars->nBTLimit );
     p = Gia_ManDup( pGia );
+    pDb = Cec_TranPatDbStart( p, pPars->nCexMax );
     pTop = pPars->fProfile && pPars->nProfileTop ?
         ABC_ALLOC( Cec_TranTargetProf_t, pPars->nProfileTop ) : NULL;
     do
     {
         fChanged = 0;
+        fCegisRestart = 0;
         // Signatures are rebuilt after every committed transaction.  This is
         // intentionally conservative while structural edit caches do not yet
         // exist; no candidate is ever proved against a stale snapshot.
         clkPhase = Abc_Clock();
-        pSim = Cec_TranSimStart( p, pPars );
+        pSim = Cec_TranSimStart( p, pPars, pDb );
         Prof.timeSim += Abc_Clock() - clkPhase;
         Prof.nSimCalls++;
         // Structural filtering is free: a topologically earlier object cannot
@@ -967,8 +1185,15 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 Snap.timeCare = Prof.timeCare;
                 Snap.timeSearch = Prof.timeSpec + Prof.timeExisting + Prof.timeConstruct;
                 Snap.timeGain = Prof.timeGain;
+                Snap.timeWindow = Prof.timeWindowMiter + Prof.timeWindowCorr;
+                Snap.timeCexBmc = Prof.timeCexBmc;
                 Snap.timeProof = Prof.timeRetainMiter + Prof.timeRetainCorr +
                     Prof.timeFinalMiter + Prof.timeFinalCorr + Prof.timeShadow;
+                Snap.nWindowCalls = Prof.nWindowCalls;
+                Snap.nWindowProved = Prof.nWindowProved;
+                Snap.nWindowExpanded = Prof.nWindowExpanded;
+                Snap.nCexBmcCalls = Prof.nCexBmcCalls;
+                Snap.nCexBmcSat = Prof.nCexBmcSat;
             }
             vSuper = Cec_TranCollectSuper( p, i );
             if ( pPars->fProfile )
@@ -981,14 +1206,14 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
             nCareBits += nThisCareBits;
             if ( pPars->fProfile )
                 Target.nCareBits = nThisCareBits;
-            for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged; f++ )
+            for ( f = 0; f < Vec_IntSize(vSuper) && !fChanged && !fCegisRestart; f++ )
             {
                 // A transaction may replace either one leaf or a pair of
                 // leaves in the same positive AND supergate.  The latter is
                 // the smallest multi-victim extension: h is required to
                 // equal the conjunction of the removed leaves wherever the
                 // remaining product is sequentially observable.
-                for ( f2 = f; f2 < Vec_IntSize(vSuper) && !fChanged; f2++ )
+                for ( f2 = f; f2 < Vec_IntSize(vSuper) && !fChanged && !fCegisRestart; f2++ )
                 {
                 if ( pPars->nVictimsMax == 1 && f2 != f )
                     break;
@@ -1040,12 +1265,12 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                         break;
                     fChanged = Cec_TranTryCommit( &p, pPars, i, f, iFanin1, iDiv0, -1, 0,
                         &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
-                        &nFinalUnproved, &nAccepted, &Prof );
-                    if ( fChanged )
+                        &nFinalUnproved, &nAccepted, pDb, &fCegisRestart, &Prof );
+                    if ( fChanged || fCegisRestart )
                         break;
                 }
                 Vec_IntFree( vMatches );
-                if ( !pPars->fUseConstr || fChanged || pPars->nConstrMax == 0 )
+                if ( !pPars->fUseConstr || fChanged || fCegisRestart || pPars->nConstrMax == 0 )
                 {
                     Cec_TranSpecStop( pSpec );
                     continue;
@@ -1102,14 +1327,14 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 }
                 Prof.timeConstruct += Abc_Clock() - clkPhase;
                 nConstructRetained += Vec_IntSize(vConstr) / 3;
-                for ( j = 0; j < Vec_IntSize(vConstr) && !fChanged && nTried < pPars->nCandMax; j += 3 )
+                for ( j = 0; j < Vec_IntSize(vConstr) && !fChanged && !fCegisRestart && nTried < pPars->nCandMax; j += 3 )
                 {
                     iDiv0 = Vec_IntEntry( vConstr, j );
                     iDiv1 = Vec_IntEntry( vConstr, j + 1 );
                     iEntry = Vec_IntEntry( vConstr, j + 2 );
                     fChanged = Cec_TranTryCommit( &p, pPars, i, f, iFanin1, iDiv0, iDiv1, iEntry,
                         &nTried, &nPositive, &nGainRejected, &nRetainUnproved,
-                        &nFinalUnproved, &nAccepted, &Prof );
+                        &nFinalUnproved, &nAccepted, pDb, &fCegisRestart, &Prof );
                 }
                 Vec_IntFree( vConstr );
                 Vec_WrdFree( vConstrSigs );
@@ -1126,6 +1351,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 Target.timeCare = Prof.timeCare - Snap.timeCare;
                 Target.timeSearch = Prof.timeSpec + Prof.timeExisting + Prof.timeConstruct - Snap.timeSearch;
                 Target.timeGain = Prof.timeGain - Snap.timeGain;
+                Target.timeWindow = Prof.timeWindowMiter + Prof.timeWindowCorr - Snap.timeWindow;
+                Target.timeCexBmc = Prof.timeCexBmc - Snap.timeCexBmc;
                 Target.timeProof = Prof.timeRetainMiter + Prof.timeRetainCorr +
                     Prof.timeFinalMiter + Prof.timeFinalCorr + Prof.timeShadow - Snap.timeProof;
                 Target.nVictimSets = nVictimSets - Snap.nVictimSets;
@@ -1143,24 +1370,33 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 Target.nRetainUnproved = nRetainUnproved - Snap.nRetainUnproved;
                 Target.nFinalUnproved = nFinalUnproved - Snap.nFinalUnproved;
                 Target.nAccepted = nAccepted - Snap.nAccepted;
+                Target.nWindowCalls = Prof.nWindowCalls - Snap.nWindowCalls;
+                Target.nWindowProved = Prof.nWindowProved - Snap.nWindowProved;
+                Target.nWindowExpanded = Prof.nWindowExpanded - Snap.nWindowExpanded;
+                Target.nCexBmcCalls = Prof.nCexBmcCalls - Snap.nCexBmcCalls;
+                Target.nCexBmcSat = Prof.nCexBmcSat - Snap.nCexBmcSat;
                 Cec_TranTargetProfAdd( &Prof, pTop, &nTop, pPars->nProfileTop, &Target );
             }
-            if ( fChanged || nTried >= pPars->nCandMax || nAccepted >= pPars->nChangesMax )
+            if ( fChanged || fCegisRestart || nTried >= pPars->nCandMax || nAccepted >= pPars->nChangesMax )
                 break;
         }
         Cec_TranSimStop( pSim );
+        if ( fCegisRestart )
+            Prof.nCegisRestarts++;
         nRound++;
     }
-    while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
+    while ( (fChanged || fCegisRestart) && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
     Prof.timeTotal = Abc_Clock() - clk;
     Abc_Print( 1, "Sequential transduction: victim-sets=%d proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-positive=%d gain-rejected=%d retain-unproved=%d final-unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
         nVictimSets, nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nSigDuplicate,
         nPositive, nGainRejected, nRetainUnproved, nFinalUnproved, nAccepted,
         Gia_ManAndNum(pGia), Gia_ManAndNum(p),
         Cec_TranTimeSec(Prof.timeTotal) );
+    Prof.nCexStored = Vec_PtrSize(pDb->vCexes);
     if ( pPars->fProfile )
         Cec_TranPrintProfile( &Prof, pTop, nTop );
     ABC_FREE( pTop );
+    Cec_TranPatDbStop( pDb );
     return p;
 }
 
