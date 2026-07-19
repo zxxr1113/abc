@@ -30,6 +30,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nCandMax    = 1000;
     p->nDivsMax    = 16;
     p->nConstrMax  = 16;
+    p->nConstrBaseMax = 64;
     p->nChangesMax = 100;
     p->nGainMin    = 1;
     p->nSimWords   = 4;
@@ -276,6 +277,40 @@ static int Cec_TranSpecMatches( Cec_TranSpec_t * p, int iDiv0, int iDiv1, int fD
         if ( (p->pMust1[s] & ~h) || (p->pMust0[s] & h) )
             return 0;
     }
+    return 1;
+}
+
+static void Cec_TranSpecCompute( Cec_TranSpec_t * p, int iDiv0, int iDiv1,
+    int fDivCompl, word * pSig )
+{
+    int s;
+    for ( s = 0; s < p->pSim->nSlots; s++ )
+    {
+        pSig[s] = Cec_TranSimLit( p->pSim, iDiv0, s );
+        if ( iDiv1 != -1 )
+            pSig[s] &= Cec_TranSimLit( p->pSim, iDiv1, s );
+        if ( fDivCompl )
+            pSig[s] = ~pSig[s];
+    }
+}
+
+// The check is exact over the current signature batch (not hash-based), so a
+// duplicate cannot consume one of the expensive formal-proof slots.  Signature
+// equality may merge different functions only on unsampled patterns, which
+// can lose a search opportunity but can never compromise correctness.
+static int Cec_TranSigIsNew( Vec_Wrd_t * vSigs, word * pSig, int nSlots )
+{
+    int i, k, nSigs = Vec_WrdSize(vSigs) / nSlots;
+    for ( i = 0; i < nSigs; i++ )
+    {
+        for ( k = 0; k < nSlots; k++ )
+            if ( Vec_WrdEntry(vSigs, i * nSlots + k) != pSig[k] )
+                break;
+        if ( k == nSlots )
+            return 0;
+    }
+    for ( k = 0; k < nSlots; k++ )
+        Vec_WrdPush( vSigs, pSig[k] );
     return 1;
 }
 
@@ -643,9 +678,11 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     Cec_TranSpec_t * pSpec;
     word * pCare;
     Vec_Int_t * vMatches, * vBases, * vConstr, * vSuper;
+    Vec_Wrd_t * vConstrSigs;
+    word * pConstrSig;
     int i, f, d, e, j, iDiv0, iDiv1, fDivCompl, iEntry;
     int nExisting = 0, nConstructed = 0, nPositive = 0, nTried = 0, nAccepted = 0;
-    int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0;
+    int nSigChecks = 0, nSigRejected = 0, nSigMatched = 0, nSigDuplicate = 0;
     int nCareBits = 0;
     int nVictim, nBaseLimit, nConstrLimit;
     int fChanged;
@@ -721,19 +758,21 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                 // A bounded base pool makes the O(D^2 W) construction pass
                 // predictable.  Its literals include both phases, so AND and
                 // complemented-AND cover AND/OR/AND-NOT forms.
-                nBaseLimit = pPars->nDivsMax ? pPars->nDivsMax : 64;
+                nBaseLimit = pPars->nConstrBaseMax;
                 nConstrLimit = pPars->nConstrMax;
-                vBases = Vec_IntAlloc( nBaseLimit );
-                for ( d = i - 1; d > 0 && Vec_IntSize(vBases) < nBaseLimit; d-- )
+                vBases = Vec_IntAlloc( nBaseLimit ? nBaseLimit : 100 );
+                for ( d = i - 1; d > 0 && (nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit); d-- )
                 {
                     pDiv = Gia_ManObj( p, d );
                     if ( !Gia_ObjIsCand(pDiv) )
                         continue;
                     Vec_IntPush( vBases, Abc_Var2Lit(d, 0) );
-                    if ( Vec_IntSize(vBases) < nBaseLimit )
+                    if ( nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit )
                         Vec_IntPush( vBases, Abc_Var2Lit(d, 1) );
                 }
                 vConstr = Vec_IntAlloc( 3 * nConstrLimit );
+                vConstrSigs = Vec_WrdAlloc( nConstrLimit * pSim->nSlots );
+                pConstrSig = ABC_ALLOC( word, pSim->nSlots );
                 Vec_IntForEachEntry( vBases, iDiv0, d )
                 {
                     Vec_IntForEachEntryStart( vBases, iDiv1, e, d + 1 )
@@ -750,6 +789,12 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                             nSigMatched++;
                             if ( Vec_IntSize(vConstr) < 3 * nConstrLimit )
                             {
+                                Cec_TranSpecCompute( pSpec, iDiv0, iDiv1, fDivCompl, pConstrSig );
+                                if ( !Cec_TranSigIsNew(vConstrSigs, pConstrSig, pSim->nSlots) )
+                                {
+                                    nSigDuplicate++;
+                                    continue;
+                                }
                                 Vec_IntPush( vConstr, iDiv0 );
                                 Vec_IntPush( vConstr, iDiv1 );
                                 Vec_IntPush( vConstr, fDivCompl );
@@ -766,6 +811,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
                         &nTried, &nPositive, &nAccepted );
                 }
                 Vec_IntFree( vConstr );
+                Vec_WrdFree( vConstrSigs );
+                ABC_FREE( pConstrSig );
                 Vec_IntFree( vBases );
                 Cec_TranSpecStop( pSpec );
             }
@@ -777,8 +824,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         Cec_TranSimStop( pSim );
     }
     while ( fChanged && nTried < pPars->nCandMax && nAccepted < pPars->nChangesMax );
-    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d gain-filtered=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
-        nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nPositive, nAccepted,
+    Abc_Print( 1, "Sequential transduction: proofs=%d existing=%d constructed=%d care-bits=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-filtered=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
+        nTried, nExisting, nConstructed, nCareBits, nSigChecks, nSigRejected, nSigMatched, nSigDuplicate, nPositive, nAccepted,
         Gia_ManAndNum(pGia), Gia_ManAndNum(p),
         1.0 * (Abc_Clock() - clk) / CLOCKS_PER_SEC );
     return p;

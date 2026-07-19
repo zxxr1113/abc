@@ -39,10 +39,13 @@ Known limitations and follow-up work:
    MFFC-based victim scoring remain open.
 4. Existing-literal matching tests the full topologically earlier CI/AND pool,
    but retains only `-D` nearest matches for formal proof.  Constructed search
-   uses a bounded nearest literal base pool of size `-D`; it is not yet an
-   exhaustive all-pairs construction over the full network.
-5. Duplicate constructed signatures are not canonicalized.  Add a signature
-   hash plus an exact structural-cost tie-break before increasing `-D`.
+   has an independent base-pool budget `-B` (`0` means all safe literals) and
+   a retained-candidate budget `-K`; an all-pairs experiment is therefore
+   possible but can cost `O(B^2 W)`.
+5. Constructed candidates with identical sampled signatures are now removed
+   exactly over the current signature batch.  Different unsampled functions
+   can still collide semantically in that batch, so this is a quality-only
+   approximation.  Exact structural-cost ordering remains open.
 6. The implementation now uses a shared-state local miter: it duplicates the
    target's complete combinational TFO and emits every affected PO and RI as a
    proof boundary, while retaining the original transition relation.  This is

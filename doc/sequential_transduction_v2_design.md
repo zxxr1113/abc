@@ -512,7 +512,7 @@ $$
 | `&stran` 命令、参数、统计 | 已完成 | 可复用，需增加 V2 参数 |
 | speculative GIA duplicate | 已完成正相 AND supergate 的 explicit add/remove transaction | 可复用，multi-wire 仍待扩展 |
 | existing literal 枚举 | 已完成：对完整拓扑安全 pool 做 `M1/M0` 位并行匹配，只保留近邻匹配项送 formal proof | 已可用；精确 sequential care 仍待接入 |
-| constructed divisor | 已完成一门 `AND` 及输出反相（覆盖 AND/OR/AND-NOT） signature matching | 需扩展 signature hash、成本去重和更大函数 |
+| constructed divisor | 已完成一门 `AND` 及输出反相（覆盖 AND/OR/AND-NOT）；`-B` 控制 base pool，`-K` 控制保留数，sampled-signature 完全去重 | 需扩展到两门以上函数和 exact cost ordering |
 | structural hash/cleanup | 已完成 | 可直接复用 |
 | exact `AND+Reg` gain | 已完成 | 可复用并扩展 level/MFFC cost |
 | local sequential proof | 已完成：共享原 transition relation、复制受影响组合 TFO、比较 PO/RI 边界 | 每次 transaction 后保守重建；尚未复用 `-i` cache |
