@@ -1,0 +1,19 @@
+.model stran_cegis
+.inputs a b c d e f g h i j k l m
+.outputs y keep_ra keep_rb
+.latch a ra 0
+.latch rare rb 0
+
+# `rare` is deliberately absent from the deterministic 64-lane W=1 batch.
+# If an unsound replacement slips through the sampled M1/M0 filter, bounded
+# BMC finds the frame-1 witness ra=0, rb=1 and feeds its PI trace back into
+# the persistent CEGIS pattern bank.
+.names b c d e f g h i j k l m rare
+111111111111 1
+.names ra rb y
+11 1
+.names ra keep_ra
+1 1
+.names rb keep_rb
+1 1
+.end

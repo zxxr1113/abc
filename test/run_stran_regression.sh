@@ -24,3 +24,8 @@ printf '%s\n' "$multi_result"
 grep -q 'victim-sets=' <<<"$multi_result"
 grep -q 'accepted=1' <<<"$multi_result"
 grep -q 'Networks are equivalent' <<<"$multi_result"
+
+cegis_result=$("$abc_bin" -q "read_blif test/stran_cegis.blif; strash; write_aiger $tmp_dir/cegis-before.aig; &get; &stran -T 8 -N 1 -D 16 -K 0 -Q 1 -W 1 -A 0 -E 2 -R 1 -C 1000 -p -P 1; &write $tmp_dir/cegis-after.aig; dsec $tmp_dir/cegis-before.aig $tmp_dir/cegis-after.aig")
+printf '%s\n' "$cegis_result"
+grep -q 'Sequential transduction CEGIS profile: stored-cex=1 restarts=1 bmc=1 sat=1' <<<"$cegis_result"
+grep -q 'Networks are equivalent' <<<"$cegis_result"
