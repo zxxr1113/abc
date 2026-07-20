@@ -1379,6 +1379,13 @@ struct Cec_TranRoot_t_
     int nMffc;
 };
 
+typedef struct Cec_TranSigEnt_t_ Cec_TranSigEnt_t;
+struct Cec_TranSigEnt_t_
+{
+    word Hash;
+    int  iLit;
+};
+
 static int Cec_TranRootCompare( const void * p0, const void * p1 )
 {
     Cec_TranRoot_t const * pR0 = (Cec_TranRoot_t const *)p0;
@@ -1388,20 +1395,102 @@ static int Cec_TranRootCompare( const void * p0, const void * p1 )
     return pR1->iObj - pR0->iObj;
 }
 
+static word Cec_TranLitHash( Cec_TranSim_t * pSim, int iLit )
+{
+    word Hash = ABC_CONST(0xcbf29ce484222325);
+    int s;
+    for ( s = 0; s < pSim->nSlots; s++ )
+    {
+        Hash ^= Cec_TranSimLit( pSim, iLit, s );
+        Hash *= ABC_CONST(0x100000001b3);
+        Hash ^= Hash >> 32;
+    }
+    return Hash;
+}
+
+static int Cec_TranSigEntCompare( const void * p0, const void * p1 )
+{
+    Cec_TranSigEnt_t const * pE0 = (Cec_TranSigEnt_t const *)p0;
+    Cec_TranSigEnt_t const * pE1 = (Cec_TranSigEnt_t const *)p1;
+    if ( pE0->Hash < pE1->Hash )
+        return -1;
+    if ( pE0->Hash > pE1->Hash )
+        return 1;
+    if ( Abc_Lit2Var(pE0->iLit) != Abc_Lit2Var(pE1->iLit) )
+        return Abc_Lit2Var(pE1->iLit) - Abc_Lit2Var(pE0->iLit);
+    return pE0->iLit - pE1->iLit;
+}
+
+static Cec_TranSigEnt_t * Cec_TranBuildSigIndex( Cec_TranSim_t * pSim,
+    int * pnEntries, int ** ppCandPrefix )
+{
+    Gia_Man_t * p = pSim->pGia;
+    Gia_Obj_t * pObj;
+    Cec_TranSigEnt_t * pEntries;
+    int * pCandPrefix = ABC_ALLOC( int, Gia_ManObjNum(p) + 1 );
+    int i, f, nCands = 1, nEntries = 0;
+    // The constant is a valid Direct divisor even though Gia_ObjIsCand()
+    // intentionally excludes it.
+    Gia_ManForEachObj( p, pObj, i )
+        if ( Gia_ObjIsCand(pObj) )
+            nCands++;
+    pEntries = ABC_ALLOC( Cec_TranSigEnt_t, 2 * nCands );
+    for ( i = 0; i <= Gia_ManObjNum(p); i++ )
+        pCandPrefix[i] = 0;
+    for ( f = 0; f < 2; f++ )
+    {
+        pEntries[nEntries].iLit = Abc_Var2Lit( 0, f );
+        pEntries[nEntries].Hash = Cec_TranLitHash( pSim, pEntries[nEntries].iLit );
+        nEntries++;
+    }
+    Gia_ManForEachObj( p, pObj, i )
+    {
+        pCandPrefix[i + 1] = pCandPrefix[i] + Gia_ObjIsCand(pObj);
+        if ( !Gia_ObjIsCand(pObj) )
+            continue;
+        for ( f = 0; f < 2; f++ )
+        {
+            pEntries[nEntries].iLit = Abc_Var2Lit( i, f );
+            pEntries[nEntries].Hash = Cec_TranLitHash( pSim, pEntries[nEntries].iLit );
+            nEntries++;
+        }
+    }
+    assert( nEntries == 2 * nCands );
+    qsort( pEntries, nEntries, sizeof(Cec_TranSigEnt_t), Cec_TranSigEntCompare );
+    *pnEntries = nEntries;
+    *ppCandPrefix = pCandPrefix;
+    return pEntries;
+}
+
+static int Cec_TranSigIndexLowerBound( Cec_TranSigEnt_t * pEntries,
+    int nEntries, word Hash )
+{
+    int Left = 0, Right = nEntries;
+    while ( Left < Right )
+    {
+        int Middle = Left + (Right - Left) / 2;
+        if ( pEntries[Middle].Hash < Hash )
+            Left = Middle + 1;
+        else
+            Right = Middle;
+    }
+    return Left;
+}
+
 static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     Cec_ParTran_t * pPars )
 {
     Cec_TranProf_t Prof = {0};
     Cec_TranRoot_t * pRoots;
+    Cec_TranSigEnt_t * pSigIndex;
     Cec_TranSim_t * pSim;
     Cec_TranPatDb_t * pDb;
     Gia_Man_t * p;
     Gia_Obj_t * pObj, * pDiv;
     Vec_Int_t * vMatches, * vBases, * vConstr;
-    Vec_Wrd_t * vConstrSigs;
-    word * pConstrSig;
-    int i, d, e, j, r, iTarget, iDiv0, iDiv1, fDivCompl, iEntry;
-    int nRoots, nBaseLimit, nConstrLimit;
+    int * pCandPrefix;
+    int i, d, e, j, r, iTarget, iDiv0, iDiv1, fDivCompl;
+    int nRoots, nSigEntries, nBaseLimit, nConstrLimit;
     int nExisting = 0, nConstructed = 0, nSigChecks = 0, nSigRejected = 0;
     int nSigMatched = 0, nSigDuplicate = 0, nPositive = 0, nGainRejected = 0;
     int nUnproved = 0, nTried = 0, nAccepted = 0, nRound = 0;
@@ -1422,6 +1511,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         pSim = Cec_TranSimStart( p, pPars, pDb );
         Prof.timeSim += Abc_Clock() - clkPhase;
         Prof.nSimCalls++;
+        pSigIndex = Cec_TranBuildSigIndex( pSim, &nSigEntries, &pCandPrefix );
 
         // Refs are restored by Gia_NodeMffcSize().  The resulting order makes
         // the expensive signature/proof budget favor the largest potential
@@ -1441,6 +1531,10 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 nRoots++;
             }
         qsort( pRoots, nRoots, sizeof(Cec_TranRoot_t), Cec_TranRootCompare );
+        // MFFC sizing preserves the refcounts for the duration of this
+        // snapshot, but the next CEGIS round can reuse the same GIA after a
+        // rejected candidate.  Drop them before that restart.
+        ABC_FREE( p->pRefs );
 
         for ( r = 0; r < nRoots && !fChanged && !fCegisRestart; r++ )
         {
@@ -1451,25 +1545,26 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             // A divisor must be topologically earlier than the root, which
             // also excludes its TFO and makes the root rewrite acyclic.
             vMatches = Vec_IntAlloc( pPars->nDivsMax + 2 );
-            for ( d = iTarget - 1; d > 0; d-- )
             {
-                pDiv = Gia_ManObj( p, d );
-                if ( !Gia_ObjIsCand(pDiv) )
+            word TargetHash = Cec_TranLitHash( pSim, Abc_Var2Lit(iTarget, 0) );
+            int iFirst = Cec_TranSigIndexLowerBound( pSigIndex, nSigEntries, TargetHash );
+            int nPool = 2 * (1 + pCandPrefix[iTarget]);
+            int nLocalMatched = 0;
+            for ( d = iFirst; d < nSigEntries && pSigIndex[d].Hash == TargetHash; d++ )
+            {
+                iDiv0 = pSigIndex[d].iLit;
+                if ( Abc_Lit2Var(iDiv0) >= iTarget )
                     continue;
-                for ( fDivCompl = 0; fDivCompl < 2; fDivCompl++ )
-                {
-                    iDiv0 = Abc_Var2Lit( d, fDivCompl );
-                    nExisting++;
-                    nSigChecks++;
-                    if ( !Cec_TranSigMatchesRoot(pSim, iTarget, iDiv0, -1, 0) )
-                    {
-                        nSigRejected++;
-                        continue;
-                    }
-                    nSigMatched++;
-                    if ( pPars->nDivsMax == 0 || Vec_IntSize(vMatches) < pPars->nDivsMax )
-                        Vec_IntPush( vMatches, iDiv0 );
-                }
+                if ( !Cec_TranSigMatchesRoot(pSim, iTarget, iDiv0, -1, 0) )
+                    continue; // a 64-bit hash collision
+                nLocalMatched++;
+                nSigMatched++;
+                if ( pPars->nDivsMax == 0 || Vec_IntSize(vMatches) < pPars->nDivsMax )
+                    Vec_IntPush( vMatches, iDiv0 );
+            }
+            nExisting += nPool;
+            nSigChecks += nPool;
+            nSigRejected += nPool - nLocalMatched;
             }
             Vec_IntForEachEntry( vMatches, iDiv0, j )
             {
@@ -1482,8 +1577,10 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                     break;
             }
             Vec_IntFree( vMatches );
+            if ( nTried >= pPars->nCandMax )
+                break;
             if ( !pPars->fUseConstr || fChanged || fCegisRestart ||
-                 pPars->nConstrMax == 0 || nTried >= pPars->nCandMax )
+                 pPars->nConstrMax == 0 )
                 continue;
 
             nBaseLimit = pPars->nConstrBaseMax;
@@ -1500,8 +1597,6 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                     Vec_IntPush( vBases, Abc_Var2Lit(d, 1) );
             }
             vConstr = Vec_IntAlloc( 3 * nConstrLimit );
-            vConstrSigs = Vec_WrdAlloc( nConstrLimit * pSim->nSlots );
-            pConstrSig = ABC_ALLOC( word, pSim->nSlots );
             for ( d = 0; d < Vec_IntSize(vBases); d++ )
             {
                 iDiv0 = Vec_IntEntry( vBases, d );
@@ -1520,29 +1615,15 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         nSigMatched++;
                         if ( Vec_IntSize(vConstr) >= 3 * nConstrLimit )
                             continue;
-                        for ( j = 0; j < pSim->nSlots; j++ )
-                        {
-                            pConstrSig[j] = Cec_TranSimLit(pSim, iDiv0, j) &
-                                Cec_TranSimLit(pSim, iDiv1, j);
-                            if ( fDivCompl )
-                                pConstrSig[j] = ~pConstrSig[j];
-                        }
-                        if ( !Cec_TranSigIsNew(vConstrSigs, pConstrSig, pSim->nSlots) )
-                        {
-                            nSigDuplicate++;
-                            continue;
-                        }
                         Vec_IntPush( vConstr, iDiv0 );
                         Vec_IntPush( vConstr, iDiv1 );
                         Vec_IntPush( vConstr, fDivCompl );
                     }
                 }
             }
-            Vec_IntForEachEntry( vConstr, iEntry, j )
+            for ( j = 0; j < Vec_IntSize(vConstr) && nTried < pPars->nCandMax; j += 3 )
             {
-                if ( j % 3 || nTried >= pPars->nCandMax )
-                    continue;
-                iDiv0 = iEntry;
+                iDiv0 = Vec_IntEntry( vConstr, j );
                 iDiv1 = Vec_IntEntry( vConstr, j + 1 );
                 fDivCompl = Vec_IntEntry( vConstr, j + 2 );
                 fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0, iDiv1,
@@ -1552,13 +1633,13 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                     break;
             }
             Vec_IntFree( vConstr );
-            Vec_WrdFree( vConstrSigs );
-            ABC_FREE( pConstrSig );
             Vec_IntFree( vBases );
             if ( nTried >= pPars->nCandMax )
                 break;
         }
         ABC_FREE( pRoots );
+        ABC_FREE( pSigIndex );
+        ABC_FREE( pCandPrefix );
         Cec_TranSimStop( pSim );
         if ( fCegisRestart )
             Prof.nCegisRestarts++;
