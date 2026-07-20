@@ -42186,10 +42186,10 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     Cec_ParTran_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
-    int c;
+    int c, fSeenDirect = 0, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERxfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERdoxfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42273,6 +42273,16 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nCexMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nCexMax < 0 ) goto usage;
             break;
+        case 'd':
+            fSeenDirect = 1;
+            pPars->fUseDirect = 1;
+            pPars->fUseSodc = 0;
+            break;
+        case 'o':
+            fSeenSodc = 1;
+            pPars->fUseDirect = 0;
+            pPars->fUseSodc = 1;
+            break;
         case 'x':
             pPars->fUseConstr ^= 1;
             break;
@@ -42288,6 +42298,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         default:
             goto usage;
         }
+    }
+    if ( fSeenDirect && fSeenSodc )
+    {
+        Abc_Print( -1, "&stran: Combined -d -o scheduling is not implemented yet; select one mode.\n" );
+        return 1;
     }
     if ( pAbc->pGia == NULL )
     {
@@ -42309,7 +42324,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAER num] [-xfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAER num] [-doxfpvh]\n" );
     Abc_Print( -2, "\t         performs bounded sequential transduction using scorr proof infrastructure\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
@@ -42327,6 +42342,8 @@ usage:
     Abc_Print( -2, "\t-A num : initial adaptive-proof TFO depth (0 = full TFO only) [default = %d]\n", pPars->nProofWindow );
     Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
+    Abc_Print( -2, "\t-d     : direct root-signature resubstitution only [default = %s]\n", pPars->fUseDirect? "yes": "no" );
+    Abc_Print( -2, "\t-o     : contextual SODC transduction only [default = %s]\n", pPars->fUseSodc? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );

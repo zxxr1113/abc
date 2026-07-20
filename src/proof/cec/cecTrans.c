@@ -42,6 +42,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nCexFrames  = 4;
     p->nCexMax     = 64;
     p->nProofWindow = 8;
+    p->fUseSodc    = 1;
     p->fUseConstr  = 1;
 }
 
@@ -1113,7 +1114,476 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     return 1;
 }
 
-Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
+// Direct resubstitution replaces the root itself, rather than one of the
+// root's supergate leaves.  Candidate generation requires exact equality to
+// the root over every sampled word; the proof below remains the sole commit
+// criterion.
+static int Cec_TranSigMatchesRoot( Cec_TranSim_t * pSim, int iTarget,
+    int iDiv0, int iDiv1, int fDivCompl )
+{
+    int s;
+    word h;
+    for ( s = 0; s < pSim->nSlots; s++ )
+    {
+        h = Cec_TranSimLit( pSim, iDiv0, s );
+        if ( iDiv1 != -1 )
+            h &= Cec_TranSimLit( pSim, iDiv1, s );
+        if ( fDivCompl )
+            h = ~h;
+        if ( h != Cec_TranSimLit(pSim, Abc_Var2Lit(iTarget, 0), s) )
+            return 0;
+    }
+    return 1;
+}
+
+static Gia_Man_t * Cec_TranDupRoot( Gia_Man_t * p, int iTarget,
+    int iDiv0, int iDiv1, int fDivCompl )
+{
+    Gia_Man_t * pNew;
+    Gia_Obj_t * pObj;
+    int i, iLit0, iLit1, iRep;
+    assert( !Gia_ObjIsXor(Gia_ManObj(p, iTarget)) );
+    assert( Abc_Lit2Var(iDiv0) < iTarget );
+    assert( iDiv1 == -1 || Abc_Lit2Var(iDiv1) < iTarget );
+    Gia_ManFillValue( p );
+    pNew = Gia_ManStart( Gia_ManObjNum(p) + 4 );
+    pNew->pName = Abc_UtilStrsav( p->pName );
+    pNew->pSpec = Abc_UtilStrsav( p->pSpec );
+    Gia_ManConst0(p)->Value = 0;
+    Gia_ManHashAlloc( pNew );
+    Gia_ManForEachCi( p, pObj, i )
+        pObj->Value = Gia_ManAppendCi( pNew );
+    Gia_ManForEachAnd( p, pObj, i )
+    {
+        iLit0 = Gia_ObjFanin0Copy( pObj );
+        iLit1 = Gia_ObjFanin1Copy( pObj );
+        if ( i == iTarget )
+        {
+            iRep = Cec_TranCopyLit( p, iDiv0 );
+            if ( iDiv1 != -1 )
+                iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranCopyLit(p, iDiv1) );
+            pObj->Value = Abc_LitNotCond( iRep, fDivCompl );
+        }
+        else
+            pObj->Value = Cec_TranHashGate( pNew, pObj, iLit0, iLit1 );
+    }
+    Gia_ManForEachCo( p, pObj, i )
+        Gia_ManAppendCo( pNew, Gia_ObjFanin0Copy(pObj) );
+    Gia_ManHashStop( pNew );
+    Gia_ManSetRegNum( pNew, Gia_ManRegNum(p) );
+    return pNew;
+}
+
+// The direct miter shares the source transition relation and duplicates only
+// the target TFO.  At the target, the edit side is h(d0,d1), so this is the
+// same local sequential proof shape as SODC but has only one final obligation.
+static Gia_Man_t * Cec_TranBuildRootMiter( Gia_Man_t * p, int iTarget,
+    int iDiv0, int iDiv1, int fDivCompl, int nTfoDepth )
+{
+    Gia_Man_t * pNew, * pTemp;
+    Gia_Obj_t * pObj;
+    Vec_Int_t * vBase, * vEdit;
+    char * pMark;
+    int i, k, iLit0, iLit1, iOld, iRep, iEdit, nOuts = 0;
+    assert( !Gia_ObjIsXor(Gia_ManObj(p, iTarget)) );
+    pMark = Cec_TranMarkTfo( p, iTarget, nTfoDepth );
+    vBase = Vec_IntStartFull( Gia_ManObjNum(p) );
+    vEdit = Vec_IntStartFull( Gia_ManObjNum(p) );
+    pNew = Gia_ManStart( Gia_ManObjNum(p) + Gia_ManAndNum(p) / 4 + 100 );
+    pNew->pName = Abc_UtilStrsav( "stran_direct_miter" );
+    Gia_ManHashAlloc( pNew );
+    Vec_IntWriteEntry( vBase, 0, 0 );
+    Vec_IntWriteEntry( vEdit, 0, 0 );
+    Gia_ManForEachCi( p, pObj, i )
+    {
+        iEdit = Gia_ManAppendCi( pNew );
+        Vec_IntWriteEntry( vBase, Gia_ObjId(p, pObj), iEdit );
+        Vec_IntWriteEntry( vEdit, Gia_ObjId(p, pObj), iEdit );
+    }
+    Gia_ManForEachAnd( p, pObj, i )
+    {
+        iLit0 = Cec_TranVecLit( vBase, Gia_ObjFaninLit0p(p, pObj) );
+        iLit1 = Cec_TranVecLit( vBase, Gia_ObjFaninLit1p(p, pObj) );
+        iOld = Cec_TranHashGate( pNew, pObj, iLit0, iLit1 );
+        Vec_IntWriteEntry( vBase, i, iOld );
+        if ( !pMark[i] )
+        {
+            Vec_IntWriteEntry( vEdit, i, iOld );
+            continue;
+        }
+        if ( i == iTarget )
+        {
+            iRep = Cec_TranVecLit( vBase, iDiv0 );
+            if ( iDiv1 != -1 )
+                iRep = Gia_ManHashAnd( pNew, iRep, Cec_TranVecLit(vBase, iDiv1) );
+            iEdit = Abc_LitNotCond( iRep, fDivCompl );
+        }
+        else
+        {
+            iLit0 = Cec_TranVecLit( vEdit, Gia_ObjFaninLit0p(p, pObj) );
+            iLit1 = Cec_TranVecLit( vEdit, Gia_ObjFaninLit1p(p, pObj) );
+            iEdit = Cec_TranHashGate( pNew, pObj, iLit0, iLit1 );
+        }
+        Vec_IntWriteEntry( vEdit, i, iEdit );
+    }
+    if ( nTfoDepth )
+    {
+        Gia_ManStaticFanoutStart( p );
+        Gia_ManForEachAnd( p, pObj, i )
+        {
+            if ( !pMark[i] )
+                continue;
+            for ( k = 0; k < Gia_ObjFanoutNumId(p, i); k++ )
+                if ( !pMark[Gia_ObjFanoutId(p, i, k)] )
+                    break;
+            if ( k == Gia_ObjFanoutNumId(p, i) )
+                continue;
+            Gia_ManAppendCo( pNew, Gia_ManHashXor(pNew,
+                Cec_TranVecLit(vBase, Abc_Var2Lit(i, 0)),
+                Cec_TranVecLit(vEdit, Abc_Var2Lit(i, 0))) );
+            nOuts++;
+        }
+        Gia_ManStaticFanoutStop( p );
+    }
+    Gia_ManForEachPo( p, pObj, i )
+    {
+        int iDriver = Gia_ObjFaninId0p( p, pObj );
+        if ( !pMark[iDriver] )
+            continue;
+        Gia_ManAppendCo( pNew, Gia_ManHashXor(pNew,
+            Cec_TranVecLit(vBase, Gia_ObjFaninLit0p(p, pObj)),
+            Cec_TranVecLit(vEdit, Gia_ObjFaninLit0p(p, pObj))) );
+        nOuts++;
+    }
+    Gia_ManForEachRi( p, pObj, i )
+    {
+        int iDriver = Gia_ObjFaninId0p( p, pObj );
+        if ( !pMark[iDriver] )
+            continue;
+        Gia_ManAppendCo( pNew, Gia_ManHashXor(pNew,
+            Cec_TranVecLit(vBase, Gia_ObjFaninLit0p(p, pObj)),
+            Cec_TranVecLit(vEdit, Gia_ObjFaninLit0p(p, pObj))) );
+        nOuts++;
+    }
+    assert( nOuts > 0 );
+    Gia_ManForEachRi( p, pObj, i )
+        Gia_ManAppendCo( pNew, Cec_TranVecLit(vBase, Gia_ObjFaninLit0p(p, pObj)) );
+    Gia_ManHashStop( pNew );
+    Gia_ManSetRegNum( pNew, Gia_ManRegNum(p) );
+    Vec_IntFree( vBase );
+    Vec_IntFree( vEdit );
+    ABC_FREE( pMark );
+    pNew = Gia_ManCleanup( pTemp = pNew );
+    Gia_ManStop( pTemp );
+    pNew = Gia_ManDupNormalize( pTemp = pNew, 0 );
+    Gia_ManStop( pTemp );
+    return pNew;
+}
+
+static int Cec_TranProveRoot( Gia_Man_t * p, Gia_Man_t * pFinal,
+    Cec_ParTran_t * pPars, int iTarget, int iDiv0, int iDiv1, int fDivCompl,
+    Cec_TranPatDb_t * pDb, int * pfCexAdded, Cec_TranProf_t * pProf )
+{
+    Gia_Man_t * pMiter;
+    int fProved;
+    abctime clk = Abc_Clock();
+    if ( pPars->nProofWindow )
+    {
+        pMiter = Cec_TranBuildRootMiter( p, iTarget, iDiv0, iDiv1, fDivCompl,
+            pPars->nProofWindow );
+        pProf->timeWindowMiter += Abc_Clock() - clk;
+        pProf->nWindowCalls++;
+        fProved = Cec_TranProveLocalMiter( pMiter, pPars, pProf, 1, 1 );
+        Gia_ManStop( pMiter );
+        if ( fProved )
+        {
+            pProf->nWindowProved++;
+            goto shadow;
+        }
+        pProf->nWindowExpanded++;
+        clk = Abc_Clock();
+    }
+    pMiter = Cec_TranBuildRootMiter( p, iTarget, iDiv0, iDiv1, fDivCompl, 0 );
+    pProf->timeFinalMiter += Abc_Clock() - clk;
+    pProf->nFinalCalls++;
+    fProved = Cec_TranProveLocalMiter( pMiter, pPars, pProf, 1, 0 );
+    if ( !fProved )
+        *pfCexAdded |= Cec_TranHarvestCex( pMiter, pPars, pDb, pProf );
+    Gia_ManStop( pMiter );
+shadow:
+    if ( fProved && pPars->fShadow )
+    {
+        clk = Abc_Clock();
+        fProved = Cec_TranProveWhole( p, pFinal, pPars );
+        pProf->timeShadow += Abc_Clock() - clk;
+        pProf->nShadowCalls++;
+    }
+    return fProved;
+}
+
+static int Cec_TranTryCommitRoot( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
+    int iTarget, int iDiv0, int iDiv1, int fDivCompl, int * pnTried,
+    int * pnPositive, int * pnGainRejected, int * pnUnproved, int * pnAccepted,
+    Cec_TranPatDb_t * pDb, int * pfCegisRestart, Cec_TranProf_t * pProf )
+{
+    Gia_Man_t * p = *pp, * pFinal, * pCand;
+    int Gain, fCexAdded = 0;
+    abctime clk = Abc_Clock();
+    pFinal = Cec_TranDupRoot( p, iTarget, iDiv0, iDiv1, fDivCompl );
+    pCand = Cec_TranCleanup( pFinal );
+    Gain = Cec_TranGain( p, pCand );
+    pProf->timeGain += Abc_Clock() - clk;
+    pProf->nGainCalls++;
+    if ( Gain < pPars->nGainMin || Gia_ManRegNum(pCand) == 0 )
+    {
+        (*pnGainRejected)++;
+        Gia_ManStop( pFinal );
+        Gia_ManStop( pCand );
+        return 0;
+    }
+    (*pnPositive)++;
+    (*pnTried)++;
+    if ( pPars->fVerbose )
+    {
+        if ( iDiv1 == -1 )
+            Abc_Print( 1, "  direct proof %d: n%d <- lit%d  gain=%d\n",
+                *pnTried, iTarget, iDiv0, Gain );
+        else
+            Abc_Print( 1, "  direct proof %d: n%d <- %s(lit%d & lit%d)  gain=%d\n",
+                *pnTried, iTarget, fDivCompl ? "!" : "", iDiv0, iDiv1, Gain );
+    }
+    if ( !Cec_TranProveRoot(p, pFinal, pPars, iTarget, iDiv0, iDiv1,
+        fDivCompl, pDb, &fCexAdded, pProf) )
+    {
+        (*pnUnproved)++;
+        Gia_ManStop( pFinal );
+        Gia_ManStop( pCand );
+        if ( fCexAdded )
+            *pfCegisRestart = 1;
+        return 0;
+    }
+    if ( pPars->fVerbose )
+        Abc_Print( 1, "  accepted direct root substitution: obj %d, gain=%d.\n",
+            iTarget, Gain );
+    Gia_ManStop( p );
+    Gia_ManStop( pFinal );
+    *pp = pCand;
+    (*pnAccepted)++;
+    return 1;
+}
+
+typedef struct Cec_TranRoot_t_ Cec_TranRoot_t;
+struct Cec_TranRoot_t_
+{
+    int iObj;
+    int nMffc;
+};
+
+static int Cec_TranRootCompare( const void * p0, const void * p1 )
+{
+    Cec_TranRoot_t const * pR0 = (Cec_TranRoot_t const *)p0;
+    Cec_TranRoot_t const * pR1 = (Cec_TranRoot_t const *)p1;
+    if ( pR0->nMffc != pR1->nMffc )
+        return pR1->nMffc - pR0->nMffc;
+    return pR1->iObj - pR0->iObj;
+}
+
+static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
+    Cec_ParTran_t * pPars )
+{
+    Cec_TranProf_t Prof = {0};
+    Cec_TranRoot_t * pRoots;
+    Cec_TranSim_t * pSim;
+    Cec_TranPatDb_t * pDb;
+    Gia_Man_t * p;
+    Gia_Obj_t * pObj, * pDiv;
+    Vec_Int_t * vMatches, * vBases, * vConstr;
+    Vec_Wrd_t * vConstrSigs;
+    word * pConstrSig;
+    int i, d, e, j, r, iTarget, iDiv0, iDiv1, fDivCompl, iEntry;
+    int nRoots, nBaseLimit, nConstrLimit;
+    int nExisting = 0, nConstructed = 0, nSigChecks = 0, nSigRejected = 0;
+    int nSigMatched = 0, nSigDuplicate = 0, nPositive = 0, nGainRejected = 0;
+    int nUnproved = 0, nTried = 0, nAccepted = 0, nRound = 0;
+    int fChanged, fCegisRestart;
+    abctime clk = Abc_Clock(), clkPhase;
+    assert( Gia_ManRegNum(pGia) > 0 );
+    Abc_Print( 1, "Sequential direct resubstitution: AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, conf = %d.\n",
+        Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nSimWords * 64,
+        pPars->nSimFrames, pPars->nSimWords * 64 * pPars->nSimFrames,
+        pPars->nFrames, pPars->nBTLimit );
+    p = Gia_ManDup( pGia );
+    pDb = Cec_TranPatDbStart( p, pPars->nCexMax );
+    do
+    {
+        fChanged = 0;
+        fCegisRestart = 0;
+        clkPhase = Abc_Clock();
+        pSim = Cec_TranSimStart( p, pPars, pDb );
+        Prof.timeSim += Abc_Clock() - clkPhase;
+        Prof.nSimCalls++;
+
+        // Refs are restored by Gia_NodeMffcSize().  The resulting order makes
+        // the expensive signature/proof budget favor the largest potential
+        // eliminations, while ties retain reverse topological preference.
+        Gia_ManCreateRefs( p );
+        nRoots = 0;
+        Gia_ManForEachAnd( p, pObj, i )
+            if ( !Gia_ObjIsXor(pObj) )
+                nRoots++;
+        pRoots = ABC_ALLOC( Cec_TranRoot_t, nRoots );
+        nRoots = 0;
+        Gia_ManForEachAnd( p, pObj, i )
+            if ( !Gia_ObjIsXor(pObj) )
+            {
+                pRoots[nRoots].iObj = i;
+                pRoots[nRoots].nMffc = Gia_NodeMffcSize( p, pObj );
+                nRoots++;
+            }
+        qsort( pRoots, nRoots, sizeof(Cec_TranRoot_t), Cec_TranRootCompare );
+
+        for ( r = 0; r < nRoots && !fChanged && !fCegisRestart; r++ )
+        {
+            iTarget = pRoots[r].iObj;
+            if ( pPars->fVerbose )
+                Abc_Print( 1, "  direct root rank %d: obj %d, MFFC=%d.\n",
+                    r + 1, iTarget, pRoots[r].nMffc );
+            // A divisor must be topologically earlier than the root, which
+            // also excludes its TFO and makes the root rewrite acyclic.
+            vMatches = Vec_IntAlloc( pPars->nDivsMax + 2 );
+            for ( d = iTarget - 1; d > 0; d-- )
+            {
+                pDiv = Gia_ManObj( p, d );
+                if ( !Gia_ObjIsCand(pDiv) )
+                    continue;
+                for ( fDivCompl = 0; fDivCompl < 2; fDivCompl++ )
+                {
+                    iDiv0 = Abc_Var2Lit( d, fDivCompl );
+                    nExisting++;
+                    nSigChecks++;
+                    if ( !Cec_TranSigMatchesRoot(pSim, iTarget, iDiv0, -1, 0) )
+                    {
+                        nSigRejected++;
+                        continue;
+                    }
+                    nSigMatched++;
+                    if ( pPars->nDivsMax == 0 || Vec_IntSize(vMatches) < pPars->nDivsMax )
+                        Vec_IntPush( vMatches, iDiv0 );
+                }
+            }
+            Vec_IntForEachEntry( vMatches, iDiv0, j )
+            {
+                if ( nTried >= pPars->nCandMax )
+                    break;
+                fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0, -1, 0,
+                    &nTried, &nPositive, &nGainRejected, &nUnproved, &nAccepted,
+                    pDb, &fCegisRestart, &Prof );
+                if ( fChanged || fCegisRestart )
+                    break;
+            }
+            Vec_IntFree( vMatches );
+            if ( !pPars->fUseConstr || fChanged || fCegisRestart ||
+                 pPars->nConstrMax == 0 || nTried >= pPars->nCandMax )
+                continue;
+
+            nBaseLimit = pPars->nConstrBaseMax;
+            nConstrLimit = pPars->nConstrMax;
+            vBases = Vec_IntAlloc( nBaseLimit ? nBaseLimit : 100 );
+            for ( d = iTarget - 1; d > 0 &&
+                  (nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit); d-- )
+            {
+                pDiv = Gia_ManObj( p, d );
+                if ( !Gia_ObjIsCand(pDiv) )
+                    continue;
+                Vec_IntPush( vBases, Abc_Var2Lit(d, 0) );
+                if ( nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit )
+                    Vec_IntPush( vBases, Abc_Var2Lit(d, 1) );
+            }
+            vConstr = Vec_IntAlloc( 3 * nConstrLimit );
+            vConstrSigs = Vec_WrdAlloc( nConstrLimit * pSim->nSlots );
+            pConstrSig = ABC_ALLOC( word, pSim->nSlots );
+            for ( d = 0; d < Vec_IntSize(vBases); d++ )
+            {
+                iDiv0 = Vec_IntEntry( vBases, d );
+                for ( e = d + 1; e < Vec_IntSize(vBases); e++ )
+                {
+                    iDiv1 = Vec_IntEntry( vBases, e );
+                    for ( fDivCompl = 0; fDivCompl < 2; fDivCompl++ )
+                    {
+                        nConstructed++;
+                        nSigChecks++;
+                        if ( !Cec_TranSigMatchesRoot(pSim, iTarget, iDiv0, iDiv1, fDivCompl) )
+                        {
+                            nSigRejected++;
+                            continue;
+                        }
+                        nSigMatched++;
+                        if ( Vec_IntSize(vConstr) >= 3 * nConstrLimit )
+                            continue;
+                        for ( j = 0; j < pSim->nSlots; j++ )
+                        {
+                            pConstrSig[j] = Cec_TranSimLit(pSim, iDiv0, j) &
+                                Cec_TranSimLit(pSim, iDiv1, j);
+                            if ( fDivCompl )
+                                pConstrSig[j] = ~pConstrSig[j];
+                        }
+                        if ( !Cec_TranSigIsNew(vConstrSigs, pConstrSig, pSim->nSlots) )
+                        {
+                            nSigDuplicate++;
+                            continue;
+                        }
+                        Vec_IntPush( vConstr, iDiv0 );
+                        Vec_IntPush( vConstr, iDiv1 );
+                        Vec_IntPush( vConstr, fDivCompl );
+                    }
+                }
+            }
+            Vec_IntForEachEntry( vConstr, iEntry, j )
+            {
+                if ( j % 3 || nTried >= pPars->nCandMax )
+                    continue;
+                iDiv0 = iEntry;
+                iDiv1 = Vec_IntEntry( vConstr, j + 1 );
+                fDivCompl = Vec_IntEntry( vConstr, j + 2 );
+                fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0, iDiv1,
+                    fDivCompl, &nTried, &nPositive, &nGainRejected, &nUnproved,
+                    &nAccepted, pDb, &fCegisRestart, &Prof );
+                if ( fChanged || fCegisRestart )
+                    break;
+            }
+            Vec_IntFree( vConstr );
+            Vec_WrdFree( vConstrSigs );
+            ABC_FREE( pConstrSig );
+            Vec_IntFree( vBases );
+            if ( nTried >= pPars->nCandMax )
+                break;
+        }
+        ABC_FREE( pRoots );
+        Cec_TranSimStop( pSim );
+        if ( fCegisRestart )
+            Prof.nCegisRestarts++;
+        nRound++;
+    }
+    while ( (fChanged || fCegisRestart) && nTried < pPars->nCandMax &&
+        nAccepted < pPars->nChangesMax );
+    Prof.timeTotal = Abc_Clock() - clk;
+    Prof.nCexStored = Vec_PtrSize(pDb->vCexes);
+    Abc_Print( 1, "Sequential direct resubstitution: rounds=%d roots=%d proofs=%d existing=%d constructed=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-positive=%d gain-rejected=%d unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
+        nRound, nRoots, nTried, nExisting, nConstructed, nSigChecks, nSigRejected,
+        nSigMatched, nSigDuplicate, nPositive, nGainRejected, nUnproved, nAccepted,
+        Gia_ManAndNum(pGia), Gia_ManAndNum(p), Cec_TranTimeSec(Prof.timeTotal) );
+    if ( pPars->fProfile )
+    {
+        Abc_Print( 1, "Sequential direct proof profile: random-lanes=%d signature-samples=%d window=%d proved=%d expanded=%d final=%d shadow=%d cex=%d/%d.\n",
+            pPars->nSimWords * 64, pPars->nSimFrames * pPars->nSimWords * 64, Prof.nWindowCalls,
+            Prof.nWindowProved, Prof.nWindowExpanded, Prof.nFinalCalls,
+            Prof.nShadowCalls, Prof.nCexStored, Prof.nCegisRestarts );
+    }
+    Cec_TranPatDbStop( pDb );
+    return p;
+}
+
+static Gia_Man_t * Cec_ManSequentialSodcTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
 {
     Cec_TranProf_t Prof = {0};
     Cec_TranTargetProf_t Target, Snap, * pTop;
@@ -1398,6 +1868,17 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     ABC_FREE( pTop );
     Cec_TranPatDbStop( pDb );
     return p;
+}
+
+Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
+{
+    // Phase 1 deliberately keeps the two search paths separate.  -d selects
+    // root-signature Direct; the pre-existing default remains SODC.  Their
+    // combined scheduler and incremental cache are the next implementation
+    // phase, rather than silently running an interleaving with unclear cost.
+    if ( pPars->fUseDirect )
+        return Cec_ManSequentialDirectResubstitution( pGia, pPars );
+    return Cec_ManSequentialSodcTransduction( pGia, pPars );
 }
 
 ABC_NAMESPACE_IMPL_END
