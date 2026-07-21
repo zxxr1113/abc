@@ -287,17 +287,17 @@ struct Cec_ParTran_t_
     int              nDivsMax;      // local existing divisors per victim
     int              nConstrMax;    // signature-matched one-gate divisors per victim
     int              nConstrBaseMax;// literals in one-gate construction pool (0 = all)
-    int              nVictimsMax;   // leaves removed by one added divisor (exactly 1 or 2)
-    int              nProfileTop;   // target-gate rows printed by profiling
+    int              nVictimsMax;   // legacy SODC leaf-set parameter (ignored by Direct)
+    int              nProfileTop;   // legacy SODC target-profile limit (ignored by Direct)
     int              nChangesMax;   // accepted transactions
     int              nGainMin;      // minimum AND+register gain to prove
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              nCexFrames;    // BMC depth used to recover a rejected-candidate witness (0 = off)
     int              nCexMax;       // persistent witness traces injected into each simulation batch
-    int              nProofWindow;  // initial TFO depth for adaptive local proof (0 = full TFO only)
-    int              fUseDirect;    // search direct root-signature substitutions
-    int              fUseSodc;      // search contextual leaf substitutions
+    int              nProofWindow;  // legacy TFO-proof parameter (unused by strict Direct proof)
+    int              fUseDirect;    // search strict direct root-signature substitutions
+    int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseConstr;    // enable one-AND constructed divisors
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles

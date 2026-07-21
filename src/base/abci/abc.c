@@ -42186,7 +42186,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     Cec_ParTran_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
-    int c, fSeenDirect = 0, fSeenSodc = 0;
+    int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
     while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERdoxfpvh")) != EOF )
@@ -42274,14 +42274,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( pPars->nCexMax < 0 ) goto usage;
             break;
         case 'd':
-            fSeenDirect = 1;
             pPars->fUseDirect = 1;
             pPars->fUseSodc = 0;
             break;
         case 'o':
             fSeenSodc = 1;
-            pPars->fUseDirect = 0;
-            pPars->fUseSodc = 1;
             break;
         case 'x':
             pPars->fUseConstr ^= 1;
@@ -42299,9 +42296,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             goto usage;
         }
     }
-    if ( fSeenDirect && fSeenSodc )
+    if ( fSeenSodc )
     {
-        Abc_Print( -1, "&stran: Combined -d -o scheduling is not implemented yet; select one mode.\n" );
+        Abc_Print( -1, "&stran: This branch implements Direct root resubstitution only; -o is unavailable.\n" );
         return 1;
     }
     if ( pAbc->pGia == NULL )
@@ -42324,8 +42321,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAER num] [-doxfpvh]\n" );
-    Abc_Print( -2, "\t         performs bounded sequential transduction using scorr proof infrastructure\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAER num] [-dxfpvh]\n" );
+    Abc_Print( -2, "\t         performs strict Direct root resubstitution using scorr proof infrastructure\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
@@ -42337,13 +42334,12 @@ usage:
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : matching one-gate constructed divisors per victim [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : literals in construction base pool (0 = all) [default = %d]\n", pPars->nConstrBaseMax );
-    Abc_Print( -2, "\t-M num : exactly 1 or 2 leaves replaced by one divisor [default = %d]\n", pPars->nVictimsMax );
-    Abc_Print( -2, "\t-P num : slowest target-gate rows printed with -p [default = %d]\n", pPars->nProfileTop );
-    Abc_Print( -2, "\t-A num : initial adaptive-proof TFO depth (0 = full TFO only) [default = %d]\n", pPars->nProofWindow );
+    Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
+    Abc_Print( -2, "\t-P num : legacy SODC target-profile option (ignored by Direct) [default = %d]\n", pPars->nProfileTop );
+    Abc_Print( -2, "\t-A num : legacy TFO-window option (ignored by strict Direct proof) [default = %d]\n", pPars->nProofWindow );
     Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
-    Abc_Print( -2, "\t-d     : direct root-signature resubstitution only [default = %s]\n", pPars->fUseDirect? "yes": "no" );
-    Abc_Print( -2, "\t-o     : contextual SODC transduction only [default = %s]\n", pPars->fUseSodc? "yes": "no" );
+    Abc_Print( -2, "\t-d     : strict Direct root-signature resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
