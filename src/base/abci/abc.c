@@ -28916,7 +28916,8 @@ usage:
 int Abc_CommandDSec( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     Fra_Sec_t SecPar, * pSecPar = &SecPar;
-    Abc_Ntk_t * pNtk, * pNtk1, * pNtk2;
+    Abc_Ntk_t * pNtk, * pNtk1, * pNtk2, * pMiter;
+    Pdr_Par_t Pdr;
     int fDelete1, fDelete2;
     char ** pArgvNew;
     int nArgcNew;
@@ -28924,6 +28925,7 @@ int Abc_CommandDSec( Abc_Frame_t * pAbc, int argc, char ** argv )
     int fIgnoreNames;
 
     extern int Abc_NtkDarSec( Abc_Ntk_t * pNtk1, Abc_Ntk_t * pNtk2, Fra_Sec_t * p );
+    extern int Abc_NtkDarPdr( Abc_Ntk_t * pNtk, Pdr_Par_t * pPars );
 
     pNtk = Abc_FrameReadNtk(pAbc);
     // set defaults
@@ -28990,14 +28992,6 @@ int Abc_CommandDSec( Abc_Frame_t * pAbc, int argc, char ** argv )
     nArgcNew = argc - globalUtilOptind;
     if ( !Abc_NtkPrepareTwoNtks( stdout, pNtk, pArgvNew, nArgcNew, &pNtk1, &pNtk2, &fDelete1, &fDelete2, fCheck ) )
         return 1;
-    if ( Abc_NtkLatchNum(pNtk1) == 0 || Abc_NtkLatchNum(pNtk2) == 0 )
-    {
-        if ( fDelete1 ) Abc_NtkDelete( pNtk1 );
-        if ( fDelete2 ) Abc_NtkDelete( pNtk2 );
-        Abc_Print( -1, "The network has no latches. Used combinational command \"cec\".\n" );
-        return 0;
-    }
-
     if ( fIgnoreNames )
     {
         if ( !fDelete1 )
@@ -29012,6 +29006,46 @@ int Abc_CommandDSec( Abc_Frame_t * pAbc, int argc, char ** argv )
         }
         Abc_NtkShortNames( pNtk1 );
         Abc_NtkShortNames( pNtk2 );
+    }
+
+    // If exactly one side has become combinational, the ordinary SEC driver
+    // cannot be used because it requires latches in both networks.  This is
+    // a legitimate outcome of sequential cleanup (for example, when all
+    // reachable outputs are constant).  Build the same sequential miter as
+    // `miter -n` and discharge it with PDR instead of returning without
+    // checking equivalence.
+    if ( (Abc_NtkLatchNum(pNtk1) == 0) != (Abc_NtkLatchNum(pNtk2) == 0) )
+    {
+        pMiter = Abc_NtkMiter( pNtk1, pNtk2, 0, 0, 0, 0 );
+        if ( pMiter == NULL )
+        {
+            if ( fDelete1 ) Abc_NtkDelete( pNtk1 );
+            if ( fDelete2 ) Abc_NtkDelete( pNtk2 );
+            Abc_Print( -1, "Sequential miter construction has failed.\n" );
+            return 1;
+        }
+        Pdr_ManSetDefaultParams( &Pdr );
+        Pdr.nTimeOut = pSecPar->TimeLimit;
+        Pdr.fVerbose = pSecPar->fVerbose;
+        Abc_Print( 1, "One network has no latches. Running sequential-miter PDR.\n" );
+        pAbc->Status = Abc_NtkDarPdr( pMiter, &Pdr );
+        if ( pAbc->Status == 1 )
+            Abc_Print( 1, "Networks are equivalent.\n" );
+        else if ( pAbc->Status == 0 )
+            Abc_Print( 1, "Networks are NOT EQUIVALENT.\n" );
+        if ( pMiter->pSeqModel )
+            Abc_FrameReplaceCex( pAbc, &pMiter->pSeqModel );
+        Abc_NtkDelete( pMiter );
+        if ( fDelete1 ) Abc_NtkDelete( pNtk1 );
+        if ( fDelete2 ) Abc_NtkDelete( pNtk2 );
+        return 0;
+    }
+    if ( Abc_NtkLatchNum(pNtk1) == 0 )
+    {
+        if ( fDelete1 ) Abc_NtkDelete( pNtk1 );
+        if ( fDelete2 ) Abc_NtkDelete( pNtk2 );
+        Abc_Print( -1, "Both networks have no latches. Use combinational command \"cec\".\n" );
+        return 0;
     }
 
     // perform verification

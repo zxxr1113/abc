@@ -744,6 +744,12 @@ static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget, int nDepth )
     {
         int iObj = Vec_IntEntry( vQueue, i );
         int iDepth = Vec_IntEntry( vDepth, i );
+        // A positive depth denotes the exact number of TFO gate levels
+        // included after the target.  Nodes at the requested depth are the
+        // cut boundary and must not pull one additional fanout level into
+        // the window.
+        if ( nDepth && iDepth >= nDepth )
+            continue;
         for ( k = 0; k < Gia_ObjFanoutNumId(p, iObj); k++ )
         {
             iFan = Gia_ObjFanoutId( p, iObj, k );
@@ -751,7 +757,7 @@ static char * Cec_TranMarkTfo( Gia_Man_t * p, int iTarget, int nDepth )
                 continue;
             pMark[iFan] = 1;
             pObj = Gia_ManObj( p, iFan );
-            if ( !Gia_ObjIsCo(pObj) && (!nDepth || iDepth < nDepth) )
+            if ( !Gia_ObjIsCo(pObj) )
             {
                 Vec_IntPush( vQueue, iFan );
                 Vec_IntPush( vDepth, iDepth + 1 );
