@@ -278,6 +278,11 @@ extern Gia_Man_t *   Cec_ManSodcSynthesis( Gia_Man_t * pAig, Cec_ParSodc_t * pPa
 // from &sodc: it uses scorr's proof machinery but searches speculative
 // redundancy-addition transactions rather than global correspondences.
 typedef struct Cec_ParTran_t_ Cec_ParTran_t;
+enum {
+    CEC_TRAN_PROOF_ROOT = 0,
+    CEC_TRAN_PROOF_WINDOW,
+    CEC_TRAN_PROOF_OUTPUT
+};
 struct Cec_ParTran_t_
 {
     int              nFrames;       // BMC/induction depth in the scorr oracle
@@ -285,7 +290,7 @@ struct Cec_ParTran_t_
     int              nStepsMax;     // scorr induction refinement limit
     int              nCandMax;      // total number of exact proof attempts
     int              nDivsMax;      // local existing divisors per victim
-    int              nConstrMax;    // signature-matched one-gate divisors per victim
+    int              nConstrMax;    // signature-matched one-gate AND/OR divisors per root
     int              nConstrBaseMax;// literals in one-gate construction pool (0 = all)
     int              nVictimsMax;   // legacy SODC leaf-set parameter (ignored by Direct)
     int              nProfileTop;   // legacy SODC target-profile limit (ignored by Direct)
@@ -295,10 +300,12 @@ struct Cec_ParTran_t_
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              nCexFrames;    // BMC depth used to recover a rejected-candidate witness (0 = off)
     int              nCexMax;       // persistent witness traces injected into each simulation batch
-    int              nProofWindow;  // legacy TFO-proof parameter (unused by strict Direct proof)
-    int              fUseDirect;    // search strict direct root-signature substitutions
+    int              nProofWindow;  // TFO depth used by Direct window proof
+    int              nProofScope;   // Direct acceptance scope: root/window/output
+    int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
-    int              fUseConstr;    // enable one-AND constructed divisors
+    int              fUseExisting;  // enable existing-literal Direct candidates
+    int              fUseConstr;    // enable one-gate AND/OR constructed divisors
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
     int              fVerbose;

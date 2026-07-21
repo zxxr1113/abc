@@ -42189,7 +42189,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERdoxfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERdoxlfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42255,8 +42255,17 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             break;
         case 'P':
             if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nProfileTop = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nProfileTop < 0 ) goto usage;
+            if ( !strcmp(argv[globalUtilOptind], "root") ||
+                 !strcmp(argv[globalUtilOptind], "gate") )
+                pPars->nProofScope = CEC_TRAN_PROOF_ROOT;
+            else if ( !strcmp(argv[globalUtilOptind], "window") )
+                pPars->nProofScope = CEC_TRAN_PROOF_WINDOW;
+            else if ( !strcmp(argv[globalUtilOptind], "output") ||
+                      !strcmp(argv[globalUtilOptind], "po-ri") )
+                pPars->nProofScope = CEC_TRAN_PROOF_OUTPUT;
+            else
+                goto usage;
+            globalUtilOptind++;
             break;
         case 'A':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42283,6 +42292,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'x':
             pPars->fUseConstr ^= 1;
             break;
+        case 'l':
+            pPars->fUseExisting ^= 1;
+            break;
         case 'f':
             pPars->fShadow ^= 1;
             break;
@@ -42299,6 +42311,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     if ( fSeenSodc )
     {
         Abc_Print( -1, "&stran: This branch implements Direct root resubstitution only; -o is unavailable.\n" );
+        return 1;
+    }
+    if ( pPars->nProofScope == CEC_TRAN_PROOF_WINDOW && pPars->nProofWindow == 0 )
+    {
+        Abc_Print( -1, "&stran: -P window requires a positive -A TFO depth.\n" );
         return 1;
     }
     if ( pAbc->pGia == NULL )
@@ -42321,26 +42338,27 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAER num] [-dxfpvh]\n" );
-    Abc_Print( -2, "\t         performs strict Direct root resubstitution using scorr proof infrastructure\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAER num] [-dxlfpvh]\n" );
+    Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-T num : maximum exact candidate proofs [default = %d]\n", pPars->nCandMax );
     Abc_Print( -2, "\t-N num : maximum committed transactions [default = %d]\n", pPars->nChangesMax );
-    Abc_Print( -2, "\t-D num : local existing divisors per victim [default = %d]\n", pPars->nDivsMax );
+    Abc_Print( -2, "\t-D num : existing literals retained per root when -l is enabled [default = %d]\n", pPars->nDivsMax );
     Abc_Print( -2, "\t-G num : minimum predicted AND+register gain [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
-    Abc_Print( -2, "\t-K num : matching one-gate constructed divisors per victim [default = %d]\n", pPars->nConstrMax );
+    Abc_Print( -2, "\t-K num : matching one-gate AND/OR divisors per root [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : literals in construction base pool (0 = all) [default = %d]\n", pPars->nConstrBaseMax );
     Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
-    Abc_Print( -2, "\t-P num : legacy SODC target-profile option (ignored by Direct) [default = %d]\n", pPars->nProfileTop );
-    Abc_Print( -2, "\t-A num : legacy TFO-window option (ignored by strict Direct proof) [default = %d]\n", pPars->nProofWindow );
+    Abc_Print( -2, "\t-P str : proof scope: root/gate, window, or output/po-ri [default = root]\n" );
+    Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
     Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
-    Abc_Print( -2, "\t-d     : strict Direct root-signature resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
-    Abc_Print( -2, "\t-x     : toggle one-AND constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
+    Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
+    Abc_Print( -2, "\t-x     : toggle one-gate AND/OR constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
+    Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
