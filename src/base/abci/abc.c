@@ -42379,11 +42379,11 @@ usage:
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-T num : maximum exact candidate proofs [default = %d]\n", pPars->nCandMax );
     Abc_Print( -2, "\t-N num : maximum committed transactions [default = %d]\n", pPars->nChangesMax );
-    Abc_Print( -2, "\t-D num : existing literals retained per root when -l is enabled [default = %d]\n", pPars->nDivsMax );
+    Abc_Print( -2, "\t-D num : existing literals retained per root and priority lane [default = %d]\n", pPars->nDivsMax );
     Abc_Print( -2, "\t-G num : minimum predicted AND+register gain [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
-    Abc_Print( -2, "\t-K num : matching one-gate AND/OR divisors per root [default = %d]\n", pPars->nConstrMax );
+    Abc_Print( -2, "\t-K num : matching one-gate AND/OR divisors per root and priority lane [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : literals in construction base pool (0 = all) [default = %d]\n", pPars->nConstrBaseMax );
     Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
     Abc_Print( -2, "\t-P str : proof scope: root/gate, window, or output/po-ri [default = root]\n" );
