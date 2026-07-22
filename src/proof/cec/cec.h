@@ -302,6 +302,9 @@ struct Cec_ParTran_t_
     int              nCexMax;       // persistent witness traces injected into each simulation batch
     int              nProofWindow;  // TFO depth used by Direct window proof
     int              nProofScope;   // Direct acceptance scope: root/window/output
+    int              nStrictPct;    // Direct proof budget percentage reserved for root-equivalent candidates
+    int              nRootBurst;    // contextual proofs retained per root in one simulation snapshot (0 = unlimited)
+    int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable existing-literal Direct candidates

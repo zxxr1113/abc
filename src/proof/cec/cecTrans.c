@@ -43,6 +43,9 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nCexMax     = 64;
     p->nProofWindow = 0;
     p->nProofScope = CEC_TRAN_PROOF_ROOT;
+    p->nStrictPct  = 25;
+    p->nRootBurst  = 4;
+    p->nUnknownMax = 8;
     p->fUseDirect  = 1;
     p->fUseSodc    = 0;
     p->fUseExisting = 1;
@@ -135,6 +138,7 @@ struct Cec_TranProf_t_
     int     nTargetFinalUnproved;
     int     nTargetAccepted;
     int     nTargetMaxChecks;
+    int     nProofUnsat;        // proofs succeeded (miter reduced to constant 0)
     int     nProofSat;          // proofs failed with counterexample
     int     nProofUnknown;      // proofs failed without counterexample
     int     nRootFastCalls;     // contextual candidates first tested by a root miter
@@ -1410,24 +1414,17 @@ static int Cec_TranTryCommitRoot( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
             Abc_Print( 1, "  direct proof %d: n%d <- (lit%d %c lit%d)  gain=%d\n",
                 *pnTried, iTarget, iDiv0, fDivOr ? '|' : '&', iDiv1, Gain );
     }
+    // One scheduler token is exactly one formal proof call.  In a contextual
+    // run, a sampled-strict candidate first spends one token on the cheaper
+    // root property.  If that fails, the fair scheduler may later enqueue a
+    // separate window/output fallback, which consumes its own token.
     if ( fRootFast && pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
     {
-        int fRootCexAdded = 0, fScopeCexAdded = 0;
         pProf->nRootFastCalls++;
         fProved = Cec_TranProveRoot( p, pFinal, pPars, CEC_TRAN_PROOF_ROOT,
-            iTarget, iDiv0, iDiv1, fDivOr, pDb, &fRootCexAdded, pProf );
+            iTarget, iDiv0, iDiv1, fDivOr, pDb, &fCexAdded, pProf );
         if ( fProved )
             pProf->nRootFastProved++;
-        else
-        {
-            // A root proof is only a sufficient condition for a contextual
-            // replacement.  SAT/UNKNOWN at the root must therefore fall back
-            // to the user-selected window/output property, never reject it.
-            pProf->nScopeFallbacks++;
-            fProved = Cec_TranProveRoot( p, pFinal, pPars, pPars->nProofScope,
-                iTarget, iDiv0, iDiv1, fDivOr, pDb, &fScopeCexAdded, pProf );
-        }
-        fCexAdded = fRootCexAdded || fScopeCexAdded;
     }
     else
         fProved = Cec_TranProveRoot( p, pFinal, pPars, pPars->nProofScope,
@@ -1452,6 +1449,7 @@ static int Cec_TranTryCommitRoot( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     Gia_ManStop( pFinal );
     *pp = pCand;
     (*pnAccepted)++;
+    pProf->nProofUnsat++;
     return 1;
 }
 
@@ -1468,6 +1466,136 @@ struct Cec_TranSigEnt_t_
     word Hash;
     int  iLit;
 };
+
+enum
+{
+    CEC_TRAN_CAND_CONST = 0,
+    CEC_TRAN_CAND_EXIST = 1,
+    CEC_TRAN_CAND_CONSTR = 2
+};
+
+typedef struct Cec_TranCand_t_ Cec_TranCand_t;
+struct Cec_TranCand_t_
+{
+    int iTarget;
+    int iDiv0;
+    int iDiv1;
+    int nMffc;
+    unsigned fDivOr    : 1;
+    unsigned fStrict   : 1;
+    unsigned fFallback : 1;
+    unsigned nKind     : 2;
+};
+
+typedef struct Cec_TranCandVec_t_ Cec_TranCandVec_t;
+struct Cec_TranCandVec_t_
+{
+    Cec_TranCand_t * pArray;
+    int nSize;
+    int nCap;
+    int iHead;
+};
+
+typedef struct Cec_TranDiscStat_t_ Cec_TranDiscStat_t;
+struct Cec_TranDiscStat_t_
+{
+    long long nConstants;
+    long long nExisting;
+    long long nConstructed;
+    long long nSigChecks;
+    long long nSigRejected;
+    long long nSigMatched;
+};
+
+static void Cec_TranCandVecPush( Cec_TranCandVec_t * p, Cec_TranCand_t Cand )
+{
+    if ( p->nSize == p->nCap )
+    {
+        p->nCap = p->nCap ? 2 * p->nCap : 64;
+        p->pArray = ABC_REALLOC( Cec_TranCand_t, p->pArray, p->nCap );
+    }
+    p->pArray[p->nSize++] = Cand;
+}
+
+static void Cec_TranCandVecClear( Cec_TranCandVec_t * p )
+{
+    p->nSize = p->iHead = 0;
+}
+
+static void Cec_TranCandVecStop( Cec_TranCandVec_t * p )
+{
+    ABC_FREE( p->pArray );
+    memset( p, 0, sizeof(Cec_TranCandVec_t) );
+}
+
+static int Cec_TranCandEqual( Cec_TranCand_t const * p0, Cec_TranCand_t const * p1 )
+{
+    return p0->iTarget == p1->iTarget && p0->iDiv0 == p1->iDiv0 &&
+        p0->iDiv1 == p1->iDiv1 && p0->fDivOr == p1->fDivOr &&
+        p0->fStrict == p1->fStrict;
+}
+
+static int Cec_TranCandVecContains( Cec_TranCandVec_t const * p, Cec_TranCand_t const * pCand )
+{
+    int i;
+    for ( i = 0; i < p->nSize; i++ )
+        if ( Cec_TranCandEqual(p->pArray + i, pCand) )
+            return 1;
+    return 0;
+}
+
+static Cec_TranCand_t Cec_TranCandCreate( int iTarget, int iDiv0, int iDiv1,
+    int fDivOr, int nMffc, int nKind, int fStrict, int fFallback )
+{
+    Cec_TranCand_t Cand;
+    memset( &Cand, 0, sizeof(Cand) );
+    Cand.iTarget = iTarget;
+    Cand.iDiv0 = iDiv0;
+    Cand.iDiv1 = iDiv1;
+    Cand.fDivOr = fDivOr;
+    Cand.nMffc = nMffc;
+    Cand.nKind = nKind;
+    Cand.fStrict = fStrict;
+    Cand.fFallback = fFallback;
+    return Cand;
+}
+
+static int Cec_TranCandVecPeek( Cec_TranCandVec_t * p, Cec_TranCand_t * pCand,
+    Cec_TranCandVec_t const * pTried, int const * pUnknown, int nUnknownMax,
+    int const * pRootUsed, int nRootBurst, int * pnCooldownSkipped,
+    int * pnBurstSkipped )
+{
+    while ( p->iHead < p->nSize )
+    {
+        Cec_TranCand_t * pEntry = p->pArray + p->iHead;
+        int iHist = 2 * pEntry->iTarget + !pEntry->fStrict;
+        if ( Cec_TranCandVecContains(pTried, pEntry) )
+            p->iHead++;
+        else if ( nUnknownMax && pUnknown[iHist] >= nUnknownMax )
+        {
+            (*pnCooldownSkipped)++;
+            p->iHead++;
+        }
+        else if ( !pEntry->fStrict && nRootBurst &&
+                  pRootUsed[pEntry->iTarget] >= nRootBurst )
+        {
+            (*pnBurstSkipped)++;
+            p->iHead++;
+        }
+        else
+        {
+            *pCand = *pEntry;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void Cec_TranCandVecDrop( Cec_TranCandVec_t * p )
+{
+    assert( p->iHead < p->nSize );
+    p->iHead++;
+}
 
 static int Cec_TranRootCompare( const void * p0, const void * p1 )
 {
@@ -1560,59 +1688,308 @@ static int Cec_TranSigIndexLowerBound( Cec_TranSigEnt_t * pEntries,
     return Left;
 }
 
+static void Cec_TranCollectStrictCandidates( Gia_Man_t * p, Cec_TranSim_t * pSim,
+    Cec_ParTran_t * pPars, Cec_TranRoot_t * pRoots, int nRoots,
+    Cec_TranSigEnt_t * pSigIndex, int nSigEntries, int * pCandPrefix,
+    Cec_TranCandVec_t * pExist, Cec_TranCandVec_t * pConstr,
+    Cec_TranDiscStat_t * pStat )
+{
+    Gia_Obj_t * pDiv;
+    Vec_Int_t * vBases;
+    int r, d, e, fPhase, fDivOr, iTarget, iDiv0, iDiv1;
+    int nBaseLimit, nKept, nPool, nLocalMatched, iFirst;
+    word TargetHash;
+    Cec_TranCand_t Cand;
+    for ( r = 0; r < nRoots; r++ )
+    {
+        iTarget = pRoots[r].iObj;
+        for ( fPhase = 0; fPhase < 2; fPhase++ )
+        {
+            iDiv0 = Abc_Var2Lit( 0, fPhase );
+            pStat->nConstants++;
+            pStat->nSigChecks++;
+            if ( !Cec_TranSigMatchesRoot(pSim, iTarget, iDiv0, -1, 0, NULL) )
+            {
+                pStat->nSigRejected++;
+                continue;
+            }
+            pStat->nSigMatched++;
+            Cand = Cec_TranCandCreate( iTarget, iDiv0, -1, 0,
+                pRoots[r].nMffc, CEC_TRAN_CAND_CONST, 1, 0 );
+            Cec_TranCandVecPush( pExist, Cand );
+        }
+
+        if ( pPars->fUseExisting )
+        {
+            TargetHash = Cec_TranLitHash( pSim, Abc_Var2Lit(iTarget, 0) );
+            iFirst = Cec_TranSigIndexLowerBound( pSigIndex, nSigEntries, TargetHash );
+            nPool = 2 * pCandPrefix[iTarget];
+            nLocalMatched = nKept = 0;
+            for ( d = iFirst; d < nSigEntries && pSigIndex[d].Hash == TargetHash; d++ )
+            {
+                iDiv0 = pSigIndex[d].iLit;
+                if ( Abc_Lit2Var(iDiv0) == 0 || Abc_Lit2Var(iDiv0) >= iTarget )
+                    continue;
+                if ( !Cec_TranSigMatchesRoot(pSim, iTarget, iDiv0, -1, 0, NULL) )
+                    continue;
+                nLocalMatched++;
+                pStat->nSigMatched++;
+                if ( pPars->nDivsMax && nKept >= pPars->nDivsMax )
+                    continue;
+                Cand = Cec_TranCandCreate( iTarget, iDiv0, -1, 0,
+                    pRoots[r].nMffc, CEC_TRAN_CAND_EXIST, 1, 0 );
+                Cec_TranCandVecPush( pExist, Cand );
+                nKept++;
+            }
+            pStat->nExisting += nPool;
+            pStat->nSigChecks += nPool;
+            pStat->nSigRejected += nPool - nLocalMatched;
+        }
+
+        if ( !pPars->fUseConstr || pPars->nConstrMax == 0 )
+            continue;
+        nBaseLimit = pPars->nConstrBaseMax;
+        vBases = Vec_IntAlloc( nBaseLimit ? nBaseLimit : 100 );
+        for ( d = iTarget - 1; d > 0 &&
+              (nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit); d-- )
+        {
+            pDiv = Gia_ManObj( p, d );
+            if ( !Gia_ObjIsCand(pDiv) )
+                continue;
+            Vec_IntPush( vBases, Abc_Var2Lit(d, 0) );
+            if ( nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit )
+                Vec_IntPush( vBases, Abc_Var2Lit(d, 1) );
+        }
+        nKept = 0;
+        for ( d = 0; d < Vec_IntSize(vBases); d++ )
+        {
+            iDiv0 = Vec_IntEntry( vBases, d );
+            for ( e = d + 1; e < Vec_IntSize(vBases); e++ )
+            {
+                iDiv1 = Vec_IntEntry( vBases, e );
+                if ( Abc_Lit2Var(iDiv0) == Abc_Lit2Var(iDiv1) )
+                    continue;
+                for ( fDivOr = 0; fDivOr < 2; fDivOr++ )
+                {
+                    pStat->nConstructed++;
+                    pStat->nSigChecks++;
+                    if ( !Cec_TranSigMatchesRoot(pSim, iTarget,
+                        iDiv0, iDiv1, fDivOr, NULL) )
+                    {
+                        pStat->nSigRejected++;
+                        continue;
+                    }
+                    pStat->nSigMatched++;
+                    if ( nKept >= pPars->nConstrMax )
+                        continue;
+                    Cand = Cec_TranCandCreate( iTarget, iDiv0, iDiv1, fDivOr,
+                        pRoots[r].nMffc, CEC_TRAN_CAND_CONSTR, 1, 0 );
+                    Cec_TranCandVecPush( pConstr, Cand );
+                    nKept++;
+                }
+            }
+        }
+        Vec_IntFree( vBases );
+    }
+}
+
+static void Cec_TranCollectContextCandidates( Gia_Man_t * p, Cec_TranSim_t * pSim,
+    Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
+    Cec_TranCandVec_t const * pTried, Cec_TranCandVec_t * pExist,
+    Cec_TranCandVec_t * pConstr, Cec_TranDiscStat_t * pStat,
+    Cec_TranProf_t * pProf )
+{
+    Gia_Obj_t * pDiv;
+    Vec_Int_t * vBases;
+    word * pCare;
+    abctime clk = Abc_Clock();
+    int d, e, fPhase, fDivOr, iTarget = pRoot->iObj, iDiv0, iDiv1;
+    int fExact, fMatched, fStrictTried, nBaseLimit, nKept;
+    Cec_TranCand_t Cand, Strict;
+    pCare = Cec_TranSimComputeCare( pSim, iTarget );
+    pProf->timeCare += Abc_Clock() - clk;
+    pProf->nCareCalls++;
+
+    for ( fPhase = 0; fPhase < 2; fPhase++ )
+    {
+        iDiv0 = Abc_Var2Lit( 0, fPhase );
+        pStat->nConstants++;
+        pStat->nSigChecks++;
+        fExact = Cec_TranSigMatchesRoot( pSim, iTarget, iDiv0, -1, 0, NULL );
+        fMatched = fExact || Cec_TranSigMatchesRoot(
+            pSim, iTarget, iDiv0, -1, 0, pCare );
+        if ( !fMatched )
+        {
+            pStat->nSigRejected++;
+            continue;
+        }
+        pStat->nSigMatched++;
+        Strict = Cec_TranCandCreate( iTarget, iDiv0, -1, 0,
+            pRoot->nMffc, CEC_TRAN_CAND_CONST, 1, 0 );
+        fStrictTried = Cec_TranCandVecContains( pTried, &Strict );
+        if ( fExact && !fStrictTried )
+            continue;
+        Cand = Cec_TranCandCreate( iTarget, iDiv0, -1, 0,
+            pRoot->nMffc, CEC_TRAN_CAND_CONST, 0, fStrictTried );
+        if ( !Cec_TranCandVecContains(pTried, &Cand) )
+            Cec_TranCandVecPush( pExist, Cand );
+    }
+
+    if ( pPars->fUseExisting )
+    {
+        nKept = 0;
+        for ( d = iTarget - 1; d > 0; d-- )
+        {
+            pDiv = Gia_ManObj( p, d );
+            if ( !Gia_ObjIsCand(pDiv) )
+                continue;
+            for ( fPhase = 0; fPhase < 2; fPhase++ )
+            {
+                iDiv0 = Abc_Var2Lit( d, fPhase );
+                pStat->nExisting++;
+                pStat->nSigChecks++;
+                fExact = Cec_TranSigMatchesRoot(
+                    pSim, iTarget, iDiv0, -1, 0, NULL );
+                fMatched = fExact || Cec_TranSigMatchesRoot(
+                    pSim, iTarget, iDiv0, -1, 0, pCare );
+                if ( !fMatched )
+                {
+                    pStat->nSigRejected++;
+                    continue;
+                }
+                pStat->nSigMatched++;
+                Strict = Cec_TranCandCreate( iTarget, iDiv0, -1, 0,
+                    pRoot->nMffc, CEC_TRAN_CAND_EXIST, 1, 0 );
+                fStrictTried = Cec_TranCandVecContains( pTried, &Strict );
+                if ( fExact && !fStrictTried )
+                    continue;
+                if ( pPars->nDivsMax && nKept >= pPars->nDivsMax )
+                    continue;
+                Cand = Cec_TranCandCreate( iTarget, iDiv0, -1, 0,
+                    pRoot->nMffc, CEC_TRAN_CAND_EXIST, 0, fStrictTried );
+                if ( Cec_TranCandVecContains(pTried, &Cand) )
+                    continue;
+                Cec_TranCandVecPush( pExist, Cand );
+                nKept++;
+            }
+        }
+    }
+
+    if ( pPars->fUseConstr && pPars->nConstrMax > 0 )
+    {
+        nBaseLimit = pPars->nConstrBaseMax;
+        vBases = Vec_IntAlloc( nBaseLimit ? nBaseLimit : 100 );
+        for ( d = iTarget - 1; d > 0 &&
+              (nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit); d-- )
+        {
+            pDiv = Gia_ManObj( p, d );
+            if ( !Gia_ObjIsCand(pDiv) )
+                continue;
+            Vec_IntPush( vBases, Abc_Var2Lit(d, 0) );
+            if ( nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit )
+                Vec_IntPush( vBases, Abc_Var2Lit(d, 1) );
+        }
+        nKept = 0;
+        for ( d = 0; d < Vec_IntSize(vBases); d++ )
+        {
+            iDiv0 = Vec_IntEntry( vBases, d );
+            for ( e = d + 1; e < Vec_IntSize(vBases); e++ )
+            {
+                iDiv1 = Vec_IntEntry( vBases, e );
+                if ( Abc_Lit2Var(iDiv0) == Abc_Lit2Var(iDiv1) )
+                    continue;
+                for ( fDivOr = 0; fDivOr < 2; fDivOr++ )
+                {
+                    pStat->nConstructed++;
+                    pStat->nSigChecks++;
+                    fExact = Cec_TranSigMatchesRoot( pSim, iTarget,
+                        iDiv0, iDiv1, fDivOr, NULL );
+                    fMatched = fExact || Cec_TranSigMatchesRoot( pSim,
+                        iTarget, iDiv0, iDiv1, fDivOr, pCare );
+                    if ( !fMatched )
+                    {
+                        pStat->nSigRejected++;
+                        continue;
+                    }
+                    pStat->nSigMatched++;
+                    Strict = Cec_TranCandCreate( iTarget, iDiv0, iDiv1, fDivOr,
+                        pRoot->nMffc, CEC_TRAN_CAND_CONSTR, 1, 0 );
+                    fStrictTried = Cec_TranCandVecContains( pTried, &Strict );
+                    if ( fExact && !fStrictTried )
+                        continue;
+                    if ( nKept >= pPars->nConstrMax )
+                        continue;
+                    Cand = Cec_TranCandCreate( iTarget, iDiv0, iDiv1, fDivOr,
+                        pRoot->nMffc, CEC_TRAN_CAND_CONSTR, 0, fStrictTried );
+                    if ( Cec_TranCandVecContains(pTried, &Cand) )
+                        continue;
+                    Cec_TranCandVecPush( pConstr, Cand );
+                    nKept++;
+                }
+            }
+        }
+        Vec_IntFree( vBases );
+    }
+    ABC_FREE( pCare );
+}
+
 static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     Cec_ParTran_t * pPars )
 {
     Cec_TranProf_t Prof = {0};
-    Cec_TranRoot_t * pRoots;
-    Cec_TranSigEnt_t * pSigIndex;
+    Cec_TranDiscStat_t Disc = {0};
+    Cec_TranCandVec_t qStrictExist = {0}, qStrictConstr = {0};
+    Cec_TranCandVec_t qContextExist = {0}, qContextConstr = {0};
+    Cec_TranCandVec_t vTried = {0};
+    Cec_TranRoot_t * pRoots = NULL;
+    Cec_TranSigEnt_t * pSigIndex = NULL;
     Cec_TranSim_t * pSim;
     Cec_TranPatDb_t * pDb;
     Gia_Man_t * p;
-    Gia_Obj_t * pObj, * pDiv;
-    Vec_Int_t * vMatches, * vMatchesContext, * vBases;
-    Vec_Int_t * vConstr, * vConstrContext;
-    word * pCare;
-    int * pCandPrefix;
-    int i, d, e, j, r, iTarget, iDiv0, iDiv1, fPhase, fDivOr;
-    int fExact, fMatched, fConstStrict[2], fConstContext[2];
-    int nRoots, nSigEntries, nBaseLimit, nConstrLimit;
-    int nConstants = 0, nExisting = 0, nConstructed = 0;
-    int nSigChecks = 0, nSigRejected = 0;
-    int nSigMatched = 0, nSigDuplicate = 0, nPositive = 0, nGainRejected = 0;
-    int nUnproved = 0, nTried = 0, nAccepted = 0, nRound = 0;
+    Gia_Obj_t * pObj;
+    int * pCandPrefix = NULL, * pUnknown, * pRootUsed;
+    int nHistObjs, nRoots = 0, nSigEntries = 0;
+    int nPositive = 0, nGainRejected = 0, nUnproved = 0;
+    int nTried = 0, nAccepted = 0, nRound = 0;
+    int nStrictProofs = 0, nContextProofs = 0;
     int nConstantProofs = 0, nExistingProofs = 0, nConstructedProofs = 0;
     int nConstantAccepted = 0, nExistingAccepted = 0, nConstructedAccepted = 0;
+    int nCooldownSkipped = 0, nBurstSkipped = 0;
+    int iStrictTurn = 0, iContextTurn = 0;
     int fChanged, fCegisRestart;
     abctime clk = Abc_Clock(), clkPhase;
     assert( Gia_ManRegNum(pGia) > 0 );
-    Abc_Print( 1, "Sequential direct resubstitution: AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, conf = %d, proof scope = %s%s, existing literals = %s, constructed AND/OR = %s.\n",
+    Abc_Print( 1, "Sequential direct resubstitution: AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, conf = %d, proof scope = %s%s, strict share = %d%%, root burst = %d, unknown cooldown = %d, existing literals = %s, constructed AND/OR = %s.\n",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nSimWords * 64,
         pPars->nSimFrames, pPars->nSimWords * 64 * pPars->nSimFrames,
         pPars->nFrames, pPars->nBTLimit,
         pPars->nProofScope == CEC_TRAN_PROOF_ROOT ? "root" :
         pPars->nProofScope == CEC_TRAN_PROOF_WINDOW ? "window" : "output",
         pPars->nProofScope == CEC_TRAN_PROOF_WINDOW ? " (bounded TFO)" : "",
+        pPars->nStrictPct, pPars->nRootBurst, pPars->nUnknownMax,
         pPars->fUseExisting ? "on" : "off", pPars->fUseConstr ? "on" : "off" );
     p = Gia_ManDup( pGia );
     pDb = Cec_TranPatDbStart( p, pPars->nCexMax );
+    nHistObjs = Gia_ManObjNum( p );
+    pUnknown = ABC_CALLOC( int, 2 * nHistObjs );
     do
     {
+        Cec_TranCand_t Cand, Temp, Fallback;
+        Cec_TranCandVec_t * pQueue = NULL;
+        int rContext = 0, fWantStrict, fHaveSE, fHaveSC, fHaveCE, fHaveCC;
+        int nTriedOld, nAcceptedOld, nUnknownOld, nSatOld, iHist;
+        int i, fFound;
         fChanged = 0;
         fCegisRestart = 0;
+        Cec_TranCandVecClear( &qStrictExist );
+        Cec_TranCandVecClear( &qStrictConstr );
+        Cec_TranCandVecClear( &qContextExist );
+        Cec_TranCandVecClear( &qContextConstr );
         clkPhase = Abc_Clock();
         pSim = Cec_TranSimStart( p, pPars, pDb );
         Prof.timeSim += Abc_Clock() - clkPhase;
         Prof.nSimCalls++;
-        pSigIndex = NULL;
-        pCandPrefix = NULL;
-        nSigEntries = 0;
-        if ( pPars->fUseExisting && pPars->nProofScope == CEC_TRAN_PROOF_ROOT )
-            pSigIndex = Cec_TranBuildSigIndex( pSim, &nSigEntries, &pCandPrefix );
 
-        // Refs are restored by Gia_NodeMffcSize().  The resulting order makes
-        // the expensive signature/proof budget favor the largest potential
-        // eliminations, while ties retain reverse topological preference.
         Gia_ManCreateRefs( p );
         nRoots = 0;
         Gia_ManForEachAnd( p, pObj, i )
@@ -1626,313 +2003,180 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             nRoots++;
         }
         qsort( pRoots, nRoots, sizeof(Cec_TranRoot_t), Cec_TranRootCompare );
-        // MFFC sizing preserves the refcounts for the duration of this
-        // snapshot, but the next CEGIS round can reuse the same GIA after a
-        // rejected candidate.  Drop them before that restart.
         ABC_FREE( p->pRefs );
+        pRootUsed = ABC_CALLOC( int, Gia_ManObjNum(p) );
 
-        for ( r = 0; r < nRoots && !fChanged && !fCegisRestart &&
-              nAccepted < pPars->nChangesMax; r++ )
+        pSigIndex = NULL;
+        pCandPrefix = NULL;
+        nSigEntries = 0;
+        if ( pPars->fUseExisting )
+            pSigIndex = Cec_TranBuildSigIndex( pSim, &nSigEntries, &pCandPrefix );
+        Cec_TranCollectStrictCandidates( p, pSim, pPars, pRoots, nRoots,
+            pSigIndex, nSigEntries, pCandPrefix, &qStrictExist,
+            &qStrictConstr, &Disc );
+
+        while ( nTried < pPars->nCandMax &&
+                nAccepted < pPars->nChangesMax )
         {
-            iTarget = pRoots[r].iObj;
-            if ( pPars->fVerbose )
-                Abc_Print( 1, "  direct root rank %d: obj %d, MFFC=%d.\n",
-                    r + 1, iTarget, pRoots[r].nMffc );
-            pCare = NULL;
+            // Context queues are filled one root at a time.  This preserves
+            // lazy discovery after a useful CEX while strict candidates from
+            // every root are already globally visible to the scheduler.
             if ( pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
             {
-                clkPhase = Abc_Clock();
-                pCare = Cec_TranSimComputeCare( pSim, iTarget );
-                Prof.timeCare += Abc_Clock() - clkPhase;
-                Prof.nCareCalls++;
-            }
-            vMatches = vMatchesContext = NULL;
-            vBases = vConstr = vConstrContext = NULL;
-            fConstStrict[0] = fConstStrict[1] = 0;
-            fConstContext[0] = fConstContext[1] = 0;
-            // A divisor must be topologically earlier than the root, which
-            // also excludes its TFO and makes the root rewrite acyclic.
-            vMatches = Vec_IntAlloc( pPars->nDivsMax + 2 );
-            vMatchesContext = Vec_IntAlloc( pPars->nDivsMax + 2 );
-
-            // Classify candidates into a strict-signature lane and a
-            // context-only lane.  Window/output search always exhausts the
-            // strict lane first, so extra ODC matches cannot crowd out the
-            // candidates that root mode would have considered.
-            for ( fPhase = 0; fPhase < 2; fPhase++ )
-            {
-                iDiv0 = Abc_Var2Lit( 0, fPhase );
-                nConstants++;
-                nSigChecks++;
-                fExact = Cec_TranSigMatchesRoot( pSim, iTarget, iDiv0, -1, 0, NULL );
-                fMatched = fExact || (pCare && Cec_TranSigMatchesRoot(
-                    pSim, iTarget, iDiv0, -1, 0, pCare));
-                if ( !fMatched )
+                while ( rContext < nRoots )
                 {
-                    nSigRejected++;
-                    continue;
+                    fHaveCE = Cec_TranCandVecPeek( &qContextExist, &Temp,
+                        &vTried, pUnknown, pPars->nUnknownMax, pRootUsed,
+                        pPars->nRootBurst, &nCooldownSkipped, &nBurstSkipped );
+                    fHaveCC = Cec_TranCandVecPeek( &qContextConstr, &Temp,
+                        &vTried, pUnknown, pPars->nUnknownMax, pRootUsed,
+                        pPars->nRootBurst, &nCooldownSkipped, &nBurstSkipped );
+                    if ( fHaveCE || fHaveCC )
+                        break;
+                    iHist = 2 * pRoots[rContext].iObj + 1;
+                    if ( !pPars->nUnknownMax ||
+                         pUnknown[iHist] < pPars->nUnknownMax )
+                        Cec_TranCollectContextCandidates( p, pSim, pPars,
+                            pRoots + rContext, &vTried, &qContextExist,
+                            &qContextConstr, &Disc, &Prof );
+                    else
+                        nCooldownSkipped++;
+                    rContext++;
                 }
-                nSigMatched++;
-                fConstStrict[fPhase] = fExact;
-                fConstContext[fPhase] = !fExact;
             }
 
-            // Strict constants are first and never consume the -D quota.
-            for ( fPhase = 0; fPhase < 2; fPhase++ )
-            {
-                if ( !fConstStrict[fPhase] )
-                    continue;
-                if ( nTried >= pPars->nCandMax )
-                    break;
-                iDiv0 = Abc_Var2Lit( 0, fPhase );
-                {
-                int nTriedOld = nTried, nAcceptedOld = nAccepted;
-                fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0, -1, 0,
-                    1, &nTried, &nPositive, &nGainRejected, &nUnproved,
-                    &nAccepted, pDb, &fCegisRestart, &Prof );
-                nConstantProofs += nTried - nTriedOld;
-                nConstantAccepted += nAccepted - nAcceptedOld;
-                }
-                if ( fChanged || fCegisRestart )
-                    break;
-            }
-            if ( fChanged || fCegisRestart || nTried >= pPars->nCandMax )
-                goto root_cleanup;
+            fHaveSE = Cec_TranCandVecPeek( &qStrictExist, &Temp,
+                &vTried, pUnknown, pPars->nUnknownMax, pRootUsed, 0,
+                &nCooldownSkipped, &nBurstSkipped );
+            fHaveSC = Cec_TranCandVecPeek( &qStrictConstr, &Temp,
+                &vTried, pUnknown, pPars->nUnknownMax, pRootUsed, 0,
+                &nCooldownSkipped, &nBurstSkipped );
+            fHaveCE = pPars->nProofScope != CEC_TRAN_PROOF_ROOT &&
+                Cec_TranCandVecPeek( &qContextExist, &Temp, &vTried,
+                    pUnknown, pPars->nUnknownMax, pRootUsed,
+                    pPars->nRootBurst, &nCooldownSkipped, &nBurstSkipped );
+            fHaveCC = pPars->nProofScope != CEC_TRAN_PROOF_ROOT &&
+                Cec_TranCandVecPeek( &qContextConstr, &Temp, &vTried,
+                    pUnknown, pPars->nUnknownMax, pRootUsed,
+                    pPars->nRootBurst, &nCooldownSkipped, &nBurstSkipped );
+            if ( !(fHaveSE || fHaveSC || fHaveCE || fHaveCC) )
+                break;
 
-            if ( pPars->fUseExisting )
+            if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT )
+                fWantStrict = 1;
+            else if ( pPars->nStrictPct == 0 )
+                fWantStrict = 0;
+            else
+                fWantStrict = 100 * nStrictProofs <
+                    pPars->nStrictPct * (nTried + 1);
+
+            if ( fWantStrict && (fHaveSE || fHaveSC) )
             {
-                if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT )
-                {
-                    word TargetHash = Cec_TranLitHash( pSim, Abc_Var2Lit(iTarget, 0) );
-                    int iFirst = Cec_TranSigIndexLowerBound( pSigIndex, nSigEntries, TargetHash );
-                    int nPool = 2 * pCandPrefix[iTarget];
-                    int nLocalMatched = 0;
-                    for ( d = iFirst; d < nSigEntries && pSigIndex[d].Hash == TargetHash; d++ )
-                    {
-                        iDiv0 = pSigIndex[d].iLit;
-                        if ( Abc_Lit2Var(iDiv0) == 0 || Abc_Lit2Var(iDiv0) >= iTarget )
-                            continue;
-                        if ( !Cec_TranSigMatchesRoot(pSim, iTarget, iDiv0, -1, 0, NULL) )
-                            continue; // a 64-bit hash collision
-                        nLocalMatched++;
-                        nSigMatched++;
-                        if ( pPars->nDivsMax == 0 || Vec_IntSize(vMatches) < pPars->nDivsMax )
-                            Vec_IntPush( vMatches, iDiv0 );
-                    }
-                    nExisting += nPool;
-                    nSigChecks += nPool;
-                    nSigRejected += nPool - nLocalMatched;
-                }
+                if ( (!iStrictTurn && fHaveSE) || !fHaveSC )
+                    pQueue = &qStrictExist;
                 else
-                {
-                    for ( d = iTarget - 1; d > 0; d-- )
-                    {
-                        pDiv = Gia_ManObj( p, d );
-                        if ( !Gia_ObjIsCand(pDiv) )
-                            continue;
-                        for ( fPhase = 0; fPhase < 2; fPhase++ )
-                        {
-                            iDiv0 = Abc_Var2Lit( d, fPhase );
-                            nExisting++;
-                            nSigChecks++;
-                            fExact = Cec_TranSigMatchesRoot( pSim, iTarget,
-                                iDiv0, -1, 0, NULL );
-                            fMatched = fExact || Cec_TranSigMatchesRoot( pSim,
-                                iTarget, iDiv0, -1, 0, pCare );
-                            if ( !fMatched )
-                            {
-                                nSigRejected++;
-                                continue;
-                            }
-                            nSigMatched++;
-                            if ( fExact )
-                            {
-                                if ( pPars->nDivsMax == 0 ||
-                                     Vec_IntSize(vMatches) < pPars->nDivsMax )
-                                    Vec_IntPush( vMatches, iDiv0 );
-                            }
-                            else if ( pPars->nDivsMax == 0 ||
-                                      Vec_IntSize(vMatchesContext) < pPars->nDivsMax )
-                                Vec_IntPush( vMatchesContext, iDiv0 );
-                        }
-                    }
-                }
+                    pQueue = &qStrictConstr;
+                iStrictTurn ^= 1;
             }
-            Vec_IntForEachEntry( vMatches, iDiv0, j )
+            else if ( !fWantStrict && (fHaveCE || fHaveCC) )
             {
-                if ( nTried >= pPars->nCandMax )
-                    break;
-                {
-                int nTriedOld = nTried, nAcceptedOld = nAccepted;
-                fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0, -1, 0,
-                    1, &nTried, &nPositive, &nGainRejected, &nUnproved,
-                    &nAccepted, pDb, &fCegisRestart, &Prof );
-                nExistingProofs += nTried - nTriedOld;
+                if ( (!iContextTurn && fHaveCE) || !fHaveCC )
+                    pQueue = &qContextExist;
+                else
+                    pQueue = &qContextConstr;
+                iContextTurn ^= 1;
+            }
+            else if ( fHaveSE || fHaveSC )
+            {
+                if ( (!iStrictTurn && fHaveSE) || !fHaveSC )
+                    pQueue = &qStrictExist;
+                else
+                    pQueue = &qStrictConstr;
+                iStrictTurn ^= 1;
+            }
+            else
+            {
+                if ( (!iContextTurn && fHaveCE) || !fHaveCC )
+                    pQueue = &qContextExist;
+                else
+                    pQueue = &qContextConstr;
+                iContextTurn ^= 1;
+            }
+            fFound = Cec_TranCandVecPeek( pQueue, &Cand, &vTried,
+                pUnknown, pPars->nUnknownMax, pRootUsed,
+                (pQueue == &qContextExist || pQueue == &qContextConstr) ?
+                    pPars->nRootBurst : 0,
+                &nCooldownSkipped, &nBurstSkipped );
+            assert( fFound );
+            if ( !fFound )
+                break;
+            Cec_TranCandVecDrop( pQueue );
+            if ( pPars->fVerbose )
+                Abc_Print( 1, "  scheduler: lane=%s-%s root=%d mffc=%d.\n",
+                    Cand.fStrict ? "strict" : "context",
+                    Cand.nKind == CEC_TRAN_CAND_CONSTR ? "constructed" :
+                    Cand.nKind == CEC_TRAN_CAND_EXIST ? "existing" : "constant",
+                    Cand.iTarget, Cand.nMffc );
+            nTriedOld = nTried;
+            nAcceptedOld = nAccepted;
+            nUnknownOld = Prof.nProofUnknown;
+            nSatOld = Prof.nProofSat;
+            fChanged = Cec_TranTryCommitRoot( &p, pPars, Cand.iTarget,
+                Cand.iDiv0, Cand.iDiv1, Cand.fDivOr, Cand.fStrict,
+                &nTried, &nPositive, &nGainRejected, &nUnproved,
+                &nAccepted, pDb, &fCegisRestart, &Prof );
+            Cec_TranCandVecPush( &vTried, Cand );
+            if ( nTried == nTriedOld )
+                continue;
+
+            if ( Cand.fStrict )
+                nStrictProofs++;
+            else
+            {
+                nContextProofs++;
+                pRootUsed[Cand.iTarget]++;
+                if ( Cand.fFallback )
+                    Prof.nScopeFallbacks++;
+            }
+            if ( Cand.nKind == CEC_TRAN_CAND_CONST )
+            {
+                nConstantProofs++;
+                nConstantAccepted += nAccepted - nAcceptedOld;
+            }
+            else if ( Cand.nKind == CEC_TRAN_CAND_EXIST )
+            {
+                nExistingProofs++;
                 nExistingAccepted += nAccepted - nAcceptedOld;
-                }
-                if ( fChanged || fCegisRestart )
-                    break;
             }
-            if ( fChanged || fCegisRestart || nTried >= pPars->nCandMax )
-                goto root_cleanup;
-
-            if ( pPars->fUseConstr && pPars->nConstrMax > 0 )
+            else
             {
-                nBaseLimit = pPars->nConstrBaseMax;
-                nConstrLimit = pPars->nConstrMax;
-                vBases = Vec_IntAlloc( nBaseLimit ? nBaseLimit : 100 );
-                for ( d = iTarget - 1; d > 0 &&
-                      (nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit); d-- )
-                {
-                    pDiv = Gia_ManObj( p, d );
-                    if ( !Gia_ObjIsCand(pDiv) )
-                        continue;
-                    Vec_IntPush( vBases, Abc_Var2Lit(d, 0) );
-                    if ( nBaseLimit == 0 || Vec_IntSize(vBases) < nBaseLimit )
-                        Vec_IntPush( vBases, Abc_Var2Lit(d, 1) );
-                }
-                vConstr = Vec_IntAlloc( 3 * nConstrLimit );
-                vConstrContext = Vec_IntAlloc( 3 * nConstrLimit );
-                for ( d = 0; d < Vec_IntSize(vBases); d++ )
-                {
-                    iDiv0 = Vec_IntEntry( vBases, d );
-                    for ( e = d + 1; e < Vec_IntSize(vBases); e++ )
-                    {
-                        iDiv1 = Vec_IntEntry( vBases, e );
-                        // Equal-variable pairs collapse to a literal or a
-                        // constant under both AND and OR, so they add no new
-                        // constructed function.
-                        if ( Abc_Lit2Var(iDiv0) == Abc_Lit2Var(iDiv1) )
-                            continue;
-                        for ( fDivOr = 0; fDivOr < 2; fDivOr++ )
-                        {
-                            nConstructed++;
-                            nSigChecks++;
-                            fExact = Cec_TranSigMatchesRoot( pSim, iTarget,
-                                iDiv0, iDiv1, fDivOr, NULL );
-                            fMatched = fExact || (pCare && Cec_TranSigMatchesRoot(
-                                pSim, iTarget, iDiv0, iDiv1, fDivOr, pCare));
-                            if ( !fMatched )
-                            {
-                                nSigRejected++;
-                                continue;
-                            }
-                            nSigMatched++;
-                            if ( fExact )
-                            {
-                                if ( Vec_IntSize(vConstr) >= 3 * nConstrLimit )
-                                    continue;
-                                Vec_IntPush( vConstr, iDiv0 );
-                                Vec_IntPush( vConstr, iDiv1 );
-                                Vec_IntPush( vConstr, fDivOr );
-                            }
-                            else
-                            {
-                                if ( Vec_IntSize(vConstrContext) >= 3 * nConstrLimit )
-                                    continue;
-                                Vec_IntPush( vConstrContext, iDiv0 );
-                                Vec_IntPush( vConstrContext, iDiv1 );
-                                Vec_IntPush( vConstrContext, fDivOr );
-                            }
-                        }
-                    }
-                }
-                for ( j = 0; j < Vec_IntSize(vConstr) && nTried < pPars->nCandMax; j += 3 )
-                {
-                    iDiv0 = Vec_IntEntry( vConstr, j );
-                    iDiv1 = Vec_IntEntry( vConstr, j + 1 );
-                    fDivOr = Vec_IntEntry( vConstr, j + 2 );
-                    {
-                    int nTriedOld = nTried, nAcceptedOld = nAccepted;
-                    fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0,
-                        iDiv1, fDivOr, 1, &nTried, &nPositive, &nGainRejected,
-                        &nUnproved, &nAccepted, pDb, &fCegisRestart, &Prof );
-                    nConstructedProofs += nTried - nTriedOld;
-                    nConstructedAccepted += nAccepted - nAcceptedOld;
-                    }
-                    if ( fChanged || fCegisRestart )
-                        break;
-                }
+                nConstructedProofs++;
+                nConstructedAccepted += nAccepted - nAcceptedOld;
             }
-            if ( fChanged || fCegisRestart || nTried >= pPars->nCandMax )
-                goto root_cleanup;
+            iHist = 2 * Cand.iTarget + !Cand.fStrict;
+            if ( Prof.nProofUnknown > nUnknownOld )
+                pUnknown[iHist]++;
+            else if ( Prof.nProofSat > nSatOld || nAccepted > nAcceptedOld )
+                pUnknown[iHist] = 0;
 
-            // Only after every strict candidate class has been considered do
-            // we spend proof budget on candidates that match under care only.
-            if ( pCare )
+            // UNKNOWN supplies no CEX.  Keep the possible contextual version,
+            // but charge its later window/output proof as a separate token.
+            if ( Cand.fStrict && !fChanged && !fCegisRestart &&
+                 pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
             {
-                for ( fPhase = 0; fPhase < 2; fPhase++ )
-                {
-                    if ( !fConstContext[fPhase] || nTried >= pPars->nCandMax )
-                        continue;
-                    iDiv0 = Abc_Var2Lit( 0, fPhase );
-                    {
-                    int nTriedOld = nTried, nAcceptedOld = nAccepted;
-                    fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0,
-                        -1, 0, 0, &nTried, &nPositive, &nGainRejected,
-                        &nUnproved, &nAccepted, pDb, &fCegisRestart, &Prof );
-                    nConstantProofs += nTried - nTriedOld;
-                    nConstantAccepted += nAccepted - nAcceptedOld;
-                    }
-                    if ( fChanged || fCegisRestart )
-                        break;
-                }
-                if ( fChanged || fCegisRestart || nTried >= pPars->nCandMax )
-                    goto root_cleanup;
-
-                Vec_IntForEachEntry( vMatchesContext, iDiv0, j )
-                {
-                    if ( nTried >= pPars->nCandMax )
-                        break;
-                    {
-                    int nTriedOld = nTried, nAcceptedOld = nAccepted;
-                    fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0,
-                        -1, 0, 0, &nTried, &nPositive, &nGainRejected,
-                        &nUnproved, &nAccepted, pDb, &fCegisRestart, &Prof );
-                    nExistingProofs += nTried - nTriedOld;
-                    nExistingAccepted += nAccepted - nAcceptedOld;
-                    }
-                    if ( fChanged || fCegisRestart )
-                        break;
-                }
-                if ( fChanged || fCegisRestart || nTried >= pPars->nCandMax )
-                    goto root_cleanup;
-
-                if ( vConstrContext )
-                for ( j = 0; j < Vec_IntSize(vConstrContext) &&
-                      nTried < pPars->nCandMax; j += 3 )
-                {
-                    iDiv0 = Vec_IntEntry( vConstrContext, j );
-                    iDiv1 = Vec_IntEntry( vConstrContext, j + 1 );
-                    fDivOr = Vec_IntEntry( vConstrContext, j + 2 );
-                    {
-                    int nTriedOld = nTried, nAcceptedOld = nAccepted;
-                    fChanged = Cec_TranTryCommitRoot( &p, pPars, iTarget, iDiv0,
-                        iDiv1, fDivOr, 0, &nTried, &nPositive, &nGainRejected,
-                        &nUnproved, &nAccepted, pDb, &fCegisRestart, &Prof );
-                    nConstructedProofs += nTried - nTriedOld;
-                    nConstructedAccepted += nAccepted - nAcceptedOld;
-                    }
-                    if ( fChanged || fCegisRestart )
-                        break;
-                }
+                Fallback = Cand;
+                Fallback.fStrict = 0;
+                Fallback.fFallback = 1;
+                if ( !Cec_TranCandVecContains(&vTried, &Fallback) )
+                    Cec_TranCandVecPush(
+                        Fallback.nKind == CEC_TRAN_CAND_CONSTR ?
+                            &qContextConstr : &qContextExist, Fallback );
             }
-
-root_cleanup:
-            if ( vMatches )
-                Vec_IntFree( vMatches );
-            if ( vMatchesContext )
-                Vec_IntFree( vMatchesContext );
-            if ( vConstr )
-                Vec_IntFree( vConstr );
-            if ( vConstrContext )
-                Vec_IntFree( vConstrContext );
-            if ( vBases )
-                Vec_IntFree( vBases );
-            ABC_FREE( pCare );
-            if ( nTried >= pPars->nCandMax )
+            if ( fChanged || fCegisRestart )
                 break;
         }
+
+        ABC_FREE( pRootUsed );
         ABC_FREE( pRoots );
         ABC_FREE( pSigIndex );
         ABC_FREE( pCandPrefix );
@@ -1940,27 +2184,42 @@ root_cleanup:
         if ( fCegisRestart )
             Prof.nCegisRestarts++;
         nRound++;
+        if ( fChanged )
+        {
+            Cec_TranCandVecClear( &vTried );
+            ABC_FREE( pUnknown );
+            nHistObjs = Gia_ManObjNum( p );
+            pUnknown = ABC_CALLOC( int, 2 * nHistObjs );
+        }
     }
     while ( (fChanged || fCegisRestart) && nTried < pPars->nCandMax &&
         nAccepted < pPars->nChangesMax && Gia_ManRegNum(p) > 0 );
+
     Prof.timeTotal = Abc_Clock() - clk;
     Prof.nCexStored = Vec_PtrSize(pDb->vCexes);
-    Abc_Print( 1, "Sequential direct resubstitution: rounds=%d roots=%d proofs=%d constants=%d existing=%d constructed=%d constant-proofs=%d existing-proofs=%d constructed-proofs=%d constant-accepted=%d existing-accepted=%d constructed-accepted=%d root-fast-proofs=%d root-fast-accepted=%d scope-fallbacks=%d sig-checks=%d sig-rejected=%d sig-matched=%d sig-duplicates=%d gain-positive=%d gain-rejected=%d unsat=%d sat=%d unknown=%d unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
-        nRound, nRoots, nTried, nConstants, nExisting, nConstructed,
+    Abc_Print( 1, "Sequential direct resubstitution: rounds=%d roots=%d proofs=%d strict-proofs=%d context-proofs=%d constants=%lld existing=%lld constructed=%lld constant-proofs=%d existing-proofs=%d constructed-proofs=%d constant-accepted=%d existing-accepted=%d constructed-accepted=%d root-fast-proofs=%d root-fast-accepted=%d scope-fallbacks=%d cooldown-skipped=%d burst-skipped=%d sig-checks=%lld sig-rejected=%lld sig-matched=%lld sig-duplicates=0 gain-positive=%d gain-rejected=%d unsat=%d sat=%d unknown=%d unproved=%d accepted=%d, AND=%d -> %d, time=%.2f sec.\n",
+        nRound, nRoots, nTried, nStrictProofs, nContextProofs,
+        Disc.nConstants, Disc.nExisting, Disc.nConstructed,
         nConstantProofs, nExistingProofs, nConstructedProofs,
         nConstantAccepted, nExistingAccepted, nConstructedAccepted,
         Prof.nRootFastCalls, Prof.nRootFastProved, Prof.nScopeFallbacks,
-        nSigChecks, nSigRejected, nSigMatched, nSigDuplicate,
-        nPositive, nGainRejected, nAccepted, Prof.nProofSat,
-        Prof.nProofUnknown, nUnproved, nAccepted,
-        Gia_ManAndNum(pGia), Gia_ManAndNum(p), Cec_TranTimeSec(Prof.timeTotal) );
+        nCooldownSkipped, nBurstSkipped, Disc.nSigChecks,
+        Disc.nSigRejected, Disc.nSigMatched, nPositive, nGainRejected,
+        Prof.nProofUnsat, Prof.nProofSat, Prof.nProofUnknown, nUnproved,
+        nAccepted, Gia_ManAndNum(pGia), Gia_ManAndNum(p),
+        Cec_TranTimeSec(Prof.timeTotal) );
     if ( pPars->fProfile )
-    {
         Abc_Print( 1, "Sequential direct proof profile: random-lanes=%d signature-samples=%d window=%d proved=%d expanded=%d final=%d shadow=%d cex=%d/%d.\n",
-            pPars->nSimWords * 64, pPars->nSimFrames * pPars->nSimWords * 64, Prof.nWindowCalls,
-            Prof.nWindowProved, Prof.nWindowExpanded, Prof.nFinalCalls,
-            Prof.nShadowCalls, Prof.nCexStored, Prof.nCegisRestarts );
-    }
+            pPars->nSimWords * 64, pPars->nSimFrames * pPars->nSimWords * 64,
+            Prof.nWindowCalls, Prof.nWindowProved, Prof.nWindowExpanded,
+            Prof.nFinalCalls, Prof.nShadowCalls, Prof.nCexStored,
+            Prof.nCegisRestarts );
+    Cec_TranCandVecStop( &qStrictExist );
+    Cec_TranCandVecStop( &qStrictConstr );
+    Cec_TranCandVecStop( &qContextExist );
+    Cec_TranCandVecStop( &qContextConstr );
+    Cec_TranCandVecStop( &vTried );
+    ABC_FREE( pUnknown );
     Cec_TranPatDbStop( pDb );
     return p;
 }

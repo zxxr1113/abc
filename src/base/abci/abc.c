@@ -42223,7 +42223,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERdoxlfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUdoxlfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42316,6 +42316,21 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nCexMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nCexMax < 0 ) goto usage;
             break;
+        case 'I':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nStrictPct = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nStrictPct < 0 || pPars->nStrictPct > 100 ) goto usage;
+            break;
+        case 'J':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nRootBurst = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRootBurst < 0 ) goto usage;
+            break;
+        case 'U':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nUnknownMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nUnknownMax < 0 ) goto usage;
+            break;
         case 'd':
             pPars->fUseDirect = 1;
             pPars->fUseSodc = 0;
@@ -42372,7 +42387,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAER num] [-dxlfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJU num] [-dxlfpvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
@@ -42390,6 +42405,9 @@ usage:
     Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
     Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
+    Abc_Print( -2, "\t-I num : formal-proof percentage reserved for strict root candidates [default = %d]\n", pPars->nStrictPct );
+    Abc_Print( -2, "\t-J num : contextual proofs per root and simulation snapshot (0 = unlimited) [default = %d]\n", pPars->nRootBurst );
+    Abc_Print( -2, "\t-U num : consecutive UNKNOWNs before root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle one-gate AND/OR constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
