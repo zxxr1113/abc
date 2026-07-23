@@ -42223,7 +42223,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUdoxlfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHdoxlfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42316,6 +42316,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nCexMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nCexMax < 0 ) goto usage;
             break;
+        case 'H':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nCexBatch = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nCexBatch < 1 || pPars->nCexBatch > 64 ) goto usage;
+            break;
         case 'I':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nStrictPct = atoi(argv[globalUtilOptind++]);
@@ -42387,7 +42392,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJU num] [-dxlfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUH num] [-dxlfpvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
@@ -42405,6 +42410,7 @@ usage:
     Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
     Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
+    Abc_Print( -2, "\t-H num : CEXes accumulated before appending one signature block (1..64) [default = %d]\n", pPars->nCexBatch );
     Abc_Print( -2, "\t-I num : formal-proof percentage reserved for strict root candidates [default = %d]\n", pPars->nStrictPct );
     Abc_Print( -2, "\t-J num : contextual proofs per root and simulation snapshot (0 = unlimited) [default = %d]\n", pPars->nRootBurst );
     Abc_Print( -2, "\t-U num : consecutive UNKNOWNs before root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );

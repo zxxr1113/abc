@@ -300,6 +300,7 @@ struct Cec_ParTran_t_
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              nCexFrames;    // BMC depth used to recover a rejected-candidate witness (0 = off)
     int              nCexMax;       // persistent witness traces injected into each simulation batch
+    int              nCexBatch;     // witnesses accumulated before appending one signature block
     int              nProofWindow;  // TFO depth used by Direct window proof
     int              nProofScope;   // Direct acceptance scope: root/window/output
     int              nStrictPct;    // Direct proof budget percentage reserved for root-equivalent candidates
