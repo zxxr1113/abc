@@ -347,15 +347,15 @@ struct Cec_ParTran_t_
     int              nProofWindow;  // TFO depth used by Direct window proof
     int              nProofScope;   // Direct acceptance scope: root/window/output
     int              nStrictPct;    // compatibility: strict root closure now precedes contextual proof
-    int              nRootBurst;    // compatibility: contextual count cap is disabled
+    int              nLowUnknownMax;// UNKNOWNs per low-value contextual root/lane
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
-    int              nRootBatch;    // root obligations admitted per snapshot closure (0 = all)
-    int              nScoutBTLimit; // low root/context conflict limit per proof obligation
-    int              nScoutConfTotal;// low root/context total conflict limit (0 = unlimited)
-    int              nHardConfTotal;// high root/context total conflict limit (0 = unlimited)
-    int              nHardGain;     // exact gain selecting the root/context high proof budget
-    int              nHardRootMax;  // compatibility: scout/rescue quota was removed
-    int              nHardMffc;     // MFFC threshold selecting the root/context high proof budget
+    int              nRootBatch;    // MFFC-ranked roots screened per snapshot (0 = all)
+    int              nScoutBTLimit; // low context conflict limit per proof obligation
+    int              nScoutConfTotal;// low context total conflict limit (0 = unlimited)
+    int              nHardConfTotal;// high context total conflict limit (0 = unlimited)
+    int              nHardGain;     // exact gain selecting the context high proof budget
+    int              nRootGainMin;  // root fallback gate: local MFFC gain (OR with nHardMffc)
+    int              nHardMffc;     // MFFC selecting root fallback/context high budget
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable existing-literal Direct candidates

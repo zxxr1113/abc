@@ -42328,8 +42328,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             break;
         case 'J':
             if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootBurst = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootBurst < 0 ) goto usage;
+            pPars->nLowUnknownMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nLowUnknownMax < 0 ) goto usage;
             break;
         case 'U':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42348,8 +42348,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             break;
         case 'O':
             if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nHardRootMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nHardRootMax < 0 ) goto usage;
+            pPars->nRootGainMin = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRootGainMin < 0 ) goto usage;
             break;
         case 'X':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42430,12 +42430,12 @@ usage:
     Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZm num] [-dxlfpvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
-    Abc_Print( -2, "\t-C num : high root/context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
+    Abc_Print( -2, "\t-C num : root/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-T num : maximum contextual window/output proof obligations (root is separate) [default = %d]\n", pPars->nCandMax );
     Abc_Print( -2, "\t-N num : maximum committed transactions [default = %d]\n", pPars->nChangesMax );
     Abc_Print( -2, "\t-D num : existing literals retained per root and priority lane [default = %d]\n", pPars->nDivsMax );
-    Abc_Print( -2, "\t-G num : minimum exact cleanup AND+register gain [default = %d]\n", pPars->nGainMin );
+    Abc_Print( -2, "\t-G num : minimum local structural gain and final exact cleanup gain [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : matching one-gate AND/OR divisors per root and priority lane [default = %d]\n", pPars->nConstrMax );
@@ -42447,15 +42447,15 @@ usage:
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
     Abc_Print( -2, "\t-H num : CEXes accumulated before appending one signature block (1..64) [default = %d]\n", pPars->nCexBatch );
     Abc_Print( -2, "\t-I num : compatibility option; strict roots now close before contextual proof [default = %d]\n", pPars->nStrictPct );
-    Abc_Print( -2, "\t-J num : compatibility option; contextual count cap is disabled [default = %d]\n", pPars->nRootBurst );
-    Abc_Print( -2, "\t-U num : consecutive UNKNOWNs before root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );
-    Abc_Print( -2, "\t-L num : root obligations admitted per snapshot closure (0 = all) [default = %d]\n", pPars->nRootBatch );
-    Abc_Print( -2, "\t-V num : exact gain selecting the root/context high proof budget [default = %d]\n", pPars->nHardGain );
-    Abc_Print( -2, "\t-O num : compatibility option; scout/rescue count quota is removed [default = %d]\n", pPars->nHardRootMax );
-    Abc_Print( -2, "\t-X num : low root/context conflict limit per proof obligation [default = %d]\n", pPars->nScoutBTLimit );
-    Abc_Print( -2, "\t-Y num : total conflicts per low root/context call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
-    Abc_Print( -2, "\t-Z num : total conflicts per high root/context call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
-    Abc_Print( -2, "\t-m num : MFFC size selecting the root/context high proof budget [default = %d]\n", pPars->nHardMffc );
+    Abc_Print( -2, "\t-J num : UNKNOWNs before low-value contextual root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nLowUnknownMax );
+    Abc_Print( -2, "\t-U num : UNKNOWNs before root/high-context cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );
+    Abc_Print( -2, "\t-L num : MFFC-ranked roots screened by root fallback per snapshot (0 = all) [default = %d]\n", pPars->nRootBatch );
+    Abc_Print( -2, "\t-V num : exact gain selecting the contextual high proof budget [default = %d]\n", pPars->nHardGain );
+    Abc_Print( -2, "\t-O num : minimum root-fallback gain (OR with -m; 0 disables gain gate) [default = %d]\n", pPars->nRootGainMin );
+    Abc_Print( -2, "\t-X num : low contextual conflict limit per proof obligation [default = %d]\n", pPars->nScoutBTLimit );
+    Abc_Print( -2, "\t-Y num : total conflicts per low contextual call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
+    Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
+    Abc_Print( -2, "\t-m num : MFFC selecting root fallback/context high budget [default = %d]\n", pPars->nHardMffc );
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle one-gate AND/OR constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
