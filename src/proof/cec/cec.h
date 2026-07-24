@@ -145,6 +145,45 @@ struct Cec_ParCec_t_
     Vec_Ptr_t *      vNamesIn;      // input names of the first network
 };
 
+// Optional aggregate profiling for one or more correspondence calls.  All
+// time fields use Abc_ClockHr() ticks (nanoseconds), rather than clock().
+// The SAT/UNSAT/UNKNOWN counters below describe the internal SRM obligations
+// seen by &scorr; they are intentionally distinct from a caller's final
+// transaction outcome.
+typedef struct Cec_ProfCor_t_ Cec_ProfCor_t;
+struct Cec_ProfCor_t_
+{
+    abctime          timeClasses;   // class discovery + base + induction
+    abctime          timeInit;      // simulation/class initialization
+    abctime          timeBmc;       // complete reset/base phase
+    abctime          timeBmcSrm;    // base-phase SRM construction
+    abctime          timeBmcSat;    // base-phase solver wall time
+    abctime          timeBmcSetup;  // solver/CNF setup within base phase
+    abctime          timeBmcSolve;  // per-obligation solving within base phase
+    abctime          timeBmcSim;    // base CEX resimulation/refinement
+    abctime          timeInd;       // complete inductive refinement loop
+    abctime          timeIndSrm;    // inductive SRM construction
+    abctime          timeIndSat;    // inductive solver wall time
+    abctime          timeIndSetup;  // solver/CNF setup within induction
+    abctime          timeIndSolve;  // per-obligation solving within induction
+    abctime          timeIndSim;    // inductive CEX resimulation/refinement
+    abctime          timeReduce;    // final Gia_ManCorrReduce/cleanup
+    long long        nBmcUnsat;     // internally discharged base obligations
+    long long        nBmcSat;       // base obligations with counterexamples
+    long long        nBmcUnknown;   // base obligations hitting proof limits
+    long long        nIndUnsat;     // internally discharged step obligations
+    long long        nIndSat;       // step obligations with counterexamples
+    long long        nIndUnknown;   // step obligations hitting proof limits
+    long long        nCexReal;      // SAT records carrying assignments
+    long long        nCexTrivial;   // structurally constant-one obligations
+    long long        nCexFail;      // timeout/failure records
+    long long        nConfUsed;     // exact conflicts/backtracks consumed
+    int              nConfStops;    // calls stopped by the total conflict cap
+    int              nCalls;        // Cec_ManLSCorrespondenceClasses calls
+    int              nBmcRounds;    // base SRMs built
+    int              nIndRounds;    // inductive SRMs built
+};
+
 // sequential register correspodence parameters
 typedef struct Cec_ParCor_t_ Cec_ParCor_t;
 struct Cec_ParCor_t_
@@ -154,6 +193,9 @@ struct Cec_ParCor_t_
     int              nFrames;       // the number of time frames
     int              nPrefix;       // the number of time frames in the prefix
     int              nBTLimit;      // conflict limit at a node
+    int              nConfTotal;    // total conflicts across this correspondence call (0 = unlimited)
+    long long        nConfUsed;     // output: exact conflicts/backtracks consumed
+    int              fConfStop;     // output: total conflict cap was reached
     int              nProcs;        // the number of processes
     int              nPartSize;     // the partition size
     int              nLevelMax;     // (scorr only) the max number of levels
@@ -183,6 +225,7 @@ struct Cec_ParCor_t_
     int              fVerboseFlops; // verbose stats
     int              fVeryVerbose;  // verbose stats
     int              fVerbose;      // verbose stats
+    Cec_ProfCor_t *  pProfile;      // optional aggregate phase profiling
     // callback
     void *           pData;
     void *           pFunc;
@@ -288,7 +331,7 @@ struct Cec_ParTran_t_
     int              nFrames;       // BMC/induction depth in the scorr oracle
     int              nBTLimit;      // conflict limit per proof obligation
     int              nStepsMax;     // scorr induction refinement limit
-    int              nCandMax;      // total number of exact proof attempts
+    int              nCandMax;      // contextual window/output proof attempts (root closure is separate)
     int              nDivsMax;      // local existing divisors per victim
     int              nConstrMax;    // signature-matched one-gate AND/OR divisors per root
     int              nConstrBaseMax;// literals in one-gate construction pool (0 = all)
@@ -303,9 +346,16 @@ struct Cec_ParTran_t_
     int              nCexBatch;     // witnesses accumulated before appending one signature block
     int              nProofWindow;  // TFO depth used by Direct window proof
     int              nProofScope;   // Direct acceptance scope: root/window/output
-    int              nStrictPct;    // Direct proof budget percentage reserved for root-equivalent candidates
-    int              nRootBurst;    // contextual proofs retained per root in one simulation snapshot (0 = unlimited)
+    int              nStrictPct;    // compatibility: strict root closure now precedes contextual proof
+    int              nRootBurst;    // compatibility: contextual count cap is disabled
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
+    int              nRootBatch;    // root obligations admitted per snapshot closure (0 = all)
+    int              nScoutBTLimit; // low root/context conflict limit per proof obligation
+    int              nScoutConfTotal;// low root/context total conflict limit (0 = unlimited)
+    int              nHardConfTotal;// high root/context total conflict limit (0 = unlimited)
+    int              nHardGain;     // exact gain selecting the root/context high proof budget
+    int              nHardRootMax;  // compatibility: scout/rescue quota was removed
+    int              nHardMffc;     // MFFC threshold selecting the root/context high proof budget
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable existing-literal Direct candidates

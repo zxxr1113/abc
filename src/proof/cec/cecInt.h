@@ -409,6 +409,9 @@ extern int                  Cec_ScorrProfCalls;  // # of per-PO solve calls in t
 extern abctime              Cec_ScorrProfSetup;  // solver alloc + AIG prep before the PO loop
 extern abctime              Cec_ScorrProfSolve;  // summed over every per-PO solve call
 extern abctime              Cec_ScorrProfMax;    // slowest single per-PO solve call
+extern ABC_INT64_T          Cec_ScorrConfLimit;  // total conflict cap for the current correspondence call
+extern ABC_INT64_T          Cec_ScorrConfUsed;   // exact conflicts/backtracks consumed by that call
+extern int                  Cec_ScorrConfStop;   // the total conflict cap has been reached
 /*=== cecCorrCert.c =========================================================*/
 extern int                  Cec_ManCorrKissatCertify( Gia_Man_t * pSrm, Vec_Int_t * vOutputs, Vec_Int_t ** pvCexStore, Vec_Str_t ** pvStatus, int * piOut, int fVerbose );
 /*=== cecCorrIncr.c ============================================================*/

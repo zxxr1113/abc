@@ -1101,7 +1101,7 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
     Vec_Str_t * vStatus;
     Cec_ManSat_t * p;
     Gia_Obj_t * pObj;
-    int i, status;
+    int i, status, nBTLimit = pPars->nBTLimit;
     abctime clk = Abc_Clock();
     abctime clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
     // prepare AIG
@@ -1145,8 +1145,28 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
             }
             continue;
         }
+        if ( Cec_ScorrConfLimit > 0 && Cec_ScorrConfUsed >= Cec_ScorrConfLimit )
+        {
+            Cec_ScorrConfStop = 1;
+            Vec_StrPush( vStatus, -1 );
+            Cec_ManSatAddToStore( vCexStore, NULL, i );
+            continue;
+        }
+        pPars->nBTLimit = nBTLimit;
+        if ( Cec_ScorrConfLimit > 0 )
+        {
+            ABC_INT64_T nRemain = Cec_ScorrConfLimit - Cec_ScorrConfUsed;
+            if ( nBTLimit == 0 || nRemain < nBTLimit )
+                pPars->nBTLimit = (int)nRemain;
+        }
         clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
-        status = Cec_ManSatCheckNode( p, Gia_ObjChild0(pObj) );
+        {
+            int nConfBefore = p->nConfUnsat + p->nConfSat + p->nConfUndec;
+            status = Cec_ManSatCheckNode( p, Gia_ObjChild0(pObj) );
+            Cec_ScorrConfUsed += p->nConfUnsat + p->nConfSat + p->nConfUndec - nConfBefore;
+        }
+        if ( Cec_ScorrConfLimit > 0 && Cec_ScorrConfUsed >= Cec_ScorrConfLimit )
+            Cec_ScorrConfStop = 1;
         if ( Cec_ScorrProfOn )
         {
             abctime dHr = Abc_ClockHr() - clkHr;
@@ -1171,6 +1191,7 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
 //        Gia_SatVerifyPattern( pAig, pObj, p->vCex, p->vVisits );
         Cec_ManSatAddToStore( vCexStore, p->vCex, i );
     }
+    pPars->nBTLimit = nBTLimit;
     p->timeTotal = Abc_Clock() - clk;
     Bar_ProgressStop( pProgress );
 //    if ( pPars->fVerbose )

@@ -22,8 +22,19 @@
 
 ABC_NAMESPACE_IMPL_START
 
+// A correspondence call may contain many BMC/induction SRMs, and every SRM
+// may contain many SAT outputs.  These counters deliberately span all of
+// them.  The existing -C limit remains per output; nConfTotal is an optional
+// deterministic cap on the exact conflicts/backtracks consumed by the whole
+// call.  &scorr leaves it at zero, so its legacy behavior is unchanged.
+ABC_INT64_T Cec_ScorrConfLimit = 0;
+ABC_INT64_T Cec_ScorrConfUsed  = 0;
+int         Cec_ScorrConfStop  = 0;
+
 static inline int Cec_ParCorShouldStop( Cec_ParCor_t * pPars )
 {
+    if ( pPars && pPars->nConfTotal > 0 && Cec_ScorrConfStop )
+        return 1;
     if ( pPars == NULL || pPars->pFunc == NULL )
         return 0;
     return ((int (*)(void *))pPars->pFunc)( pPars->pData );
@@ -225,6 +236,75 @@ static inline void Cec_ScorrProfAdd( Cec_ScorrProf_t * pT, Cec_ScorrProf_t * pI 
     if ( pI->nIncrConeKeys > pT->nIncrConeKeys ) pT->nIncrConeKeys = pI->nIncrConeKeys;
     if ( pI->nIncrKeys  > pT->nIncrKeys  ) pT->nIncrKeys  = pI->nIncrKeys;
     if ( pI->tSatMax > pT->tSatMax ) pT->tSatMax = pI->tSatMax;
+}
+
+static void Cec_ProfCorCountStatus( Cec_ParCor_t * pPars,
+    Vec_Str_t * vStatus, int fBmc )
+{
+    Cec_ProfCor_t * p = pPars->pProfile;
+    int i, Status;
+    if ( p == NULL )
+        return;
+    Vec_StrForEachEntry( vStatus, Status, i )
+    {
+        if ( fBmc )
+        {
+            if ( Status == 1 )      p->nBmcUnsat++;
+            else if ( Status == 0 ) p->nBmcSat++;
+            else                    p->nBmcUnknown++;
+        }
+        else
+        {
+            if ( Status == 1 )      p->nIndUnsat++;
+            else if ( Status == 0 ) p->nIndSat++;
+            else                    p->nIndUnknown++;
+        }
+    }
+}
+
+static void Cec_ProfCorAddRounds( Cec_ParCor_t * pPars,
+    Cec_ScorrProf_t * pTotal, int fBmc, abctime TimeWall )
+{
+    Cec_ProfCor_t * p = pPars->pProfile;
+    if ( p == NULL )
+        return;
+    if ( fBmc )
+    {
+        p->timeBmc      += TimeWall;
+        p->timeBmcSrm   += pTotal->tSrm;
+        p->timeBmcSat   += pTotal->tSat;
+        p->timeBmcSetup += pTotal->tSatSetup;
+        p->timeBmcSolve += pTotal->tSatSolve;
+        p->timeBmcSim   += pTotal->tSim;
+        p->nBmcRounds   += pTotal->nIterations;
+    }
+    else
+    {
+        p->timeInd      += TimeWall;
+        p->timeIndSrm   += pTotal->tSrm;
+        p->timeIndSat   += pTotal->tSat;
+        p->timeIndSetup += pTotal->tSatSetup;
+        p->timeIndSolve += pTotal->tSatSolve;
+        p->timeIndSim   += pTotal->tSim;
+        p->nIndRounds   += pTotal->nIterations;
+    }
+    p->nCexReal    += pTotal->nCexReal;
+    p->nCexTrivial += pTotal->nCexTriv;
+    p->nCexFail    += pTotal->nCexFail;
+}
+
+static void Cec_ProfCorFinishClasses( Cec_ParCor_t * pPars,
+    Cec_ScorrProf_t * pIndTotal, abctime clkClasses, abctime clkInd )
+{
+    pPars->nConfUsed = Cec_ScorrConfUsed;
+    pPars->fConfStop = Cec_ScorrConfStop;
+    if ( pPars->pProfile == NULL )
+        return;
+    if ( clkInd )
+        Cec_ProfCorAddRounds( pPars, pIndTotal, 0, Abc_ClockHr() - clkInd );
+    pPars->pProfile->timeClasses += Abc_ClockHr() - clkClasses;
+    pPars->pProfile->nConfUsed += Cec_ScorrConfUsed;
+    pPars->pProfile->nConfStops += Cec_ScorrConfStop;
 }
 
 // Print one iteration's (or the run total's) breakdown. Times shown in ms.
@@ -1474,8 +1554,9 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
     int fBmcPersist = 0;
     // fine-grained profiling (-w only); zero-cost when fVeryVerbose is off
     Cec_ScorrProf_t Prof, Total; abctime tWall0 = 0, tH = 0;
+    abctime clkProfBmc = pPars->pProfile ? Abc_ClockHr() : 0;
     memset( &Total, 0, sizeof(Total) );
-    Cec_ScorrProfOn = pPars->fVeryVerbose;
+    Cec_ScorrProfOn = pPars->fVeryVerbose || pPars->pProfile != NULL;
     // BMC SRM is keyed only on pReprs (Gia_ManCorrSpecReduceInit ignores
     // its fRings flag).  So the incremental filter only needs pReprs-based
     // seeds; pNexts changes cannot affect this SRM and there are no ring
@@ -1593,6 +1674,7 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         }
         pParsSat->nBTLimit *= 10;
         tH = Abc_ClockHr();
+        Cec_ScorrConfLimit = pPars->nConfTotal;
         if ( fBmcPersist && (pPars->fUseTas || pPars->fBmcTasAdaptive) )
             vCexStore = Cec_DynSrmSolveBmcAdaptive( pBmcDynSrm, pPars->nBTLimit, &vStatus, pPars->fUseTas );
         else if ( fBmcPersist )
@@ -1601,7 +1683,9 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
             vCexStore = Tas_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
+        Cec_ScorrConfLimit = 0;
         Prof.tSat = Abc_ClockHr() - tH;
+        Cec_ProfCorCountStatus( pPars, vStatus, 1 );
         Prof.tSatSetup = Cec_ScorrProfSetup; Prof.tSatSolve = Cec_ScorrProfSolve;
         Prof.tSatMax   = Cec_ScorrProfMax;   Prof.nSatCalls = Cec_ScorrProfCalls;
         if ( pBmcDynSrm && Vec_IntSize(vCexStore) == 0 )
@@ -1714,6 +1798,8 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
         Cec_ScorrProfPrint( "bmc", -1, Total.nSatCalls, &Total );
     if ( pPars->fVeryVerbose && pBmcDynSrm && pPars->fBmcTasAdaptive && !pPars->fUseTas )
         Cec_DynSrmPrintBmcSolverStats( pBmcDynSrm );
+    Cec_ProfCorAddRounds( pPars, &Total, 1,
+        pPars->pProfile ? Abc_ClockHr() - clkProfBmc : 0 );
     Cec_ScorrProfOn = 0;
     Cec_DynSrmFree( pBmcDynSrm );
     Cec_IncrMgrFree( pBmcMgr );
@@ -1913,12 +1999,23 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     int nIncrSkipped = 0, nIncrFallback = 0;
     // fine-grained profiling (-w only); zero-cost when fVeryVerbose is off
     Cec_ScorrProf_t Prof, Total; abctime tWall0 = 0, tH = 0;
+    abctime clkProfClasses = pPars->pProfile ? Abc_ClockHr() : 0;
+    abctime clkProfInit = clkProfClasses, clkProfInd = 0;
     memset( &Total, 0, sizeof(Total) );
+    // The hook is enabled only around correspondence-owned solver calls, so
+    // a later standalone CBS/TAS invocation cannot inherit this budget.
+    Cec_ScorrConfLimit = 0;
+    Cec_ScorrConfUsed  = 0;
+    Cec_ScorrConfStop  = 0;
+    pPars->nConfUsed   = 0;
+    pPars->fConfStop   = 0;
     if ( Gia_ManRegNum(pAig) == 0 )
     {
         Abc_Print( 1, "Cec_ManLatchCorrespondence(): Not a sequential AIG.\n" );
         return 0;
     }
+    if ( pPars->pProfile )
+        pPars->pProfile->nCalls++;
     Gia_ManRandom( 1 );
     // prepare simulation manager
     Cec_ManSimSetDefaultParams( pParsSim );
@@ -1942,6 +2039,8 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     // limit the number of conflicts in the circuit-based solver
     if ( pPars->fUseCSat )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
+    if ( pPars->pProfile )
+        pPars->pProfile->timeInit += Abc_ClockHr() - clkProfInit;
     if ( pPars->fVerbose )
     {
         Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d. IncrFb = %d%%. DynRb = %d%%. DynCmp = %dx.\n",
@@ -1954,12 +2053,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Cec_ManLSCorrespondenceBmc( pAig, pPars, 0 );
     if ( Cec_ParCorShouldStop( pPars ) )
     {
+        Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, 0 );
         Cec_ManSimStop( pSim );
         return 1;
     }
     if ( pPars->nStepsMax == 0 )
     {
         Abc_Print( 1, "Stopped signal correspondence after BMC.\n" );
+        Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, 0 );
         Cec_ManSimStop( pSim );
         return 1;
     }
@@ -1985,12 +2086,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pSeedSim = Cec_SeedSimAlloc( pAig, pPars->nFrames + 1 + nAddFrames, pPars->nFrames, pParsSim->nWords );
         pSeedSim->fVerify = pPars->fVerifyResim;
     }
-    Cec_ScorrProfOn = pPars->fVeryVerbose;
+    Cec_ScorrProfOn = pPars->fVeryVerbose || pPars->pProfile != NULL;
+    clkProfInd = pPars->pProfile ? Abc_ClockHr() : 0;
     // perform refinement of equivalence classes
     for ( r = 0; r < nIterMax; r++ )
     {
         if ( Cec_ParCorShouldStop( pPars ) )
         {
+            Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
@@ -1999,6 +2102,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         }
         if ( pPars->nStepsMax == r )
         {
+            Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
@@ -2120,6 +2224,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     Cec_DynSrmFree( pDynSrm );
                     Cec_IncrMgrFree( pMgr );
                     Cec_SeedSimFree( pSeedSim );
+                    Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
                     Cec_ScorrProfOn = 0;
                     return 0;
                 }
@@ -2180,13 +2285,16 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         // found counter-examples to speculation
         clk2 = Abc_Clock();
         tH = Abc_ClockHr();
+        Cec_ScorrConfLimit = pPars->nConfTotal;
         if ( fPersist )
             vCexStore = Cec_DynSrmSolve( pDynSrm, pPars->nBTLimit, &vStatus, 0 );
         else if ( pPars->fUseCSat )
             vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
+        Cec_ScorrConfLimit = 0;
         Prof.tSat = Abc_ClockHr() - tH;
+        Cec_ProfCorCountStatus( pPars, vStatus, 0 );
         Prof.tSatSetup = Cec_ScorrProfSetup; Prof.tSatSolve = Cec_ScorrProfSolve;
         Prof.tSatMax   = Cec_ScorrProfMax;   Prof.nSatCalls = Cec_ScorrProfCalls;
         if ( pSrm )
@@ -2300,6 +2408,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 //Gia_ManEquivPrintClasses( pAig, 1, 0 );
         if ( Cec_ParCorShouldStop( pPars ) )
         {
+            Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
@@ -2315,6 +2424,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             Cec_DynSrmFree( pDynSrm );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
+            Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
             return 0;
         }
         if ( pPars->nLimitMax )
@@ -2330,6 +2440,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 Cec_SeedSimFree( pSeedSim );
                 ABC_FREE( pAig->pReprs );
                 ABC_FREE( pAig->pNexts );
+                Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
                 return 0;
             }
             nPrev[0] = nPrev[1];
@@ -2406,6 +2517,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     }
     if ( fCertFailed )
     {
+        Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
         Cec_ScorrProfOn = 0;
         Cec_ManSimStop( pSim );
         Cec_IncrMgrFree( pMgr );
@@ -2417,6 +2529,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Cec_ManRefinedClassPrintStats( pAig, NULL, r+1, Abc_Clock() - clk );
     if ( pPars->fVeryVerbose )
         Cec_ScorrProfPrint( "refine", -1, Total.nSatCalls, &Total );
+    Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
     Cec_ScorrProfOn = 0;
     // check the overflow
     if ( r == nIterMax )
@@ -2543,13 +2656,20 @@ Gia_Man_t * Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Gia_Man_t * pNew, * pTemp;
     unsigned * pInitState;
     int RetValue;
+    abctime clkProfReduce;
     ABC_FREE( pAig->pReprs );
     ABC_FREE( pAig->pNexts );
     if ( pPars->nPrefix == 0 )
     {
         RetValue = Cec_ManLSCorrespondenceClasses( pAig, pPars );
         if ( RetValue == 0 )
-            return Gia_ManDup( pAig );
+        {
+            clkProfReduce = pPars->pProfile ? Abc_ClockHr() : 0;
+            pNew = Gia_ManDup( pAig );
+            if ( pPars->pProfile )
+                pPars->pProfile->timeReduce += Abc_ClockHr() - clkProfReduce;
+            return pNew;
+        }
     }
     else
     {
@@ -2579,6 +2699,7 @@ Gia_Man_t * Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Gia_ManStop( pTemp );
     }
     // derive reduced AIG
+    clkProfReduce = pPars->pProfile ? Abc_ClockHr() : 0;
     if ( pPars->fMakeChoices )
     {
         pNew = Gia_ManEquivToChoices( pAig, 1 );
@@ -2592,6 +2713,8 @@ Gia_Man_t * Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Gia_ManStop( pTemp );
         //Gia_AigerWrite( pNew, "reduced.aig", 0, 0, 0 );
     }
+    if ( pPars->pProfile )
+        pPars->pProfile->timeReduce += Abc_ClockHr() - clkProfReduce;
     // report the results
     if ( pPars->fVerbose )
     {

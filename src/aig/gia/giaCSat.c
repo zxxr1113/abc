@@ -1071,6 +1071,8 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
     // &scorr fine-grained profiling hooks (defined in cecCorr.c)
     extern int     Cec_ScorrProfOn, Cec_ScorrProfCalls;
     extern abctime Cec_ScorrProfSetup, Cec_ScorrProfSolve, Cec_ScorrProfMax;
+    extern ABC_INT64_T Cec_ScorrConfLimit, Cec_ScorrConfUsed;
+    extern int         Cec_ScorrConfStop;
     Cbs_Man_t * p;
     Vec_Int_t * vCex, * vVisit, * vCexStore, * vOutVals = NULL;
     Vec_Str_t * vStatus;
@@ -1127,6 +1129,20 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
             }
             continue;
         }
+        if ( Cec_ScorrConfLimit > 0 && Cec_ScorrConfUsed >= Cec_ScorrConfLimit )
+        {
+            Cec_ScorrConfStop = 1;
+            Vec_StrPush( vStatus, -1 );
+            Cec_ManSatAddToStore( vCexStore, NULL, i );
+            continue;
+        }
+        p->Pars.nBTLimit = nConfs;
+        if ( Cec_ScorrConfLimit > 0 )
+        {
+            ABC_INT64_T nRemain = Cec_ScorrConfLimit - Cec_ScorrConfUsed;
+            if ( nConfs == 0 || nRemain < nConfs )
+                p->Pars.nBTLimit = (int)nRemain;
+        }
         clk = Abc_Clock();
         clkHr = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
         p->Pars.fUseHighest = 1;
@@ -1135,6 +1151,9 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
         p->vOutVals = vOutVals;
         p->iOutVal  = i;
         status = Cbs_ManSolve( p, Gia_ObjChild0(pRoot) );
+        Cec_ScorrConfUsed += p->Pars.nBTThis;
+        if ( Cec_ScorrConfLimit > 0 && Cec_ScorrConfUsed >= Cec_ScorrConfLimit )
+            Cec_ScorrConfStop = 1;
         p->vOutLits = NULL;
         p->vOutVals = NULL;
         p->iOutVal  = -1;

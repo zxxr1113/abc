@@ -42223,7 +42223,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHdoxlfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmdoxlfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42336,6 +42336,41 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nUnknownMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nUnknownMax < 0 ) goto usage;
             break;
+        case 'L':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nRootBatch = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRootBatch < 0 ) goto usage;
+            break;
+        case 'V':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nHardGain = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nHardGain < 0 ) goto usage;
+            break;
+        case 'O':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nHardRootMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nHardRootMax < 0 ) goto usage;
+            break;
+        case 'X':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nScoutBTLimit = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nScoutBTLimit < 0 ) goto usage;
+            break;
+        case 'Y':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nScoutConfTotal = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nScoutConfTotal < 0 ) goto usage;
+            break;
+        case 'Z':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nHardConfTotal = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nHardConfTotal < 0 ) goto usage;
+            break;
+        case 'm':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nHardMffc = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nHardMffc < 0 ) goto usage;
+            break;
         case 'd':
             pPars->fUseDirect = 1;
             pPars->fUseSodc = 0;
@@ -42392,15 +42427,15 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUH num] [-dxlfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZm num] [-dxlfpvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
-    Abc_Print( -2, "\t-C num : conflict limit per proof [default = %d]\n", pPars->nBTLimit );
+    Abc_Print( -2, "\t-C num : high root/context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
-    Abc_Print( -2, "\t-T num : maximum exact candidate proofs [default = %d]\n", pPars->nCandMax );
+    Abc_Print( -2, "\t-T num : maximum contextual window/output proof obligations (root is separate) [default = %d]\n", pPars->nCandMax );
     Abc_Print( -2, "\t-N num : maximum committed transactions [default = %d]\n", pPars->nChangesMax );
     Abc_Print( -2, "\t-D num : existing literals retained per root and priority lane [default = %d]\n", pPars->nDivsMax );
-    Abc_Print( -2, "\t-G num : minimum predicted AND+register gain [default = %d]\n", pPars->nGainMin );
+    Abc_Print( -2, "\t-G num : minimum exact cleanup AND+register gain [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : matching one-gate AND/OR divisors per root and priority lane [default = %d]\n", pPars->nConstrMax );
@@ -42411,9 +42446,16 @@ usage:
     Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
     Abc_Print( -2, "\t-H num : CEXes accumulated before appending one signature block (1..64) [default = %d]\n", pPars->nCexBatch );
-    Abc_Print( -2, "\t-I num : formal-proof percentage reserved for strict root candidates [default = %d]\n", pPars->nStrictPct );
-    Abc_Print( -2, "\t-J num : contextual proofs per root and simulation snapshot (0 = unlimited) [default = %d]\n", pPars->nRootBurst );
+    Abc_Print( -2, "\t-I num : compatibility option; strict roots now close before contextual proof [default = %d]\n", pPars->nStrictPct );
+    Abc_Print( -2, "\t-J num : compatibility option; contextual count cap is disabled [default = %d]\n", pPars->nRootBurst );
     Abc_Print( -2, "\t-U num : consecutive UNKNOWNs before root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );
+    Abc_Print( -2, "\t-L num : root obligations admitted per snapshot closure (0 = all) [default = %d]\n", pPars->nRootBatch );
+    Abc_Print( -2, "\t-V num : exact gain selecting the root/context high proof budget [default = %d]\n", pPars->nHardGain );
+    Abc_Print( -2, "\t-O num : compatibility option; scout/rescue count quota is removed [default = %d]\n", pPars->nHardRootMax );
+    Abc_Print( -2, "\t-X num : low root/context conflict limit per proof obligation [default = %d]\n", pPars->nScoutBTLimit );
+    Abc_Print( -2, "\t-Y num : total conflicts per low root/context call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
+    Abc_Print( -2, "\t-Z num : total conflicts per high root/context call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
+    Abc_Print( -2, "\t-m num : MFFC size selecting the root/context high proof budget [default = %d]\n", pPars->nHardMffc );
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle one-gate AND/OR constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
