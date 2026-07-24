@@ -52,7 +52,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     // explicitly with -J 2 (normally together with a larger -G).
     p->nLowUnknownMax = 8;
     p->nUnknownMax = 8;
-    p->nRootBatch  = 64;
+    p->nRootBatch  = 0;
     p->nScoutBTLimit = 100;
     p->nScoutConfTotal = 20000;
     p->nHardConfTotal = 1000000;
@@ -60,7 +60,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     // corpus, lower thresholds promoted almost every large-root candidate
     // (including level_48's long stream of non-winning obligations).
     p->nHardGain   = 256;
-    p->nRootGainMin = 16;
+    p->nRootGainMin = 0;
     p->nHardMffc   = 1024;
     p->fUseDirect  = 1;
     p->fUseSodc    = 0;
@@ -1857,7 +1857,6 @@ static int Cec_TranTryCommitRoot( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
             Abc_Print( 1, "  direct proof %d: n%d <- (lit%d %c lit%d)  gain=%d\n",
                 *pnTried, iTarget, iDiv0, fDivOr ? '|' : '&', iDiv1, Gain );
     }
-    // Strict equalities are discharged by the preceding root-batch closure.
     // Each contextual candidate receives exactly one deterministic proof call:
     // large-MFFC or large-exact-gain opportunities use C/Z, all others X/Y.
     // There is no scout-then-rescue retry.
@@ -2978,13 +2977,14 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     int nAndOld, nRegOld;
     abctime clk = Abc_Clock(), clkPhase, clkCand, timeCand;
     assert( Gia_ManRegNum(pGia) > 0 );
-    Abc_Print( 1, "Sequential direct resubstitution: AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, conf = %d, proof scope = %s%s, root closure width = %d, contextual proof limit = %d, CEX batch = %d, unknown cooldown = low:%d/high:%d, existing literals = %s, constructed AND/OR = %s.\n",
+    Abc_Print( 1, "Sequential direct resubstitution: AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, conf = %d, proof scope = %s%s, root batch = %s, root closure width = %d, contextual proof limit = %d, CEX batch = %d, unknown cooldown = low:%d/high:%d, existing literals = %s, constructed AND/OR = %s.\n",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nSimWords * 64,
         pPars->nSimFrames, pPars->nSimWords * 64 * pPars->nSimFrames,
         pPars->nFrames, pPars->nBTLimit,
         pPars->nProofScope == CEC_TRAN_PROOF_ROOT ? "root" :
         pPars->nProofScope == CEC_TRAN_PROOF_WINDOW ? "window" : "output",
         pPars->nProofScope == CEC_TRAN_PROOF_WINDOW ? " (bounded TFO)" : "",
+        pPars->nProofScope == CEC_TRAN_PROOF_ROOT ? "on" : "off",
         pPars->nRootBatch, pPars->nCandMax, pPars->nCexBatch,
         pPars->nLowUnknownMax, pPars->nUnknownMax,
         pPars->fUseExisting ? "on" : "off", pPars->fUseConstr ? "on" : "off" );
@@ -3046,22 +3046,30 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         pSigIndex = NULL;
         pCandPrefix = NULL;
         nSigEntries = 0;
-        if ( pPars->fUseExisting )
+        if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT &&
+             pPars->fUseExisting )
             pSigIndex = Cec_TranBuildSigIndex( pSim, &nSigEntries, &pCandPrefix );
         if ( pPars->fProfile )
             Prof.timeSpec += Abc_Clock() - clkPhase, Prof.nSpecCalls++;
-        Cec_TranCollectStrictCandidates( p, pSim, pPars, pRoots, nRoots,
-            pSigIndex, nSigEntries, pCandPrefix, &qStrictExist,
-            &qStrictConstr, &Disc, &Prof );
-        for ( i = 0; i < qStrictExist.nSize; i++ )
-            Cec_TranCandVecPush( &qStrictAll, qStrictExist.pArray[i] );
-        for ( i = 0; i < qStrictConstr.nSize; i++ )
-            Cec_TranCandVecPush( &qStrictAll, qStrictConstr.pArray[i] );
-        if ( qStrictAll.nSize > 1 )
-            qsort( qStrictAll.pArray, qStrictAll.nSize,
-                sizeof(Cec_TranCand_t), Cec_TranCandPriorityCompare );
-        if ( qStrictAll.nSize )
-            Prof.nRootSnapshots++;
+        // Root equivalence is stronger than window/output observability and
+        // does not need to be discharged as an incremental pre-stage.  Only
+        // root scope builds strict candidates and invokes the shared batch;
+        // contextual scopes go directly to their own candidate scheduler.
+        if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT )
+        {
+            Cec_TranCollectStrictCandidates( p, pSim, pPars, pRoots, nRoots,
+                pSigIndex, nSigEntries, pCandPrefix, &qStrictExist,
+                &qStrictConstr, &Disc, &Prof );
+            for ( i = 0; i < qStrictExist.nSize; i++ )
+                Cec_TranCandVecPush( &qStrictAll, qStrictExist.pArray[i] );
+            for ( i = 0; i < qStrictConstr.nSize; i++ )
+                Cec_TranCandVecPush( &qStrictAll, qStrictConstr.pArray[i] );
+            if ( qStrictAll.nSize > 1 )
+                qsort( qStrictAll.pArray, qStrictAll.nSize,
+                    sizeof(Cec_TranCand_t), Cec_TranCandPriorityCompare );
+            if ( qStrictAll.nSize )
+                Prof.nRootSnapshots++;
+        }
 
         while ( nAccepted < pPars->nChangesMax )
         {
@@ -3105,7 +3113,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 }
             }
 
-            fHaveSE = !fRootBatchDone && qStrictAll.iHead < qStrictAll.nSize;
+            fHaveSE = pPars->nProofScope == CEC_TRAN_PROOF_ROOT &&
+                !fRootBatchDone && qStrictAll.iHead < qStrictAll.nSize;
             fHaveSC = 0;
             fHaveCE = pPars->nProofScope != CEC_TRAN_PROOF_ROOT &&
                 nContextProofs < pPars->nCandMax &&
@@ -3120,11 +3129,9 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             if ( !(fHaveSE || fHaveSC || fHaveCE || fHaveCC) )
                 break;
 
-            // Strict root equality is compositional in every proof scope.
-            // Close these relations first in shared scorr batches and commit
-            // every proved target together.  Window/output candidates remain
-            // one-commit-per-snapshot because contextual don't-cares are not
-            // compositional.
+            // Root scope closes strict equalities in shared scorr batches and
+            // commits every proved target together.  Window/output never enter
+            // this branch; contextual don't-cares remain one commit per snapshot.
             if ( fHaveSE || fHaveSC )
             {
                 Cec_TranCandVec_t Batch = {0};
@@ -3209,10 +3216,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                             Cec_TranCandVecPush( &Batch, Best );
                         else
                         {
-                            // In window/output mode, an exact-signature root
-                            // relation filtered from the expensive root fallback
-                            // is still eligible for the ordinary contextual
-                            // low/high scheduler.
+                            // An explicitly enabled root admission gate may
+                            // discard this lower-value strict relation.
                             Cec_TranCandVecPush( &vTried, Best );
                             Prof.nRootValueFiltered++;
                         }

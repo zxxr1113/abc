@@ -331,7 +331,7 @@ struct Cec_ParTran_t_
     int              nFrames;       // BMC/induction depth in the scorr oracle
     int              nBTLimit;      // conflict limit per proof obligation
     int              nStepsMax;     // scorr induction refinement limit
-    int              nCandMax;      // contextual window/output proof attempts (root closure is separate)
+    int              nCandMax;      // contextual window/output proof attempts (root scope ignores this)
     int              nDivsMax;      // local existing divisors per victim
     int              nConstrMax;    // signature-matched one-gate AND/OR divisors per root
     int              nConstrBaseMax;// literals in one-gate construction pool (0 = all)
@@ -346,16 +346,16 @@ struct Cec_ParTran_t_
     int              nCexBatch;     // witnesses accumulated before appending one signature block
     int              nProofWindow;  // TFO depth used by Direct window proof
     int              nProofScope;   // Direct acceptance scope: root/window/output
-    int              nStrictPct;    // compatibility: strict root closure now precedes contextual proof
+    int              nStrictPct;    // compatibility option (ignored)
     int              nLowUnknownMax;// UNKNOWNs per low-value contextual root/lane
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
-    int              nRootBatch;    // MFFC-ranked roots screened per snapshot (0 = all)
+    int              nRootBatch;    // root-scope MFFC-ranked roots screened per snapshot (0 = all)
     int              nScoutBTLimit; // low context conflict limit per proof obligation
     int              nScoutConfTotal;// low context total conflict limit (0 = unlimited)
     int              nHardConfTotal;// high context total conflict limit (0 = unlimited)
     int              nHardGain;     // exact gain selecting the context high proof budget
-    int              nRootGainMin;  // root fallback gate: local MFFC gain (OR with nHardMffc)
-    int              nHardMffc;     // MFFC selecting root fallback/context high budget
+    int              nRootGainMin;  // root-scope gate: local MFFC gain (OR with nHardMffc; 0 = off)
+    int              nHardMffc;     // MFFC selecting root admission/context high budget
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable existing-literal Direct candidates
