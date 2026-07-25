@@ -42249,8 +42249,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             break;
         case 'N':
             if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nChangesMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nChangesMax < 0 ) goto usage;
+            pPars->nDepNodesMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nDepNodesMax < 1 || pPars->nDepNodesMax > 20 ) goto usage;
             break;
         case 'D':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42432,14 +42432,14 @@ usage:
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : root/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
-    Abc_Print( -2, "\t-T num : maximum contextual window/output proof obligations (root is separate) [default = %d]\n", pPars->nCandMax );
-    Abc_Print( -2, "\t-N num : maximum committed transactions [default = %d]\n", pPars->nChangesMax );
+    Abc_Print( -2, "\t-T num : maximum contextual proof obligations (0 = unlimited; root is separate) [default = %d]\n", pPars->nCandMax );
+    Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..20) [default = %d]\n", pPars->nDepNodesMax );
     Abc_Print( -2, "\t-D num : existing literals retained per root and priority lane [default = %d]\n", pPars->nDivsMax );
     Abc_Print( -2, "\t-G num : minimum local structural gain and final exact cleanup gain [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
-    Abc_Print( -2, "\t-K num : matching one-gate AND/OR divisors per root and priority lane [default = %d]\n", pPars->nConstrMax );
-    Abc_Print( -2, "\t-B num : literals in construction base pool (0 = all) [default = %d]\n", pPars->nConstrBaseMax );
+    Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
+    Abc_Print( -2, "\t-B num : physical nodes in the local divisor pool (0 = all; both phases are free) [default = %d]\n", pPars->nConstrBaseMax );
     Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
     Abc_Print( -2, "\t-P str : proof scope: root/gate, window, or output/po-ri [default = root]\n" );
     Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
@@ -42457,7 +42457,7 @@ usage:
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-m num : MFFC selecting root admission/context high budget [default = %d]\n", pPars->nHardMffc );
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
-    Abc_Print( -2, "\t-x     : toggle one-gate AND/OR constructed divisors [default = %s]\n", pPars->fUseConstr? "yes": "no" );
+    Abc_Print( -2, "\t-x     : toggle multi-node dependency-function recipes [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );

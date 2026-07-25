@@ -331,13 +331,14 @@ struct Cec_ParTran_t_
     int              nFrames;       // BMC/induction depth in the scorr oracle
     int              nBTLimit;      // conflict limit per proof obligation
     int              nStepsMax;     // scorr induction refinement limit
-    int              nCandMax;      // contextual window/output proof attempts (root scope ignores this)
+    int              nCandMax;      // contextual proof attempts (0 = unlimited; root scope ignores this)
     int              nDivsMax;      // local existing divisors per victim
-    int              nConstrMax;    // signature-matched one-gate AND/OR divisors per root
-    int              nConstrBaseMax;// literals in one-gate construction pool (0 = all)
+    int              nConstrMax;    // TFI depth used to collect local divisors (0 = complete TFI)
+    int              nConstrBaseMax;// physical nodes in the local divisor pool (0 = all)
+    int              nDepNodesMax;  // maximum AIG nodes in a dependency recipe (1..20)
     int              nVictimsMax;   // legacy SODC leaf-set parameter (ignored by Direct)
     int              nProfileTop;   // legacy SODC target-profile limit (ignored by Direct)
-    int              nChangesMax;   // accepted transactions
+    int              nChangesMax;   // accepted transactions (0 = unlimited; Direct has no CLI cap)
     int              nGainMin;      // minimum AND+register gain to prove
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
@@ -359,7 +360,7 @@ struct Cec_ParTran_t_
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable existing-literal Direct candidates
-    int              fUseConstr;    // enable one-gate AND/OR constructed divisors
+    int              fUseConstr;    // enable multi-node dependency-function recipes
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
     int              fVerbose;
