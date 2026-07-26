@@ -42374,7 +42374,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'w':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootWaves = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootWaves < 1 || pPars->nRootWaves > 64 ) goto usage;
+            if ( pPars->nRootWaves < 1 ) goto usage;
             break;
         case 'd':
             pPars->fUseDirect = 1;
