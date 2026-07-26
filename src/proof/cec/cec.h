@@ -350,7 +350,8 @@ struct Cec_ParTran_t_
     int              nStrictPct;    // compatibility option (ignored)
     int              nLowUnknownMax;// UNKNOWNs per low-value contextual root/lane
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
-    int              nRootBatch;    // root-scope MFFC-ranked roots screened per snapshot (0 = all)
+    int              nRootBatch;    // MFFC-ranked roots searched/submitted in root scope (0 = all)
+    int              nRootWaves;    // root construct CEGAR waves on one immutable snapshot
     int              nScoutBTLimit; // low context conflict limit per proof obligation
     int              nScoutConfTotal;// low context total conflict limit (0 = unlimited)
     int              nHardConfTotal;// high context total conflict limit (0 = unlimited)

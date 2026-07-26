@@ -42223,7 +42223,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmdoxlfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmdoxlfpwvh")) != EOF )
     {
         switch ( c )
         {
@@ -42371,6 +42371,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nHardMffc = atoi(argv[globalUtilOptind++]);
             if ( pPars->nHardMffc < 0 ) goto usage;
             break;
+        case 'w':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nRootWaves = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRootWaves < 1 || pPars->nRootWaves > 64 ) goto usage;
+            break;
         case 'd':
             pPars->fUseDirect = 1;
             pPars->fUseSodc = 0;
@@ -42427,7 +42432,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZm num] [-dxlfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmw num] [-dxlfpvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : root/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
@@ -42449,13 +42454,14 @@ usage:
     Abc_Print( -2, "\t-I num : compatibility option; currently ignored [default = %d]\n", pPars->nStrictPct );
     Abc_Print( -2, "\t-J num : UNKNOWNs before low-value contextual root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nLowUnknownMax );
     Abc_Print( -2, "\t-U num : UNKNOWNs before root/high-context cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );
-    Abc_Print( -2, "\t-L num : root scope only: MFFC-ranked roots screened per batch (0 = all) [default = %d]\n", pPars->nRootBatch );
+    Abc_Print( -2, "\t-L num : root scope only: MFFC-ranked roots searched/submitted (0 = all) [default = %d]\n", pPars->nRootBatch );
     Abc_Print( -2, "\t-V num : exact gain selecting the contextual high proof budget [default = %d]\n", pPars->nHardGain );
     Abc_Print( -2, "\t-O num : root scope only: minimum local gain (OR with -m; 0 disables gate) [default = %d]\n", pPars->nRootGainMin );
     Abc_Print( -2, "\t-X num : low contextual conflict limit per proof obligation [default = %d]\n", pPars->nScoutBTLimit );
     Abc_Print( -2, "\t-Y num : total conflicts per low contextual call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-m num : MFFC selecting root admission/context high budget [default = %d]\n", pPars->nHardMffc );
+    Abc_Print( -2, "\t-w num : root construct CEGAR waves on one immutable snapshot (1..64) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle multi-node dependency-function recipes [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
