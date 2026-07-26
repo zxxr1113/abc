@@ -2331,6 +2331,26 @@ static Cec_TranCand_t Cec_TranCandCreate( int iTarget, int iDiv0, int iDiv1,
     return Cand;
 }
 
+// The correspondence SRM can place constants, ROs, and internal ANDs into
+// speculative classes, but a free PI cannot be a class node: unlike an RO it
+// has no frame-to-frame definition for Gia_ManCorrSpecReal().  Preserve useful
+// root=PI candidates by representing each PI literal with one unstrashed
+// ordinary AND proxy (x&1=x) in this temporary proof network.  The query PO
+// retains the proxy through cleanup, and sharing by PI phase avoids inflating a
+// large batch with duplicate wrappers.
+static int Cec_TranRootClassEndpoint( Gia_Man_t * pNew, int iLit,
+    int nPis, int * pPiProxies )
+{
+    Gia_Obj_t * pObj = Gia_ManObj( pNew, Abc_Lit2Var(iLit) );
+    int iIndex;
+    if ( !Gia_ObjIsCi(pObj) || Gia_ObjCioId(pObj) >= nPis )
+        return iLit;
+    iIndex = 2 * Gia_ObjCioId(pObj) + Abc_LitIsCompl(iLit);
+    if ( pPiProxies[iIndex] == -1 )
+        pPiProxies[iIndex] = Gia_ManAppendAnd( pNew, iLit, 1 );
+    return pPiProxies[iIndex];
+}
+
 // Build one signal-correspondence instance for a group of strict Direct
 // candidates.  The source transition relation is copied only once.  Candidate
 // endpoint pairs seed speculative equivalence classes; root-XOR-replacement POs
@@ -2343,6 +2363,8 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     Gia_Obj_t * pObj;
     Vec_Int_t * vPairs = Vec_IntAlloc( 2 * nCands );
     Vec_Int_t * vQueries = Vec_IntAlloc( nCands );
+    int nPis = Gia_ManPiNum(p);
+    int * pPiProxies = nPis ? ABC_FALLOC( int, 2 * nPis ) : NULL;
     int i, iLit0, iLit1, iRoot, iRep, iQuery;
     assert( nCands > 0 );
     Gia_ManFillValue( p );
@@ -2362,6 +2384,7 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     {
         iRoot = Cec_TranCopyLit( p, Abc_Var2Lit(pCands[i].iTarget, 0) );
         iRep = Cec_TranRecipeBuild( p, pNew, pCands + i );
+        iRep = Cec_TranRootClassEndpoint( pNew, iRep, nPis, pPiProxies );
         iQuery = Gia_ManHashXor( pNew, iRoot, iRep );
         Vec_IntPushTwo( vPairs, iRoot, iRep );
         Vec_IntPush( vQueries, iQuery );
@@ -2380,6 +2403,7 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     Gia_ManDupRemapLiterals( vPairs, pTemp );
     Gia_ManDupRemapLiterals( vQueries, pTemp );
     Gia_ManStop( pTemp );
+    ABC_FREE( pPiProxies );
 
     *pvPairs = vPairs;
     *pvQueries = vQueries;
