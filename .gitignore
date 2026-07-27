@@ -66,3 +66,44 @@ tags
 /cmake
 /cscope
 abc.history
+
+# Local non-code files
+.codegraph/
+PR_DESCRIPTION.md
+abc.normal
+benchmark/
+figures/
+md/
+paper/
+v6_direct/
+
+# Local doc notes
+doc/20260719.md
+doc/20260727.md
+doc/context_handoff_20260721.md
+doc/simple_idea
+doc/sodc_prototype.md
+doc/stran_direct_local_debug_20260720.md
+doc/stran_profile_logs_20260722.md
+doc/unified_direct_sodc_resub_design.md
+
+# Local scripts
+scripts/run_bench_parallel.sh
+scripts/run_sodc_bench.sh
+scripts/run_stran_direct_debug.sh
+scripts/run_stran_fair_sweep.sh
+scripts/summarize_scorr_stran.py
+scripts/summarize_scorr_stran2.py
+scripts/verify_sodc_results.sh
+run_miter_ez.sh
+run_ric3_existing_miters.sh
+run_scorr_diff_ric3.sh
+
+# Local test data
+test/sodc_context.blif
+test/stran_direct_*.blif
+test/stran_root_*.blif
+test/stran_dsec_*.blif
+
+# Local benchmark output CSVs
+/stran_root_*.csv
