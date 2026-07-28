@@ -42223,7 +42223,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmdoxlfpwvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwdoxlfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42374,7 +42374,12 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'w':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootWaves = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootWaves < 1 ) goto usage;
+            if ( pPars->nRootWaves < 1 || pPars->nRootWaves > 64 ) goto usage;
+            break;
+        case 'q':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRootConstrTop < 1 || pPars->nRootConstrTop > 64 ) goto usage;
             break;
         case 'd':
             pPars->fUseDirect = 1;
@@ -42432,14 +42437,14 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmw num] [-dxlfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmqw num] [-dxlfpvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : root/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-T num : maximum contextual proof obligations (0 = unlimited; root is separate) [default = %d]\n", pPars->nCandMax );
     Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..20) [default = %d]\n", pPars->nDepNodesMax );
-    Abc_Print( -2, "\t-D num : existing literals retained per root and priority lane [default = %d]\n", pPars->nDivsMax );
+    Abc_Print( -2, "\t-D num : existing literals retained per contextual root (root scope keeps one) [default = %d]\n", pPars->nDivsMax );
     Abc_Print( -2, "\t-G num : minimum local structural gain and final exact cleanup gain [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
@@ -42460,8 +42465,9 @@ usage:
     Abc_Print( -2, "\t-X num : low contextual conflict limit per proof obligation [default = %d]\n", pPars->nScoutBTLimit );
     Abc_Print( -2, "\t-Y num : total conflicts per low contextual call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
-    Abc_Print( -2, "\t-m num : MFFC selecting root admission/context high budget [default = %d]\n", pPars->nHardMffc );
+    Abc_Print( -2, "\t-m num : MFFC selecting root existing admission/context high budget [default = %d]\n", pPars->nHardMffc );
     Abc_Print( -2, "\t-w num : root construct CEGAR waves on one immutable snapshot (1..64) [default = %d]\n", pPars->nRootWaves );
+    Abc_Print( -2, "\t-q num : constructed recipes retained per root/wave (1..64) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle multi-node dependency-function recipes [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
