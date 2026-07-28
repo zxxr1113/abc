@@ -363,6 +363,7 @@ struct Cec_ParTran_t_
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable existing-literal Direct candidates
     int              fUseConstr;    // enable multi-node dependency-function recipes
+    int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
     int              fVerbose;

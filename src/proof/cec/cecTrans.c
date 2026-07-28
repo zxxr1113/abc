@@ -74,6 +74,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseSodc    = 0;
     p->fUseExisting = 1;
     p->fUseConstr  = 1;
+    p->fUseCbsMultiLit = 1;
 }
 
 typedef struct Cec_TranTargetProf_t_ Cec_TranTargetProf_t;
@@ -227,6 +228,7 @@ struct Cec_TranProf_t_
     int     nCombDisproved;     // candidates with a combinational counterexample
     int     nCombUnknown;       // candidates not decided by CBS
     int     nCombCubeCalls;     // direct literal-cube CBS calls
+    int     nCombQueryCalls;    // ordinary CBS calls on constructed XOR queries
     int     nCombTwoCubeCands;  // generic two-implication candidates
     int     nCombThreeCubeCands;// one-AND candidates split into three cubes
     int     nSeqCands;          // unresolved candidates sent to scorr
@@ -370,7 +372,8 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
     int nStrictProofs, int nContextProofs,
     int nContextProofMax,
     int nConstantProofs, int nExistingProofs, int nConstructedProofs,
-    int nConstantAccepted, int nExistingAccepted, int nConstructedAccepted )
+    int nConstantAccepted, int nExistingAccepted, int nConstructedAccepted,
+    int fUseCbsMultiLit )
 {
     Cec_ProfCor_t * pC = &p->Corr;
     abctime Miter = p->timeWindowMiter + p->timeRetainMiter + p->timeFinalMiter;
@@ -379,14 +382,16 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->timeExisting + p->timeConstruct + p->timeGain + Miter + Corr +
         p->timeCombSolve + p->timeShadow + p->timeCexBmc;
     abctime Other = p->timeTotal > Accounted ? p->timeTotal - Accounted : 0;
-    Abc_Print( 1, "Sequential direct phase profile: total=%.3f sim=%.3f snapshot-prep=%.3f prep-constant=%.3f care=%.3f existing-search=%.3f constructed-search=%.3f gain=%.3f miter=%.3f corr=%.3f cex=%.3f shadow=%.3f other=%.3f sec.\n",
-        Cec_TranTimeSec(p->timeTotal), Cec_TranTimeSec(p->timeSim),
-        Cec_TranTimeSec(p->timeSpec),
-        Cec_TranTimeSec(p->timeSpec), Cec_TranTimeSec(p->timeCare),
-        Cec_TranTimeSec(p->timeExisting), Cec_TranTimeSec(p->timeConstruct),
+    Abc_Print( 1, "Sequential direct phase profile: total=%.3f sec\n", Cec_TranTimeSec(p->timeTotal) );
+    Abc_Print( 1, "  sim=%.3f care=%.3f spec=%.3f existing=%.3f construct=%.3f\n",
+        Cec_TranTimeSec(p->timeSim), Cec_TranTimeSec(p->timeCare),
+        Cec_TranTimeSec(p->timeSpec), Cec_TranTimeSec(p->timeExisting),
+        Cec_TranTimeSec(p->timeConstruct) );
+    Abc_Print( 1, "  gain=%.3f miter=%.3f corr=%.3f comb-solve=%.3f cex=%.3f shadow=%.3f other=%.3f\n",
         Cec_TranTimeSec(p->timeGain), Cec_TranTimeSec(Miter),
-        Cec_TranTimeSec(Corr), Cec_TranTimeSec(p->timeCexBmc),
-        Cec_TranTimeSec(p->timeShadow), Cec_TranTimeSec(Other) );
+        Cec_TranTimeSec(Corr), Cec_TranTimeSec(p->timeCombSolve),
+        Cec_TranTimeSec(p->timeCexBmc), Cec_TranTimeSec(p->timeShadow),
+        Cec_TranTimeSec(Other) );
     Abc_Print( 1, "Sequential direct outcome profile: unsat=%d time=%.3f avg-ms=%.3f sat=%d time=%.3f avg-ms=%.3f unknown=%d time=%.3f avg-ms=%.3f.\n",
         p->nProofUnsat, Cec_TranTimeSec(p->timeProofUnsat),
         p->nProofUnsat ? 1000.0 * Cec_TranTimeSec(p->timeProofUnsat) / p->nProofUnsat : 0.0,
@@ -400,15 +405,19 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nUnknownRepeat, Cec_TranTimeSec(p->timeUnknownRepeat),
         p->nUnknownRepeat ? 1000.0 * Cec_TranTimeSec(p->timeUnknownRepeat) / p->nUnknownRepeat : 0.0,
         p->nQueueTriedSkipped );
-    Abc_Print( 1, "Sequential direct scorr phase profile: calls=%d classes=%.3f init=%.3f bmc=%.3f [srm=%.3f sat=%.3f setup=%.3f solve=%.3f resim=%.3f] induction=%.3f [srm=%.3f sat=%.3f setup=%.3f solve=%.3f resim=%.3f] reduce=%.3f sec.\n",
-        pC->nCalls, Cec_TranTimeHrSec(pC->timeClasses),
-        Cec_TranTimeHrSec(pC->timeInit), Cec_TranTimeHrSec(pC->timeBmc),
-        Cec_TranTimeHrSec(pC->timeBmcSrm), Cec_TranTimeHrSec(pC->timeBmcSat),
-        Cec_TranTimeHrSec(pC->timeBmcSetup), Cec_TranTimeHrSec(pC->timeBmcSolve),
-        Cec_TranTimeHrSec(pC->timeBmcSim), Cec_TranTimeHrSec(pC->timeInd),
-        Cec_TranTimeHrSec(pC->timeIndSrm), Cec_TranTimeHrSec(pC->timeIndSat),
-        Cec_TranTimeHrSec(pC->timeIndSetup), Cec_TranTimeHrSec(pC->timeIndSolve),
-        Cec_TranTimeHrSec(pC->timeIndSim), Cec_TranTimeHrSec(pC->timeReduce) );
+    Abc_Print( 1, "Sequential direct scorr pipeline:\n" );
+    Abc_Print( 1, "  class-discover: %.3f sec\n",  Cec_TranTimeHrSec(pC->timeClasses) );
+    Abc_Print( 1, "  init:           %.3f sec\n",  Cec_TranTimeHrSec(pC->timeInit) );
+    Abc_Print( 1, "  bmc:            %.3f sec (srm=%.3f sat=%.3f setup=%.3f solve=%.3f resim=%.3f)\n",
+        Cec_TranTimeHrSec(pC->timeBmc), Cec_TranTimeHrSec(pC->timeBmcSrm),
+        Cec_TranTimeHrSec(pC->timeBmcSat), Cec_TranTimeHrSec(pC->timeBmcSetup),
+        Cec_TranTimeHrSec(pC->timeBmcSolve), Cec_TranTimeHrSec(pC->timeBmcSim) );
+    Abc_Print( 1, "  induction:      %.3f sec (srm=%.3f sat=%.3f setup=%.3f solve=%.3f resim=%.3f)\n",
+        Cec_TranTimeHrSec(pC->timeInd), Cec_TranTimeHrSec(pC->timeIndSrm),
+        Cec_TranTimeHrSec(pC->timeIndSat), Cec_TranTimeHrSec(pC->timeIndSetup),
+        Cec_TranTimeHrSec(pC->timeIndSolve), Cec_TranTimeHrSec(pC->timeIndSim) );
+    Abc_Print( 1, "  reduce:         %.3f sec\n",  Cec_TranTimeHrSec(pC->timeReduce) );
+    Abc_Print( 1, "  calls:          %d\n",          pC->nCalls );
     Abc_Print( 1, "Sequential direct scorr obligation profile: bmc-rounds=%d unsat=%lld sat=%lld unknown=%lld induction-rounds=%d unsat=%lld sat=%lld unknown=%lld cex-real=%lld trivial=%lld fail=%lld conflicts=%lld total-cap-stops=%d.\n",
         pC->nBmcRounds, pC->nBmcUnsat, pC->nBmcSat, pC->nBmcUnknown,
         pC->nIndRounds, pC->nIndUnsat, pC->nIndSat, pC->nIndUnknown,
@@ -438,13 +447,15 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nRootBatchCalls ? 1000.0 * Cec_TranTimeSec(p->timeRootBatch) / p->nRootBatchCalls : 0.0,
         p->nRootRescueCalls, p->nRootRescueProved,
         Cec_TranTimeSec(p->timeRootRescue) );
-    Abc_Print( 1, "Sequential direct two-stage proof profile: shared-build=%.6f; comb-candidates=%d proved=%d disproved=%d unknown=%d cubes=%d two-cube=%d three-cube=%d conflicts=%lld time=%.6f; scorr-candidates=%d proved=%d time=%.6f; selected=comb:%d/scorr:%d.\n",
+    Abc_Print( 1, "Sequential direct two-stage proof profile: shared-build=%.6f; comb-candidates=%d proved=%d disproved=%d unknown=%d cubes=%d two-cube=%d three-cube=%d queries=%d conflicts=%lld time=%.6f; scorr-candidates=%d proved=%d time=%.6f; selected=comb:%d/scorr:%d interface=%s.\n",
         Cec_TranTimeSec(p->timeCombBuild),
         p->nCombCands, p->nCombProved, p->nCombDisproved, p->nCombUnknown,
         p->nCombCubeCalls, p->nCombTwoCubeCands, p->nCombThreeCubeCands,
+        p->nCombQueryCalls,
         p->nCombConfUsed, Cec_TranTimeSec(p->timeCombSolve),
         p->nSeqCands, p->nSeqProved, Cec_TranTimeSec(p->timeSeqSolve),
-        p->nCombSelected, p->nSeqSelected );
+        p->nCombSelected, p->nSeqSelected,
+        fUseCbsMultiLit ? "multi-lit" : "xor-query" );
     Abc_Print( 1, "Sequential direct two-stage size profile: AND=%lld -> comb=%lld (gain=%lld) -> scorr=%lld (incremental-gain=%lld); Reg=%lld -> comb=%lld (gain=%lld) -> scorr=%lld (incremental-gain=%lld); size-eval=%.6f commit=%.6f sec.\n",
         p->nStageAndBefore, p->nStageAndAfterComb,
         p->nStageAndBefore - p->nStageAndAfterComb,
@@ -2499,13 +2510,17 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     {
         iRoot = Cec_TranCopyLit( p, Abc_Var2Lit(pCands[i].iTarget, 0) );
         iRep = Cec_TranRecipeBuild( p, pNew, pCands + i );
-        iRep = Cec_TranRootClassEndpoint( pNew, iRep, nPis, pPiProxies );
-        Vec_IntPushTwo( vPairs, iRoot, iRep );
+        // Build ordinary CBS/BMC queries from the real recipe endpoint.  A PI
+        // proxy is only a correspondence-class representation; exposing its
+        // unstrashed x&1 gate to CBS would make the solver visit constant
+        // fanins, which are not CBS candidate variables.
         if ( fCreateQueries )
         {
             iQuery = Gia_ManHashXor( pNew, iRoot, iRep );
             Vec_IntPush( vQueries, iQuery );
         }
+        iRep = Cec_TranRootClassEndpoint( pNew, iRep, nPis, pPiProxies );
+        Vec_IntPushTwo( vPairs, iRoot, iRep );
     }
     Vec_IntForEachEntry( vQueries, iQuery, i )
         Gia_ManAppendCo( pNew, iQuery );
@@ -2513,7 +2528,10 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     // normal correspondence closure reads status from representatives and
     // needs no XOR property at all; the separate reachable-CEX miter requests
     // XOR queries and retains candidate endpoints through those queries.
-    for ( i = 0; !fCreateQueries && i < Vec_IntSize(vPairs); i++ )
+    // Mode 2 is the ordinary-CBS A/B path: keep the class endpoints as well
+    // as the XOR queries because the same graph continues into scorr.  Mode 1
+    // is the standalone reachable-CEX miter and must expose only query POs.
+    for ( i = 0; fCreateQueries != 1 && i < Vec_IntSize(vPairs); i++ )
         Gia_ManAppendCo( pNew, Vec_IntEntry(vPairs, i) );
     Gia_ManForEachRi( p, pObj, i )
         Gia_ManAppendCo( pNew, Gia_ObjFanin0Copy(pObj) );
@@ -2617,6 +2635,36 @@ static int Cec_TranCombSolveCube( Cbs_Man_t * pCbs, int const * pLits,
     return Status;
 }
 
+// Correspondence represents a PI endpoint with an unstrashed x&1 proxy.
+// Remove that proof-only wrapper before passing a literal to CBS.
+static int Cec_TranCombUnwrapPiProxy( Gia_Man_t * pBatch, int iLit )
+{
+    Gia_Obj_t * pObj = Gia_ManObj( pBatch, Abc_Lit2Var(iLit) );
+    int iLit0, iLit1, iReal = -1;
+    if ( !Gia_ObjIsAnd(pObj) )
+        return iLit;
+    iLit0 = Gia_ObjFaninLit0p( pBatch, pObj );
+    iLit1 = Gia_ObjFaninLit1p( pBatch, pObj );
+    if ( iLit0 == 1 )
+        iReal = iLit1;
+    else if ( iLit1 == 1 )
+        iReal = iLit0;
+    return iReal == -1 ? iLit :
+        Abc_LitNotCond( iReal, Abc_LitIsCompl(iLit) );
+}
+
+// Solve one explicitly constructed XOR query through CBS's ordinary
+// single-root interface.  This path exists as an A/B baseline for the direct
+// multi-literal interface above; both share the same manager and conflict cap.
+static int Cec_TranCombSolveQuery( Cbs_Man_t * pCbs, Gia_Man_t * pBatch,
+    int iQuery, Cec_TranProf_t * pProf )
+{
+    int Status = Cbs_ManSolve( pCbs, Gia_ObjFromLit(pBatch, iQuery) );
+    pProf->nCombQueryCalls++;
+    pProf->nCombConfUsed += Cbs_ManReadConflicts( pCbs );
+    return Status;
+}
+
 // Candidate-directed combinational equivalence.  Registers are treated as
 // independent CIs, so every UNSAT result is valid in all states.  A generic
 // a=h relation is two implication counterexample cubes.  If h is one
@@ -2624,7 +2672,7 @@ static int Cec_TranCombSolveCube( Cbs_Man_t * pCbs, int const * pLits,
 // terminates the candidate immediately.
 static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
     Cec_TranCand_t const * pCands, int nCands, Vec_Int_t * vPairs,
-    Cec_ParTran_t * pPars, Cec_TranProf_t * pProf )
+    Vec_Int_t * vQueries, Cec_ParTran_t * pPars, Cec_TranProf_t * pProf )
 {
     Cbs_Man_t * pCbs = Cbs_ManAlloc( pBatch );
     Vec_Str_t * vStage = Vec_StrStart( nCands );
@@ -2632,11 +2680,13 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
     int i, k, a, h, x, y, t, Status, fSat, fUnknown, Cubes[3][3], Sizes[3];
     abctime clk = Abc_Clock();
     Cbs_ManSetConflictNum( pCbs, pPars->nBTLimit );
+    assert( pPars->fUseCbsMultiLit || Vec_IntSize(vQueries) == nCands );
     pProf->nCombCands += nCands;
     for ( i = 0; i < nCands; i++ )
     {
         a = Vec_IntEntry( vPairs, 2*i );
         h = Vec_IntEntry( vPairs, 2*i + 1 );
+        h = Cec_TranCombUnwrapPiProxy( pBatch, h );
         if ( a == h )
         {
             Vec_StrWriteEntry( vStage, i, 1 );
@@ -2644,6 +2694,21 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
             continue;
         }
         fSat = fUnknown = 0;
+        if ( !pPars->fUseCbsMultiLit )
+        {
+            Status = Cec_TranCombSolveQuery( pCbs, pBatch,
+                Vec_IntEntry(vQueries, i), pProf );
+            if ( Status == 0 )
+                pProf->nCombDisproved++;
+            else if ( Status < 0 )
+                pProf->nCombUnknown++;
+            else
+            {
+                Vec_StrWriteEntry( vStage, i, 1 );
+                pProf->nCombProved++;
+            }
+            continue;
+        }
         pRep = Gia_ManObj( pBatch, Abc_Lit2Var(h) );
         if ( pCands[i].nGates == 1 && Gia_ObjIsAnd(pRep) )
         {
@@ -2709,13 +2774,14 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     abctime clk, timeSeq = 0, clkBatch = Abc_Clock();
     memset( &Cor, 0, sizeof(Cor) );
     clk = Abc_Clock();
-    pBatch = Cec_TranBuildRootBatch( p, pCands, nCands, 0,
+    pBatch = Cec_TranBuildRootBatch( p, pCands, nCands,
+        pPars->fUseCbsMultiLit ? 0 : 2,
         &vPairs, &vQueries );
     clk = Abc_Clock() - clk;
     pProf->timeFinalMiter += clk;
     pProf->timeCombBuild += clk;
     pProf->nFinalCalls++;
-    vStage = Cec_TranProveCombBatch( pBatch, pCands, nCands, vPairs,
+    vStage = Cec_TranProveCombBatch( pBatch, pCands, nCands, vPairs, vQueries,
         pPars, pProf );
     for ( i = 0; i < nCands; i++ )
         if ( Vec_StrEntry(vStage, i) == 0 )
@@ -3724,7 +3790,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     int nAndOld, nRegOld;
     abctime clk = Abc_Clock(), clkPhase, clkCand, timeCand;
     assert( Gia_ManRegNum(pGia) > 0 );
-    Abc_Print( 1, "Sequential direct resubstitution: AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, conf = %d, proof scope = %s%s, root batch = %s, root search width = %d, root waves = %d, constructed top-K = %d, contextual proof limit = %s, CEX batch = %d, TFI depth = %d, pool nodes = %d, dependency nodes = %d, unknown cooldown = low:%d/high:%d, global exact = %s, dependency synthesis = %s.\n",
+    Abc_Print( 1, "Sequential direct resubstitution: AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, conf = %d, proof scope = %s%s, root batch = %s, root search width = %d, root waves = %d, constructed top-K = %d, contextual proof limit = %s, CEX batch = %d, TFI depth = %d, pool nodes = %d, dependency nodes = %d, unknown cooldown = low:%d/high:%d, global exact = %s, dependency synthesis = %s, root CBS = %s.\n",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nSimWords * 64,
         pPars->nSimFrames, pPars->nSimWords * 64 * pPars->nSimFrames,
         pPars->nFrames, pPars->nBTLimit,
@@ -3740,7 +3806,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         pPars->fUseExisting ?
             (pPars->nProofScope == CEC_TRAN_PROOF_ROOT ?
                 "large-MFFC-only" : "on") : "off",
-        pPars->fUseConstr ? "on" : "off" );
+        pPars->fUseConstr ? "on" : "off",
+        pPars->fUseCbsMultiLit ? "multi-lit" : "xor-query" );
     Abc_Print( 1, "Sequential direct proof budgets: root-conf=%d root-total=unlimited root-min-gain=%d root-existing-mffc=%d; context-low=%d/%d context-high=%d/%d context-high-gain=%d context-high-mffc=%d.\n",
         pPars->nBTLimit, pPars->nRootGainMin, pPars->nHardMffc,
         pPars->nScoutBTLimit, pPars->nScoutConfTotal, pPars->nBTLimit,
@@ -4338,7 +4405,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         Cec_TranPrintDirectProfile( &Prof, nStrictProofs, nContextProofs,
             pPars->nCandMax,
             nConstantProofs, nExistingProofs, nConstructedProofs,
-            nConstantAccepted, nExistingAccepted, nConstructedAccepted );
+            nConstantAccepted, nExistingAccepted, nConstructedAccepted,
+            pPars->fUseCbsMultiLit );
     }
     Cec_TranCandVecStop( &qStrictExist );
     Cec_TranCandVecStop( &qStrictConstr );

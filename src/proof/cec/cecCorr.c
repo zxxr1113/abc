@@ -317,22 +317,23 @@ static void Cec_ScorrProfPrint( const char * pTag, int iIter, int nProofs, Cec_S
     abctime tRest = p->tWall > tAcc ? p->tWall - tAcc : 0;
     if ( iIter >= 0 )
     {
-        Abc_Print( 1, "[scorr2-profile] stage=%s iter=%d wall_ms=%.3f ",
+        Abc_Print( 1, "[scorr2-profile] stage=%s iter=%d wall=%.3f ms\n",
             pTag, iIter, p->tWall*M );
-        Abc_Print( 1, "phase_ms(frontier/srm/sat/resim/check/other)=%.3f/%.3f/%.3f/%.3f/%.3f/%.3f ",
-            tIfo*M, p->tSrm*M, p->tSat*M, p->tSim*M, p->tChk*M, tRest*M );
-        Abc_Print( 1, "proofs=%d cex(real/trivial/fail)=%d/%d/%d ",
-            nProofs, p->nCexReal, p->nCexTriv, p->nCexFail );
-        Abc_Print( 1, "resim(local/full)=%d/%d split(sim/check)=%d/%d\n",
+        Abc_Print( 1, "  pipeline: frontier=%.3f -> srm=%.3f -> sat=%.3f -> resim=%.3f -> check=%.3f ms\n",
+            tIfo*M, p->tSrm*M, p->tSat*M, p->tSim*M, p->tChk*M );
+        Abc_Print( 1, "  proofs=%d cex(real/trivial/fail)=%d/%d/%d resim(local/full)=%d/%d split(sim/check)=%d/%d\n",
+            nProofs, p->nCexReal, p->nCexTriv, p->nCexFail,
             p->nIncrSrc, p->nIncrFull, p->dSimLits, p->dChkLits );
         return;
     }
 
     Abc_Print( 1, "[scorr2-profile] stage=%s summary iterations=%d\n",
         pTag, p->nIterations );
-    Abc_Print( 1, "  time_ms: wall=%.3f frontier=%.3f snapshot=%.3f srm=%.3f sat=%.3f resim=%.3f check=%.3f stats=%.3f other=%.3f\n",
-        p->tWall*M, tIfo*M, p->tSnap*M, p->tSrm*M, p->tSat*M,
-        p->tSim*M, p->tChk*M, p->tStats*M, tRest*M );
+    Abc_Print( 1, "  pipeline: frontier=%.3f -> snapshot=%.3f -> srm=%.3f -> sat=%.3f -> resim=%.3f -> check=%.3f ms\n",
+        tIfo*M, p->tSnap*M, p->tSrm*M, p->tSat*M,
+        p->tSim*M, p->tChk*M );
+    Abc_Print( 1, "  wall=%.3f stats=%.3f other=%.3f ms\n",
+        p->tWall*M, p->tStats*M, tRest*M );
     Abc_Print( 1, "  sat: proofs=%d setup_ms=%.3f solve_ms=%.3f max_proof_ms=%.3f\n",
         nProofs, p->tSatSetup*M, p->tSatSolve*M, p->tSatMax*M );
     Abc_Print( 1, "  cex: real=%d trivial=%d failed=%d resim_calls=%d trivial_splits=%d pending=%d\n",
