@@ -977,6 +977,12 @@ int Cbs_ManSolve( Cbs_Man_t * p, Gia_Obj_t * pObj )
         Gia_IsComplement(pObj) );
     return Cbs_ManSolveLits( p, &iLit, 1 );
 }
+int Cbs_ManSolveNoModel( Cbs_Man_t * p, Gia_Obj_t * pObj )
+{
+    int iLit = Abc_Var2Lit( Gia_ObjId(p->pAig, Gia_Regular(pObj)),
+        Gia_IsComplement(pObj) );
+    return Cbs_ManSolveLitsNoModel( p, &iLit, 1 );
+}
 
 /**Function*************************************************************
 
@@ -996,7 +1002,7 @@ int Cbs_ManSolve( Cbs_Man_t * p, Gia_Obj_t * pObj )
 
 ***********************************************************************/
 static int Cbs_ManSolveLitsInt( Cbs_Man_t * p, int const * pLits,
-    int nLits, int fSaveAll )
+    int nLits, int fSaveModel )
 {
     int RetValue = 0, i, k, iLit, iVar, fSkip;
     s_Counter = 0;
@@ -1036,9 +1042,9 @@ static int Cbs_ManSolveLitsInt( Cbs_Man_t * p, int const * pLits,
     {
         if ( !Cbs_ManSolve_rec(p, 0) && !Cbs_ManCheckLimits(p) )
         {
-            if ( fSaveAll )
+            if ( fSaveModel == 2 )
                 Cbs_ManSaveModelAll( p, p->vModel );
-            else
+            else if ( fSaveModel == 1 )
             {
                 Cbs_ManSaveModel( p, p->vModel );
                 Cbs_ManSaveOutVals( p, p->vOutLits, p->vOutVals, p->iOutVal );
@@ -1059,6 +1065,10 @@ static int Cbs_ManSolveLitsInt( Cbs_Man_t * p, int const * pLits,
 }
 int Cbs_ManSolveLits( Cbs_Man_t * p, int const * pLits, int nLits )
 {
+    return Cbs_ManSolveLitsInt( p, pLits, nLits, 1 );
+}
+int Cbs_ManSolveLitsNoModel( Cbs_Man_t * p, int const * pLits, int nLits )
+{
     return Cbs_ManSolveLitsInt( p, pLits, nLits, 0 );
 }
 int Cbs_ManSolve2( Cbs_Man_t * p, Gia_Obj_t * pObj, Gia_Obj_t * pObj2 )
@@ -1069,7 +1079,7 @@ int Cbs_ManSolve2( Cbs_Man_t * p, Gia_Obj_t * pObj, Gia_Obj_t * pObj2 )
     if ( pObj2 )
         Lits[nLits++] = Abc_Var2Lit(
             Gia_ObjId(p->pAig, Gia_Regular(pObj2)), Gia_IsComplement(pObj2) );
-    return Cbs_ManSolveLitsInt( p, Lits, nLits, 1 );
+    return Cbs_ManSolveLitsInt( p, Lits, nLits, 2 );
 }
 
 int Cbs_ManReadConflicts( Cbs_Man_t * p )

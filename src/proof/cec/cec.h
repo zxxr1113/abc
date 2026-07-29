@@ -353,6 +353,9 @@ struct Cec_ParTran_t_
     int              nRootBatch;    // MFFC-ranked roots searched/submitted in root scope (0 = all)
     int              nRootWaves;    // root construct CEGAR waves on one immutable snapshot
     int              nRootConstrTop;// constructed recipes retained per root/wave
+    int              nCombBTLimit; // root CBS conflict limit per cube
+    int              nFreeWords;   // 64-bit independent PI/RO words for combination screening
+    int              nFreeCexMax;  // CBS free-state counterexamples retained per proof batch
     int              nScoutBTLimit; // low context conflict limit per proof obligation
     int              nScoutConfTotal;// low context total conflict limit (0 = unlimited)
     int              nHardConfTotal;// high context total conflict limit (0 = unlimited)
@@ -364,6 +367,10 @@ struct Cec_ParTran_t_
     int              fUseExisting;  // enable existing-literal Direct candidates
     int              fUseConstr;    // enable multi-node dependency-function recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
+    int              fRootProgressive;// split seq stage: submit only the best candidate per root
+    int              fRootSplitStages;// root scope: commit CBS winners before rebuilding for scorr
+    int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
+    int              nRootStage;    // internal: 0=combined, 1=comb-only, 2=seq-only
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
     int              fVerbose;
