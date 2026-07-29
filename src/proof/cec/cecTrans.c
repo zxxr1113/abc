@@ -81,7 +81,10 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseExisting = 1;
     p->fUseConstr  = 1;
     p->fUseCbsMultiLit = 1;
-    p->fRootProgressive = 0;
+    // The split sequential pass proves only the best retained candidate per
+    // root in one shared closure.  This is the default scheduling policy;
+    // command-line -r toggles back to the all-alternatives A/B mode.
+    p->fRootProgressive = 1;
     p->fRootSplitStages = 1;
     p->fUseFreeSim = 1;
     p->nRootStage = 0;
@@ -150,6 +153,9 @@ struct Cec_TranProf_t_
     abctime timeFreeBuild;
     abctime timeFreeCheck;
     abctime timeFreeCexSim;
+    abctime timeRootDivPool;
+    abctime timeRootDepSynthesis;
+    abctime timeRootPairEnum;
     abctime timeSeqSolve;
     abctime timeRootStageEval;
     abctime timeRootCommit;
@@ -253,6 +259,12 @@ struct Cec_TranProf_t_
     int     nCombFreeCexInvalid;// partial CBS models that failed scalar validation
     int     nCombUnknownEarly;  // candidates stopped immediately on the first UNKNOWN cube
     int     nCombNoModelCalls;  // solve calls skipping unused model extraction
+    int     nRootDivPoolCalls;   // strict-root divisor pools constructed
+    long long nRootDivPoolNodes; // physical divisors retained across pools
+    int     nRootDepCalls;       // dependency-synthesis calls
+    int     nRootDepFound;       // dependency-synthesis calls returning a recipe
+    long long nRootPairChecks;   // one-gate divisor-pair signature checks
+    long long nRootPairMatches;  // pair checks matching the reachable signature
     int     nSeqCands;          // unresolved candidates sent to scorr
     int     nSeqSeeded;         // endpoint relations actually seeded into scorr classes
     int     nSeqProved;         // candidates proved only by scorr
@@ -490,6 +502,13 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nCombFreeCexInvalid, p->nCombFreePotentialGain,
         p->nCombUnknownEarly, p->nCombCubesSkippedUnknown,
         p->nCombNoModelCalls );
+    Abc_Print( 1, "Sequential direct construct profile: div-pool calls=%d nodes=%lld time=%.6f; dependency calls=%d found=%d time=%.6f; pair-checks=%lld matched=%lld time=%.6f sec.\n",
+        p->nRootDivPoolCalls, p->nRootDivPoolNodes,
+        Cec_TranTimeSec(p->timeRootDivPool),
+        p->nRootDepCalls, p->nRootDepFound,
+        Cec_TranTimeSec(p->timeRootDepSynthesis),
+        p->nRootPairChecks, p->nRootPairMatches,
+        Cec_TranTimeSec(p->timeRootPairEnum) );
     Abc_Print( 1, "Sequential direct two-stage size profile: AND=%lld -> comb=%lld (gain=%lld) -> scorr=%lld (incremental-gain=%lld); Reg=%lld -> comb=%lld (gain=%lld) -> scorr=%lld (incremental-gain=%lld); size-eval=%.6f commit=%.6f sec.\n",
         p->nStageAndBefore, p->nStageAndAfterComb,
         p->nStageAndBefore - p->nStageAndAfterComb,
@@ -4011,12 +4030,12 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
     Cec_TranCandVec_t * pConstr, Cec_TranDiscStat_t * pStat,
     Cec_TranProf_t * pProf )
 {
-    int r, iConstrStart, i, k, f0, f1, fOr;
+    int r, iConstrStart, i, k, f0, f1, fOr, fDepFound;
     char * pMffc;
     Vec_Int_t * vPool;
     Cec_TranCand_t Cand;
     Cec_TranCandVec_t Local;
-    abctime clk;
+    abctime clk, timePart;
     for ( r = 0; r < nRoots; r++ )
     {
         if ( pSolved && pSolved[pRoots[r].iObj] )
@@ -4033,13 +4052,18 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                 pRoots[r].iObj, pRoots[r].nMffc, Vec_IntSize(vPool) );
             Vec_IntPrint( vPool );
         }
-        pProf->timeSpec += Abc_Clock() - clk;
+        timePart = Abc_Clock() - clk;
+        pProf->timeSpec += timePart;
+        pProf->timeRootDivPool += timePart;
+        pProf->nRootDivPoolCalls++;
+        pProf->nRootDivPoolNodes += Vec_IntSize(vPool);
         memset( &Local, 0, sizeof(Local) );
         pStat->nConstructed++;
         pStat->nSigChecks++;
         clk = Abc_Clock();
-        if ( Cec_TranComputeDependency(pSim, pPars, pRoots + r,
-                vPool, NULL, 1, &Cand) )
+        fDepFound = Cec_TranComputeDependency(pSim, pPars, pRoots + r,
+            vPool, NULL, 1, &Cand);
+        if ( fDepFound )
         {
             // Constants and single existing literals are collected by the
             // initial lane, so this queue remains constructed-only.
@@ -4060,6 +4084,11 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         }
         else
             pStat->nSigRejected++;
+        timePart = Abc_Clock() - clk;
+        pProf->timeConstruct += timePart;
+        pProf->timeRootDepSynthesis += timePart;
+        pProf->nRootDepCalls++;
+        pProf->nRootDepFound += fDepFound;
 
         // Resub returns only one dependency recipe.  Fill the same root class
         // with several cheap one-gate functions found by simulation.  They
@@ -4069,6 +4098,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         // Stop after top-K
         // distinct matches; all one-gate matches have the same gate cost and
         // are ranked with the dependency recipe by exact local gain below.
+        clk = Abc_Clock();
         for ( i = 0; i < Vec_IntSize(vPool) &&
                      Local.nSize < pPars->nRootConstrTop; i++ )
         for ( k = i + 1; k < Vec_IntSize(vPool) &&
@@ -4081,6 +4111,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
             int iLit1 = Abc_Var2Lit( Vec_IntEntry(vPool, k), f1 );
             pStat->nConstructed++;
             pStat->nSigChecks++;
+            pProf->nRootPairChecks++;
             if ( !Cec_TranSigMatchesRoot(pSim, pRoots[r].iObj,
                     iLit0, iLit1, fOr, NULL) )
             {
@@ -4088,6 +4119,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                 continue;
             }
             pStat->nSigMatched++;
+            pProf->nRootPairMatches++;
             Cand = Cec_TranCandCreate( pRoots[r].iObj, iLit0, iLit1,
                 fOr, pRoots[r].nMffc, CEC_TRAN_CAND_CONSTR, 1 );
             Cand.Gain = Cand.nMffc - Cand.nGates;
@@ -4096,7 +4128,9 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                 continue;
             Cec_TranCandVecPush( &Local, Cand );
         }
-        pProf->timeConstruct += Abc_Clock() - clk;
+        timePart = Abc_Clock() - clk;
+        pProf->timeConstruct += timePart;
+        pProf->timeRootPairEnum += timePart;
         pProf->nRootGainEvals += Cec_TranCandVecEvalSortTail( p,
             &Local, 0, pProf );
         for ( i = 0; i < Local.nSize && i < pPars->nRootConstrTop; i++ )
@@ -5299,9 +5333,9 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         SeqPars.nRootStage = 2;
         SeqPars.fUseFreeSim = 0;
         // Keep the combination lane in one batch so random signatures and
-        // learned CBS models are shared across all alternatives.  The -r A/B
-        // switch applies to the rebuilt sequential lane: off seeds every
-        // retained alternative in one scorr closure; on seeds only top-1/root.
+        // learned CBS models are shared across all alternatives.  The scheduling
+        // mode applies to the rebuilt sequential lane: false seeds every
+        // retained alternative in one scorr closure; true seeds only top-1/root.
         CombPars.fRootProgressive = 0;
         SeqPars.fRootProgressive = pPars->fRootProgressive;
         Abc_Print( 1, "Sequential direct split-stage profile: begin AND=%d Reg=%d comb-conf=%d seq-conf=%d free-words=%d free-cex=%d seq-scheduling=%s.\n",

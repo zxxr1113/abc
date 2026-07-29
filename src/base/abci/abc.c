@@ -42502,7 +42502,7 @@ usage:
     Abc_Print( -2, "\t-x     : toggle multi-node dependency-function recipes [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
-    Abc_Print( -2, "\t-r     : toggle split scorr top-1 scheduling (one candidate/root/closure) [default = %s]\n", pPars->fRootProgressive? "yes": "no" );
+    Abc_Print( -2, "\t-r     : toggle split scorr scheduling: top-1/root vs all alternatives [default top-1 = %s]\n", pPars->fRootProgressive? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle split root stages (CBS commit, rebuild, then scorr) [default = %s]\n", pPars->fRootSplitStages? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
