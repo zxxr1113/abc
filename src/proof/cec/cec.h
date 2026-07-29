@@ -352,7 +352,7 @@ struct Cec_ParTran_t_
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
     int              nRootBatch;    // MFFC-ranked roots searched/submitted in root scope (0 = all)
     int              nRootWaves;    // root construct CEGAR waves on one immutable snapshot
-    int              nRootConstrTop;// constructed recipes retained per root/wave
+    int              nRootConstrTop;// compatibility cap; single-resub root mode retains one
     int              nCombBTLimit; // root CBS conflict limit per cube
     int              nFreeWords;   // 64-bit independent PI/RO words for combination screening
     int              nFreeCexMax;  // CBS free-state counterexamples retained per proof batch
@@ -365,9 +365,9 @@ struct Cec_ParTran_t_
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable existing-literal Direct candidates
-    int              fUseConstr;    // enable multi-node dependency-function recipes
+    int              fUseConstr;    // enable single-result dependency-function resub
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
-    int              fRootProgressive;// split seq stage: submit only the best candidate per root
+    int              fRootProgressive;// root scope: submit only the best candidate per root
     int              fRootSplitStages;// root scope: commit CBS winners before rebuilding for scorr
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
     int              nRootStage;    // internal: 0=combined, 1=comb-only, 2=seq-only
