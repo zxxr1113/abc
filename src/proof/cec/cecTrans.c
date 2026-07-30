@@ -27,8 +27,8 @@ enum { CEC_TRAN_ROOT_ALT_PROFILE_MAX = CEC_TRAN_RESUB_CHOICES_MAX + 3 };
 
 extern void Abc_ResubPrepareManager( int nWords );
 extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
-    int nWords, int nLimit, int nDivsMax, int nChoices, int fUseXor,
-    int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
+    int nWords, int nLimit, int nDivsMax, int nChoices, int fUseZero,
+    int fUseXor, int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
     abctime * pTimeInit, abctime * pTimeSearch,
     abctime * pTimeAttempts, int * pAttemptUnique );
 
@@ -83,6 +83,10 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseDirect  = 1;
     p->fUseSodc    = 0;
     p->fUseExisting = 1;
+    // Zero-gate dependency recipes overlap heavily with constants and
+    // constructed recipes in root scope.  Keep this lane opt-in while the
+    // independent global-existing lookup remains controlled by -l.
+    p->fUseResubZero = 0;
     p->fUseConstr  = 1;
     p->fUseCbsMultiLit = 1;
     // Prove only the best retained candidate per root in one shared closure.
@@ -575,7 +579,7 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nRootBatchCalls ? 1000.0 * Cec_TranTimeSec(p->timeRootBatch) / p->nRootBatchCalls : 0.0,
         p->nRootRescueCalls, p->nRootRescueProved,
         Cec_TranTimeSec(p->timeRootRescue) );
-    Abc_Print( 1, "Sequential direct two-stage proof profile: shared-build=%.6f; comb-candidates=%d proved=%d disproved=%d unknown=%d free-base=%d free-cex-filtered=%d cubes=%d two-cube=%d and-cone=%d leaves=%lld queries=%d conflicts=%lld time=%.6f; scorr-candidates=%d seeded=%d proved=%d time=%.6f; selected=comb:%d/scorr:%d interface=%s.\n",
+    Abc_Print( 1, "Sequential direct two-stage proof profile: shared-build=%.6f; comb-candidates=%d proved=%d disproved=%d unknown=%d free-base=%d free-cex-filtered=%d cubes=%d two-cube=%d and-cone=%d leaves=%lld queries=%d conflicts=%lld time=%.6f; scorr-candidates=%d seeded=%d comb-helper-seeds=%d proved=%d time=%.6f; selected=comb:%d/scorr:%d interface=%s.\n",
         Cec_TranTimeSec(p->timeCombBuild),
         p->nCombCands, p->nCombProved, p->nCombDisproved, p->nCombUnknown,
         p->nCombFreeBaseRejected, p->nCombFreeCexRejected,
@@ -583,7 +587,8 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nCombAndLeaves,
         p->nCombQueryCalls,
         p->nCombConfUsed, Cec_TranTimeSec(p->timeCombSolve),
-        p->nSeqCands, p->nSeqSeeded, p->nSeqProved,
+        p->nSeqCands, p->nSeqSeeded,
+        p->nSeqSeeded - p->nSeqCands, p->nSeqProved,
         Cec_TranTimeSec(p->timeSeqSolve),
         p->nCombSelected, p->nSeqSelected,
         fUseCbsMultiLit ? "multi-lit" : "xor-query" );
@@ -4146,7 +4151,8 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
         sizeof(pScratch->fAttemptUniqueLast) );
     nRecipes = Abc_ResubComputeFunctions( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit,
-        Vec_IntSize(vPool), nChoices, 0, 0, pPars->fVerbose,
+        Vec_IntSize(vPool), nChoices, pPars->fUseResubZero,
+        0, 0, pPars->fVerbose,
         pScratch->vRecipes, &pScratch->nAttemptsLast,
         pPars->fProfile ? &pScratch->timeInitLast : NULL,
         pPars->fProfile ? &pScratch->timeSearchLast : NULL,
@@ -4157,9 +4163,12 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
         Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare,
             fStrict, vDivs, vRecipe, pCands + nCands );
         pCands[nCands].nResubRank = i + 1;
-        if ( !pPars->fUseExisting && pCands[nCands].nGates == 0 &&
-             Abc_Lit2Var(pCands[nCands].iOut) != 0 )
-            continue;
+        // Zero-gate existing recipes are suppressed inside the resub search.
+        // This lets the same attempt continue to a constructed recipe instead
+        // of returning a buffer that would only be discarded here.
+        assert( pPars->fUseResubZero ||
+            pCands[nCands].nGates > 0 ||
+            Abc_Lit2Var(pCands[nCands].iOut) == 0 );
         nCands++;
     }
     assert( nCands <= nRecipes && nCands <= nChoices );
@@ -4497,7 +4506,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     int nAndOld, nRegOld;
     abctime clk = Abc_Clock(), clkPhase, clkCand, timeCand;
     assert( Gia_ManRegNum(pGia) > 0 );
-    Abc_Print( 1, "Sequential direct resubstitution: stage=%s AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, seq-conf = %d comb-conf = %d, proof scope = %s%s, root batch = %s, root search width = %d, root waves = %d, constructed mode = multi-resub/q%d, root scheduling = %s, contextual proof limit = %s, CEX batch = %d, TFI depth = %d, pool nodes = %d, dependency nodes = %d, unknown cooldown = low:%d/high:%d, global exact = %s, dependency synthesis = %s, root CBS = %s, free-state=%s/%d words/%d cex.\n",
+    Abc_Print( 1, "Sequential direct resubstitution: stage=%s AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, seq-conf = %d comb-conf = %d, proof scope = %s%s, root batch = %s, root search width = %d, root waves = %d, constructed mode = multi-resub/q%d, root scheduling = %s, contextual proof limit = %s, CEX batch = %d, TFI depth = %d, pool nodes = %d, dependency nodes = %d, unknown cooldown = low:%d/high:%d, global exact = %s, resub-zero = %s, dependency synthesis = %s, root CBS = %s, free-state=%s/%d words/%d cex.\n",
         pPars->nRootStage == 1 ? "comb-only" :
         pPars->nRootStage == 2 ? "seq-only" : "combined",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nSimWords * 64,
@@ -4516,6 +4525,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         pPars->fUseExisting ?
             (pPars->nProofScope == CEC_TRAN_PROOF_ROOT ?
                 "large-MFFC-only" : "on") : "off",
+        pPars->fUseResubZero ? "on" : "off",
         pPars->fUseConstr ? "on" : "off",
         pPars->fUseCbsMultiLit ? "multi-lit" : "xor-query",
         pPars->fUseFreeSim ? "on" : "off", pPars->nFreeWords,

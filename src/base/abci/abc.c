@@ -42223,7 +42223,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwbaecdoxlrsgfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwbaecdoxlrzsgfpvh")) != EOF )
     {
         switch ( c )
         {
@@ -42413,6 +42413,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'l':
             pPars->fUseExisting ^= 1;
             break;
+        case 'z':
+            pPars->fUseResubZero ^= 1;
+            break;
         case 'r':
             pPars->fRootProgressive ^= 1;
             break;
@@ -42465,7 +42468,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmqwbae num] [-cdxlrsgfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmqwbae num] [-cdxlrzsgfpvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
@@ -42502,7 +42505,8 @@ usage:
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
-    Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
+    Abc_Print( -2, "\t-l     : toggle global existing-literal lookup [default = %s]\n", pPars->fUseExisting? "yes": "no" );
+    Abc_Print( -2, "\t-z     : toggle zero-gate existing dependency recipes [default = %s]\n", pPars->fUseResubZero? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle root scheduling: top-q/root vs all alternatives [default top-q = %s]\n", pPars->fRootProgressive? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle split root stages (off shares one snapshot and final commit) [default split = %s]\n", pPars->fRootSplitStages? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );

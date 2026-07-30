@@ -365,8 +365,9 @@ struct Cec_ParTran_t_
     int              nHardMffc;     // MFFC selecting root admission/context high budget
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
-    int              fUseExisting;  // enable existing-literal Direct candidates
-    int              fUseConstr;    // enable single-result dependency-function resub
+    int              fUseExisting;  // enable global existing-literal Direct candidates
+    int              fUseResubZero; // enable zero-gate existing recipes returned by dependency resub
+    int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fRootProgressive;// root scope: submit only the best candidate per root
     int              fRootSplitStages;// root scope: commit CBS winners before rebuilding for scorr

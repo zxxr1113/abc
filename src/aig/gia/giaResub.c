@@ -293,6 +293,7 @@ struct Gia_ResbMan_t_
     int         nLimit;
     int         nDivsMax;
     int         iChoice;
+    int         fUseZero;
     int         fUseXor;
     int         fDebug;
     int         fVerbose;
@@ -336,12 +337,13 @@ Gia_ResbMan_t * Gia_ResbAlloc( int nWords )
     p->vSims            = Vec_WrdAlloc( 100 );
     return p;
 }
-void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice, int fUseXor, int fDebug, int fVerbose, int fVeryVerbose )
+void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice, int fUseZero, int fUseXor, int fDebug, int fVerbose, int fVeryVerbose )
 {
     assert( p->nWords == nWords );
     p->nLimit       = nLimit;
     p->nDivsMax     = nDivsMax;
     p->iChoice      = iChoice;
+    p->fUseZero     = fUseZero;
     p->fUseXor      = fUseXor;
     p->fDebug       = fDebug;
     p->fVerbose     = fVerbose;
@@ -1234,7 +1236,7 @@ int Gia_ManResubAddNode( Gia_ResbMan_t * p, int iLit0, int iLit1, int Type )
 }
 int Gia_ManResubPerformMux_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
 {
-    extern int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth );
+    extern int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop );
     int iDivBest, iResLit0, iResLit1, nNodes;
     word * pDiv, * pCopy[2];
     if ( Depth == 0 )
@@ -1253,7 +1255,7 @@ int Gia_ManResubPerformMux_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
     Abc_TtAndSharp( p->pSets[1], pCopy[1], pDiv, p->nWords, !Abc_LitIsCompl(iDivBest) );
     nNodes = Vec_IntSize(p->vGates)/2;
     //iResLit0 = Gia_ManResubPerform_rec( p, nLimit-3 );
-    iResLit0 = Gia_ManResubPerform_rec( p, nLimit, 0 );
+    iResLit0 = Gia_ManResubPerform_rec( p, nLimit, 0, 0 );
     if ( iResLit0 == -1 )
         iResLit0 = Gia_ManResubPerformMux_rec( p, nLimit, Depth-1 );
     if ( iResLit0 == -1 )
@@ -1270,7 +1272,7 @@ int Gia_ManResubPerformMux_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
     if ( nLimit-nNodes < 3 )
         return -1;
     //iResLit1 = Gia_ManResubPerform_rec( p, nLimit-3-nNodes );
-    iResLit1 = Gia_ManResubPerform_rec( p, nLimit, 0 );
+    iResLit1 = Gia_ManResubPerform_rec( p, nLimit, 0, 0 );
     if ( iResLit1 == -1 )
         iResLit1 = Gia_ManResubPerformMux_rec( p, nLimit, Depth-1 );
     if ( iResLit1 == -1 )
@@ -1294,9 +1296,11 @@ int Gia_ManResubPerformMux_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
   SeeAlso     []
 
 ***********************************************************************/
-int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
+int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop )
 {
-    int TopOneW[2] = {0}, TopTwoW[2] = {0}, Max1, Max2, iChoice, iResLit, nVars = Vec_PtrSize(p->vDivs);
+    int TopOneW[2] = {0}, TopTwoW[2] = {0}, Max1, Max2, iChoice, iResLit;
+    int fAllowZero = p->fUseZero || !fTop;
+    int nVars = Vec_PtrSize(p->vDivs);
     if ( p->fVerbose )
     {
         int nMints[2] = { Abc_TtCountOnesVec(p->pSets[0], p->nWords), Abc_TtCountOnesVec(p->pSets[1], p->nWords) };
@@ -1317,9 +1321,29 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
             return 1;
         p->iChoice--;
     }
-    iResLit = Gia_ManFindOneUnate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vNotUnateVars, p->fVerbose, &p->iChoice );
-    if ( iResLit >= 0 ) // buffer
-        return iResLit;
+    if ( fAllowZero )
+    {
+        iResLit = Gia_ManFindOneUnate( p->pSets, p->vDivs, p->nWords,
+            p->vUnateLits, p->vNotUnateVars, p->fVerbose, &p->iChoice );
+        if ( iResLit >= 0 ) // buffer or recursive cover leaf
+            return iResLit;
+    }
+    else
+    {
+        int n;
+        // Do not return a zero-gate top-level answer, but keep exact literals
+        // in the unate sets: several such literals may still form a useful
+        // formally provable constructed recipe (for example, r & s).
+        if ( p->fVerbose ) printf( "  " );
+        for ( n = 0; n < 2; n++ )
+        {
+            Gia_ManFindOneUnateInt( p->pSets[n], p->pSets[!n],
+                p->vDivs, p->nWords, p->vUnateLits[n],
+                p->vNotUnateVars[n] );
+            if ( p->fVerbose )
+                printf( "U%d =%4d ", n, Vec_IntSize(p->vUnateLits[n]) );
+        }
+    }
     if ( nLimit == 0 )
         return -1;
     Gia_ManSortUnates( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnateLitsW, p->vSorter );
@@ -1446,7 +1470,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], pDiv, p->nWords, !fComp );
             if ( p->fVerbose )
                 printf( "\n" ); 
-            iResLit = Gia_ManResubPerform_rec( p, nLimit-1, Depth );
+            iResLit = Gia_ManResubPerform_rec( p, nLimit-1, Depth, 0 );
             if ( iResLit >= 0 ) 
             {
                 int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1469,7 +1493,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], p->pDivA, p->nWords, !fComp );
             if ( p->fVerbose )
                 printf( "\n      " ); 
-            iResLit = Gia_ManResubPerform_rec( p, nLimit-2 );
+            iResLit = Gia_ManResubPerform_rec( p, nLimit-2, Depth, 0 );
             if ( iResLit >= 0 ) 
             {
                 int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1496,7 +1520,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], p->pDivA, p->nWords, !fComp );
             if ( p->fVerbose )
                 printf( "\n" ); 
-            iResLit = Gia_ManResubPerform_rec( p, nLimit-2, Depth );
+            iResLit = Gia_ManResubPerform_rec( p, nLimit-2, Depth, 0 );
             if ( iResLit >= 0 ) 
             {
                 int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1519,7 +1543,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], pDiv, p->nWords, !fComp );
             if ( p->fVerbose )
                 printf( "\n      " ); 
-            iResLit = Gia_ManResubPerform_rec( p, nLimit-1 );
+            iResLit = Gia_ManResubPerform_rec( p, nLimit-1, Depth, 0 );
             if ( iResLit >= 0 ) 
             {
                 int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1533,17 +1557,18 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
 }
 static void Gia_ManResubPerformProfile( Gia_ResbMan_t * p,
     Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice,
-    int fUseXor, int fDebug, int fVerbose, int Depth,
+    int fUseZero, int fUseXor, int fDebug, int fVerbose, int Depth,
     abctime * pTimeInit, abctime * pTimeSearch )
 {
     int Res;
     abctime clk = (pTimeInit || pTimeSearch) ? Abc_Clock() : 0;
-    Gia_ResbInit( p, vDivs, nWords, nLimit, nDivsMax, iChoice, fUseXor, fDebug, fVerbose, fVerbose );
+    Gia_ResbInit( p, vDivs, nWords, nLimit, nDivsMax, iChoice,
+        fUseZero, fUseXor, fDebug, fVerbose, fVerbose );
     if ( pTimeInit )
         *pTimeInit += Abc_Clock() - clk;
     if ( pTimeInit || pTimeSearch )
         clk = Abc_Clock();
-    Res = Gia_ManResubPerform_rec( p, nLimit, Depth );
+    Res = Gia_ManResubPerform_rec( p, nLimit, Depth, 1 );
     if ( pTimeSearch )
         *pTimeSearch += Abc_Clock() - clk;
     if ( Res >= 0 ) 
@@ -1556,7 +1581,7 @@ static void Gia_ManResubPerformProfile( Gia_ResbMan_t * p,
 void Gia_ManResubPerform( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice, int fUseXor, int fDebug, int fVerbose, int Depth )
 {
     Gia_ManResubPerformProfile( p, vDivs, nWords, nLimit, nDivsMax,
-        iChoice, fUseXor, fDebug, fVerbose, Depth, NULL, NULL );
+        iChoice, 1, fUseXor, fDebug, fVerbose, Depth, NULL, NULL );
 }
 Vec_Int_t * Gia_ManResubOne( Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice, int fUseXor, int fDebug, int fVerbose, word * pFunc, int Depth )
 {
@@ -1633,15 +1658,15 @@ int Abc_ResubComputeFunction( void ** ppDivs, int nDivs, int nWords, int nLimit,
     return Vec_IntSize(s_pResbMan->vGates);
 }
 
-// Computes a bounded set of structurally distinct recipes.  Choice zero is
-// bit-for-bit the legacy search.  Additional attempts ask the same ordered
-// engine to skip earlier exact solutions or to use a later greedy cover
-// pivot.  At most twice the requested number of searches are performed, so
-// a small top-K does not recreate the combinatorial divisor enumeration that
-// this engine is intended to avoid.
+// Computes a bounded set of structurally distinct recipes.  With zero-gate
+// answers enabled, choice zero is bit-for-bit the legacy search.  Additional
+// attempts ask the same ordered engine to skip earlier exact solutions or to
+// use a later greedy cover pivot.  Perform at most the requested number of
+// searches; attempts beyond K contributed very few unique recipes in
+// root-scope profiling.
 int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
-    int nLimit, int nDivsMax, int nChoices, int fUseXor, int fDebug,
-    int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
+    int nLimit, int nDivsMax, int nChoices, int fUseZero, int fUseXor,
+    int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
     abctime * pTimeInit, abctime * pTimeSearch,
     abctime * pTimeAttempts, int * pAttemptUnique )
 {
@@ -1652,7 +1677,7 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
     assert( s_pResbMan != NULL ); // first call Abc_ResubPrepareManager()
     assert( nChoices > 0 );
     Vec_WecClear( vResults );
-    nAttemptsMax = nChoices == 1 ? 1 : 2 * nChoices;
+    nAttemptsMax = nChoices;
     if ( pTimeInit )
         *pTimeInit = 0;
     if ( pTimeSearch )
@@ -1665,7 +1690,7 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
     {
         timeInit = timeSearch = 0;
         Gia_ManResubPerformProfile( s_pResbMan, &Divs, nWords, nLimit,
-            nDivsMax, i, fUseXor, fDebug, fVerbose==2, 0,
+            nDivsMax, i, fUseZero, fUseXor, fDebug, fVerbose==2, 0,
             pTimeInit ? &timeInit : NULL,
             pTimeSearch ? &timeSearch : NULL );
         if ( pTimeInit )
