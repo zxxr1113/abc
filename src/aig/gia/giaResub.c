@@ -797,7 +797,11 @@ Gia_Man_t * Gia_ManInsertFromGates( Gia_Man_t * p, Vec_Int_t * vObjs, Vec_Wec_t 
   SeeAlso     []
 
 ***********************************************************************/
-static inline int Gia_ManFindFirstCommonLit( Vec_Int_t * vArr1, Vec_Int_t * vArr2, int fVerbose )
+// Returns the next common variable with opposite phases.  When piChoice is
+// non-NULL, each such exact solution is counted and skipped until the
+// requested choice reaches zero.  Skipped solutions are removed from both
+// arrays so that the later cover stages cannot rediscover them.
+static inline int Gia_ManFindFirstCommonLit( Vec_Int_t * vArr1, Vec_Int_t * vArr2, int fVerbose, int * piChoice )
 {
     int * pBeg1 = vArr1->pArray;
     int * pBeg2 = vArr2->pArray;
@@ -810,8 +814,13 @@ static inline int Gia_ManFindFirstCommonLit( Vec_Int_t * vArr1, Vec_Int_t * vArr
     {
         if ( Abc_Lit2Var(*pBeg1) == Abc_Lit2Var(*pBeg2) )
         { 
-            if ( *pBeg1 != *pBeg2 ) 
-                return *pBeg1; 
+            if ( *pBeg1 != *pBeg2 )
+            {
+                if ( piChoice == NULL || *piChoice == 0 )
+                    return *pBeg1;
+                (*piChoice)--;
+                pBeg1++, pBeg2++;
+            }
             else
                 pBeg1++, pBeg2++;
             nRemoved++;
@@ -844,7 +853,7 @@ void Gia_ManFindOneUnateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWo
         else
             Vec_IntPush( vNotUnateVars, i );
 }
-int Gia_ManFindOneUnate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vNotUnateVars[2], int fVerbose )
+int Gia_ManFindOneUnate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vNotUnateVars[2], int fVerbose, int * piChoice )
 {
     int n;
     if ( fVerbose ) printf( "  " );
@@ -853,7 +862,7 @@ int Gia_ManFindOneUnate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int
         Gia_ManFindOneUnateInt( pSets[n], pSets[!n], vDivs, nWords, vUnateLits[n], vNotUnateVars[n] );
         if ( fVerbose ) printf( "U%d =%4d ", n, Vec_IntSize(vUnateLits[n]) );
     }
-    return Gia_ManFindFirstCommonLit( vUnateLits[0], vUnateLits[1], fVerbose );
+    return Gia_ManFindFirstCommonLit( vUnateLits[0], vUnateLits[1], fVerbose, piChoice );
 }
 
 static inline int Gia_ManDivCover( word * pOff, word * pOn, word * pDivA, int ComplA, word * pDivB, int ComplB, int nWords )
@@ -862,7 +871,7 @@ static inline int Gia_ManDivCover( word * pOff, word * pOn, word * pDivA, int Co
     //assert( !Abc_TtIntersectOne(pOff, 0, pDivB, ComplB, nWords) );
     return !Abc_TtIntersectTwo( pOn, 0, pDivA, !ComplA, pDivB, !ComplB, nWords );
 }
-int Gia_ManFindTwoUnateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits, Vec_Int_t * vUnateLitsW, int * pnPairs )
+int Gia_ManFindTwoUnateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits, Vec_Int_t * vUnateLitsW, int * pnPairs, int * piChoice )
 {
     int i, k, iDiv0_, iDiv1_, Cover0, Cover1;
     int nTotal = Abc_TtCountOnesVec( pOn, nWords );
@@ -881,19 +890,23 @@ int Gia_ManFindTwoUnateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWor
                 break;
             (*pnPairs)++;
             if ( Gia_ManDivCover(pOff, pOn, pDiv1, Abc_LitIsCompl(iDiv1), pDiv0, Abc_LitIsCompl(iDiv0), nWords) )
-                return Abc_Var2Lit((Abc_LitNot(iDiv1) << 15) | Abc_LitNot(iDiv0), 1);
+            {
+                if ( *piChoice == 0 )
+                    return Abc_Var2Lit((Abc_LitNot(iDiv1) << 15) | Abc_LitNot(iDiv0), 1);
+                (*piChoice)--;
+            }
         }
     }
     return -1;
 }
-int Gia_ManFindTwoUnate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vUnateLitsW[2], int fVerbose )
+int Gia_ManFindTwoUnate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vUnateLitsW[2], int fVerbose, int * piChoice )
 {
     int n, iLit, nPairs;
     if ( fVerbose ) printf( "  " );
     for ( n = 0; n < 2; n++ )
     {
         //int nPairsAll = Vec_IntSize(vUnateLits[n])*(Vec_IntSize(vUnateLits[n])-1)/2;
-        iLit = Gia_ManFindTwoUnateInt( pSets[n], pSets[!n], vDivs, nWords, vUnateLits[n], vUnateLitsW[n], &nPairs );
+        iLit = Gia_ManFindTwoUnateInt( pSets[n], pSets[!n], vDivs, nWords, vUnateLits[n], vUnateLitsW[n], &nPairs, piChoice );
         if ( fVerbose ) printf( "UU%d =%5d ", n, nPairs );
         if ( iLit >= 0 )
             return Abc_LitNotCond(iLit, n);
@@ -918,7 +931,7 @@ void Gia_ManFindXorInt( word * pOff, word * pOn, Vec_Int_t * vBinate, Vec_Ptr_t 
             Vec_IntPush( vUnatePairs, Abc_Var2Lit((Abc_Var2Lit(iDiv0, 0) << 15) | Abc_Var2Lit(iDiv1, 0), 1) );
     }
 }
-int Gia_ManFindXor( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Int_t * vUnatePairs[2], int fVerbose )
+int Gia_ManFindXor( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Int_t * vUnatePairs[2], int fVerbose, int * piChoice )
 {
     int n;
     if ( fVerbose ) printf( "  " );
@@ -928,7 +941,7 @@ int Gia_ManFindXor( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * 
         Gia_ManFindXorInt( pSets[n], pSets[!n], vBinateVars, vDivs, nWords, vUnatePairs[n] );
         if ( fVerbose ) printf( "UX%d =%5d ", n, Vec_IntSize(vUnatePairs[n]) );
     }
-    return Gia_ManFindFirstCommonLit( vUnatePairs[0], vUnatePairs[1], fVerbose );
+    return Gia_ManFindFirstCommonLit( vUnatePairs[0], vUnatePairs[1], fVerbose, piChoice );
 }
 
 void Gia_ManFindUnatePairsInt( word * pOff, word * pOn, Vec_Int_t * vBinate, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnatePairs )
@@ -962,7 +975,7 @@ void Gia_ManFindUnatePairs( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_
         Gia_ManFindUnatePairsInt( pSets[n], pSets[!n], vBinateVars, vDivs, nWords, vUnatePairs[n] );
         if ( fVerbose ) printf( "UP%d =%5d ", n, Vec_IntSize(vUnatePairs[n])-nBefore );
     }
-    RetValue = Gia_ManFindFirstCommonLit( vUnatePairs[0], vUnatePairs[1], fVerbose );
+    RetValue = Gia_ManFindFirstCommonLit( vUnatePairs[0], vUnatePairs[1], fVerbose, NULL );
     assert( RetValue == -1 );
 }
 
@@ -985,7 +998,7 @@ void Gia_ManDeriveDivPair( int iDiv, Vec_Ptr_t * vDivs, int nWords, word * pRes 
         Abc_TtXor( pRes, pDiv0, pDiv1, nWords, 0 );
     }
 }
-int Gia_ManFindDivGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits, Vec_Int_t * vUnatePairs, Vec_Int_t * vUnateLitsW, Vec_Int_t * vUnatePairsW, word * pDivTemp )
+int Gia_ManFindDivGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits, Vec_Int_t * vUnatePairs, Vec_Int_t * vUnateLitsW, Vec_Int_t * vUnatePairsW, word * pDivTemp, int * piChoice )
 {
     int i, k, iDiv0, iDiv1, Cover0, Cover1;
     int nTotal = Abc_TtCountOnesVec( pOn, nWords );
@@ -1001,24 +1014,28 @@ int Gia_ManFindDivGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWord
                 break;
             Gia_ManDeriveDivPair( iDiv1, vDivs, nWords, pDivTemp );
             if ( Gia_ManDivCover(pOff, pOn, pDiv0, Abc_LitIsCompl(iDiv0), pDivTemp, fComp1, nWords) )
-                return Abc_Var2Lit((Abc_Var2Lit(k, 1) << 15) | Abc_LitNot(iDiv0), 1);
+            {
+                if ( *piChoice == 0 )
+                    return Abc_Var2Lit((Abc_Var2Lit(k, 1) << 15) | Abc_LitNot(iDiv0), 1);
+                (*piChoice)--;
+            }
         }
     }
     return -1;
 }
-int Gia_ManFindDivGate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vUnatePairs[2], Vec_Int_t * vUnateLitsW[2], Vec_Int_t * vUnatePairsW[2], word * pDivTemp )
+int Gia_ManFindDivGate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vUnatePairs[2], Vec_Int_t * vUnateLitsW[2], Vec_Int_t * vUnatePairsW[2], word * pDivTemp, int * piChoice )
 {
     int n, iLit;
     for ( n = 0; n < 2; n++ )
     {
-        iLit = Gia_ManFindDivGateInt( pSets[n], pSets[!n], vDivs, nWords, vUnateLits[n], vUnatePairs[n], vUnateLitsW[n], vUnatePairsW[n], pDivTemp );
+        iLit = Gia_ManFindDivGateInt( pSets[n], pSets[!n], vDivs, nWords, vUnateLits[n], vUnatePairs[n], vUnateLitsW[n], vUnatePairsW[n], pDivTemp, piChoice );
         if ( iLit >= 0 )
             return Abc_LitNotCond( iLit, n );
     }
     return -1;
 }
 
-int Gia_ManFindGateGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnatePairs, Vec_Int_t * vUnatePairsW, word * pDivTempA, word * pDivTempB )
+int Gia_ManFindGateGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnatePairs, Vec_Int_t * vUnatePairsW, word * pDivTempA, word * pDivTempB, int * piChoice )
 {
     int i, k, iDiv0, iDiv1, Cover0, Cover1;
     int nTotal = Abc_TtCountOnesVec( pOn, nWords );
@@ -1035,17 +1052,21 @@ int Gia_ManFindGateGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWor
                 break;
             Gia_ManDeriveDivPair( iDiv1, vDivs, nWords, pDivTempB );
             if ( Gia_ManDivCover(pOff, pOn, pDivTempA, fCompA, pDivTempB, fCompB, nWords) )
-                return Abc_Var2Lit((Abc_Var2Lit(i, 1) << 15) | Abc_Var2Lit(k, 1), 1);
+            {
+                if ( *piChoice == 0 )
+                    return Abc_Var2Lit((Abc_Var2Lit(i, 1) << 15) | Abc_Var2Lit(k, 1), 1);
+                (*piChoice)--;
+            }
         }
     }
     return -1;
 }
-int Gia_ManFindGateGate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnatePairs[2], Vec_Int_t * vUnatePairsW[2], word * pDivTempA, word * pDivTempB )
+int Gia_ManFindGateGate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnatePairs[2], Vec_Int_t * vUnatePairsW[2], word * pDivTempA, word * pDivTempB, int * piChoice )
 {
     int n, iLit;
     for ( n = 0; n < 2; n++ )
     {
-        iLit = Gia_ManFindGateGateInt( pSets[n], pSets[!n], vDivs, nWords, vUnatePairs[n], vUnatePairsW[n], pDivTempA, pDivTempB );
+        iLit = Gia_ManFindGateGateInt( pSets[n], pSets[!n], vDivs, nWords, vUnatePairs[n], vUnatePairsW[n], pDivTempA, pDivTempB, piChoice );
         if ( iLit >= 0 )
             return Abc_LitNotCond( iLit, n );
     }
@@ -1275,7 +1296,7 @@ int Gia_ManResubPerformMux_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
 ***********************************************************************/
 int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
 {
-    int TopOneW[2] = {0}, TopTwoW[2] = {0}, Max1, Max2, iResLit, nVars = Vec_PtrSize(p->vDivs);
+    int TopOneW[2] = {0}, TopTwoW[2] = {0}, Max1, Max2, iChoice, iResLit, nVars = Vec_PtrSize(p->vDivs);
     if ( p->fVerbose )
     {
         int nMints[2] = { Abc_TtCountOnesVec(p->pSets[0], p->nWords), Abc_TtCountOnesVec(p->pSets[1], p->nWords) };
@@ -1285,16 +1306,24 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
         printf( "1=%5d (%5.2f %%)  ", nMints[1], 100.0*nMints[1]/(64*p->nWords) );
     }
     if ( Abc_TtIsConst0( p->pSets[1], p->nWords ) )
-        return 0;
+    {
+        if ( p->iChoice == 0 )
+            return 0;
+        p->iChoice--;
+    }
     if ( Abc_TtIsConst0( p->pSets[0], p->nWords ) )
-        return 1;
-    iResLit = Gia_ManFindOneUnate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vNotUnateVars, p->fVerbose );
+    {
+        if ( p->iChoice == 0 )
+            return 1;
+        p->iChoice--;
+    }
+    iResLit = Gia_ManFindOneUnate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vNotUnateVars, p->fVerbose, &p->iChoice );
     if ( iResLit >= 0 ) // buffer
         return iResLit;
     if ( nLimit == 0 )
         return -1;
     Gia_ManSortUnates( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnateLitsW, p->vSorter );
-    iResLit = Gia_ManFindTwoUnate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnateLitsW, p->fVerbose );
+    iResLit = Gia_ManFindTwoUnate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnateLitsW, p->fVerbose, &p->iChoice );
     if ( iResLit >= 0 ) // and
     {
         int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1314,7 +1343,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
     //Gia_ManSortBinate( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vSorter );
     if ( p->fUseXor )
     {
-        iResLit = Gia_ManFindXor( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vUnatePairs, p->fVerbose );
+        iResLit = Gia_ManFindXor( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vUnatePairs, p->fVerbose, &p->iChoice );
         if ( iResLit >= 0 ) // xor
         {
             int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1332,7 +1361,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
         return -1;
     Gia_ManFindUnatePairs( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vUnatePairs, p->fVerbose );
     Gia_ManSortPairs( p->pSets, p->vDivs, p->nWords, p->vUnatePairs, p->vUnatePairsW, p->vSorter );
-    iResLit = Gia_ManFindDivGate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnatePairs, p->vUnateLitsW, p->vUnatePairsW, p->pDivA );
+    iResLit = Gia_ManFindDivGate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnatePairs, p->vUnateLitsW, p->vUnatePairsW, p->pDivA, &p->iChoice );
     if ( iResLit >= 0 ) // and(div,pair)
     {
         int iNode  = nVars + Vec_IntSize(p->vGates)/2;
@@ -1354,7 +1383,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
 //        return -1;
     if ( nLimit >= 3 )
     {
-        iResLit = Gia_ManFindGateGate( p->pSets, p->vDivs, p->nWords, p->vUnatePairs, p->vUnatePairsW, p->pDivA, p->pDivB );
+        iResLit = Gia_ManFindGateGate( p->pSets, p->vDivs, p->nWords, p->vUnatePairs, p->vUnatePairsW, p->pDivA, p->pDivB, &p->iChoice );
         if ( iResLit >= 0 ) // and(pair,pair)
         {
             int iNode  = nVars + Vec_IntSize(p->vGates)/2;
@@ -1395,12 +1424,23 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
     if ( Abc_MaxInt(Max1, Max2) == 0 )
         return -1;
 
+    // Exact templates above consume choices in increasing gate-count order.
+    // Any remaining choice selects an alternate first greedy cover element;
+    // the recursive remainder deliberately uses its primary choice.  This
+    // gives bounded diversity without turning the cover recursion into an
+    // exponential backtracking search.
+    iChoice = p->iChoice;
+    p->iChoice = 0;
+
     if ( Max1 > Max2/2 )
     {
         if ( nLimit >= 2 && (Max1 == TopOneW[0] || Max1 == TopOneW[1]) )
         {
             int fUseOr  = Max1 == TopOneW[0];
-            int iDiv    = Vec_IntEntry( p->vUnateLits[!fUseOr], 0 );
+            int iDiv;
+            if ( iChoice >= Vec_IntSize(p->vUnateLits[!fUseOr]) )
+                return -1;
+            iDiv         = Vec_IntEntry( p->vUnateLits[!fUseOr], iChoice );
             int fComp   = Abc_LitIsCompl(iDiv);
             word * pDiv = (word *)Vec_PtrEntry( p->vDivs, Abc_Lit2Var(iDiv) );
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], pDiv, p->nWords, !fComp );
@@ -1447,7 +1487,10 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
         if ( nLimit >= 3 && (Max2 == TopTwoW[0] || Max2 == TopTwoW[1]) )
         {
             int fUseOr  = Max2 == TopTwoW[0];
-            int iDiv    = Vec_IntEntry( p->vUnatePairs[!fUseOr], 0 );
+            int iDiv;
+            if ( iChoice >= Vec_IntSize(p->vUnatePairs[!fUseOr]) )
+                return -1;
+            iDiv         = Vec_IntEntry( p->vUnatePairs[!fUseOr], iChoice );
             int fComp   = Abc_LitIsCompl(iDiv);
             Gia_ManDeriveDivPair( iDiv, p->vDivs, p->nWords, p->pDivA );
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], p->pDivA, p->nWords, !fComp );
@@ -1573,6 +1616,60 @@ int Abc_ResubComputeFunction( void ** ppDivs, int nDivs, int nWords, int nLimit,
     *ppArray = Vec_IntArray(s_pResbMan->vGates);
     assert( Vec_IntSize(s_pResbMan->vGates)/2 <= nLimit );
     return Vec_IntSize(s_pResbMan->vGates);
+}
+
+// Computes a bounded set of structurally distinct recipes.  Choice zero is
+// bit-for-bit the legacy search.  Additional attempts ask the same ordered
+// engine to skip earlier exact solutions or to use a later greedy cover
+// pivot.  At most twice the requested number of searches are performed, so
+// a small top-K does not recreate the combinatorial divisor enumeration that
+// this engine is intended to avoid.
+int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
+    int nLimit, int nDivsMax, int nChoices, int fUseXor, int fDebug,
+    int fVerbose, Vec_Wec_t * vResults, int * pnAttempts )
+{
+    Vec_Ptr_t Divs = { nDivs, nDivs, ppDivs };
+    Vec_Int_t * vRecipe;
+    int i, k, fDuplicate, nAttemptsMax;
+    assert( s_pResbMan != NULL ); // first call Abc_ResubPrepareManager()
+    assert( nChoices > 0 );
+    Vec_WecClear( vResults );
+    nAttemptsMax = nChoices == 1 ? 1 : 2 * nChoices;
+    for ( i = 0; i < nAttemptsMax && Vec_WecSize(vResults) < nChoices; i++ )
+    {
+        Gia_ManResubPerform( s_pResbMan, &Divs, nWords, nLimit,
+            nDivsMax, i, fUseXor, fDebug, fVerbose==2, 0 );
+        if ( Vec_IntSize(s_pResbMan->vGates) == 0 )
+            continue;
+        fDuplicate = 0;
+        Vec_WecForEachLevel( vResults, vRecipe, k )
+            if ( Vec_IntEqual(vRecipe, s_pResbMan->vGates) )
+            {
+                fDuplicate = 1;
+                break;
+            }
+        if ( fDuplicate )
+            continue;
+        vRecipe = Vec_WecPushLevel( vResults );
+        Vec_IntAppend( vRecipe, s_pResbMan->vGates );
+        assert( Vec_IntSize(vRecipe)/2 <= nLimit );
+        if ( fDebug && !Gia_ManResubVerify(s_pResbMan, NULL) )
+        {
+            Gia_ManResubPrint( s_pResbMan->vGates, nDivs );
+            printf( "Verification FAILED.\n" );
+        }
+        if ( fVerbose )
+        {
+            printf( "      Choice = %2d  Gain = %2d  Gates = %2d  __________  F = ",
+                Vec_WecSize(vResults)-1, nLimit+1-Vec_IntSize(vRecipe)/2,
+                Vec_IntSize(vRecipe)/2 );
+            Gia_ManResubPrint( vRecipe, nDivs );
+            printf( "\n" );
+        }
+    }
+    if ( pnAttempts )
+        *pnAttempts = i;
+    return Vec_WecSize(vResults);
 }
 
 void Abc_ResubDumpProblem( char * pFileName, void ** ppDivs, int nDivs, int nWords )
@@ -2156,4 +2253,3 @@ Gia_Man_t * Gia_ManResubUnateOne( char * pFileName, int nLimit, int nDivMax, int
 ////////////////////////////////////////////////////////////////////////
 
 ABC_NAMESPACE_IMPL_END
-

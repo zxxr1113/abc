@@ -42379,7 +42379,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'q':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootConstrTop < 1 || pPars->nRootConstrTop > 64 ) goto usage;
+            if ( pPars->nRootConstrTop < 1 ||
+                 pPars->nRootConstrTop > CEC_TRAN_RESUB_CHOICES_MAX ) goto usage;
             break;
         case 'b':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42494,15 +42495,15 @@ usage:
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-m num : MFFC selecting root existing admission/context high budget [default = %d]\n", pPars->nHardMffc );
     Abc_Print( -2, "\t-w num : root construct CEGAR waves on one immutable snapshot (1..64) [default = %d]\n", pPars->nRootWaves );
-    Abc_Print( -2, "\t-q num : compatibility cap; single-resub root mode retains one [default = %d]\n", pPars->nRootConstrTop );
+    Abc_Print( -2, "\t-q num : dependency recipes retained/proved per root and wave (1..8) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
-    Abc_Print( -2, "\t-x     : toggle single-result dependency-function resub [default = %s]\n", pPars->fUseConstr? "yes": "no" );
+    Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle existing-literal divisors [default = %s]\n", pPars->fUseExisting? "yes": "no" );
-    Abc_Print( -2, "\t-r     : toggle root scheduling: top-1/root vs all alternatives [default top-1 = %s]\n", pPars->fRootProgressive? "yes": "no" );
+    Abc_Print( -2, "\t-r     : toggle root scheduling: top-q/root vs all alternatives [default top-q = %s]\n", pPars->fRootProgressive? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle split root stages (off shares one snapshot and final commit) [default split = %s]\n", pPars->fRootSplitStages? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );

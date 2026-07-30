@@ -24,9 +24,9 @@
 ABC_NAMESPACE_IMPL_START
 
 extern void Abc_ResubPrepareManager( int nWords );
-extern int Abc_ResubComputeFunction( void ** ppDivs, int nDivs,
-    int nWords, int nLimit, int nDivsMax, int iChoice, int fUseXor,
-    int fDebug, int fVerbose, int ** ppArray );
+extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
+    int nWords, int nLimit, int nDivsMax, int nChoices, int fUseXor,
+    int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts );
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
 {
@@ -266,6 +266,8 @@ struct Cec_TranProf_t_
     long long nRootDivPoolNodes; // physical divisors retained across pools
     int     nRootDepCalls;       // dependency-synthesis calls
     int     nRootDepFound;       // dependency-synthesis calls returning a recipe
+    int     nRootDepAttempts;    // bounded choice-ranked searches
+    int     nRootDepRecipes;     // unique recipes returned by these searches
     long long nRootPairChecks;   // one-gate divisor-pair signature checks
     long long nRootPairMatches;  // pair checks matching the reachable signature
     int     nSeqCands;          // unresolved candidates sent to scorr
@@ -472,7 +474,7 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         nStrictProofs, Cec_TranTimeSec(p->timeDirectLane[1]),
         nContextProofs, Cec_TranTimeSec(p->timeDirectLane[0]) );
     Abc_Print( 1, "Sequential direct root-batch profile: scheduling=%s snapshots=%d batches=%d calls=%d candidates=%d proved=%d max=%d initial=%d/%d/%d refill=%d/%d/%d screened=%d local-gain-evals=%d value-filtered=%d existing-large-skipped=%d existing-kept=%d committed-roots=%d and-gain=%lld reg-gain=%lld time=%.3f avg-candidates=%.1f avg-ms=%.3f rescue=%d/%d time=%.3f.\n",
-        fRootProgressive ? "one-per-root" : "all-at-once",
+        fRootProgressive ? "bounded-per-root" : "all-at-once",
         p->nRootSnapshots, p->nRootClosures, p->nRootBatchCalls,
         p->nRootBatchCands, p->nRootBatchProved,
         p->nRootBatchMax,
@@ -505,10 +507,11 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nCombFreeCexInvalid, p->nCombFreePotentialGain,
         p->nCombUnknownEarly, p->nCombCubesSkippedUnknown,
         p->nCombNoModelCalls );
-    Abc_Print( 1, "Sequential direct construct profile: div-pool calls=%d nodes=%lld time=%.6f; dependency calls=%d found=%d time=%.6f; pair-checks=%lld matched=%lld time=%.6f sec.\n",
+    Abc_Print( 1, "Sequential direct construct profile: div-pool calls=%d nodes=%lld time=%.6f; dependency calls=%d found=%d attempts=%d recipes=%d time=%.6f; pair-checks=%lld matched=%lld time=%.6f sec.\n",
         p->nRootDivPoolCalls, p->nRootDivPoolNodes,
         Cec_TranTimeSec(p->timeRootDivPool),
         p->nRootDepCalls, p->nRootDepFound,
+        p->nRootDepAttempts, p->nRootDepRecipes,
         Cec_TranTimeSec(p->timeRootDepSynthesis),
         p->nRootPairChecks, p->nRootPairMatches,
         Cec_TranTimeSec(p->timeRootPairEnum) );
@@ -3832,55 +3835,37 @@ typedef struct Cec_TranDepScratch_t_ Cec_TranDepScratch_t;
 struct Cec_TranDepScratch_t_
 {
     Vec_Ptr_t * vDivs;
+    Vec_Wec_t * vRecipes;
     word *      pOff;
     word *      pOn;
+    int         nAttemptsLast;
 };
 
 static void Cec_TranDepScratchStart( Cec_TranDepScratch_t * p,
     int nSlots, int nDivsMax )
 {
     p->vDivs = Vec_PtrAlloc( nDivsMax + 2 );
+    p->vRecipes = Vec_WecAlloc( CEC_TRAN_RESUB_CHOICES_MAX );
     p->pOff = ABC_ALLOC( word, nSlots );
     p->pOn  = ABC_ALLOC( word, nSlots );
+    p->nAttemptsLast = 0;
 }
 
 static void Cec_TranDepScratchStop( Cec_TranDepScratch_t * p )
 {
     Vec_PtrFree( p->vDivs );
+    Vec_WecFree( p->vRecipes );
     ABC_FREE( p->pOff );
     ABC_FREE( p->pOn );
 }
 
-static int Cec_TranComputeDependency( Cec_TranSim_t * pSim,
-    Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
-    Vec_Int_t * vPool, word * pCare, int fStrict,
-    Cec_TranCand_t * pCand, Cec_TranDepScratch_t * pScratch )
+static void Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
+    Cec_TranRoot_t const * pRoot, Vec_Int_t * vPool, word * pCare,
+    int fStrict, Vec_Ptr_t * vDivs, Vec_Int_t * vRecipe,
+    Cec_TranCand_t * pCand )
 {
-    Vec_Ptr_t * vDivs = pScratch->vDivs;
-    word * pOff = pScratch->pOff;
-    word * pOn  = pScratch->pOn;
-    int * pArray = NULL;
-    int i, s, iObj, nArray, nVars, nLimit, Code;
-    word Target, Care;
-    Vec_PtrClear( vDivs );
-    for ( s = 0; s < pSim->nSlots; s++ )
-    {
-        Target = Cec_TranSimLit( pSim, Abc_Var2Lit(pRoot->iObj, 0), s );
-        Care = pCare ? pCare[s] : ~(word)0;
-        pOff[s] = ~Target & Care;
-        pOn[s]  =  Target & Care;
-    }
-    Vec_PtrPushTwo( vDivs, pOff, pOn );
-    Vec_IntForEachEntry( vPool, iObj, i )
-        Vec_PtrPush( vDivs, Cec_TranSimObj(pSim, iObj) );
-    nLimit = pPars->fUseConstr ?
-        Abc_MinInt( pPars->nDepNodesMax,
-            Abc_MaxInt(0, pRoot->nMffc - pPars->nGainMin) ) : 0;
-    nArray = Abc_ResubComputeFunction( Vec_PtrArray(vDivs),
-        Vec_PtrSize(vDivs), pSim->nSlots, nLimit,
-        Vec_IntSize(vPool), 0, 0, 0, pPars->fVerbose, &pArray );
-    if ( nArray == 0 )
-        return 0;
+    int i, Code, nArray = Vec_IntSize(vRecipe);
+    int nVars = Vec_PtrSize(vDivs);
     memset( pCand, 0, sizeof(*pCand) );
     pCand->iTarget = pRoot->iObj;
     pCand->nMffc = pRoot->nMffc;
@@ -3888,12 +3873,11 @@ static int Cec_TranComputeDependency( Cec_TranSim_t * pSim,
     pCand->fStrict = fStrict;
     pCand->nGates = nArray / 2;
     assert( pCand->nGates <= CEC_TRAN_RECIPE_NODES_MAX );
-    nVars = Vec_PtrSize( vDivs );
     for ( i = 0; i < 2 * pCand->nGates; i++ )
         pCand->Recipe[i] = Cec_TranRecipeCodeFromResub(
-            pArray[i], nVars, vPool );
+            Vec_IntEntry(vRecipe, i), nVars, vPool );
     pCand->iOut = Cec_TranRecipeCodeFromResub(
-        pArray[nArray-1], nVars, vPool );
+        Vec_IntEntryLast(vRecipe), nVars, vPool );
     pCand->nKind = pCand->nGates ? CEC_TRAN_CAND_CONSTR :
         (Abc_Lit2Var(pCand->iOut) == 0 ?
             CEC_TRAN_CAND_CONST : CEC_TRAN_CAND_EXIST);
@@ -3912,10 +3896,50 @@ static int Cec_TranComputeDependency( Cec_TranSim_t * pSim,
         }
     }
     assert( Cec_TranRecipeMatchesRoot(pSim, pCand, pCare) );
-    if ( !pPars->fUseExisting && pCand->nGates == 0 &&
-         Abc_Lit2Var(pCand->iOut) != 0 )
-        nArray = 0;
-    return nArray != 0;
+}
+
+static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
+    Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
+    Vec_Int_t * vPool, word * pCare, int fStrict,
+    Cec_TranCand_t * pCands, int nChoices,
+    Cec_TranDepScratch_t * pScratch )
+{
+    Vec_Ptr_t * vDivs = pScratch->vDivs;
+    word * pOff = pScratch->pOff;
+    word * pOn  = pScratch->pOn;
+    Vec_Int_t * vRecipe;
+    int i, s, iObj, nLimit, nRecipes, nCands = 0;
+    word Target, Care;
+    assert( nChoices > 0 && nChoices <= CEC_TRAN_RESUB_CHOICES_MAX );
+    Vec_PtrClear( vDivs );
+    for ( s = 0; s < pSim->nSlots; s++ )
+    {
+        Target = Cec_TranSimLit( pSim, Abc_Var2Lit(pRoot->iObj, 0), s );
+        Care = pCare ? pCare[s] : ~(word)0;
+        pOff[s] = ~Target & Care;
+        pOn[s]  =  Target & Care;
+    }
+    Vec_PtrPushTwo( vDivs, pOff, pOn );
+    Vec_IntForEachEntry( vPool, iObj, i )
+        Vec_PtrPush( vDivs, Cec_TranSimObj(pSim, iObj) );
+    nLimit = pPars->fUseConstr ?
+        Abc_MinInt( pPars->nDepNodesMax,
+            Abc_MaxInt(0, pRoot->nMffc - pPars->nGainMin) ) : 0;
+    nRecipes = Abc_ResubComputeFunctions( Vec_PtrArray(vDivs),
+        Vec_PtrSize(vDivs), pSim->nSlots, nLimit,
+        Vec_IntSize(vPool), nChoices, 0, 0, pPars->fVerbose,
+        pScratch->vRecipes, &pScratch->nAttemptsLast );
+    Vec_WecForEachLevel( pScratch->vRecipes, vRecipe, i )
+    {
+        Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare,
+            fStrict, vDivs, vRecipe, pCands + nCands );
+        if ( !pPars->fUseExisting && pCands[nCands].nGates == 0 &&
+             Abc_Lit2Var(pCands[nCands].iOut) != 0 )
+            continue;
+        nCands++;
+    }
+    assert( nCands <= nRecipes && nCands <= nChoices );
+    return nCands;
 }
 
 static void Cec_TranCollectGlobalExact( Cec_TranSim_t * pSim,
@@ -4042,9 +4066,9 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
     Cec_TranDepScratch_t * pDep, Cec_TranDiscStat_t * pStat,
     Cec_TranProf_t * pProf )
 {
-    int r, iConstrStart, fDepFound;
+    int r, k, iConstrStart, nDepFound;
     Vec_Int_t * vPool;
-    Cec_TranCand_t Cand;
+    Cec_TranCand_t Cand, Cands[CEC_TRAN_RESUB_CHOICES_MAX];
     abctime clk, timePart;
     for ( r = 0; r < nRoots; r++ )
     {
@@ -4070,15 +4094,14 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         pStat->nConstructed++;
         pStat->nSigChecks++;
         clk = Abc_Clock();
-        fDepFound = Cec_TranComputeDependency(pSim, pPars, pRoots + r,
-            vPool, NULL, 1, &Cand, pDep);
-        if ( fDepFound )
+        nDepFound = Cec_TranComputeDependencies(pSim, pPars, pRoots + r,
+            vPool, NULL, 1, Cands, pPars->nRootConstrTop, pDep);
+        for ( k = 0; k < nDepFound; k++ )
         {
-            // Resub searches constants and literals before constructed
-            // recipes.  Preserve whichever minimum-cost result it returns;
-            // the initial lane is checked only to avoid proving a duplicate.
+            Cand = Cands[k];
             if ( !Cec_TranCandVecContains(pTried, &Cand) &&
-                 !Cec_TranCandVecContains(pExist, &Cand) )
+                 !Cec_TranCandVecContains(pExist, &Cand) &&
+                 !Cec_TranCandVecContainsRange(pConstr, iConstrStart, &Cand) )
             {
                 // Every strict-root divisor was collected outside this
                 // MFFC.  A safe isolated-gain lower bound is therefore MFFC
@@ -4093,17 +4116,19 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
             else
                 pStat->nSigRejected++;
         }
-        else
+        if ( nDepFound == 0 )
             pStat->nSigRejected++;
         timePart = Abc_Clock() - clk;
         pProf->timeConstruct += timePart;
         pProf->timeRootDepSynthesis += timePart;
         pProf->nRootDepCalls++;
-        pProf->nRootDepFound += fDepFound;
+        pProf->nRootDepFound += nDepFound > 0;
+        pProf->nRootDepAttempts += pDep->nAttemptsLast;
+        pProf->nRootDepRecipes += nDepFound;
 
-        // The resub engine already searches constants, literals, and one-gate
-        // unate functions before deeper recipes.  Keep its first (minimum-cost)
-        // constructed result and avoid re-enumerating every divisor pair.
+        // Results are already choice-ranked and structurally deduplicated by
+        // the resub engine.  Keep at most -q without re-enumerating arbitrary
+        // divisor tuples here.
         Cec_TranDiscFinishRoot( pStat, 0,
             pConstr->nSize - iConstrStart );
         Vec_IntFree( vPool );
@@ -4151,9 +4176,10 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
     Cec_TranDepScratch_t * pDep, Cec_TranDiscStat_t * pStat,
     Cec_TranProf_t * pProf )
 {
+    int k, nDepFound;
     int iExistStart = pExist->nSize, iConstrStart = pConstr->nSize;
     Vec_Int_t * vPool;
-    Cec_TranCand_t Cand;
+    Cec_TranCand_t Cand, Cands[CEC_TRAN_RESUB_CHOICES_MAX];
     word * pCare;
     abctime clk = Abc_Clock();
     vPool = Cec_TranCollectDivPool( p, pRoot->iObj,
@@ -4170,16 +4196,23 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
     pStat->nConstructed++;
     pStat->nSigChecks++;
     clk = Abc_Clock();
-    if ( Cec_TranComputeDependency(pSim, pPars, pRoot,
-            vPool, pCare, 0, &Cand, pDep) )
+    nDepFound = Cec_TranComputeDependencies(pSim, pPars, pRoot,
+        vPool, pCare, 0, Cands, pPars->nRootConstrTop, pDep);
+    for ( k = 0; k < nDepFound; k++ )
     {
+        Cec_TranCandVec_t * pDest;
+        int iStart;
+        Cand = Cands[k];
         pStat->nSigMatched++;
+        pDest = Cand.nGates ? pConstr : pExist;
+        iStart = Cand.nGates ? iConstrStart : iExistStart;
         if ( !Cec_TranCandVecContains(pTried, &Cand) &&
-             (Cand.nGates || !Cec_TranCandVecContainsRange(
-                 pExist, iExistStart, &Cand)) )
-            Cec_TranCandVecPush( Cand.nGates ? pConstr : pExist, Cand );
+             !Cec_TranCandVecContainsRange(pDest, iStart, &Cand) )
+            Cec_TranCandVecPush( pDest, Cand );
+        else
+            pStat->nSigRejected++;
     }
-    else
+    if ( nDepFound == 0 )
         pStat->nSigRejected++;
     pProf->timeConstruct += Abc_Clock() - clk;
     Cec_TranCandVecEvalSortTail( p, pExist, iExistStart, pProf );
@@ -4219,7 +4252,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     int nAndOld, nRegOld;
     abctime clk = Abc_Clock(), clkPhase, clkCand, timeCand;
     assert( Gia_ManRegNum(pGia) > 0 );
-    Abc_Print( 1, "Sequential direct resubstitution: stage=%s AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, seq-conf = %d comb-conf = %d, proof scope = %s%s, root batch = %s, root search width = %d, root waves = %d, constructed mode = single-resub/q%d, root scheduling = %s, contextual proof limit = %s, CEX batch = %d, TFI depth = %d, pool nodes = %d, dependency nodes = %d, unknown cooldown = low:%d/high:%d, global exact = %s, dependency synthesis = %s, root CBS = %s, free-state=%s/%d words/%d cex.\n",
+    Abc_Print( 1, "Sequential direct resubstitution: stage=%s AND = %d, Reg = %d, random lanes = %d, sequential frames = %d, signature samples = %d, proof frames = %d, seq-conf = %d comb-conf = %d, proof scope = %s%s, root batch = %s, root search width = %d, root waves = %d, constructed mode = multi-resub/q%d, root scheduling = %s, contextual proof limit = %s, CEX batch = %d, TFI depth = %d, pool nodes = %d, dependency nodes = %d, unknown cooldown = low:%d/high:%d, global exact = %s, dependency synthesis = %s, root CBS = %s, free-state=%s/%d words/%d cex.\n",
         pPars->nRootStage == 1 ? "comb-only" :
         pPars->nRootStage == 2 ? "seq-only" : "combined",
         Gia_ManAndNum(pGia), Gia_ManRegNum(pGia), pPars->nSimWords * 64,
@@ -4230,7 +4263,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         pPars->nProofScope == CEC_TRAN_PROOF_WINDOW ? " (bounded TFO)" : "",
         pPars->nProofScope == CEC_TRAN_PROOF_ROOT ? "on" : "off",
         pPars->nRootBatch, pPars->nRootWaves, pPars->nRootConstrTop,
-        pPars->fRootProgressive ? "one-per-root" : "all-at-once",
+        pPars->fRootProgressive ? "bounded-per-root" : "all-at-once",
         pPars->nCandMax ? "bounded" : "unlimited",
         pPars->nCexBatch, pPars->nConstrMax, pPars->nConstrBaseMax,
         pPars->nDepNodesMax,
@@ -4360,10 +4393,12 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             {
                 vRootGroups = Cec_TranCandBuildRootGroups(
                     &qStrictAll, &nRootLayers );
-                // Progressive scheduling is the top-1 policy in both combined
-                // and sequential-only modes.  The combinational-only split
-                // stage explicitly disables it in the wrapper below.
-                nRootLayers = Abc_MinInt( nRootLayers, 1 );
+                // Progressive scheduling submits at most -q ranked choices
+                // per root.  With the default q=1 this is exactly the legacy
+                // top-1 behavior; -r still enables the all-alternatives A/B
+                // mode.
+                nRootLayers = Abc_MinInt( nRootLayers,
+                    pPars->nRootConstrTop );
                 if ( nRound + 1 < pPars->nRootWaves )
                 {
                     pRootWaveFailed = ABC_CALLOC( char, qStrictAll.nSize );
@@ -5316,14 +5351,14 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         // Keep the combination lane in one batch so random signatures and
         // learned CBS models are shared across all alternatives.  The scheduling
         // mode applies to the rebuilt sequential lane: false seeds every
-        // retained alternative in one scorr closure; true seeds only top-1/root.
+        // retained alternative in one scorr closure; true seeds up to q/root.
         CombPars.fRootProgressive = 0;
         SeqPars.fRootProgressive = pPars->fRootProgressive;
         Abc_Print( 1, "Sequential direct split-stage profile: begin AND=%d Reg=%d comb-conf=%d seq-conf=%d free-words=%d free-cex=%d seq-scheduling=%s.\n",
             Gia_ManAndNum(pGia), Gia_ManRegNum(pGia),
             CombPars.nCombBTLimit, SeqPars.nBTLimit,
             CombPars.nFreeWords, CombPars.nFreeCexMax,
-            SeqPars.fRootProgressive ? "top-1/root" : "all-alternatives" );
+            SeqPars.fRootProgressive ? "top-q/root" : "all-alternatives" );
         pComb = Cec_ManSequentialDirectResubstitution( pGia, &CombPars );
         pSeq = Cec_ManSequentialDirectResubstitution( pComb, &SeqPars );
         Abc_Print( 1, "Sequential direct split-stage size profile: AND=%d -> comb=%d (gain=%d) -> scorr=%d (incremental-gain=%d); Reg=%d -> comb=%d -> scorr=%d.\n",

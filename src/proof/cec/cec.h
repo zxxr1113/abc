@@ -324,7 +324,8 @@ typedef struct Cec_ParTran_t_ Cec_ParTran_t;
 enum {
     CEC_TRAN_PROOF_ROOT = 0,
     CEC_TRAN_PROOF_WINDOW,
-    CEC_TRAN_PROOF_OUTPUT
+    CEC_TRAN_PROOF_OUTPUT,
+    CEC_TRAN_RESUB_CHOICES_MAX = 8
 };
 struct Cec_ParTran_t_
 {
@@ -352,7 +353,7 @@ struct Cec_ParTran_t_
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
     int              nRootBatch;    // MFFC-ranked roots searched/submitted in root scope (0 = all)
     int              nRootWaves;    // root construct CEGAR waves on one immutable snapshot
-    int              nRootConstrTop;// compatibility cap; single-resub root mode retains one
+    int              nRootConstrTop;// dependency recipes retained/proved per root and wave (1..8)
     int              nCombBTLimit; // root CBS conflict limit per cube
     int              nFreeWords;   // 64-bit independent PI/RO words for combination screening
     int              nFreeCexMax;  // CBS free-state counterexamples retained per proof batch
