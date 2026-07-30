@@ -23,6 +23,8 @@
 
 ABC_NAMESPACE_IMPL_START
 
+enum { CEC_TRAN_ROOT_ALT_PROFILE_MAX = CEC_TRAN_RESUB_CHOICES_MAX + 3 };
+
 extern void Abc_ResubPrepareManager( int nWords );
 extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int nChoices, int fUseXor,
@@ -268,6 +270,23 @@ struct Cec_TranProf_t_
     int     nRootDepFound;       // dependency-synthesis calls returning a recipe
     int     nRootDepAttempts;    // bounded choice-ranked searches
     int     nRootDepRecipes;     // unique recipes returned by these searches
+    int     nRootDepYield[CEC_TRAN_RESUB_CHOICES_MAX + 1];
+    int     nRootResubGenerated[CEC_TRAN_RESUB_CHOICES_MAX];
+    int     nRootResubSubmitted[CEC_TRAN_RESUB_CHOICES_MAX];
+    int     nRootResubCombProved[CEC_TRAN_RESUB_CHOICES_MAX];
+    int     nRootResubSeqProved[CEC_TRAN_RESUB_CHOICES_MAX];
+    int     nRootResubSelected[CEC_TRAN_RESUB_CHOICES_MAX];
+    int     nRootLayerSubmitted[CEC_TRAN_ROOT_ALT_PROFILE_MAX];
+    int     nRootLayerProved[CEC_TRAN_ROOT_ALT_PROFILE_MAX];
+    int     nRootLayerSelected[CEC_TRAN_ROOT_ALT_PROFILE_MAX];
+    int     nRootWaveDepCalls[64];
+    int     nRootWaveRecipes[64];
+    int     nRootWaveSubmitted[64];
+    int     nRootWaveProved[64];
+    int     nRootWaveSelected[64];
+    abctime timeRootWaveConstruct[64];
+    abctime timeRootWaveProof[64];
+    abctime timeRootWaveTotal[64];
     long long nRootPairChecks;   // one-gate divisor-pair signature checks
     long long nRootPairMatches;  // pair checks matching the reachable signature
     int     nSeqCands;          // unresolved candidates sent to scorr
@@ -413,9 +432,10 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
     int nContextProofMax,
     int nConstantProofs, int nExistingProofs, int nConstructedProofs,
     int nConstantAccepted, int nExistingAccepted, int nConstructedAccepted,
-    int fUseCbsMultiLit, int fRootProgressive )
+    int fUseCbsMultiLit, int fRootProgressive, int nRootWaves )
 {
     Cec_ProfCor_t * pC = &p->Corr;
+    int i;
     abctime Miter = p->timeWindowMiter + p->timeRetainMiter + p->timeFinalMiter;
     abctime Corr = p->timeWindowCorr + p->timeRetainCorr + p->timeFinalCorr;
     abctime Accounted = p->timeSim + p->timeCare + p->timeSpec +
@@ -515,6 +535,32 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         Cec_TranTimeSec(p->timeRootDepSynthesis),
         p->nRootPairChecks, p->nRootPairMatches,
         Cec_TranTimeSec(p->timeRootPairEnum) );
+    Abc_Print( 1, "Sequential direct dependency-yield profile:" );
+    for ( i = 0; i <= CEC_TRAN_RESUB_CHOICES_MAX; i++ )
+        Abc_Print( 1, " y%d=%d", i, p->nRootDepYield[i] );
+    Abc_Print( 1, ".\n" );
+    Abc_Print( 1, "Sequential direct resub-rank profile:" );
+    for ( i = 0; i < CEC_TRAN_RESUB_CHOICES_MAX; i++ )
+        Abc_Print( 1, " r%d=%d/%d/%d/%d/%d", i + 1,
+            p->nRootResubGenerated[i], p->nRootResubSubmitted[i],
+            p->nRootResubCombProved[i], p->nRootResubSeqProved[i],
+            p->nRootResubSelected[i] );
+    Abc_Print( 1, ".\n" );
+    Abc_Print( 1, "Sequential direct root-layer profile:" );
+    for ( i = 0; i < CEC_TRAN_ROOT_ALT_PROFILE_MAX; i++ )
+        Abc_Print( 1, " l%d=%d/%d/%d", i + 1,
+            p->nRootLayerSubmitted[i], p->nRootLayerProved[i],
+            p->nRootLayerSelected[i] );
+    Abc_Print( 1, ".\n" );
+    Abc_Print( 1, "Sequential direct root-wave profile:" );
+    for ( i = 0; i < nRootWaves; i++ )
+        Abc_Print( 1, " w%d=%d/%d/%.6f/%d/%d/%d/%.6f/%.6f", i + 1,
+            p->nRootWaveDepCalls[i], p->nRootWaveRecipes[i],
+            Cec_TranTimeSec(p->timeRootWaveConstruct[i]),
+            p->nRootWaveSubmitted[i], p->nRootWaveProved[i],
+            p->nRootWaveSelected[i], Cec_TranTimeSec(p->timeRootWaveProof[i]),
+            Cec_TranTimeSec(p->timeRootWaveTotal[i]) );
+    Abc_Print( 1, ".\n" );
     Abc_Print( 1, "Sequential direct two-stage size profile: AND=%lld -> comb=%lld (gain=%lld) -> scorr=%lld (incremental-gain=%lld); Reg=%lld -> comb=%lld (gain=%lld) -> scorr=%lld (incremental-gain=%lld); size-eval=%.6f commit=%.6f sec.\n",
         p->nStageAndBefore, p->nStageAndAfterComb,
         p->nStageAndBefore - p->nStageAndAfterComb,
@@ -1876,6 +1922,9 @@ struct Cec_TranCand_t_
     unsigned fStrict   : 1;
     unsigned nKind     : 2;
     unsigned nProofStage : 2;   // 0=unproved, 1=combinational, 2=sequential
+    unsigned nResubRank : 4;    // 0=non-resub, otherwise raw recipe rank 1..8
+    unsigned nSchedRank : 4;    // gain-ranked alternative layer 1..11
+    unsigned nWave      : 6;    // zero-based root CEGAR wave
 };
 
 static inline int Cec_TranRecipeCopyCode( Gia_Man_t * p, int Code,
@@ -3933,6 +3982,7 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
     {
         Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare,
             fStrict, vDivs, vRecipe, pCands + nCands );
+        pCands[nCands].nResubRank = i + 1;
         if ( !pPars->fUseExisting && pCands[nCands].nGates == 0 &&
              Abc_Lit2Var(pCands[nCands].iOut) != 0 )
             continue;
@@ -4059,7 +4109,7 @@ static void Cec_TranCollectStrictExisting( Gia_Man_t * p,
 
 static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
     Cec_TranSim_t * pSim, Cec_ParTran_t * pPars,
-    Cec_TranRoot_t * pRoots, int nRoots,
+    Cec_TranRoot_t * pRoots, int nRoots, int iWave,
     Cec_TranCandVec_t const * pTried, char const * pSolved,
     char * pMffc, Vec_Int_t * vMffc,
     Cec_TranCandVec_t const * pExist, Cec_TranCandVec_t * pConstr,
@@ -4070,6 +4120,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
     Vec_Int_t * vPool;
     Cec_TranCand_t Cand, Cands[CEC_TRAN_RESUB_CHOICES_MAX];
     abctime clk, timePart;
+    assert( iWave >= 0 && iWave < 64 );
     for ( r = 0; r < nRoots; r++ )
     {
         if ( pSolved && pSolved[pRoots[r].iObj] )
@@ -4089,6 +4140,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         timePart = Abc_Clock() - clk;
         pProf->timeSpec += timePart;
         pProf->timeRootDivPool += timePart;
+        pProf->timeRootWaveConstruct[iWave] += timePart;
         pProf->nRootDivPoolCalls++;
         pProf->nRootDivPoolNodes += Vec_IntSize(vPool);
         pStat->nConstructed++;
@@ -4096,9 +4148,16 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         clk = Abc_Clock();
         nDepFound = Cec_TranComputeDependencies(pSim, pPars, pRoots + r,
             vPool, NULL, 1, Cands, pPars->nRootConstrTop, pDep);
+        pProf->nRootDepYield[nDepFound]++;
+        pProf->nRootWaveDepCalls[iWave]++;
+        pProf->nRootWaveRecipes[iWave] += nDepFound;
         for ( k = 0; k < nDepFound; k++ )
         {
             Cand = Cands[k];
+            Cand.nWave = iWave;
+            assert( Cand.nResubRank > 0 &&
+                    Cand.nResubRank <= CEC_TRAN_RESUB_CHOICES_MAX );
+            pProf->nRootResubGenerated[Cand.nResubRank - 1]++;
             if ( !Cec_TranCandVecContains(pTried, &Cand) &&
                  !Cec_TranCandVecContains(pExist, &Cand) &&
                  !Cec_TranCandVecContainsRange(pConstr, iConstrStart, &Cand) )
@@ -4121,6 +4180,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         timePart = Abc_Clock() - clk;
         pProf->timeConstruct += timePart;
         pProf->timeRootDepSynthesis += timePart;
+        pProf->timeRootWaveConstruct[iWave] += timePart;
         pProf->nRootDepCalls++;
         pProf->nRootDepFound += nDepFound > 0;
         pProf->nRootDepAttempts += pDep->nAttemptsLast;
@@ -4137,7 +4197,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
 
 static void Cec_TranCollectRootPhase( Gia_Man_t * p,
     Cec_TranSim_t * pSim, Cec_ParTran_t * pPars,
-    Cec_TranRoot_t * pRoots, int nRoots,
+    Cec_TranRoot_t * pRoots, int nRoots, int iWave,
     Cec_TranSigEnt_t * pSigIndex, int nSigEntries,
     Cec_TranCandVec_t const * pTried, char const * pSolved,
     char * pMffc, Vec_Int_t * vMffc, int fExistingPhase,
@@ -4155,7 +4215,7 @@ static void Cec_TranCollectRootPhase( Gia_Man_t * p,
             pSigIndex, nSigEntries, pTried, pSolved, pMffc, vMffc,
             pExist, pStat, pProf );
     if ( pPars->fUseConstr )
-        Cec_TranCollectStrictConstructed( p, pSim, pPars, pRoots, nRoots,
+        Cec_TranCollectStrictConstructed( p, pSim, pPars, pRoots, nRoots, iWave,
             pTried, pSolved, pMffc, vMffc, pExist, pConstr, pDep,
             pStat, pProf );
     for ( i = 0; i < pExist->nSize; i++ )
@@ -4305,7 +4365,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         int fRootExistingPhase = 0;
         int nTriedOld, nAcceptedOld, nUnknownOld, nSatOld, iHist, fWasUnknown;
         int i, fFound, fCandCex, fNeedSigIndex;
-        abctime timeUnknownOld;
+        abctime timeUnknownOld, clkRound = Abc_Clock();
         // Contextual scopes iterate after commits or CEX refinement.  Root
         // scope iterates only on reachable-CEX construct waves; the source
         // graph itself stays immutable until one final bundle commit.
@@ -4381,6 +4441,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             fRootExistingPhase = !fRootExistingDone;
             Cec_TranCollectRootPhase( p, pSim, pPars, pRoots,
                 pPars->nRootBatch ? Abc_MinInt(nRoots, pPars->nRootBatch) : nRoots,
+                nRound,
                 pSigIndex, nSigEntries, &vTried, pRootSolved,
                 pMffc, vMffc, fRootExistingPhase,
                 &qStrictExist, &qStrictConstr,
@@ -4497,6 +4558,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         if ( iCandPos >= iGroupEnd )
                             continue;
                         Cand = qStrictAll.pArray[iCandPos];
+                        Cand.nSchedRank = iLayerThis + 1;
                         if ( iLayerThis == 0 )
                             Prof.nRootScreened++;
                         if ( pRootSolved[Cand.iTarget] )
@@ -4551,6 +4613,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                            (!pPars->nRootBatch || nRootScreenedNow < pPars->nRootBatch) )
                     {
                         int iTarget = qStrictAll.pArray[qStrictAll.iHead].iTarget;
+                        int iRootAlt = 0;
                         nRootScreenedNow++;
                         Prof.nRootScreened++;
                         while ( qStrictAll.iHead < qStrictAll.nSize &&
@@ -4558,6 +4621,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         {
                             int iCandPos = qStrictAll.iHead++;
                             Cand = qStrictAll.pArray[iCandPos];
+                            Cand.nSchedRank = ++iRootAlt;
                             if ( Cec_TranCandVecContains(&vTried, &Cand) )
                             {
                                 Prof.nQueueTriedSkipped++;
@@ -4611,6 +4675,12 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 for ( iBatch = 0; iBatch < Batch.nSize; iBatch++ )
                 {
                     Cand = Batch.pArray[iBatch];
+                    Prof.nRootWaveSubmitted[nRound]++;
+                    if ( Cand.nResubRank )
+                        Prof.nRootResubSubmitted[Cand.nResubRank - 1]++;
+                    if ( Cand.nSchedRank &&
+                         Cand.nSchedRank <= CEC_TRAN_ROOT_ALT_PROFILE_MAX )
+                        Prof.nRootLayerSubmitted[Cand.nSchedRank - 1]++;
                     Cec_TranCandVecPush( &vTried, Cand );
                     nTried++;
                     nStrictProofs++;
@@ -4639,6 +4709,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 vBatchStatus = Cec_TranProveRootBatch( p,
                     Batch.pArray, Batch.nSize, pPars, &Prof, &vBatchStage );
                 timeBatch = Abc_Clock() - clkBatch;
+                Prof.timeRootWaveProof[nRound] += timeBatch;
                 timeShare = timeBatch / Batch.nSize;
                 if ( pPars->fProfile )
                 {
@@ -4653,6 +4724,20 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                     {
                         Batch.pArray[iBatch].nProofStage =
                             (unsigned)Vec_StrEntry( vBatchStage, iBatch );
+                        Prof.nRootWaveProved[nRound]++;
+                        if ( Batch.pArray[iBatch].nResubRank )
+                        {
+                            int iRank = Batch.pArray[iBatch].nResubRank - 1;
+                            if ( Batch.pArray[iBatch].nProofStage == 1 )
+                                Prof.nRootResubCombProved[iRank]++;
+                            else
+                                Prof.nRootResubSeqProved[iRank]++;
+                        }
+                        if ( Batch.pArray[iBatch].nSchedRank &&
+                             Batch.pArray[iBatch].nSchedRank <=
+                                CEC_TRAN_ROOT_ALT_PROFILE_MAX )
+                            Prof.nRootLayerProved[
+                                Batch.pArray[iBatch].nSchedRank - 1]++;
                         Prof.nRootPhaseProved[iRootPhase]++;
                         pRootSolved[Batch.pArray[iBatch].iTarget] = 1;
                         if ( !Cec_TranCandVecContains(&qRootProved,
@@ -4924,6 +5009,14 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 nAccepted += nCommitted;
                 Vec_IntForEachEntry( vSelected, iSelected, iRootCand )
                 {
+                    Cec_TranCand_t const * pSelected =
+                        qRootProved.pArray + iSelected;
+                    Prof.nRootWaveSelected[pSelected->nWave]++;
+                    if ( pSelected->nResubRank )
+                        Prof.nRootResubSelected[pSelected->nResubRank - 1]++;
+                    if ( pSelected->nSchedRank &&
+                         pSelected->nSchedRank <= CEC_TRAN_ROOT_ALT_PROFILE_MAX )
+                        Prof.nRootLayerSelected[pSelected->nSchedRank - 1]++;
                     if ( qRootProved.pArray[iSelected].nProofStage == 1 )
                         Prof.nCombSelected++;
                     else
@@ -4950,6 +5043,11 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             Vec_IntFreeP( &vSelected );
             Vec_IntFree( vCombProved );
             Vec_IntFree( vAllProved );
+        }
+        if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT )
+        {
+            assert( nRound < 64 );
+            Prof.timeRootWaveTotal[nRound] += Abc_Clock() - clkRound;
         }
         nRound++;
         if ( fChanged && pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
@@ -5028,7 +5126,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             pPars->nCandMax,
             nConstantProofs, nExistingProofs, nConstructedProofs,
             nConstantAccepted, nExistingAccepted, nConstructedAccepted,
-            pPars->fUseCbsMultiLit, pPars->fRootProgressive );
+            pPars->fUseCbsMultiLit, pPars->fRootProgressive,
+            pPars->nRootWaves );
     }
     Cec_TranCandVecStop( &qStrictExist );
     Cec_TranCandVecStop( &qStrictConstr );
