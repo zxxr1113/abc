@@ -1531,17 +1531,32 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth )
     }
     return -1;
 }
-void Gia_ManResubPerform( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice, int fUseXor, int fDebug, int fVerbose, int Depth )
+static void Gia_ManResubPerformProfile( Gia_ResbMan_t * p,
+    Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice,
+    int fUseXor, int fDebug, int fVerbose, int Depth,
+    abctime * pTimeInit, abctime * pTimeSearch )
 {
     int Res;
+    abctime clk = (pTimeInit || pTimeSearch) ? Abc_Clock() : 0;
     Gia_ResbInit( p, vDivs, nWords, nLimit, nDivsMax, iChoice, fUseXor, fDebug, fVerbose, fVerbose );
+    if ( pTimeInit )
+        *pTimeInit += Abc_Clock() - clk;
+    if ( pTimeInit || pTimeSearch )
+        clk = Abc_Clock();
     Res = Gia_ManResubPerform_rec( p, nLimit, Depth );
+    if ( pTimeSearch )
+        *pTimeSearch += Abc_Clock() - clk;
     if ( Res >= 0 ) 
         Vec_IntPush( p->vGates, Res );
     else
         Vec_IntClear( p->vGates );
     if ( fVerbose )
         printf( "\n" );
+}
+void Gia_ManResubPerform( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice, int fUseXor, int fDebug, int fVerbose, int Depth )
+{
+    Gia_ManResubPerformProfile( p, vDivs, nWords, nLimit, nDivsMax,
+        iChoice, fUseXor, fDebug, fVerbose, Depth, NULL, NULL );
 }
 Vec_Int_t * Gia_ManResubOne( Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDivsMax, int iChoice, int fUseXor, int fDebug, int fVerbose, word * pFunc, int Depth )
 {
@@ -1626,19 +1641,39 @@ int Abc_ResubComputeFunction( void ** ppDivs, int nDivs, int nWords, int nLimit,
 // this engine is intended to avoid.
 int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
     int nLimit, int nDivsMax, int nChoices, int fUseXor, int fDebug,
-    int fVerbose, Vec_Wec_t * vResults, int * pnAttempts )
+    int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
+    abctime * pTimeInit, abctime * pTimeSearch,
+    abctime * pTimeAttempts, int * pAttemptUnique )
 {
     Vec_Ptr_t Divs = { nDivs, nDivs, ppDivs };
     Vec_Int_t * vRecipe;
     int i, k, fDuplicate, nAttemptsMax;
+    abctime timeInit, timeSearch;
     assert( s_pResbMan != NULL ); // first call Abc_ResubPrepareManager()
     assert( nChoices > 0 );
     Vec_WecClear( vResults );
     nAttemptsMax = nChoices == 1 ? 1 : 2 * nChoices;
+    if ( pTimeInit )
+        *pTimeInit = 0;
+    if ( pTimeSearch )
+        *pTimeSearch = 0;
+    if ( pTimeAttempts )
+        memset( pTimeAttempts, 0, sizeof(abctime) * nAttemptsMax );
+    if ( pAttemptUnique )
+        memset( pAttemptUnique, 0, sizeof(int) * nAttemptsMax );
     for ( i = 0; i < nAttemptsMax && Vec_WecSize(vResults) < nChoices; i++ )
     {
-        Gia_ManResubPerform( s_pResbMan, &Divs, nWords, nLimit,
-            nDivsMax, i, fUseXor, fDebug, fVerbose==2, 0 );
+        timeInit = timeSearch = 0;
+        Gia_ManResubPerformProfile( s_pResbMan, &Divs, nWords, nLimit,
+            nDivsMax, i, fUseXor, fDebug, fVerbose==2, 0,
+            pTimeInit ? &timeInit : NULL,
+            pTimeSearch ? &timeSearch : NULL );
+        if ( pTimeInit )
+            *pTimeInit += timeInit;
+        if ( pTimeSearch )
+            *pTimeSearch += timeSearch;
+        if ( pTimeAttempts )
+            pTimeAttempts[i] = timeInit + timeSearch;
         if ( Vec_IntSize(s_pResbMan->vGates) == 0 )
             continue;
         fDuplicate = 0;
@@ -1650,6 +1685,8 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
             }
         if ( fDuplicate )
             continue;
+        if ( pAttemptUnique )
+            pAttemptUnique[i] = 1;
         vRecipe = Vec_WecPushLevel( vResults );
         Vec_IntAppend( vRecipe, s_pResbMan->vGates );
         assert( Vec_IntSize(vRecipe)/2 <= nLimit );

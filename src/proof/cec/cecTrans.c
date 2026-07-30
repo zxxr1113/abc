@@ -28,7 +28,9 @@ enum { CEC_TRAN_ROOT_ALT_PROFILE_MAX = CEC_TRAN_RESUB_CHOICES_MAX + 3 };
 extern void Abc_ResubPrepareManager( int nWords );
 extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int nChoices, int fUseXor,
-    int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts );
+    int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
+    abctime * pTimeInit, abctime * pTimeSearch,
+    abctime * pTimeAttempts, int * pAttemptUnique );
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
 {
@@ -160,6 +162,8 @@ struct Cec_TranProf_t_
     abctime timeFreeCexSim;
     abctime timeRootDivPool;
     abctime timeRootDepSynthesis;
+    abctime timeRootDepInit;
+    abctime timeRootDepSearch;
     abctime timeRootPairEnum;
     abctime timeSeqSolve;
     abctime timeRootStageEval;
@@ -172,11 +176,21 @@ struct Cec_TranProf_t_
     abctime timeUnknownRepeat;
     abctime timeDirectKind[3];
     abctime timeDirectLane[2];
+    abctime timeRootDepAttempt[2 * CEC_TRAN_RESUB_CHOICES_MAX];
+    abctime timeRootKindContribution;
     Cec_ProfCor_t Corr;
     long long nDirectAndGain[3];
     long long nDirectRegGain[3];
     long long nRootBundleAndGain;
     long long nRootBundleRegGain;
+    long long nRootKindSubsetAndGain[8];
+    long long nRootKindSubsetRegGain[8];
+    long long nRootRank1AndGain;
+    long long nRootRank1RegGain;
+    long long nRootWave1AndGain;
+    long long nRootWave1RegGain;
+    long long nRootExistingGlobalLeaveoutAndGain;
+    long long nRootExistingResubLeaveoutAndGain;
     long long nCombConfUsed;
     long long nStageAndBefore;
     long long nStageAndAfterComb;
@@ -270,6 +284,12 @@ struct Cec_TranProf_t_
     int     nRootDepFound;       // dependency-synthesis calls returning a recipe
     int     nRootDepAttempts;    // bounded choice-ranked searches
     int     nRootDepRecipes;     // unique recipes returned by these searches
+    int     nRootDepAttemptCalls[2 * CEC_TRAN_RESUB_CHOICES_MAX];
+    int     nRootDepAttemptUnique[2 * CEC_TRAN_RESUB_CHOICES_MAX];
+    int     nRootExistingGlobalProofs;
+    int     nRootExistingResubProofs;
+    int     nRootExistingGlobalSelected;
+    int     nRootExistingResubSelected;
     int     nRootDepYield[CEC_TRAN_RESUB_CHOICES_MAX + 1];
     int     nRootResubGenerated[CEC_TRAN_RESUB_CHOICES_MAX];
     int     nRootResubSubmitted[CEC_TRAN_RESUB_CHOICES_MAX];
@@ -427,6 +447,18 @@ static void Cec_TranPrintProfile( Cec_TranProf_t * p, Cec_TranTargetProf_t * pTo
     }
 }
 
+static double Cec_TranThreeKindShapley( long long const pGain[8], int iKind )
+{
+    int iBit = 1 << iKind;
+    int iOther0 = 1 << ((iKind + 1) % 3);
+    int iOther1 = 1 << ((iKind + 2) % 3);
+    long long Numer = 2 * pGain[iBit] +
+        (pGain[iBit | iOther0] - pGain[iOther0]) +
+        (pGain[iBit | iOther1] - pGain[iOther1]) +
+        2 * (pGain[7] - pGain[iOther0 | iOther1]);
+    return Numer / 6.0;
+}
+
 static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
     int nStrictProofs, int nContextProofs,
     int nContextProofMax,
@@ -490,6 +522,41 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nDirectAndGain[1], p->nDirectRegGain[1], Cec_TranTimeSec(p->timeDirectKind[1]),
         nConstructedAccepted, nConstructedProofs,
         p->nDirectAndGain[2], p->nDirectRegGain[2], Cec_TranTimeSec(p->timeDirectKind[2]) );
+    Abc_Print( 1, "Sequential direct kind-contribution profile: AND total=%lld constant=%.3f/%lld/%lld existing=%.3f/%lld/%lld constructed=%.3f/%lld/%lld rank1=%lld extra-rank=%lld wave1=%lld later-wave=%lld; Reg total=%lld constant=%.3f/%lld/%lld existing=%.3f/%lld/%lld constructed=%.3f/%lld/%lld rank1=%lld extra-rank=%lld wave1=%lld later-wave=%lld; eval=%.6f sec.\n",
+        p->nRootKindSubsetAndGain[7],
+        Cec_TranThreeKindShapley(p->nRootKindSubsetAndGain, 0),
+        p->nRootKindSubsetAndGain[1],
+        p->nRootKindSubsetAndGain[7] - p->nRootKindSubsetAndGain[6],
+        Cec_TranThreeKindShapley(p->nRootKindSubsetAndGain, 1),
+        p->nRootKindSubsetAndGain[2],
+        p->nRootKindSubsetAndGain[7] - p->nRootKindSubsetAndGain[5],
+        Cec_TranThreeKindShapley(p->nRootKindSubsetAndGain, 2),
+        p->nRootKindSubsetAndGain[4],
+        p->nRootKindSubsetAndGain[7] - p->nRootKindSubsetAndGain[3],
+        p->nRootRank1AndGain,
+        p->nRootKindSubsetAndGain[7] - p->nRootRank1AndGain,
+        p->nRootWave1AndGain,
+        p->nRootKindSubsetAndGain[7] - p->nRootWave1AndGain,
+        p->nRootKindSubsetRegGain[7],
+        Cec_TranThreeKindShapley(p->nRootKindSubsetRegGain, 0),
+        p->nRootKindSubsetRegGain[1],
+        p->nRootKindSubsetRegGain[7] - p->nRootKindSubsetRegGain[6],
+        Cec_TranThreeKindShapley(p->nRootKindSubsetRegGain, 1),
+        p->nRootKindSubsetRegGain[2],
+        p->nRootKindSubsetRegGain[7] - p->nRootKindSubsetRegGain[5],
+        Cec_TranThreeKindShapley(p->nRootKindSubsetRegGain, 2),
+        p->nRootKindSubsetRegGain[4],
+        p->nRootKindSubsetRegGain[7] - p->nRootKindSubsetRegGain[3],
+        p->nRootRank1RegGain,
+        p->nRootKindSubsetRegGain[7] - p->nRootRank1RegGain,
+        p->nRootWave1RegGain,
+        p->nRootKindSubsetRegGain[7] - p->nRootWave1RegGain,
+        Cec_TranTimeSec(p->timeRootKindContribution) );
+    Abc_Print( 1, "Sequential direct existing-source profile: global=%d/%d leaveout-and-gain=%lld resub=%d/%d leaveout-and-gain=%lld.\n",
+        p->nRootExistingGlobalSelected, p->nRootExistingGlobalProofs,
+        p->nRootExistingGlobalLeaveoutAndGain,
+        p->nRootExistingResubSelected, p->nRootExistingResubProofs,
+        p->nRootExistingResubLeaveoutAndGain );
     Abc_Print( 1, "Sequential direct lane profile: strict=%d attempt=%.3f context=%d attempt=%.3f sec.\n",
         nStrictProofs, Cec_TranTimeSec(p->timeDirectLane[1]),
         nContextProofs, Cec_TranTimeSec(p->timeDirectLane[0]) );
@@ -527,14 +594,24 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nCombFreeCexInvalid, p->nCombFreePotentialGain,
         p->nCombUnknownEarly, p->nCombCubesSkippedUnknown,
         p->nCombNoModelCalls );
-    Abc_Print( 1, "Sequential direct construct profile: div-pool calls=%d nodes=%lld time=%.6f; dependency calls=%d found=%d attempts=%d recipes=%d time=%.6f; pair-checks=%lld matched=%lld time=%.6f sec.\n",
+    Abc_Print( 1, "Sequential direct construct profile: div-pool calls=%d nodes=%lld time=%.6f; dependency calls=%d found=%d attempts=%d recipes=%d time=%.6f init=%.6f search=%.6f; pair-checks=%lld matched=%lld time=%.6f sec.\n",
         p->nRootDivPoolCalls, p->nRootDivPoolNodes,
         Cec_TranTimeSec(p->timeRootDivPool),
         p->nRootDepCalls, p->nRootDepFound,
         p->nRootDepAttempts, p->nRootDepRecipes,
         Cec_TranTimeSec(p->timeRootDepSynthesis),
+        Cec_TranTimeSec(p->timeRootDepInit),
+        Cec_TranTimeSec(p->timeRootDepSearch),
         p->nRootPairChecks, p->nRootPairMatches,
         Cec_TranTimeSec(p->timeRootPairEnum) );
+    Abc_Print( 1, "Sequential direct dependency-attempt profile:" );
+    for ( i = 0; i < 2 * CEC_TRAN_RESUB_CHOICES_MAX; i++ )
+        if ( p->nRootDepAttemptCalls[i] )
+            Abc_Print( 1, " a%d=%d/%d/%.6f", i + 1,
+                p->nRootDepAttemptCalls[i],
+                p->nRootDepAttemptUnique[i],
+                Cec_TranTimeSec(p->timeRootDepAttempt[i]) );
+    Abc_Print( 1, ".\n" );
     Abc_Print( 1, "Sequential direct dependency-yield profile:" );
     for ( i = 0; i <= CEC_TRAN_RESUB_CHOICES_MAX; i++ )
         Abc_Print( 1, " y%d=%d", i, p->nRootDepYield[i] );
@@ -3562,6 +3639,87 @@ static void Cec_TranRootBundleCost( Gia_Man_t * p,
     Vec_IntFree( vSelected );
 }
 
+// Counterfactual size profiles use the same per-target winner selection and
+// cleanup as the real commit.  With only three candidate kinds, the six
+// proper nonempty subsets are enough to recover exact Shapley contributions;
+// the empty size is the input and the full size is the actual committed
+// result.  Additional subsets expose the marginal utility of raw resub ranks
+// above one, CEGAR waves after wave one, and the two sources currently folded
+// into the existing kind (global lookup versus zero-gate resub recipes).
+static void Cec_TranRootContributionCost( Gia_Man_t * p,
+    Cec_TranCand_t const * pCands, Vec_Int_t * vStatus, int nCands,
+    int nSelectMax, int pKindAnds[8], int pKindRegs[8],
+    int * pnRank1Ands, int * pnRank1Regs,
+    int * pnWave1Ands, int * pnWave1Regs,
+    int * pnNoGlobalExistAnds, int * pnNoResubExistAnds )
+{
+    Vec_Int_t * vEnabled = Vec_IntStart( nCands );
+    int i, Mask, fHasExtraRank = 0, fHasLaterWave = 0;
+    int fHasGlobalExist = 0, fHasResubExist = 0, nDummyRegs;
+    pKindAnds[0] = Gia_ManAndNum( p );
+    pKindRegs[0] = Gia_ManRegNum( p );
+    pKindAnds[7] = pKindRegs[7] = -1;
+    for ( Mask = 1; Mask < 7; Mask++ )
+    {
+        for ( i = 0; i < nCands; i++ )
+            Vec_IntWriteEntry( vEnabled, i,
+                Vec_IntEntry(vStatus, i) &&
+                (Mask & (1 << pCands[i].nKind)) );
+        Cec_TranRootBundleCost( p, pCands, vEnabled, nCands,
+            nSelectMax, pKindAnds + Mask, pKindRegs + Mask );
+    }
+    for ( i = 0; i < nCands; i++ )
+    {
+        fHasExtraRank |= Vec_IntEntry(vStatus, i) &&
+            pCands[i].nResubRank > 1;
+        Vec_IntWriteEntry( vEnabled, i,
+            Vec_IntEntry(vStatus, i) && pCands[i].nResubRank <= 1 );
+    }
+    if ( fHasExtraRank )
+        Cec_TranRootBundleCost( p, pCands, vEnabled, nCands,
+            nSelectMax, pnRank1Ands, pnRank1Regs );
+    else
+        *pnRank1Ands = *pnRank1Regs = -1;
+    for ( i = 0; i < nCands; i++ )
+    {
+        fHasLaterWave |= Vec_IntEntry(vStatus, i) && pCands[i].nWave > 0;
+        Vec_IntWriteEntry( vEnabled, i,
+            Vec_IntEntry(vStatus, i) && pCands[i].nWave == 0 );
+    }
+    if ( fHasLaterWave )
+        Cec_TranRootBundleCost( p, pCands, vEnabled, nCands,
+            nSelectMax, pnWave1Ands, pnWave1Regs );
+    else
+        *pnWave1Ands = *pnWave1Regs = -1;
+    for ( i = 0; i < nCands; i++ )
+    {
+        int fGlobalExist = pCands[i].nKind == CEC_TRAN_CAND_EXIST &&
+            pCands[i].nResubRank == 0;
+        fHasGlobalExist |= Vec_IntEntry(vStatus, i) && fGlobalExist;
+        Vec_IntWriteEntry( vEnabled, i,
+            Vec_IntEntry(vStatus, i) && !fGlobalExist );
+    }
+    if ( fHasGlobalExist )
+        Cec_TranRootBundleCost( p, pCands, vEnabled, nCands,
+            nSelectMax, pnNoGlobalExistAnds, &nDummyRegs );
+    else
+        *pnNoGlobalExistAnds = -1;
+    for ( i = 0; i < nCands; i++ )
+    {
+        int fResubExist = pCands[i].nKind == CEC_TRAN_CAND_EXIST &&
+            pCands[i].nResubRank > 0;
+        fHasResubExist |= Vec_IntEntry(vStatus, i) && fResubExist;
+        Vec_IntWriteEntry( vEnabled, i,
+            Vec_IntEntry(vStatus, i) && !fResubExist );
+    }
+    if ( fHasResubExist )
+        Cec_TranRootBundleCost( p, pCands, vEnabled, nCands,
+            nSelectMax, pnNoResubExistAnds, &nDummyRegs );
+    else
+        *pnNoResubExistAnds = -1;
+    Vec_IntFree( vEnabled );
+}
+
 // Select the best proved recipe for each target, then commit all selected
 // targets together.  Different proved alternatives of one target form one
 // equivalence class, so only the highest exact-gain representative is needed.
@@ -3888,6 +4046,10 @@ struct Cec_TranDepScratch_t_
     word *      pOff;
     word *      pOn;
     int         nAttemptsLast;
+    abctime     timeInitLast;
+    abctime     timeSearchLast;
+    abctime     timeAttemptLast[2 * CEC_TRAN_RESUB_CHOICES_MAX];
+    int         fAttemptUniqueLast[2 * CEC_TRAN_RESUB_CHOICES_MAX];
 };
 
 static void Cec_TranDepScratchStart( Cec_TranDepScratch_t * p,
@@ -3898,6 +4060,9 @@ static void Cec_TranDepScratchStart( Cec_TranDepScratch_t * p,
     p->pOff = ABC_ALLOC( word, nSlots );
     p->pOn  = ABC_ALLOC( word, nSlots );
     p->nAttemptsLast = 0;
+    p->timeInitLast = p->timeSearchLast = 0;
+    memset( p->timeAttemptLast, 0, sizeof(p->timeAttemptLast) );
+    memset( p->fAttemptUniqueLast, 0, sizeof(p->fAttemptUniqueLast) );
 }
 
 static void Cec_TranDepScratchStop( Cec_TranDepScratch_t * p )
@@ -3974,10 +4139,19 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
     nLimit = pPars->fUseConstr ?
         Abc_MinInt( pPars->nDepNodesMax,
             Abc_MaxInt(0, pRoot->nMffc - pPars->nGainMin) ) : 0;
+    pScratch->timeInitLast = pScratch->timeSearchLast = 0;
+    memset( pScratch->timeAttemptLast, 0,
+        sizeof(pScratch->timeAttemptLast) );
+    memset( pScratch->fAttemptUniqueLast, 0,
+        sizeof(pScratch->fAttemptUniqueLast) );
     nRecipes = Abc_ResubComputeFunctions( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit,
         Vec_IntSize(vPool), nChoices, 0, 0, pPars->fVerbose,
-        pScratch->vRecipes, &pScratch->nAttemptsLast );
+        pScratch->vRecipes, &pScratch->nAttemptsLast,
+        pPars->fProfile ? &pScratch->timeInitLast : NULL,
+        pPars->fProfile ? &pScratch->timeSearchLast : NULL,
+        pPars->fProfile ? pScratch->timeAttemptLast : NULL,
+        pPars->fProfile ? pScratch->fAttemptUniqueLast : NULL );
     Vec_WecForEachLevel( pScratch->vRecipes, vRecipe, i )
     {
         Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare,
@@ -4185,6 +4359,17 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         pProf->nRootDepFound += nDepFound > 0;
         pProf->nRootDepAttempts += pDep->nAttemptsLast;
         pProf->nRootDepRecipes += nDepFound;
+        pProf->timeRootDepInit += pDep->timeInitLast;
+        pProf->timeRootDepSearch += pDep->timeSearchLast;
+        for ( k = 0; k < pDep->nAttemptsLast; k++ )
+        {
+            assert( k < 2 * CEC_TRAN_RESUB_CHOICES_MAX );
+            pProf->nRootDepAttemptCalls[k]++;
+            pProf->nRootDepAttemptUnique[k] +=
+                pDep->fAttemptUniqueLast[k];
+            pProf->timeRootDepAttempt[k] +=
+                pDep->timeAttemptLast[k];
+        }
 
         // Results are already choice-ranked and structurally deduplicated by
         // the resub engine.  Keep at most -q without re-enumerating arbitrary
@@ -4687,7 +4872,13 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                     if ( Cand.nKind == CEC_TRAN_CAND_CONST )
                         nConstantProofs++;
                     else if ( Cand.nKind == CEC_TRAN_CAND_EXIST )
+                    {
                         nExistingProofs++;
+                        if ( Cand.nResubRank )
+                            Prof.nRootExistingResubProofs++;
+                        else
+                            Prof.nRootExistingGlobalProofs++;
+                    }
                     else
                         nConstructedProofs++;
                     if ( pPars->fVerbose )
@@ -4982,6 +5173,10 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             Vec_Int_t * vSelected = NULL;
             int iRootCand, iSelected, nCommitted;
             int nAndAfterComb, nRegAfterComb;
+            int nKindAnds[8], nKindRegs[8];
+            int nRank1Ands = -1, nRank1Regs = -1;
+            int nWave1Ands = -1, nWave1Regs = -1;
+            int nNoGlobalExistAnds = -1, nNoResubExistAnds = -1;
             int nSelectMax = pPars->nChangesMax ?
                 pPars->nChangesMax - nAccepted : -1;
             for ( iRootCand = 0; iRootCand < qRootProved.nSize; iRootCand++ )
@@ -4997,6 +5192,17 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 qRootProved.nSize, nSelectMax, &nAndAfterComb,
                 &nRegAfterComb );
             Prof.timeRootStageEval += Abc_Clock() - clkCand;
+            if ( pPars->fProfile )
+            {
+                clkCand = Abc_Clock();
+                Cec_TranRootContributionCost( p, qRootProved.pArray,
+                    vAllProved, qRootProved.nSize, nSelectMax,
+                    nKindAnds, nKindRegs,
+                    &nRank1Ands, &nRank1Regs,
+                    &nWave1Ands, &nWave1Regs,
+                    &nNoGlobalExistAnds, &nNoResubExistAnds );
+                Prof.timeRootKindContribution += Abc_Clock() - clkCand;
+            }
             clkCand = Abc_Clock();
             nCommitted = Cec_TranCommitRootBatchBundle( &p,
                 qRootProved.pArray, vAllProved, qRootProved.nSize,
@@ -5026,12 +5232,49 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         nConstantAccepted++;
                     else if ( qRootProved.pArray[iSelected].nKind ==
                               CEC_TRAN_CAND_EXIST )
+                    {
                         nExistingAccepted++;
+                        if ( pSelected->nResubRank )
+                            Prof.nRootExistingResubSelected++;
+                        else
+                            Prof.nRootExistingGlobalSelected++;
+                    }
                     else
                         nConstructedAccepted++;
                 }
                 Prof.nRootBundleAndGain += nAndOld - Gia_ManAndNum(p);
                 Prof.nRootBundleRegGain += nRegOld - Gia_ManRegNum(p);
+                if ( pPars->fProfile )
+                {
+                    int Mask;
+                    for ( Mask = 1; Mask < 7; Mask++ )
+                    {
+                        Prof.nRootKindSubsetAndGain[Mask] +=
+                            nAndOld - nKindAnds[Mask];
+                        Prof.nRootKindSubsetRegGain[Mask] +=
+                            nRegOld - nKindRegs[Mask];
+                    }
+                    Prof.nRootKindSubsetAndGain[7] +=
+                        nAndOld - Gia_ManAndNum(p);
+                    Prof.nRootKindSubsetRegGain[7] +=
+                        nRegOld - Gia_ManRegNum(p);
+                    Prof.nRootRank1AndGain += nRank1Ands < 0 ?
+                        nAndOld - Gia_ManAndNum(p) : nAndOld - nRank1Ands;
+                    Prof.nRootRank1RegGain += nRank1Regs < 0 ?
+                        nRegOld - Gia_ManRegNum(p) : nRegOld - nRank1Regs;
+                    Prof.nRootWave1AndGain += nWave1Ands < 0 ?
+                        nAndOld - Gia_ManAndNum(p) : nAndOld - nWave1Ands;
+                    Prof.nRootWave1RegGain += nWave1Regs < 0 ?
+                        nRegOld - Gia_ManRegNum(p) : nRegOld - nWave1Regs;
+                    Prof.nRootExistingGlobalLeaveoutAndGain +=
+                        nNoGlobalExistAnds < 0 ? 0 :
+                        (nAndOld - Gia_ManAndNum(p)) -
+                        (nAndOld - nNoGlobalExistAnds);
+                    Prof.nRootExistingResubLeaveoutAndGain +=
+                        nNoResubExistAnds < 0 ? 0 :
+                        (nAndOld - Gia_ManAndNum(p)) -
+                        (nAndOld - nNoResubExistAnds);
+                }
                 Prof.nRootBundleCommits += nCommitted;
                 Prof.nStageAndBefore = nAndOld;
                 Prof.nStageAndAfterComb = nAndAfterComb;
