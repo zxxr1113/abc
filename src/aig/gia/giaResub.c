@@ -1663,9 +1663,12 @@ int Abc_ResubComputeFunction( void ** ppDivs, int nDivs, int nWords, int nLimit,
 // attempts ask the same ordered engine to skip earlier exact solutions or to
 // use a later greedy cover pivot.  Perform at most the requested number of
 // searches; attempts beyond K contributed very few unique recipes in
-// root-scope profiling.
+// root-scope profiling.  iChoiceStart allows a caller to preserve the same
+// ordered search while redirecting unused later-choice budget to another
+// divisor pool.
 int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
-    int nLimit, int nDivsMax, int nChoices, int fUseZero, int fUseXor,
+    int nLimit, int nDivsMax, int nChoices, int iChoiceStart,
+    int fUseZero, int fUseXor,
     int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
     abctime * pTimeInit, abctime * pTimeSearch,
     abctime * pTimeAttempts, int * pAttemptUnique )
@@ -1675,7 +1678,7 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
     int i, k, fDuplicate, nAttemptsMax;
     abctime timeInit, timeSearch;
     assert( s_pResbMan != NULL ); // first call Abc_ResubPrepareManager()
-    assert( nChoices > 0 );
+    assert( nChoices > 0 && iChoiceStart >= 0 );
     Vec_WecClear( vResults );
     nAttemptsMax = nChoices;
     if ( pTimeInit )
@@ -1690,7 +1693,8 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
     {
         timeInit = timeSearch = 0;
         Gia_ManResubPerformProfile( s_pResbMan, &Divs, nWords, nLimit,
-            nDivsMax, i, fUseZero, fUseXor, fDebug, fVerbose==2, 0,
+            nDivsMax, iChoiceStart + i, fUseZero, fUseXor,
+            fDebug, fVerbose==2, 0,
             pTimeInit ? &timeInit : NULL,
             pTimeSearch ? &timeSearch : NULL );
         if ( pTimeInit )
@@ -1723,7 +1727,7 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
         if ( fVerbose )
         {
             printf( "      Choice = %2d  Gain = %2d  Gates = %2d  __________  F = ",
-                Vec_WecSize(vResults)-1, nLimit+1-Vec_IntSize(vRecipe)/2,
+                iChoiceStart + i, nLimit+1-Vec_IntSize(vRecipe)/2,
                 Vec_IntSize(vRecipe)/2 );
             Gia_ManResubPrint( vRecipe, nDivs );
             printf( "\n" );
