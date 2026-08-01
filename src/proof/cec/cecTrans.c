@@ -296,6 +296,13 @@ struct Cec_TranProf_t_
     int     nRootDivAltSubmitted;// non-BFS recipes sent to proof
     int     nRootDivAltProved;   // non-BFS recipes formally proved
     int     nRootDivAltSelected; // non-BFS recipes committed
+    int     nRootDivGlobalRecipes;   // exact matches found only by global hash
+    int     nRootDivGlobalSubmitted;
+    int     nRootDivGlobalProved;
+    int     nRootDivGlobalSelected;
+    long long nRootDivRouteNodes[4]; // TFI/boundary/local/global reservoir nodes
+    int     nRootDivRouteCalls[5];   // pool calls by route (last is mixed)
+    int     nRootDivRouteRecipes[5]; // returned recipes by route
     int     nRootDepCalls;       // dependency-synthesis calls
     int     nRootDepFound;       // dependency-synthesis calls returning a recipe
     int     nRootDepAttempts;    // bounded choice-ranked searches
@@ -625,6 +632,17 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nRootDivAltCalls, p->nRootDivAltRescues,
         p->nRootDivAltRecipes, p->nRootDivAltSubmitted,
         p->nRootDivAltProved, p->nRootDivAltSelected );
+    Abc_Print( 1, "Sequential direct global-divisor profile: recipes=%d submitted=%d proved=%d selected=%d.\n",
+        p->nRootDivGlobalRecipes, p->nRootDivGlobalSubmitted,
+        p->nRootDivGlobalProved, p->nRootDivGlobalSelected );
+    Abc_Print( 1, "Sequential direct divisor-route profile: nodes=tfi:%lld/boundary:%lld/local:%lld/global:%lld; calls-recipes=legacy:%d/%d direct:%d/%d boundary:%d/%d local:%d/%d global:%d/%d.\n",
+        p->nRootDivRouteNodes[0], p->nRootDivRouteNodes[1],
+        p->nRootDivRouteNodes[2], p->nRootDivRouteNodes[3],
+        p->nRootDivRouteCalls[0], p->nRootDivRouteRecipes[0],
+        p->nRootDivRouteCalls[1], p->nRootDivRouteRecipes[1],
+        p->nRootDivRouteCalls[2], p->nRootDivRouteRecipes[2],
+        p->nRootDivRouteCalls[3], p->nRootDivRouteRecipes[3],
+        p->nRootDivRouteCalls[4], p->nRootDivRouteRecipes[4] );
     Abc_Print( 1, "Sequential direct bundle-portfolio profile: primary-wins=%d gain-wins=%d ties=%d avoided-cost=%lld.\n",
         p->nRootBundlePrimaryWins, p->nRootBundleGainWins,
         p->nRootBundlePortfolioTies, p->nRootBundlePortfolioAdvantage );
@@ -2026,6 +2044,8 @@ struct Cec_TranCand_t_
     unsigned nResubRank : 4;    // 0=non-resub, otherwise raw recipe rank 1..8
     unsigned nSchedRank : 6;    // normal/rescue layer, including audit pass
     unsigned fDivRescue : 1;    // recipe came from a non-BFS failure pool
+    unsigned fDivGlobal : 1;    // direct divisor required global hash fallback
+    unsigned fPrimaryFrontier : 1; // candidate belongs to exact q=1 frontier
     unsigned nWave      : 6;    // zero-based root CEGAR wave
 };
 
@@ -3283,6 +3303,7 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     Gia_Man_t * pBatch;
     Gia_Obj_t * pObj;
     Vec_Int_t * vPairs, * vQueries;
+    Vec_Int_t * vSeqPairs = NULL;
     Vec_Int_t * vAndLeaves = NULL;
     Vec_Str_t * vAndCounts = NULL;
     Vec_Int_t * vStatus = Vec_IntStart( nCands );
@@ -3306,7 +3327,7 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         vPairs, vQueries, vAndLeaves, vAndCounts, pPars, pProf ) :
         Vec_StrStart( nCands );
     for ( i = 0; i < nCands; i++ )
-        if ( Vec_StrEntry(vStage, i) == 0 )
+        if ( Vec_StrEntry(vStage, i) == 0 && !pCands[i].fDivGlobal )
             nSeq++;
     if ( fNeedSeq )
         pProf->nSeqCands += nSeq;
@@ -3318,10 +3339,17 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
             Gia_ObjSetRepr( pBatch, i, GIA_VOID );
         Gia_ManCreateValueRefs( pBatch );
         // Keep universally proved combinational relations in the same class
-        // hypothesis.  They are already discharged, but connecting them to
-        // the unresolved relations can strengthen the shared scorr closure.
-        Cec_TranSeedRootClasses( pBatch, vPairs );
-        pProf->nSeqSeeded += nCands;
+        // hypothesis.  Global-hash fallback relations, however, enter this
+        // closure only when CBS already proved them: an unresolved distant
+        // signature match has very low sequential conversion and can make a
+        // large shared closure substantially more expensive.
+        vSeqPairs = Vec_IntAlloc( 2 * nCands );
+        for ( i = 0; i < nCands; i++ )
+            if ( Vec_StrEntry(vStage, i) == 1 || !pCands[i].fDivGlobal )
+                Vec_IntPushTwo( vSeqPairs, Vec_IntEntry(vPairs, 2*i),
+                    Vec_IntEntry(vPairs, 2*i + 1) );
+        Cec_TranSeedRootClasses( pBatch, vSeqPairs );
+        pProf->nSeqSeeded += Vec_IntSize(vSeqPairs) / 2;
         pBatch->pNexts = Gia_ManDeriveNexts( pBatch );
         Cec_ManCorSetDefaultParams( &Cor );
         Cor.nFrames   = pPars->nFrames;
@@ -3339,7 +3367,7 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     for ( i = 0; i < nCands; i++ )
     {
         int fProved = Vec_StrEntry(vStage, i) == 1;
-        if ( !fProved && fNeedSeq && nSeq )
+        if ( !fProved && fNeedSeq && nSeq && !pCands[i].fDivGlobal )
             fProved = RetValue && !Cor.fConfStop &&
                 Cec_TranRootBatchPairProved( pBatch,
                     Vec_IntEntry(vPairs, 2*i), Vec_IntEntry(vPairs, 2*i+1) );
@@ -3367,6 +3395,7 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     }
     Vec_IntFree( vPairs );
     Vec_IntFree( vQueries );
+    Vec_IntFreeP( &vSeqPairs );
     Vec_IntFreeP( &vAndLeaves );
     Vec_StrFreeP( &vAndCounts );
     Gia_ManStop( pBatch );
@@ -3645,9 +3674,11 @@ static Vec_Int_t * Cec_TranSelectRootBatchBundle( Gia_Man_t * p,
     return vSelected;
 }
 
-// A conservative portfolio member which never lets an extra resub rank
-// replace a proved q=1-frontier candidate for the same root.  Extra ranks are
-// still selected for roots whose primary candidate could not be proved.
+// The exact q=1 frontier is a conservative portfolio member.  It includes
+// ordinary non-resub candidates and candidates explicitly generated by the
+// legacy/direct/boundary q=1 path, but never admits a root which exists only
+// because q>1 explored additional choices.  Comparing its cleanup cost with
+// the full gain portfolio gives large q a strict q=1 bundle fallback.
 static Vec_Int_t * Cec_TranSelectRootBatchPrimary( Gia_Man_t * p,
     Cec_TranCand_t const * pCands, Vec_Int_t * vStatus, int nCands,
     int nSelectMax )
@@ -3657,18 +3688,16 @@ static Vec_Int_t * Cec_TranSelectRootBatchPrimary( Gia_Man_t * p,
     int i, iPos, iPrev;
     for ( i = 0; i < nCands; i++ )
     {
-        if ( !Vec_IntEntry(vStatus, i) )
+        if ( !Vec_IntEntry(vStatus, i) ||
+             (pCands[i].nResubRank > 0 &&
+              !pCands[i].fPrimaryFrontier) )
             continue;
         iPos = pTargetPos[pCands[i].iTarget];
         if ( iPos >= 0 )
         {
             iPrev = Vec_IntEntry( vSelected, iPos );
-            if ( (pCands[iPrev].nResubRank > 1 &&
-                  pCands[i].nResubRank <= 1) ||
-                 ((pCands[iPrev].nResubRank > 1) ==
-                  (pCands[i].nResubRank > 1) &&
-                  Cec_TranCandGainCompare(pCands + i,
-                      pCands + iPrev) < 0) )
+            if ( Cec_TranCandGainCompare(pCands + i,
+                    pCands + iPrev) < 0 )
                 Vec_IntWriteEntry( vSelected, iPos, i );
             continue;
         }
@@ -4136,6 +4165,183 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
     return vPool;
 }
 
+// Add divisors reached by entering the target MFFC at all of its external
+// boundary leaves and then expanding upstream in parallel.  A target-rooted
+// depth bound can stop before a deep MFFC boundary; measuring depth from the
+// boundary gives these leaves and their supports an independent opportunity.
+// When a boundary is wide, evenly spaced leaves avoid inheriting the DFS
+// order used by the MFFC marker.
+static void Cec_TranAppendBoundaryDivs( Gia_Man_t * p, int iTarget,
+    int nDepthMax, int nAddMax, char const * pMffc, Vec_Int_t * vMffc,
+    Vec_Int_t * vPool )
+{
+    Vec_Int_t * vBoundary = Vec_IntAlloc( 32 );
+    Vec_Int_t * vFront = Vec_IntAlloc( 32 );
+    Vec_Int_t * vNext = Vec_IntAlloc( 32 );
+    Gia_Obj_t * pObj, * pFan;
+    int i, k, d, iObj, iFan, iPos, nSelect, nAdded = 0;
+    if ( nAddMax <= 0 )
+        goto cleanup;
+    Gia_ManIncrementTravId( p );
+    Vec_IntForEachEntry( vMffc, iObj, i )
+    {
+        pObj = Gia_ManObj( p, iObj );
+        if ( !Gia_ObjIsAnd(pObj) )
+            continue;
+        for ( k = 0; k < 2; k++ )
+        {
+            iFan = k ? Gia_ObjFaninId1p(p, pObj) :
+                       Gia_ObjFaninId0p(p, pObj);
+            if ( iFan == 0 || iFan >= iTarget || pMffc[iFan] ||
+                 Gia_ObjIsTravIdCurrentId(p, iFan) )
+                continue;
+            Gia_ObjSetTravIdCurrentId( p, iFan );
+            if ( Gia_ObjIsCand(Gia_ManObj(p, iFan)) )
+                Vec_IntPush( vBoundary, iFan );
+        }
+    }
+    nSelect = Abc_MinInt( Vec_IntSize(vBoundary),
+        Abc_MaxInt(1, nAddMax / 2) );
+    // Start a bounded upstream search from a uniform subset of the boundary.
+    Gia_ManIncrementTravId( p );
+    for ( i = 0; i < nSelect; i++ )
+    {
+        iPos = (int)(((long long)(2 * i + 1) *
+            Vec_IntSize(vBoundary)) / (2 * nSelect));
+        iObj = Vec_IntEntry( vBoundary,
+            Abc_MinInt(iPos, Vec_IntSize(vBoundary) - 1) );
+        if ( Gia_ObjIsTravIdCurrentId(p, iObj) )
+            continue;
+        Gia_ObjSetTravIdCurrentId( p, iObj );
+        Vec_IntPush( vFront, iObj );
+        if ( Vec_IntFind(vPool, iObj) < 0 )
+        {
+            Vec_IntPush( vPool, iObj );
+            if ( ++nAdded == nAddMax )
+                goto cleanup;
+        }
+    }
+    for ( d = 1; Vec_IntSize(vFront) &&
+         (!nDepthMax || d <= nDepthMax); d++ )
+    {
+        Vec_IntClear( vNext );
+        Vec_IntForEachEntry( vFront, iObj, i )
+        {
+            pObj = Gia_ManObj( p, iObj );
+            if ( !Gia_ObjIsAnd(pObj) )
+                continue;
+            for ( k = 0; k < 2; k++ )
+            {
+                iFan = k ? Gia_ObjFaninId1p(p, pObj) :
+                           Gia_ObjFaninId0p(p, pObj);
+                if ( Gia_ObjIsTravIdCurrentId(p, iFan) )
+                    continue;
+                Gia_ObjSetTravIdCurrentId( p, iFan );
+                pFan = Gia_ManObj( p, iFan );
+                if ( iFan != 0 && iFan < iTarget && !pMffc[iFan] &&
+                     Gia_ObjIsCand(pFan) && Vec_IntFind(vPool, iFan) < 0 )
+                {
+                    Vec_IntPush( vPool, iFan );
+                    if ( ++nAdded == nAddMax )
+                        goto cleanup;
+                }
+                if ( Gia_ObjIsAnd(pFan) )
+                    Vec_IntPush( vNext, iFan );
+            }
+        }
+        ABC_SWAP( Vec_Int_t, *vFront, *vNext );
+    }
+cleanup:
+    Vec_IntFree( vBoundary );
+    Vec_IntFree( vFront );
+    Vec_IntFree( vNext );
+}
+
+// Nearby earlier objects often represent reconvergent side logic which is
+// absent from the target TFI.  Earlier topological IDs cannot depend on the
+// target, so excluding the target MFFC is sufficient to keep these divisors
+// combinationally legal.  Bound the scan to keep the per-root cost predictable.
+static void Cec_TranAppendLocalDivs( Gia_Man_t * p, int iTarget,
+    int nAddMax, char const * pMffc, Vec_Int_t * vPool )
+{
+    Gia_Obj_t * pObj;
+    int iObj, nAdded = 0, nScanned = 0;
+    int nScanMax = 64 * nAddMax;
+    for ( iObj = iTarget - 1; iObj > 0 && nAdded < nAddMax &&
+          nScanned < nScanMax; iObj--, nScanned++ )
+    {
+        pObj = Gia_ManObj( p, iObj );
+        if ( pMffc[iObj] || !Gia_ObjIsCand(pObj) ||
+             Vec_IntFind(vPool, iObj) >= 0 )
+            continue;
+        Vec_IntPush( vPool, iObj );
+        nAdded++;
+    }
+}
+
+// Uniform samples over the whole earlier topological prefix provide a cheap
+// deterministic analogue of random global divisors.  The later simulation
+// ranking decides which sampled signals actually enter B.
+static void Cec_TranAppendGlobalDivs( Gia_Man_t * p, int iTarget,
+    int nAddMax, char const * pMffc, Vec_Int_t * vPool )
+{
+    Gia_Obj_t * pObj;
+    int i, iObj, nAdded = 0;
+    int nTrials = Abc_MinInt( iTarget - 1, 64 * nAddMax );
+    if ( nTrials <= 0 )
+        return;
+    for ( i = 0; i < nTrials && nAdded < nAddMax; i++ )
+    {
+        iObj = 1 + (int)(((long long)(2 * i + 1) *
+            (iTarget - 1)) / (2 * nTrials));
+        iObj = Abc_MinInt( iObj, iTarget - 1 );
+        pObj = Gia_ManObj( p, iObj );
+        if ( pMffc[iObj] || !Gia_ObjIsCand(pObj) ||
+             Vec_IntFind(vPool, iObj) >= 0 )
+            continue;
+        Vec_IntPush( vPool, iObj );
+        nAdded++;
+    }
+}
+
+// The first B entries remain the legacy target-TFI BFS pool.  Extra capacity
+// is divided among independent structural routes instead of extending only
+// that BFS order.  Route boundaries let later attempts construct from one
+// source at a time before falling back to a mixed information-ranked pool.
+static Vec_Int_t * Cec_TranCollectDivReservoir( Gia_Man_t * p, int iTarget,
+    int nDepthMax, int nPoolMax, char * pMffc, Vec_Int_t * vMffc,
+    int RouteBeg[4], int RouteEnd[4] )
+{
+    Vec_Int_t * vPool;
+    int nRouteMax;
+    RouteBeg[0] = 0;
+    if ( nPoolMax <= 0 )
+    {
+        vPool = Cec_TranCollectDivPool( p, iTarget, nDepthMax, 0,
+            pMffc, vMffc );
+        RouteEnd[0] = Vec_IntSize(vPool);
+        RouteBeg[1] = RouteEnd[1] = RouteEnd[0];
+        RouteBeg[2] = RouteEnd[2] = RouteEnd[0];
+        RouteBeg[3] = RouteEnd[3] = RouteEnd[0];
+        return vPool;
+    }
+    nRouteMax = 2 * nPoolMax;
+    vPool = Cec_TranCollectDivPool( p, iTarget, nDepthMax, nRouteMax,
+        pMffc, vMffc );
+    RouteEnd[0] = Vec_IntSize(vPool);
+    RouteBeg[1] = RouteEnd[0];
+    Cec_TranAppendBoundaryDivs( p, iTarget, nDepthMax, nRouteMax,
+        pMffc, vMffc, vPool );
+    RouteEnd[1] = Vec_IntSize(vPool);
+    RouteBeg[2] = RouteEnd[1];
+    Cec_TranAppendLocalDivs( p, iTarget, nRouteMax, pMffc, vPool );
+    RouteEnd[2] = Vec_IntSize(vPool);
+    RouteBeg[3] = RouteEnd[2];
+    Cec_TranAppendGlobalDivs( p, iTarget, nRouteMax, pMffc, vPool );
+    RouteEnd[3] = Vec_IntSize(vPool);
+    return vPool;
+}
+
 // Rank a physical divisor by the number of opposite-label simulation pairs
 // it separates.  If O0/O1 and I0/I1 are the off/on-set counts in the two
 // divisor cofactors, O0*I1 + O1*I0 is exactly the number of off/on pairs cut
@@ -4187,22 +4393,48 @@ static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
     return pRanks;
 }
 
+// A zero-gate existing replacement does not need the resub cover engine.
+// Scan all structural routes for an exact full-signature match and return the
+// first local/diverse/global divisor (including complemented phase).  This is
+// both broader than selecting 2B first and much cheaper than initializing the
+// unate/pair machinery for a direct literal answer.
+static int Cec_TranFindDirectDiv( Cec_TranSim_t * pSim,
+    Cec_TranRoot_t const * pRoot, Vec_Int_t * vReservoir,
+    Cec_TranCand_t * pCand )
+{
+    int i, f, iObj;
+    Vec_IntForEachEntry( vReservoir, iObj, i )
+        for ( f = 0; f < 2; f++ )
+            if ( Cec_TranSigMatchesRoot(pSim, pRoot->iObj,
+                    Abc_Var2Lit(iObj, f), NULL) )
+            {
+                *pCand = Cec_TranCandCreateLiteral( pRoot->iObj,
+                    Abc_Var2Lit(iObj, f), pRoot->nMffc,
+                    CEC_TRAN_CAND_EXIST, 1 );
+                pCand->Gain = pRoot->nMffc;
+                return 1;
+            }
+    return 0;
+}
+
 // Pool zero is byte-for-byte the former BFS prefix, preserving the strong
-// first candidate.  Later pools retain a small set of informative prefix
-// anchors and fill the remaining slots with high-separation reservoir nodes
-// not used by earlier pools.  With a 4B reservoir, the first three B-sized
-// pools are mostly disjoint without introducing randomness or another graph
-// traversal.
+// first candidate.  Pools one through three first draw from boundary, local,
+// and global routes respectively.  Later pools mix all unused routes.  Every
+// alternate keeps a small set of informative BFS anchors so the dependency
+// engine can combine new information with strong local divisors.
 static Vec_Int_t * Cec_TranBuildDivPool( Vec_Int_t * vReservoir,
     int nPoolMax, int iPool, Cec_TranDivRank_t const * pRanks,
-    unsigned char * pUseCount )
+    unsigned char * pUseCount, int const RouteBeg[4],
+    int const RouteEnd[4] )
 {
     Vec_Int_t * vPool;
     char * pPicked;
-    int i, iPos, nBase, nAnchors;
-    nBase = nPoolMax ? Abc_MinInt(nPoolMax, Vec_IntSize(vReservoir)) :
+    int i, iPos, iRoute, nBase, nPoolSize, nAnchors;
+    nBase = nPoolMax ? Abc_MinInt(nPoolMax, RouteEnd[0]) : RouteEnd[0];
+    nPoolSize = nPoolMax ?
+        Abc_MinInt(nPoolMax, Vec_IntSize(vReservoir)) :
         Vec_IntSize(vReservoir);
-    vPool = Vec_IntAlloc( nBase );
+    vPool = Vec_IntAlloc( nPoolSize );
     if ( iPool == 0 || pRanks == NULL )
     {
         for ( i = 0; i < nBase; i++ )
@@ -4214,7 +4446,8 @@ static Vec_Int_t * Cec_TranBuildDivPool( Vec_Int_t * vReservoir,
         return vPool;
     }
     pPicked = ABC_CALLOC( char, Vec_IntSize(vReservoir) );
-    nAnchors = Abc_MaxInt( 1, nBase / 4 );
+    nAnchors = Abc_MinInt( nBase,
+        Abc_MaxInt(1, nPoolSize / 4) );
     // Informative anchors from the original BFS pool retain locality.
     for ( i = 0; i < Vec_IntSize(vReservoir) &&
          Vec_IntSize(vPool) < nAnchors; i++ )
@@ -4225,10 +4458,22 @@ static Vec_Int_t * Cec_TranBuildDivPool( Vec_Int_t * vReservoir,
         Vec_IntPush( vPool, Vec_IntEntry(vReservoir, iPos) );
         pPicked[iPos] = 1;
     }
-    // Prefer informative nodes outside the BFS prefix which have not yet
-    // appeared in any pool.
+    // Give each structural route one independent choice-zero construction.
+    iRoute = iPool >= 1 && iPool <= 3 ? iPool : -1;
+    for ( i = 0; iRoute >= 0 && i < Vec_IntSize(vReservoir) &&
+         Vec_IntSize(vPool) < nPoolSize; i++ )
+    {
+        iPos = pRanks[i].iPos;
+        if ( iPos < RouteBeg[iRoute] || iPos >= RouteEnd[iRoute] ||
+             pPicked[iPos] || pUseCount[iPos] )
+            continue;
+        Vec_IntPush( vPool, Vec_IntEntry(vReservoir, iPos) );
+        pPicked[iPos] = 1;
+    }
+    // Fill from informative nodes outside the BFS prefix which have not yet
+    // appeared in any pool.  This also implements the mixed route.
     for ( i = 0; i < Vec_IntSize(vReservoir) &&
-         Vec_IntSize(vPool) < nBase; i++ )
+         Vec_IntSize(vPool) < nPoolSize; i++ )
     {
         iPos = pRanks[i].iPos;
         if ( iPos < nBase || pPicked[iPos] || pUseCount[iPos] )
@@ -4239,7 +4484,7 @@ static Vec_Int_t * Cec_TranBuildDivPool( Vec_Int_t * vReservoir,
     // Reservoirs smaller than the requested number of alternatives may need
     // controlled reuse; keep the same information ordering for that tail.
     for ( i = 0; i < Vec_IntSize(vReservoir) &&
-         Vec_IntSize(vPool) < nBase; i++ )
+         Vec_IntSize(vPool) < nPoolSize; i++ )
     {
         iPos = pRanks[i].iPos;
         if ( pPicked[iPos] )
@@ -4385,7 +4630,8 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
         sizeof(pScratch->fAttemptUniqueLast) );
     nRecipes = Abc_ResubComputeFunctions( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit,
-        Vec_IntSize(vPool), nChoices, iChoiceStart, pPars->fUseResubZero,
+        Vec_IntSize(vPool), nChoices, iChoiceStart,
+        pPars->fUseResubZero,
         0, 0, pPars->fVerbose,
         pScratch->vRecipes, &pScratch->nAttemptsLast,
         pPars->fProfile ? &pScratch->timeInitLast : NULL,
@@ -4463,6 +4709,41 @@ static void Cec_TranCollectGlobalExact( Cec_TranSim_t * pSim,
     }
 }
 
+// Return one exact earlier-object replacement without allocating a candidate
+// vector.  The hash index makes this a narrow signature-bucket lookup; the
+// full signature check protects against hash collisions.  It is used only
+// after both the legacy constructed pool and the local multi-route scan miss.
+static int Cec_TranFindGlobalDirect( Cec_TranSim_t * pSim,
+    Cec_TranRoot_t const * pRoot, Cec_TranSigEnt_t * pSigIndex,
+    int nSigEntries, char const * pMffc, Cec_TranCand_t * pCand )
+{
+    word TargetHash;
+    int iBeg, iEnd, i, iLit, iObj;
+    if ( pSigIndex == NULL )
+        return 0;
+    TargetHash = Cec_TranLitHash( pSim,
+        Abc_Var2Lit(pRoot->iObj, 0) );
+    iBeg = Cec_TranSigIndexLowerBound( pSigIndex, nSigEntries,
+        TargetHash );
+    iEnd = Cec_TranSigIndexUpperBound( pSigIndex, iBeg, nSigEntries,
+        TargetHash );
+    i = Cec_TranSigIndexFirstEarlier( pSigIndex, iBeg, iEnd,
+        pRoot->iObj );
+    for ( ; i < iEnd; i++ )
+    {
+        iLit = pSigIndex[i].iLit;
+        iObj = Abc_Lit2Var( iLit );
+        if ( iObj == 0 || pMffc[iObj] ||
+             !Cec_TranSigMatchesRoot(pSim, pRoot->iObj, iLit, NULL) )
+            continue;
+        *pCand = Cec_TranCandCreateLiteral( pRoot->iObj, iLit,
+            pRoot->nMffc, CEC_TRAN_CAND_EXIST, 1 );
+        pCand->Gain = pRoot->nMffc;
+        return 1;
+    }
+    return 0;
+}
+
 static void Cec_TranCollectStrictExisting( Gia_Man_t * p,
     Cec_TranSim_t * pSim, Cec_ParTran_t * pPars,
     Cec_TranRoot_t * pRoots, int nRoots, Cec_TranSigEnt_t * pSigIndex,
@@ -4527,41 +4808,53 @@ static void Cec_TranCollectStrictExisting( Gia_Man_t * p,
 static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
     Cec_TranSim_t * pSim, Cec_ParTran_t * pPars,
     Cec_TranRoot_t * pRoots, int nRoots, int iWave,
+    Cec_TranSigEnt_t * pSigIndex, int nSigEntries,
     Cec_TranCandVec_t const * pTried, char const * pSolved,
+    char * pHadRecipe,
     char * pMffc, Vec_Int_t * vMffc,
     Cec_TranCandVec_t const * pExist, Cec_TranCandVec_t * pConstr,
     Cec_TranDepScratch_t * pDep, Cec_TranDiscStat_t * pStat,
     Cec_TranProf_t * pProf )
 {
-    int r, k, iPool, iAttempt, iChoiceStart, iConstrStart;
-    int nDepFound, nDepFoundTotal;
+    int r, k, iPool, iPoolBuild, iAttempt, iChoiceStart, iConstrStart;
+    int nDepFound, nDepFoundBefore, nDepFoundTotal;
     int nAttemptsRoot;
-    int nAttemptBudget, nCallChoices, nReservoirMax, fCanDiversify;
+    int nAttemptBudget, nCallChoices, nPoolThis, fCanDiversify;
+    int fDirect, fGlobalDirect, fKeepLegacyChoices;
     int fFirstPoolMiss;
+    int RouteBeg[4], RouteEnd[4];
     Vec_Int_t * vReservoir, * vPool;
     Cec_TranDivRank_t * pRanks;
     unsigned char * pUseCount;
     Cec_TranCand_t Cand, Cands[CEC_TRAN_RESUB_CHOICES_MAX];
     abctime clk, timePart;
     assert( iWave >= 0 && iWave < 64 );
+    // Exact same-pool portfolios remain worthwhile when the whole q frontier
+    // is small (for example control-heavy arbitrated/loop designs).  On large
+    // frontiers their proof conversion collapses while shared-closure cost
+    // grows sharply, so reserve the budget for previously unsolved roots.
+    fKeepLegacyChoices = (long long)nRoots * pPars->nRootConstrTop <= 20000;
     for ( r = 0; r < nRoots; r++ )
     {
         if ( pSolved && pSolved[pRoots[r].iObj] )
+            continue;
+        if ( iWave > 0 && pHadRecipe[pRoots[r].iObj] )
             continue;
         if ( pRoots[r].nMffc < pPars->nGainMin )
             continue;
         iConstrStart = pConstr->nSize;
         clk = Abc_Clock();
-        nReservoirMax = pPars->nConstrBaseMax ?
-            4 * pPars->nConstrBaseMax : 0;
-        vReservoir = Cec_TranCollectDivPool( p, pRoots[r].iObj,
-            pPars->nConstrMax, nReservoirMax, pMffc, vMffc );
+        vReservoir = Cec_TranCollectDivReservoir( p, pRoots[r].iObj,
+            pPars->nConstrMax, pPars->nConstrBaseMax, pMffc, vMffc,
+            RouteBeg, RouteEnd );
         timePart = Abc_Clock() - clk;
         pProf->timeSpec += timePart;
         pProf->timeRootDivPool += timePart;
         pProf->timeRootWaveConstruct[iWave] += timePart;
         pProf->nRootDivPoolCalls++;
         pProf->nRootDivPoolNodes += Vec_IntSize(vReservoir);
+        for ( k = 0; k < 4; k++ )
+            pProf->nRootDivRouteNodes[k] += RouteEnd[k] - RouteBeg[k];
         pStat->nConstructed++;
         pStat->nSigChecks++;
 
@@ -4571,8 +4864,10 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         // succeeds.  When it fails, redirect the remaining q-search budget to
         // independent choice-zero searches on diverse pools.  q=1 has no
         // spare budget, so it gets at most two cheap failure-only rescues.
-        nAttemptBudget = pPars->nRootConstrTop == 1 ? 3 :
-            pPars->nRootConstrTop;
+        nAttemptBudget = pPars->nRootConstrTop == 1 ||
+            !fKeepLegacyChoices ? 3 :
+            Abc_MinInt( CEC_TRAN_RESUB_CHOICES_MAX,
+                2 * pPars->nRootConstrTop + 1 );
         pRanks = NULL;
         pUseCount = ABC_CALLOC( unsigned char, Vec_IntSize(vReservoir) );
         nDepFoundTotal = 0;
@@ -4581,6 +4876,46 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         while ( nAttemptsRoot < nAttemptBudget &&
                 nDepFoundTotal < pPars->nRootConstrTop )
         {
+            if ( fFirstPoolMiss && nAttemptsRoot == 1 )
+            {
+                // Route one is a full-reservoir direct literal scan.  Count
+                // it as one rescue opportunity, but not as a dependency
+                // synthesis attempt because no cover search is performed.
+                nAttemptsRoot++;
+                pProf->nRootDivAltCalls++;
+                pProf->nRootDivRouteCalls[1]++;
+                fDirect = Cec_TranFindDirectDiv(pSim, pRoots + r,
+                    vReservoir, &Cand);
+                fGlobalDirect = !fDirect &&
+                    Cec_TranFindGlobalDirect(pSim, pRoots + r,
+                        pSigIndex, nSigEntries, pMffc, &Cand);
+                if ( fDirect || fGlobalDirect )
+                {
+                    Cand.nResubRank = 2;
+                    Cand.fDivRescue = 1;
+                    Cand.fDivGlobal = fGlobalDirect;
+                    Cand.fPrimaryFrontier = 1;
+                    Cand.nWave = iWave;
+                    nDepFoundTotal++;
+                    pProf->nRootDivAltRecipes++;
+                    pProf->nRootDivGlobalRecipes += fGlobalDirect;
+                    pProf->nRootDivRouteRecipes[1]++;
+                    pProf->nRootResubGenerated[1]++;
+                    if ( !Cec_TranCandVecContains(pTried, &Cand) &&
+                         !Cec_TranCandVecContains(pExist, &Cand) &&
+                         !Cec_TranCandVecContainsRange(pConstr,
+                             iConstrStart, &Cand) )
+                    {
+                        pStat->nSigMatched++;
+                        Cec_TranCandVecPush( pConstr, Cand );
+                    }
+                    else
+                        pStat->nSigRejected++;
+                    if ( !fKeepLegacyChoices )
+                        break;
+                }
+                continue;
+            }
             if ( nAttemptsRoot == 0 )
             {
                 iPool = 0;
@@ -4591,6 +4926,8 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
             {
                 // Continue exactly where the legacy fixed-pool search left
                 // off.  This retains its useful q>1 candidates unchanged.
+                if ( nAttemptsRoot >= pPars->nRootConstrTop )
+                    break;
                 iPool = 0;
                 iChoiceStart = nAttemptsRoot;
                 nCallChoices = pPars->nRootConstrTop - nAttemptsRoot;
@@ -4607,8 +4944,13 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
             if ( iPool > 0 && pRanks == NULL )
                 pRanks = Cec_TranRankDivReservoir( pSim,
                     pRoots[r].iObj, vReservoir );
+            // After the direct scan misses, spend one ordinary-B constructed
+            // attempt on the MFFC boundary route.
+            iPoolBuild = iPool ? iPool - 1 : 0;
+            nPoolThis = pPars->nConstrBaseMax;
             vPool = Cec_TranBuildDivPool( vReservoir,
-                pPars->nConstrBaseMax, iPool, pRanks, pUseCount );
+                nPoolThis, iPoolBuild, pRanks, pUseCount,
+                RouteBeg, RouteEnd );
             timePart = Abc_Clock() - clk;
             pProf->timeSpec += timePart;
             pProf->timeRootDivPool += timePart;
@@ -4622,7 +4964,8 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
             }
             clk = Abc_Clock();
             nDepFound = Cec_TranComputeDependencies(pSim, pPars,
-                pRoots + r, vPool, NULL, 1, Cands, nCallChoices,
+                pRoots + r, vPool, NULL, 1,
+                Cands, nCallChoices,
                 iChoiceStart, pDep);
             timePart = Abc_Clock() - clk;
             pProf->timeConstruct += timePart;
@@ -4645,10 +4988,14 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
             }
             nAttemptsRoot += pDep->nAttemptsLast;
             pProf->nRootDepAttempts += pDep->nAttemptsLast;
+            pProf->nRootDivRouteCalls[Abc_MinInt(iPool, 4)]++;
+            pProf->nRootDivRouteRecipes[Abc_MinInt(iPool, 4)] +=
+                nDepFound;
             if ( iPool > 0 )
                 pProf->nRootDivAltCalls++;
             if ( iAttempt == 0 )
                 fFirstPoolMiss = nDepFound == 0;
+            nDepFoundBefore = nDepFoundTotal;
             nDepFoundTotal += nDepFound;
             for ( k = 0; k < nDepFound; k++ )
             {
@@ -4659,6 +5006,8 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                     Cand.fDivRescue = 1;
                     pProf->nRootDivAltRecipes++;
                 }
+                Cand.fPrimaryFrontier = iAttempt == 0 ||
+                    (iAttempt <= 2 && nDepFoundBefore == 0 && k == 0);
                 Cand.nWave = iWave;
                 assert( Cand.nResubRank > 0 &&
                         Cand.nResubRank <= CEC_TRAN_RESUB_CHOICES_MAX );
@@ -4680,6 +5029,13 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                     pStat->nSigRejected++;
             }
             Vec_IntFree( vPool );
+            // A successful legacy pool already supplied the strongest
+            // candidate for this root.  Spend all additional q budget only
+            // on roots which missed that frontier instead of enumerating
+            // low-yield same-pool alternatives on the solved 35%.
+            if ( iAttempt == 0 && nDepFound > 0 &&
+                 !fKeepLegacyChoices )
+                break;
         }
         assert( nDepFoundTotal <= CEC_TRAN_RESUB_CHOICES_MAX );
         pProf->nRootDepYield[nDepFoundTotal]++;
@@ -4691,6 +5047,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         pProf->nRootDepFound += nDepFoundTotal > 0;
         pProf->nRootDepRecipes += nDepFoundTotal;
         pProf->nRootDivAltRescues += fFirstPoolMiss && nDepFoundTotal > 0;
+        pHadRecipe[pRoots[r].iObj] |= nDepFoundTotal > 0;
 
         // Each search is choice-ranked by the resub engine; the candidate
         // vector above also removes duplicates across split/pool calls.  Keep
@@ -4708,6 +5065,7 @@ static void Cec_TranCollectRootPhase( Gia_Man_t * p,
     Cec_TranRoot_t * pRoots, int nRoots, int iWave,
     Cec_TranSigEnt_t * pSigIndex, int nSigEntries,
     Cec_TranCandVec_t const * pTried, char const * pSolved,
+    char * pHadRecipe,
     char * pMffc, Vec_Int_t * vMffc, int fExistingPhase,
     Cec_TranCandVec_t * pExist,
     Cec_TranCandVec_t * pConstr, Cec_TranCandVec_t * pAll,
@@ -4724,8 +5082,8 @@ static void Cec_TranCollectRootPhase( Gia_Man_t * p,
             pExist, pStat, pProf );
     if ( pPars->fUseConstr )
         Cec_TranCollectStrictConstructed( p, pSim, pPars, pRoots, nRoots, iWave,
-            pTried, pSolved, pMffc, vMffc, pExist, pConstr, pDep,
-            pStat, pProf );
+            pSigIndex, nSigEntries, pTried, pSolved, pHadRecipe,
+            pMffc, vMffc, pExist, pConstr, pDep, pStat, pProf );
     for ( i = 0; i < pExist->nSize; i++ )
         Cec_TranCandVecPush( pAll, pExist->pArray[i] );
     for ( i = 0; i < pConstr->nSize; i++ )
@@ -4765,7 +5123,8 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
     pStat->nSigChecks++;
     clk = Abc_Clock();
     nDepFound = Cec_TranComputeDependencies(pSim, pPars, pRoot,
-        vPool, pCare, 0, Cands, pPars->nRootConstrTop, 0, pDep);
+        vPool, pCare, 0,
+        Cands, pPars->nRootConstrTop, 0, pDep);
     for ( k = 0; k < nDepFound; k++ )
     {
         Cec_TranCandVec_t * pDest;
@@ -4808,7 +5167,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     Gia_Man_t * p;
     Gia_Obj_t * pObj;
     int * pUnknown;
-    char * pRootSolved;
+    char * pRootSolved, * pRootHadRecipe;
     int nRoots = 0, nSigEntries = 0;
     int nPositive = 0, nGainRejected = 0, nUnproved = 0;
     int nTried = 0, nAccepted = 0, nRound = 0;
@@ -4857,6 +5216,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     pDb = Cec_TranPatDbStart( p, pPars->nCexMax );
     pUnknown = ABC_CALLOC( int, 2 * Gia_ManObjNum(p) );
     pRootSolved = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    pRootHadRecipe = ABC_CALLOC( char, Gia_ManObjNum(p) );
     do
     {
         Cec_TranCand_t Cand, Temp;
@@ -4925,17 +5285,13 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         nSigEntries = 0;
         fNeedSigIndex = pPars->fUseExisting &&
             pPars->nProofScope != CEC_TRAN_PROOF_ROOT;
-        if ( pPars->fUseExisting &&
-             pPars->nProofScope == CEC_TRAN_PROOF_ROOT &&
-             !fRootExistingDone )
-            for ( i = 0; i < nRoots &&
-                 (!pPars->nRootBatch || i < pPars->nRootBatch); i++ )
-                if ( !pRootSolved[pRoots[i].iObj] &&
-                     pRoots[i].nMffc >= pPars->nHardMffc )
-                {
-                    fNeedSigIndex = 1;
-                    break;
-                }
+        // Root construction uses the same index as a failure-only direct
+        // divisor route.  Build it once in the initial root phase; later CEX
+        // waves keep their narrower multi-route reservoirs.
+        if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT &&
+             !fRootExistingDone &&
+             (pPars->fUseExisting || pPars->fUseConstr) )
+            fNeedSigIndex = 1;
         if ( fNeedSigIndex )
             pSigIndex = Cec_TranBuildSigIndex( pSim, &nSigEntries );
         if ( pPars->fProfile )
@@ -4954,7 +5310,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 pPars->nRootBatch ? Abc_MinInt(nRoots, pPars->nRootBatch) : nRoots,
                 nRound,
                 pSigIndex, nSigEntries, &vTried, pRootSolved,
-                pMffc, vMffc, fRootExistingPhase,
+                pRootHadRecipe, pMffc, vMffc, fRootExistingPhase,
                 &qStrictExist, &qStrictConstr,
                 &qStrictAll, &DepScratch, &Disc, &Prof );
             if ( fRootExistingPhase )
@@ -4970,10 +5326,15 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 // Failure-pool candidates run only afterward, so they cannot
                 // perturb the shared proof batch which established the q=1/q3
                 // baseline on roots that already had recipes.
-                nRootNormalLayers = Abc_MinInt( nRootNormalLayers,
-                    pPars->nRootConstrTop );
-                nRootRescueLayers = Abc_MinInt( nRootRescueLayers,
-                    pPars->nRootConstrTop );
+                {
+                    int nLayerTop =
+                        (long long)nRoots * pPars->nRootConstrTop <= 20000 ?
+                            pPars->nRootConstrTop : 1;
+                    nRootNormalLayers = Abc_MinInt( nRootNormalLayers,
+                        nLayerTop );
+                    nRootRescueLayers = Abc_MinInt( nRootRescueLayers,
+                        nLayerTop );
+                }
                 // Repeat both layer classes as an audit pass.  Candidates
                 // already submitted are removed by vTried; only alternatives
                 // skipped after another candidate solved their root remain.
@@ -5211,6 +5572,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         Prof.nRootResubSubmitted[Cand.nResubRank - 1]++;
                     if ( Cand.fDivRescue )
                         Prof.nRootDivAltSubmitted++;
+                    if ( Cand.fDivGlobal )
+                        Prof.nRootDivGlobalSubmitted++;
                     if ( Cand.nSchedRank &&
                          Cand.nSchedRank <= CEC_TRAN_ROOT_ALT_PROFILE_MAX )
                         Prof.nRootLayerSubmitted[Cand.nSchedRank - 1]++;
@@ -5266,6 +5629,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         Prof.nRootWaveProved[nRound]++;
                         if ( Batch.pArray[iBatch].fDivRescue )
                             Prof.nRootDivAltProved++;
+                        if ( Batch.pArray[iBatch].fDivGlobal )
+                            Prof.nRootDivGlobalProved++;
                         if ( Batch.pArray[iBatch].nResubRank )
                         {
                             int iRank = Batch.pArray[iBatch].nResubRank - 1;
@@ -5573,6 +5938,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         Prof.nRootResubSelected[pSelected->nResubRank - 1]++;
                     if ( pSelected->fDivRescue )
                         Prof.nRootDivAltSelected++;
+                    if ( pSelected->fDivGlobal )
+                        Prof.nRootDivGlobalSelected++;
                     if ( pSelected->nSchedRank &&
                          pSelected->nSchedRank <= CEC_TRAN_ROOT_ALT_PROFILE_MAX )
                         Prof.nRootLayerSelected[pSelected->nSchedRank - 1]++;
@@ -5734,6 +6101,7 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
     Cec_TranCandVecStop( &vTried );
     ABC_FREE( pUnknown );
     ABC_FREE( pRootSolved );
+    ABC_FREE( pRootHadRecipe );
     Cec_TranPatDbStop( pDb );
     return p;
 }
