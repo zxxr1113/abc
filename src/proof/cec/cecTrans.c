@@ -24,7 +24,13 @@
 
 ABC_NAMESPACE_IMPL_START
 
-enum { CEC_TRAN_ROOT_ALT_PROFILE_MAX = CEC_TRAN_RESUB_CHOICES_MAX + 3 };
+enum
+{
+    CEC_TRAN_CAND_CONST = 0,
+    CEC_TRAN_CAND_EXIST = 1,
+    CEC_TRAN_CAND_CONSTR = 2,
+    CEC_TRAN_ROOT_ALT_PROFILE_MAX = CEC_TRAN_RESUB_CHOICES_MAX + 3
+};
 
 extern void Abc_ResubPrepareManager( int nWords );
 extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
@@ -191,6 +197,15 @@ struct Cec_TranProf_t_
     long long nRootBundleRegGain;
     long long nRootKindSubsetAndGain[8];
     long long nRootKindSubsetRegGain[8];
+    // Exact stage-by-kind contribution.  Stage 0 is the arbitrary-state
+    // combinational certificate lane; stage 1 is the additional reduction
+    // enabled only by sequential correspondence.  Each eight-entry table is
+    // the characteristic function of the three candidate kinds and is used
+    // to report exact Shapley gain despite cleanup/sharing interactions.
+    long long nStageKindSubsetAndGain[2][8];
+    long long nStageKindSubsetRegGain[2][8];
+    long long nStageConstructProvedGates[2];
+    long long nStageConstructSelectedGates[2];
     long long nRootRank1AndGain;
     long long nRootRank1RegGain;
     long long nRootWave1AndGain;
@@ -209,6 +224,10 @@ struct Cec_TranProf_t_
     int       nRootBundlePrimaryWins;
     int       nRootBundleGainWins;
     int       nRootBundlePortfolioTies;
+    int       nStageKindProved[2][3];
+    int       nStageKindSelected[2][3];
+    int       nStageConstructProvedMaxGates[2];
+    int       nStageConstructSelectedMaxGates[2];
     int     nSimCalls;
     int     nCareCalls;
     int     nSpecCalls;
@@ -575,6 +594,39 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         p->nRootWave1RegGain,
         p->nRootKindSubsetRegGain[7] - p->nRootWave1RegGain,
         Cec_TranTimeSec(p->timeRootKindContribution) );
+    for ( i = 0; i < 2; i++ )
+    {
+        long long nAndBefore = i ? p->nStageAndAfterComb : p->nStageAndBefore;
+        long long nAndAfter = i ? p->nStageAndAfterSeq : p->nStageAndAfterComb;
+        long long nRegBefore = i ? p->nStageRegAfterComb : p->nStageRegBefore;
+        long long nRegAfter = i ? p->nStageRegAfterSeq : p->nStageRegAfterComb;
+        Abc_Print( 1, "Sequential direct stage-kind profile: stage=%s counts=selected/proved gain=proved-portfolio-shapley constant=%d/%d and-gain=%.3f reg-gain=%.3f existing=%d/%d and-gain=%.3f reg-gain=%.3f constructed=%d/%d and-gain=%.3f reg-gain=%.3f constructed-gates=%lld/%lld max-gates=%d/%d; AND=%lld -> %lld gain=%lld; Reg=%lld -> %lld gain=%lld.\n",
+            i ? "seq" : "comb",
+            p->nStageKindSelected[i][CEC_TRAN_CAND_CONST],
+            p->nStageKindProved[i][CEC_TRAN_CAND_CONST],
+            Cec_TranThreeKindShapley(p->nStageKindSubsetAndGain[i],
+                CEC_TRAN_CAND_CONST),
+            Cec_TranThreeKindShapley(p->nStageKindSubsetRegGain[i],
+                CEC_TRAN_CAND_CONST),
+            p->nStageKindSelected[i][CEC_TRAN_CAND_EXIST],
+            p->nStageKindProved[i][CEC_TRAN_CAND_EXIST],
+            Cec_TranThreeKindShapley(p->nStageKindSubsetAndGain[i],
+                CEC_TRAN_CAND_EXIST),
+            Cec_TranThreeKindShapley(p->nStageKindSubsetRegGain[i],
+                CEC_TRAN_CAND_EXIST),
+            p->nStageKindSelected[i][CEC_TRAN_CAND_CONSTR],
+            p->nStageKindProved[i][CEC_TRAN_CAND_CONSTR],
+            Cec_TranThreeKindShapley(p->nStageKindSubsetAndGain[i],
+                CEC_TRAN_CAND_CONSTR),
+            Cec_TranThreeKindShapley(p->nStageKindSubsetRegGain[i],
+                CEC_TRAN_CAND_CONSTR),
+            p->nStageConstructSelectedGates[i],
+            p->nStageConstructProvedGates[i],
+            p->nStageConstructSelectedMaxGates[i],
+            p->nStageConstructProvedMaxGates[i],
+            nAndBefore, nAndAfter, nAndBefore - nAndAfter,
+            nRegBefore, nRegAfter, nRegBefore - nRegAfter );
+    }
     Abc_Print( 1, "Sequential direct existing-source profile: global=%d/%d leaveout-and-gain=%lld resub=%d/%d leaveout-and-gain=%lld.\n",
         p->nRootExistingGlobalSelected, p->nRootExistingGlobalProofs,
         p->nRootExistingGlobalLeaveoutAndGain,
@@ -1999,13 +2051,6 @@ static int Cec_TranTryCommit( Gia_Man_t ** pp, Cec_ParTran_t * pPars,
     (*pnAccepted)++;
     return 1;
 }
-
-enum
-{
-    CEC_TRAN_CAND_CONST = 0,
-    CEC_TRAN_CAND_EXIST = 1,
-    CEC_TRAN_CAND_CONSTR = 2
-};
 
 #define CEC_TRAN_RECIPE_NODES_MAX 20
 
@@ -3831,6 +3876,42 @@ static void Cec_TranRootContributionCost( Gia_Man_t * p,
     Vec_IntFree( vEnabled );
 }
 
+// Split the exact cleanup gain by both proof stage and candidate kind.  The
+// combinational characteristic function starts from the input network.  The
+// sequential characteristic function starts from the full combinational
+// bundle, so its Shapley values add up to the incremental temporal reduction
+// instead of double-counting reductions already certified combinationally.
+static void Cec_TranRootStageContributionCost( Gia_Man_t * p,
+    Cec_TranCand_t const * pCands, Vec_Int_t * vStatus, int nCands,
+    int nSelectMax, int nAndAfterComb, int nRegAfterComb,
+    long long pStageAndGain[2][8], long long pStageRegGain[2][8] )
+{
+    Vec_Int_t * vEnabled = Vec_IntStart( nCands );
+    int i, Mask, Stage, nAnds, nRegs;
+    memset( pStageAndGain, 0, 2 * 8 * sizeof(long long) );
+    memset( pStageRegGain, 0, 2 * 8 * sizeof(long long) );
+    for ( Stage = 0; Stage < 2; Stage++ )
+    for ( Mask = 1; Mask < 7; Mask++ )
+    {
+        for ( i = 0; i < nCands; i++ )
+        {
+            int fComb = pCands[i].nProofStage == 1;
+            int fKind = (Mask & (1 << pCands[i].nKind)) != 0;
+            Vec_IntWriteEntry( vEnabled, i, Vec_IntEntry(vStatus, i) &&
+                (Stage == 0 ? (fComb && fKind) : (fComb || fKind)) );
+        }
+        Cec_TranRootBundleCost( p, pCands, vEnabled, nCands,
+            nSelectMax, &nAnds, &nRegs );
+        pStageAndGain[Stage][Mask] =
+            (Stage ? nAndAfterComb : Gia_ManAndNum(p)) - nAnds;
+        pStageRegGain[Stage][Mask] =
+            (Stage ? nRegAfterComb : Gia_ManRegNum(p)) - nRegs;
+    }
+    pStageAndGain[0][7] = Gia_ManAndNum(p) - nAndAfterComb;
+    pStageRegGain[0][7] = Gia_ManRegNum(p) - nRegAfterComb;
+    Vec_IntFree( vEnabled );
+}
+
 // Select the best proved recipe for each target, then commit all selected
 // targets together.  Different proved alternatives of one target form one
 // equivalence class, so only the highest exact-gain representative is needed.
@@ -5648,8 +5729,23 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         pRootSolved[Batch.pArray[iBatch].iTarget] = 1;
                         if ( !Cec_TranCandVecContains(&qRootProved,
                                 Batch.pArray + iBatch) )
+                        {
+                            int iStage =
+                                Batch.pArray[iBatch].nProofStage == 1 ? 0 : 1;
+                            int iKind = Batch.pArray[iBatch].nKind;
+                            Prof.nStageKindProved[iStage][iKind]++;
+                            if ( iKind == CEC_TRAN_CAND_CONSTR )
+                            {
+                                Prof.nStageConstructProvedGates[iStage] +=
+                                    Batch.pArray[iBatch].nGates;
+                                Prof.nStageConstructProvedMaxGates[iStage] =
+                                    Abc_MaxInt(
+                                        Prof.nStageConstructProvedMaxGates[iStage],
+                                        Batch.pArray[iBatch].nGates );
+                            }
                             Cec_TranCandVecPush( &qRootProved,
                                 Batch.pArray[iBatch] );
+                        }
                     }
 
                 if ( pRootWaveFailed )
@@ -5890,6 +5986,8 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
             int iRootCand, iSelected, nCommitted;
             int nAndAfterComb, nRegAfterComb;
             int nKindAnds[8], nKindRegs[8];
+            long long nStageKindAndGain[2][8];
+            long long nStageKindRegGain[2][8];
             int nRank1Ands = -1, nRank1Regs = -1;
             int nWave1Ands = -1, nWave1Regs = -1;
             int nNoGlobalExistAnds = -1, nNoResubExistAnds = -1;
@@ -5917,6 +6015,10 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                     &nRank1Ands, &nRank1Regs,
                     &nWave1Ands, &nWave1Regs,
                     &nNoGlobalExistAnds, &nNoResubExistAnds );
+                Cec_TranRootStageContributionCost( p,
+                    qRootProved.pArray, vAllProved, qRootProved.nSize,
+                    nSelectMax, nAndAfterComb, nRegAfterComb,
+                    nStageKindAndGain, nStageKindRegGain );
                 Prof.timeRootKindContribution += Abc_Clock() - clkCand;
             }
             clkCand = Abc_Clock();
@@ -5933,6 +6035,17 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 {
                     Cec_TranCand_t const * pSelected =
                         qRootProved.pArray + iSelected;
+                    int iStage = pSelected->nProofStage == 1 ? 0 : 1;
+                    Prof.nStageKindSelected[iStage][pSelected->nKind]++;
+                    if ( pSelected->nKind == CEC_TRAN_CAND_CONSTR )
+                    {
+                        Prof.nStageConstructSelectedGates[iStage] +=
+                            pSelected->nGates;
+                        Prof.nStageConstructSelectedMaxGates[iStage] =
+                            Abc_MaxInt(
+                                Prof.nStageConstructSelectedMaxGates[iStage],
+                                pSelected->nGates );
+                    }
                     Prof.nRootWaveSelected[pSelected->nWave]++;
                     if ( pSelected->nResubRank )
                         Prof.nRootResubSelected[pSelected->nResubRank - 1]++;
@@ -5966,7 +6079,11 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 Prof.nRootBundleRegGain += nRegOld - Gia_ManRegNum(p);
                 if ( pPars->fProfile )
                 {
-                    int Mask;
+                    int Mask, Stage;
+                    nStageKindAndGain[1][7] =
+                        nAndAfterComb - Gia_ManAndNum(p);
+                    nStageKindRegGain[1][7] =
+                        nRegAfterComb - Gia_ManRegNum(p);
                     for ( Mask = 1; Mask < 7; Mask++ )
                     {
                         Prof.nRootKindSubsetAndGain[Mask] +=
@@ -5978,6 +6095,14 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                         nAndOld - Gia_ManAndNum(p);
                     Prof.nRootKindSubsetRegGain[7] +=
                         nRegOld - Gia_ManRegNum(p);
+                    for ( Stage = 0; Stage < 2; Stage++ )
+                    for ( Mask = 1; Mask < 8; Mask++ )
+                    {
+                        Prof.nStageKindSubsetAndGain[Stage][Mask] +=
+                            nStageKindAndGain[Stage][Mask];
+                        Prof.nStageKindSubsetRegGain[Stage][Mask] +=
+                            nStageKindRegGain[Stage][Mask];
+                    }
                     Prof.nRootRank1AndGain += nRank1Ands < 0 ?
                         nAndOld - Gia_ManAndNum(p) : nAndOld - nRank1Ands;
                     Prof.nRootRank1RegGain += nRank1Regs < 0 ?
