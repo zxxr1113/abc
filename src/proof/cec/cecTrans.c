@@ -44,7 +44,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
 {
     memset( p, 0, sizeof(Cec_ParTran_t) );
     p->nFrames     = 1;
-    p->nBTLimit    = 1000;
+    p->nBTLimit    = 100;
     p->nStepsMax   = -1;
     p->nCandMax    = 0;
     p->nDivsMax    = 16;
@@ -73,10 +73,10 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nRootBatch  = 0;
     p->nRootWaves  = 1;
     p->nRootConstrTop = 1;
-    // CBS is a fast all-state certificate lane, not the main sequential
-    // oracle.  Keep its per-cube budget separate and intentionally much lower
-    // than the scorr budget in nBTLimit.
-    p->nCombBTLimit = 64;
+    // Use the same per-obligation conflict budget for the combinational CBS
+    // certificate lane and the sequential scorr oracle by default.  The two
+    // budgets remain independently configurable through -b and -C.
+    p->nCombBTLimit = 100;
     p->nFreeWords  = 2;
     p->nFreeCexMax = 64;
     p->nScoutBTLimit = 100;
@@ -91,10 +91,10 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseDirect  = 1;
     p->fUseSodc    = 0;
     p->fUseExisting = 1;
-    // Zero-gate dependency recipes overlap heavily with constants and
-    // constructed recipes in root scope.  Keep this lane opt-in while the
-    // independent global-existing lookup remains controlled by -l.
-    p->fUseResubZero = 0;
+    // Include zero-gate dependency recipes by default.  The independent
+    // global-existing lookup remains controlled by -l, while -z can still be
+    // used to disable this resub-derived existing-recipe lane.
+    p->fUseResubZero = 1;
     p->fUseConstr  = 1;
     p->fUseCbsMultiLit = 1;
     // Prove only the best retained candidate per root in one shared closure.
