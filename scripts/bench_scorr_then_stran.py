@@ -50,6 +50,37 @@ DEFAULT_SCORR_ARGS = "-F 1 -C 200"
 DEFAULT_STRAN_ARGS = "-M 1 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8"
 NA = "N/A"
 
+STAGE_PROFILE_FIELDS = [
+    "stage_and_before", "stage_and_after_comb", "stage_and_after_scorr",
+    "comb_stage_and_gain", "seq_stage_and_gain",
+    "stage_reg_before", "stage_reg_after_comb", "stage_reg_after_scorr",
+    "comb_stage_reg_gain", "seq_stage_reg_gain",
+]
+for _stage in ("comb", "seq"):
+    for _kind in ("constant", "existing", "constructed"):
+        STAGE_PROFILE_FIELDS.extend([
+            f"{_stage}_{_kind}_selected",
+            f"{_stage}_{_kind}_proved",
+            f"{_stage}_{_kind}_and_gain",
+            f"{_stage}_{_kind}_reg_gain",
+        ])
+    STAGE_PROFILE_FIELDS.extend([
+        f"{_stage}_constructed_selected_gates",
+        f"{_stage}_constructed_proved_gates",
+        f"{_stage}_constructed_selected_max_gates",
+        f"{_stage}_constructed_proved_max_gates",
+        f"{_stage}_constant_ordered_and_gain",
+        f"{_stage}_constant_ordered_reg_gain",
+        f"{_stage}_existing_ordered_and_gain",
+        f"{_stage}_existing_ordered_reg_gain",
+        f"{_stage}_build_ordered_and_gain",
+        f"{_stage}_build_ordered_reg_gain",
+        f"{_stage}_build_only_and_gain",
+        f"{_stage}_build_only_reg_gain",
+        f"{_stage}_ordered_total_and_gain",
+        f"{_stage}_ordered_total_reg_gain",
+    ])
+
 
 def run_abc(abc: str, command: str, timeout: int) -> Tuple[str, str, int, int]:
     """Return stdout, stderr, return code, and wall time in milliseconds."""
@@ -96,6 +127,11 @@ def subtract(left: Any, right: Any) -> Any:
     return left - right if isinstance(left, int) and isinstance(right, int) else NA
 
 
+def profile_number(text: str) -> int | float:
+    """Parse an integer or decimal profiler token without losing exact counts."""
+    return float(text) if "." in text else int(text)
+
+
 def parse_stran(stdout: str) -> Dict[str, Any]:
     lines = [line for line in stdout.splitlines() if "Sequential transduction:" in line]
     line = lines[-1] if lines else ""
@@ -106,6 +142,108 @@ def parse_stran(stdout: str) -> Dict[str, Any]:
     ):
         match = re.search(rf"{re.escape(key)}=(\d+)", line)
         result[key.replace("-", "_")] = int(match.group(1)) if match else NA
+
+    # The legacy stage-kind line reports exact subset Shapley attribution.  It
+    # remains available for backward compatibility, while the ordered line
+    # below reports C, E-after-C, B-after-CE, and the Build-only counterfactual.
+    stage_records: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+    for stage_line in (
+        item for item in stdout.splitlines()
+        if "Sequential direct stage-kind profile:" in item
+    ):
+        stage_match = re.search(r"(?:^| )stage=(comb|seq)(?: |$)", stage_line)
+        if not stage_match:
+            continue
+        stage = stage_match.group(1)
+        record: Dict[str, Any] = {}
+        score = 0.0
+        for kind in ("constant", "existing", "constructed"):
+            match = re.search(
+                rf"(?:^| ){kind}=(\d+)/(\d+) "
+                rf"and-gain=(-?\d+(?:\.\d+)?) "
+                rf"reg-gain=(-?\d+(?:\.\d+)?)",
+                stage_line,
+            )
+            if not match:
+                continue
+            selected, proved = int(match.group(1)), int(match.group(2))
+            and_gain = profile_number(match.group(3))
+            reg_gain = profile_number(match.group(4))
+            record[f"{stage}_{kind}_selected"] = selected
+            record[f"{stage}_{kind}_proved"] = proved
+            record[f"{stage}_{kind}_and_gain"] = and_gain
+            record[f"{stage}_{kind}_reg_gain"] = reg_gain
+            score += selected + proved + abs(float(and_gain)) + abs(float(reg_gain))
+        gates = re.search(
+            r"constructed-gates=(\d+)/(\d+) max-gates=(\d+)/(\d+)",
+            stage_line,
+        )
+        if gates:
+            record[f"{stage}_constructed_selected_gates"] = int(gates.group(1))
+            record[f"{stage}_constructed_proved_gates"] = int(gates.group(2))
+            record[f"{stage}_constructed_selected_max_gates"] = int(gates.group(3))
+            record[f"{stage}_constructed_proved_max_gates"] = int(gates.group(4))
+        sizes = re.search(
+            r"; AND=(\d+) -> (\d+) gain=(-?\d+); "
+            r"Reg=(\d+) -> (\d+) gain=(-?\d+)",
+            stage_line,
+        )
+        if sizes:
+            and_before, and_after, and_gain = map(int, sizes.group(1, 2, 3))
+            reg_before, reg_after, reg_gain = map(int, sizes.group(4, 5, 6))
+            record[f"{stage}_stage_and_gain"] = and_gain
+            record[f"{stage}_stage_reg_gain"] = reg_gain
+            if stage == "comb":
+                record["stage_and_before"] = and_before
+                record["stage_and_after_comb"] = and_after
+                record["stage_reg_before"] = reg_before
+                record["stage_reg_after_comb"] = reg_after
+            else:
+                record["stage_and_after_comb"] = and_before
+                record["stage_and_after_scorr"] = and_after
+                record["stage_reg_after_comb"] = reg_before
+                record["stage_reg_after_scorr"] = reg_after
+            score += abs(and_gain) + abs(reg_gain)
+        if stage not in stage_records or score > stage_records[stage][0]:
+            stage_records[stage] = (score, record)
+    for _, record in stage_records.values():
+        result.update(record)
+
+    ordered_records: Dict[str, Tuple[float, Dict[str, Any]]] = {}
+    for ordered_line in (
+        item for item in stdout.splitlines()
+        if "Sequential direct stage-kind ordered profile:" in item
+    ):
+        stage_match = re.search(r"(?:^| )stage=(comb|seq)(?: |$)", ordered_line)
+        if not stage_match:
+            continue
+        stage = stage_match.group(1)
+        record = {}
+        score = 0.0
+        for label in ("constant", "existing", "build", "build-only"):
+            match = re.search(
+                rf"(?:^| ){label}-and-gain=(-?\d+) reg-gain=(-?\d+)",
+                ordered_line,
+            )
+            if not match:
+                continue
+            field = label.replace("-", "_")
+            and_gain, reg_gain = int(match.group(1)), int(match.group(2))
+            record[f"{stage}_{field}_ordered_and_gain" if label != "build-only"
+                   else f"{stage}_build_only_and_gain"] = and_gain
+            record[f"{stage}_{field}_ordered_reg_gain" if label != "build-only"
+                   else f"{stage}_build_only_reg_gain"] = reg_gain
+            score += abs(and_gain) + abs(reg_gain)
+        total = re.search(
+            r"; total-and-gain=(-?\d+) total-reg-gain=(-?\d+)", ordered_line)
+        if total:
+            record[f"{stage}_ordered_total_and_gain"] = int(total.group(1))
+            record[f"{stage}_ordered_total_reg_gain"] = int(total.group(2))
+            score += abs(int(total.group(1))) + abs(int(total.group(2)))
+        if stage not in ordered_records or score > ordered_records[stage][0]:
+            ordered_records[stage] = (score, record)
+    for _, record in ordered_records.values():
+        result.update(record)
     return result
 
 
@@ -114,12 +252,17 @@ def short_error(stdout: str, stderr: str) -> str:
     return text[:500] if text else NA
 
 
-def worker(task: Tuple[str, str, str, str, int, str, bool, str]) -> Dict[str, Any]:
-    aig_name, relative_name, abc, scorr_args, timeout, stran_args, keep_artifacts, artifacts_root = task
+def worker(
+    task: Tuple[str, str, str, str, int, str, bool, str, bool]
+) -> Dict[str, Any]:
+    (aig_name, relative_name, abc, scorr_args, timeout, stran_args,
+     keep_artifacts, artifacts_root, skip_dsec) = task
     source = Path(aig_name)
     source_and, source_latches = aig_stats(source)
     row: Dict[str, Any] = {
         "file": relative_name,
+        "scorr_args": scorr_args,
+        "stran_args": stran_args,
         "source_and": source_and,
         "source_latches": source_latches,
         "scorr_status": NA,
@@ -150,6 +293,7 @@ def worker(task: Tuple[str, str, str, str, int, str, bool, str]) -> Dict[str, An
         "accepted": NA,
         "error": NA,
     }
+    row.update({field: NA for field in STAGE_PROFILE_FIELDS})
     started = time.perf_counter()
     tag = hashlib.sha1(relative_name.encode("utf-8")).hexdigest()[:12]
     artifact_dir = Path(artifacts_root) / tag
@@ -202,17 +346,24 @@ def worker(task: Tuple[str, str, str, str, int, str, bool, str]) -> Dict[str, An
         row["total_and_reduction"] = subtract(source_and, row["stran_and"])
         row["total_latch_reduction"] = subtract(source_latches, row["stran_latches"])
 
-        dsec_out, dsec_err, dsec_rc, dsec_ms = run_abc(
-            abc, f"dsec {base} {final}", timeout
-        )
-        row["dsec_time_ms"] = dsec_ms
-        row["dsec_status"] = (
-            "PASS" if dsec_rc == 0 and "Networks are equivalent" in dsec_out
-            else "TIMEOUT" if dsec_rc == -1
-            else f"FAIL({dsec_rc})"
-        )
-        if row["dsec_status"] != "PASS":
-            row["error"] = f"dsec:{row['dsec_status']}: {short_error(dsec_out, dsec_err)}"
+        if skip_dsec:
+            row["dsec_status"] = "SKIP"
+            row["dsec_time_ms"] = 0
+        else:
+            dsec_out, dsec_err, dsec_rc, dsec_ms = run_abc(
+                abc, f"dsec {base} {final}", timeout
+            )
+            row["dsec_time_ms"] = dsec_ms
+            row["dsec_status"] = (
+                "PASS" if dsec_rc == 0 and "Networks are equivalent" in dsec_out
+                else "TIMEOUT" if dsec_rc == -1
+                else f"FAIL({dsec_rc})"
+            )
+            if row["dsec_status"] != "PASS":
+                row["error"] = (
+                    f"dsec:{row['dsec_status']}: "
+                    f"{short_error(dsec_out, dsec_err)}"
+                )
 
     finally:
         row["total_time_ms"] = int((time.perf_counter() - started) * 1000)
@@ -229,12 +380,14 @@ def worker(task: Tuple[str, str, str, str, int, str, bool, str]) -> Dict[str, An
 
 
 CSV_FIELDS = [
-    "file", "source_and", "source_latches", "scorr_status", "stran_status", "dsec_status",
+    "file", "scorr_args", "stran_args",
+    "source_and", "source_latches", "scorr_status", "stran_status", "dsec_status",
     "normalize_time_ms", "scorr_time_ms", "stran_time_ms", "dsec_time_ms", "total_time_ms",
     "scorr_and", "scorr_latches", "stran_and", "stran_latches",
     "scorr_and_reduction", "scorr_latch_reduction",
     "stran_extra_and_reduction", "stran_extra_latch_reduction",
     "total_and_reduction", "total_latch_reduction",
+    *STAGE_PROFILE_FIELDS,
     "victim_sets", "proofs", "sig_matched", "gain_positive", "gain_rejected",
     "retain_unproved", "final_unproved", "accepted", "error",
 ]
@@ -264,6 +417,10 @@ def main() -> None:
     parser.add_argument("--stran-args", default=DEFAULT_STRAN_ARGS)
     parser.add_argument("--keep-artifacts", action="store_true",
                         help="keep AIGs and logs next to the CSV, including failed cases")
+    parser.add_argument(
+        "--skip-dsec", action="store_true",
+        help="skip the final equivalence audit and write dsec_status=SKIP",
+    )
     args = parser.parse_args()
 
     aig_dir = Path(args.aig_dir).expanduser().resolve()
@@ -288,7 +445,8 @@ def main() -> None:
 
     tasks = [
         (str(path), str(path.relative_to(aig_dir)), abc, args.scorr_args, args.timeout,
-         args.stran_args, args.keep_artifacts, str(output.parent / f"{output.stem}_artifacts"))
+         args.stran_args, args.keep_artifacts,
+         str(output.parent / f"{output.stem}_artifacts"), args.skip_dsec)
         for path in aigs
     ]
     rows = []
