@@ -600,6 +600,16 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
         long long nAndAfter = i ? p->nStageAndAfterSeq : p->nStageAndAfterComb;
         long long nRegBefore = i ? p->nStageRegAfterComb : p->nStageRegBefore;
         long long nRegAfter = i ? p->nStageRegAfterSeq : p->nStageRegAfterComb;
+        long long nConstAnd = p->nStageKindSubsetAndGain[i][1];
+        long long nConstReg = p->nStageKindSubsetRegGain[i][1];
+        long long nExistAnd = p->nStageKindSubsetAndGain[i][3] -
+            p->nStageKindSubsetAndGain[i][1];
+        long long nExistReg = p->nStageKindSubsetRegGain[i][3] -
+            p->nStageKindSubsetRegGain[i][1];
+        long long nBuildAnd = p->nStageKindSubsetAndGain[i][7] -
+            p->nStageKindSubsetAndGain[i][3];
+        long long nBuildReg = p->nStageKindSubsetRegGain[i][7] -
+            p->nStageKindSubsetRegGain[i][3];
         Abc_Print( 1, "Sequential direct stage-kind profile: stage=%s counts=selected/proved gain=proved-portfolio-shapley constant=%d/%d and-gain=%.3f reg-gain=%.3f existing=%d/%d and-gain=%.3f reg-gain=%.3f constructed=%d/%d and-gain=%.3f reg-gain=%.3f constructed-gates=%lld/%lld max-gates=%d/%d; AND=%lld -> %lld gain=%lld; Reg=%lld -> %lld gain=%lld.\n",
             i ? "seq" : "comb",
             p->nStageKindSelected[i][CEC_TRAN_CAND_CONST],
@@ -626,6 +636,21 @@ static void Cec_TranPrintDirectProfile( Cec_TranProf_t * p,
             p->nStageConstructProvedMaxGates[i],
             nAndBefore, nAndAfter, nAndBefore - nAndAfter,
             nRegBefore, nRegAfter, nRegBefore - nRegAfter );
+        // Ordered attribution answers the operational question "what did
+        // Build add after Constant and Existing?" while retaining the same
+        // frozen proved-candidate pool and exact portfolio policy.  Build-only
+        // is the counterfactual exact gain when this stage enables only
+        // constructed candidates.  Unlike Shapley, these are integer subset
+        // differences and C + E + B equals the actual stage gain exactly.
+        Abc_Print( 1, "Sequential direct stage-kind ordered profile: stage=%s order=constant-existing-build constant-and-gain=%lld reg-gain=%lld existing-and-gain=%lld reg-gain=%lld build-and-gain=%lld reg-gain=%lld build-only-and-gain=%lld reg-gain=%lld; total-and-gain=%lld total-reg-gain=%lld.\n",
+            i ? "seq" : "comb",
+            nConstAnd, nConstReg,
+            nExistAnd, nExistReg,
+            nBuildAnd, nBuildReg,
+            p->nStageKindSubsetAndGain[i][4],
+            p->nStageKindSubsetRegGain[i][4],
+            p->nStageKindSubsetAndGain[i][7],
+            p->nStageKindSubsetRegGain[i][7] );
     }
     Abc_Print( 1, "Sequential direct existing-source profile: global=%d/%d leaveout-and-gain=%lld resub=%d/%d leaveout-and-gain=%lld.\n",
         p->nRootExistingGlobalSelected, p->nRootExistingGlobalProofs,
@@ -3755,44 +3780,69 @@ static Vec_Int_t * Cec_TranSelectRootBatchPrimary( Gia_Man_t * p,
     return vSelected;
 }
 
+static void Cec_TranRootSelectedSize( Gia_Man_t * p,
+    Cec_TranCand_t const * pCands, Vec_Int_t * vSelected,
+    int * pnAnds, int * pnRegs )
+{
+    Gia_Man_t * pTemp, * pClean;
+    if ( Vec_IntSize(vSelected) == 0 )
+    {
+        *pnAnds = Gia_ManAndNum( p );
+        *pnRegs = Gia_ManRegNum( p );
+        return;
+    }
+    pTemp = Cec_TranDupRootBundle( p, pCands, vSelected );
+    pClean = Cec_TranCleanup( pTemp );
+    *pnAnds = Gia_ManAndNum( pClean );
+    *pnRegs = Gia_ManRegNum( pClean );
+    Gia_ManStop( pTemp );
+    Gia_ManStop( pClean );
+}
+
 static int Cec_TranRootSelectedCost( Gia_Man_t * p,
     Cec_TranCand_t const * pCands, Vec_Int_t * vSelected )
 {
-    Gia_Man_t * pTemp, * pClean;
-    int Cost;
-    if ( Vec_IntSize(vSelected) == 0 )
-        return Gia_ManAndNum(p) + Gia_ManRegNum(p);
-    pTemp = Cec_TranDupRootBundle( p, pCands, vSelected );
-    pClean = Cec_TranCleanup( pTemp );
-    Cost = Gia_ManAndNum(pClean) + Gia_ManRegNum(pClean);
-    Gia_ManStop( pTemp );
-    Gia_ManStop( pClean );
-    return Cost;
+    int nAnds, nRegs;
+    Cec_TranRootSelectedSize( p, pCands, vSelected, &nAnds, &nRegs );
+    return nAnds + nRegs;
 }
 
 // Exact dry-run size for one proof-stage subset, using the same winner
-// selection and cleanup as the unified commit.
+// selection and cleanup as the unified commit.  In particular, evaluate both
+// the local-gain portfolio and the q=1-primary fallback, because the real
+// commit may choose either one after exact cleanup.
 static void Cec_TranRootBundleCost( Gia_Man_t * p,
     Cec_TranCand_t const * pCands, Vec_Int_t * vStatus, int nCands,
     int nSelectMax, int * pnAnds, int * pnRegs )
 {
     Vec_Int_t * vSelected = Cec_TranSelectRootBatchBundle( p, pCands,
         vStatus, nCands, nSelectMax );
-    Gia_Man_t * pTemp, * pClean;
+    Vec_Int_t * vPrimary = Cec_TranSelectRootBatchPrimary( p, pCands,
+        vStatus, nCands, nSelectMax );
+    int nGainAnds, nGainRegs, nPrimaryAnds, nPrimaryRegs;
     if ( Vec_IntSize(vSelected) == 0 )
     {
         *pnAnds = Gia_ManAndNum( p );
         *pnRegs = Gia_ManRegNum( p );
         Vec_IntFree( vSelected );
+        Vec_IntFree( vPrimary );
         return;
     }
-    pTemp = Cec_TranDupRootBundle( p, pCands, vSelected );
-    pClean = Gia_ManCleanup( pTemp );
-    *pnAnds = Gia_ManAndNum( pClean );
-    *pnRegs = Gia_ManRegNum( pClean );
-    Gia_ManStop( pTemp );
-    Gia_ManStop( pClean );
+    Cec_TranRootSelectedSize( p, pCands, vSelected,
+        &nGainAnds, &nGainRegs );
+    if ( Vec_IntEqual(vSelected, vPrimary) )
+        *pnAnds = nGainAnds, *pnRegs = nGainRegs;
+    else
+    {
+        Cec_TranRootSelectedSize( p, pCands, vPrimary,
+            &nPrimaryAnds, &nPrimaryRegs );
+        if ( nPrimaryAnds + nPrimaryRegs <= nGainAnds + nGainRegs )
+            *pnAnds = nPrimaryAnds, *pnRegs = nPrimaryRegs;
+        else
+            *pnAnds = nGainAnds, *pnRegs = nGainRegs;
+    }
     Vec_IntFree( vSelected );
+    Vec_IntFree( vPrimary );
 }
 
 // Counterfactual size profiles use the same per-target winner selection and
