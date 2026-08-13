@@ -324,8 +324,7 @@ typedef struct Cec_ParTran_t_ Cec_ParTran_t;
 enum {
     CEC_TRAN_PROOF_ROOT = 0,
     CEC_TRAN_PROOF_WINDOW,
-    CEC_TRAN_PROOF_OUTPUT,
-    CEC_TRAN_RESUB_CHOICES_MAX = 8
+    CEC_TRAN_PROOF_OUTPUT
 };
 struct Cec_ParTran_t_
 {
@@ -336,7 +335,7 @@ struct Cec_ParTran_t_
     int              nDivsMax;      // local existing divisors per victim
     int              nConstrMax;    // TFI depth used to collect local divisors (0 = complete TFI)
     int              nConstrBaseMax;// physical nodes in the local divisor pool (0 = all)
-    int              nDepNodesMax;  // maximum AIG nodes in a dependency recipe (1..20)
+    int              nDepNodesMax;  // maximum AIG nodes in a dependency recipe (1..100)
     int              nVictimsMax;   // legacy SODC leaf-set parameter (ignored by Direct)
     int              nProfileTop;   // legacy SODC target-profile limit (ignored by Direct)
     int              nChangesMax;   // accepted transactions (0 = unlimited; Direct has no CLI cap)
@@ -353,7 +352,6 @@ struct Cec_ParTran_t_
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
     int              nRootBatch;    // MFFC-ranked roots searched/submitted in root scope (0 = all)
     int              nRootWaves;    // root construct CEGAR waves on one immutable snapshot
-    int              nRootConstrTop;// dependency recipes retained/proved per root and wave (1..8)
     int              nCombBTLimit; // root CBS conflict limit per cube
     int              nFreeWords;   // 64-bit independent PI/RO words for combination screening
     int              nFreeCexMax;  // CBS free-state counterexamples retained per proof batch
@@ -369,7 +367,10 @@ struct Cec_ParTran_t_
     int              fUseResubZero; // enable zero-gate existing recipes returned by dependency resub
     int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
-    int              fRootProgressive;// root scope: submit only the best candidate per root
+    int              fRootProgressive;// internal root layer scheduler
+    int              fRootExhaustive;// root scope: disable discovery/value admission filters
+    int              fRootStopLegacy;// stop construction when the legacy pool finds a recipe
+    int              fRootStopProved;// stop searching a root after one relation is proved
     int              fRootSplitStages;// root scope: commit CBS winners before rebuilding for scorr
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
     int              nRootStage;    // internal: 0=combined, 1=comb-only, 2=seq-only

@@ -293,6 +293,7 @@ struct Gia_ResbMan_t_
     int         nLimit;
     int         nDivsMax;
     int         iChoice;
+    int         fChoiceSelected;
     int         fUseZero;
     int         fUseXor;
     int         fDebug;
@@ -343,6 +344,7 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     p->nLimit       = nLimit;
     p->nDivsMax     = nDivsMax;
     p->iChoice      = iChoice;
+    p->fChoiceSelected = 0;
     p->fUseZero     = fUseZero;
     p->fUseXor      = fUseXor;
     p->fDebug       = fDebug;
@@ -1451,8 +1453,8 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
     // Exact templates above consume choices in increasing gate-count order.
     // Any remaining choice selects an alternate first greedy cover element;
     // the recursive remainder deliberately uses its primary choice.  This
-    // gives bounded diversity without turning the cover recursion into an
-    // exponential backtracking search.
+    // gives finite ordered diversity without turning the cover recursion into
+    // an exponential backtracking search.
     iChoice = p->iChoice;
     p->iChoice = 0;
 
@@ -1465,6 +1467,8 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
             if ( iChoice >= Vec_IntSize(p->vUnateLits[!fUseOr]) )
                 return -1;
             iDiv         = Vec_IntEntry( p->vUnateLits[!fUseOr], iChoice );
+            if ( fTop )
+                p->fChoiceSelected = 1;
             int fComp   = Abc_LitIsCompl(iDiv);
             word * pDiv = (word *)Vec_PtrEntry( p->vDivs, Abc_Lit2Var(iDiv) );
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], pDiv, p->nWords, !fComp );
@@ -1515,6 +1519,8 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
             if ( iChoice >= Vec_IntSize(p->vUnatePairs[!fUseOr]) )
                 return -1;
             iDiv         = Vec_IntEntry( p->vUnatePairs[!fUseOr], iChoice );
+            if ( fTop )
+                p->fChoiceSelected = 1;
             int fComp   = Abc_LitIsCompl(iDiv);
             Gia_ManDeriveDivPair( iDiv, p->vDivs, p->nWords, p->pDivA );
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], p->pDivA, p->nWords, !fComp );
@@ -1658,20 +1664,19 @@ int Abc_ResubComputeFunction( void ** ppDivs, int nDivs, int nWords, int nLimit,
     return Vec_IntSize(s_pResbMan->vGates);
 }
 
-// Computes a bounded set of structurally distinct recipes.  With zero-gate
+// Computes an ordered set of structurally distinct recipes.  With zero-gate
 // answers enabled, choice zero is bit-for-bit the legacy search.  Additional
 // attempts ask the same ordered engine to skip earlier exact solutions or to
-// use a later greedy cover pivot.  Perform at most the requested number of
-// searches; attempts beyond K contributed very few unique recipes in
-// root-scope profiling.  iChoiceStart allows a caller to preserve the same
-// ordered search while redirecting unused later-choice budget to another
-// divisor pool.
+// use a later greedy cover pivot.  The exhaustion result distinguishes an
+// unavailable choice from an available greedy pivot whose recursive cover
+// failed, so callers can enumerate the finite choice space without imposing
+// an arbitrary recipe limit.
 int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
     int nLimit, int nDivsMax, int nChoices, int iChoiceStart,
     int fUseZero, int fUseXor,
     int fDebug, int fVerbose, Vec_Wec_t * vResults, int * pnAttempts,
     abctime * pTimeInit, abctime * pTimeSearch,
-    abctime * pTimeAttempts, int * pAttemptUnique )
+    abctime * pTimeAttempts, int * pAttemptUnique, int * pfExhausted )
 {
     Vec_Ptr_t Divs = { nDivs, nDivs, ppDivs };
     Vec_Int_t * vRecipe;
@@ -1689,6 +1694,8 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
         memset( pTimeAttempts, 0, sizeof(abctime) * nAttemptsMax );
     if ( pAttemptUnique )
         memset( pAttemptUnique, 0, sizeof(int) * nAttemptsMax );
+    if ( pfExhausted )
+        *pfExhausted = 0;
     for ( i = 0; i < nAttemptsMax && Vec_WecSize(vResults) < nChoices; i++ )
     {
         timeInit = timeSearch = 0;
@@ -1701,6 +1708,13 @@ int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs, int nWords,
             *pTimeInit += timeInit;
         if ( pTimeSearch )
             *pTimeSearch += timeSearch;
+        if ( Vec_IntSize(s_pResbMan->vGates) == 0 &&
+             !s_pResbMan->fChoiceSelected )
+        {
+            if ( pfExhausted )
+                *pfExhausted = 1;
+            break;
+        }
         if ( pTimeAttempts )
             pTimeAttempts[i] = timeInit + timeSearch;
         if ( Vec_IntSize(s_pResbMan->vGates) == 0 )

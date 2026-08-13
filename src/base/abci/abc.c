@@ -42223,7 +42223,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c, fSeenSodc = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwbaecdoxlrzsgfpvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwbaecdoxlrzsgifpuvh")) != EOF )
     {
         switch ( c )
         {
@@ -42250,7 +42250,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'N':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nDepNodesMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nDepNodesMax < 1 || pPars->nDepNodesMax > 20 ) goto usage;
+            if ( pPars->nDepNodesMax < 1 || pPars->nDepNodesMax > 100 ) goto usage;
             break;
         case 'D':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42260,7 +42260,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'G':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nGainMin = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nGainMin < 1 ) goto usage;
+            if ( pPars->nGainMin < 0 ) goto usage;
             break;
         case 'Q':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42377,10 +42377,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( pPars->nRootWaves < 1 || pPars->nRootWaves > 64 ) goto usage;
             break;
         case 'q':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootConstrTop < 1 ||
-                 pPars->nRootConstrTop > CEC_TRAN_RESUB_CHOICES_MAX ) goto usage;
+            // Deprecated compatibility input.  Recipe generation is now
+            // structurally exhaustive, so this value intentionally has no
+            // effect and is omitted from the user-facing option list.
+            if ( globalUtilOptind >= argc ||
+                 atoi(argv[globalUtilOptind++]) < 1 ) goto usage;
             break;
         case 'b':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42417,7 +42418,13 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->fUseResubZero ^= 1;
             break;
         case 'r':
-            pPars->fRootProgressive ^= 1;
+            pPars->fRootExhaustive ^= 1;
+            break;
+        case 'i':
+            pPars->fRootStopLegacy ^= 1;
+            break;
+        case 'u':
+            pPars->fRootStopProved ^= 1;
             break;
         case 's':
             pPars->fRootSplitStages ^= 1;
@@ -42448,6 +42455,14 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         Abc_Print( -1, "&stran: -P window requires a positive -A TFO depth.\n" );
         return 1;
     }
+    if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT &&
+         pPars->fRootExhaustive )
+    {
+        pPars->nRootBatch = 0;
+        pPars->nGainMin = 0;
+        pPars->nRootGainMin = 0;
+        pPars->nHardMffc = 0;
+    }
     if ( pAbc->pGia == NULL )
     {
         Abc_Print( -1, "&stran: There is no AIG.\n" );
@@ -42468,15 +42483,15 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmqwbae num] [-cdxlrzsgfpvh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmwbae num] [-cdxlrzsgifpuvh]\n" );
     Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-T num : maximum contextual proof obligations (0 = unlimited; root is separate) [default = %d]\n", pPars->nCandMax );
-    Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..20) [default = %d]\n", pPars->nDepNodesMax );
-    Abc_Print( -2, "\t-D num : existing literals retained per contextual root (root scope keeps one) [default = %d]\n", pPars->nDivsMax );
-    Abc_Print( -2, "\t-G num : minimum local structural gain and final exact cleanup gain [default = %d]\n", pPars->nGainMin );
+    Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..100) [default = %d]\n", pPars->nDepNodesMax );
+    Abc_Print( -2, "\t-D num : existing literals retained per contextual root (root scope keeps all earlier exact matches) [default = %d]\n", pPars->nDivsMax );
+    Abc_Print( -2, "\t-G num : non-exhaustive local structural-gain admission gate [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
@@ -42498,7 +42513,6 @@ usage:
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-m num : MFFC selecting root existing admission/context high budget [default = %d]\n", pPars->nHardMffc );
     Abc_Print( -2, "\t-w num : root construct CEGAR waves on one immutable snapshot (1..64) [default = %d]\n", pPars->nRootWaves );
-    Abc_Print( -2, "\t-q num : dependency recipes retained/proved per root and wave (1..8) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
@@ -42507,7 +42521,9 @@ usage:
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle global existing-literal lookup [default = %s]\n", pPars->fUseExisting? "yes": "no" );
     Abc_Print( -2, "\t-z     : toggle zero-gate existing dependency recipes [default = %s]\n", pPars->fUseResubZero? "yes": "no" );
-    Abc_Print( -2, "\t-r     : toggle root scheduling: top-q/root vs all alternatives [default top-q = %s]\n", pPars->fRootProgressive? "yes": "no" );
+    Abc_Print( -2, "\t-r     : toggle exhaustive root discovery (forces L/G/O/m admission gates off) [default = %s]\n", pPars->fRootExhaustive? "yes": "no" );
+    Abc_Print( -2, "\t-i     : toggle stopping construction after a legacy-pool recipe [default = %s]\n", pPars->fRootStopLegacy? "yes": "no" );
+    Abc_Print( -2, "\t-u     : toggle continuing a root after one proved relation [default stop = %s]\n", pPars->fRootStopProved? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle split root stages (off shares one snapshot and final commit) [default split = %s]\n", pPars->fRootSplitStages? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
