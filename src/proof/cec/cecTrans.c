@@ -21,6 +21,7 @@
 #include "aig/gia/giaAig.h"
 #include "misc/util/utilTruth.h"
 #include "sat/bmc/bmc.h"
+#include <stddef.h>
 
 ABC_NAMESPACE_IMPL_START
 
@@ -2181,6 +2182,12 @@ static inline int Cec_TranRecipeGateLit( int Code )
 }
 
 typedef struct Cec_TranCand_t_ Cec_TranCand_t;
+typedef struct Cec_TranRecipe_t_ Cec_TranRecipe_t;
+struct Cec_TranRecipe_t_
+{
+    int nRefs;
+    int Data[1];
+};
 struct Cec_TranCand_t_
 {
     int iTarget;
@@ -2190,17 +2197,70 @@ struct Cec_TranCand_t_
     int Gain;                   // local structural gain for scheduling
     int nGates;                 // dependency AIG nodes in Recipe[]
     int iOut;                   // external or recipe-gate literal code
-    int Recipe[2 * CEC_TRAN_RECIPE_NODES_MAX];
-    unsigned fStrict;
-    unsigned nKind;
-    unsigned nProofStage;       // 0=unproved, 1=combinational, 2=sequential
+    int * Recipe;               // shared, immutable, exactly 2*nGates ints
+    unsigned fStrict   : 1;
+    unsigned nKind     : 2;
+    unsigned nProofStage : 2;   // 0=unproved, 1=combinational, 2=sequential
+    unsigned fDivRescue : 1;
+    unsigned fDivGlobal : 1;
+    unsigned fPrimaryFrontier : 1;
     int      nResubRank;         // 0=non-resub, otherwise raw recipe rank
     int      nSchedRank;         // normal/rescue proof layer
-    unsigned fDivRescue;
-    unsigned fDivGlobal;
-    unsigned fPrimaryFrontier;
     int      nWave;              // zero-based root CEGAR wave
 };
+
+// Candidate vectors copy scheduling metadata by value, but all copies of a
+// constructed candidate refer to one immutable, reference-counted recipe.
+// Literal/constant candidates allocate no recipe at all.  Keeping the recipe
+// out of Cec_TranCand_t is important because the root lane can contain every
+// exact earlier literal and may therefore hold millions of zero-gate entries.
+static int * Cec_TranRecipeAlloc( int nSize )
+{
+    Cec_TranRecipe_t * p;
+    assert( nSize > 0 && nSize <= 2 * CEC_TRAN_RECIPE_NODES_MAX );
+    p = (Cec_TranRecipe_t *)ABC_ALLOC( char,
+        sizeof(Cec_TranRecipe_t) + sizeof(int) * (nSize - 1) );
+    p->nRefs = 1;
+    return p->Data;
+}
+
+static Cec_TranRecipe_t * Cec_TranRecipeHead( int const * pData )
+{
+    return (Cec_TranRecipe_t *)((char *)pData -
+        offsetof(Cec_TranRecipe_t, Data));
+}
+
+static void Cec_TranCandRecipeRetain( Cec_TranCand_t const * pCand )
+{
+    if ( pCand->Recipe )
+        Cec_TranRecipeHead(pCand->Recipe)->nRefs++;
+}
+
+static void Cec_TranCandRecipeRelease( Cec_TranCand_t * pCand )
+{
+    Cec_TranRecipe_t * pRecipe;
+    if ( pCand->Recipe == NULL )
+        return;
+    pRecipe = Cec_TranRecipeHead( pCand->Recipe );
+    assert( pRecipe->nRefs > 0 );
+    if ( --pRecipe->nRefs == 0 )
+        ABC_FREE( pRecipe );
+    pCand->Recipe = NULL;
+}
+
+static void Cec_TranCandRecipeDetach( Cec_TranCand_t * pCand )
+{
+    int * pRecipe;
+    if ( pCand->nGates == 0 )
+    {
+        assert( pCand->Recipe == NULL );
+        return;
+    }
+    assert( pCand->Recipe != NULL );
+    pRecipe = Cec_TranRecipeAlloc( 2 * pCand->nGates );
+    memcpy( pRecipe, pCand->Recipe, sizeof(int) * 2 * pCand->nGates );
+    pCand->Recipe = pRecipe;
+}
 
 static inline int Cec_TranRecipeCopyCode( Gia_Man_t * p, int Code,
     int const * pGates, int nBuilt )
@@ -2865,6 +2925,7 @@ static void Cec_TranCandVecPush( Cec_TranCandVec_t * p, Cec_TranCand_t Cand )
     }
     if ( p->nHash == 0 || 2 * (p->nSize + 1) >= p->nHash )
         Cec_TranCandVecHashResize( p, p->nHash ? 2 * p->nHash : 128 );
+    Cec_TranCandRecipeRetain( &Cand );
     p->pArray[p->nSize] = Cand;
     k = (int)(Cec_TranCandHash(&Cand) & (unsigned)(p->nHash - 1));
     while ( p->pHash[k] )
@@ -2874,6 +2935,9 @@ static void Cec_TranCandVecPush( Cec_TranCandVec_t * p, Cec_TranCand_t Cand )
 
 static void Cec_TranCandVecClear( Cec_TranCandVec_t * p )
 {
+    int i;
+    for ( i = 0; i < p->nSize; i++ )
+        Cec_TranCandRecipeRelease( p->pArray + i );
     p->nSize = p->iHead = 0;
     if ( p->pHash )
         memset( p->pHash, 0, sizeof(int) * p->nHash );
@@ -2881,6 +2945,7 @@ static void Cec_TranCandVecClear( Cec_TranCandVec_t * p )
 
 static void Cec_TranCandVecStop( Cec_TranCandVec_t * p )
 {
+    Cec_TranCandVecClear( p );
     ABC_FREE( p->pArray );
     ABC_FREE( p->pHash );
     memset( p, 0, sizeof(Cec_TranCandVec_t) );
@@ -2890,8 +2955,8 @@ static int Cec_TranCandEqual( Cec_TranCand_t const * p0, Cec_TranCand_t const * 
 {
     return p0->iTarget == p1->iTarget && p0->fStrict == p1->fStrict &&
         p0->nGates == p1->nGates && p0->iOut == p1->iOut &&
-        !memcmp( p0->Recipe, p1->Recipe,
-            sizeof(int) * 2 * p0->nGates );
+        (p0->nGates == 0 || !memcmp( p0->Recipe, p1->Recipe,
+            sizeof(int) * 2 * p0->nGates ));
 }
 
 static int Cec_TranCandVecContains( Cec_TranCandVec_t const * p, Cec_TranCand_t const * pCand )
@@ -2951,6 +3016,10 @@ static int Cec_TranCandVecRemap( Cec_TranCandVec_t * p,
              !Gia_ObjIsAnd(Gia_ManObj(pNew, Abc_Lit2Var(iTargetLit))) )
             continue;
         Cand.iTarget = Abc_Lit2Var( iTargetLit );
+        // The source vector still owns and may share its immutable recipe.
+        // Remapping changes external literals, so make one private recipe for
+        // the candidate being transferred to the new history vector.
+        Cec_TranCandRecipeDetach( &Cand );
         for ( k = -1; k < 2 * Cand.nGates; k++ )
         {
             Code = k < 0 ? Cand.iOut : Cand.Recipe[k];
@@ -2968,16 +3037,19 @@ static int Cec_TranCandVecRemap( Cec_TranCandVec_t * p,
                 Cand.Recipe[k] = Code;
         }
         if ( fDrop )
+        {
+            Cec_TranCandRecipeRelease( &Cand );
             continue;
+        }
         if ( Cand.iDiv0 >= 0 )
             Cand.iDiv0 = Cec_TranObjMapLit( vObjMap, Cand.iDiv0 );
         if ( Cand.iDiv1 >= 0 )
             Cand.iDiv1 = Cec_TranObjMapLit( vObjMap, Cand.iDiv1 );
         if ( !Cec_TranCandVecContains(&New, &Cand) )
             Cec_TranCandVecPush( &New, Cand );
+        Cec_TranCandRecipeRelease( &Cand );
     }
-    ABC_FREE( p->pArray );
-    ABC_FREE( p->pHash );
+    Cec_TranCandVecStop( p );
     *p = New;
     return New.nSize;
 }
@@ -4965,6 +5037,8 @@ static void Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
     pCand->fStrict = fStrict;
     pCand->nGates = nArray / 2;
     assert( pCand->nGates <= CEC_TRAN_RECIPE_NODES_MAX );
+    if ( pCand->nGates )
+        pCand->Recipe = Cec_TranRecipeAlloc( 2 * pCand->nGates );
     for ( i = 0; i < 2 * pCand->nGates; i++ )
         pCand->Recipe[i] = Cec_TranRecipeCodeFromResub(
             Vec_IntEntry(vRecipe, i), nVars, vPool );
@@ -5004,6 +5078,7 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
     word Target, Care;
     assert( nChoices > 0 && iChoiceStart >= 0 &&
             nChoices <= pScratch->nAttemptCap );
+    memset( pCands, 0, sizeof(Cec_TranCand_t) * nChoices );
     Vec_PtrClear( vDivs );
     for ( s = 0; s < pSim->nSlots; s++ )
     {
@@ -5297,6 +5372,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                     pProf->nRootDivAltCalls++;
                 if ( fExhausted )
                 {
+                    Cec_TranCandRecipeRelease( &CandOne );
                     RouteDone[iRoute] = 1;
                     nRoutesDone++;
                     continue;
@@ -5312,7 +5388,10 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                 pProf->nRootDepAttempts += pDep->nAttemptsLast;
                 pProf->nRootDivRouteRecipes[iRoute] += nDepFound;
                 if ( nDepFound == 0 )
+                {
+                    Cec_TranCandRecipeRelease( &CandOne );
                     continue;
+                }
                 Cand = CandOne;
                 Cand.nResubRank = nDepFoundTotal + 1;
                 Cand.fDivRescue = iRoute > 0;
@@ -5341,6 +5420,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                 }
                 else
                     pStat->nSigRejected++;
+                Cec_TranCandRecipeRelease( &CandOne );
                 if ( iRoute == 0 && nNewThisRank &&
                      pPars->fRootStopLegacy )
                     break;
@@ -5357,7 +5437,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
         pProf->nRootDepCalls++;
         pProf->nRootDepFound += nDepFoundTotal > 0;
         pProf->nRootDepRecipes += nDepFoundTotal;
-        pProf->nRootDivAltRescues += nDepFoundTotal > 0 &&
+        pProf->nRootDivAltRescues += pConstr->nSize > iConstrStart &&
             pConstr->pArray[iConstrStart].fDivRescue;
         // Each search is choice-ranked by the resub engine; the candidate
         // vector above also removes duplicates across divisor routes.
@@ -5398,13 +5478,36 @@ static void Cec_TranCollectRootPhase( Gia_Man_t * p,
         Cec_TranCollectStrictConstructed( p, pSim, pPars, pRoots, nRoots, iWave,
             pSigIndex, nSigEntries, pTried, pSolved, pCovered, pUsed,
             pMffc, vMffc, pExist, pConstr, pDep, pStat, pProf );
-    for ( i = 0; i < pExist->nSize; i++ )
-        Cec_TranCandVecPush( pAll, pExist->pArray[i] );
-    for ( i = 0; i < pConstr->nSize; i++ )
-        Cec_TranCandVecPush( pAll, pConstr->pArray[i] );
+    // The root phases are disjoint: direct discovery fills pExist and lazy
+    // constructed discovery fills pConstr.  Transfer the populated vector
+    // instead of materializing a second header/hash copy of the same phase.
+    if ( pExist->nSize && pConstr->nSize == 0 )
+    {
+        Cec_TranCandVecStop( pAll );
+        *pAll = *pExist;
+        memset( pExist, 0, sizeof(*pExist) );
+    }
+    else if ( pConstr->nSize && pExist->nSize == 0 )
+    {
+        Cec_TranCandVecStop( pAll );
+        *pAll = *pConstr;
+        memset( pConstr, 0, sizeof(*pConstr) );
+    }
+    else
+    {
+        for ( i = 0; i < pExist->nSize; i++ )
+            Cec_TranCandVecPush( pAll, pExist->pArray[i] );
+        for ( i = 0; i < pConstr->nSize; i++ )
+            Cec_TranCandVecPush( pAll, pConstr->pArray[i] );
+    }
     if ( pAll->nSize > 1 )
         qsort( pAll->pArray, pAll->nSize,
             sizeof(Cec_TranCand_t), Cec_TranCandRootCompare );
+    // pAll is the sole scheduling snapshot after discovery.  Keeping the two
+    // source vectors alive would duplicate every candidate header and retain
+    // an additional recipe reference until the command exits.
+    Cec_TranCandVecStop( pExist );
+    Cec_TranCandVecStop( pConstr );
 }
 
 static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
@@ -5444,9 +5547,15 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
         nDepFound = Cec_TranComputeDependencies(pSim, pPars, pRoot,
             vPool, pCare, 0, &Cand, 1, iChoice, pDep, &fExhausted);
         if ( fExhausted )
+        {
+            Cec_TranCandRecipeRelease( &Cand );
             break;
+        }
         if ( nDepFound == 0 )
+        {
+            Cec_TranCandRecipeRelease( &Cand );
             continue;
+        }
         nDepFoundTotal++;
         pStat->nSigMatched++;
         pDest = Cand.nGates ? pConstr : pExist;
@@ -5456,6 +5565,7 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
             Cec_TranCandVecPush( pDest, Cand );
         else
             pStat->nSigRejected++;
+        Cec_TranCandRecipeRelease( &Cand );
     }
     if ( nDepFoundTotal == 0 )
         pStat->nSigRejected++;
@@ -5569,9 +5679,11 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
         }
         fChanged = 0;
         fCegisRestart = 0;
-        Cec_TranCandVecClear( &qStrictExist );
-        Cec_TranCandVecClear( &qStrictConstr );
-        Cec_TranCandVecClear( &qStrictAll );
+        // Root snapshots are phase-local.  Release their backing capacity at
+        // a new immutable wave instead of retaining the previous wave's peak.
+        Cec_TranCandVecStop( &qStrictExist );
+        Cec_TranCandVecStop( &qStrictConstr );
+        Cec_TranCandVecStop( &qStrictAll );
         Cec_TranCandVecClear( &qContextExist );
         Cec_TranCandVecClear( &qContextConstr );
         clkPhase = Abc_Clock();
@@ -5738,8 +5850,14 @@ static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
                 iRootLayer = nRootLayers = 0;
                 nRootDirectLayers = nRootNormalLayers =
                     nRootRescueLayers = 0;
+                // The direct snapshot has been exhausted; the constructed
+                // snapshot can reuse the name but must not retain its peak
+                // backing allocation alongside the new phase.
+                Cec_TranCandVecStop( &qStrictAll );
                 Cec_TranCollectRootPhase( p, pSim, pPars, pRoots,
-                    nRoots, nRound, pSigIndex, nSigEntries, &vTried,
+                    pPars->fRootExhaustive || !pPars->nRootBatch ? nRoots :
+                        Abc_MinInt(nRoots, pPars->nRootBatch),
+                    nRound, pSigIndex, nSigEntries, &vTried,
                     pRootSolved, pRootCovered, pRootUsed,
                     pMffc, vMffc, 0,
                     &qStrictExist, &qStrictConstr, &qStrictAll,
