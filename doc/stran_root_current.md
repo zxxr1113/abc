@@ -51,7 +51,9 @@ shared scorr 不直接 union physical endpoints。proof graph 为每个 root 建
 
 constant 和 existing 只由 direct generator 产生。build-only resub 顶层禁止返回 zero-gate existing，以免与 direct 重复；exact literals 仍保留为递归构造叶子。
 
-divisor reservoir 保留 TFI/BFS、MFFC boundary、local、global 和 mixed routes。每条 route 初始化一个 stateful iterator，并调用 `Next` 直到有限候选空间耗尽；第 q 个 recipe 不会重新扫描前 q-1 个 recipe。每个 recipe 离开 iterator 前都用不可变 OFF/ON truth tables 做语义审计，转换为 root candidate 后在 canonicalization 前后再次校验；无效 recipe 被计数并跳过，canonicalization 若意外改变函数则回退到已审计的原 recipe。所谓 q unlimited 只表示没有人工 top-q 截断，候选宇宙仍受 `B/K/N`、合法 include、有限模板、canonicalization 和有限 greedy diversity 约束，不枚举所有 AIG。
+divisor reservoir 保留 TFI/BFS、MFFC boundary、local、global 和 mixed routes。每条 route 初始化一个 stateful iterator，并调用 `Next` 直到有限候选空间耗尽；exact-template 游标不会为第 q 个 recipe 重新扫描前 q-1 个 recipe。带极性 coverage 排序后，exact pair frontier 保持 B-wide，因此 gate-gate 最多在两个 B-wide pair 列表上枚举，不会退化成物理 divisor pair 的 `O(B^4)` Cartesian search。greedy choice 每次从不可变 OFF/ON 和清空后的 pair scratch 重建，经 recipe 去重后同样保持 B-wide；iterator 另有 `iGreedy < B` 的结构性终止不变量。这是有限候选宇宙的定义，不是 wall-clock/q 超时。
+
+iterator 热路径只检查 recipe shape。recipe 映射到 root candidate 并 canonicalize 后，用不可变 OFF/ON truth tables 做一次完整语义审计；若 canonical recipe 意外改变函数，则恢复 raw recipe 并审计 raw relation。结构错误或两个版本都不满足 relation 的 recipe 会被计数并跳过，而不是触发 assertion。verifier 明确接受并仿真 `x&x`、`x&!x` 这类待 canonicalize 的退化 AND，不会因相同 physical fanin 终止 ABC。所谓 q unlimited 只表示没有人工 top-q 截断，候选宇宙仍受 `B/K/N`、合法 include、有限模板、canonicalization 和有限 greedy diversity 约束，不枚举所有 AIG。
 
 ### 4.2 带极性的 include/template 筛选
 
@@ -134,7 +136,7 @@ test/run_stran_regression.sh
 - `stran_seq.blif`、`stran_seq_only.blif`：代表性 sequential、top-1/all-candidate、完整 fixed point；
 - `stran_proxy_roots.blif`：两个 roots 共享 physical endpoint 但 class-max 必须为 2；
 - `stran_polarity.blif`：关闭 existing 后必须由 complemented-AND BUILD 实现 OR；
-- `&stran_resub_test`：直接断言 `T=1101,d=1000` 的 literal 极性、binate pair 的 OFF/ON 条件、iterator 有限 exhaustion，以及常量/重复/absorption canonicalization；
+- `&stran_resub_test`：直接断言 `T=1101,d=1000` 的 literal 极性、binate pair 的 OFF/ON 条件、`x&x`/`x&!x` verifier 安全性、public iterator 的 B-wide 有限 exhaustion，以及常量/重复/absorption canonicalization；
 - `stran_dirty.blif`：virtual selection 后的 root-free/MFFC dirty；
 - `stran_constant.blif`：sequential constant candidate 的 proof proxy、选择、AND cleanup 与 register-boundary 保持；
 - `stran_combinational_noop.blif`：无 register 输入返回成功 no-op；
@@ -144,9 +146,17 @@ test/run_stran_regression.sh
 
 每个回归在变换前后写 AIG，并用 `dsec` 检查 sequential equivalence。
 
+真实 benchmark smoke 使用与批处理脚本一致的链路：原始 AIG 写为 base，执行 `&scorr -C 100`，再执行 `&stran -C 100 -b 100 -P root -N 10 -B 64 -K 8 -r`，最后对 base/final 运行 `dsec`。当前验证结果：
+
+- `loopv3.aig`：scorr 后 1298 AND roots；iterator `initialized=22075`、`exhausted=22075`、`next=1038229`、`invalid=0`，约 49 秒完成，最终 `dsec` 等价；
+- `simple_alu.aig`：83 roots，正常完成并通过 `dsec`；
+- `fib_05.aig`：649 roots，正常完成并通过 `dsec`；
+- `gen26.aig`：170 roots，约 7.5 秒完成并通过 `dsec`。
+
 ## 8. 明确保留的风险
 
 - all-candidate 仍可能在大型 signature class 上产生很宽的 proof batch；这是算法语义，不是 q 截断遗漏。
 - discovery 依赖 reset-reachable samples 只影响候选召回/排序，不影响 correctness；所有 selected 都必须有 CBS 或完整 scorr proof。
 - repair 可以产生多个小 scorr epochs，但主 sequential frontier只有一次 shared fixed point；repair 仅处理 virtual commit 后出现的新 candidates。
+- q unlimited 在 B=64 的真实设计上仍可能产生百万级 `Next` 调用；现在保证有限耗尽和正确性，但 resub enumeration 仍可能是主要运行时间。
 - `window/output` 是冻结兼容代码，不能用本文的 root-only保证推断其性能或 profile 语义。

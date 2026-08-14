@@ -3229,17 +3229,6 @@ static int Cec_TranCandVecContains( Cec_TranCandVec_t const * p, Cec_TranCand_t 
     return 0;
 }
 
-static int Cec_TranCandVecContainsRange( Cec_TranCandVec_t const * p,
-    int iStart, Cec_TranCand_t const * pCand )
-{
-    int i;
-    assert( iStart >= 0 && iStart <= p->nSize );
-    for ( i = iStart; i < p->nSize; i++ )
-        if ( Cec_TranCandEqual(p->pArray + i, pCand) )
-            return 1;
-    return 0;
-}
-
 static int Cec_TranCandVecRemap( Cec_TranCandVec_t * p,
     Vec_Int_t * vObjMap, char const * pAffected, Gia_Man_t * pNew )
 {
@@ -5527,8 +5516,7 @@ static int Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
     pCand->nKind = pCand->nGates ? CEC_TRAN_CAND_CONSTR :
         (Abc_Lit2Var(pCand->iOut) == 0 ?
             CEC_TRAN_CAND_CONST : CEC_TRAN_CAND_EXIST);
-    if ( !Cec_TranRecipeStructurallyValid(pSim, pCand) ||
-         !Cec_TranRecipeMatchesRoot(pSim, pCand, pCare) )
+    if ( !Cec_TranRecipeStructurallyValid(pSim, pCand) )
     {
         Cec_TranCandRecipeRelease( pCand );
         memset( pCand, 0, sizeof(*pCand) );
@@ -5541,8 +5529,8 @@ static int Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
         memcpy( RawRecipe, pCand->Recipe, sizeof(int) * 2 * RawGates );
     Cec_TranCandCanonicalizeRecipe( pCand );
     // Canonicalization is an optimization, never a semantic pruning rule.
-    // Keep the audited raw recipe if a future identity/compaction change
-    // accidentally alters its function.
+    // If a future identity/compaction change alters the function, restore
+    // and audit the raw recipe before deciding whether to reject it.
     if ( !Cec_TranRecipeStructurallyValid(pSim, pCand) ||
          !Cec_TranRecipeMatchesRoot(pSim, pCand, pCare) )
     {
@@ -5555,6 +5543,13 @@ static int Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
             pCand->Recipe = Cec_TranRecipeAlloc( 2 * RawGates );
             memcpy( pCand->Recipe, RawRecipe,
                 sizeof(int) * 2 * RawGates );
+        }
+        if ( !Cec_TranRecipeStructurallyValid(pSim, pCand) ||
+             !Cec_TranRecipeMatchesRoot(pSim, pCand, pCare) )
+        {
+            Cec_TranCandRecipeRelease( pCand );
+            memset( pCand, 0, sizeof(*pCand) );
+            return 0;
         }
     }
     pCand->iDiv0 = pCand->iDiv1 = -1;
@@ -5708,24 +5703,20 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
 }
 
 static int Cec_TranCandCiOverlap( Cec_TranCand_t const * pCand,
-    Vec_Int_t * vReservoir, Cec_TranDivRank_t const * pRanks )
+    Vec_Int_t * vSupport, int const * pCiKeys,
+    int const * pCiScores, int nCiMask )
 {
-    Vec_Int_t * vSupport = Vec_IntAlloc( 16 );
-    int i, k, iObj, iPos, Overlap = 0;
+    int i, iObj, k, Overlap = 0;
+    Vec_IntClear( vSupport );
     Cec_TranCandCollectSupport( pCand, vSupport );
     Vec_IntForEachEntry( vSupport, iObj, i )
     {
-        iPos = Vec_IntFind( vReservoir, iObj );
-        if ( iPos < 0 )
-            continue;
-        for ( k = 0; k < Vec_IntSize(vReservoir); k++ )
-            if ( pRanks[k].iPos == iPos )
-            {
-                Overlap += pRanks[k].CiOverlap;
-                break;
-            }
+        k = (int)(((unsigned)iObj * 0x9E3779B1u) & (unsigned)nCiMask);
+        while ( pCiKeys[k] && pCiKeys[k] != iObj + 1 )
+            k = (k + 1) & nCiMask;
+        if ( pCiKeys[k] )
+            Overlap += pCiScores[k];
     }
-    Vec_IntFree( vSupport );
     return Overlap;
 }
 
@@ -6001,8 +5992,7 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
                 Cand.nWave = iWave;
                 if ( !Cec_TranCandVecContains(pTried, &Cand) &&
                      !Cec_TranCandVecContains(pExist, &Cand) &&
-                     !Cec_TranCandVecContainsRange(pConstr,
-                         iConstrStart, &Cand) )
+                     !Cec_TranCandVecContains(pConstr, &Cand) )
                 {
                     Cand.Gain = Cand.nMffc - Cand.nGates;
                     pStat->nSigMatched++;
@@ -6065,10 +6055,13 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     Cec_TranDiscStat_t * pStat, Cec_TranProf_t * pProf )
 {
     int RouteBeg[4], RouteEnd[4], iRoute, i, k, iAttempt, fExhausted;
+    int nCiHash = 128, nCiMask;
     int IterStatus;
     int iConstrStart = pConstr->nSize, nDepFoundTotal = 0;
     Vec_Int_t * vReservoir, * vPools[5] = {NULL, NULL, NULL, NULL, NULL};
     Cec_TranDivRank_t * pRanks;
+    Vec_Int_t * vCandSupport = Vec_IntAlloc( 16 );
+    int * pCiKeys, * pCiScores;
     unsigned char * pUseCount;
     void * pIters[5] = {NULL, NULL, NULL, NULL, NULL};
     char Done[5] = {0, 0, 0, 0, 0};
@@ -6093,6 +6086,21 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     clk = Abc_Clock();
     pRanks = Vec_IntSize(vReservoir) ?
         Cec_TranRankDivReservoir( pSim, pRoot->iObj, vReservoir ) : NULL;
+    while ( nCiHash < 2 * Vec_IntSize(vReservoir) )
+        nCiHash <<= 1;
+    nCiMask = nCiHash - 1;
+    pCiKeys = ABC_CALLOC( int, nCiHash );
+    pCiScores = ABC_CALLOC( int, nCiHash );
+    for ( i = 0; i < Vec_IntSize(vReservoir); i++ )
+    {
+        int iObj = Vec_IntEntry(vReservoir, pRanks[i].iPos);
+        int iHash = (int)(((unsigned)iObj * 0x9E3779B1u) &
+            (unsigned)nCiMask);
+        while ( pCiKeys[iHash] )
+            iHash = (iHash + 1) & nCiMask;
+        pCiKeys[iHash] = iObj + 1;
+        pCiScores[iHash] = pRanks[i].CiOverlap;
+    }
     pUseCount = ABC_CALLOC( unsigned char, Vec_IntSize(vReservoir) );
     for ( iRoute = 0; iRoute < 5; iRoute++ )
     {
@@ -6153,11 +6161,10 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             Cand.nWave = 0;
             Cand.Gain = Cand.nMffc - Cand.nGates;
             Cand.nCiOverlap = Cec_TranCandCiOverlap( &Cand,
-                vReservoir, pRanks );
+                vCandSupport, pCiKeys, pCiScores, nCiMask );
             if ( !Cec_TranCandVecContains(pKnown, &Cand) &&
                  !Cec_TranCandVecContains(pExist, &Cand) &&
-                 !Cec_TranCandVecContainsRange(pConstr,
-                    iConstrStart, &Cand) )
+                 !Cec_TranCandVecContains(pConstr, &Cand) )
             {
                 Cec_TranCandVecPush( pConstr, Cand );
                 pProf->nRootConstructGenerated++;
@@ -6184,7 +6191,10 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         Vec_IntFree( vPools[i] );
     }
     ABC_FREE( pRanks );
+    ABC_FREE( pCiKeys );
+    ABC_FREE( pCiScores );
     ABC_FREE( pUseCount );
+    Vec_IntFree( vCandSupport );
     Vec_IntFree( vReservoir );
 }
 
@@ -6280,7 +6290,6 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
     for ( iChoice = 0; ; iChoice++ )
     {
         Cec_TranCandVec_t * pDest;
-        int iStart;
         nDepFound = Cec_TranComputeDependencies(pSim, pPars, pRoot,
             vPool, pCare, 0, &Cand, 1, iChoice, pDep, &fExhausted);
         if ( fExhausted )
@@ -6296,9 +6305,8 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
         nDepFoundTotal++;
         pStat->nSigMatched++;
         pDest = Cand.nGates ? pConstr : pExist;
-        iStart = Cand.nGates ? iConstrStart : iExistStart;
         if ( !Cec_TranCandVecContains(pTried, &Cand) &&
-             !Cec_TranCandVecContainsRange(pDest, iStart, &Cand) )
+             !Cec_TranCandVecContains(pDest, &Cand) )
             Cec_TranCandVecPush( pDest, Cand );
         else
             pStat->nSigRejected++;

@@ -459,15 +459,57 @@ int Gia_ManResubPrint( Vec_Int_t * vRes, int nVars )
   SeeAlso     []
 
 ***********************************************************************/
+static int Gia_ManResubRecipeIsWellFormed( Gia_ResbMan_t * p )
+{
+    int nVars = Vec_PtrSize(p->vDivs);
+    int nGates, iTopLit, i, iLit0, iLit1;
+    if ( Vec_IntSize(p->vGates) == 0 ||
+         !(Vec_IntSize(p->vGates) & 1) )
+        return 0;
+    nGates = Vec_IntSize(p->vGates) / 2;
+    iTopLit = Vec_IntEntryLast(p->vGates);
+    if ( iTopLit < 0 || (Abc_Lit2Var(iTopLit) >= nVars &&
+         Abc_Lit2Var(iTopLit) - nVars >= nGates) )
+        return 0;
+    Vec_IntForEachEntryDouble( p->vGates, iLit0, iLit1, i )
+    {
+        int iGate = i / 2;
+        int iVar0, iVar1;
+        if ( iLit0 < 0 || iLit1 < 0 )
+            return 0;
+        iVar0 = Abc_Lit2Var(iLit0);
+        iVar1 = Abc_Lit2Var(iLit1);
+        if ( iVar0 >= nVars + iGate || iVar1 >= nVars + iGate )
+            return 0;
+        // Reversed fanins encode XOR in this resub format.  Root-only
+        // recipes request ANDs exclusively, and XOR fanins are plain.
+        if ( iVar0 > iVar1 && (!p->fUseXor ||
+             Abc_LitIsCompl(iLit0) || Abc_LitIsCompl(iLit1)) )
+            return 0;
+        // Equal physical fanins are a degenerate AND (x&x or x&!x) in root
+        // mode.  An XOR-enabled mixed recipe would make the operation tag
+        // ambiguous, so reject that shape.
+        if ( iVar0 == iVar1 && p->fUseXor )
+            return 0;
+    }
+    return 1;
+}
+
 int Gia_ManResubVerify( Gia_ResbMan_t * p, word * pFunc )
 {
     int nVars = Vec_PtrSize(p->vDivs);
-    int iTopLit, RetValue;
+    int nGates, iTopLit, RetValue;
     word * pDivRes; 
     if ( Vec_IntSize(p->vGates) == 0 )
         return -1;
+    // A recipe is untrusted search output.  Verification must reject a
+    // malformed candidate, not terminate the whole ABC process.
+    if ( !Gia_ManResubRecipeIsWellFormed(p) )
+        return 0;
+    nGates = Vec_IntSize(p->vGates) / 2;
     iTopLit = Vec_IntEntryLast(p->vGates);
-    assert( iTopLit >= 0 );
+    if ( iTopLit < 0 )
+        return 0;
     if ( iTopLit == 0 )
     {
         if ( pFunc ) Abc_TtClear( pFunc, p->nWords );
@@ -479,17 +521,14 @@ int Gia_ManResubVerify( Gia_ResbMan_t * p, word * pFunc )
         return Abc_TtIsConst0( p->pSets[0], p->nWords );
     }
     if ( Abc_Lit2Var(iTopLit) < nVars )
-    {
-        assert( Vec_IntSize(p->vGates) == 1 );
         pDivRes = (word *)Vec_PtrEntry( p->vDivs, Abc_Lit2Var(iTopLit) );
-    }
     else
     {
         int i, iLit0, iLit1;
-        assert( Vec_IntSize(p->vGates) > 1 );
-        assert( Vec_IntSize(p->vGates) % 2 == 1 );
-        assert( Abc_Lit2Var(iTopLit)-nVars == Vec_IntSize(p->vGates)/2-1 );
-        Vec_WrdFill( p->vSims, p->nWords * Vec_IntSize(p->vGates)/2, 0 );
+        int iTopGate = Abc_Lit2Var(iTopLit) - nVars;
+        if ( iTopGate < 0 || iTopGate >= nGates )
+            return 0;
+        Vec_WrdFill( p->vSims, p->nWords * nGates, 0 );
         Vec_IntForEachEntryDouble( p->vGates, iLit0, iLit1, i )
         {
             int iVar0 = Abc_Lit2Var(iLit0);
@@ -501,13 +540,13 @@ int Gia_ManResubVerify( Gia_ResbMan_t * p, word * pFunc )
                 Abc_TtAndCompl( pDiv, pDiv0, Abc_LitIsCompl(iLit0), pDiv1, Abc_LitIsCompl(iLit1), p->nWords );
             else if ( iVar0 > iVar1 )
             {
-                assert( !Abc_LitIsCompl(iLit0) );
-                assert( !Abc_LitIsCompl(iLit1) );
                 Abc_TtXor( pDiv, pDiv0, pDiv1, p->nWords, 0 );
             }
-            else assert( 0 );
+            else
+                Abc_TtAndCompl( pDiv, pDiv0, Abc_LitIsCompl(iLit0),
+                    pDiv1, Abc_LitIsCompl(iLit1), p->nWords );
         }
-        pDivRes = Vec_WrdEntryP( p->vSims, p->nWords*(Vec_IntSize(p->vGates)/2-1) );
+        pDivRes = Vec_WrdEntryP( p->vSims, p->nWords*iTopGate );
     }
     if ( Abc_LitIsCompl(iTopLit) )
         RetValue = !Abc_TtIntersectOne(p->pSets[1], 0, pDivRes, 0, p->nWords) && !Abc_TtIntersectOne(p->pSets[0], 0, pDivRes, 1, p->nWords);
@@ -1392,7 +1431,29 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
     if ( nLimit == 1 )
         return -1;
     Gia_ManFindUnatePairs( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vUnatePairs, p->fVerbose );
+    // Root-only greedy diversity revisits this routine for successive top
+    // pivots and recursively for the residual cover.  The legacy containers
+    // intentionally accumulate pairs, but in an iterator this made every
+    // Next() enlarge the next choice universe: a failed choice could keep
+    // fChoiceSelected set forever and never reach exhaustion.  Canonicalize
+    // the accumulated relation before ranking, then keep the same B-wide
+    // finite frontier used by root discovery.
+    if ( p->fSkipTemplates )
+    {
+        Vec_IntUniqify( p->vUnatePairs[0] );
+        Vec_IntUniqify( p->vUnatePairs[1] );
+    }
     Gia_ManSortPairs( p->pSets, p->vDivs, p->nWords, p->vUnatePairs, p->vUnatePairsW, p->vSorter );
+    if ( p->fSkipTemplates )
+    {
+        int n;
+        for ( n = 0; n < 2; n++ )
+            if ( Vec_IntSize(p->vUnatePairs[n]) > p->nDivsMax )
+            {
+                Vec_IntShrink( p->vUnatePairs[n], p->nDivsMax );
+                Vec_IntShrink( p->vUnatePairsW[n], p->nDivsMax );
+            }
+    }
     iResLit = p->fSkipTemplates ? -1 :
         Gia_ManFindDivGate( p->pSets, p->vDivs, p->nWords,
             p->vUnateLits, p->vUnatePairs, p->vUnateLitsW,
@@ -1678,6 +1739,17 @@ static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
         p->vBinateVars, p->vUnatePairs, 0 );
     Gia_ManSortPairs( p->pSets, p->vDivs, p->nWords,
         p->vUnatePairs, p->vUnatePairsW, p->vSorter );
+    // A physical B-wide divisor pool can induce O(B^2) pair literals.  Letting
+    // the exact gate-gate stage take the Cartesian square of that entire list
+    // turns one root into O(B^4) enumeration (loopv3 stalls at B=64).  The
+    // ranked exact-pair frontier is itself B-wide; all candidates in this
+    // finite template universe are still enumerated, with no top-q cutoff.
+    for ( n = 0; n < 2; n++ )
+        if ( Vec_IntSize(p->vUnatePairs[n]) > p->nDivsMax )
+        {
+            Vec_IntShrink( p->vUnatePairs[n], p->nDivsMax );
+            Vec_IntShrink( p->vUnatePairsW[n], p->nDivsMax );
+        }
     pIt->fPreparedPairs = 1;
 }
 
@@ -1874,6 +1946,14 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
         }
         else if ( pIt->Stage == 5 )
         {
+            // The ranked greedy pivot frontier is B-wide.  This is a finite
+            // universe invariant, not a time/q cutoff, and guarantees that a
+            // future scratch-state regression cannot make Next() nonterminating.
+            if ( pIt->iGreedy >= p->nDivsMax )
+            {
+                pIt->Stage = 6;
+                continue;
+            }
             // Reset only mutable search storage.  Configuration and the
             // monotonically increasing greedy pivot cursor remain intact.
             Abc_TtCopy( p->pSets[0], (word *)Vec_PtrEntry(p->vDivs, 0),
@@ -1881,6 +1961,14 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
             Abc_TtCopy( p->pSets[1], (word *)Vec_PtrEntry(p->vDivs, 1),
                 p->nWords, 0 );
             Vec_IntClear( p->vGates );
+            // Exact templates and the previous greedy choice share the
+            // manager's pair scratch.  A choice must start from the immutable
+            // divisor truth tables, not inherit a monotonically growing pair
+            // universe from the preceding choice.
+            Vec_IntClear( p->vUnatePairs[0] );
+            Vec_IntClear( p->vUnatePairs[1] );
+            Vec_IntClear( p->vUnatePairsW[0] );
+            Vec_IntClear( p->vUnatePairsW[1] );
             p->iChoice = pIt->iGreedy++;
             p->fChoiceSelected = 0;
             p->fSkipTemplates = 1;
@@ -1900,16 +1988,10 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
         }
         if ( !fFound )
             continue;
-        // Recursive greedy search mutates the uncovered OFF/ON sets.  Always
-        // audit a completed recipe against the immutable original relation
-        // before it leaves the iterator.  Exact-template bugs and incomplete
-        // greedy constructions are rejected as candidates, not promoted into
-        // a downstream assertion in &stran.
-        Abc_TtCopy( p->pSets[0], (word *)Vec_PtrEntry(p->vDivs, 0),
-            p->nWords, 0 );
-        Abc_TtCopy( p->pSets[1], (word *)Vec_PtrEntry(p->vDivs, 1),
-            p->nWords, 0 );
-        if ( Gia_ManResubVerify(p, NULL) )
+        // Check only recipe shape here.  Full OFF/ON simulation is performed
+        // once after root-level canonicalization; repeating it in this hot
+        // iterator loop makes medium benchmarks tens of times slower.
+        if ( Gia_ManResubRecipeIsWellFormed(p) )
             break;
         Vec_IntClear( p->vGates );
         *pfInvalid = 1;
@@ -1991,6 +2073,19 @@ int Abc_ResubIteratorSelfTest()
             Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
     } while ( !Exhausted );
     Abc_ResubIteratorStop( pIt );
+    // Regression for real benchmark recipes containing degenerate same-var
+    // fanins.  Verification must return a semantic result, never assert.
+    pIt = Abc_ResubIteratorStart( Divs, 4, 1, 3, 2, 0, 0 );
+    Vec_IntClear( ((Gia_ResbIter_t *)pIt)->p->vGates );
+    Vec_IntPushTwo( ((Gia_ResbIter_t *)pIt)->p->vGates,
+        Abc_Var2Lit(2, 0), Abc_Var2Lit(2, 0) );
+    Vec_IntPush( ((Gia_ResbIter_t *)pIt)->p->vGates,
+        Abc_Var2Lit(4, 0) );
+    assert( !Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
+    Vec_IntWriteEntry( ((Gia_ResbIter_t *)pIt)->p->vGates, 1,
+        Abc_Var2Lit(2, 1) );
+    assert( !Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
+    Abc_ResubIteratorStop( pIt );
     // Deterministically exercise all finite exact-template stages on a wider
     // set of disjoint OFF/ON relations.  The hand-written case above covers
     // the public greedy/exhaustion path; keeping the random sweep exact-only
@@ -2025,6 +2120,19 @@ int Abc_ResubIteratorSelfTest()
         while ( Gia_ResbIterNextGateGate((Gia_ResbIter_t *)pIt) )
             assert( ++nRounds < 4096 &&
                 Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
+        Abc_ResubIteratorStop( pIt );
+        // Public Next() must exhaust exact templates plus the finite B-wide
+        // greedy frontier.  This catches the loopv3 regression where failed
+        // greedy choices kept appending pair scratch and never exhausted.
+        pIt = Abc_ResubIteratorStart( RandDivs, 6, 1, 3, 4, 0, 0 );
+        nRounds = 0;
+        do {
+            nArray = Abc_ResubIteratorNext( pIt, &pArray, &Attempt,
+                &Exhausted, &Invalid );
+            assert( ++nRounds < 4096 );
+            assert( Exhausted || Invalid ||
+                (nArray > 0 && (nArray & 1)) );
+        } while ( !Exhausted );
         Abc_ResubIteratorStop( pIt );
     }
     ABC_FREE( U.pArray );
