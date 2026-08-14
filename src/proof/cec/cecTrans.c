@@ -4,16 +4,15 @@
 
   SystemName  [ABC: Logic synthesis and verification system.]
 
-  PackageName [Sequential transduction using SODC proof obligations.]
+  PackageName [Sequential Direct root resubstitution.]
 
-  Synopsis    [Candidate-and-prove sequential redundancy addition.]
+  Synopsis    [Candidate-and-prove sequential root replacement.]
 
-  Description [This command is intentionally independent of &sodc.  It uses
-  the BMC/induction machinery behind signal correspondence only as a bounded
-  sequential proof oracle.  Its search space is speculative transduction:
-  find a costly victim fanin, derive an added divisor, prove that adding it
-  is redundant, prove that it makes the victim removable, and commit only a
-  proved positive-gain transaction.]
+  Description [The active algorithm replaces an AND root by a constant,
+  earlier literal, or dependency recipe.  Root candidates are discovered and
+  proved on an immutable GIA, selected under bundle interactions, and committed
+  together.  Window/output scopes are frozen compatibility paths.  Legacy SODC
+  code in this file is not part of the active &stran command.]
 
 ***********************************************************************/
 
@@ -2528,6 +2527,8 @@ static Vec_Int_t * Cec_TranCollectSeqTfoPos( Gia_Man_t * p, int iTarget )
 // the edit's sequential TFO are retained.  Gia_ManDupCones then computes the
 // exact sequential COI of these properties, so &scorr proves no unrelated
 // pairs and RI equality is not imposed as an extra property.
+// Frozen compatibility proof scope.  Current algorithm and QoR development
+// target CEC_TRAN_PROOF_ROOT only.
 static Gia_Man_t * Cec_TranBuildDirectOutputMiter( Gia_Man_t * p,
     Gia_Man_t * pFinal, int iTarget )
 {
@@ -2559,6 +2560,8 @@ static Gia_Man_t * Cec_TranBuildDirectOutputMiter( Gia_Man_t * p,
 // the window cut and at every PO/RI reached before that cut.  An RI reached
 // inside the window is a cut boundary, not a separate whole-machine
 // RI-equality obligation.
+// Frozen compatibility proof scope.  Current algorithm and QoR development
+// target CEC_TRAN_PROOF_ROOT only.
 static Gia_Man_t * Cec_TranBuildDirectContextMiter( Gia_Man_t * p,
     Cec_TranCand_t const * pCand, int nTfoDepth )
 {

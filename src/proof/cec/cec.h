@@ -317,12 +317,14 @@ extern Gia_Man_t *   Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * p
 extern void          Cec_ManSodcSetDefaultParams( Cec_ParSodc_t * pPars );
 extern Gia_Man_t *   Cec_ManSodcSynthesis( Gia_Man_t * pAig, Cec_ParSodc_t * pPars );
 
-// Sequential transduction parameters.  The command is deliberately separate
-// from &sodc: it uses scorr's proof machinery but searches speculative
-// redundancy-addition transactions rather than global correspondences.
+// Sequential Direct root-resubstitution parameters.  The active command uses
+// scorr's proof machinery for root relations; legacy SODC and frozen
+// window/output compatibility paths are not current development targets.
 typedef struct Cec_ParTran_t_ Cec_ParTran_t;
 enum {
     CEC_TRAN_PROOF_ROOT = 0,
+    // Frozen compatibility scopes.  Current &stran development, QoR work,
+    // and algorithm review target CEC_TRAN_PROOF_ROOT only.
     CEC_TRAN_PROOF_WINDOW,
     CEC_TRAN_PROOF_OUTPUT
 };
@@ -346,7 +348,7 @@ struct Cec_ParTran_t_
     int              nCexMax;       // persistent witness traces injected into each simulation batch
     int              nCexBatch;     // witnesses accumulated before appending one signature block
     int              nProofWindow;  // TFO depth used by Direct window proof
-    int              nProofScope;   // Direct acceptance scope: root/window/output
+    int              nProofScope;   // root is active; window/output are frozen compatibility paths
     int              nStrictPct;    // compatibility option (ignored)
     int              nLowUnknownMax;// UNKNOWNs per low-value contextual root/lane
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)

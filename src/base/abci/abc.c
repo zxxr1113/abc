@@ -42445,6 +42445,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             goto usage;
         }
     }
+    if ( pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
+        Abc_Print( 1, "&stran: -P window/output are frozen compatibility paths; current development targets -P root only.\n" );
     if ( fSeenSodc )
     {
         Abc_Print( -1, "&stran: This branch implements Direct root resubstitution only; -o is unavailable.\n" );
@@ -42497,7 +42499,7 @@ usage:
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : physical nodes in the local divisor pool (0 = all; both phases are free) [default = %d]\n", pPars->nConstrBaseMax );
     Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
-    Abc_Print( -2, "\t-P str : proof scope: root/gate, window, or output/po-ri [default = root]\n" );
+    Abc_Print( -2, "\t-P str : proof scope: root/gate; window and output/po-ri are frozen compatibility paths [default = root]\n" );
     Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
     Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
     Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
