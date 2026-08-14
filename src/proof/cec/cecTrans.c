@@ -34,6 +34,13 @@ enum
     CEC_TRAN_RESUB_PROFILE_MAX = 64,
     CEC_TRAN_ROOT_ALT_PROFILE_MAX = CEC_TRAN_RESUB_PROFILE_MAX + 3
 };
+enum
+{
+    CEC_TRAN_STATE_CANDIDATE = 0,
+    CEC_TRAN_STATE_PROVED_COMB,
+    CEC_TRAN_STATE_PROVED_SEQ,
+    CEC_TRAN_STATE_SELECTED
+};
 
 extern void Abc_ResubPrepareManager( int nWords );
 extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
@@ -42,6 +49,18 @@ extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
     Vec_Wec_t * vResults, int * pnAttempts,
     abctime * pTimeInit, abctime * pTimeSearch,
     abctime * pTimeAttempts, int * pAttemptUnique, int * pfExhausted );
+extern void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs,
+    int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor );
+extern int Abc_ResubIteratorNext( void * pIter, int ** ppArray,
+    int * pnAttempt, int * pfExhausted );
+extern void Abc_ResubIteratorStop( void * pIter );
+extern int Abc_ResubIteratorSelfTest();
+
+static int Cec_TranCanonicalizeSelfTest();
+int Cec_TranRootSelfTest()
+{
+    return Abc_ResubIteratorSelfTest() && Cec_TranCanonicalizeSelfTest();
+}
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
 {
@@ -93,24 +112,22 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseDirect  = 1;
     p->fUseSodc    = 0;
     p->fUseExisting = 1;
-    // Include zero-gate dependency recipes by default.  The independent
-    // global-existing lookup remains controlled by -l, while -z can still be
-    // used to disable this resub-derived existing-recipe lane.
-    p->fUseResubZero = 1;
+    // Zero-gate recipes are owned by the direct constant/existing generator.
+    // Exact literals remain legal leaves inside non-zero constructed recipes.
+    p->fUseResubZero = 0;
     p->fUseConstr  = 1;
     p->fUseCbsMultiLit = 1;
-    // Root candidates are exposed one lane/rank at a time to preserve a
-    // deterministic global proof order without clipping the frontier.
-    p->fRootProgressive = 1;
+    // Progressive/layer scheduling is retired by the root-only pipeline.
+    p->fRootProgressive = 0;
     p->fRootExhaustive = 0;
     p->fRootStopLegacy = 0;
     p->fRootStopProved = 1;
-    // Keep candidate discovery, combinational proof, and sequential proof on
-    // one immutable snapshot, then commit all winners together.  Command-line
-    // -s retains the old commit-and-rebuild split path as an A/B mode.
+    // Candidate discovery, combination proof, and sequential proof share one
+    // immutable snapshot; selected winners are committed once at the end.
     p->fRootSplitStages = 0;
     p->fUseFreeSim = 1;
     p->nRootStage = 0;
+    p->fSeqAllCands = 0;
 }
 
 typedef struct Cec_TranTargetProf_t_ Cec_TranTargetProf_t;
@@ -186,6 +203,26 @@ struct Cec_TranProf_t_
     abctime timeRootStageEval;
     abctime timeRootCommit;
     abctime timeRootRescue;
+    // Root-only redesign: the following top-level buckets are disjoint.
+    abctime timeRootSimSig;
+    abctime timeRootRefresh;
+    abctime timeRootDirect;
+    abctime timeRootDivCi;
+    abctime timeRootResubInit;
+    abctime timeRootResubEnumCanon;
+    abctime timeRootCbsGraph;
+    abctime timeRootCbsScreen;
+    abctime timeRootCbsSolve;
+    abctime timeRootScorrGraph;
+    abctime timeRootScorrSolve;
+    abctime timeRootScorrBmc;
+    abctime timeRootScorrIndSat;
+    abctime timeRootScorrResim;
+    abctime timeRootScorrOther;
+    abctime timeRootPostSelect;
+    abctime timeRootBundleDup;
+    abctime timeRootCleanup;
+    abctime timeRootExactAudit;
     abctime timeRootBudget[2]; // low/high root-batch proof time
     abctime timeScout;
     abctime timeHardRescue;
@@ -229,8 +266,12 @@ struct Cec_TranProf_t_
     int       nRootBundlePrimaryWins;
     int       nRootBundleGainWins;
     int       nRootBundlePortfolioTies;
+    int       nStageKindGenerated[2][3];
+    int       nStageKindSubmitted[2][3];
     int       nStageKindProved[2][3];
     int       nStageKindSelected[2][3];
+    long long nStageKindMarginalAndGain[2][3];
+    long long nStageKindMarginalRegGain[2][3];
     int       nStageConstructProvedMaxGates[2];
     int       nStageConstructSelectedMaxGates[2];
     int     nSimCalls;
@@ -331,6 +372,9 @@ struct Cec_TranProf_t_
     int     nRootDepFound;       // dependency-synthesis calls returning a recipe
     int     nRootDepAttempts;    // bounded choice-ranked searches
     int     nRootDepRecipes;     // unique recipes returned by these searches
+    int     nRootResubIterInit;  // stateful iterators initialized once per route
+    int     nRootResubIterNext;  // total Next calls, including final exhaustion
+    int     nRootResubIterExhausted;// routes reaching their finite end
     int     nRootConstructGenerated; // nonzero-gate Build recipes discovered
     long long nRootConstructGeneratedGates;
     int     nRootConstructSubmitted; // Build recipes sent to the root proof batch
@@ -363,6 +407,16 @@ struct Cec_TranProf_t_
     int     nSeqCands;          // unresolved candidates sent to scorr
     int     nSeqSeeded;         // endpoint relations actually seeded into scorr classes
     int     nSeqProved;         // candidates proved only by scorr
+    int     nSeqSplit;          // seeded relations split by the fixed point
+    int     nSeqUnknown;        // surviving relations under an incomplete oracle
+    int     nSeqRoots;          // distinct roots seeded into shared scorr
+    int     nSeqClassMax;       // largest root proxy class (root plus candidates)
+    long long nSeqClassSum;     // total class members over seeded roots
+    int     nSeqFixedRounds;    // completed fixed-point refinement rounds
+    int     nSeqRepairEpochs;   // dirty repair scorr epochs
+    int     nDirtyRootFreed;    // cached relation whose root is already free/used
+    int     nDirtySupportFreed; // cached relation whose external support was freed
+    int     nDirtyMffcChanged;  // still-legal relation with changed marginal MFFC
     int     nCombSelected;      // final root winners proved by CBS
     int     nSeqSelected;       // final root winners proved by scorr
     int     nRootRescueCalls;   // legacy profile column; isolated retry was removed
@@ -2200,10 +2254,13 @@ struct Cec_TranCand_t_
     unsigned fStrict   : 1;
     unsigned nKind     : 2;
     unsigned nProofStage : 2;   // 0=unproved, 1=combinational, 2=sequential
+    unsigned nStatus    : 2;    // candidate/proved_comb/proved_seq/selected
+    unsigned fExactTemplate : 1;// finite exact resub template (before greedy diversity)
     unsigned fDivRescue : 1;
     unsigned fDivGlobal : 1;
     unsigned fPrimaryFrontier : 1;
     int      nResubRank;         // 0=non-resub, otherwise raw recipe rank
+    int      nCiOverlap;         // CI support overlap with root; ordering only
     int      nSchedRank;         // normal/rescue proof layer
     int      nWave;              // zero-based root CEGAR wave
 };
@@ -2245,6 +2302,161 @@ static void Cec_TranCandRecipeRelease( Cec_TranCand_t * pCand )
     if ( --pRecipe->nRefs == 0 )
         ABC_FREE( pRecipe );
     pCand->Recipe = NULL;
+}
+
+static inline int Cec_TranRecipeNotCode( int Code )
+{
+    int iLit;
+    if ( !Cec_TranRecipeCodeIsGate(Code) )
+        return Abc_LitNot( Code );
+    iLit = Cec_TranRecipeGateLit( Code );
+    return Cec_TranRecipeGateCode( Abc_Lit2Var(iLit),
+        !Abc_LitIsCompl(iLit) );
+}
+
+static inline int Cec_TranRecipeMapCode( int Code, int const * pMap,
+    int nMapped )
+{
+    int iLit, iGate;
+    if ( !Cec_TranRecipeCodeIsGate(Code) )
+        return Code;
+    iLit = Cec_TranRecipeGateLit( Code );
+    iGate = Abc_Lit2Var( iLit );
+    assert( iGate < nMapped );
+    return Abc_LitIsCompl(iLit) ?
+        Cec_TranRecipeNotCode(pMap[iGate]) : pMap[iGate];
+}
+
+static void Cec_TranRecipeMarkUsed_rec( int Code, int const * pRecipe,
+    int nGates, char * pUsed )
+{
+    int iGate;
+    if ( !Cec_TranRecipeCodeIsGate(Code) )
+        return;
+    iGate = Abc_Lit2Var( Cec_TranRecipeGateLit(Code) );
+    assert( iGate < nGates );
+    if ( pUsed[iGate] )
+        return;
+    pUsed[iGate] = 1;
+    Cec_TranRecipeMarkUsed_rec( pRecipe[2*iGate], pRecipe, nGates, pUsed );
+    Cec_TranRecipeMarkUsed_rec( pRecipe[2*iGate+1], pRecipe, nGates, pUsed );
+}
+
+// Canonicalize the small recipe AIG before it enters a candidate set.  These
+// are structural identities only: commutative fanins, constants, duplicate
+// inputs, complementary inputs, one-level absorption, hash-identical gates,
+// and dead gates.  Sampled dominance is deliberately not a pruning rule.
+static void Cec_TranCandCanonicalizeRecipe( Cec_TranCand_t * pCand )
+{
+    int Work[2 * CEC_TRAN_RECIPE_NODES_MAX];
+    int OldMap[CEC_TRAN_RECIPE_NODES_MAX];
+    int CompactMap[CEC_TRAN_RECIPE_NODES_MAX];
+    int Compact[2 * CEC_TRAN_RECIPE_NODES_MAX];
+    char Used[CEC_TRAN_RECIPE_NODES_MAX] = {0};
+    int i, k, a, b, Result, nWork = 0, nCompact = 0, iOut;
+    if ( pCand->nGates == 0 )
+        return;
+    for ( i = 0; i < pCand->nGates; i++ )
+    {
+        a = Cec_TranRecipeMapCode( pCand->Recipe[2*i], OldMap, i );
+        b = Cec_TranRecipeMapCode( pCand->Recipe[2*i+1], OldMap, i );
+        if ( a == 0 || b == 0 || a == Cec_TranRecipeNotCode(b) )
+            Result = 0;
+        else if ( a == 1 )
+            Result = b;
+        else if ( b == 1 || a == b )
+            Result = a;
+        else
+        {
+            Result = -1;
+            if ( Cec_TranRecipeCodeIsGate(a) &&
+                 !Abc_LitIsCompl(Cec_TranRecipeGateLit(a)) )
+            {
+                k = Abc_Lit2Var( Cec_TranRecipeGateLit(a) );
+                if ( Work[2*k] == b || Work[2*k+1] == b )
+                    Result = a;
+            }
+            if ( Result == -1 && Cec_TranRecipeCodeIsGate(b) &&
+                 !Abc_LitIsCompl(Cec_TranRecipeGateLit(b)) )
+            {
+                k = Abc_Lit2Var( Cec_TranRecipeGateLit(b) );
+                if ( Work[2*k] == a || Work[2*k+1] == a )
+                    Result = b;
+            }
+            if ( Result == -1 )
+            {
+                if ( a > b ) { int t = a; a = b; b = t; }
+                for ( k = 0; k < nWork; k++ )
+                    if ( Work[2*k] == a && Work[2*k+1] == b )
+                        break;
+                if ( k < nWork )
+                    Result = Cec_TranRecipeGateCode( k, 0 );
+                else
+                {
+                    Work[2*nWork] = a;
+                    Work[2*nWork+1] = b;
+                    Result = Cec_TranRecipeGateCode( nWork++, 0 );
+                }
+            }
+        }
+        OldMap[i] = Result;
+    }
+    iOut = Cec_TranRecipeMapCode( pCand->iOut, OldMap, pCand->nGates );
+    Cec_TranRecipeMarkUsed_rec( iOut, Work, nWork, Used );
+    for ( i = 0; i < nWork; i++ )
+    {
+        CompactMap[i] = -1;
+        if ( !Used[i] )
+            continue;
+        a = Cec_TranRecipeMapCode( Work[2*i], CompactMap, i );
+        b = Cec_TranRecipeMapCode( Work[2*i+1], CompactMap, i );
+        Compact[2*nCompact] = a;
+        Compact[2*nCompact+1] = b;
+        CompactMap[i] = Cec_TranRecipeGateCode( nCompact++, 0 );
+    }
+    iOut = Cec_TranRecipeMapCode( iOut, CompactMap, nWork );
+    Cec_TranCandRecipeRelease( pCand );
+    pCand->nGates = nCompact;
+    pCand->iOut = iOut;
+    if ( nCompact )
+    {
+        pCand->Recipe = Cec_TranRecipeAlloc( 2 * nCompact );
+        memcpy( pCand->Recipe, Compact, sizeof(int) * 2 * nCompact );
+    }
+    pCand->nKind = nCompact ? CEC_TRAN_CAND_CONSTR :
+        (Abc_Lit2Var(iOut) == 0 ? CEC_TRAN_CAND_CONST :
+            CEC_TRAN_CAND_EXIST);
+}
+
+static int Cec_TranCanonicalizeSelfTest()
+{
+    Cec_TranCand_t Cand;
+    memset( &Cand, 0, sizeof(Cand) );
+    Cand.nKind = CEC_TRAN_CAND_CONSTR;
+    Cand.nGates = 3;
+    Cand.Recipe = Cec_TranRecipeAlloc( 6 );
+    // g0 = x & 1 = x; g1 = g0 & x = x; g2 = g1 & g0 = x.
+    Cand.Recipe[0] = Abc_Var2Lit(2, 0); Cand.Recipe[1] = 1;
+    Cand.Recipe[2] = Cec_TranRecipeGateCode(0, 0);
+    Cand.Recipe[3] = Abc_Var2Lit(2, 0);
+    Cand.Recipe[4] = Cec_TranRecipeGateCode(1, 0);
+    Cand.Recipe[5] = Cec_TranRecipeGateCode(0, 0);
+    Cand.iOut = Cec_TranRecipeGateCode(2, 0);
+    Cec_TranCandCanonicalizeRecipe( &Cand );
+    assert( Cand.nGates == 0 && Cand.Recipe == NULL );
+    assert( Cand.nKind == CEC_TRAN_CAND_EXIST &&
+        Cand.iOut == Abc_Var2Lit(2, 0) );
+    // x & !x canonicalizes to constant zero.
+    Cand.nKind = CEC_TRAN_CAND_CONSTR;
+    Cand.nGates = 1;
+    Cand.Recipe = Cec_TranRecipeAlloc( 2 );
+    Cand.Recipe[0] = Abc_Var2Lit(3, 0);
+    Cand.Recipe[1] = Abc_Var2Lit(3, 1);
+    Cand.iOut = Cec_TranRecipeGateCode(0, 0);
+    Cec_TranCandCanonicalizeRecipe( &Cand );
+    assert( Cand.nGates == 0 && Cand.Recipe == NULL &&
+        Cand.nKind == CEC_TRAN_CAND_CONST && Cand.iOut == 0 );
+    return 1;
 }
 
 static void Cec_TranCandRecipeDetach( Cec_TranCand_t * pCand )
@@ -3126,20 +3338,23 @@ static int Cec_TranRootClassEndpoint( Gia_Man_t * pNew, int iLit,
 static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     Cec_TranCand_t const * pCands, int nCands,
     int fCreateQueries,
-    Vec_Int_t ** pvPairs, Vec_Int_t ** pvQueries,
+    Vec_Int_t ** pvPairs, Vec_Int_t ** pvCombPairs, Vec_Int_t ** pvQueries,
     Vec_Int_t ** pvAndLeaves, Vec_Str_t ** pvAndCounts )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj;
     Vec_Int_t * vPairs = Vec_IntAlloc( 2 * nCands );
+    Vec_Int_t * vCombPairs = Vec_IntAlloc( 2 * nCands );
     Vec_Int_t * vQueries = Vec_IntAlloc( nCands );
     Vec_Int_t * vAndLeaves = pvAndLeaves ? Vec_IntAlloc( 2 * nCands ) : NULL;
     Vec_Str_t * vAndCounts = pvAndCounts ? Vec_StrAlloc( nCands ) : NULL;
     int nPis = Gia_ManPiNum(p);
     int * pPiProxies = nPis ? ABC_FALLOC( int, 2 * nPis ) : NULL;
+    int * pRootProxies = ABC_FALLOC( int, Gia_ManObjNum(p) );
     int Gates[CEC_TRAN_RECIPE_NODES_MAX];
     int Leaves[2 * CEC_TRAN_RECIPE_NODES_MAX + 1];
     int i, k, nLeaves, iLit0, iLit1, iRoot, iRep, iQuery;
+    int iRootProxy, iCandProxy;
     assert( nCands > 0 );
     assert( (pvAndLeaves != NULL) == (pvAndCounts != NULL) );
     Gia_ManFillValue( p );
@@ -3159,6 +3374,7 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     {
         iRoot = Cec_TranCopyLit( p, Abc_Var2Lit(pCands[i].iTarget, 0) );
         iRep = Cec_TranRecipeBuildMapped( p, pNew, pCands + i, Gates );
+        Vec_IntPushTwo( vCombPairs, iRoot, iRep );
         if ( vAndCounts )
         {
             nLeaves = Cec_TranRecipeCollectAndLeaves( pCands + i, Leaves );
@@ -3177,8 +3393,18 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
             iQuery = Gia_ManHashXor( pNew, iRoot, iRep );
             Vec_IntPush( vQueries, iQuery );
         }
-        iRep = Cec_TranRootClassEndpoint( pNew, iRep, nPis, pPiProxies );
-        Vec_IntPushTwo( vPairs, iRoot, iRep );
+        // Correspondence classes must be root-local.  Raw physical endpoints
+        // can be shared by unrelated roots; unioning them would create an
+        // accidental transitive class.  Unstrashed x&1 proof proxies preserve
+        // the two functions while giving every root an isolated class.  All
+        // alternatives of one root intentionally share its root proxy.
+        if ( pRootProxies[pCands[i].iTarget] == -1 )
+            pRootProxies[pCands[i].iTarget] =
+                Gia_ManAppendAnd( pNew, iRoot, 1 );
+        iRootProxy = pRootProxies[pCands[i].iTarget];
+        iCandProxy = Gia_ManAppendAnd( pNew,
+            Cec_TranRootClassEndpoint(pNew, iRep, nPis, pPiProxies), 1 );
+        Vec_IntPushTwo( vPairs, iRootProxy, iCandProxy );
     }
     Vec_IntForEachEntry( vQueries, iQuery, i )
         Gia_ManAppendCo( pNew, iQuery );
@@ -3201,13 +3427,16 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
     // cleanup copy left in pTemp->Value.
     pNew = Gia_ManCleanup( pTemp = pNew );
     Gia_ManDupRemapLiterals( vPairs, pTemp );
+    Gia_ManDupRemapLiterals( vCombPairs, pTemp );
     Gia_ManDupRemapLiterals( vQueries, pTemp );
     if ( vAndLeaves )
         Gia_ManDupRemapLiterals( vAndLeaves, pTemp );
     Gia_ManStop( pTemp );
     ABC_FREE( pPiProxies );
+    ABC_FREE( pRootProxies );
 
     *pvPairs = vPairs;
+    *pvCombPairs = vCombPairs;
     *pvQueries = vQueries;
     if ( pvAndLeaves )
         *pvAndLeaves = vAndLeaves;
@@ -3343,7 +3572,8 @@ static int Cec_TranCombSolveQuery( Cbs_Man_t * pCbs, Gia_Man_t * pBatch,
 static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
     Cec_TranCand_t const * pCands, int nCands, Vec_Int_t * vPairs,
     Vec_Int_t * vQueries, Vec_Int_t * vAndLeaves, Vec_Str_t * vAndCounts,
-    Cec_ParTran_t * pPars, Cec_TranProf_t * pProf )
+    Cec_ParTran_t * pPars, Cec_TranProf_t * pProf,
+    int fStopAtFirstProof, int * pnAttempted )
 {
     Cbs_Man_t * pCbs = Cbs_ManAlloc( pBatch );
     Cec_TranFreeSim_t * pFree = NULL;
@@ -3351,7 +3581,7 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
     int Cube[2 * CEC_TRAN_RECIPE_NODES_MAX + 2];
     int i, k, iBeg = 0, iEnd = 0, nLeaves, a, h, t;
     int Status, fSat, fUnknown, fSaveModel, FreeMismatch;
-    abctime clk = Abc_Clock();
+    abctime clk = Abc_Clock(), timeSolve = 0, clkSolve;
     if ( pPars->fUseFreeSim && (pPars->nFreeWords || pPars->nFreeCexMax) )
     {
         abctime clkFree = Abc_Clock();
@@ -3361,9 +3591,13 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
     }
     Cbs_ManSetConflictNum( pCbs, pPars->nCombBTLimit );
     assert( pPars->fUseCbsMultiLit || Vec_IntSize(vQueries) == nCands );
-    pProf->nCombCands += nCands;
+    if ( pnAttempted )
+        *pnAttempted = 0;
     for ( i = 0; i < nCands; i++ )
     {
+        pProf->nCombCands++;
+        if ( pnAttempted )
+            (*pnAttempted)++;
         nLeaves = pPars->fUseCbsMultiLit ?
             (unsigned char)Vec_StrEntry(vAndCounts, i) : 0;
         iBeg = iEnd;
@@ -3375,6 +3609,8 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
         {
             Vec_StrWriteEntry( vStage, i, 1 );
             pProf->nCombProved++;
+            if ( fStopAtFirstProof )
+                break;
             continue;
         }
         if ( pFree )
@@ -3397,8 +3633,10 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
         fSat = fUnknown = 0;
         if ( !pPars->fUseCbsMultiLit )
         {
+            clkSolve = Abc_Clock();
             Status = Cec_TranCombSolveQuery( pCbs, pBatch,
                 Vec_IntEntry(vQueries, i), fSaveModel, pProf );
+            timeSolve += Abc_Clock() - clkSolve;
             if ( Status == 0 )
             {
                 pProf->nCombDisproved++;
@@ -3418,6 +3656,8 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
             {
                 Vec_StrWriteEntry( vStage, i, 1 );
                 pProf->nCombProved++;
+                if ( fStopAtFirstProof )
+                    break;
             }
             continue;
         }
@@ -3436,8 +3676,10 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
             {
                 Cube[0] = t;
                 Cube[1] = Abc_LitNot( Vec_IntEntry(vAndLeaves, k) );
+                clkSolve = Abc_Clock();
                 Status = Cec_TranCombSolveCube( pCbs, Cube, 2,
                     fSaveModel, pProf );
+                timeSolve += Abc_Clock() - clkSolve;
                 if ( Status == 0 ) { fSat = 1; break; }
                 if ( Status < 0 )
                 {
@@ -3452,8 +3694,10 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
                 Cube[0] = Abc_LitNot( t );
                 for ( k = 0; k < nLeaves; k++ )
                     Cube[k+1] = Vec_IntEntry( vAndLeaves, iBeg + k );
+                clkSolve = Abc_Clock();
                 Status = Cec_TranCombSolveCube( pCbs, Cube, nLeaves + 1,
                     fSaveModel, pProf );
+                timeSolve += Abc_Clock() - clkSolve;
                 if ( Status == 0 )
                     fSat = 1;
                 else
@@ -3467,8 +3711,10 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
         {
             Cube[0] = a;             Cube[1] = Abc_LitNot(h);
             pProf->nCombTwoCubeCands++;
+            clkSolve = Abc_Clock();
             Status = Cec_TranCombSolveCube( pCbs, Cube, 2,
                 fSaveModel, pProf );
+            timeSolve += Abc_Clock() - clkSolve;
             if ( Status == 0 )
                 fSat = 1;
             else
@@ -3483,8 +3729,10 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
             if ( !fSat && !fUnknown )
             {
                 Cube[0] = Abc_LitNot(a); Cube[1] = h;
+                clkSolve = Abc_Clock();
                 Status = Cec_TranCombSolveCube( pCbs, Cube, 2,
                     fSaveModel, pProf );
+                timeSolve += Abc_Clock() - clkSolve;
                 if ( Status == 0 )
                     fSat = 1;
                 else
@@ -3513,11 +3761,44 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
         {
             Vec_StrWriteEntry( vStage, i, 1 );
             pProf->nCombProved++;
+            if ( fStopAtFirstProof )
+                break;
         }
     }
-    pProf->timeCombSolve += Abc_Clock() - clk;
+    pProf->timeCombSolve += timeSolve;
+    pProf->timeRootCbsScreen += Abc_Clock() - clk - timeSolve;
     Cec_TranFreeSimStop( pFree );
     Cbs_ManStop( pCbs );
+    return vStage;
+}
+
+// Run only candidate-directed CBS.  This is the COMB half of the root-only
+// pipeline; no sequential relation is seeded by this helper.
+static Vec_Str_t * Cec_TranProveCombOnly( Gia_Man_t * p,
+    Cec_TranCand_t const * pCands, int nCands, int fStopAtFirstProof,
+    Cec_ParTran_t * pPars, Cec_TranProf_t * pProf, int * pnAttempted )
+{
+    Gia_Man_t * pBatch;
+    Vec_Int_t * vPairs, * vCombPairs, * vQueries, * vAndLeaves = NULL;
+    Vec_Str_t * vAndCounts = NULL, * vStage;
+    abctime timeGraph, clk = Abc_Clock();
+    pBatch = Cec_TranBuildRootBatch( p, pCands, nCands,
+        !pPars->fUseCbsMultiLit ? 2 : 0,
+        &vPairs, &vCombPairs, &vQueries,
+        pPars->fUseCbsMultiLit ? &vAndLeaves : NULL,
+        pPars->fUseCbsMultiLit ? &vAndCounts : NULL );
+    timeGraph = Abc_Clock() - clk;
+    pProf->timeRootCbsGraph += timeGraph;
+    pProf->timeCombBuild += timeGraph;
+    vStage = Cec_TranProveCombBatch( pBatch, pCands, nCands,
+        vCombPairs, vQueries, vAndLeaves, vAndCounts, pPars, pProf,
+        fStopAtFirstProof, pnAttempted );
+    Vec_IntFree( vPairs );
+    Vec_IntFree( vCombPairs );
+    Vec_IntFree( vQueries );
+    Vec_IntFreeP( &vAndLeaves );
+    Vec_StrFreeP( &vAndCounts );
+    Gia_ManStop( pBatch );
     return vStage;
 }
 
@@ -3532,29 +3813,35 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     Cec_ParCor_t Cor;
     Gia_Man_t * pBatch;
     Gia_Obj_t * pObj;
-    Vec_Int_t * vPairs, * vQueries;
+    Vec_Int_t * vPairs, * vCombPairs, * vQueries;
     Vec_Int_t * vSeqPairs = NULL;
     Vec_Int_t * vAndLeaves = NULL;
     Vec_Str_t * vAndCounts = NULL;
     Vec_Int_t * vStatus = Vec_IntStart( nCands );
     Vec_Str_t * vStage;
+    Cec_ProfCor_t CorrBefore;
     int fNeedComb = pPars->nRootStage != 2;
     int fNeedSeq = pPars->nRootStage != 1;
     int i, RetValue = 1, nProved = 0, nSeq = 0, nSeqProved = 0;
+    int nSeqSplit = 0, nSeqUnknown = 0, nSeqRoots = 0;
     abctime clk, timeSeq = 0, clkBatch = Abc_Clock();
     memset( &Cor, 0, sizeof(Cor) );
     clk = Abc_Clock();
     pBatch = Cec_TranBuildRootBatch( p, pCands, nCands,
         fNeedComb && !pPars->fUseCbsMultiLit ? 2 : 0,
-        &vPairs, &vQueries,
+        &vPairs, &vCombPairs, &vQueries,
         fNeedComb && pPars->fUseCbsMultiLit ? &vAndLeaves : NULL,
         fNeedComb && pPars->fUseCbsMultiLit ? &vAndCounts : NULL );
     clk = Abc_Clock() - clk;
     pProf->timeFinalMiter += clk;
-    pProf->timeCombBuild += clk;
+    if ( fNeedComb )
+        pProf->timeCombBuild += clk, pProf->timeRootCbsGraph += clk;
+    else
+        pProf->timeRootScorrGraph += clk;
     pProf->nFinalCalls++;
     vStage = fNeedComb ? Cec_TranProveCombBatch( pBatch, pCands, nCands,
-        vPairs, vQueries, vAndLeaves, vAndCounts, pPars, pProf ) :
+        vCombPairs, vQueries, vAndLeaves, vAndCounts, pPars, pProf,
+        0, NULL ) :
         Vec_StrStart( nCands );
     for ( i = 0; i < nCands; i++ )
         if ( Vec_StrEntry(vStage, i) == 0 )
@@ -3563,6 +3850,31 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         pProf->nSeqCands += nSeq;
     if ( fNeedSeq && nSeq )
     {
+        int iPrevTarget = -1, nClass = 0;
+        for ( i = 0; i < nCands; i++ )
+            if ( Vec_StrEntry(vStage, i) == 0 )
+            {
+                if ( pCands[i].iTarget != iPrevTarget )
+                {
+                    if ( nClass )
+                    {
+                        pProf->nSeqClassSum += nClass + 1;
+                        pProf->nSeqClassMax = Abc_MaxInt(
+                            pProf->nSeqClassMax, nClass + 1 );
+                    }
+                    nSeqRoots++;
+                    iPrevTarget = pCands[i].iTarget;
+                    nClass = 0;
+                }
+                nClass++;
+            }
+        if ( nClass )
+        {
+            pProf->nSeqClassSum += nClass + 1;
+            pProf->nSeqClassMax = Abc_MaxInt(
+                pProf->nSeqClassMax, nClass + 1 );
+        }
+        pProf->nSeqRoots += nSeqRoots;
         Gia_ManSetPhase( pBatch );
         pBatch->pReprs = ABC_CALLOC( Gia_Rpr_t, Gia_ManObjNum(pBatch) );
         Gia_ManForEachObj( pBatch, pObj, i )
@@ -3572,8 +3884,9 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         // index is a discovery route, not a reason to deny sequential proof.
         vSeqPairs = Vec_IntAlloc( 2 * nCands );
         for ( i = 0; i < nCands; i++ )
-            Vec_IntPushTwo( vSeqPairs, Vec_IntEntry(vPairs, 2*i),
-                Vec_IntEntry(vPairs, 2*i + 1) );
+            if ( Vec_StrEntry(vStage, i) == 0 )
+                Vec_IntPushTwo( vSeqPairs, Vec_IntEntry(vPairs, 2*i),
+                    Vec_IntEntry(vPairs, 2*i + 1) );
         Cec_TranSeedRootClasses( pBatch, vSeqPairs );
         pProf->nSeqSeeded += Vec_IntSize(vSeqPairs) / 2;
         pBatch->pNexts = Gia_ManDeriveNexts( pBatch );
@@ -3584,19 +3897,70 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         Cor.nStepsMax = pPars->nStepsMax;
         Cor.fVerbose  = 0;
         Cor.pProfile  = pPars->fProfile ? &pProf->Corr : NULL;
+        CorrBefore = pProf->Corr;
         clk = Abc_Clock();
         RetValue = Cec_ManLSCorrespondenceClasses( pBatch, &Cor );
         timeSeq = Abc_Clock() - clk;
         pProf->timeFinalCorr += timeSeq;
         pProf->timeSeqSolve += timeSeq;
+        // Detailed correspondence counters use nanosecond ticks.  Attribute
+        // the complete base phase, inductive SAT, and resimulation separately;
+        // the remaining wall time is class management and fixed-point control.
+        {
+            abctime TimeSrm = 0, TimeBmc = 0, TimeIndSat = 0;
+            abctime TimeResim = 0, Remain = timeSeq, Use;
+            if ( pPars->fProfile )
+            {
+                double BmcHr = pProf->Corr.timeBmc - CorrBefore.timeBmc;
+                double BmcSrmHr = pProf->Corr.timeBmcSrm - CorrBefore.timeBmcSrm;
+                double BmcSimHr = pProf->Corr.timeBmcSim - CorrBefore.timeBmcSim;
+                double IndSrmHr = pProf->Corr.timeIndSrm - CorrBefore.timeIndSrm;
+                double IndSatHr = pProf->Corr.timeIndSat - CorrBefore.timeIndSat;
+                double IndSimHr = pProf->Corr.timeIndSim - CorrBefore.timeIndSim;
+                double BmcOtherHr = BmcHr - BmcSrmHr - BmcSimHr;
+                if ( BmcOtherHr < 0 )
+                    BmcOtherHr = 0;
+                TimeSrm = (abctime)(1.0e-9 * (BmcSrmHr + IndSrmHr) * CLOCKS_PER_SEC);
+                TimeBmc = (abctime)(1.0e-9 * BmcOtherHr * CLOCKS_PER_SEC);
+                TimeIndSat = (abctime)(1.0e-9 * IndSatHr * CLOCKS_PER_SEC);
+                TimeResim = (abctime)(1.0e-9 * (BmcSimHr + IndSimHr) * CLOCKS_PER_SEC);
+                Use = TimeSrm < Remain ? TimeSrm : Remain;
+                pProf->timeRootScorrGraph += Use; Remain -= Use;
+                Use = TimeBmc < Remain ? TimeBmc : Remain;
+                pProf->timeRootScorrBmc += Use; Remain -= Use;
+                Use = TimeIndSat < Remain ? TimeIndSat : Remain;
+                pProf->timeRootScorrIndSat += Use; Remain -= Use;
+                Use = TimeResim < Remain ? TimeResim : Remain;
+                pProf->timeRootScorrResim += Use; Remain -= Use;
+                pProf->timeRootScorrOther += Remain;
+            }
+            else
+                pProf->timeRootScorrOther += timeSeq;
+            pProf->timeRootScorrSolve += timeSeq -
+                (TimeSrm < timeSeq ? TimeSrm : timeSeq);
+        }
+        if ( Cor.fCompleted )
+            pProf->nSeqFixedRounds += Cor.nRoundsDone;
     }
     for ( i = 0; i < nCands; i++ )
     {
         int fProved = Vec_StrEntry(vStage, i) == 1;
         if ( !fProved && fNeedSeq && nSeq )
-            fProved = RetValue && !Cor.fConfStop &&
-                Cec_TranRootBatchPairProved( pBatch,
-                    Vec_IntEntry(vPairs, 2*i), Vec_IntEntry(vPairs, 2*i+1) );
+        {
+            int fSameClass = Cec_TranRootBatchPairProved( pBatch,
+                Vec_IntEntry(vPairs, 2*i), Vec_IntEntry(vPairs, 2*i+1) );
+            int fComplete = RetValue && Cor.fCompleted && !Cor.fConfStop;
+            fProved = fComplete && fSameClass;
+            if ( !fProved )
+            {
+                // A split is a stable UNPROVED result only after the shared
+                // base+induction oracle completed.  Any early stop leaves all
+                // unresolved relations UNKNOWN, regardless of their current
+                // provisional class placement.
+                nSeqSplit += fComplete && !fSameClass;
+                nSeqUnknown += !fComplete;
+            }
+        }
         if ( fProved && Vec_StrEntry(vStage, i) == 0 )
         {
             Vec_StrWriteEntry( vStage, i, 2 );
@@ -3610,6 +3974,8 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     pProf->nRootBatchCalls++;
     pProf->nRootBatchCands += nCands;
     pProf->nRootBatchProved += nProved;
+    pProf->nSeqSplit += nSeqSplit;
+    pProf->nSeqUnknown += nSeqUnknown;
     if ( fNeedSeq && nSeq )
     {
         pProf->timeRootBudget[1] += timeSeq;
@@ -3620,6 +3986,7 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         pProf->nRootBudgetConfStops[1] += Cor.fConfStop;
     }
     Vec_IntFree( vPairs );
+    Vec_IntFree( vCombPairs );
     Vec_IntFree( vQueries );
     Vec_IntFreeP( &vSeqPairs );
     Vec_IntFreeP( &vAndLeaves );
@@ -3642,7 +4009,7 @@ static int Cec_TranHarvestRootWaveCex( Gia_Man_t * p,
 {
     Cec_TranCandVec_t Retry = {0};
     Gia_Man_t * pMiter;
-    Vec_Int_t * vPairs, * vQueries, * vOrig = Vec_IntAlloc( nCands );
+    Vec_Int_t * vPairs, * vCombPairs, * vQueries, * vOrig = Vec_IntAlloc( nCands );
     int i, iPo = -1, fAdded;
     *piCand = -1;
     assert( (vStatus != NULL) != (pFailed != NULL) );
@@ -3662,11 +4029,12 @@ static int Cec_TranHarvestRootWaveCex( Gia_Man_t * p,
     }
     pMiter = Cec_TranBuildRootBatch( p, Retry.pArray, Retry.nSize,
         1,
-        &vPairs, &vQueries, NULL, NULL );
+        &vPairs, &vCombPairs, &vQueries, NULL, NULL );
     fAdded = Cec_TranHarvestCex( pMiter, pPars, pDb, pProf, &iPo );
     if ( iPo >= 0 && iPo < Vec_IntSize(vOrig) )
         *piCand = Vec_IntEntry( vOrig, iPo );
     Vec_IntFree( vPairs );
+    Vec_IntFree( vCombPairs );
     Vec_IntFree( vQueries );
     Vec_IntFree( vOrig );
     Gia_ManStop( pMiter );
@@ -3734,6 +4102,37 @@ static int Cec_TranCandGainCompare( const void * p0, const void * p1 )
         return pC0->iOut - pC1->iOut;
     return memcmp( pC0->Recipe, pC1->Recipe,
         sizeof(int) * 2 * pC0->nGates );
+}
+
+// Root-only heuristic order is semantic and deterministic: constants first,
+// then existing literals, then constructed recipes by increasing gate count.
+// Gain/coverage and the canonical recipe key break ties without changing that
+// kind order.
+static int Cec_TranCandHeuristicCompare( const void * p0, const void * p1 )
+{
+    Cec_TranCand_t const * pC0 = (Cec_TranCand_t const *)p0;
+    Cec_TranCand_t const * pC1 = (Cec_TranCand_t const *)p1;
+    if ( pC0->nKind != pC1->nKind )
+        return pC0->nKind - pC1->nKind;
+    if ( pC0->nGates != pC1->nGates )
+        return pC0->nGates - pC1->nGates;
+    if ( pC0->fExactTemplate != pC1->fExactTemplate )
+        return pC1->fExactTemplate - pC0->fExactTemplate;
+    // The resub engine yields exact covers in decreasing sampled coverage /
+    // residual-reduction order.  CI overlap is the next safe tie-break; it is
+    // never used as a semantic filter.
+    if ( pC0->nResubRank != pC1->nResubRank )
+        return pC0->nResubRank - pC1->nResubRank;
+    if ( pC0->nCiOverlap != pC1->nCiOverlap )
+        return pC1->nCiOverlap - pC0->nCiOverlap;
+    if ( pC0->fDivRescue != pC1->fDivRescue )
+        return pC0->fDivRescue - pC1->fDivRescue;
+    if ( pC0->Gain != pC1->Gain )
+        return pC1->Gain - pC0->Gain;
+    if ( pC0->iOut != pC1->iOut )
+        return pC0->iOut - pC1->iOut;
+    return pC0->nGates ? memcmp( pC0->Recipe, pC1->Recipe,
+        sizeof(int) * 2 * pC0->nGates ) : 0;
 }
 
 static int Cec_TranCandPriorityCompare( const void * p0, const void * p1 )
@@ -4817,6 +5216,7 @@ typedef struct Cec_TranDivRank_t_ Cec_TranDivRank_t;
 struct Cec_TranDivRank_t_
 {
     word Score;
+    int  CiOverlap;
     int  iPos;
 };
 
@@ -4828,18 +5228,24 @@ static int Cec_TranDivRankCompare( const void * p1, const void * p2 )
         return -1;
     if ( pR1->Score < pR2->Score )
         return 1;
+    if ( pR1->CiOverlap != pR2->CiOverlap )
+        return pR2->CiOverlap - pR1->CiOverlap;
     return pR1->iPos - pR2->iPos;
 }
 
 static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
     int iTarget, Vec_Int_t * vReservoir )
 {
+    Gia_Man_t * p = pSim->pGia;
     Cec_TranDivRank_t * pRanks = ABC_ALLOC( Cec_TranDivRank_t,
         Vec_IntSize(vReservoir) );
     word * pTarget = Cec_TranSimObj( pSim, iTarget );
     word * pDiv;
     word nOff0, nOff1, nOn0, nOn1;
-    int i, s, iObj;
+    Vec_Int_t * vRootSupp = Vec_IntAlloc( 32 );
+    Vec_Int_t * vDivSupp = Vec_IntAlloc( 32 );
+    int i, k, s, iObj, RootNode = iTarget;
+    Gia_ManCollectCis( p, &RootNode, 1, vRootSupp );
     Vec_IntForEachEntry( vReservoir, iObj, i )
     {
         pDiv = Cec_TranSimObj( pSim, iObj );
@@ -4852,10 +5258,17 @@ static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
             nOn1  += Abc_TtCountOnes(  pTarget[s] &  pDiv[s] );
         }
         pRanks[i].Score = nOff0 * nOn1 + nOff1 * nOn0;
+        Vec_IntClear( vDivSupp );
+        Gia_ManCollectCis( p, &iObj, 1, vDivSupp );
+        pRanks[i].CiOverlap = 0;
+        Vec_IntForEachEntry( vDivSupp, iObj, k )
+            pRanks[i].CiOverlap += Vec_IntFind(vRootSupp, iObj) >= 0;
         pRanks[i].iPos = i;
     }
     qsort( pRanks, Vec_IntSize(vReservoir),
         sizeof(Cec_TranDivRank_t), Cec_TranDivRankCompare );
+    Vec_IntFree( vRootSupp );
+    Vec_IntFree( vDivSupp );
     return pRanks;
 }
 
@@ -5050,6 +5463,7 @@ static void Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
     pCand->nKind = pCand->nGates ? CEC_TRAN_CAND_CONSTR :
         (Abc_Lit2Var(pCand->iOut) == 0 ?
             CEC_TRAN_CAND_CONST : CEC_TRAN_CAND_EXIST);
+    Cec_TranCandCanonicalizeRecipe( pCand );
     pCand->iDiv0 = pCand->iDiv1 = -1;
     for ( i = -1; i < 2 * pCand->nGates; i++ )
     {
@@ -5117,17 +5531,104 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
     {
         Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare,
             fStrict, vDivs, vRecipe, pCands + nCands );
+        // Constants and existing literals are emitted only by the direct
+        // generator.  Canonicalization may collapse a nominal build recipe
+        // to zero gates, so discard that duplicate lane here as well.
+        if ( !pPars->fUseResubZero && pCands[nCands].nGates == 0 )
+        {
+            Cec_TranCandRecipeRelease( pCands + nCands );
+            continue;
+        }
         pCands[nCands].nResubRank = iChoiceStart + i + 1;
         // Zero-gate existing recipes are suppressed inside the resub search.
         // This lets the same attempt continue to a constructed recipe instead
         // of returning a buffer that would only be discarded here.
-        assert( pPars->fUseResubZero ||
-            pCands[nCands].nGates > 0 ||
-            Abc_Lit2Var(pCands[nCands].iOut) == 0 );
         nCands++;
     }
     assert( nCands <= nRecipes && nCands <= nChoices );
     return nCands;
+}
+
+static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
+    Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
+    Vec_Int_t * vPool, word * pCare, Cec_TranDepScratch_t * pScratch )
+{
+    Vec_Ptr_t * vDivs = pScratch->vDivs;
+    word Target, Care;
+    int s, i, iObj, nLimit;
+    Vec_PtrClear( vDivs );
+    for ( s = 0; s < pSim->nSlots; s++ )
+    {
+        Target = Cec_TranSimLit( pSim,
+            Abc_Var2Lit(pRoot->iObj, 0), s );
+        Care = pCare ? pCare[s] : ~(word)0;
+        pScratch->pOff[s] = ~Target & Care;
+        pScratch->pOn[s]  =  Target & Care;
+    }
+    Vec_PtrPushTwo( vDivs, pScratch->pOff, pScratch->pOn );
+    Vec_IntForEachEntry( vPool, iObj, i )
+        Vec_PtrPush( vDivs, Cec_TranSimObj(pSim, iObj) );
+    nLimit = pPars->fUseConstr ?
+        (pPars->fRootExhaustive ? pPars->nDepNodesMax :
+            Abc_MinInt( pPars->nDepNodesMax,
+                Abc_MaxInt(0, pRoot->nMffc - pPars->nGainMin) )) : 0;
+    return Abc_ResubIteratorStart( Vec_PtrArray(vDivs),
+        Vec_PtrSize(vDivs), pSim->nSlots, nLimit, Vec_IntSize(vPool),
+        0, 0 );
+}
+
+static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
+    Cec_TranRoot_t const * pRoot, Vec_Int_t * vPool, word * pCare,
+    Cec_TranDepScratch_t * pScratch, void * pIter,
+    Cec_TranCand_t * pCand, int * pAttempt, int * pfExhausted )
+{
+    Vec_Int_t Recipe = {0};
+    // Each route has its own iterator and therefore its own divisor-number
+    // space.  pScratch->vDivs is only construction scratch and is overwritten
+    // when the next route is initialized; using its final size here would
+    // misclassify a recipe divisor as an internal gate.  Candidate decoding
+    // only needs the current route's divisor count, not the truth-table
+    // pointers, so provide a route-local header.
+    Vec_Ptr_t Divs = {Vec_IntSize(vPool) + 2,
+        Vec_IntSize(vPool) + 2, NULL};
+    int * pArray = NULL, nArray;
+    (void)pScratch;
+    memset( pCand, 0, sizeof(*pCand) );
+    nArray = Abc_ResubIteratorNext( pIter, &pArray, pAttempt, pfExhausted );
+    if ( *pfExhausted )
+        return 0;
+    Recipe.nSize = Recipe.nCap = nArray;
+    Recipe.pArray = pArray;
+    Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare, 1,
+        &Divs, &Recipe, pCand );
+    if ( pCand->nGates == 0 )
+    {
+        Cec_TranCandRecipeRelease( pCand );
+        return 0;
+    }
+    return 1;
+}
+
+static int Cec_TranCandCiOverlap( Cec_TranCand_t const * pCand,
+    Vec_Int_t * vReservoir, Cec_TranDivRank_t const * pRanks )
+{
+    Vec_Int_t * vSupport = Vec_IntAlloc( 16 );
+    int i, k, iObj, iPos, Overlap = 0;
+    Cec_TranCandCollectSupport( pCand, vSupport );
+    Vec_IntForEachEntry( vSupport, iObj, i )
+    {
+        iPos = Vec_IntFind( vReservoir, iObj );
+        if ( iPos < 0 )
+            continue;
+        for ( k = 0; k < Vec_IntSize(vReservoir); k++ )
+            if ( pRanks[k].iPos == iPos )
+            {
+                Overlap += pRanks[k].CiOverlap;
+                break;
+            }
+    }
+    Vec_IntFree( vSupport );
+    return Overlap;
 }
 
 static void Cec_TranCollectGlobalExact( Cec_TranSim_t * pSim,
@@ -5454,6 +5955,137 @@ static void Cec_TranCollectStrictConstructed( Gia_Man_t * p,
     }
 }
 
+// Root-only constructed discovery.  Each structural route owns one stateful
+// resub iterator, initialized once and advanced with Next until exhaustion.
+// This avoids the cumulative iChoice=0..q restart cost of the frozen paths.
+static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
+    Cec_TranSim_t * pSim, Cec_ParTran_t * pPars,
+    Cec_TranRoot_t * pRoot, Cec_TranCandVec_t const * pKnown,
+    char const * pCovered, char const * pUsed,
+    char * pMffc, Vec_Int_t * vMffc, Cec_TranCandVec_t const * pExist,
+    Cec_TranCandVec_t * pConstr, Cec_TranDepScratch_t * pDep,
+    Cec_TranDiscStat_t * pStat, Cec_TranProf_t * pProf )
+{
+    int RouteBeg[4], RouteEnd[4], iRoute, i, k, iAttempt, fExhausted;
+    int iConstrStart = pConstr->nSize, nDepFoundTotal = 0;
+    Vec_Int_t * vReservoir, * vPools[5] = {NULL, NULL, NULL, NULL, NULL};
+    Cec_TranDivRank_t * pRanks;
+    unsigned char * pUseCount;
+    void * pIters[5] = {NULL, NULL, NULL, NULL, NULL};
+    char Done[5] = {0, 0, 0, 0, 0};
+    Cec_TranCand_t Cand;
+    abctime clk, timePart;
+    clk = Abc_Clock();
+    vReservoir = Cec_TranCollectDivReservoir( p, pRoot->iObj,
+        pPars->nConstrMax, pPars->nConstrBaseMax, pCovered, pUsed,
+        pMffc, vMffc, RouteBeg, RouteEnd );
+    if ( pCovered )
+        vReservoir = Cec_TranFilterDivReservoir( vReservoir,
+            pCovered, RouteBeg, RouteEnd );
+    timePart = Abc_Clock() - clk;
+    pProf->timeSpec += timePart;
+    pProf->timeRootDivPool += timePart;
+    pProf->nRootDivPoolCalls++;
+    pProf->nRootDivPoolNodes += Vec_IntSize(vReservoir);
+    for ( k = 0; k < 4; k++ )
+        pProf->nRootDivRouteNodes[k] += RouteEnd[k] - RouteBeg[k];
+    pStat->nConstructed++;
+    pStat->nSigChecks++;
+    clk = Abc_Clock();
+    pRanks = Vec_IntSize(vReservoir) ?
+        Cec_TranRankDivReservoir( pSim, pRoot->iObj, vReservoir ) : NULL;
+    pUseCount = ABC_CALLOC( unsigned char, Vec_IntSize(vReservoir) );
+    for ( iRoute = 0; iRoute < 5; iRoute++ )
+    {
+        vPools[iRoute] = Cec_TranBuildDivPool( vReservoir,
+            pPars->nConstrBaseMax, iRoute, pRanks, pUseCount,
+            RouteBeg, RouteEnd );
+        if ( Vec_IntSize(vPools[iRoute]) == 0 )
+            Done[iRoute] = 1;
+    }
+    pProf->timeRootDivPool += Abc_Clock() - clk;
+    for ( iRoute = 0; iRoute < 5; iRoute++ )
+        if ( !Done[iRoute] )
+        {
+            clk = Abc_Clock();
+            pIters[iRoute] = Cec_TranDependencyIteratorStart( pSim,
+                pPars, pRoot, vPools[iRoute], NULL, pDep );
+            pProf->timeRootDepInit += Abc_Clock() - clk;
+            pProf->nRootDivRouteCalls[iRoute]++;
+            pProf->nRootResubIterInit++;
+        }
+    while ( 1 )
+    {
+        int nLive = 0;
+        for ( iRoute = 0; iRoute < 5; iRoute++ )
+        {
+            if ( Done[iRoute] )
+                continue;
+            nLive++;
+            clk = Abc_Clock();
+            iAttempt = 0;
+            pProf->nRootResubIterNext++;
+            if ( !Cec_TranDependencyIteratorNext(pSim, pRoot,
+                    vPools[iRoute], NULL, pDep, pIters[iRoute],
+                    &Cand, &iAttempt, &fExhausted) )
+            {
+                timePart = Abc_Clock() - clk;
+                pProf->timeConstruct += timePart;
+                pProf->timeRootDepSearch += timePart;
+                pProf->nRootDepAttempts++;
+                if ( fExhausted )
+                {
+                    Done[iRoute] = 1;
+                    pProf->nRootResubIterExhausted++;
+                }
+                continue;
+            }
+            timePart = Abc_Clock() - clk;
+            pProf->timeConstruct += timePart;
+            pProf->timeRootDepSearch += timePart;
+            pProf->nRootDepAttempts++;
+            Cand.nResubRank = ++nDepFoundTotal;
+            Cand.fExactTemplate = iAttempt != 5;
+            Cand.fDivRescue = iRoute > 0;
+            Cand.fPrimaryFrontier = nDepFoundTotal == 1;
+            Cand.nWave = 0;
+            Cand.Gain = Cand.nMffc - Cand.nGates;
+            Cand.nCiOverlap = Cec_TranCandCiOverlap( &Cand,
+                vReservoir, pRanks );
+            if ( !Cec_TranCandVecContains(pKnown, &Cand) &&
+                 !Cec_TranCandVecContains(pExist, &Cand) &&
+                 !Cec_TranCandVecContainsRange(pConstr,
+                    iConstrStart, &Cand) )
+            {
+                Cec_TranCandVecPush( pConstr, Cand );
+                pProf->nRootConstructGenerated++;
+                pProf->nRootConstructGeneratedGates += Cand.nGates;
+                pProf->nRootDivRouteRecipes[iRoute]++;
+                pProf->nRootDepRecipes++;
+                pStat->nSigMatched++;
+            }
+            else
+                pStat->nSigRejected++;
+            Cec_TranCandRecipeRelease( &Cand );
+        }
+        if ( nLive == 0 )
+            break;
+    }
+    pProf->nRootDepCalls++;
+    pProf->nRootDepFound += pConstr->nSize > iConstrStart;
+    if ( pConstr->nSize == iConstrStart )
+        pStat->nSigRejected++;
+    Cec_TranDiscFinishRoot( pStat, 0, pConstr->nSize - iConstrStart );
+    for ( i = 0; i < 5; i++ )
+    {
+        Abc_ResubIteratorStop( pIters[i] );
+        Vec_IntFree( vPools[i] );
+    }
+    ABC_FREE( pRanks );
+    ABC_FREE( pUseCount );
+    Vec_IntFree( vReservoir );
+}
+
 static void Cec_TranCollectRootPhase( Gia_Man_t * p,
     Cec_TranSim_t * pSim, Cec_ParTran_t * pPars,
     Cec_TranRoot_t * pRoots, int nRoots, int iWave,
@@ -5579,6 +6211,620 @@ static void Cec_TranCollectContextRecipes( Gia_Man_t * p,
         pExist->nSize - iExistStart + pConstr->nSize - iConstrStart );
     ABC_FREE( pCare );
     Vec_IntFree( vPool );
+}
+
+static int Cec_TranCandRootHeuristicCompare( const void * p0, const void * p1 )
+{
+    Cec_TranCand_t const * pC0 = (Cec_TranCand_t const *)p0;
+    Cec_TranCand_t const * pC1 = (Cec_TranCand_t const *)p1;
+    if ( pC0->nMffc != pC1->nMffc )
+        return pC1->nMffc - pC0->nMffc;
+    if ( pC0->iTarget != pC1->iTarget )
+        return pC1->iTarget - pC0->iTarget;
+    return Cec_TranCandHeuristicCompare( p0, p1 );
+}
+
+static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
+    Cec_ParTran_t * pPars, Cec_TranRoot_t * pRoot,
+    Cec_TranSigEnt_t * pSigIndex, int nSigEntries,
+    Cec_TranCandVec_t const * pKnown, char const * pSolved,
+    char const * pCovered, char const * pUsed,
+    char * pMffc, Vec_Int_t * vMffc, Cec_TranDepScratch_t * pDep,
+    Cec_TranDiscStat_t * pDisc, Cec_TranProf_t * pProf,
+    Cec_TranCandVec_t * pOut )
+{
+    Cec_TranCandVec_t Exist = {0}, Build = {0};
+    int i;
+    abctime clk = Abc_Clock();
+    Cec_TranCandVecClear( pOut );
+    Cec_TranCollectStrictExisting( p, pSim, pPars, pRoot, 1,
+        pSigIndex, nSigEntries, pKnown, pSolved, pMffc, vMffc,
+        &Exist, pDisc, pProf );
+    pProf->timeRootDirect += Abc_Clock() - clk;
+    if ( pPars->fUseConstr )
+        Cec_TranCollectRootConstructedIter( p, pSim, pPars, pRoot,
+            pKnown, pCovered, pUsed, pMffc, vMffc, &Exist, &Build,
+            pDep, pDisc, pProf );
+    for ( i = 0; i < Exist.nSize; i++ )
+        if ( !Cec_TranCandVecContains(pOut, Exist.pArray + i) )
+            Cec_TranCandVecPush( pOut, Exist.pArray[i] );
+    for ( i = 0; i < Build.nSize; i++ )
+        if ( !Cec_TranCandVecContains(pOut, Build.pArray + i) )
+            Cec_TranCandVecPush( pOut, Build.pArray[i] );
+    if ( pOut->nSize > 1 )
+        qsort( pOut->pArray, pOut->nSize, sizeof(Cec_TranCand_t),
+            Cec_TranCandHeuristicCompare );
+    Cec_TranCandVecStop( &Exist );
+    Cec_TranCandVecStop( &Build );
+}
+
+static int Cec_TranRootRefreshPotential( Gia_Man_t * p,
+    Cec_TranRoot_t * pRoots, int nRoots, char const * pCovered,
+    char const * pUsed, char * pMffc, Vec_Int_t * vMffc,
+    Cec_TranProf_t * pProf )
+{
+    int r, nPositive = 0, nOld;
+    for ( r = 0; r < nRoots; r++ )
+    {
+        nOld = pRoots[r].nMffc;
+        if ( pCovered[pRoots[r].iObj] || pUsed[pRoots[r].iObj] )
+        {
+            if ( pProf && nOld > 0 )
+                pProf->nDirtyRootFreed++;
+            pRoots[r].nMffc = 0;
+            continue;
+        }
+        Cec_TranMarkDynamicMffc( p, pRoots[r].iObj, pCovered, pUsed,
+            NULL, pMffc, vMffc );
+        pRoots[r].nMffc = Vec_IntSize( vMffc );
+        if ( pProf && nOld > 0 && pRoots[r].nMffc != nOld )
+            pProf->nDirtyMffcChanged++;
+        nPositive += pRoots[r].nMffc > 0;
+    }
+    qsort( pRoots, nRoots, sizeof(Cec_TranRoot_t), Cec_TranRootCompare );
+    return nPositive;
+}
+
+static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
+    Cec_TranRoot_t * pRoots, int nRoots, Cec_TranCandVec_t const * pCands,
+    char const * pCovered, char const * pUsed, char * pMffc,
+    Vec_Int_t * vMffc, Vec_Int_t * vSupport, int fAll,
+    Cec_TranCandVec_t * pSeq, Cec_TranProf_t * pProf )
+{
+    int r, i, k, iObj, Gain, fAdded, fSupportFreed;
+    Cec_TranCandVecClear( pSeq );
+    for ( i = 0; i < pCands->nSize; i++ )
+        if ( pCands->pArray[i].nStatus == CEC_TRAN_STATE_CANDIDATE &&
+             (pCovered[pCands->pArray[i].iTarget] ||
+              pUsed[pCands->pArray[i].iTarget]) )
+            pProf->nDirtyRootFreed++;
+    Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
+        pMffc, vMffc, pProf );
+    for ( r = 0; r < nRoots && pRoots[r].nMffc > 0; r++ )
+    {
+        fAdded = 0;
+        for ( i = 0; i < pCands->nSize; i++ )
+        {
+            Cec_TranCand_t Cand = pCands->pArray[i];
+            if ( Cand.iTarget != pRoots[r].iObj ||
+                 Cand.nStatus != CEC_TRAN_STATE_CANDIDATE )
+                continue;
+            if ( pCovered[Cand.iTarget] || pUsed[Cand.iTarget] )
+            {
+                pProf->nDirtyRootFreed++;
+                continue;
+            }
+            Cec_TranCandCollectSupport( &Cand, vSupport );
+            fSupportFreed = 0;
+            Vec_IntForEachEntry( vSupport, iObj, k )
+                fSupportFreed |= pCovered[iObj] != 0;
+            if ( fSupportFreed )
+            {
+                pProf->nDirtySupportFreed++;
+                continue;
+            }
+            Gain = Cec_TranCandDynamicGain( p, &Cand, pCovered, pUsed,
+                pMffc, vMffc, vSupport );
+            if ( Gain <= 0 )
+            {
+                pProf->nDirtyMffcChanged++;
+                continue;
+            }
+            if ( Gain != Cand.Gain || Vec_IntSize(vMffc) != Cand.nMffc )
+                pProf->nDirtyMffcChanged++;
+            Cand.Gain = Gain;
+            Cand.nMffc = pRoots[r].nMffc;
+            Cec_TranCandVecPush( pSeq, Cand );
+            fAdded = 1;
+            if ( !fAll )
+                break;
+        }
+        (void)fAdded;
+    }
+    if ( pSeq->nSize > 1 )
+        qsort( pSeq->pArray, pSeq->nSize, sizeof(Cec_TranCand_t),
+            Cec_TranCandRootHeuristicCompare );
+}
+
+static int Cec_TranRootConsumeProved( Gia_Man_t * p,
+    Cec_TranRoot_t * pRoots, int nRoots, Cec_TranCandVec_t * pProved,
+    char * pCovered, char * pUsed, char * pSolved, char * pMffc,
+    Vec_Int_t * vMffc, Vec_Int_t * vSupport,
+    Cec_TranCandVec_t * pSelected, Cec_TranProf_t * pProf )
+{
+    int r, i, Gain, nSelected = 0, fChanged;
+    char * pDirtySeen = ABC_CALLOC( char, pProved->nSize );
+    do
+    {
+        fChanged = 0;
+        Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
+            pMffc, vMffc, pProf );
+        for ( r = 0; r < nRoots && pRoots[r].nMffc > 0 && !fChanged; r++ )
+            for ( i = 0; i < pProved->nSize; i++ )
+            {
+                Cec_TranCand_t Cand = pProved->pArray[i];
+                if ( Cand.iTarget != pRoots[r].iObj ||
+                     (Cand.nStatus != CEC_TRAN_STATE_PROVED_COMB &&
+                      Cand.nStatus != CEC_TRAN_STATE_PROVED_SEQ) )
+                    continue;
+                if ( pCovered[Cand.iTarget] || pUsed[Cand.iTarget] )
+                {
+                    if ( !pDirtySeen[i] )
+                        pProf->nDirtyRootFreed++, pDirtySeen[i] = 1;
+                    continue;
+                }
+                Gain = Cec_TranCandDynamicGain( p, &Cand, pCovered, pUsed,
+                    pMffc, vMffc, vSupport );
+                if ( Gain <= 0 )
+                {
+                    if ( !pDirtySeen[i] )
+                        pProf->nDirtySupportFreed++, pDirtySeen[i] = 1;
+                    continue;
+                }
+                if ( (Gain != Cand.Gain || Vec_IntSize(vMffc) != Cand.nMffc) &&
+                     !pDirtySeen[i] )
+                    pProf->nDirtyMffcChanged++, pDirtySeen[i] = 1;
+                Cand.Gain = Gain;
+                Cand.nMffc = Vec_IntSize( vMffc );
+                if ( Cec_TranSelectDynamicCandidate(p, Cand, pCovered, pUsed,
+                        pSolved, pMffc, vMffc, vSupport, pSelected) )
+                {
+                    int Stage = Cand.nStatus == CEC_TRAN_STATE_PROVED_COMB ? 0 : 1;
+                    pProved->pArray[i].nStatus = CEC_TRAN_STATE_SELECTED;
+                    pSelected->pArray[pSelected->nSize - 1].nStatus =
+                        CEC_TRAN_STATE_SELECTED;
+                    pProf->nStageKindSelected[Stage][Cand.nKind]++;
+                    pProf->nStageKindMarginalAndGain[Stage][Cand.nKind] += Gain;
+                    pProf->nCombSelected += Stage == 0;
+                    pProf->nSeqSelected += Stage == 1;
+                    nSelected++;
+                    fChanged = 1;
+                    break;
+                }
+            }
+    }
+    while ( fChanged );
+    ABC_FREE( pDirtySeen );
+    return nSelected;
+}
+
+static Gia_Man_t * Cec_TranCommitSelectedRootOnly( Gia_Man_t * p,
+    Cec_TranCandVec_t * pSelected, Cec_ParTran_t * pPars,
+    Cec_TranProf_t * pProf )
+{
+    Gia_Man_t * pDup, * pClean;
+    Vec_Int_t * vSelected;
+    long long Marginal = 0;
+    int i, Gain, fProved = 1;
+    abctime clk;
+    if ( pSelected->nSize == 0 )
+        return p;
+    vSelected = Vec_IntAlloc( pSelected->nSize );
+    for ( i = 0; i < pSelected->nSize; i++ )
+        Vec_IntPush( vSelected, i ), Marginal += pSelected->pArray[i].Gain;
+    clk = Abc_Clock();
+    pDup = Cec_TranDupRootBundle( p, pSelected->pArray, vSelected );
+    pProf->timeRootBundleDup += Abc_Clock() - clk;
+    clk = Abc_Clock();
+    pClean = Cec_TranCleanup( pDup );
+    pProf->timeRootCleanup += Abc_Clock() - clk;
+    clk = Abc_Clock();
+    Gain = Cec_TranGain( p, pClean );
+    pProf->timeRootExactAudit += Abc_Clock() - clk;
+    assert( Gain > 0 && Gain >= Marginal );
+    assert( Gia_ManRegNum(p) == Gia_ManRegNum(pClean) );
+    if ( pPars->fShadow )
+    {
+        clk = Abc_Clock();
+        fProved = Cec_TranProveWhole( p, pDup, pPars, pProf );
+        pProf->timeShadow += Abc_Clock() - clk;
+        pProf->nShadowCalls++;
+    }
+    assert( fProved );
+    pProf->nRootBundleAndGain = Gain;
+    pProf->nRootBundleRegGain = Gia_ManRegNum(p) - Gia_ManRegNum(pClean);
+    pProf->nRootBundleCommits = pSelected->nSize;
+    Gia_ManStop( p );
+    Gia_ManStop( pDup );
+    Vec_IntFree( vSelected );
+    return pClean;
+}
+
+static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
+    int nAndBefore, int nAndAfter )
+{
+    static char const * pStage[2] = { "COMB", "SEQ" };
+    static char const * pKind[3] = { "CONSTANT", "EXISTING", "BUILD" };
+    abctime Times[19] = { p->timeRootSimSig, p->timeRootRefresh,
+        p->timeRootDirect, p->timeRootDivCi, p->timeRootResubInit,
+        p->timeRootResubEnumCanon, p->timeRootCbsGraph,
+        p->timeRootCbsScreen, p->timeRootCbsSolve, p->timeRootScorrGraph,
+        p->timeRootScorrBmc, p->timeRootScorrIndSat,
+        p->timeRootScorrResim, p->timeRootScorrOther, p->timeRootPostSelect,
+        p->timeRootBundleDup, p->timeRootCleanup, p->timeRootExactAudit,
+        p->timeShadow };
+    char const * Names[19] = { "simulation/signature-index", "root/MFFC/dirty-refresh",
+        "direct constant/existing generation", "divisor-reservoir/CI-ranking",
+        "resub-initialization", "resub-enumeration/canonicalization",
+        "CBS-graph/build", "CBS-screen", "CBS-solve",
+        "shared-scorr-graph/SRM", "shared-scorr-BMC/base",
+        "shared-scorr-induction/SAT", "shared-scorr-resimulation/refinement",
+        "shared-scorr-fixed-point/other", "post-fixed-point-selection/dirty-repair",
+        "final-bundle-duplication", "cleanup", "exact-gain-audit", "shadow-audit" };
+    int i, s, k, SumSelected = 0, SumProved[2] = {0};
+    abctime SumTime = 0;
+    long long SumMarginal = 0;
+    Abc_Print( 1, "stran-root time profile: total=%.6f sec.\n",
+        Cec_TranTimeSec(p->timeTotal) );
+    for ( i = 0; i < 19; i++ )
+    {
+        Abc_Print( 1, "  %-42s %.6f sec %6.2f%%\n", Names[i],
+            Cec_TranTimeSec(Times[i]), p->timeTotal ?
+            100.0 * Times[i] / p->timeTotal : 0.0 );
+        SumTime += Times[i];
+    }
+    Abc_Print( 1, "stran-root effect matrix: stage kind generated submitted proved selected marginal-AND marginal-Reg\n" );
+    for ( s = 0; s < 2; s++ )
+    for ( k = 0; k < 3; k++ )
+    {
+        Abc_Print( 1, "  %s %s %d %d %d %d %lld %lld\n", pStage[s], pKind[k],
+            p->nStageKindGenerated[s][k], p->nStageKindSubmitted[s][k],
+            p->nStageKindProved[s][k], p->nStageKindSelected[s][k],
+            p->nStageKindMarginalAndGain[s][k],
+            p->nStageKindMarginalRegGain[s][k] );
+        SumSelected += p->nStageKindSelected[s][k];
+        SumProved[s] += p->nStageKindProved[s][k];
+        SumMarginal += p->nStageKindMarginalAndGain[s][k];
+    }
+    assert( SumTime <= p->timeTotal );
+    assert( SumProved[0] == p->nCombProved );
+    assert( SumProved[1] == p->nSeqProved );
+    assert( SumSelected == p->nRootBundleCommits );
+    assert( SumMarginal <= p->nRootBundleAndGain );
+    assert( p->nRootBundleAndGain == nAndBefore - nAndAfter );
+    assert( p->nSeqSeeded == p->nSeqProved + p->nSeqSplit + p->nSeqUnknown );
+    assert( p->nRootResubIterInit == p->nRootResubIterExhausted );
+    Abc_Print( 1, "stran-root effect totals: selected-roots=%d marginal-AND=%lld cleanup-exact-AND=%lld AND=%d->%d.\n",
+        SumSelected, SumMarginal, p->nRootBundleAndGain, nAndBefore, nAndAfter );
+    Abc_Print( 1, "stran-root sequential relations: seeded=%d proved=%d split=%d unknown=%d roots=%d class-max=%d class-avg=%.2f fixed-point-rounds=%d repair-epochs=%d.\n",
+        p->nSeqSeeded, p->nSeqProved, p->nSeqSplit, p->nSeqUnknown,
+        p->nSeqRoots, p->nSeqClassMax, p->nSeqRoots ?
+        1.0 * p->nSeqClassSum / p->nSeqRoots : 0.0,
+        p->nSeqFixedRounds, p->nSeqRepairEpochs );
+    Abc_Print( 1, "stran-root resub iterator: initialized=%d next=%d exhausted=%d.\n",
+        p->nRootResubIterInit, p->nRootResubIterNext,
+        p->nRootResubIterExhausted );
+    Abc_Print( 1, "stran-root dirty: root-free=%d candidate-support-freed=%d root-MFFC-changed=%d.\n",
+        p->nDirtyRootFreed, p->nDirtySupportFreed,
+        p->nDirtyMffcChanged );
+}
+
+static Gia_Man_t * Cec_ManSequentialRootOnly( Gia_Man_t * pGia,
+    Cec_ParTran_t * pPars )
+{
+    Cec_TranProf_t Prof = {0};
+    Cec_TranDiscStat_t Disc = {0};
+    Cec_TranCandVec_t Known = {0}, RootCands = {0}, Unresolved = {0};
+    Cec_TranCandVec_t Seq = {0}, Proved = {0}, Selected = {0};
+    Cec_TranRoot_t * pRoots;
+    Cec_TranSigEnt_t * pSigIndex;
+    Cec_TranSim_t * pSim;
+    Cec_TranPatDb_t * pDb;
+    Cec_TranDepScratch_t Dep;
+    Gia_Man_t * p = Gia_ManDup( pGia );
+    Gia_Obj_t * pObj;
+    Vec_Int_t * vMffc = Vec_IntAlloc( 128 );
+    Vec_Int_t * vSupport = Vec_IntAlloc( 32 );
+    char * pMffc = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pCombDone = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pRootIsCand = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pSolved = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pCovered = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pUsed = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    int nRoots = 0, nSigEntries = 0, r, i, k, nAttempted, nSelected;
+    int nAndBefore = Gia_ManAndNum( p );
+    abctime clkTotal = Abc_Clock(), clk;
+    Cec_ParTran_t DiscPars = *pPars, SeqPars = *pPars;
+    // Deprecated root switches are deliberately normalized here so direct
+    // API users cannot accidentally revive layers, early generator stops, or
+    // duplicate zero-gate resub candidates.
+    DiscPars.fUseResubZero = 0;
+    DiscPars.fRootProgressive = 0;
+    DiscPars.fRootStopLegacy = 0;
+    DiscPars.fRootStopProved = 1;
+    DiscPars.fRootSplitStages = 0;
+    DiscPars.nRootWaves = 1;
+    pDb = Cec_TranPatDbStart( p, 0 );
+    Gia_ManCreateRefs( p );
+    Gia_ManForEachAnd( p, pObj, i )
+        nRoots++;
+    pRoots = ABC_ALLOC( Cec_TranRoot_t, nRoots );
+    nRoots = 0;
+    Gia_ManForEachAnd( p, pObj, i )
+        pRoots[nRoots].iObj = i,
+        pRootIsCand[i] = 1,
+        pRoots[nRoots++].nMffc = Gia_NodeMffcSize( p, pObj );
+    qsort( pRoots, nRoots, sizeof(Cec_TranRoot_t), Cec_TranRootCompare );
+    clk = Abc_Clock();
+    pSim = Cec_TranSimStart( p, pPars, pDb );
+    pSigIndex = Cec_TranBuildSigIndex( pSim, &nSigEntries );
+    Prof.timeRootSimSig += Abc_Clock() - clk;
+    Prof.nSimCalls++;
+    Abc_ResubPrepareManager( pSim->nSlots );
+    Cec_TranDepScratchStart( &Dep, pSim->nSlots,
+        pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
+    Abc_Print( 1, "stran-root: snapshot=immutable stages=COMB->barrier->SEQ seq-mode=%s candidates=constant/existing/build q=unlimited.\n",
+        pPars->fSeqAllCands ? "all-candidate" : "top-1" );
+
+    // COMB: root-major, candidate-serial, stop the root at its first CBS proof.
+    for ( k = 0; k < nRoots; k++ )
+    {
+        Vec_Str_t * vComb;
+        Cec_TranCand_t Winner;
+        int iWinner = -1;
+        clk = Abc_Clock();
+        Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
+            pMffc, vMffc, &Prof );
+        Prof.timeRootRefresh += Abc_Clock() - clk;
+        for ( r = 0; r < nRoots; r++ )
+            if ( !pCombDone[pRoots[r].iObj] )
+                break;
+        if ( r == nRoots )
+            break;
+        pCombDone[pRoots[r].iObj] = 1;
+        if ( pRoots[r].nMffc <= 0 || pSolved[pRoots[r].iObj] )
+            continue;
+        Cec_TranRootDiscoverOne( p, pSim, &DiscPars, pRoots + r,
+            pSigIndex, nSigEntries, &Known, pSolved, pCovered, pUsed,
+            pMffc, vMffc, &Dep, &Disc, &Prof, &RootCands );
+        for ( i = 0; i < RootCands.nSize; i++ )
+        {
+            Cec_TranCandVecPush( &Known, RootCands.pArray[i] );
+            Prof.nStageKindGenerated[0][RootCands.pArray[i].nKind]++;
+        }
+        if ( RootCands.nSize == 0 )
+            continue;
+        vComb = Cec_TranProveCombOnly( p, RootCands.pArray,
+            RootCands.nSize, 1, pPars, &Prof, &nAttempted );
+        for ( i = 0; i < nAttempted; i++ )
+            Prof.nStageKindSubmitted[0][RootCands.pArray[i].nKind]++;
+        for ( i = 0; i < nAttempted; i++ )
+            if ( Vec_StrEntry(vComb, i) == 1 )
+            {
+                iWinner = i;
+                break;
+            }
+        if ( iWinner >= 0 )
+        {
+            Winner = RootCands.pArray[iWinner];
+            Winner.nProofStage = 1;
+            Winner.nStatus = CEC_TRAN_STATE_PROVED_COMB;
+            Prof.nStageKindProved[0][Winner.nKind]++;
+            Cec_TranCandVecPush( &Proved, Winner );
+            clk = Abc_Clock();
+            nSelected = Cec_TranRootConsumeProved( p, pRoots, nRoots,
+                &Proved, pCovered, pUsed, pSolved, pMffc, vMffc,
+                vSupport, &Selected, &Prof );
+            Prof.timeRootPostSelect += Abc_Clock() - clk;
+            (void)nSelected;
+        }
+        else
+            for ( i = 0; i < RootCands.nSize; i++ )
+                Cec_TranCandVecPush( &Unresolved, RootCands.pArray[i] );
+            Vec_StrFree( vComb );
+    }
+
+    // Roots swallowed by a selected virtual kill-set are no longer pending.
+    // Count them once here, independently of sort order and cached MFFC size.
+    for ( i = 0; i < Gia_ManObjNum(p); i++ )
+        if ( pRootIsCand[i] && pCovered[i] && !pCombDone[i] )
+            Prof.nDirtyRootFreed++, pCombDone[i] = 1;
+
+    // Barrier: recompute dynamic MFFC/order and validate the cached frontier.
+    clk = Abc_Clock();
+    Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
+        pMffc, vMffc, &Prof );
+    Prof.timeRootRefresh += Abc_Clock() - clk;
+    // A virtual COMB selection may invalidate every cached relation of an
+    // earlier unresolved root.  Recollect its current divisor routes before
+    // the one main SEQ fixed point; Known suppresses old canonical recipes,
+    // so only genuinely new candidates enter the frontier.
+    for ( r = 0; r < nRoots && pRoots[r].nMffc > 0; r++ )
+    {
+        int fHasValid = 0;
+        if ( pSolved[pRoots[r].iObj] )
+            continue;
+        for ( i = 0; i < Unresolved.nSize && !fHasValid; i++ )
+            if ( Unresolved.pArray[i].iTarget == pRoots[r].iObj &&
+                 Unresolved.pArray[i].nStatus == CEC_TRAN_STATE_CANDIDATE &&
+                 Cec_TranCandDynamicGain(p, Unresolved.pArray + i,
+                    pCovered, pUsed, pMffc, vMffc, vSupport) > 0 )
+                fHasValid = 1;
+        if ( fHasValid )
+            continue;
+        Cec_TranRootDiscoverOne( p, pSim, &DiscPars, pRoots + r,
+            pSigIndex, nSigEntries, &Known, pSolved, pCovered, pUsed,
+            pMffc, vMffc, &Dep, &Disc, &Prof, &RootCands );
+        for ( i = 0; i < RootCands.nSize; i++ )
+        {
+            Cec_TranCandVecPush( &Known, RootCands.pArray[i] );
+            Cec_TranCandVecPush( &Unresolved, RootCands.pArray[i] );
+            Prof.nStageKindGenerated[1][RootCands.pArray[i].nKind]++;
+        }
+    }
+    clk = Abc_Clock();
+    Cec_TranRootPrepareSeqFrontier( p, pRoots, nRoots, &Unresolved,
+        pCovered, pUsed, pMffc, vMffc, vSupport,
+        pPars->fSeqAllCands, &Seq, &Prof );
+    Prof.timeRootRefresh += Abc_Clock() - clk;
+    for ( i = 0; i < Seq.nSize; i++ )
+        Prof.nStageKindSubmitted[1][Seq.pArray[i].nKind]++;
+
+    // SEQ: exactly one shared fixed point, then relation-by-relation status.
+    if ( Seq.nSize )
+    {
+        Vec_Int_t * vStatus;
+        Vec_Str_t * vStage;
+        SeqPars.nRootStage = 2;
+        vStatus = Cec_TranProveRootBatch( p, Seq.pArray, Seq.nSize,
+            &SeqPars, &Prof, &vStage );
+        for ( i = 0; i < Seq.nSize; i++ )
+            if ( Vec_IntEntry(vStatus, i) && Vec_StrEntry(vStage, i) == 2 )
+            {
+                Seq.pArray[i].nProofStage = 2;
+                Seq.pArray[i].nStatus = CEC_TRAN_STATE_PROVED_SEQ;
+                Prof.nStageKindProved[1][Seq.pArray[i].nKind]++;
+            }
+        clk = Abc_Clock();
+        Cec_TranRootConsumeProved( p, pRoots, nRoots, &Seq,
+            pCovered, pUsed, pSolved, pMffc, vMffc, vSupport,
+            &Selected, &Prof );
+        Prof.timeRootPostSelect += Abc_Clock() - clk;
+        Vec_IntFree( vStatus );
+        Vec_StrFree( vStage );
+    }
+
+    // Dirty repair: only candidates not seen before are discovered.  Each new
+    // root frontier tries CBS first; the unresolved tail enters one small
+    // shared repair epoch.  The finite generators and Known canonical set make
+    // this loop terminate without an arbitrary epoch/q limit.
+    for ( k = 0; ; k++ )
+    {
+        Cec_TranCandVec_t Repair = {0};
+        int nNew = 0;
+        clk = Abc_Clock();
+        Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
+            pMffc, vMffc, &Prof );
+        Prof.timeRootRefresh += Abc_Clock() - clk;
+        for ( r = 0; r < nRoots && pRoots[r].nMffc > 0; r++ )
+        {
+            Vec_Str_t * vComb;
+            int iWinner = -1;
+            if ( pSolved[pRoots[r].iObj] )
+                continue;
+            Cec_TranRootDiscoverOne( p, pSim, &DiscPars, pRoots + r,
+                pSigIndex, nSigEntries, &Known, pSolved, pCovered, pUsed,
+                pMffc, vMffc, &Dep, &Disc, &Prof, &RootCands );
+            if ( RootCands.nSize == 0 )
+                continue;
+            nNew += RootCands.nSize;
+            for ( i = 0; i < RootCands.nSize; i++ )
+            {
+                Cec_TranCandVecPush( &Known, RootCands.pArray[i] );
+                Prof.nStageKindGenerated[0][RootCands.pArray[i].nKind]++;
+            }
+            vComb = Cec_TranProveCombOnly( p, RootCands.pArray,
+                RootCands.nSize, 1, pPars, &Prof, &nAttempted );
+            for ( i = 0; i < nAttempted; i++ )
+                Prof.nStageKindSubmitted[0][RootCands.pArray[i].nKind]++;
+            for ( i = 0; i < nAttempted; i++ )
+                if ( Vec_StrEntry(vComb, i) == 1 ) { iWinner = i; break; }
+            if ( iWinner >= 0 )
+            {
+                Cec_TranCand_t Cand = RootCands.pArray[iWinner];
+                Cand.nProofStage = 1;
+                Cand.nStatus = CEC_TRAN_STATE_PROVED_COMB;
+                Prof.nStageKindProved[0][Cand.nKind]++;
+                Cec_TranCandVecPush( &Proved, Cand );
+                clk = Abc_Clock();
+                Cec_TranRootConsumeProved( p, pRoots, nRoots, &Proved,
+                    pCovered, pUsed, pSolved, pMffc, vMffc, vSupport,
+                    &Selected, &Prof );
+                Prof.timeRootPostSelect += Abc_Clock() - clk;
+            }
+            else
+                for ( i = 0; i < RootCands.nSize; i++ )
+                    if ( pPars->fSeqAllCands || i == 0 )
+                        Cec_TranCandVecPush( &Repair, RootCands.pArray[i] );
+            Vec_StrFree( vComb );
+        }
+        if ( Repair.nSize )
+        {
+            Vec_Int_t * vStatus;
+            Vec_Str_t * vStage;
+            Prof.nSeqRepairEpochs++;
+            for ( i = 0; i < Repair.nSize; i++ )
+                Prof.nStageKindSubmitted[1][Repair.pArray[i].nKind]++;
+            SeqPars.nRootStage = 2;
+            vStatus = Cec_TranProveRootBatch( p, Repair.pArray, Repair.nSize,
+                &SeqPars, &Prof, &vStage );
+            for ( i = 0; i < Repair.nSize; i++ )
+                if ( Vec_IntEntry(vStatus, i) && Vec_StrEntry(vStage, i) == 2 )
+                {
+                    Repair.pArray[i].nProofStage = 2;
+                    Repair.pArray[i].nStatus = CEC_TRAN_STATE_PROVED_SEQ;
+                    Prof.nStageKindProved[1][Repair.pArray[i].nKind]++;
+                }
+            clk = Abc_Clock();
+            Cec_TranRootConsumeProved( p, pRoots, nRoots, &Repair,
+                pCovered, pUsed, pSolved, pMffc, vMffc, vSupport,
+                &Selected, &Prof );
+            Prof.timeRootPostSelect += Abc_Clock() - clk;
+            Vec_IntFree( vStatus );
+            Vec_StrFree( vStage );
+        }
+        Cec_TranCandVecStop( &Repair );
+        if ( nNew == 0 )
+            break;
+    }
+
+    // All proof and discovery data refer to the one immutable snapshot.  Tear
+    // them down before the sole bundle duplication stops that snapshot.
+    Cec_TranDepScratchStop( &Dep );
+    Abc_ResubPrepareManager( 0 );
+    Cec_TranSimStop( pSim );
+    Cec_TranPatDbStop( pDb );
+    pSim = NULL;
+    pDb = NULL;
+    p = Cec_TranCommitSelectedRootOnly( p, &Selected, pPars, &Prof );
+    Prof.timeRootDivCi = Prof.timeRootDivPool;
+    Prof.timeRootResubInit = Prof.timeRootDepInit;
+    Prof.timeRootResubEnumCanon = Prof.timeRootDepSearch;
+    Prof.timeRootCbsSolve = Prof.timeCombSolve;
+    Prof.timeTotal = Abc_Clock() - clkTotal;
+    if ( pPars->fProfile )
+        Cec_TranPrintRootOnlyProfile( &Prof, nAndBefore, Gia_ManAndNum(p) );
+    Abc_Print( 1, "stran-root summary: roots=%d selected=%d comb-proved=%d seq-proved=%d AND=%d->%d exact-gain=%lld.\n",
+        nRoots, Selected.nSize, Prof.nCombProved, Prof.nSeqProved,
+        nAndBefore, Gia_ManAndNum(p), Prof.nRootBundleAndGain );
+    ABC_FREE( p->pRefs );
+    Cec_TranCandVecStop( &Known );
+    Cec_TranCandVecStop( &RootCands );
+    Cec_TranCandVecStop( &Unresolved );
+    Cec_TranCandVecStop( &Seq );
+    Cec_TranCandVecStop( &Proved );
+    Cec_TranCandVecStop( &Selected );
+    Vec_IntFree( vMffc );
+    Vec_IntFree( vSupport );
+    ABC_FREE( pMffc );
+    ABC_FREE( pCombDone );
+    ABC_FREE( pRootIsCand );
+    ABC_FREE( pSolved );
+    ABC_FREE( pCovered );
+    ABC_FREE( pUsed );
+    ABC_FREE( pRoots );
+    ABC_FREE( pSigIndex );
+    return p;
 }
 
 static Gia_Man_t * Cec_ManSequentialDirectResubstitution( Gia_Man_t * pGia,
@@ -6973,8 +8219,6 @@ static Gia_Man_t * Cec_ManSequentialSodcTransduction( Gia_Man_t * pGia, Cec_ParT
 
 Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
 {
-    Gia_Man_t * pComb, * pSeq;
-    Cec_ParTran_t CombPars, SeqPars;
     // This branch exposes Direct root replacement with an explicit proof
     // scope.  Keep the legacy leaf-SODC implementation above isolated until
     // it is split into a separate command or branch.
@@ -6989,37 +8233,8 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         pPars->nRootGainMin = 0;
         pPars->nHardMffc = 0;
     }
-    if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT &&
-         pPars->fRootSplitStages && pPars->nRootStage == 0 )
-    {
-        CombPars = SeqPars = *pPars;
-        CombPars.nRootStage = 1;
-        // Reachable CEGAR belongs to the temporal pass.  The combination pass
-        // learns arbitrary-state CBS models inside each proof batch instead.
-        CombPars.nRootWaves = 1;
-        SeqPars.nRootStage = 2;
-        SeqPars.fUseFreeSim = 0;
-        // Keep the combination lane in one batch so random signatures and
-        // learned CBS models are shared across all alternatives.  The scheduling
-        // mode applies to the rebuilt sequential lane: false seeds every
-        // retained alternative in one scorr closure; true seeds up to q/root.
-        CombPars.fRootProgressive = 0;
-        SeqPars.fRootProgressive = pPars->fRootProgressive;
-        Abc_Print( 1, "Sequential direct split-stage profile: begin AND=%d Reg=%d comb-conf=%d seq-conf=%d free-words=%d free-cex=%d seq-scheduling=%s.\n",
-            Gia_ManAndNum(pGia), Gia_ManRegNum(pGia),
-            CombPars.nCombBTLimit, SeqPars.nBTLimit,
-            CombPars.nFreeWords, CombPars.nFreeCexMax,
-            SeqPars.fRootProgressive ? "top-q/root" : "all-alternatives" );
-        pComb = Cec_ManSequentialDirectResubstitution( pGia, &CombPars );
-        pSeq = Cec_ManSequentialDirectResubstitution( pComb, &SeqPars );
-        Abc_Print( 1, "Sequential direct split-stage size profile: AND=%d -> comb=%d (gain=%d) -> scorr=%d (incremental-gain=%d); Reg=%d -> comb=%d -> scorr=%d.\n",
-            Gia_ManAndNum(pGia), Gia_ManAndNum(pComb),
-            Gia_ManAndNum(pGia) - Gia_ManAndNum(pComb),
-            Gia_ManAndNum(pSeq), Gia_ManAndNum(pComb) - Gia_ManAndNum(pSeq),
-            Gia_ManRegNum(pGia), Gia_ManRegNum(pComb), Gia_ManRegNum(pSeq) );
-        Gia_ManStop( pComb );
-        return pSeq;
-    }
+    if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT )
+        return Cec_ManSequentialRootOnly( pGia, pPars );
     return Cec_ManSequentialDirectResubstitution( pGia, pPars );
 }
 

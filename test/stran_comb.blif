@@ -1,0 +1,13 @@
+.model stran_comb
+.inputs a b
+.outputs q
+.latch y q 0
+
+# The root is (a&b)&a = a&b.  Reconstructing a&b costs one gate but removes
+# the two-gate root MFFC.  Root &stran should discharge this one-AND candidate
+# with three direct CBS cubes and commit the one-gate reduction.
+.names a b ab
+11 1
+.names ab a y
+11 1
+.end

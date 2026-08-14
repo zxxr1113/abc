@@ -243,10 +243,12 @@ static void Cec_ProfCorCountStatus( Cec_ParCor_t * pPars,
 {
     Cec_ProfCor_t * p = pPars->pProfile;
     int i, Status;
-    if ( p == NULL )
-        return;
     Vec_StrForEachEntry( vStatus, Status, i )
     {
+        if ( Status != 0 && Status != 1 )
+            pPars->fIncomplete = 1;
+        if ( p == NULL )
+            continue;
         if ( fBmc )
         {
             if ( Status == 1 )      p->nBmcUnsat++;
@@ -2010,6 +2012,9 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ScorrConfStop  = 0;
     pPars->nConfUsed   = 0;
     pPars->fConfStop   = 0;
+    pPars->fIncomplete = 0;
+    pPars->fCompleted  = 0;
+    pPars->nRoundsDone = 0;
     if ( Gia_ManRegNum(pAig) == 0 )
     {
         Abc_Print( 1, "Cec_ManLatchCorrespondence(): Not a sequential AIG.\n" );
@@ -2054,12 +2059,14 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Cec_ManLSCorrespondenceBmc( pAig, pPars, 0 );
     if ( Cec_ParCorShouldStop( pPars ) )
     {
+        pPars->fIncomplete = 1;
         Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, 0 );
         Cec_ManSimStop( pSim );
         return 1;
     }
     if ( pPars->nStepsMax == 0 )
     {
+        pPars->fIncomplete = 1;
         Abc_Print( 1, "Stopped signal correspondence after BMC.\n" );
         Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, 0 );
         Cec_ManSimStop( pSim );
@@ -2094,6 +2101,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     {
         if ( Cec_ParCorShouldStop( pPars ) )
         {
+            pPars->fIncomplete = 1;
             Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
@@ -2103,6 +2111,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         }
         if ( pPars->nStepsMax == r )
         {
+            pPars->fIncomplete = 1;
             Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
@@ -2219,6 +2228,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 if ( Gia_ManCoNum(pShadow) > 0 &&
                      !Cec_ManIncrOracleCheck( pShadow, vShadowOutputs, r ) )
                 {
+                    pPars->fIncomplete = 1;
                     Gia_ManStop( pShadow );
                     Vec_IntFree( vShadowOutputs );
                     Cec_ManSimStop( pSim );
@@ -2409,6 +2419,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 //Gia_ManEquivPrintClasses( pAig, 1, 0 );
         if ( Cec_ParCorShouldStop( pPars ) )
         {
+            pPars->fIncomplete = 1;
             Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
@@ -2419,6 +2430,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         // quit if const is no longer there
         if ( pPars->fStopWhenGone && Gia_ManPoNum(pAig) == 1 && !Gia_ObjIsConst( pAig, Gia_ObjFaninId0p(pAig, Gia_ManPo(pAig, 0)) ) )
         {
+            pPars->fIncomplete = 1;
             printf( "Iterative refinement is stopped after iteration %d\n", r );
             printf( "because the property output is no longer a candidate constant.\n" );
             Cec_ManSimStop( pSim );
@@ -2433,6 +2445,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             int nCur = Cec_ManCountLits(pAig);
             if ( r > 4 && nPrev[0] - nCur <= 4*pPars->nLimitMax )
             {
+                pPars->fIncomplete = 1;
                 printf( "Iterative refinement is stopped after iteration %d\n", r );
                 printf( "because refinement does not proceed quickly.\n" );
                 Cec_ManSimStop( pSim );
@@ -2518,6 +2531,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     }
     if ( fCertFailed )
     {
+        pPars->fIncomplete = 1;
         Cec_ProfCorFinishClasses( pPars, &Total, clkProfClasses, clkProfInd );
         Cec_ScorrProfOn = 0;
         Cec_ManSimStop( pSim );
@@ -2559,6 +2573,13 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_IncrMgrFree( pMgr );
     Cec_DynSrmFree( pDynSrm );
     Cec_SeedSimFree( pSeedSim );
+    // A surviving speculative class is a certificate only after every base
+    // and induction obligation completed and the refinement loop converged.
+    // Per-output UNKNOWNs do not necessarily trip the aggregate conflict-stop
+    // flag, so retain this independent completion bit for callers such as
+    // &stran that must distinguish PROVED from UNKNOWN.
+    pPars->fCompleted = !pPars->fIncomplete && r < nIterMax;
+    pPars->nRoundsDone = r + 1;
     return 1;
 }
 

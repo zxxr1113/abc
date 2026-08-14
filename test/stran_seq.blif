@@ -1,0 +1,19 @@
+.model stran_seq
+.inputs a
+.outputs y keep_r keep_s
+.latch a r 0
+.latch a s 0
+
+# r and s are independent combinational CIs but equal in every reachable
+# state.  Universally y=(r&s)&r equals the one-gate construction r&s; only in
+# reachable states it also equals the zero-gate existing literal r.  This
+# exercises one unified class with both proof stages and final gain selection.
+.names r s rs
+11 1
+.names rs r y
+11 1
+.names r keep_r
+1 1
+.names s keep_s
+1 1
+.end

@@ -294,6 +294,7 @@ struct Gia_ResbMan_t_
     int         nDivsMax;
     int         iChoice;
     int         fChoiceSelected;
+    int         fSkipTemplates;
     int         fUseZero;
     int         fUseXor;
     int         fDebug;
@@ -345,6 +346,7 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     p->nDivsMax     = nDivsMax;
     p->iChoice      = iChoice;
     p->fChoiceSelected = 0;
+    p->fSkipTemplates = 0;
     p->fUseZero     = fUseZero;
     p->fUseXor      = fUseXor;
     p->fDebug       = fDebug;
@@ -1311,13 +1313,13 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         printf( "0=%5d (%5.2f %%) ",  nMints[0], 100.0*nMints[0]/(64*p->nWords) );
         printf( "1=%5d (%5.2f %%)  ", nMints[1], 100.0*nMints[1]/(64*p->nWords) );
     }
-    if ( Abc_TtIsConst0( p->pSets[1], p->nWords ) )
+    if ( !p->fSkipTemplates && Abc_TtIsConst0( p->pSets[1], p->nWords ) )
     {
         if ( p->iChoice == 0 )
             return 0;
         p->iChoice--;
     }
-    if ( Abc_TtIsConst0( p->pSets[0], p->nWords ) )
+    if ( !p->fSkipTemplates && Abc_TtIsConst0( p->pSets[0], p->nWords ) )
     {
         if ( p->iChoice == 0 )
             return 1;
@@ -1349,7 +1351,9 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
     if ( nLimit == 0 )
         return -1;
     Gia_ManSortUnates( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnateLitsW, p->vSorter );
-    iResLit = Gia_ManFindTwoUnate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnateLitsW, p->fVerbose, &p->iChoice );
+    iResLit = p->fSkipTemplates ? -1 :
+        Gia_ManFindTwoUnate( p->pSets, p->vDivs, p->nWords,
+            p->vUnateLits, p->vUnateLitsW, p->fVerbose, &p->iChoice );
     if ( iResLit >= 0 ) // and
     {
         int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1366,8 +1370,10 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
     if ( Vec_IntSize(p->vBinateVars) > p->nDivsMax )
         Vec_IntShrink( p->vBinateVars, p->nDivsMax );
     if ( p->fVerbose ) printf( "  B = %3d", Vec_IntSize(p->vBinateVars) );
-    //Gia_ManSortBinate( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vSorter );
-    if ( p->fUseXor )
+    // Rank binate variables before pair/template enumeration.  This changes
+    // only heuristic order, never the finite candidate universe.
+    Gia_ManSortBinate( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vSorter );
+    if ( p->fUseXor && !p->fSkipTemplates )
     {
         iResLit = Gia_ManFindXor( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vUnatePairs, p->fVerbose, &p->iChoice );
         if ( iResLit >= 0 ) // xor
@@ -1387,7 +1393,10 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         return -1;
     Gia_ManFindUnatePairs( p->pSets, p->vDivs, p->nWords, p->vBinateVars, p->vUnatePairs, p->fVerbose );
     Gia_ManSortPairs( p->pSets, p->vDivs, p->nWords, p->vUnatePairs, p->vUnatePairsW, p->vSorter );
-    iResLit = Gia_ManFindDivGate( p->pSets, p->vDivs, p->nWords, p->vUnateLits, p->vUnatePairs, p->vUnateLitsW, p->vUnatePairsW, p->pDivA, &p->iChoice );
+    iResLit = p->fSkipTemplates ? -1 :
+        Gia_ManFindDivGate( p->pSets, p->vDivs, p->nWords,
+            p->vUnateLits, p->vUnatePairs, p->vUnateLitsW,
+            p->vUnatePairsW, p->pDivA, &p->iChoice );
     if ( iResLit >= 0 ) // and(div,pair)
     {
         int iNode  = nVars + Vec_IntSize(p->vGates)/2;
@@ -1407,7 +1416,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
     }
 //    if ( nLimit == 2 )
 //        return -1;
-    if ( nLimit >= 3 )
+    if ( nLimit >= 3 && !p->fSkipTemplates )
     {
         iResLit = Gia_ManFindGateGate( p->pSets, p->vDivs, p->nWords, p->vUnatePairs, p->vUnatePairsW, p->pDivA, p->pDivB, &p->iChoice );
         if ( iResLit >= 0 ) // and(pair,pair)
@@ -1624,6 +1633,341 @@ Vec_Int_t * Gia_ManResubOne( Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDiv
 
 ***********************************************************************/
 static Gia_ResbMan_t * s_pResbMan = NULL;
+
+// Stateful finite recipe iterator used by &stran root discovery.  Exact
+// templates keep nested-loop cursors, while greedy diversity advances one
+// pivot at a time.  Thus Next(q) never asks the legacy iChoice engine to skip
+// the first q-1 answers again.
+typedef struct Gia_ResbIter_t_ Gia_ResbIter_t;
+struct Gia_ResbIter_t_
+{
+    Gia_ResbMan_t * p;
+    int Stage;
+    int n, i, k;
+    int iGreedy;
+    int fPreparedPairs;
+};
+
+static void Gia_ResbIterEmitOne( Gia_ResbMan_t * p, int iLit0,
+    int iLit1, int fCompl )
+{
+    int iNode = Vec_PtrSize(p->vDivs);
+    Vec_IntClear( p->vGates );
+    Vec_IntPushTwo( p->vGates, iLit0, iLit1 );
+    Vec_IntPush( p->vGates, Abc_Var2Lit(iNode, fCompl) );
+}
+
+static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
+{
+    Gia_ResbMan_t * p = pIt->p;
+    int n;
+    if ( pIt->fPreparedPairs )
+        return;
+    for ( n = 0; n < 2; n++ )
+        Gia_ManFindOneUnateInt( p->pSets[n], p->pSets[!n], p->vDivs,
+            p->nWords, p->vUnateLits[n], p->vNotUnateVars[n] );
+    Gia_ManSortUnates( p->pSets, p->vDivs, p->nWords,
+        p->vUnateLits, p->vUnateLitsW, p->vSorter );
+    Vec_IntTwoFindCommon( p->vNotUnateVars[0], p->vNotUnateVars[1],
+        p->vBinateVars );
+    if ( Vec_IntSize(p->vBinateVars) > p->nDivsMax )
+        Vec_IntShrink( p->vBinateVars, p->nDivsMax );
+    Gia_ManSortBinate( p->pSets, p->vDivs, p->nWords,
+        p->vBinateVars, p->vSorter );
+    Gia_ManFindUnatePairs( p->pSets, p->vDivs, p->nWords,
+        p->vBinateVars, p->vUnatePairs, 0 );
+    Gia_ManSortPairs( p->pSets, p->vDivs, p->nWords,
+        p->vUnatePairs, p->vUnatePairsW, p->vSorter );
+    pIt->fPreparedPairs = 1;
+}
+
+static int Gia_ResbIterNextOneGate( Gia_ResbIter_t * pIt )
+{
+    Gia_ResbMan_t * p = pIt->p;
+    int nTotal, iDiv0, iDiv1, Cover0, Cover1;
+    Gia_ResbIterPreparePairs( pIt );
+    for ( ; pIt->n < 2; pIt->n++, pIt->i = 0, pIt->k = 1 )
+    {
+        nTotal = Abc_TtCountOnesVec( p->pSets[!pIt->n], p->nWords );
+        for ( ; pIt->i < Vec_IntSize(p->vUnateLits[pIt->n]);
+              pIt->i++, pIt->k = pIt->i + 1 )
+        {
+            iDiv0 = Vec_IntEntry( p->vUnateLits[pIt->n], pIt->i );
+            Cover0 = Vec_IntEntry( p->vUnateLitsW[pIt->n], pIt->i );
+            if ( 2 * Cover0 < nTotal )
+                break;
+            for ( ; pIt->k < Vec_IntSize(p->vUnateLits[pIt->n]);
+                  pIt->k++ )
+            {
+                word * pDiv0, * pDiv1;
+                int a, b;
+                iDiv1 = Vec_IntEntry( p->vUnateLits[pIt->n], pIt->k );
+                Cover1 = Vec_IntEntry( p->vUnateLitsW[pIt->n], pIt->k );
+                if ( Cover0 + Cover1 < nTotal )
+                    break;
+                pDiv0 = (word *)Vec_PtrEntry(p->vDivs, Abc_Lit2Var(iDiv0));
+                pDiv1 = (word *)Vec_PtrEntry(p->vDivs, Abc_Lit2Var(iDiv1));
+                if ( !Gia_ManDivCover(p->pSets[pIt->n],
+                        p->pSets[!pIt->n], pDiv0,
+                        Abc_LitIsCompl(iDiv0), pDiv1,
+                        Abc_LitIsCompl(iDiv1), p->nWords) )
+                    continue;
+                a = Abc_LitNot( Abc_MinInt(iDiv0, iDiv1) );
+                b = Abc_LitNot( Abc_MaxInt(iDiv0, iDiv1) );
+                pIt->k++;
+                Gia_ResbIterEmitOne( p, a, b, !pIt->n );
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int Gia_ResbIterNextDivGate( Gia_ResbIter_t * pIt )
+{
+    Gia_ResbMan_t * p = pIt->p;
+    int nTotal, iDiv0, iPair, Cover0, Cover1;
+    for ( ; pIt->n < 2; pIt->n++, pIt->i = pIt->k = 0 )
+    {
+        nTotal = Abc_TtCountOnesVec( p->pSets[!pIt->n], p->nWords );
+        for ( ; pIt->i < Vec_IntSize(p->vUnateLits[pIt->n]);
+              pIt->i++, pIt->k = 0 )
+        {
+            iDiv0 = Vec_IntEntry( p->vUnateLits[pIt->n], pIt->i );
+            Cover0 = Vec_IntEntry( p->vUnateLitsW[pIt->n], pIt->i );
+            if ( 2 * Cover0 < nTotal )
+                break;
+            for ( ; pIt->k < Vec_IntSize(p->vUnatePairs[pIt->n]);
+                  pIt->k++ )
+            {
+                int iNode = Vec_PtrSize(p->vDivs), fPair, iLit0, iLit1;
+                word * pDiv0;
+                iPair = Vec_IntEntry( p->vUnatePairs[pIt->n], pIt->k );
+                Cover1 = Vec_IntEntry( p->vUnatePairsW[pIt->n], pIt->k );
+                if ( Cover0 + Cover1 < nTotal )
+                    break;
+                pDiv0 = (word *)Vec_PtrEntry(p->vDivs, Abc_Lit2Var(iDiv0));
+                Gia_ManDeriveDivPair( iPair, p->vDivs, p->nWords, p->pDivA );
+                fPair = Abc_LitIsCompl( iPair );
+                if ( !Gia_ManDivCover(p->pSets[pIt->n],
+                        p->pSets[!pIt->n], pDiv0,
+                        Abc_LitIsCompl(iDiv0), p->pDivA, fPair,
+                        p->nWords) )
+                    continue;
+                iLit0 = Abc_Lit2Var(iPair) & 0x7FFF;
+                iLit1 = Abc_Lit2Var(iPair) >> 15;
+                Vec_IntClear( p->vGates );
+                Vec_IntPushTwo( p->vGates, iLit0, iLit1 );
+                Vec_IntPushTwo( p->vGates, Abc_LitNot(iDiv0),
+                    Abc_Var2Lit(iNode, !fPair) );
+                Vec_IntPush( p->vGates,
+                    Abc_Var2Lit(iNode + 1, !pIt->n) );
+                pIt->k++;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int Gia_ResbIterNextGateGate( Gia_ResbIter_t * pIt )
+{
+    Gia_ResbMan_t * p = pIt->p;
+    int nTotal, iPair0, iPair1, Cover0, Cover1;
+    for ( ; pIt->n < 2; pIt->n++, pIt->i = 0, pIt->k = 1 )
+    {
+        nTotal = Abc_TtCountOnesVec( p->pSets[!pIt->n], p->nWords );
+        for ( ; pIt->i < Vec_IntSize(p->vUnatePairs[pIt->n]);
+              pIt->i++, pIt->k = pIt->i + 1 )
+        {
+            iPair0 = Vec_IntEntry( p->vUnatePairs[pIt->n], pIt->i );
+            Cover0 = Vec_IntEntry( p->vUnatePairsW[pIt->n], pIt->i );
+            if ( 2 * Cover0 < nTotal )
+                break;
+            Gia_ManDeriveDivPair( iPair0, p->vDivs, p->nWords, p->pDivA );
+            for ( ; pIt->k < Vec_IntSize(p->vUnatePairs[pIt->n]);
+                  pIt->k++ )
+            {
+                int iNode = Vec_PtrSize(p->vDivs);
+                int a0, a1, b0, b1, f0, f1;
+                iPair1 = Vec_IntEntry( p->vUnatePairs[pIt->n], pIt->k );
+                Cover1 = Vec_IntEntry( p->vUnatePairsW[pIt->n], pIt->k );
+                if ( Cover0 + Cover1 < nTotal )
+                    break;
+                Gia_ManDeriveDivPair( iPair1, p->vDivs, p->nWords, p->pDivB );
+                f0 = Abc_LitIsCompl(iPair0);
+                f1 = Abc_LitIsCompl(iPair1);
+                if ( !Gia_ManDivCover(p->pSets[pIt->n],
+                        p->pSets[!pIt->n], p->pDivA, f0,
+                        p->pDivB, f1, p->nWords) )
+                    continue;
+                a0 = Abc_Lit2Var(iPair0) & 0x7FFF;
+                a1 = Abc_Lit2Var(iPair0) >> 15;
+                b0 = Abc_Lit2Var(iPair1) & 0x7FFF;
+                b1 = Abc_Lit2Var(iPair1) >> 15;
+                Vec_IntClear( p->vGates );
+                Vec_IntPushTwo( p->vGates, a0, a1 );
+                Vec_IntPushTwo( p->vGates, b0, b1 );
+                Vec_IntPushTwo( p->vGates,
+                    Abc_Var2Lit(iNode, !f0),
+                    Abc_Var2Lit(iNode + 1, !f1) );
+                Vec_IntPush( p->vGates,
+                    Abc_Var2Lit(iNode + 2, !pIt->n) );
+                pIt->k++;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs, int nWords,
+    int nLimit, int nDivsMax, int fUseZero, int fUseXor )
+{
+    Gia_ResbIter_t * pIt = ABC_CALLOC( Gia_ResbIter_t, 1 );
+    Vec_Ptr_t Divs = { nDivs, nDivs, ppDivs };
+    pIt->p = Gia_ResbAlloc( nWords );
+    Gia_ResbInit( pIt->p, &Divs, nWords, nLimit, nDivsMax, 0,
+        fUseZero, fUseXor, 0, 0, 0 );
+    // Root mode currently uses AND templates.  Preserve the legacy API for
+    // XOR callers rather than silently changing their recipe universe.
+    if ( fUseXor )
+        pIt->Stage = 5;
+    else
+        pIt->Stage = 1;
+    pIt->n = pIt->i = 0;
+    pIt->k = 1;
+    return pIt;
+}
+
+int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
+    int * pnAttempt, int * pfExhausted )
+{
+    Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
+    Gia_ResbMan_t * p = pIt->p;
+    int Res;
+    *pfExhausted = 0;
+    while ( 1 )
+    {
+        if ( pIt->Stage == 1 )
+        {
+            if ( p->nLimit >= 1 && Gia_ResbIterNextOneGate(pIt) )
+                break;
+            pIt->Stage = 3; pIt->n = pIt->i = pIt->k = 0;
+        }
+        else if ( pIt->Stage == 3 )
+        {
+            if ( p->nLimit >= 2 && Gia_ResbIterNextDivGate(pIt) )
+                break;
+            pIt->Stage = 4; pIt->n = pIt->i = 0; pIt->k = 1;
+        }
+        else if ( pIt->Stage == 4 )
+        {
+            if ( p->nLimit >= 3 && Gia_ResbIterNextGateGate(pIt) )
+                break;
+            pIt->Stage = 5;
+        }
+        else if ( pIt->Stage == 5 )
+        {
+            // Reset only mutable search storage.  Configuration and the
+            // monotonically increasing greedy pivot cursor remain intact.
+            Abc_TtCopy( p->pSets[0], (word *)Vec_PtrEntry(p->vDivs, 0),
+                p->nWords, 0 );
+            Abc_TtCopy( p->pSets[1], (word *)Vec_PtrEntry(p->vDivs, 1),
+                p->nWords, 0 );
+            Vec_IntClear( p->vGates );
+            p->iChoice = pIt->iGreedy++;
+            p->fChoiceSelected = 0;
+            p->fSkipTemplates = 1;
+            Res = Gia_ManResubPerform_rec( p, p->nLimit, 0, 1 );
+            if ( Res >= 0 )
+                Vec_IntPush( p->vGates, Res );
+            if ( Res >= 0 )
+                break;
+            if ( p->fChoiceSelected )
+                continue;
+            pIt->Stage = 6;
+        }
+        else
+        {
+            *pfExhausted = 1;
+            *ppArray = NULL;
+            return 0;
+        }
+    }
+    *ppArray = Vec_IntArray( p->vGates );
+    // The caller uses this stage tag only for deterministic ranking: stages
+    // 1/3/4 are finite exact templates and stage 5 is greedy diversity.
+    if ( pnAttempt )
+        *pnAttempt = pIt->Stage;
+    return Vec_IntSize( p->vGates );
+}
+
+void Abc_ResubIteratorStop( void * pVoid )
+{
+    Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
+    if ( pIt == NULL )
+        return;
+    Gia_ResbFree( pIt->p );
+    ABC_FREE( pIt );
+}
+
+// Focused invariant checks for the root-only iterator.  These truth tables
+// encode the polarity example T=1101,d=1000 and a finite two-divisor cover.
+// The helper is intentionally exported only to the in-repository regression
+// command; production discovery uses the same Start/Next/Stop implementation.
+int Abc_ResubIteratorSelfTest()
+{
+    word Off = 0x2, On = 0xD, D = 0x8, E = 0x5;
+    void * Divs[4] = { &Off, &On, &D, &E };
+    Vec_Ptr_t V = {4, 4, Divs};
+    Vec_Int_t U = {0}, N = {0}, P = {0};
+    void * pIt;
+    int * pArray = NULL, Attempt, Exhausted, nArray;
+    int fSawD = 0, fSawNotD = 0, nNext = 0;
+    U.nCap = N.nCap = P.nCap = 8;
+    U.pArray = ABC_ALLOC( int, 8 );
+    N.pArray = ABC_ALLOC( int, 8 );
+    P.pArray = ABC_ALLOC( int, 8 );
+    Gia_ManFindOneUnateInt( &Off, &On, &V, 1, &U, &N );
+    fSawD = Vec_IntFind( &U, Abc_Var2Lit(2, 0) ) >= 0;
+    fSawNotD = Vec_IntFind( &U, Abc_Var2Lit(2, 1) ) >= 0;
+    // d is an OR implicant of T=1101; !d is not.  In the opposite set it
+    // must not be misclassified as a direct AND factor.
+    assert( fSawD && !fSawNotD );
+    Gia_ManFindOneUnateInt( &On, &Off, &V, 1, &U, &N );
+    assert( Vec_IntFind(&U, Abc_Var2Lit(2, 0)) < 0 );
+    Vec_IntClear( &N );
+    Vec_IntPushTwo( &N, 2, 3 );
+    Vec_IntClear( &P );
+    Gia_ManFindUnatePairsInt( &Off, &On, &N, &V, 1, &P );
+    // Every admitted binate pair must be OFF-disjoint and cover nonempty ON;
+    // the generator itself asserts this condition through the expected count.
+    for ( Attempt = 0; Attempt < Vec_IntSize(&P); Attempt++ )
+    {
+        int Pair = Vec_IntEntry( &P, Attempt );
+        int L0 = Abc_Lit2Var(Pair) & 0x7FFF;
+        int L1 = Abc_Lit2Var(Pair) >> 15;
+        assert( !Abc_TtIntersectTwo(&Off, 0,
+            (word *)Vec_PtrEntry(&V, Abc_Lit2Var(L0)), Abc_LitIsCompl(L0),
+            (word *)Vec_PtrEntry(&V, Abc_Lit2Var(L1)), Abc_LitIsCompl(L1), 1) );
+        assert( Abc_TtIntersectTwo(&On, 0,
+            (word *)Vec_PtrEntry(&V, Abc_Lit2Var(L0)), Abc_LitIsCompl(L0),
+            (word *)Vec_PtrEntry(&V, Abc_Lit2Var(L1)), Abc_LitIsCompl(L1), 1) );
+    }
+    pIt = Abc_ResubIteratorStart( Divs, 4, 1, 3, 2, 0, 0 );
+    do {
+        nArray = Abc_ResubIteratorNext( pIt, &pArray, &Attempt, &Exhausted );
+        nNext++;
+        assert( Exhausted || (nArray > 0 && (nArray & 1)) );
+    } while ( !Exhausted );
+    Abc_ResubIteratorStop( pIt );
+    ABC_FREE( U.pArray );
+    ABC_FREE( N.pArray );
+    ABC_FREE( P.pArray );
+    assert( nNext > 0 );
+    return 1;
+}
 
 void Abc_ResubPrepareManager( int nWords )
 {

@@ -1,0 +1,16 @@
+.model stran_seq_only
+.inputs a
+.outputs y keep_r keep_s
+.latch a r 0
+.latch a s 0
+
+# r and s are equal only on reset-reachable traces.  The root r&s therefore
+# has no combinationally valid zero-gate replacement, but sequentially equals
+# either existing literal.  This forces the shared SEQ fixed-point path.
+.names r s y
+11 1
+.names r keep_r
+1 1
+.names s keep_s
+1 1
+.end

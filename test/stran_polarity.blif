@@ -1,0 +1,16 @@
+.model stran_polarity
+.inputs a b
+.outputs q
+.latch y q 0
+
+# y=(a|b)|a = a|b.  With direct existing lookup disabled, the only useful
+# one-gate recipe is a complemented-AND implementation of OR.  This catches
+# polarity-incomplete unate/include filtering (the positive a/b literals are
+# OR implicants, not direct AND factors).
+.names a b ab_or
+1- 1
+-1 1
+.names ab_or a y
+1- 1
+-1 1
+.end

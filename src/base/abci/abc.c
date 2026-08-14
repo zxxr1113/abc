@@ -497,6 +497,7 @@ static int Abc_CommandAbc9Scorr              ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9Scorr2             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sodc               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Stran              ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9StranResubTest     ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Choice             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sat                ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9SatEnum            ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -1351,6 +1352,7 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr2",       Abc_CommandAbc9Scorr2,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sodc",         Abc_CommandAbc9Sodc,         0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&stran",        Abc_CommandAbc9Stran,        0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&stran_resub_test", Abc_CommandAbc9StranResubTest, 0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&choice",       Abc_CommandAbc9Choice,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sat",          Abc_CommandAbc9Sat,          0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&satenum",      Abc_CommandAbc9SatEnum,      0 );
@@ -42216,14 +42218,30 @@ usage:
   Synopsis    [Performs bounded sequential transduction.]
 
 ***********************************************************************/
+extern int Cec_TranRootSelfTest();
+static int Abc_CommandAbc9StranResubTest( Abc_Frame_t * pAbc,
+    int argc, char ** argv )
+{
+    (void)pAbc;
+    if ( argc != 1 )
+    {
+        Abc_Print( -2, "usage: &stran_resub_test\n" );
+        return 1;
+    }
+    if ( !Cec_TranRootSelfTest() )
+        return 1;
+    Abc_Print( 1, "stran resub iterator/polarity/canonicalization self-test: PASS\n" );
+    return 0;
+}
+
 int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     Cec_ParTran_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
-    int c, fSeenSodc = 0;
+    int c, fSeenSodc = 0, fSeenDeprecatedRoot = 0;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwbaecdoxlrzsgifpuvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwbaecdoxlrzsgiftpuvh")) != EOF )
     {
         switch ( c )
         {
@@ -42337,6 +42355,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( pPars->nUnknownMax < 0 ) goto usage;
             break;
         case 'L':
+            fSeenDeprecatedRoot = 1;
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootBatch = atoi(argv[globalUtilOptind++]);
             if ( pPars->nRootBatch < 0 ) goto usage;
@@ -42372,6 +42391,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( pPars->nHardMffc < 0 ) goto usage;
             break;
         case 'w':
+            fSeenDeprecatedRoot = 1;
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootWaves = atoi(argv[globalUtilOptind++]);
             if ( pPars->nRootWaves < 1 || pPars->nRootWaves > 64 ) goto usage;
@@ -42380,6 +42400,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             // Deprecated compatibility input.  Recipe generation is now
             // structurally exhaustive, so this value intentionally has no
             // effect and is omitted from the user-facing option list.
+            fSeenDeprecatedRoot = 1;
             if ( globalUtilOptind >= argc ||
                  atoi(argv[globalUtilOptind++]) < 1 ) goto usage;
             break;
@@ -42415,18 +42436,22 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->fUseExisting ^= 1;
             break;
         case 'z':
+            fSeenDeprecatedRoot = 1;
             pPars->fUseResubZero ^= 1;
             break;
         case 'r':
             pPars->fRootExhaustive ^= 1;
             break;
         case 'i':
+            fSeenDeprecatedRoot = 1;
             pPars->fRootStopLegacy ^= 1;
             break;
         case 'u':
+            fSeenDeprecatedRoot = 1;
             pPars->fRootStopProved ^= 1;
             break;
         case 's':
+            fSeenDeprecatedRoot = 1;
             pPars->fRootSplitStages ^= 1;
             break;
         case 'g':
@@ -42434,6 +42459,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             break;
         case 'f':
             pPars->fShadow ^= 1;
+            break;
+        case 't':
+            pPars->fSeqAllCands ^= 1;
             break;
         case 'p':
             pPars->fProfile ^= 1;
@@ -42447,6 +42475,10 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     }
     if ( pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
         Abc_Print( 1, "&stran: -P window/output are frozen compatibility paths; current development targets -P root only.\n" );
+    else if ( fSeenDeprecatedRoot || pPars->nRootWaves != 1 || pPars->fUseResubZero ||
+              pPars->fRootStopLegacy || !pPars->fRootStopProved ||
+              pPars->fRootSplitStages || pPars->nRootBatch )
+        Abc_Print( 1, "&stran: -q/-w/-L/-z/-i/-u/-s are deprecated and ignored by the root-only pipeline.\n" );
     if ( fSeenSodc )
     {
         Abc_Print( -1, "&stran: This branch implements Direct root resubstitution only; -o is unavailable.\n" );
@@ -42485,8 +42517,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmwbae num] [-cdxlrzsgifpuvh]\n" );
-    Abc_Print( -2, "\t         performs Direct root resubstitution with selectable scorr proof scope\n" );
+    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmwbae num] [-cdxlrzsgiftpuvh]\n" );
+    Abc_Print( -2, "\t         performs root-only Direct resubstitution (window/output are frozen)\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
@@ -42507,14 +42539,14 @@ usage:
     Abc_Print( -2, "\t-I num : compatibility option; currently ignored [default = %d]\n", pPars->nStrictPct );
     Abc_Print( -2, "\t-J num : UNKNOWNs before low-value contextual root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nLowUnknownMax );
     Abc_Print( -2, "\t-U num : UNKNOWNs before root/high-context cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );
-    Abc_Print( -2, "\t-L num : root scope only: MFFC-ranked roots searched/submitted (0 = all) [default = %d]\n", pPars->nRootBatch );
+    Abc_Print( -2, "\t-L num : deprecated compatibility input; ignored by root scope [default = %d]\n", pPars->nRootBatch );
     Abc_Print( -2, "\t-V num : exact gain selecting the contextual high proof budget [default = %d]\n", pPars->nHardGain );
     Abc_Print( -2, "\t-O num : root scope only: minimum local gain (OR with -m; 0 disables gate) [default = %d]\n", pPars->nRootGainMin );
     Abc_Print( -2, "\t-X num : low contextual conflict limit per proof obligation [default = %d]\n", pPars->nScoutBTLimit );
     Abc_Print( -2, "\t-Y num : total conflicts per low contextual call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-m num : MFFC selecting root existing admission/context high budget [default = %d]\n", pPars->nHardMffc );
-    Abc_Print( -2, "\t-w num : root construct CEGAR waves on one immutable snapshot (1..64) [default = %d]\n", pPars->nRootWaves );
+    Abc_Print( -2, "\t-w num : deprecated compatibility input; ignored by root scope [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
@@ -42522,13 +42554,14 @@ usage:
     Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle global existing-literal lookup [default = %s]\n", pPars->fUseExisting? "yes": "no" );
-    Abc_Print( -2, "\t-z     : toggle zero-gate existing dependency recipes [default = %s]\n", pPars->fUseResubZero? "yes": "no" );
+    Abc_Print( -2, "\t-z     : deprecated compatibility toggle; ignored by root scope\n" );
     Abc_Print( -2, "\t-r     : toggle exhaustive root discovery (forces L/G/O/m admission gates off) [default = %s]\n", pPars->fRootExhaustive? "yes": "no" );
-    Abc_Print( -2, "\t-i     : toggle stopping construction after a legacy-pool recipe [default = %s]\n", pPars->fRootStopLegacy? "yes": "no" );
-    Abc_Print( -2, "\t-u     : toggle continuing a root after one proved relation [default stop = %s]\n", pPars->fRootStopProved? "yes": "no" );
-    Abc_Print( -2, "\t-s     : toggle split root stages (off shares one snapshot and final commit) [default split = %s]\n", pPars->fRootSplitStages? "yes": "no" );
+    Abc_Print( -2, "\t-i     : deprecated compatibility toggle; ignored by root scope\n" );
+    Abc_Print( -2, "\t-u     : deprecated compatibility toggle; root always stops at first CBS proof\n" );
+    Abc_Print( -2, "\t-s     : deprecated compatibility toggle; root always runs COMB then SEQ\n" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
+    Abc_Print( -2, "\t-t     : toggle sequential all-candidate mode (off = top-1) [default = %s]\n", pPars->fSeqAllCands? "all-candidate": "top-1" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );

@@ -1,0 +1,19 @@
+.model stran_proxy_roots
+.inputs a
+.outputs y_and y_or keep_r keep_s
+.latch a r 0
+.latch a s 0
+
+# Both roots are sequentially equal to the same physical endpoint r, but not
+# combinationally equal to it.  Root-local proof proxies must yield two
+# independent size-2 classes in top-1 mode, never one transitive shared class.
+.names r s y_and
+11 1
+.names r s y_or
+1- 1
+-1 1
+.names r keep_r
+1 1
+.names s keep_s
+1 1
+.end

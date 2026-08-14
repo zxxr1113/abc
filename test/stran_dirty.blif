@@ -1,0 +1,17 @@
+.model stran_dirty
+.inputs a b
+.outputs q keep_n
+.latch y q 0
+
+# y=((a&b)&a)&b.  Selecting the largest root makes inner cached roots free and
+# changes the remaining virtual MFFCs.  The profile must report dirty reasons
+# while the exact bundle remains disjoint and equivalent.
+.names a b n
+11 1
+.names n a r
+11 1
+.names r b y
+11 1
+.names n keep_n
+1 1
+.end

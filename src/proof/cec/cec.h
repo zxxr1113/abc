@@ -196,6 +196,9 @@ struct Cec_ParCor_t_
     int              nConfTotal;    // total conflicts across this correspondence call (0 = unlimited)
     long long        nConfUsed;     // output: exact conflicts/backtracks consumed
     int              fConfStop;     // output: total conflict cap was reached
+    int              fIncomplete;   // output: at least one base/step obligation was UNKNOWN
+    int              fCompleted;    // output: base+induction reached a real fixed point
+    int              nRoundsDone;   // output: completed induction refinement rounds
     int              nProcs;        // the number of processes
     int              nPartSize;     // the partition size
     int              nLevelMax;     // (scorr only) the max number of levels
@@ -352,8 +355,8 @@ struct Cec_ParTran_t_
     int              nStrictPct;    // compatibility option (ignored)
     int              nLowUnknownMax;// UNKNOWNs per low-value contextual root/lane
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
-    int              nRootBatch;    // MFFC-ranked roots searched/submitted in root scope (0 = all)
-    int              nRootWaves;    // root construct CEGAR waves on one immutable snapshot
+    int              nRootBatch;    // deprecated/ignored by the root-only pipeline
+    int              nRootWaves;    // deprecated/ignored by the root-only pipeline
     int              nCombBTLimit; // root CBS conflict limit per cube
     int              nFreeWords;   // 64-bit independent PI/RO words for combination screening
     int              nFreeCexMax;  // CBS free-state counterexamples retained per proof batch
@@ -366,16 +369,17 @@ struct Cec_ParTran_t_
     int              fUseDirect;    // search Direct root substitutions
     int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
     int              fUseExisting;  // enable global existing-literal Direct candidates
-    int              fUseResubZero; // enable zero-gate existing recipes returned by dependency resub
+    int              fUseResubZero; // deprecated/ignored for root: direct generator owns zero-gate recipes
     int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
-    int              fRootProgressive;// internal root layer scheduler
+    int              fRootProgressive;// deprecated/ignored by root-only pipeline
     int              fRootExhaustive;// root scope: disable discovery/value admission filters
-    int              fRootStopLegacy;// stop construction when the legacy pool finds a recipe
-    int              fRootStopProved;// stop searching a root after one relation is proved
-    int              fRootSplitStages;// root scope: commit CBS winners before rebuilding for scorr
+    int              fRootStopLegacy;// deprecated/ignored by the root-only pipeline
+    int              fRootStopProved;// deprecated/ignored: root stops after first CBS proof
+    int              fRootSplitStages;// deprecated/ignored: root always uses COMB barrier then SEQ
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
-    int              nRootStage;    // internal: 0=combined, 1=comb-only, 2=seq-only
+    int              nRootStage;    // frozen compatibility path only
+    int              fSeqAllCands;  // root SEQ mode: 0=top-1, 1=all canonical candidates
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
     int              fVerbose;
