@@ -68,6 +68,19 @@ CONSTRUCT_FIELDS = [
         "selected_max_gates", "gates_per_selected",
     )
 ]
+TIME_FIELDS = [
+    "profile_total_sec", "profile_build_discovery_sec",
+    "profile_seq_proof_shared_sec", "profile_selection_sec",
+    "profile_stage_eval_sec", "profile_contribution_eval_sec",
+    "profile_commit_sec", "profile_decision_sec", "profile_overhead_sec",
+    "profile_unprofiled_sec",
+    "profile_build_discovery_pct", "profile_seq_proof_shared_pct",
+    "profile_selection_pct", "profile_stage_eval_pct",
+    "profile_contribution_eval_pct", "profile_commit_pct", "profile_decision_pct",
+    "profile_overhead_pct", "profile_unprofiled_pct",
+    "seq_build_path_upper_bound_sec", "seq_build_path_upper_bound_pct",
+    "seq_build_ordered_gain_per_upper_bound_sec",
+]
 OVERALL_FIELDS = [
     "valid_cases", "invalid_cases", "cases_comb_improved", "cases_seq_improved",
     "mean_case_comb_reduction_pct", "median_case_comb_reduction_pct",
@@ -75,7 +88,7 @@ OVERALL_FIELDS = [
 ]
 CSV_FIELDS = (
     BASE_FIELDS + STAGE_FIELDS + ATTRIBUTION_FIELDS + KIND_FIELDS + BUILD_ONLY_FIELDS +
-    CONSTRUCT_FIELDS + OVERALL_FIELDS
+    CONSTRUCT_FIELDS + TIME_FIELDS + OVERALL_FIELDS
 )
 
 
@@ -242,6 +255,9 @@ def make_case(row: Dict[str, str]) -> Dict[str, Any]:
              number(result[f"{stage}_constructed_selected"])
              if number(result[f"{stage}_constructed_selected"]) else None))
 
+    for field in TIME_FIELDS:
+        result[field] = clean_number(number(row.get(field)))
+
     return result
 
 
@@ -270,17 +286,33 @@ def make_overall(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         *[field for field in BUILD_ONLY_FIELDS if not field.endswith("_pct")],
         *[field for field in CONSTRUCT_FIELDS
           if not field.endswith(("_max_gates", "_per_selected"))],
+        *[field for field in TIME_FIELDS if field.endswith("_sec")],
     ]
     for field in sum_fields:
         vals = numeric_values(valid, field)
         if vals:
             value = sum(vals)
-            integral = not field.endswith(("_and_gain", "_reg_gain"))
+            integral = field not in TIME_FIELDS and not field.endswith(
+                ("_and_gain", "_reg_gain"))
             overall[field] = clean_number(value, integral=integral)
     for field in [field for field in CONSTRUCT_FIELDS if field.endswith("_max_gates")]:
         vals = numeric_values(valid, field)
         if vals:
             overall[field] = int(max(vals))
+    profile_total = number(overall["profile_total_sec"])
+    for metric in (
+        "build_discovery", "seq_proof_shared", "selection", "stage_eval",
+        "contribution_eval", "commit", "decision", "overhead", "unprofiled",
+    ):
+        overall[f"profile_{metric}_pct"] = clean_number(ratio_pct(
+            overall[f"profile_{metric}_sec"], profile_total))
+    overall["seq_build_path_upper_bound_pct"] = clean_number(ratio_pct(
+        overall["seq_build_path_upper_bound_sec"], profile_total))
+    upper = number(overall["seq_build_path_upper_bound_sec"])
+    ordered_gain = number(overall["seq_constructed_and_gain"])
+    if upper and ordered_gain is not None:
+        overall["seq_build_ordered_gain_per_upper_bound_sec"] = clean_number(
+            ordered_gain / upper)
 
     overall["comb_reduction_pct"] = clean_number(ratio_pct(
         overall["comb_reduced_and"], overall["input_and"]))
@@ -398,6 +430,15 @@ def print_report(cases: List[Dict[str, Any]], overall: Dict[str, Any]) -> None:
     )
     print(f"  comb {render_stage(overall, 'comb')}")
     print(f"  seq  {render_stage(overall, 'seq')}")
+    print(
+        "  time "+
+        f"Build-search={overall['profile_build_discovery_sec']}s "
+        f"({overall['profile_build_discovery_pct']}%) | "
+        f"shared-seq-proof={overall['profile_seq_proof_shared_sec']}s "
+        f"({overall['profile_seq_proof_shared_pct']}%) | "
+        f"profiling-overhead={overall['profile_overhead_sec']}s "
+        f"({overall['profile_overhead_pct']}%)"
+    )
 
 
 def main() -> None:

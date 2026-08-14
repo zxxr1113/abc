@@ -10,6 +10,9 @@ the presentation name ``Build`` and ranks by::
 Every component reduction percentage written by this script is relative to the
 original input AND count, not merely a within-stage share.  Build-only gain is
 the separate G(B) counterfactual from the same frozen proved-candidate pool.
+Build-search time is exact; sequential-proof time is labelled shared because
+direct and Build candidates are proved in the same closure.  Their sum is only
+an upper bound on the Build path, not a causal time attribution.
 """
 
 from __future__ import annotations
@@ -36,6 +39,12 @@ OUTPUT_FIELDS = [
     "seq_build_and_gain", "seq_build_gain_share_pct",
     "seq_build_only_reduction_pct", "seq_build_only_and_gain",
     "seq_build_selected", "seq_build_proved",
+    "profile_total_sec", "build_discovery_sec", "build_discovery_pct",
+    "seq_proof_shared_sec", "seq_proof_shared_pct",
+    "decision_sec", "decision_pct",
+    "profiling_overhead_sec", "profiling_overhead_pct",
+    "seq_build_path_upper_bound_sec", "seq_build_path_upper_bound_pct",
+    "seq_build_and_gain_per_upper_bound_sec",
 ]
 
 
@@ -108,6 +117,19 @@ def ranked_row(source: dict[str, str]) -> tuple[dict[str, Any] | None, str]:
         "seq_build_only_and_gain": profile["seq_build_only_and_gain"],
         "seq_build_selected": profile["seq_constructed_selected"],
         "seq_build_proved": profile["seq_constructed_proved"],
+        "profile_total_sec": profile["profile_total_sec"],
+        "build_discovery_sec": profile["profile_build_discovery_sec"],
+        "build_discovery_pct": profile["profile_build_discovery_pct"],
+        "seq_proof_shared_sec": profile["profile_seq_proof_shared_sec"],
+        "seq_proof_shared_pct": profile["profile_seq_proof_shared_pct"],
+        "decision_sec": profile["profile_decision_sec"],
+        "decision_pct": profile["profile_decision_pct"],
+        "profiling_overhead_sec": profile["profile_overhead_sec"],
+        "profiling_overhead_pct": profile["profile_overhead_pct"],
+        "seq_build_path_upper_bound_sec": profile["seq_build_path_upper_bound_sec"],
+        "seq_build_path_upper_bound_pct": profile["seq_build_path_upper_bound_pct"],
+        "seq_build_and_gain_per_upper_bound_sec":
+            profile["seq_build_ordered_gain_per_upper_bound_sec"],
     }, "included"
 
 
@@ -145,8 +167,9 @@ def markdown_table(rows: list[dict[str, Any]], limit: int) -> str:
     lines = [
         "| Rank | Case | Seq total / input | Seq Constant / input | "
         "Seq Existing / input | Seq Build / input | Build-only / input | "
-        "Build AND | Build-only AND | Selected / Proved |",
-        "|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "Build AND | Build-only AND | Selected / Proved | Build search | "
+        "Shared seq proof | Profile overhead |",
+        "|---:|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for row in selected:
         case = str(row["case"]).replace("|", "\\|")
@@ -158,7 +181,13 @@ def markdown_table(rows: list[dict[str, Any]], limit: int) -> str:
             f"{display_number(row['seq_build_only_reduction_pct'], 6)}% | "
             f"{display_number(row['seq_build_and_gain'], 3)} | "
             f"{display_number(row['seq_build_only_and_gain'], 3)} | "
-            f"{row['seq_build_selected']} / {row['seq_build_proved']} |"
+            f"{row['seq_build_selected']} / {row['seq_build_proved']} | "
+            f"{display_number(row['build_discovery_sec'], 4)}s "
+            f"({display_number(row['build_discovery_pct'], 2)}%) | "
+            f"{display_number(row['seq_proof_shared_sec'], 4)}s "
+            f"({display_number(row['seq_proof_shared_pct'], 2)}%) | "
+            f"{display_number(row['profiling_overhead_sec'], 4)}s "
+            f"({display_number(row['profiling_overhead_pct'], 2)}%) |"
         )
     return "\n".join(lines) + "\n"
 
@@ -176,7 +205,8 @@ def terminal_table(rows: list[dict[str, Any]], limit: int, case_width: int) -> s
     header = (
         f"{'Rank':>4}  {'Case':<{case_width}} | {'Seq/Input':>9} | "
         f"{'Constant':>9} {'Existing':>9} {'Build':>9} {'B-only':>9} | "
-        f"{'Build AND':>9} {'B-only AND':>10} {'Sel/Prv':>9}"
+        f"{'Build AND':>9} {'B-only AND':>10} {'Sel/Prv':>9} | "
+        f"{'B-search%':>9} {'Seq-prf%':>9} {'Prof-ov%':>9}"
     )
     separator = "-" * len(header)
     lines = [header, separator]
@@ -193,7 +223,10 @@ def terminal_table(rows: list[dict[str, Any]], limit: int, case_width: int) -> s
             f"{row['seq_build_reduction_pct']:>8.4f}% "
             f"{build_only_pct:>8}% | "
             f"{row['seq_build_and_gain']:>9.3f} "
-            f"{build_only_gain:>10} {selected_proved:>9}"
+            f"{build_only_gain:>10} {selected_proved:>9} | "
+            f"{display_number(row['build_discovery_pct'], 3):>9} "
+            f"{display_number(row['seq_proof_shared_pct'], 3):>9} "
+            f"{display_number(row['profiling_overhead_pct'], 3):>9}"
         )
     return "\n".join(lines) + "\n"
 

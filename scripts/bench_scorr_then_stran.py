@@ -28,6 +28,7 @@ import csv
 import hashlib
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -36,6 +37,8 @@ import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, Tuple
+
+from stran_profile import PROFILE_FIELDS, parse_experiment_profile
 
 
 # Edit these defaults, or override them with --scorr-args / --stran-args.
@@ -47,7 +50,7 @@ DEFAULT_OUT = "scorr_then_stran.csv"
 # Keep the baseline at the user's normal &scorr defaults.  Do not add -r:
 # it toggles implication rings *off* because they are enabled by default.
 DEFAULT_SCORR_ARGS = "-F 1 -C 200"
-DEFAULT_STRAN_ARGS = "-M 1 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8"
+DEFAULT_STRAN_ARGS = "-M 1 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8 -r -p"
 NA = "N/A"
 
 STAGE_PROFILE_FIELDS = [
@@ -125,6 +128,17 @@ def status_from(rc: int, output_path: Path) -> str:
 
 def subtract(left: Any, right: Any) -> Any:
     return left - right if isinstance(left, int) and isinstance(right, int) else NA
+
+
+def profiled_exhaustive_args(arguments: str) -> str:
+    """Force exactly one -r and -p for comparable experiment records."""
+    try:
+        tokens = shlex.split(arguments)
+    except ValueError as exc:
+        raise ValueError(f"cannot parse &stran arguments: {exc}") from exc
+    tokens = [token for token in tokens if token not in {"-r", "-p"}]
+    tokens.extend(["-r", "-p"])
+    return " ".join(tokens)
 
 
 def profile_number(text: str) -> int | float:
@@ -244,6 +258,7 @@ def parse_stran(stdout: str) -> Dict[str, Any]:
             ordered_records[stage] = (score, record)
     for _, record in ordered_records.values():
         result.update(record)
+    result.update(parse_experiment_profile(stdout))
     return result
 
 
@@ -258,13 +273,12 @@ def worker(
     (aig_name, relative_name, abc, scorr_args, timeout, stran_args,
      keep_artifacts, artifacts_root, skip_dsec) = task
     source = Path(aig_name)
-    source_and, source_latches = aig_stats(source)
     row: Dict[str, Any] = {
         "file": relative_name,
         "scorr_args": scorr_args,
         "stran_args": stran_args,
-        "source_and": source_and,
-        "source_latches": source_latches,
+        "source_and": NA,
+        "source_latches": NA,
         "scorr_status": NA,
         "stran_status": NA,
         "dsec_status": NA,
@@ -294,6 +308,7 @@ def worker(
         "error": NA,
     }
     row.update({field: NA for field in STAGE_PROFILE_FIELDS})
+    row.update({field: NA for field in PROFILE_FIELDS if field not in STAGE_PROFILE_FIELDS})
     started = time.perf_counter()
     tag = hashlib.sha1(relative_name.encode("utf-8")).hexdigest()[:12]
     artifact_dir = Path(artifacts_root) / tag
@@ -316,6 +331,12 @@ def worker(
         if norm_status != "PASS":
             row["error"] = f"normalize:{norm_status}: {short_error(norm_out, norm_err)}"
             return row
+        # Measure the source from the normalized rewrite, not the raw AIGER
+        # header: &read expands latch init values into init-mux AND gates, so
+        # the raw header undercounts the ANDs that &scorr actually starts from.
+        source_and, source_latches = aig_stats(base)
+        row["source_and"] = source_and
+        row["source_latches"] = source_latches
 
         scorr_out, scorr_err, scorr_rc, scorr_ms = run_abc(
             abc, f"&read {base}; &scorr {scorr_args}; &write {scorr}", timeout
@@ -388,6 +409,7 @@ CSV_FIELDS = [
     "stran_extra_and_reduction", "stran_extra_latch_reduction",
     "total_and_reduction", "total_latch_reduction",
     *STAGE_PROFILE_FIELDS,
+    *[field for field in PROFILE_FIELDS if field not in STAGE_PROFILE_FIELDS],
     "victim_sets", "proofs", "sig_matched", "gain_positive", "gain_rejected",
     "retain_unproved", "final_unproved", "accepted", "error",
 ]
@@ -423,6 +445,11 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    try:
+        stran_args = profiled_exhaustive_args(args.stran_args)
+    except ValueError as exc:
+        sys.exit(f"[ERROR] {exc}")
+
     aig_dir = Path(args.aig_dir).expanduser().resolve()
     abc = str(Path(args.abc).expanduser().resolve())
     output = Path(args.out).expanduser()
@@ -441,11 +468,11 @@ def main() -> None:
     print(f"[INFO] Pipeline: normalized input -> &scorr -> &stran -> dsec")
     print(f"[INFO] Files={len(aigs)} jobs={args.jobs} timeout={args.timeout}s")
     print(f"[INFO] &scorr args: {args.scorr_args}")
-    print(f"[INFO] &stran args: {args.stran_args}")
+    print(f"[INFO] &stran args: {stran_args}")
 
     tasks = [
         (str(path), str(path.relative_to(aig_dir)), abc, args.scorr_args, args.timeout,
-         args.stran_args, args.keep_artifacts,
+         stran_args, args.keep_artifacts,
          str(output.parent / f"{output.stem}_artifacts"), args.skip_dsec)
         for path in aigs
     ]
