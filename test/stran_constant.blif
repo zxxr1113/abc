@@ -1,0 +1,8 @@
+.model stran_constant
+.inputs a
+.outputs y
+.latch z q 0
+.names z
+.names q a y
+11 1
+.end

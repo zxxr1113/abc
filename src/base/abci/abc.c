@@ -42504,8 +42504,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     }
     if ( Gia_ManRegNum(pAbc->pGia) == 0 )
     {
-        Abc_Print( -1, "&stran: The network is combinational.\n" );
-        return 1;
+        Abc_Print( 1, "&stran: The network is combinational; root-only sequential transduction is a no-op.\n" );
+        return 0;
     }
     if ( Gia_ManBoxNum(pAbc->pGia) )
     {

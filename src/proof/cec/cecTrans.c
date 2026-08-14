@@ -52,7 +52,7 @@ extern int Abc_ResubComputeFunctions( void ** ppDivs, int nDivs,
 extern void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor );
 extern int Abc_ResubIteratorNext( void * pIter, int ** ppArray,
-    int * pnAttempt, int * pfExhausted );
+    int * pnAttempt, int * pfExhausted, int * pfInvalid );
 extern void Abc_ResubIteratorStop( void * pIter );
 extern int Abc_ResubIteratorSelfTest();
 
@@ -375,6 +375,7 @@ struct Cec_TranProf_t_
     int     nRootResubIterInit;  // stateful iterators initialized once per route
     int     nRootResubIterNext;  // total Next calls, including final exhaustion
     int     nRootResubIterExhausted;// routes reaching their finite end
+    int     nRootResubInvalid;   // generated recipes rejected by semantic audit
     int     nRootConstructGenerated; // nonzero-gate Build recipes discovered
     long long nRootConstructGeneratedGates;
     int     nRootConstructSubmitted; // Build recipes sent to the root proof batch
@@ -1615,6 +1616,23 @@ static Gia_Man_t * Cec_TranCleanup( Gia_Man_t * p )
     return Cec_TranCleanupMapped( p, NULL );
 }
 
+// Root-only transduction optimizes the AND network while preserving the
+// sequential interface.  Generic sequential cleanup is allowed to delete
+// latches that become unobservable after a constant replacement, which makes
+// AND-only gain accounting inconsistent and changes the register boundary.
+// The final root bundle therefore performs combinational cleanup/normalization
+// only; other proof and compatibility paths retain Cec_TranCleanup().
+static Gia_Man_t * Cec_TranCleanupKeepRegs( Gia_Man_t * p )
+{
+    Gia_Man_t * pNew, * pTemp;
+    pNew = Gia_ManCleanup( pTemp = Gia_ManDup(p) );
+    Gia_ManStop( pTemp );
+    pNew = Gia_ManDupNormalize( pTemp = pNew, 0 );
+    Gia_ManStop( pTemp );
+    assert( Gia_ManRegNum(pNew) == Gia_ManRegNum(p) );
+    return pNew;
+}
+
 static int Cec_TranObjMapLit( Vec_Int_t * vMap, int iLit )
 {
     int iMap;
@@ -2618,6 +2636,28 @@ static int Cec_TranRecipeMatchesRoot( Cec_TranSim_t * pSim,
     return 1;
 }
 
+static int Cec_TranRecipeStructurallyValid( Cec_TranSim_t * pSim,
+    Cec_TranCand_t const * pCand )
+{
+    int i, k, Code;
+    if ( pCand->nGates < 0 ||
+         pCand->nGates > CEC_TRAN_RECIPE_NODES_MAX )
+        return 0;
+    for ( i = -1; i < 2 * pCand->nGates; i++ )
+    {
+        Code = i < 0 ? pCand->iOut : pCand->Recipe[i];
+        if ( Cec_TranRecipeCodeIsGate(Code) )
+        {
+            k = Abc_Lit2Var( Cec_TranRecipeGateLit(Code) );
+            if ( k >= (i < 0 ? pCand->nGates : i / 2) )
+                return 0;
+        }
+        else if ( Code < 0 || Abc_Lit2Var(Code) >= Gia_ManObjNum(pSim->pGia) )
+            return 0;
+    }
+    return 1;
+}
+
 // Direct resubstitution replaces the root itself, rather than one of the
 // root's supergate leaves.  Root scope requires sampled equality everywhere;
 // contextual scopes pass pCare and require it only where the sampled
@@ -3330,6 +3370,28 @@ static int Cec_TranRootClassEndpoint( Gia_Man_t * pNew, int iLit,
     return pPiProxies[iIndex];
 }
 
+// Give every correspondence relation a distinct non-CI class object without
+// violating Gia_ManAppendAnd's different-physical-fanin invariant.  The usual
+// x&1 wrapper cannot represent a constant because both constant phases have
+// object ID zero.  For constants, build a unique 0&anchor node and complement
+// its literal for constant one.  iAnchor is the nonconstant physical root, so
+// this proxy remains functionally constant and survives endpoint cleanup.
+static int Cec_TranRootProofProxy( Gia_Man_t * pNew, int iLit,
+    int iAnchor, int nPis, int * pPiProxies )
+{
+    int iEndpoint = Cec_TranRootClassEndpoint( pNew, iLit,
+        nPis, pPiProxies );
+    if ( Abc_Lit2Var(iEndpoint) == 0 )
+    {
+        int iConst0Proxy;
+        assert( Abc_Lit2Var(iAnchor) != 0 );
+        iConst0Proxy = Gia_ManAppendAnd( pNew, 0, iAnchor );
+        return Abc_LitNotCond( iConst0Proxy,
+            Abc_LitIsCompl(iEndpoint) );
+    }
+    return Gia_ManAppendAnd( pNew, iEndpoint, 1 );
+}
+
 // Build one signal-correspondence instance for a group of strict Direct
 // candidates.  The source transition relation is copied only once.  Candidate
 // endpoint pairs seed speculative equivalence classes.  Root-XOR-replacement
@@ -3402,8 +3464,8 @@ static Gia_Man_t * Cec_TranBuildRootBatch( Gia_Man_t * p,
             pRootProxies[pCands[i].iTarget] =
                 Gia_ManAppendAnd( pNew, iRoot, 1 );
         iRootProxy = pRootProxies[pCands[i].iTarget];
-        iCandProxy = Gia_ManAppendAnd( pNew,
-            Cec_TranRootClassEndpoint(pNew, iRep, nPis, pPiProxies), 1 );
+        iCandProxy = Cec_TranRootProofProxy( pNew, iRep, iRoot,
+            nPis, pPiProxies );
         Vec_IntPushTwo( vPairs, iRootProxy, iCandProxy );
     }
     Vec_IntForEachEntry( vQueries, iQuery, i )
@@ -5439,12 +5501,14 @@ static void Cec_TranDepScratchStop( Cec_TranDepScratch_t * p )
     ABC_FREE( p->fAttemptUniqueLast );
 }
 
-static void Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
+static int Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
     Cec_TranRoot_t const * pRoot, Vec_Int_t * vPool, word * pCare,
     int fStrict, Vec_Ptr_t * vDivs, Vec_Int_t * vRecipe,
     Cec_TranCand_t * pCand )
 {
-    int i, Code, nArray = Vec_IntSize(vRecipe);
+    int RawRecipe[2 * CEC_TRAN_RECIPE_NODES_MAX];
+    int i, Code, RawOut, RawKind, RawGates;
+    int nArray = Vec_IntSize(vRecipe);
     int nVars = Vec_PtrSize(vDivs);
     memset( pCand, 0, sizeof(*pCand) );
     pCand->iTarget = pRoot->iObj;
@@ -5463,7 +5527,36 @@ static void Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
     pCand->nKind = pCand->nGates ? CEC_TRAN_CAND_CONSTR :
         (Abc_Lit2Var(pCand->iOut) == 0 ?
             CEC_TRAN_CAND_CONST : CEC_TRAN_CAND_EXIST);
+    if ( !Cec_TranRecipeStructurallyValid(pSim, pCand) ||
+         !Cec_TranRecipeMatchesRoot(pSim, pCand, pCare) )
+    {
+        Cec_TranCandRecipeRelease( pCand );
+        memset( pCand, 0, sizeof(*pCand) );
+        return 0;
+    }
+    RawGates = pCand->nGates;
+    RawOut = pCand->iOut;
+    RawKind = pCand->nKind;
+    if ( RawGates )
+        memcpy( RawRecipe, pCand->Recipe, sizeof(int) * 2 * RawGates );
     Cec_TranCandCanonicalizeRecipe( pCand );
+    // Canonicalization is an optimization, never a semantic pruning rule.
+    // Keep the audited raw recipe if a future identity/compaction change
+    // accidentally alters its function.
+    if ( !Cec_TranRecipeStructurallyValid(pSim, pCand) ||
+         !Cec_TranRecipeMatchesRoot(pSim, pCand, pCare) )
+    {
+        Cec_TranCandRecipeRelease( pCand );
+        pCand->nGates = RawGates;
+        pCand->iOut = RawOut;
+        pCand->nKind = RawKind;
+        if ( RawGates )
+        {
+            pCand->Recipe = Cec_TranRecipeAlloc( 2 * RawGates );
+            memcpy( pCand->Recipe, RawRecipe,
+                sizeof(int) * 2 * RawGates );
+        }
+    }
     pCand->iDiv0 = pCand->iDiv1 = -1;
     for ( i = -1; i < 2 * pCand->nGates; i++ )
     {
@@ -5478,7 +5571,7 @@ static void Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
             break;
         }
     }
-    assert( Cec_TranRecipeMatchesRoot(pSim, pCand, pCare) );
+    return 1;
 }
 
 static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
@@ -5529,8 +5622,9 @@ static int Cec_TranComputeDependencies( Cec_TranSim_t * pSim,
         pfExhausted );
     Vec_WecForEachLevel( pScratch->vRecipes, vRecipe, i )
     {
-        Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare,
-            fStrict, vDivs, vRecipe, pCands + nCands );
+        if ( !Cec_TranCandFromDependency(pSim, pRoot, vPool, pCare,
+                fStrict, vDivs, vRecipe, pCands + nCands) )
+            continue;
         // Constants and existing literals are emitted only by the direct
         // generator.  Canonicalization may collapse a nominal build recipe
         // to zero gates, so discard that duplicate lane here as well.
@@ -5591,16 +5685,20 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
     // pointers, so provide a route-local header.
     Vec_Ptr_t Divs = {Vec_IntSize(vPool) + 2,
         Vec_IntSize(vPool) + 2, NULL};
-    int * pArray = NULL, nArray;
+    int * pArray = NULL, nArray, fInvalid;
     (void)pScratch;
     memset( pCand, 0, sizeof(*pCand) );
-    nArray = Abc_ResubIteratorNext( pIter, &pArray, pAttempt, pfExhausted );
+    nArray = Abc_ResubIteratorNext( pIter, &pArray, pAttempt,
+        pfExhausted, &fInvalid );
     if ( *pfExhausted )
         return 0;
+    if ( fInvalid )
+        return -1;
     Recipe.nSize = Recipe.nCap = nArray;
     Recipe.pArray = pArray;
-    Cec_TranCandFromDependency( pSim, pRoot, vPool, pCare, 1,
-        &Divs, &Recipe, pCand );
+    if ( !Cec_TranCandFromDependency(pSim, pRoot, vPool, pCare, 1,
+            &Divs, &Recipe, pCand) )
+        return -1;
     if ( pCand->nGates == 0 )
     {
         Cec_TranCandRecipeRelease( pCand );
@@ -5967,6 +6065,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     Cec_TranDiscStat_t * pStat, Cec_TranProf_t * pProf )
 {
     int RouteBeg[4], RouteEnd[4], iRoute, i, k, iAttempt, fExhausted;
+    int IterStatus;
     int iConstrStart = pConstr->nSize, nDepFoundTotal = 0;
     Vec_Int_t * vReservoir, * vPools[5] = {NULL, NULL, NULL, NULL, NULL};
     Cec_TranDivRank_t * pRanks;
@@ -6025,14 +6124,17 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             clk = Abc_Clock();
             iAttempt = 0;
             pProf->nRootResubIterNext++;
-            if ( !Cec_TranDependencyIteratorNext(pSim, pRoot,
-                    vPools[iRoute], NULL, pDep, pIters[iRoute],
-                    &Cand, &iAttempt, &fExhausted) )
+            IterStatus = Cec_TranDependencyIteratorNext(pSim, pRoot,
+                vPools[iRoute], NULL, pDep, pIters[iRoute],
+                &Cand, &iAttempt, &fExhausted);
+            if ( IterStatus <= 0 )
             {
                 timePart = Abc_Clock() - clk;
                 pProf->timeConstruct += timePart;
                 pProf->timeRootDepSearch += timePart;
                 pProf->nRootDepAttempts++;
+                if ( IterStatus < 0 )
+                    pProf->nRootResubInvalid++;
                 if ( fExhausted )
                 {
                     Done[iRoute] = 1;
@@ -6426,7 +6528,7 @@ static Gia_Man_t * Cec_TranCommitSelectedRootOnly( Gia_Man_t * p,
     pDup = Cec_TranDupRootBundle( p, pSelected->pArray, vSelected );
     pProf->timeRootBundleDup += Abc_Clock() - clk;
     clk = Abc_Clock();
-    pClean = Cec_TranCleanup( pDup );
+    pClean = Cec_TranCleanupKeepRegs( pDup );
     pProf->timeRootCleanup += Abc_Clock() - clk;
     clk = Abc_Clock();
     Gain = Cec_TranGain( p, pClean );
@@ -6511,9 +6613,9 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         p->nSeqRoots, p->nSeqClassMax, p->nSeqRoots ?
         1.0 * p->nSeqClassSum / p->nSeqRoots : 0.0,
         p->nSeqFixedRounds, p->nSeqRepairEpochs );
-    Abc_Print( 1, "stran-root resub iterator: initialized=%d next=%d exhausted=%d.\n",
+    Abc_Print( 1, "stran-root resub iterator: initialized=%d next=%d exhausted=%d invalid=%d.\n",
         p->nRootResubIterInit, p->nRootResubIterNext,
-        p->nRootResubIterExhausted );
+        p->nRootResubIterExhausted, p->nRootResubInvalid );
     Abc_Print( 1, "stran-root dirty: root-free=%d candidate-support-freed=%d root-MFFC-changed=%d.\n",
         p->nDirtyRootFreed, p->nDirtySupportFreed,
         p->nDirtyMffcChanged );

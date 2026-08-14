@@ -41,13 +41,14 @@ run_case() {
             for (i=1; i<=NF; i++) {
                 if ($i ~ /^initialized=/) {split($i,a,"="); initialized=a[2]+0}
                 if ($i ~ /^exhausted=/) {split($i,a,"="); exhausted=a[2]+0}
+                if ($i ~ /^invalid=/) {split($i,a,"="); invalid=a[2]+0}
             }
         }
         END {
             if (rows != 6 || selected != total_selected ||
                 marginal != total_marginal || marginal > exact ||
                 seeded != proved + splitn + unknown ||
-                initialized != exhausted) exit 1
+                initialized != exhausted || invalid != 0) exit 1
         }
     ' "$out"
 }
@@ -74,6 +75,12 @@ grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/polarity.log"
 run_case dirty test/stran_dirty.blif ""
 grep -Eq 'stran-root dirty: root-free=[1-9]|root-MFFC-changed=[1-9]' "$tmp_dir/dirty.log"
 
+# A sequentially proved constant candidate used to assert while constructing
+# its proof-only proxy, then could lose a latch during final cleanup.
+run_case constant test/stran_constant.blif ""
+grep -q '^  SEQ CONSTANT 0 1 1 1 1 0$' "$tmp_dir/constant.log"
+grep -q 'cleanup-exact-AND=1 AND=1->0' "$tmp_dir/constant.log"
+
 run_case deprecated test/stran_comb.blif "-q 99 -w 7 -L 1 -z -i -u -s"
 grep -q -- '-q/-w/-L/-z/-i/-u/-s are deprecated and ignored' "$tmp_dir/deprecated.log"
 grep -q 'AND=2->1' "$tmp_dir/deprecated.log"
@@ -81,5 +88,11 @@ grep -q 'AND=2->1' "$tmp_dir/deprecated.log"
 # The existing sequential sample remains a representative mixed-discovery
 # smoke test even when its final winner is discharged in COMB.
 run_case seq_existing test/stran_seq.blif ""
+
+# scorr may legitimately remove every latch before &stran is invoked.  This is
+# a successful no-op, not a batch-run failure.
+noop_out="$tmp_dir/combinational-noop.log"
+"$abc_bin" -q "read_blif test/stran_combinational_noop.blif; strash; &get; &stran -P root" >"$noop_out"
+grep -q 'network is combinational; root-only sequential transduction is a no-op' "$noop_out"
 
 printf 'stran root-only regression: PASS\n'

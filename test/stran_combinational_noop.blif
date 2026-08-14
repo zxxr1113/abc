@@ -1,0 +1,6 @@
+.model stran_combinational_noop
+.inputs a b
+.outputs y
+.names a b y
+11 1
+.end

@@ -1841,31 +1841,36 @@ void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs, int nWords,
 }
 
 int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
-    int * pnAttempt, int * pfExhausted )
+    int * pnAttempt, int * pfExhausted, int * pfInvalid )
 {
     Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
     Gia_ResbMan_t * p = pIt->p;
-    int Res;
+    int Res, fFound;
     *pfExhausted = 0;
+    *pfInvalid = 0;
     while ( 1 )
     {
+        fFound = 0;
         if ( pIt->Stage == 1 )
         {
             if ( p->nLimit >= 1 && Gia_ResbIterNextOneGate(pIt) )
-                break;
-            pIt->Stage = 3; pIt->n = pIt->i = pIt->k = 0;
+                fFound = 1;
+            else
+                pIt->Stage = 3, pIt->n = pIt->i = pIt->k = 0;
         }
         else if ( pIt->Stage == 3 )
         {
             if ( p->nLimit >= 2 && Gia_ResbIterNextDivGate(pIt) )
-                break;
-            pIt->Stage = 4; pIt->n = pIt->i = 0; pIt->k = 1;
+                fFound = 1;
+            else
+                pIt->Stage = 4, pIt->n = pIt->i = 0, pIt->k = 1;
         }
         else if ( pIt->Stage == 4 )
         {
             if ( p->nLimit >= 3 && Gia_ResbIterNextGateGate(pIt) )
-                break;
-            pIt->Stage = 5;
+                fFound = 1;
+            else
+                pIt->Stage = 5;
         }
         else if ( pIt->Stage == 5 )
         {
@@ -1883,10 +1888,9 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
             if ( Res >= 0 )
                 Vec_IntPush( p->vGates, Res );
             if ( Res >= 0 )
-                break;
-            if ( p->fChoiceSelected )
-                continue;
-            pIt->Stage = 6;
+                fFound = 1;
+            else if ( !p->fChoiceSelected )
+                pIt->Stage = 6;
         }
         else
         {
@@ -1894,6 +1898,23 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
             *ppArray = NULL;
             return 0;
         }
+        if ( !fFound )
+            continue;
+        // Recursive greedy search mutates the uncovered OFF/ON sets.  Always
+        // audit a completed recipe against the immutable original relation
+        // before it leaves the iterator.  Exact-template bugs and incomplete
+        // greedy constructions are rejected as candidates, not promoted into
+        // a downstream assertion in &stran.
+        Abc_TtCopy( p->pSets[0], (word *)Vec_PtrEntry(p->vDivs, 0),
+            p->nWords, 0 );
+        Abc_TtCopy( p->pSets[1], (word *)Vec_PtrEntry(p->vDivs, 1),
+            p->nWords, 0 );
+        if ( Gia_ManResubVerify(p, NULL) )
+            break;
+        Vec_IntClear( p->vGates );
+        *pfInvalid = 1;
+        *ppArray = NULL;
+        return 0;
     }
     *ppArray = Vec_IntArray( p->vGates );
     // The caller uses this stage tag only for deterministic ranking: stages
@@ -1919,12 +1940,16 @@ void Abc_ResubIteratorStop( void * pVoid )
 int Abc_ResubIteratorSelfTest()
 {
     word Off = 0x2, On = 0xD, D = 0x8, E = 0x5;
+    word RandData[6], Care, Target;
     void * Divs[4] = { &Off, &On, &D, &E };
+    void * RandDivs[6];
     Vec_Ptr_t V = {4, 4, Divs};
     Vec_Int_t U = {0}, N = {0}, P = {0};
     void * pIt;
-    int * pArray = NULL, Attempt, Exhausted, nArray;
-    int fSawD = 0, fSawNotD = 0, nNext = 0;
+    int * pArray = NULL, Attempt, Exhausted, Invalid, nArray;
+    int fSawD = 0, fSawNotD = 0, nNext = 0, nInvalid = 0;
+    int t, j, nRounds;
+    unsigned Rand = 0x51A7E123;
     U.nCap = N.nCap = P.nCap = 8;
     U.pArray = ABC_ALLOC( int, 8 );
     N.pArray = ABC_ALLOC( int, 8 );
@@ -1957,15 +1982,55 @@ int Abc_ResubIteratorSelfTest()
     }
     pIt = Abc_ResubIteratorStart( Divs, 4, 1, 3, 2, 0, 0 );
     do {
-        nArray = Abc_ResubIteratorNext( pIt, &pArray, &Attempt, &Exhausted );
+        nArray = Abc_ResubIteratorNext( pIt, &pArray, &Attempt,
+            &Exhausted, &Invalid );
         nNext++;
-        assert( Exhausted || (nArray > 0 && (nArray & 1)) );
+        nInvalid += Invalid;
+        assert( Exhausted || Invalid || (nArray > 0 && (nArray & 1)) );
+        assert( Exhausted || Invalid ||
+            Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
     } while ( !Exhausted );
     Abc_ResubIteratorStop( pIt );
+    // Deterministically exercise all finite exact-template stages on a wider
+    // set of disjoint OFF/ON relations.  The hand-written case above covers
+    // the public greedy/exhaustion path; keeping the random sweep exact-only
+    // makes it small enough for every in-repository regression run.
+    for ( j = 0; j < 6; j++ )
+        RandDivs[j] = RandData + j;
+    for ( t = 0; t < 32; t++ )
+    {
+        for ( j = 0; j < 6; j++ )
+        {
+            Rand = 1664525 * Rand + 1013904223;
+            RandData[j] = (word)Rand << 32;
+            Rand = 1664525 * Rand + 1013904223;
+            RandData[j] ^= Rand;
+        }
+        Care = RandData[0] | (word)1;
+        Target = RandData[1];
+        RandData[0] = ~Target & Care;
+        RandData[1] =  Target & Care;
+        pIt = Abc_ResubIteratorStart( RandDivs, 6, 1, 3, 4, 0, 0 );
+        nRounds = 0;
+        while ( Gia_ResbIterNextOneGate((Gia_ResbIter_t *)pIt) )
+            assert( ++nRounds < 4096 &&
+                Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
+        ((Gia_ResbIter_t *)pIt)->n = ((Gia_ResbIter_t *)pIt)->i =
+            ((Gia_ResbIter_t *)pIt)->k = 0;
+        while ( Gia_ResbIterNextDivGate((Gia_ResbIter_t *)pIt) )
+            assert( ++nRounds < 4096 &&
+                Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
+        ((Gia_ResbIter_t *)pIt)->n = ((Gia_ResbIter_t *)pIt)->i = 0;
+        ((Gia_ResbIter_t *)pIt)->k = 1;
+        while ( Gia_ResbIterNextGateGate((Gia_ResbIter_t *)pIt) )
+            assert( ++nRounds < 4096 &&
+                Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
+        Abc_ResubIteratorStop( pIt );
+    }
     ABC_FREE( U.pArray );
     ABC_FREE( N.pArray );
     ABC_FREE( P.pArray );
-    assert( nNext > 0 );
+    assert( nNext > 0 && nInvalid == 0 );
     return 1;
 }
 

@@ -35,11 +35,11 @@
 6. 所有 seed relations 进入一次 shared SRM/closure 并运行到真正 fixed point；之后逐关系分类 `PROVED/UNPROVED/UNKNOWN`。
 7. fixed point 后按动态 MFFC root-major 消费 proved relations。每个 root 选择启发式顺序中第一个仍合法且 marginal gain 大于零的 candidate，更新虚拟 `Covered/Used`。
 8. dirty root 若没有仍合法的旧 proved relation但仍有正潜力，只发现 `Known` 集合之外的新 candidates。新 candidate 先走 CBS；未解决项才进入一个小 shared repair scorr epoch。已有且仍合法的 proved relation不重复证明。
-9. 对 `SELECTED` 列表做一次 topological bundle duplication、cleanup 和 exact-gain audit。正常选择保证 kill-set 不重叠且每步 marginal gain 大于零；exact gain 仅作 assertion/防御检查。`-f` 可额外启用 whole-network shadow audit。
+9. 对 `SELECTED` 列表做一次 topological bundle duplication、combinational cleanup/normalize 和 exact-gain audit。最终 cleanup 保留原 register boundary，不做 sequential latch cleanup；正常选择保证 kill-set 不重叠且每步 marginal gain 大于零，exact AND gain 仅作 assertion/防御检查。`-f` 可额外启用 whole-network shadow audit。
 
 ## 3. Proof-only proxy 隔离
 
-shared scorr 不直接 union physical endpoints。proof graph 为每个 root 建一个未结构哈希的 `root & 1` proxy，为每个 candidate 建独立 `candidate & 1` proxy：
+shared scorr 不直接 union physical endpoints。proof graph 为每个 root 建一个未结构哈希的 `root & 1` proxy，为每个非恒定 candidate 建独立 `candidate & 1` proxy；constant candidate 使用等价的 `0 & root-anchor` 独立节点（constant-1 取其反相），避免 GIA 禁止两个相同 physical fanin 的断言：
 
 - 不同 roots 永远不会因共享同一 physical divisor 发生传递合类；
 - 同一 root 的 all-candidates 共享 root proxy，因此可形成 `{root,c1,c2,...}` 大类并在同一 fixed point 中分别拆分；
@@ -51,7 +51,7 @@ shared scorr 不直接 union physical endpoints。proof graph 为每个 root 建
 
 constant 和 existing 只由 direct generator 产生。build-only resub 顶层禁止返回 zero-gate existing，以免与 direct 重复；exact literals 仍保留为递归构造叶子。
 
-divisor reservoir 保留 TFI/BFS、MFFC boundary、local、global 和 mixed routes。每条 route 初始化一个 stateful iterator，并调用 `Next` 直到有限候选空间耗尽；第 q 个 recipe 不会重新扫描前 q-1 个 recipe。所谓 q unlimited 只表示没有人工 top-q 截断，候选宇宙仍受 `B/K/N`、合法 include、有限模板、canonicalization 和有限 greedy diversity 约束，不枚举所有 AIG。
+divisor reservoir 保留 TFI/BFS、MFFC boundary、local、global 和 mixed routes。每条 route 初始化一个 stateful iterator，并调用 `Next` 直到有限候选空间耗尽；第 q 个 recipe 不会重新扫描前 q-1 个 recipe。每个 recipe 离开 iterator 前都用不可变 OFF/ON truth tables 做语义审计，转换为 root candidate 后在 canonicalization 前后再次校验；无效 recipe 被计数并跳过，canonicalization 若意外改变函数则回退到已审计的原 recipe。所谓 q unlimited 只表示没有人工 top-q 截断，候选宇宙仍受 `B/K/N`、合法 include、有限模板、canonicalization 和有限 greedy diversity 约束，不枚举所有 AIG。
 
 ### 4.2 带极性的 include/template 筛选
 
@@ -86,6 +86,8 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 
 旧 `-q/-w/-L/-z/-i/-u/-s` 在 root scope 中只解析以兼容旧脚本，明确打印 deprecated/ignored，并且不能改变 root 主线语义。`window/output` 会打印 frozen 提示。
 
+若输入 GIA 已无 register（例如前置 `scorr` 已完成全部 latch cleanup），`&stran` 打印 combinational no-op 并返回成功；这不是 proof failure，也不会修改网络。
+
 ## 6. Profiling 与一致性
 
 `-p` 输出互不重叠的顶层时间桶：
@@ -100,7 +102,7 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 - post-fixed-point selection/dirty repair；
 - final bundle duplication、cleanup、exact-gain audit 和可选 shadow audit。
 
-效果按 `COMB/SEQ × CONSTANT/EXISTING/BUILD` 六格打印 generated、submitted、proved、selected、selected marginal AND/Reg gain。随后打印 selected roots、总 marginal gain和 cleanup exact gain。
+效果按 `COMB/SEQ × CONSTANT/EXISTING/BUILD` 六格打印 generated、submitted、proved、selected、selected marginal AND/Reg gain。root-only 最终 commit 保留 register boundary，因此当前六格 marginal Reg gain 与最终 exact Reg gain 均为零；字段保留用于 schema 明确性。随后打印 selected roots、总 marginal gain和 cleanup exact gain。
 
 运行时 assertions 校验：
 
@@ -110,7 +112,7 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 - sequential `seeded == proved + split + unknown`；
 - stateful resub `initialized == exhausted`。
 
-all-candidate 强度/规模指标包括 seeded/proved/split/unknown relations、roots、最大/平均 class size、fixed-point rounds 和 repair epochs。另打印 iterator initialized/next/exhausted 与三类 dirty 计数。
+all-candidate 强度/规模指标包括 seeded/proved/split/unknown relations、roots、最大/平均 class size、fixed-point rounds 和 repair epochs。另打印 iterator initialized/next/exhausted/invalid 与三类 dirty 计数。标准回归要求 `invalid=0`；生产输入即使触发防御审计也会跳过坏 recipe，而不是中止整个运行。
 
 ## 7. 回归与验证
 
@@ -134,6 +136,8 @@ test/run_stran_regression.sh
 - `stran_polarity.blif`：关闭 existing 后必须由 complemented-AND BUILD 实现 OR；
 - `&stran_resub_test`：直接断言 `T=1101,d=1000` 的 literal 极性、binate pair 的 OFF/ON 条件、iterator 有限 exhaustion，以及常量/重复/absorption canonicalization；
 - `stran_dirty.blif`：virtual selection 后的 root-free/MFFC dirty；
+- `stran_constant.blif`：sequential constant candidate 的 proof proxy、选择、AND cleanup 与 register-boundary 保持；
+- `stran_combinational_noop.blif`：无 register 输入返回成功 no-op；
 - `-S 0`：incomplete oracle 必须输出 UNKNOWN，不能 selected；
 - deprecated 参数组合：结果语义不变并打印 ignored；
 - profile parser：六格、sequential 分类、exact gain 与 iterator exhaustion 一致。
