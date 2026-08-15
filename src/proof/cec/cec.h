@@ -196,8 +196,8 @@ struct Cec_ParCor_t_
     int              nConfTotal;    // total conflicts across this correspondence call (0 = unlimited)
     long long        nConfUsed;     // output: exact conflicts/backtracks consumed
     int              fConfStop;     // output: total conflict cap was reached
-    int              fIncomplete;   // output: at least one base/step obligation was UNKNOWN
-    int              fCompleted;    // output: base+induction reached a real fixed point
+    int              fIncomplete;   // output: correspondence stopped before convergence
+    int              fCompleted;    // output: standard base+induction refinement converged
     int              nRoundsDone;   // output: completed induction refinement rounds
     int              nProcs;        // the number of processes
     int              nPartSize;     // the partition size
@@ -356,7 +356,7 @@ struct Cec_ParTran_t_
     int              nLowUnknownMax;// UNKNOWNs per low-value contextual root/lane
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
     int              nRootBatch;    // deprecated/ignored by the root-only pipeline
-    int              nRootWaves;    // deprecated/ignored by the root-only pipeline
+    int              nRootWaves;    // distinct candidate frontiers on one immutable snapshot
     int              nRootConstrTop;// canonical Build candidates retained per root (1..64)
     int              nCombBTLimit; // root CBS conflict limit per cube
     int              nFreeWords;   // 64-bit independent PI/RO words for combination screening

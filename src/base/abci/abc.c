@@ -42391,7 +42391,6 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( pPars->nHardMffc < 0 ) goto usage;
             break;
         case 'w':
-            fSeenDeprecatedRoot = 1;
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootWaves = atoi(argv[globalUtilOptind++]);
             if ( pPars->nRootWaves < 1 || pPars->nRootWaves > 64 ) goto usage;
@@ -42473,10 +42472,10 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     }
     if ( pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
         Abc_Print( 1, "&stran: -P window/output are frozen compatibility paths; current development targets -P root only.\n" );
-    else if ( fSeenDeprecatedRoot || pPars->nRootWaves != 1 || pPars->fUseResubZero ||
+    else if ( fSeenDeprecatedRoot || pPars->fUseResubZero ||
               pPars->fRootStopLegacy || !pPars->fRootStopProved ||
               pPars->fRootSplitStages || pPars->nRootBatch )
-        Abc_Print( 1, "&stran: -w/-L/-z/-i/-u/-s are deprecated and ignored by the root-only pipeline.\n" );
+        Abc_Print( 1, "&stran: -L/-z/-i/-u/-s are deprecated and ignored by the root-only pipeline.\n" );
     if ( fSeenSodc )
     {
         Abc_Print( -1, "&stran: This branch implements Direct root resubstitution only; -o is unavailable.\n" );
@@ -42545,7 +42544,7 @@ usage:
     Abc_Print( -2, "\t-Y num : total conflicts per low contextual call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-m num : MFFC selecting root existing admission/context high budget [default = %d]\n", pPars->nHardMffc );
-    Abc_Print( -2, "\t-w num : deprecated compatibility input; ignored by root scope [default = %d]\n", pPars->nRootWaves );
+    Abc_Print( -2, "\t-w num : candidate waves; each wave advances to untried root candidates (1..64) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );

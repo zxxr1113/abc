@@ -243,12 +243,10 @@ static void Cec_ProfCorCountStatus( Cec_ParCor_t * pPars,
 {
     Cec_ProfCor_t * p = pPars->pProfile;
     int i, Status;
+    if ( p == NULL )
+        return;
     Vec_StrForEachEntry( vStatus, Status, i )
     {
-        if ( Status != 0 && Status != 1 )
-            pPars->fIncomplete = 1;
-        if ( p == NULL )
-            continue;
         if ( fBmc )
         {
             if ( Status == 1 )      p->nBmcUnsat++;
@@ -2573,11 +2571,11 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_IncrMgrFree( pMgr );
     Cec_DynSrmFree( pDynSrm );
     Cec_SeedSimFree( pSeedSim );
-    // A surviving speculative class is a certificate only after every base
-    // and induction obligation completed and the refinement loop converged.
-    // Per-output UNKNOWNs do not necessarily trip the aggregate conflict-stop
-    // flag, so retain this independent completion bit for callers such as
-    // &stran that must distinguish PROVED from UNKNOWN.
+    // Match ordinary &scorr semantics: SAT counterexamples refine the affected
+    // classes, per-output UNKNOWN removes only its emitted candidate, and UNSAT
+    // retains the relation.  Other classes continue through the fixed-point
+    // loop.  fCompleted reports convergence and must not be cleared merely
+    // because one solver output was UNKNOWN.
     pPars->fCompleted = !pPars->fIncomplete && r < nIterMax;
     pPars->nRoundsDone = r + 1;
     return 1;

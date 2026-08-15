@@ -67,6 +67,22 @@ run_case seq_unknown test/stran_seq_only.blif "-S 0"
 grep -q 'seeded=1 proved=0 split=0 unknown=1' "$tmp_dir/seq_unknown.log"
 grep -q 'selected-roots=0 marginal-AND=0 cleanup-exact-AND=0 AND=1->1' "$tmp_dir/seq_unknown.log"
 
+# A submitted top-1 relation releases its frontier slot even when the shared
+# correspondence call stops early.  Wave two must therefore submit the other
+# relation of the same root, never repeat wave one's candidate.
+run_case seq_waves test/stran_seq_only.blif "-S 0 -w 2"
+grep -q 'seeded=2 proved=0 split=0 unknown=2' "$tmp_dir/seq_waves.log"
+grep -q 'stran-root waves: w1=1/0/1/0/0 w2=1/0/1/0/0' "$tmp_dir/seq_waves.log"
+
+# Regression for per-output UNKNOWN isolation.  With this small conflict limit,
+# standard scorr produces UNKNOWN obligations while other speculative classes
+# are still proved or split.  An UNKNOWN must never poison the complete batch.
+mixed_unknown_log="$tmp_dir/mixed_unknown.log"
+"$abc_bin" -q "&read benchmark/gen26.aig; &write $tmp_dir/mixed_unknown-before.aig; &stran -P root -p -t -q 2 -C 1 -V 0; &write $tmp_dir/mixed_unknown-after.aig; dsec $tmp_dir/mixed_unknown-before.aig $tmp_dir/mixed_unknown-after.aig" >"$mixed_unknown_log"
+grep -Eq 'stran-root scorr obligations: bmc=[0-9]+/[0-9]+/[1-9][0-9]*' "$mixed_unknown_log"
+grep -Eq 'stran-root sequential relations: seeded=[0-9]+ proved=[1-9][0-9]* split=[0-9]+ unknown=0' "$mixed_unknown_log"
+grep -q 'Networks are equivalent' "$mixed_unknown_log"
+
 run_case proxy test/stran_proxy_roots.blif ""
 grep -q 'seeded=2 proved=2 split=0 unknown=0 roots=2 class-max=2' "$tmp_dir/proxy.log"
 
@@ -86,8 +102,8 @@ run_case constant test/stran_constant.blif ""
 grep -q '^  SEQ CONSTANT 0 1 1 1 1 0$' "$tmp_dir/constant.log"
 grep -q 'cleanup-exact-AND=1 AND=1->0' "$tmp_dir/constant.log"
 
-run_case deprecated test/stran_comb.blif "-q 3 -w 7 -L 1 -z -i -u -s"
-grep -q -- '-w/-L/-z/-i/-u/-s are deprecated and ignored' "$tmp_dir/deprecated.log"
+run_case deprecated test/stran_comb.blif "-q 3 -L 1 -z -i -u -s"
+grep -q -- '-L/-z/-i/-u/-s are deprecated and ignored' "$tmp_dir/deprecated.log"
 grep -q 'candidates=constant/existing/build q=3 divisor-route=TFI-only' "$tmp_dir/deprecated.log"
 grep -q 'AND=2->1' "$tmp_dir/deprecated.log"
 
