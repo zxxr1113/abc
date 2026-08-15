@@ -31,7 +31,7 @@
 2. COMB 阶段按当前动态 MFFC 潜力降序处理 root。每个 root 内固定顺序为 constant、existing、build；build 先按 gate 数升序，再按 exact template、coverage/residual 次序、CI support overlap、route/locality 和稳定 canonical key 排序。
 3. 对一个 root 的 candidates 串行做 CBS。找到第一个 CBS proof 后立即尝试虚拟 `SELECTED`，更新 `Covered/Used`，停止该 root；CBS SAT/UNKNOWN 的关系保留给 sequential，但已经由 CBS 解决的 root 不进入 scorr。
 4. COMB barrier 重新计算动态 MFFC/优先级，删除已 free root，校验 candidate support 与 marginal gain；过期关系分类为 root-free、candidate-support-freed 或 root-MFFC-changed。
-5. SEQ 有两个模式：默认 top-1 每个 unresolved root 只 seed 排序第一项；`-t` all-candidate seed 该 root 的全部语义合法、canonical candidates。没有 layer、wave 或人工 top-q 截断。
+5. SEQ 有两个模式：默认 top-1 每个 unresolved root 只 seed 排序第一项；`-t` all-candidate seed 该 root 当前已返回的全部语义合法、canonical candidates。没有 layer 或 wave。`-q` 限制每个 root 当前保留的 Build frontier；all-candidate 的“all”是这个有限 frontier 中的全部候选，而不是绕过 `q`。
 6. 所有 seed relations 进入一次 shared SRM/closure 并运行到真正 fixed point；之后逐关系分类 `PROVED/UNPROVED/UNKNOWN`。
 7. fixed point 后按动态 MFFC root-major 消费 proved relations。每个 root 选择启发式顺序中第一个仍合法且 marginal gain 大于零的 candidate，更新虚拟 `Covered/Used`。
 8. dirty root 若没有仍合法的旧 proved relation但仍有正潜力，只发现 `Known` 集合之外的新 candidates。新 candidate 先走 CBS；未解决项才进入一个小 shared repair scorr epoch。已有且仍合法的 proved relation不重复证明。
@@ -49,11 +49,15 @@ shared scorr 不直接 union physical endpoints。proof graph 为每个 root 建
 
 ### 4.1 Direct 与 build 分工
 
-constant 和 existing 只由 direct generator 产生。build-only resub 顶层禁止返回 zero-gate existing，以免与 direct 重复；exact literals 仍保留为递归构造叶子。
+constant 和 existing 只由 direct generator 产生。direct 先检查两个常量，再在当前 TFI divisor pool 中检查 exact literal 的两个极性。build-only resub 顶层禁止返回 zero-gate existing，以免与 direct 重复；exact literals 仍保留为递归构造叶子。
 
-divisor reservoir 保留 TFI/BFS、MFFC boundary、local、global 和 mixed routes。每条 route 初始化一个 stateful iterator，并调用 `Next` 直到有限候选空间耗尽；exact-template 游标不会为第 q 个 recipe 重新扫描前 q-1 个 recipe。带极性 coverage 排序后，exact pair frontier 保持 B-wide，因此 gate-gate 最多在两个 B-wide pair 列表上枚举，不会退化成物理 divisor pair 的 `O(B^4)` Cartesian search。greedy choice 每次从不可变 OFF/ON 和清空后的 pair scratch 重建，经 recipe 去重后同样保持 B-wide；iterator 另有 `iGreedy < B` 的结构性终止不变量。这是有限候选宇宙的定义，不是 wall-clock/q 超时。
+当前 root 主线只有一条 divisor route：从 root 按 TFI 距离做 BFS，遍历 MFFC 内部但不把 MFFC 节点当 divisor，从而优先取得 MFFC boundary 及其上游 support。`K` 是 BFS 深度，`B` 是物理 divisor 数；正反两个 literal 不重复占 B。TFI 的拓扑关系同时排除了 root TFO，且每个 divisor 的 CI support 是 root TFI support 的子集。旧 boundary/local/global/mixed helper 仍留在冻结兼容代码中，当前 root discovery 不调用，之后若重新评估 route 多样性再单独启用。
 
-iterator 热路径只检查 recipe shape。recipe 映射到 root candidate 并 canonicalize 后，用不可变 OFF/ON truth tables 做一次完整语义审计；若 canonical recipe 意外改变函数，则恢复 raw recipe 并审计 raw relation。结构错误或两个版本都不满足 relation 的 recipe 会被计数并跳过，而不是触发 assertion。verifier 明确接受并仿真 `x&x`、`x&!x` 这类待 canonicalize 的退化 AND，不会因相同 physical fanin 终止 ABC。所谓 q unlimited 只表示没有人工 top-q 截断，候选宇宙仍受 `B/K/N`、合法 include、有限模板、canonicalization 和有限 greedy diversity 约束，不枚举所有 AIG。
+每个 root 只初始化一个 stateful iterator。论文式顺序为：constant、exact TFI literal、1-gate unate cover、小型 2/3-gate exact template、recursive unate/binate greedy decomposition。unate literal 和 pair 都按 ON coverage/residual reduction 降序；binate ranking 已启用。exact-template 游标不会为第 q 个 recipe 重新扫描前 q-1 个 recipe。root 一旦保留 `q` 个 canonical、正 marginal-gain Build candidates 就停止调用 `Next`，只有候选空间先耗尽时才少于 q。virtual commit 使旧候选失效时，失效项释放 q slot，dirty repair 最多补回 q 个当前有效 Build candidates；普通未解决 root 不会借 repair 分批枚举到 exhaustion。
+
+带极性 coverage 排序后，exact pair frontier 保持 B-wide，因此 gate-gate 最多在两个 B-wide pair 列表上枚举，不会退化成物理 divisor pair 的 `O(B^4)` Cartesian search。greedy choice 每次从不可变 OFF/ON 和清空后的 pair scratch 重建，经 recipe 去重后同样保持 B-wide；iterator 另有 `iGreedy < B` 的结构性终止不变量。`q` 是返回 frontier 限制，不是 wall-clock 超时；底层 iterator 本身仍是有限的，便于 exhaustion 与 repair。
+
+iterator 热路径只检查 recipe shape。recipe 映射到 root candidate 并 canonicalize 后，用不可变 OFF/ON truth tables 做一次完整语义审计；若 canonical recipe 意外改变函数，则恢复 raw recipe 并审计 raw relation。结构错误或两个版本都不满足 relation 的 recipe 会被计数并跳过，而不是触发 assertion。verifier 明确接受并仿真 `x&x`、`x&!x` 这类待 canonicalize 的退化 AND，不会因相同 physical fanin 终止 ABC。候选宇宙受 `B/K/N/q`、合法 include、有限模板、canonicalization 和有限 greedy diversity共同约束，不枚举所有 AIG。
 
 ### 4.2 带极性的 include/template 筛选
 
@@ -80,13 +84,14 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 - `-t`：top-1 与 all-candidate sequential 模式切换，默认 top-1；
 - `-F/-C/-S`：scorr depth、每 obligation 冲突限和 refinement step 限；
 - `-N`：单 recipe 最大 gate 数；
-- `-B/-K`：divisor pool 宽度与 TFI 深度；
+- `-B/-K`：TFI divisor pool 的物理节点宽度与 BFS 深度，默认 `B=16, K=8`；
+- `-q`：每个 root 当前保留的 canonical Build candidates，范围 1..64，默认 8；达到 q 后停止 iterator，不枚举余下 recipe；
 - `-b`：CBS 每 cube 冲突限；
 - `-l/-x`：关闭 existing/build generator；
 - `-p`：打印 root-only profile；
 - `-f`：启用最终 shadow audit。
 
-旧 `-q/-w/-L/-z/-i/-u/-s` 在 root scope 中只解析以兼容旧脚本，明确打印 deprecated/ignored，并且不能改变 root 主线语义。`window/output` 会打印 frozen 提示。
+旧 `-w/-L/-z/-i/-u/-s` 在 root scope 中只解析以兼容旧脚本，明确打印 deprecated/ignored，并且不能改变 root 主线语义。`-q` 已恢复为有效 root 参数。`window/output` 会打印 frozen 提示。
 
 若输入 GIA 已无 register（例如前置 `scorr` 已完成全部 latch cleanup），`&stran` 打印 combinational no-op 并返回成功；这不是 proof failure，也不会修改网络。
 
@@ -106,15 +111,17 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 
 效果按 `COMB/SEQ × CONSTANT/EXISTING/BUILD` 六格打印 generated、submitted、proved、selected、selected marginal AND/Reg gain。root-only 最终 commit 保留 register boundary，因此当前六格 marginal Reg gain 与最终 exact Reg gain 均为零；字段保留用于 schema 明确性。随后打印 selected roots、总 marginal gain和 cleanup exact gain。
 
+同一批数据另以稳定的 `stran-root experiment-*-profile: schema=3` 行输出。`scripts/stran_profile.py` 和 `scripts/bench_scorr_then_stran.py` 同时解析旧 direct schema 与 root-only schema=3；CSV 保留粗粒度兼容列，并新增 root refresh、divisor、resub、CBS、scorr、selection、bundle/cleanup/audit 的独立秒数以及六格 generated/submitted/proved/selected/gain。解析回归要求所有 `profile_*` 字段为数值，不能在 `-p` 成功时退化为 `N/A`。
+
 运行时 assertions 校验：
 
 - 六格 selected 之和等于 bundle 大小；
 - 六格 marginal gain 之和不大于 cleanup exact gain；
 - cleanup exact gain 等于最终 AND 数差；
 - sequential `seeded == proved + split + unknown`；
-- stateful resub `initialized == exhausted`。
+- stateful resub `initialized == exhausted + capped`。
 
-all-candidate 强度/规模指标包括 seeded/proved/split/unknown relations、roots、最大/平均 class size、fixed-point rounds 和 repair epochs。另打印 iterator initialized/next/exhausted/invalid 与三类 dirty 计数。标准回归要求 `invalid=0`；生产输入即使触发防御审计也会跳过坏 recipe，而不是中止整个运行。
+all-candidate 强度/规模指标包括 seeded/proved/split/unknown relations、roots、最大/平均 class size、fixed-point rounds 和 repair epochs。另打印 iterator initialized/next/exhausted/capped/invalid 与三类 dirty 计数。标准回归要求 `invalid=0`；生产输入即使触发防御审计也会跳过坏 recipe，而不是中止整个运行。
 
 ## 7. 回归与验证
 
@@ -136,27 +143,27 @@ test/run_stran_regression.sh
 - `stran_seq.blif`、`stran_seq_only.blif`：代表性 sequential、top-1/all-candidate、完整 fixed point；
 - `stran_proxy_roots.blif`：两个 roots 共享 physical endpoint 但 class-max 必须为 2；
 - `stran_polarity.blif`：关闭 existing 后必须由 complemented-AND BUILD 实现 OR；
+- `-q 1`：iterator 必须出现 `capped>0`，并满足 `initialized == exhausted + capped`；
 - `&stran_resub_test`：直接断言 `T=1101,d=1000` 的 literal 极性、binate pair 的 OFF/ON 条件、`x&x`/`x&!x` verifier 安全性、public iterator 的 B-wide 有限 exhaustion，以及常量/重复/absorption canonicalization；
 - `stran_dirty.blif`：virtual selection 后的 root-free/MFFC dirty；
 - `stran_constant.blif`：sequential constant candidate 的 proof proxy、选择、AND cleanup 与 register-boundary 保持；
 - `stran_combinational_noop.blif`：无 register 输入返回成功 no-op；
 - `-S 0`：incomplete oracle 必须输出 UNKNOWN，不能 selected；
-- deprecated 参数组合：结果语义不变并打印 ignored；
-- profile parser：六格、sequential 分类、exact gain 与 iterator exhaustion 一致。
+- deprecated 参数组合：`-w/-L/-z/-i/-u/-s` 结果语义不变并打印 ignored，同时 `-q` 仍改变 Build frontier；
+- profile parser：schema=3 的时间桶、六格、sequential 分类、exact gain 与 iterator accounting 一致。
 
 每个回归在变换前后写 AIG，并用 `dsec` 检查 sequential equivalence。
 
-真实 benchmark smoke 使用与批处理脚本一致的链路：原始 AIG 写为 base，执行 `&scorr -C 100`，再执行 `&stran -C 100 -b 100 -P root -N 10 -B 64 -K 8 -r`，最后对 base/final 运行 `dsec`。当前验证结果：
+真实 benchmark smoke 使用与批处理脚本一致的链路：原始 AIG 写为 base，执行 `&scorr -C 100`，再执行 `&stran -C 100 -b 100 -P root -p -N 10 -B 16 -K 8 -q 8 -r`，最后对 base/final 运行 `dsec`。当前 `loopv3.aig` 验证结果：scorr 后 1298 AND roots，root-only profile 约 0.52 秒，Build generated/submitted/proved/selected 为 `2161/2147/9/9`，iterator `initialized=1996, next=16531, exhausted=1769, capped=227, invalid=0`，最终 `1298 -> 1282`，`dsec` 等价。`q=1` 对照生成 293 个 COMB Build，约 0.50 秒，最终 gain 同为 16；这证明 q 改变返回 frontier，而 repair 不再把 q 个一批偷偷枚举到 exhaustion。
 
-- `loopv3.aig`：scorr 后 1298 AND roots；iterator `initialized=22075`、`exhausted=22075`、`next=1038229`、`invalid=0`，约 49 秒完成，最终 `dsec` 等价；
-- `simple_alu.aig`：83 roots，正常完成并通过 `dsec`；
-- `fib_05.aig`：649 roots，正常完成并通过 `dsec`；
-- `gen26.aig`：170 roots，约 7.5 秒完成并通过 `dsec`。
+同参数下，`simple_alu.aig` 为 `83 -> 80`，`fib_05.aig` 为 `649 -> 649`，`gen26.aig` 为 `170 -> 162`；三者均 `invalid=0` 并通过 `dsec`。
+
+批处理脚本用同一 loopv3 单例实际生成 CSV：`profile_schema=3`，全部 `profile_*` 字段均为数值，`profile_resub_enum_sec`、CBS/scorr 分桶、六格 Build 计数和 `final_and_gain=16` 均被正确采集。
 
 ## 8. 明确保留的风险
 
-- all-candidate 仍可能在大型 signature class 上产生很宽的 proof batch；这是算法语义，不是 q 截断遗漏。
+- all-candidate 仍可能因 direct exact literals 和 `q` 个 Build candidates 形成较宽 proof class；可用较小 q 控制规模，但可能牺牲候选召回。
 - discovery 依赖 reset-reachable samples 只影响候选召回/排序，不影响 correctness；所有 selected 都必须有 CBS 或完整 scorr proof。
 - repair 可以产生多个小 scorr epochs，但主 sequential frontier只有一次 shared fixed point；repair 仅处理 virtual commit 后出现的新 candidates。
-- q unlimited 在 B=64 的真实设计上仍可能产生百万级 `Next` 调用；现在保证有限耗尽和正确性，但 resub enumeration 仍可能是主要运行时间。
+- `B` 限制进入构造器的物理 divisor，不等于实际可形成的 literal/pair 数；include/coverage 会显著缩小合法集合，但没有正 marginal-gain candidate 的 root 仍可能走到 iterator exhaustion。即使有 q，resub enumeration 仍可能是主要运行时间，应同时观察 `next/exhausted/capped` 与时间桶。
 - `window/output` 是冻结兼容代码，不能用本文的 root-only保证推断其性能或 profile 语义。

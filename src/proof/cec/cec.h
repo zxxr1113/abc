@@ -357,6 +357,7 @@ struct Cec_ParTran_t_
     int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
     int              nRootBatch;    // deprecated/ignored by the root-only pipeline
     int              nRootWaves;    // deprecated/ignored by the root-only pipeline
+    int              nRootConstrTop;// canonical Build candidates retained per root (1..64)
     int              nCombBTLimit; // root CBS conflict limit per cube
     int              nFreeWords;   // 64-bit independent PI/RO words for combination screening
     int              nFreeCexMax;  // CBS free-state counterexamples retained per proof batch

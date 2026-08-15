@@ -42397,12 +42397,10 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( pPars->nRootWaves < 1 || pPars->nRootWaves > 64 ) goto usage;
             break;
         case 'q':
-            // Deprecated compatibility input.  Recipe generation is now
-            // structurally exhaustive, so this value intentionally has no
-            // effect and is omitted from the user-facing option list.
-            fSeenDeprecatedRoot = 1;
-            if ( globalUtilOptind >= argc ||
-                 atoi(argv[globalUtilOptind++]) < 1 ) goto usage;
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRootConstrTop < 1 ||
+                 pPars->nRootConstrTop > 64 ) goto usage;
             break;
         case 'b':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42478,7 +42476,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     else if ( fSeenDeprecatedRoot || pPars->nRootWaves != 1 || pPars->fUseResubZero ||
               pPars->fRootStopLegacy || !pPars->fRootStopProved ||
               pPars->fRootSplitStages || pPars->nRootBatch )
-        Abc_Print( 1, "&stran: -q/-w/-L/-z/-i/-u/-s are deprecated and ignored by the root-only pipeline.\n" );
+        Abc_Print( 1, "&stran: -w/-L/-z/-i/-u/-s are deprecated and ignored by the root-only pipeline.\n" );
     if ( fSeenSodc )
     {
         Abc_Print( -1, "&stran: This branch implements Direct root resubstitution only; -o is unavailable.\n" );
@@ -42530,6 +42528,7 @@ usage:
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : physical nodes in the local divisor pool (0 = all; both phases are free) [default = %d]\n", pPars->nConstrBaseMax );
+    Abc_Print( -2, "\t-q num : canonical Build candidates retained per root (1..64) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
     Abc_Print( -2, "\t-P str : proof scope: root/gate; window and output/po-ri are frozen compatibility paths [default = root]\n" );
     Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
@@ -42553,7 +42552,7 @@ usage:
     Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
-    Abc_Print( -2, "\t-l     : toggle global existing-literal lookup [default = %s]\n", pPars->fUseExisting? "yes": "no" );
+    Abc_Print( -2, "\t-l     : toggle exact existing-literal lookup in the TFI pool [default = %s]\n", pPars->fUseExisting? "yes": "no" );
     Abc_Print( -2, "\t-z     : deprecated compatibility toggle; ignored by root scope\n" );
     Abc_Print( -2, "\t-r     : toggle exhaustive root discovery (forces L/G/O/m admission gates off) [default = %s]\n", pPars->fRootExhaustive? "yes": "no" );
     Abc_Print( -2, "\t-i     : deprecated compatibility toggle; ignored by root scope\n" );

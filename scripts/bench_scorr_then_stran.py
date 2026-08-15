@@ -62,6 +62,8 @@ STAGE_PROFILE_FIELDS = [
 for _stage in ("comb", "seq"):
     for _kind in ("constant", "existing", "constructed"):
         STAGE_PROFILE_FIELDS.extend([
+            f"{_stage}_{_kind}_generated",
+            f"{_stage}_{_kind}_submitted",
             f"{_stage}_{_kind}_selected",
             f"{_stage}_{_kind}_proved",
             f"{_stage}_{_kind}_and_gain",
@@ -222,6 +224,56 @@ def parse_stran(stdout: str) -> Dict[str, Any]:
             stage_records[stage] = (score, record)
     for _, record in stage_records.values():
         result.update(record)
+
+    # Root-only schema=3 reports the requested 2x3 generated/submitted/proved/
+    # selected matrix directly.  Build is named "constructed" in the existing
+    # CSV columns to keep old analysis notebooks source-compatible.
+    root_stage_gains = {"comb": [0, 0], "seq": [0, 0]}
+    saw_root_effect = False
+    for stage_line in (
+        item for item in stdout.splitlines()
+        if "stran-root experiment-effect profile:" in item
+    ):
+        stage_match = re.search(r"(?:^| )stage=(comb|seq)(?: |$)", stage_line)
+        kind_match = re.search(
+            r"(?:^| )kind=(constant|existing|build)(?: |$)", stage_line)
+        if not stage_match or not kind_match:
+            continue
+        saw_root_effect = True
+        stage = stage_match.group(1)
+        kind = "constructed" if kind_match.group(1) == "build" else kind_match.group(1)
+        for metric in ("generated", "submitted", "proved", "selected"):
+            match = re.search(rf"(?:^| ){metric}=(-?\d+)(?: |$)", stage_line)
+            if match:
+                result[f"{stage}_{kind}_{metric}"] = int(match.group(1))
+        for index, (metric, suffix) in enumerate(
+            (("marginal-and", "and_gain"), ("marginal-reg", "reg_gain"))
+        ):
+            match = re.search(rf"(?:^| ){metric}=(-?\d+)(?: |$)", stage_line)
+            if match:
+                value = int(match.group(1))
+                result[f"{stage}_{kind}_{suffix}"] = value
+                root_stage_gains[stage][index] += value
+    if saw_root_effect:
+        for stage in ("comb", "seq"):
+            result[f"{stage}_stage_and_gain"] = root_stage_gains[stage][0]
+            result[f"{stage}_stage_reg_gain"] = root_stage_gains[stage][1]
+
+    root_summary = next((
+        item for item in reversed(stdout.splitlines())
+        if "stran-root experiment-summary profile:" in item
+    ), "")
+    if root_summary:
+        before = re.search(r"(?:^| )and-before=(\d+)(?: |$)", root_summary)
+        after = re.search(r"(?:^| )and-after=(\d+)(?: |$)", root_summary)
+        if before and after:
+            result["stage_and_before"] = int(before.group(1))
+            result["stage_and_after_comb"] = (
+                int(before.group(1)) - root_stage_gains["comb"][0])
+            # This is the virtual serial marginal endpoint.  The separate
+            # final_and_gain field includes any extra cleanup gain.
+            result["stage_and_after_scorr"] = (
+                result["stage_and_after_comb"] - root_stage_gains["seq"][0])
 
     ordered_records: Dict[str, Tuple[float, Dict[str, Any]]] = {}
     for ordered_line in (

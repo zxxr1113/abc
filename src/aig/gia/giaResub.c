@@ -1742,8 +1742,9 @@ static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
     // A physical B-wide divisor pool can induce O(B^2) pair literals.  Letting
     // the exact gate-gate stage take the Cartesian square of that entire list
     // turns one root into O(B^4) enumeration (loopv3 stalls at B=64).  The
-    // ranked exact-pair frontier is itself B-wide; all candidates in this
-    // finite template universe are still enumerated, with no top-q cutoff.
+    // ranked exact-pair frontier is itself B-wide.  The iterator exposes this
+    // finite universe lazily; root discovery stops calling Next as soon as its
+    // q canonical candidates have been retained.
     for ( n = 0; n < 2; n++ )
         if ( Vec_IntSize(p->vUnatePairs[n]) > p->nDivsMax )
         {
