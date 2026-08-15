@@ -1,0 +1,17 @@
+.model stran_seq_order
+.inputs a
+.outputs y keep_r keep_s
+.latch z r 0
+.latch z s 0
+
+# r and s are both reset-reachable constants but remain independent free-state
+# ROs for combinational proof.  The root r&s therefore has sequentially valid
+# constant and existing alternatives; top-1 must submit the constant first.
+.names z
+.names r s y
+11 1
+.names r keep_r
+1 1
+.names s keep_s
+1 1
+.end

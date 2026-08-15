@@ -37,6 +37,7 @@ enum
 enum
 {
     CEC_TRAN_STATE_CANDIDATE = 0,
+    CEC_TRAN_STATE_STALE,
     CEC_TRAN_STATE_TRIED_SEQ,
     CEC_TRAN_STATE_PROVED_COMB,
     CEC_TRAN_STATE_PROVED_SEQ,
@@ -2276,7 +2277,7 @@ struct Cec_TranCand_t_
     unsigned fStrict   : 1;
     unsigned nKind     : 2;
     unsigned nProofStage : 2;   // 0=unproved, 1=combinational, 2=sequential
-    unsigned nStatus    : 3;    // candidate/tried_seq/proved_comb/proved_seq/selected
+    unsigned nStatus    : 3;    // candidate/stale/tried_seq/proved_comb/proved_seq/selected
     unsigned fExactTemplate : 1;// finite exact resub template (before greedy diversity)
     unsigned fDivRescue : 1;
     unsigned fDivGlobal : 1;
@@ -3965,6 +3966,10 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         Cec_ManCorSetDefaultParams( &Cor );
         Cor.nFrames   = pPars->nFrames;
         Cor.nBTLimit  = pPars->nBTLimit;
+        // Root scorr intentionally has no shared conflict cap.  -C is the
+        // per-output limit; an UNKNOWN output is removed from only its own
+        // speculative class by ordinary scorr refinement.  A shared cap would
+        // make solve order turn one hard relation into a global early stop.
         Cor.nConfTotal = 0;
         Cor.nStepsMax = pPars->nStepsMax;
         Cor.fVerbose  = 0;
@@ -4021,16 +4026,21 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         {
             int fSameClass = Cec_TranRootBatchPairProved( pBatch,
                 Vec_IntEntry(vPairs, 2*i), Vec_IntEntry(vPairs, 2*i+1) );
-            int fComplete = RetValue && Cor.fCompleted && !Cor.fConfStop;
-            fProved = fComplete && fSameClass;
+            int fBatchComplete = RetValue && Cor.fCompleted;
+            // fConfStop can only accompany an incomplete correspondence run;
+            // it is not the per-output UNKNOWN indication.  Keep the invariant
+            // explicit so callers cannot accidentally reintroduce batch-wide
+            // poisoning for ordinary solver UNKNOWNs.
+            assert( !Cor.fConfStop || !Cor.fCompleted );
+            fProved = fBatchComplete && fSameClass;
             if ( !fProved )
             {
                 // As in ordinary &scorr, SAT counterexamples split only the
                 // affected speculative class.  A global early stop is UNKNOWN;
                 // a completed fixed point classifies each relation by whether
                 // its endpoints survived in the same refined class.
-                nSeqSplit += fComplete && !fSameClass;
-                nSeqUnknown += !fComplete;
+                nSeqSplit += fBatchComplete && !fSameClass;
+                nSeqUnknown += !fBatchComplete;
             }
         }
         if ( fProved && Vec_StrEntry(vStage, i) == 0 )
@@ -4176,10 +4186,11 @@ static int Cec_TranCandGainCompare( const void * p0, const void * p1 )
         sizeof(int) * 2 * pC0->nGates );
 }
 
-// Root-only heuristic order is semantic and deterministic: constants first,
-// then existing literals, then constructed recipes by increasing gate count.
-// Gain/coverage and the canonical recipe key break ties without changing that
-// kind order.
+// Among candidates that already passed signature/care matching and structural
+// legality, root-only order is deterministic: constants first, then existing
+// literals, then constructed recipes by increasing gate count.  Kind priority
+// never admits an unmatched relation.  Gain/coverage and the canonical recipe
+// key break ties without changing that kind order.
 static int Cec_TranCandHeuristicCompare( const void * p0, const void * p1 )
 {
     Cec_TranCand_t const * pC0 = (Cec_TranCand_t const *)p0;
@@ -6545,7 +6556,7 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
             if ( fAll )
                 Cec_TranCandVecPush( pSeq, Cand );
             else if ( !fHaveBest ||
-                      Cec_TranCandPriorityCompare(&Cand, &Best) < 0 )
+                      Cec_TranCandHeuristicCompare(&Cand, &Best) < 0 )
                 Best = Cand, fHaveBest = 1;
         }
         if ( !fAll && fHaveBest )
@@ -6554,6 +6565,53 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
     if ( pSeq->nSize > 1 )
         qsort( pSeq->pArray, pSeq->nSize, sizeof(Cec_TranCand_t),
             Cec_TranCandRootHeuristicCompare );
+}
+
+// Retire pending relations invalidated by virtual selections before opening a
+// new wave.  Known retains their canonical keys for cross-wave deduplication,
+// but STALE entries no longer occupy q or participate in sequential proof.
+// Covered/Used only grow on the immutable snapshot, so a stale relation cannot
+// become legal again in a later wave.
+static void Cec_TranRootRetireStaleCandidates( Gia_Man_t * p,
+    Cec_TranCandVec_t * pKnown, char const * pCovered, char const * pUsed,
+    char * pMffc, Vec_Int_t * vMffc, Vec_Int_t * vSupport,
+    Cec_TranProf_t * pProf )
+{
+    int i, k, iObj, Gain, fSupportFreed;
+    for ( i = 0; i < pKnown->nSize; i++ )
+    {
+        Cec_TranCand_t * pCand = pKnown->pArray + i;
+        if ( pCand->nStatus != CEC_TRAN_STATE_CANDIDATE )
+            continue;
+        if ( pCovered[pCand->iTarget] || pUsed[pCand->iTarget] )
+        {
+            pCand->nStatus = CEC_TRAN_STATE_STALE;
+            pProf->nDirtyRootFreed++;
+            continue;
+        }
+        Cec_TranCandCollectSupport( pCand, vSupport );
+        fSupportFreed = 0;
+        Vec_IntForEachEntry( vSupport, iObj, k )
+            fSupportFreed |= pCovered[iObj] != 0;
+        if ( fSupportFreed )
+        {
+            pCand->nStatus = CEC_TRAN_STATE_STALE;
+            pProf->nDirtySupportFreed++;
+            continue;
+        }
+        Gain = Cec_TranCandDynamicGain( p, pCand, pCovered, pUsed,
+            pMffc, vMffc, vSupport );
+        if ( Gain <= 0 )
+        {
+            pCand->nStatus = CEC_TRAN_STATE_STALE;
+            pProf->nDirtyMffcChanged++;
+            continue;
+        }
+        if ( Gain != pCand->Gain || Vec_IntSize(vMffc) != pCand->nMffc )
+            pProf->nDirtyMffcChanged++;
+        pCand->Gain = Gain;
+        pCand->nMffc = Vec_IntSize( vMffc );
+    }
 }
 
 static int Cec_TranRootConsumeProved( Gia_Man_t * p,
@@ -6832,6 +6890,16 @@ static Gia_Man_t * Cec_ManSequentialRootOnly( Gia_Man_t * pGia,
         abctime clkWave = Abc_Clock();
         memset( pCombDone, 0, sizeof(char) * Gia_ManObjNum(p) );
 
+        // Wave boundary: first clean roots and pending relations released by
+        // the previous wave, then discover this wave's constant/existing/build
+        // frontier.  This is the wave analogue of the old dirty-repair gate.
+        clk = Abc_Clock();
+        Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
+            pMffc, vMffc, &Prof );
+        Cec_TranRootRetireStaleCandidates( p, &Known, pCovered, pUsed,
+            pMffc, vMffc, vSupport, &Prof );
+        Prof.timeRootRefresh += Abc_Clock() - clk;
+
         // COMB remains root-major and candidate-serial.  Only candidates newly
         // exposed in this wave are sent to CBS; older unresolved relations are
         // pending exclusively for the shared sequential closure below.
@@ -6900,6 +6968,8 @@ static Gia_Man_t * Cec_ManSequentialRootOnly( Gia_Man_t * pGia,
         clk = Abc_Clock();
         Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
             pMffc, vMffc, &Prof );
+        Cec_TranRootRetireStaleCandidates( p, &Known, pCovered, pUsed,
+            pMffc, vMffc, vSupport, &Prof );
         Prof.timeRootRefresh += Abc_Clock() - clk;
         clk = Abc_Clock();
         Cec_TranRootPrepareSeqFrontier( p, pRoots, nRoots, &Known,

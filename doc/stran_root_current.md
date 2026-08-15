@@ -9,6 +9,7 @@
 候选状态严格分为：
 
 - `CANDIDATE`：signature/care 匹配，只是待证明关系；
+- `STALE`：上一轮虚拟选择后 root 已释放、support 已释放或 marginal gain 已非正；保留 canonical key 去重，但不再占 `q` 或进入证明；
 - `TRIED_SEQ`：已进入过 shared scorr，但没有在该轮 refined fixed point 中保留；它不再占用后续 wave 的 `q` frontier；
 - `PROVED_COMB`：CBS 在所有自由 PI/RO 状态上证明；
 - `PROVED_SEQ`：shared scorr 没有全局提前停止，并且标准 BMC/refinement/induction fixed point 后 root/candidate 仍在同一类；单个无关 obligation 的 UNKNOWN 不会污染该关系；
@@ -32,10 +33,10 @@
 2. COMB 阶段按当前动态 MFFC 潜力降序处理 root。每个 root 内固定顺序为 constant、existing、build；build 先按 gate 数升序，再按 exact template、coverage/residual 次序、CI support overlap、route/locality 和稳定 canonical key 排序。
 3. 对一个 root 本 wave 新产生的 candidates 串行做 CBS。找到第一个 CBS proof 后立即尝试虚拟 `SELECTED`，更新 `Covered/Used`，停止该 root；CBS SAT/UNKNOWN 的关系保留给 sequential，但已经由 CBS 解决的 root 不进入 scorr。
 4. COMB barrier 重新计算动态 MFFC/优先级，删除已 free root，校验 candidate support 与 marginal gain；过期关系分类为 root-free、candidate-support-freed 或 root-MFFC-changed。
-5. SEQ 有两个模式：默认 top-1 每个 unresolved root 选择当前 dynamic gain 最好的一个未尝试 candidate；`-t` all-candidate seed 该 root 当前全部未尝试、语义合法的 candidates。`-q` 限制每个 root 同时保留的未尝试 Build frontier。
+5. SEQ 有两个模式：在 candidate 已通过 signature/care 匹配、结构合法且当前 marginal gain 为正的前提下，默认 top-1 每个 unresolved root 严格按 constant、existing、Build 的启发式顺序选择第一个未尝试 candidate；类别优先级不会强行接纳不匹配关系。Build 内再按 gate 数、exact template、coverage/residual、CI overlap 和稳定 canonical key 排序。`-t` all-candidate 按同一顺序 seed 该 root 当前全部未尝试、语义合法的 candidates。`-q` 限制每个 root 同时保留的未尝试 Build frontier。
 6. 本 wave 的 seed relations 作为 speculative equivalence classes 进入标准 scorr BMC/refinement/induction 流程。SAT counterexample 细化受影响的 class，per-output UNKNOWN 只移除对应 candidate；两者都不会把无关 class 作废。只有全局提前停止才把该次未决关系记为 UNKNOWN。
 7. fixed point 后按动态 MFFC root-major 消费 surviving relations，更新虚拟 `Covered/Used`。已提交但未保留的关系标为 `TRIED_SEQ` 并释放 q slot。
-8. 若 `-w` 仍有剩余轮次，未解决 root 再发现 `Known` 集合之外的新 candidates。all-candidate 模式每轮最多推进 q 个不同 Build，因而最多暴露 q*w 个；top-1 保留未提交的 frontier，每轮推进一个关系，不丢弃其余候选。
+8. 若 `-w` 仍有剩余轮次，先重算动态 MFFC/root 顺序，并把上一轮虚拟选择失效的 pending relation 标为 `STALE`；清理完成后，未解决 root 才发现 `Known` 集合之外的新 candidates。all-candidate 模式每轮最多推进 q 个不同 Build，因而最多暴露 q*w 个；top-1 保留未提交的 frontier，每轮按启发式顺序推进一个关系，不丢弃其余候选。
 9. 对 `SELECTED` 列表做一次 topological bundle duplication、combinational cleanup/normalize 和 exact-gain audit。最终 cleanup 保留原 register boundary，不做 sequential latch cleanup；正常选择保证 kill-set 不重叠且每步 marginal gain 大于零，exact AND gain 仅作 assertion/防御检查。`-f` 可额外启用 whole-network shadow audit。
 
 ## 3. Proof-only proxy 隔离

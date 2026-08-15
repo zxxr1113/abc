@@ -59,9 +59,25 @@ grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/comb.log"
 
 run_case seq_top1 test/stran_seq_only.blif ""
 grep -q 'seeded=1 proved=1 split=0 unknown=0 roots=1 class-max=2' "$tmp_dir/seq_top1.log"
+grep -q '^  SEQ CONSTANT 0 0 0 0 0 0$' "$tmp_dir/seq_top1.log"
+grep -q '^  SEQ EXISTING 0 1 1 1 1 0$' "$tmp_dir/seq_top1.log"
 
 run_case seq_all test/stran_seq_only.blif "-t"
 grep -q 'seeded=2 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_all.log"
+
+# top-1 is the resub heuristic order, not a gain-first re-ranking: constant,
+# then existing, then Build.  With one wave only the constant is submitted.
+run_case seq_order_top1 test/stran_seq_order.blif "-S 0"
+grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_top1.log"
+grep -q '^  SEQ EXISTING 0 0 0 0 0 0$' "$tmp_dir/seq_order_top1.log"
+grep -q 'seeded=1 proved=0 split=0 unknown=1' "$tmp_dir/seq_order_top1.log"
+
+# The next wave keeps the unsubmitted ordered frontier.  It advances to an
+# existing literal only after wave one retires the constant as TRIED_SEQ.
+run_case seq_order_waves test/stran_seq_order.blif "-S 0 -w 2"
+grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_waves.log"
+grep -q '^  SEQ EXISTING 0 1 0 0 0 0$' "$tmp_dir/seq_order_waves.log"
+grep -q 'seeded=2 proved=0 split=0 unknown=2' "$tmp_dir/seq_order_waves.log"
 
 run_case seq_unknown test/stran_seq_only.blif "-S 0"
 grep -q 'seeded=1 proved=0 split=0 unknown=1' "$tmp_dir/seq_unknown.log"
@@ -95,6 +111,11 @@ grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*capped=[1-9]' "$t
 
 run_case dirty test/stran_dirty.blif ""
 grep -Eq 'stran-root dirty: root-free=[1-9]|root-MFFC-changed=[1-9]' "$tmp_dir/dirty.log"
+
+# A second wave must begin after stale roots/frontiers from wave one have been
+# retired.  No candidate may be regenerated for the already released bundle.
+run_case dirty_waves test/stran_dirty.blif "-w 2"
+grep -q 'stran-root waves: .*w2=0/0/0/0/0' "$tmp_dir/dirty_waves.log"
 
 # A sequentially proved constant candidate used to assert while constructing
 # its proof-only proxy, then could lose a latch during final cleanup.
