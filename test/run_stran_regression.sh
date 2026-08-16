@@ -7,7 +7,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 resub_selftest=$("$abc_bin" -q '&stran_resub_test')
 printf '%s\n' "$resub_selftest"
-grep -q 'stran resub iterator/polarity/canonicalization self-test: PASS' <<<"$resub_selftest"
+grep -q 'stran resub iterator/polarity/canonicalization/MFFC self-test: PASS' <<<"$resub_selftest"
 
 run_case() {
     local name="$1" blif="$2" opts="$3"
@@ -31,7 +31,9 @@ run_case() {
         }
         /stran-root sequential relations:/ {
             for (i=1; i<=NF; i++) {
+                if ($i ~ /^candidates=/) {split($i,a,"="); seq_candidates=a[2]+0}
                 if ($i ~ /^seeded=/) {split($i,a,"="); seeded=a[2]+0}
+                if ($i ~ /^comb-helper-seeds=/) {split($i,a,"="); helpers=a[2]+0}
                 if ($i ~ /^proved=/) {split($i,a,"="); proved=a[2]+0}
                 if ($i ~ /^split=/) {split($i,a,"="); splitn=a[2]+0}
                 if ($i ~ /^unknown=/) {split($i,a,"="); unknown=a[2]+0}
@@ -48,7 +50,8 @@ run_case() {
         END {
             if (rows != 6 || selected != total_selected ||
                 marginal != total_marginal || marginal > exact ||
-                seeded != proved + splitn + unknown ||
+                seq_candidates != proved + splitn + unknown ||
+                seeded != seq_candidates + helpers ||
                 initialized != exhausted + capped || invalid != 0) exit 1
         }
     ' "$out"
@@ -58,36 +61,36 @@ run_case comb test/stran_comb.blif ""
 grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/comb.log"
 
 run_case seq_top1 test/stran_seq_only.blif ""
-grep -q 'seeded=1 proved=1 split=0 unknown=0 roots=1 class-max=2' "$tmp_dir/seq_top1.log"
+grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=1 split=0 unknown=0 roots=1 class-max=2' "$tmp_dir/seq_top1.log"
 grep -q '^  SEQ CONSTANT 0 0 0 0 0 0$' "$tmp_dir/seq_top1.log"
 grep -q '^  SEQ EXISTING 0 1 1 1 1 0$' "$tmp_dir/seq_top1.log"
 
 run_case seq_all test/stran_seq_only.blif "-t"
-grep -q 'seeded=2 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_all.log"
+grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_all.log"
 
 # top-1 is the resub heuristic order, not a gain-first re-ranking: constant,
 # then existing, then Build.  With one wave only the constant is submitted.
 run_case seq_order_top1 test/stran_seq_order.blif "-S 0"
 grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_top1.log"
 grep -q '^  SEQ EXISTING 0 0 0 0 0 0$' "$tmp_dir/seq_order_top1.log"
-grep -q 'seeded=1 proved=0 split=0 unknown=1' "$tmp_dir/seq_order_top1.log"
+grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_order_top1.log"
 
-# The next wave keeps the unsubmitted ordered frontier.  It advances to an
-# existing literal only after wave one retires the constant as TRIED_SEQ.
+# The next wave advances to the existing literal and re-proves the cumulative
+# {constant, existing} prefix.  The first relation therefore appears in both
+# proof calls while candidate ordering remains unchanged.
 run_case seq_order_waves test/stran_seq_order.blif "-S 0 -w 2"
-grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_waves.log"
+grep -q '^  SEQ CONSTANT 0 2 0 0 0 0$' "$tmp_dir/seq_order_waves.log"
 grep -q '^  SEQ EXISTING 0 1 0 0 0 0$' "$tmp_dir/seq_order_waves.log"
-grep -q 'seeded=2 proved=0 split=0 unknown=2' "$tmp_dir/seq_order_waves.log"
+grep -q 'candidates=3 seeded=3 comb-helper-seeds=0 proved=0 split=0 unknown=3' "$tmp_dir/seq_order_waves.log"
 
 run_case seq_unknown test/stran_seq_only.blif "-S 0"
-grep -q 'seeded=1 proved=0 split=0 unknown=1' "$tmp_dir/seq_unknown.log"
+grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_unknown.log"
 grep -q 'selected-roots=0 marginal-AND=0 cleanup-exact-AND=0 AND=1->1' "$tmp_dir/seq_unknown.log"
 
-# A submitted top-1 relation releases its frontier slot even when the shared
-# correspondence call stops early.  Wave two must therefore submit the other
-# relation of the same root, never repeat wave one's candidate.
+# A submitted top-1 relation releases its frontier slot even when proof stops
+# early.  Wave two adds the other relation, then retries both as one prefix.
 run_case seq_waves test/stran_seq_only.blif "-S 0 -w 2"
-grep -q 'seeded=2 proved=0 split=0 unknown=2' "$tmp_dir/seq_waves.log"
+grep -q 'candidates=3 seeded=3 comb-helper-seeds=0 proved=0 split=0 unknown=3' "$tmp_dir/seq_waves.log"
 grep -q 'stran-root waves: w1=1/0/1/0/0 w2=1/0/1/0/0' "$tmp_dir/seq_waves.log"
 
 # Regression for per-output UNKNOWN isolation.  With this small conflict limit,
@@ -96,11 +99,11 @@ grep -q 'stran-root waves: w1=1/0/1/0/0 w2=1/0/1/0/0' "$tmp_dir/seq_waves.log"
 mixed_unknown_log="$tmp_dir/mixed_unknown.log"
 "$abc_bin" -q "&read benchmark/gen26.aig; &write $tmp_dir/mixed_unknown-before.aig; &stran -P root -p -t -q 2 -C 1 -V 0; &write $tmp_dir/mixed_unknown-after.aig; dsec $tmp_dir/mixed_unknown-before.aig $tmp_dir/mixed_unknown-after.aig" >"$mixed_unknown_log"
 grep -Eq 'stran-root scorr obligations: bmc=[0-9]+/[0-9]+/[1-9][0-9]*' "$mixed_unknown_log"
-grep -Eq 'stran-root sequential relations: seeded=[0-9]+ proved=[1-9][0-9]* split=[0-9]+ unknown=0' "$mixed_unknown_log"
+grep -Eq 'stran-root sequential relations: candidates=[0-9]+ seeded=[0-9]+ comb-helper-seeds=[0-9]+ proved=[1-9][0-9]* split=[0-9]+ unknown=0' "$mixed_unknown_log"
 grep -q 'Networks are equivalent' "$mixed_unknown_log"
 
 run_case proxy test/stran_proxy_roots.blif ""
-grep -q 'seeded=2 proved=2 split=0 unknown=0 roots=2 class-max=2' "$tmp_dir/proxy.log"
+grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=2 class-max=2' "$tmp_dir/proxy.log"
 
 run_case polarity test/stran_polarity.blif "-l"
 grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/polarity.log"
@@ -109,13 +112,17 @@ run_case q_cap test/stran_polarity.blif "-l -q 1"
 grep -q 'candidates=constant/existing/build q=1 divisor-route=TFI-only' "$tmp_dir/q_cap.log"
 grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*capped=[1-9]' "$tmp_dir/q_cap.log"
 
+run_case q_unlimited test/stran_polarity.blif "-l -t -q 0 -w 1"
+grep -q 'candidates=constant/existing/build q=0 divisor-route=TFI-only' "$tmp_dir/q_unlimited.log"
+grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*exhausted=[1-9][0-9]* capped=0 invalid=0' "$tmp_dir/q_unlimited.log"
+
 run_case dirty test/stran_dirty.blif ""
 grep -Eq 'stran-root dirty: root-free=[1-9]|root-MFFC-changed=[1-9]' "$tmp_dir/dirty.log"
 
-# A second wave must begin after stale roots/frontiers from wave one have been
-# retired.  No candidate may be regenerated for the already released bundle.
+# Selection is deferred until all cumulative prefix proofs finish, so wave two
+# may add one more ordered candidate but the bundle is committed only once.
 run_case dirty_waves test/stran_dirty.blif "-w 2"
-grep -q 'stran-root waves: .*w2=0/0/0/0/0' "$tmp_dir/dirty_waves.log"
+grep -q 'stran-root waves: .*w2=3/0/1/1/1' "$tmp_dir/dirty_waves.log"
 
 # A sequentially proved constant candidate used to assert while constructing
 # its proof-only proxy, then could lose a latch during final cleanup.

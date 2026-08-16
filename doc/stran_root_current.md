@@ -9,8 +9,8 @@
 候选状态严格分为：
 
 - `CANDIDATE`：signature/care 匹配，只是待证明关系；
-- `STALE`：上一轮虚拟选择后 root 已释放、support 已释放或 marginal gain 已非正；保留 canonical key 去重，但不再占 `q` 或进入证明；
-- `TRIED_SEQ`：已进入过 shared scorr，但没有在该轮 refined fixed point 中保留；它不再占用后续 wave 的 `q` frontier；
+- `STALE`：root/support 已释放或 marginal gain 已非正；保留 canonical key 去重，但不再占 `q` 或进入证明；
+- `TRIED_SEQ`：候选已从发现 frontier 转移到累计 proof portfolio；它不再占用后续 wave 的 `q` 槽位，但 top-1 后续累计前缀会继续把它作为 hypothesis/obligation 重证；
 - `PROVED_COMB`：CBS 在所有自由 PI/RO 状态上证明；
 - `PROVED_SEQ`：shared scorr 没有全局提前停止，并且标准 BMC/refinement/induction fixed point 后 root/candidate 仍在同一类；单个无关 obligation 的 UNKNOWN 不会污染该关系；
 - `SELECTED`：proved relation 仍结构合法、动态 marginal gain 为正，并被 root-major 虚拟串行选择。
@@ -21,7 +21,7 @@
 - `UNPROVED(split)`：完整 oracle 后已拆类；
 - `UNKNOWN`：整个 correspondence 调用达到 step/iteration/总冲突限制或其他全局提前停止；ordinary per-output UNKNOWN 按标准 scorr 语义只移除对应 output 的 candidate，不升级成全 batch UNKNOWN。
 
-`Free/Covered/Used` 只描述虚拟串行 commit：
+`Free/Covered/Used` 只描述所有 proof wave 完成后的虚拟串行选择：
 
 - `Covered` 是已选 candidate 的动态 MFFC kill-set；
 - `Used` 是已选 recipe 的外部 support；
@@ -29,23 +29,21 @@
 
 ## 2. 端到端流程
 
-1. 从 reset 初态做多帧 bit-parallel simulation，建立完整 signature index，并收集全部 AND roots。
-2. COMB 阶段按当前动态 MFFC 潜力降序处理 root。每个 root 内固定顺序为 constant、existing、build；build 先按 gate 数升序，再按 exact template、coverage/residual 次序、CI support overlap、route/locality 和稳定 canonical key 排序。
-3. 对一个 root 本 wave 新产生的 candidates 串行做 CBS。找到第一个 CBS proof 后立即尝试虚拟 `SELECTED`，更新 `Covered/Used`，停止该 root；CBS SAT/UNKNOWN 的关系保留给 sequential，但已经由 CBS 解决的 root 不进入 scorr。
-4. COMB barrier 重新计算动态 MFFC/优先级，删除已 free root，校验 candidate support 与 marginal gain；过期关系分类为 root-free、candidate-support-freed 或 root-MFFC-changed。
-5. SEQ 有两个模式：在 candidate 已通过 signature/care 匹配、结构合法且当前 marginal gain 为正的前提下，默认 top-1 每个 unresolved root 严格按 constant、existing、Build 的启发式顺序选择第一个未尝试 candidate；类别优先级不会强行接纳不匹配关系。Build 内再按 gate 数、exact template、coverage/residual、CI overlap 和稳定 canonical key 排序。`-t` all-candidate 按同一顺序 seed 该 root 当前全部未尝试、语义合法的 candidates。`-q` 限制每个 root 同时保留的未尝试 Build frontier。
-6. 本 wave 的 seed relations 作为 speculative equivalence classes 进入标准 scorr BMC/refinement/induction 流程。SAT counterexample 细化受影响的 class，per-output UNKNOWN 只移除对应 candidate；两者都不会把无关 class 作废。只有全局提前停止才把该次未决关系记为 UNKNOWN。
-7. fixed point 后按动态 MFFC root-major 消费 surviving relations，更新虚拟 `Covered/Used`。已提交但未保留的关系标为 `TRIED_SEQ` 并释放 q slot。
-8. 若 `-w` 仍有剩余轮次，先重算动态 MFFC/root 顺序，并把上一轮虚拟选择失效的 pending relation 标为 `STALE`；清理完成后，未解决 root 才发现 `Known` 集合之外的新 candidates。all-candidate 模式每轮最多推进 q 个不同 Build，因而最多暴露 q*w 个；top-1 保留未提交的 frontier，每轮按启发式顺序推进一个关系，不丢弃其余候选。
-9. 对 `SELECTED` 列表做一次 topological bundle duplication、combinational cleanup/normalize 和 exact-gain audit。最终 cleanup 保留原 register boundary，不做 sequential latch cleanup；正常选择保证 kill-set 不重叠且每步 marginal gain 大于零，exact AND gain 仅作 assertion/防御检查。`-f` 可额外启用 whole-network shadow audit。
+1. 从 reset 初态做多帧 bit-parallel simulation，建立 signature index，并收集全部 AND roots。整个发现/证明阶段使用同一不可变 GIA snapshot。
+2. 每个 discovery wave 按动态 MFFC 潜力处理 root，生成新的 constant、existing、Build candidates。root 内排序固定为 constant、existing、Build；Build 再按 gate 数、exact template、coverage/residual、CI overlap 和稳定 canonical key 排序。
+3. `q>0` 只限制当前未转移的 Build frontier；转入 proof portfolio 后立即释放槽位，后续 wave 从确定性 iterator 中跳过 `Known` recipe 并继续补充。`q=0` 在 wave 1 穷尽 iterator，后续 wave 只消费已保留的有序 frontier，不重复扫描。
+4. 默认 top-1 每 wave、每 root 只把下一个启发式候选加入累计 portfolio，并对当前整个排序前缀执行一次 combined CBS+scorr proof。各前缀的 proved relations 取并集，因此增加 wave 不会丢失较小前缀已经建立的证明。
+5. `-t` all-candidate 每 wave 把当前全部合法 frontier 加入 portfolio，发现结束后只对完整集合执行一次 combined proof。`q=0` 的超宽 class 在有限预算下另保留 primary q=1 portfolio 作为 QoR fallback，再与完整集合的 proved relations 取并集。
+6. 每次 combined proof 先用 CBS 分类组合恒真关系；未由 CBS 解决的关系进入标准 scorr BMC/refinement/induction。CBS-proved relations 仍作为 induction helpers 留在同一个 speculative hypothesis 中，但不计作 sequential obligations。
+7. correspondence 必须约束真实 physical root 和 candidate endpoints，使关系连接真实 next-state fanout。只有 free PI endpoint 使用功能等价的 proof proxy；不能对内部 root/candidate 使用无 fanout 的 `x&1` 隔离节点。
+8. 所有 prefix/full proof 完成后，对 proved 并集按正确的动态 marginal MFFC 做一次 root-major 虚拟选择。动态 MFFC 使用临时 deref/ref，正确处理 reconvergence，并把已 `Covered` 节点移除的 fanin 引用计入后续 kill-set；candidate support、`Used` 和显式 boundary 是停止点。
+9. 对最终 `SELECTED` 列表执行一次 topological bundle duplication、combinational cleanup/normalize 和 exact-gain audit。cleanup 保留 register boundary；`exact-gain` 必须严格等于最终 AND before/after 差值。`-f` 可额外启用 whole-network shadow audit。
 
-## 3. Proof-only proxy 隔离
+## 3. Correspondence endpoint 语义
 
-shared scorr 不直接 union physical endpoints。proof graph 为每个 root 建一个未结构哈希的 `root & 1` proxy，为每个非恒定 candidate 建独立 `candidate & 1` proxy；constant candidate 使用等价的 `0 & root-anchor` 独立节点（constant-1 取其反相），避免 GIA 禁止两个相同 physical fanin 的断言：
+内部 AND/RO candidate 与 root 必须直接使用 physical endpoint。把二者包装成无 fanout 的 `x&1` 虽然组合等价，却切断了它们与 next-state logic 的连接，使 shared invariant 无法跨 frame 传播。
 
-- 不同 roots 永远不会因共享同一 physical divisor 发生传递合类；
-- 同一 root 的 all-candidates 共享 root proxy，因此可形成 `{root,c1,c2,...}` 大类并在同一 fixed point 中分别拆分；
-- CBS 始终使用真实 physical root/replacement endpoints，proof proxy 只服务 correspondence class。
+free PI 没有 frame-to-frame definition，仍使用一个功能等价的普通 AND proxy 作为 class node；常量由 GIA constant endpoint直接处理。多个 candidate 属于同一 root 时共享 physical root class，CBS-proved relations也保留在该 class 中作为 induction helpers。
 
 ## 4. Candidate 与 resub 语义
 
@@ -53,11 +51,11 @@ shared scorr 不直接 union physical endpoints。proof graph 为每个 root 建
 
 constant 和 existing 只由 direct generator 产生。direct 先检查两个常量，再在当前 TFI divisor pool 中检查 exact literal 的两个极性。build-only resub 顶层禁止返回 zero-gate existing，以免与 direct 重复；exact literals 仍保留为递归构造叶子。
 
-当前 root 主线只有一条 divisor route：从 root 按 TFI 距离做 BFS，遍历 MFFC 内部但不把 MFFC 节点当 divisor，从而优先取得 MFFC boundary 及其上游 support。`K` 是 BFS 深度，`B` 是物理 divisor 数；正反两个 literal 不重复占 B。TFI 的拓扑关系同时排除了 root TFO，且每个 divisor 的 CI support 是 root TFI support 的子集。旧 boundary/local/global/mixed helper 仍留在冻结兼容代码中，当前 root discovery 不调用。
+当前 root 主线只有一条 divisor route：从 root 按 TFI 距离做 BFS。用于路由的 exclusion mask 只沿初始 `ref==1` exclusive tree 前进，它不是 MFFC 计算；reconvergent 的较早内部节点仍是合法 divisor，因为 replacement support 会把它保活，随后 exact dynamic MFFC 会以该 support 为 boundary 重算真实 gain。`K` 是 BFS 深度，`B` 是物理 divisor 数；正反两个 literal 不重复占 B。TFI 拓扑关系排除了 root TFO。旧 boundary/local/global/mixed helper 留在冻结兼容代码中，当前 root discovery 不调用。
 
 每次 root discovery 使用有限 stateful iterator。论文式顺序为：constant、exact TFI literal、1-gate unate cover、小型 2/3-gate exact template、recursive unate/binate greedy decomposition。unate literal 和 pair 都按 ON coverage/residual reduction 降序；binate ranking 已启用。`Known` 对 canonical recipe 做跨 wave 去重；只有尚未送入 SEQ 的有效 Build 才占 q slot，`TRIED_SEQ`、proved 或结构失效的候选都会释放槽位。达到 q 后本 wave 停止，下一 wave 从确定性顺序中跳过 Known recipe，补入不同的新候选。
 
-带极性 coverage 排序后，exact pair frontier 保持 B-wide，因此 gate-gate 最多在两个 B-wide pair 列表上枚举，不会退化成物理 divisor pair 的 `O(B^4)` Cartesian search。greedy choice 每次从不可变 OFF/ON 和清空后的 pair scratch 重建，经 recipe 去重后同样保持 B-wide；iterator 另有 `iGreedy < B` 的结构性终止不变量。`q` 是返回 frontier 限制，不是 wall-clock 超时；底层 iterator 本身仍是有限的，便于 exhaustion 与 repair。
+带极性 coverage 排序后，exact pair frontier 保持 B-wide，因此 gate-gate 最多在两个 B-wide pair 列表上枚举，不会退化成物理 divisor pair 的 `O(B^4)` Cartesian search。greedy choice 每次从不可变 OFF/ON 和清空后的 pair scratch 重建，经 recipe 去重后同样保持 B-wide；iterator 另有 `iGreedy < B` 的结构性终止不变量。`q` 是返回 frontier 限制，不是 wall-clock 超时。`q=0` 运行有限 iterator 直到 exhaustion；`q>0` 达到 frontier 宽度后记录 `capped`，由后续 wave 继续分页。
 
 iterator 热路径只检查 recipe shape。recipe 映射到 root candidate 并 canonicalize 后，用不可变 OFF/ON truth tables 做一次完整语义审计；若 canonical recipe 意外改变函数，则恢复 raw recipe 并审计 raw relation。结构错误或两个版本都不满足 relation 的 recipe 会被计数并跳过，而不是触发 assertion。verifier 明确接受并仿真 `x&x`、`x&!x` 这类待 canonicalize 的退化 AND，不会因相同 physical fanin 终止 ABC。候选宇宙受 `B/K/N/q`、合法 include、有限模板、canonicalization 和有限 greedy diversity共同约束，不枚举所有 AIG。
 
@@ -83,12 +81,12 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 常用 root 选项：
 
 - `-P root`：显式选择默认 root scope；
-- `-t`：top-1 与 all-candidate sequential 模式切换，默认 top-1；
+- `-t`：切换为 all-candidate；默认 top-1 按 wave 扩展并证明累计排序前缀；
 - `-F/-C/-S`：scorr depth、每 obligation 冲突限和 refinement step 限；
 - `-N`：单 recipe 最大 gate 数；
 - `-B/-K`：TFI divisor pool 的物理节点宽度与 BFS 深度，默认 `B=16, K=8`；
-- `-q`：每个 root 当前保留的 canonical Build candidates，范围 1..64，默认 8；达到 q 后停止 iterator，不枚举余下 recipe；
-- `-w`：在同一 immutable snapshot 上执行的 candidate waves，范围 1..64；每轮只证明尚未尝试的 frontier；
+- `-q`：每个 root 当前保留的 canonical Build candidates；`0` = unlimited/exhaust iterator，`1..64` = 有限 frontier，默认 8；
+- `-w`：同一 immutable snapshot 上的有序 candidate waves，范围 1..64；top-1 每 wave 扩展并重证累计前缀，all-candidate 用它为有限 q 分页；
 - `-b`：CBS 每 cube 冲突限；
 - `-l/-x`：关闭 existing/build generator；
 - `-p`：打印 root-only profile；
@@ -121,10 +119,11 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 - 六格 selected 之和等于 bundle 大小；
 - 六格 marginal gain 之和不大于 cleanup exact gain；
 - cleanup exact gain 等于最终 AND 数差；
-- sequential `seeded == proved + split + unknown`；
+- sequential proof-event `candidates == proved + split + unknown`；
+- `seeded == candidates + comb-helper-seeds`；
 - stateful resub `initialized == exhausted + capped`。
 
-all-candidate 强度/规模指标包括 seeded/proved/split/unknown relations、roots、最大/平均 class size、fixed-point rounds 和 repair epochs。另打印 iterator initialized/next/exhausted/capped/invalid 与三类 dirty 计数。标准回归要求 `invalid=0`；生产输入即使触发防御审计也会跳过坏 recipe，而不是中止整个运行。
+top-1 会在多个累计前缀中重复提交早期 relation，因此 `candidates/seeded/proved/split/unknown/roots` 是 proof-event 计数，而不是 unique relation 数；all-candidate 的完整 proof 通常每个 relation 一次，`q=0` primary fallback 会额外产生一组 proof events。独立的 `cumulative portfolio` 行报告 `unique-candidates/unique-proved/proof-calls`。另打印 iterator initialized/next/exhausted/capped/invalid 与三类 dirty 计数。标准回归要求 `invalid=0`。
 
 ## 7. 回归与验证
 
@@ -144,29 +143,28 @@ test/run_stran_regression.sh
 
 - `stran_comb.blif`：COMB existing/build discovery 与 exact gain；
 - `stran_seq.blif`、`stran_seq_only.blif`：代表性 sequential、top-1/all-candidate、完整 fixed point；
-- `stran_proxy_roots.blif`：两个 roots 共享 physical endpoint 但 class-max 必须为 2；
+- `stran_proxy_roots.blif`：两个 roots 的 PI endpoint proxy 与 physical-root correspondence；
 - `stran_polarity.blif`：关闭 existing 后必须由 complemented-AND BUILD 实现 OR；
-- `-q 1`：iterator 必须出现 `capped>0`，并满足 `initialized == exhausted + capped`；
-- `&stran_resub_test`：直接断言 `T=1101,d=1000` 的 literal 极性、binate pair 的 OFF/ON 条件、`x&x`/`x&!x` verifier 安全性、public iterator 的 B-wide 有限 exhaustion，以及常量/重复/absorption canonicalization；
+- `-q 1`：iterator 必须出现 `capped>0`；`-q 0` 必须接受并以 `capped=0` exhaustion；两者都满足 `initialized == exhausted + capped`；
+- `&stran_resub_test`：除 iterator、极性、canonicalization 外，还检查 reconvergent deref/ref MFFC、candidate boundary、Covered 引用扣除和 Used cutpoint；
 - `stran_dirty.blif`：virtual selection 后的 root-free/MFFC dirty；
-- `stran_constant.blif`：sequential constant candidate 的 proof proxy、选择、AND cleanup 与 register-boundary 保持；
+- `stran_constant.blif`：sequential constant endpoint、选择、AND cleanup 与 register-boundary 保持；
 - `stran_combinational_noop.blif`：无 register 输入返回成功 no-op；
-- `-S 0`：全局提前停止必须输出 UNKNOWN，不能 selected；`-w 2` 必须推进到不同 relation，不能重复 wave-1 candidate；`gen26 -C 1` 必须在内部存在 UNKNOWN obligation 时仍逐类产出 proved/split，并通过 `dsec`；
+- `-S 0`：全局提前停止必须输出 UNKNOWN，不能 selected；`-w 2` 必须加入不同 relation，并在第二次 proof 中重证累计前缀；`gen26 -C 1` 必须在内部存在 UNKNOWN obligation 时仍逐类产出 proved/split，并通过 `dsec`；
 - deprecated 参数组合：`-L/-z/-i/-u/-s` 结果语义不变并打印 ignored，同时 `-q/-w` 仍改变 Build frontier/wave；
 - profile parser：schema=3 的时间桶、六格、sequential 分类、exact gain 与 iterator accounting 一致。
 
 每个回归在变换前后写 AIG，并用 `dsec` 检查 sequential equivalence。
 
-真实 benchmark smoke 使用与批处理脚本一致的链路：原始 AIG 写为 base，执行 `&scorr -C 100`，再执行 `&stran -C 100 -b 100 -P root -p -N 10 -B 16 -K 8 -q 8 -r`，最后对 base/final 运行 `dsec`。当前 `loopv3.aig` 验证结果：scorr 后 1298 AND roots，root-only profile 约 0.52 秒，Build generated/submitted/proved/selected 为 `2161/2147/9/9`，iterator `initialized=1996, next=16531, exhausted=1769, capped=227, invalid=0`，最终 `1298 -> 1282`，`dsec` 等价。`q=1` 对照生成 293 个 COMB Build，约 0.50 秒，最终 gain 同为 16；这证明 q 改变返回 frontier，而 repair 不再把 q 个一批偷偷枚举到 exhaustion。
+当前 `loopv3.aig` reference 使用 `-C 500 -b 500 -P root -p -V 0 -N 10 -B 64`。`-t -q 0 -w 1` 穷尽 1397 个 root iterator（`capped=0`），完整 portfolio 加 primary fallback 后得到 `1397 -> 862`、`exact-gain=535`；有限 `-t -q 64 -w 1` 与 top-1 `-q 8 -w 5` 同样得到 `1397 -> 862`。三种配置都以 `&read` 后写出的 canonical baseline 执行 `dsec -n`。
 
-同参数下，`simple_alu.aig` 为 `83 -> 80`，`fib_05.aig` 为 `649 -> 649`，`gen26.aig` 为 `170 -> 162`；三者均 `invalid=0` 并通过 `dsec`。
-
-批处理脚本用同一 loopv3 单例实际生成 CSV：`profile_schema=3`，全部 `profile_*` 字段均为数值，`profile_resub_enum_sec`、CBS/scorr 分桶、六格 Build 计数和 `final_and_gain=16` 均被正确采集。
+修正 deref/ref MFFC 后，所选 68 个 root 的 marginal AND gain 之和也是 535，与 cleanup exact gain 一致；最终统计仍以 `exact-gain == AND-before - AND-after` 为准。
 
 ## 8. 明确保留的风险
 
-- all-candidate 仍可能因 direct exact literals 和 `q` 个 Build candidates 形成较宽 proof class；可用较小 q 控制规模，但可能牺牲候选召回。
+- all-candidate 仍可能形成很宽的 speculative class；`q=0` 会穷尽 iterator，并用 primary q=1 proof 保护有限预算下的 QoR，但完整 batch 的内存和 fixed-point 成本仍可能较高。
 - discovery 依赖 reset-reachable samples 只影响候选召回/排序，不影响 correctness；所有 selected 都必须有 CBS 或完整 scorr proof。
-- 每个 wave 有一次 shared scorr fixed point；`Known/TRIED_SEQ` 保证 relation 不重复提交。当前实现为保持生成器简单，会在新 wave 重新初始化有限 iterator 并跳过 Known recipe，因此候选不重复，但深 wave 仍可能有确定性前缀重扫开销。
+- top-1 每个 wave 重证累计前缀并对 proved relation 取并集；这是结果单调性保护，也意味着早期 relation 会产生重复 proof events。有限 q 的新 wave 会重新初始化 iterator 并跳过 Known recipe，深 wave 仍有确定性前缀重扫开销。
+- exact dynamic MFFC 当前为每次查询复制 reference snapshot，再执行带 Covered/Used/boundary 的 deref/ref；它优先保证正确性，在更大设计上可能成为后续可优化的时间/内存热点。
 - `B` 限制进入构造器的物理 divisor，不等于实际可形成的 literal/pair 数；include/coverage 会显著缩小合法集合，但没有正 marginal-gain candidate 的 root 仍可能走到 iterator exhaustion。即使有 q，resub enumeration 仍可能是主要运行时间，应同时观察 `next/exhausted/capped` 与时间桶。
 - `window/output` 是冻结兼容代码，不能用本文的 root-only保证推断其性能或 profile 语义。

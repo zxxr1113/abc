@@ -42230,7 +42230,7 @@ static int Abc_CommandAbc9StranResubTest( Abc_Frame_t * pAbc,
     }
     if ( !Cec_TranRootSelfTest() )
         return 1;
-    Abc_Print( 1, "stran resub iterator/polarity/canonicalization self-test: PASS\n" );
+    Abc_Print( 1, "stran resub iterator/polarity/canonicalization/MFFC self-test: PASS\n" );
     return 0;
 }
 
@@ -42398,7 +42398,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'q':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootConstrTop < 1 ||
+            if ( pPars->nRootConstrTop < 0 ||
                  pPars->nRootConstrTop > 64 ) goto usage;
             break;
         case 'b':
@@ -42527,7 +42527,7 @@ usage:
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : physical nodes in the local divisor pool (0 = all; both phases are free) [default = %d]\n", pPars->nConstrBaseMax );
-    Abc_Print( -2, "\t-q num : canonical Build candidates retained per root (1..64) [default = %d]\n", pPars->nRootConstrTop );
+    Abc_Print( -2, "\t-q num : canonical Build candidates retained per root (0 = unlimited, 1..64) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
     Abc_Print( -2, "\t-P str : proof scope: root/gate; window and output/po-ri are frozen compatibility paths [default = root]\n" );
     Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
@@ -42544,7 +42544,7 @@ usage:
     Abc_Print( -2, "\t-Y num : total conflicts per low contextual call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
     Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-m num : MFFC selecting root existing admission/context high budget [default = %d]\n", pPars->nHardMffc );
-    Abc_Print( -2, "\t-w num : candidate waves; each wave advances to untried root candidates (1..64) [default = %d]\n", pPars->nRootWaves );
+    Abc_Print( -2, "\t-w num : ordered candidate waves; top-1 re-proves each cumulative prefix (1..64) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
@@ -42559,7 +42559,7 @@ usage:
     Abc_Print( -2, "\t-s     : deprecated compatibility toggle; root always runs COMB then SEQ\n" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
-    Abc_Print( -2, "\t-t     : toggle sequential all-candidate mode (off = top-1) [default = %s]\n", pPars->fSeqAllCands? "all-candidate": "top-1" );
+    Abc_Print( -2, "\t-t     : toggle cumulative all-candidate mode (off = top-1 prefix waves) [default = %s]\n", pPars->fSeqAllCands? "all-candidate": "top-1" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
