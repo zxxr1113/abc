@@ -320,70 +320,34 @@ extern Gia_Man_t *   Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * p
 extern void          Cec_ManSodcSetDefaultParams( Cec_ParSodc_t * pPars );
 extern Gia_Man_t *   Cec_ManSodcSynthesis( Gia_Man_t * pAig, Cec_ParSodc_t * pPars );
 
-// Sequential Direct root-resubstitution parameters.  The active command uses
-// scorr's proof machinery for root relations; legacy SODC and frozen
-// window/output compatibility paths are not current development targets.
+// Sequential Direct root-resubstitution parameters.
 typedef struct Cec_ParTran_t_ Cec_ParTran_t;
-enum {
-    CEC_TRAN_PROOF_ROOT = 0,
-    // Frozen compatibility scopes.  Current &stran development, QoR work,
-    // and algorithm review target CEC_TRAN_PROOF_ROOT only.
-    CEC_TRAN_PROOF_WINDOW,
-    CEC_TRAN_PROOF_OUTPUT
-};
 struct Cec_ParTran_t_
 {
     int              nFrames;       // BMC/induction depth in the scorr oracle
     int              nBTLimit;      // conflict limit per proof obligation
     int              nStepsMax;     // scorr induction refinement limit
-    int              nCandMax;      // contextual proof attempts (0 = unlimited; root scope ignores this)
-    int              nDivsMax;      // local existing divisors per victim
     int              nConstrMax;    // TFI depth used to collect local divisors (0 = complete TFI)
     int              nConstrBaseMax;// physical nodes in the local divisor pool (0 = all)
     int              nDepNodesMax;  // maximum AIG nodes in a dependency recipe (1..100)
-    int              nVictimsMax;   // legacy SODC leaf-set parameter (ignored by Direct)
-    int              nProfileTop;   // legacy SODC target-profile limit (ignored by Direct)
-    int              nChangesMax;   // accepted transactions (0 = unlimited; Direct has no CLI cap)
-    int              nGainMin;      // minimum AND+register gain to prove
+    int              nGainMin;      // minimum local structural gain admitted to discovery
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
-    int              nCexFrames;    // BMC depth used to recover a rejected-candidate witness (0 = off)
-    int              nCexMax;       // persistent witness traces injected into each simulation batch
-    int              nCexBatch;     // witnesses accumulated before appending one signature block
-    int              nProofWindow;  // TFO depth used by Direct window proof
-    int              nProofScope;   // root is active; window/output are frozen compatibility paths
-    int              nStrictPct;    // compatibility option (ignored)
-    int              nLowUnknownMax;// UNKNOWNs per low-value contextual root/lane
-    int              nUnknownMax;   // consecutive UNKNOWNs before a root/lane cooldown (0 = disabled)
-    int              nRootBatch;    // deprecated/ignored by the root-only pipeline
     int              nRootWaves;    // distinct candidate frontiers on one immutable snapshot
     int              nRootConstrTop;// canonical Build candidates retained per root (1..64)
-    int              nCombBTLimit; // root CBS conflict limit per cube
-    int              nFreeWords;   // 64-bit independent PI/RO words for combination screening
-    int              nFreeCexMax;  // CBS free-state counterexamples retained per proof batch
-    int              nScoutBTLimit; // low context conflict limit per proof obligation
-    int              nScoutConfTotal;// low context total conflict limit (0 = unlimited)
-    int              nHardConfTotal;// high context total conflict limit (0 = unlimited)
-    int              nHardGain;     // exact gain selecting the context high proof budget
-    int              nRootGainMin;  // root-scope gate: local MFFC gain (OR with nHardMffc; 0 = off)
-    int              nHardMffc;     // MFFC selecting root admission/context high budget
-    int              fUseDirect;    // search Direct root substitutions
-    int              fUseSodc;      // legacy selector; must remain zero on Direct-only branch
-    int              fUseExisting;  // enable global existing-literal Direct candidates
-    int              fUseResubZero; // deprecated/ignored for root: direct generator owns zero-gate recipes
+    int              nCombBTLimit;  // root CBS conflict limit per cube
+    int              nFreeWords;    // 64-bit independent PI/RO words for combination screening
+    int              nFreeCexMax;   // CBS free-state counterexamples retained per proof batch
+    int              nHardConfTotal;// whole-miter shadow-audit conflict cap
+    int              fUseExisting;  // enable exact earlier-literal candidates
+    int              fUseMffcDivs;  // allow exact-MFFC internal nodes in the root divisor pool
     int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
-    int              fRootProgressive;// deprecated/ignored by root-only pipeline
-    int              fRootExhaustive;// root scope: disable discovery/value admission filters
-    int              fRootStopLegacy;// deprecated/ignored by the root-only pipeline
-    int              fRootStopProved;// deprecated/ignored: root stops after first CBS proof
-    int              fRootSplitStages;// deprecated/ignored: root always uses COMB barrier then SEQ
+    int              fRootExhaustive;// disable the local-gain discovery gate
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
-    int              nRootStage;    // frozen compatibility path only
     int              fSeqAllCands;  // root SEQ mode: 0=top-1, 1=all canonical candidates
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
-    int              fVerbose;
 };
 extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );
 extern Gia_Man_t *   Cec_ManSequentialTransduction( Gia_Man_t * pAig, Cec_ParTran_t * pPars );

@@ -42238,10 +42238,10 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     Cec_ParTran_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
-    int c, fSeenSodc = 0, fSeenDeprecatedRoot = 0;
+    int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSTNDGQWKBMPAERIJUHLVOXYZmqwbaecdoxlrzsgiftpuvh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwbaeMxclrgftph")) != EOF )
     {
         switch ( c )
         {
@@ -42260,20 +42260,10 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nStepsMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nStepsMax < -1 ) goto usage;
             break;
-        case 'T':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nCandMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nCandMax < 0 ) goto usage;
-            break;
         case 'N':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nDepNodesMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nDepNodesMax < 1 || pPars->nDepNodesMax > 100 ) goto usage;
-            break;
-        case 'D':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nDivsMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nDivsMax < 0 ) goto usage;
             break;
         case 'G':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42301,94 +42291,19 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( pPars->nConstrBaseMax < 0 ) goto usage;
             break;
         case 'M':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nVictimsMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nVictimsMax < 1 || pPars->nVictimsMax > 2 ) goto usage;
+            pPars->fUseMffcDivs ^= 1;
             break;
         case 'P':
             if ( globalUtilOptind >= argc ) goto usage;
-            if ( !strcmp(argv[globalUtilOptind], "root") ||
-                 !strcmp(argv[globalUtilOptind], "gate") )
-                pPars->nProofScope = CEC_TRAN_PROOF_ROOT;
-            else if ( !strcmp(argv[globalUtilOptind], "window") )
-                pPars->nProofScope = CEC_TRAN_PROOF_WINDOW;
-            else if ( !strcmp(argv[globalUtilOptind], "output") ||
-                      !strcmp(argv[globalUtilOptind], "po-ri") )
-                pPars->nProofScope = CEC_TRAN_PROOF_OUTPUT;
-            else
+            if ( strcmp(argv[globalUtilOptind], "root") &&
+                 strcmp(argv[globalUtilOptind], "gate") )
                 goto usage;
             globalUtilOptind++;
-            break;
-        case 'A':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nProofWindow = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nProofWindow < 0 ) goto usage;
-            break;
-        case 'E':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nCexFrames = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nCexFrames < 0 ) goto usage;
-            break;
-        case 'R':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nCexMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nCexMax < 0 ) goto usage;
-            break;
-        case 'H':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nCexBatch = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nCexBatch < 1 || pPars->nCexBatch > 64 ) goto usage;
-            break;
-        case 'I':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nStrictPct = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nStrictPct < 0 || pPars->nStrictPct > 100 ) goto usage;
-            break;
-        case 'J':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nLowUnknownMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nLowUnknownMax < 0 ) goto usage;
-            break;
-        case 'U':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nUnknownMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nUnknownMax < 0 ) goto usage;
-            break;
-        case 'L':
-            fSeenDeprecatedRoot = 1;
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootBatch = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootBatch < 0 ) goto usage;
-            break;
-        case 'V':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nHardGain = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nHardGain < 0 ) goto usage;
-            break;
-        case 'O':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootGainMin = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootGainMin < 0 ) goto usage;
-            break;
-        case 'X':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nScoutBTLimit = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nScoutBTLimit < 0 ) goto usage;
-            break;
-        case 'Y':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nScoutConfTotal = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nScoutConfTotal < 0 ) goto usage;
             break;
         case 'Z':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nHardConfTotal = atoi(argv[globalUtilOptind++]);
             if ( pPars->nHardConfTotal < 0 ) goto usage;
-            break;
-        case 'm':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nHardMffc = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nHardMffc < 0 ) goto usage;
             break;
         case 'w':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42416,13 +42331,6 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nFreeCexMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nFreeCexMax < 0 ) goto usage;
             break;
-        case 'd':
-            pPars->fUseDirect = 1;
-            pPars->fUseSodc = 0;
-            break;
-        case 'o':
-            fSeenSodc = 1;
-            break;
         case 'x':
             pPars->fUseConstr ^= 1;
             break;
@@ -42432,24 +42340,8 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'l':
             pPars->fUseExisting ^= 1;
             break;
-        case 'z':
-            fSeenDeprecatedRoot = 1;
-            pPars->fUseResubZero ^= 1;
-            break;
         case 'r':
             pPars->fRootExhaustive ^= 1;
-            break;
-        case 'i':
-            fSeenDeprecatedRoot = 1;
-            pPars->fRootStopLegacy ^= 1;
-            break;
-        case 'u':
-            fSeenDeprecatedRoot = 1;
-            pPars->fRootStopProved ^= 1;
-            break;
-        case 's':
-            fSeenDeprecatedRoot = 1;
-            pPars->fRootSplitStages ^= 1;
             break;
         case 'g':
             pPars->fUseFreeSim ^= 1;
@@ -42463,37 +42355,12 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'p':
             pPars->fProfile ^= 1;
             break;
-        case 'v':
-            pPars->fVerbose ^= 1;
-            break;
         default:
             goto usage;
         }
     }
-    if ( pPars->nProofScope != CEC_TRAN_PROOF_ROOT )
-        Abc_Print( 1, "&stran: -P window/output are frozen compatibility paths; current development targets -P root only.\n" );
-    else if ( fSeenDeprecatedRoot || pPars->fUseResubZero ||
-              pPars->fRootStopLegacy || !pPars->fRootStopProved ||
-              pPars->fRootSplitStages || pPars->nRootBatch )
-        Abc_Print( 1, "&stran: -L/-z/-i/-u/-s are deprecated and ignored by the root-only pipeline.\n" );
-    if ( fSeenSodc )
-    {
-        Abc_Print( -1, "&stran: This branch implements Direct root resubstitution only; -o is unavailable.\n" );
-        return 1;
-    }
-    if ( pPars->nProofScope == CEC_TRAN_PROOF_WINDOW && pPars->nProofWindow == 0 )
-    {
-        Abc_Print( -1, "&stran: -P window requires a positive -A TFO depth.\n" );
-        return 1;
-    }
-    if ( pPars->nProofScope == CEC_TRAN_PROOF_ROOT &&
-         pPars->fRootExhaustive )
-    {
-        pPars->nRootBatch = 0;
+    if ( pPars->fRootExhaustive )
         pPars->nGainMin = 0;
-        pPars->nRootGainMin = 0;
-        pPars->nHardMffc = 0;
-    }
     if ( pAbc->pGia == NULL )
     {
         Abc_Print( -1, "&stran: There is no AIG.\n" );
@@ -42514,54 +42381,33 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSTNDGQWKBMPAERIJUHLVOXYZmwbae num] [-cdxlrzsgiftpuvh]\n" );
-    Abc_Print( -2, "\t         performs root-only Direct resubstitution (window/output are frozen)\n" );
+    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwbae num] [-P root] [-Mxclrgftph]\n" );
+    Abc_Print( -2, "\t         performs root-only sequential Direct resubstitution\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
-    Abc_Print( -2, "\t-C num : scorr/high-context conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
+    Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
-    Abc_Print( -2, "\t-T num : maximum contextual proof obligations (0 = unlimited; root is separate) [default = %d]\n", pPars->nCandMax );
     Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..100) [default = %d]\n", pPars->nDepNodesMax );
-    Abc_Print( -2, "\t-D num : existing literals retained per contextual root (root scope keeps all earlier exact matches) [default = %d]\n", pPars->nDivsMax );
     Abc_Print( -2, "\t-G num : non-exhaustive local structural-gain admission gate [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : physical nodes in the local divisor pool (0 = all; both phases are free) [default = %d]\n", pPars->nConstrBaseMax );
     Abc_Print( -2, "\t-q num : canonical Build candidates retained per root (0 = unlimited, 1..64) [default = %d]\n", pPars->nRootConstrTop );
-    Abc_Print( -2, "\t-M num : legacy SODC leaf-set option (ignored by Direct) [default = %d]\n", pPars->nVictimsMax );
-    Abc_Print( -2, "\t-P str : proof scope: root/gate; window and output/po-ri are frozen compatibility paths [default = root]\n" );
-    Abc_Print( -2, "\t-A num : TFO depth for -P window (must be positive) [default = %d]\n", pPars->nProofWindow );
-    Abc_Print( -2, "\t-E num : BMC frames for harvesting a rejected-candidate CEX (0 = off) [default = %d]\n", pPars->nCexFrames );
-    Abc_Print( -2, "\t-R num : persistent CEX traces injected into each simulation batch (0 = off) [default = %d]\n", pPars->nCexMax );
-    Abc_Print( -2, "\t-H num : CEXes accumulated before appending one signature block (1..64) [default = %d]\n", pPars->nCexBatch );
-    Abc_Print( -2, "\t-I num : compatibility option; currently ignored [default = %d]\n", pPars->nStrictPct );
-    Abc_Print( -2, "\t-J num : UNKNOWNs before low-value contextual root/lane cooldown (0 = disabled) [default = %d]\n", pPars->nLowUnknownMax );
-    Abc_Print( -2, "\t-U num : UNKNOWNs before root/high-context cooldown (0 = disabled) [default = %d]\n", pPars->nUnknownMax );
-    Abc_Print( -2, "\t-L num : deprecated compatibility input; ignored by root scope [default = %d]\n", pPars->nRootBatch );
-    Abc_Print( -2, "\t-V num : exact gain selecting the contextual high proof budget [default = %d]\n", pPars->nHardGain );
-    Abc_Print( -2, "\t-O num : root scope only: minimum local gain (OR with -m; 0 disables gate) [default = %d]\n", pPars->nRootGainMin );
-    Abc_Print( -2, "\t-X num : low contextual conflict limit per proof obligation [default = %d]\n", pPars->nScoutBTLimit );
-    Abc_Print( -2, "\t-Y num : total conflicts per low contextual call (0 = unlimited) [default = %d]\n", pPars->nScoutConfTotal );
-    Abc_Print( -2, "\t-Z num : total conflicts per high contextual call (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
-    Abc_Print( -2, "\t-m num : MFFC selecting root existing admission/context high budget [default = %d]\n", pPars->nHardMffc );
+    Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
+    Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
+    Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-w num : ordered candidate waves; top-1 re-proves each cumulative prefix (1..64) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
-    Abc_Print( -2, "\t-d     : Direct root resubstitution [default = %s]\n", pPars->fUseDirect? "yes": "no" );
     Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle exact existing-literal lookup in the TFI pool [default = %s]\n", pPars->fUseExisting? "yes": "no" );
-    Abc_Print( -2, "\t-z     : deprecated compatibility toggle; ignored by root scope\n" );
-    Abc_Print( -2, "\t-r     : toggle exhaustive root discovery (forces L/G/O/m admission gates off) [default = %s]\n", pPars->fRootExhaustive? "yes": "no" );
-    Abc_Print( -2, "\t-i     : deprecated compatibility toggle; ignored by root scope\n" );
-    Abc_Print( -2, "\t-u     : deprecated compatibility toggle; root always stops at first CBS proof\n" );
-    Abc_Print( -2, "\t-s     : deprecated compatibility toggle; root always runs COMB then SEQ\n" );
+    Abc_Print( -2, "\t-r     : toggle exhaustive root discovery (disables -G) [default = %s]\n", pPars->fRootExhaustive? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
     Abc_Print( -2, "\t-t     : toggle cumulative all-candidate mode (off = top-1 prefix waves) [default = %s]\n", pPars->fSeqAllCands? "all-candidate": "top-1" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
-    Abc_Print( -2, "\t-v     : toggle verbose candidate statistics [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;
 }
