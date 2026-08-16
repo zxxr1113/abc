@@ -3534,9 +3534,10 @@ static int Cec_TranRootConsumeProved( Gia_Man_t * p,
     return nSelected;
 }
 
-// Prove the complete bounded frontier of one immutable phase.  COMB-only
-// closure stops after CBS; the SEQ phase sends every CBS-unproved relation to
-// one shared correspondence fixed point.
+// Prove the selected frontier of one immutable phase: one candidate per root
+// by default, or the complete bounded q frontier under -t.  COMB-only closure
+// stops after CBS; the SEQ phase sends every CBS-unproved submitted relation
+// to one shared correspondence fixed point.
 static int Cec_TranRootProvePortfolio( Gia_Man_t * p,
     Cec_TranCandVec_t * pPortfolio, Cec_ParTran_t * pPars,
     Cec_TranProf_t * pProf, Cec_TranCandVec_t * pProved, int fCombOnly )
@@ -3781,15 +3782,16 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Abc_ResubPrepareManager( pSim->nSlots );
     Cec_TranDepScratchStart( &Dep, pSim->nSlots,
         pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
-    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable proof=bounded-q frontier=all selection=dynamic-max-gain candidates=%s q=%d divisor-route=TFI-only mffc-divisors=%s.\n",
+    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable proof=bounded-q frontier=%s selection=dynamic-max-gain candidates=%s q=%d divisor-route=TFI-only mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
+        pPars->fSeqAllCands ? "all" : "top-1",
         pPars->fBuildOnly ? "build-only" : "constant/existing/build",
         pPars->nRootConstrTop,
         pPars->fUseMffcDivs ? "on" : "off" );
 
     // One pass owns one immutable snapshot.  Discover at most q Build
-    // candidates per root once, prove the complete bounded frontier, commit,
-    // and discard every object-indexed cache before the caller rebuilds.
+    // candidates per root once, prove its top-1 or complete bounded frontier,
+    // commit, and discard every object-indexed cache before caller rebuilds.
     {
         abctime clkWave = Abc_Clock();
         clk = Abc_Clock();
@@ -3814,7 +3816,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         }
         clk = Abc_Clock();
         Cec_TranRootPrepareSeqFrontier( p, pRoots, nRoots, &Known,
-            pCovered, pUsed, pMffc, vMffc, vSupport, 1, &Seq, &Prof );
+            pCovered, pUsed, pMffc, vMffc, vSupport,
+            pPars->fSeqAllCands, &Seq, &Prof );
         Prof.timeRootRefresh += Abc_Clock() - clk;
         Prof.nRootWaveSubmitted[0] += Seq.nSize;
         for ( r = 0; r < Seq.nSize; r++ )
@@ -3901,8 +3904,6 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     int nSeqPasses = 0, nSeqCommits = 0;
     if ( pPars->fRootExhaustive )
         pPars->nGainMin = 0;
-    if ( pPars->fSeqAllCands )
-        Abc_Print( 1, "stran-root: -t is redundant in round mode; every bounded q frontier is proved.\n" );
     for ( iRound = 0; iRound < pPars->nRootWaves; iRound++ )
     {
         int nBefore, nAfter;

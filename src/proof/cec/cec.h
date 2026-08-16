@@ -345,7 +345,7 @@ struct Cec_ParTran_t_
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fRootExhaustive;// disable the local-gain discovery gate
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
-    int              fSeqAllCands;  // compatibility toggle; bounded frontier is always proved
+    int              fSeqAllCands;  // per phase/root proof frontier: 0=top-1, 1=all q candidates
     int              fBuildOnly;    // suppress constant/existing candidates
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles

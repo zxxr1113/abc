@@ -31,9 +31,9 @@
 
 1. round 开始于上一次 commit 后的 GIA。先进入 COMB closure；每个 COMB pass 都重新建立 simulation/signature、root/MFFC、divisor pool 和 candidate frontier。
 2. 每个 root 一次性生成最多 `q` 个 canonical Build candidates；`q=0` 穷尽该 root 的有限 iterator。默认同时生成 constant/existing；`-y` 完全跳过 direct generator，只研究 Build。
-3. 当前有界 frontier 全部进入 CBS batch。CBS 在任意 PI/RO 状态上证明组合恒真的 relation；按动态 max-gain greedy 选择所有仍合法的正 gain relation，并立即 commit/cleanup。
+3. 当前有界 frontier 按 `-t` 形成 proof batch：默认每个 root 只提交当前最高优先级的 1 个 relation；打开 `-t` 后提交该 root 当前全部合法的 `q` frontier。CBS 在任意 PI/RO 状态上证明组合恒真的 relation；按动态 max-gain greedy 选择所有仍合法的正 gain relation，并立即 commit/cleanup。
 4. 只要 COMB commit 使 AND 数下降，就在新 GIA 上重建并再跑一个 COMB pass；无下降时 COMB closure 到达 fixed point。
-5. 随后在 COMB-closed GIA 上重新发现同样的有界 frontier并再次 CBS screen。未由 CBS 证明的 relation 一次性进入 shared scorr BMC/refinement/induction；CBS-proved relation 仍可作为 induction helper，但不计作 sequential obligation。
+5. 随后在 COMB-closed GIA 上重新发现同样的有界 frontier，按相同 top-1/all 语义再次 CBS screen。未由 CBS 证明的 relation 一次性进入 shared scorr BMC/refinement/induction；CBS-proved relation 仍可作为 induction helper，但不计作 sequential obligation。
 6. COMB/SEQ proved relation 的提交都使用同一个全局 max-gain greedy：每步重算所有剩余 candidate 的动态 marginal gain，选择最大者，局部更新 live references 和 `Covered/Used`，直到没有正 gain candidate。gain 相同时依次用动态 MFFC、reverse topology 和稳定 candidate heuristic 打破平局。
 7. SEQ phase 末尾立即 bundle duplication、cleanup、exact-gain audit 和 commit。若 AND 数下降，下一 round 从新图重新开始 COMB closure；若无下降，同一图再次发现只会得到相同有界 frontier，因此提前终止。
 8. correspondence 必须约束真实 physical root 和 candidate endpoints，使关系连接真实 next-state fanout。只有 free PI endpoint 使用功能等价的 proof proxy；不能对内部 root/candidate 使用无 fanout 的 `x&1` 隔离节点。
@@ -81,7 +81,7 @@ root 和 divisor 都预计算 CI support。CI overlap 位于 coverage/residual �
 常用 root 选项：
 
 - `-P root`：显式选择默认 root scope；
-- `-t`：兼容开关；round 模式始终证明当前有界 `q` frontier，因此该开关不再改变算法并会打印提示；
+- `-t`：切换每个 phase、每个 root 的 proof frontier；默认 top-1，打开后提交当前全部合法的 `q` candidates；
 - `-F/-C/-S`：scorr depth、每 obligation 冲突限和 refinement step 限；
 - `-N`：单 recipe 最大 gate 数；
 - `-B/-K`：TFI divisor pool 的物理节点宽度与 BFS 深度，默认 `B=16, K=8`；
@@ -160,7 +160,7 @@ test/run_stran_regression.sh
 
 ## 8. 明确保留的风险
 
-- 当前有界 frontier 会一次性进入同一个 speculative batch；`q=0` 仍可能形成很宽的 class，增加 temporary GIA/SRM、冲突和 fixed-point 成本。round commit 会缩小下一张图，但不能降低当前超宽 batch 的成本。
+- `-t` 会让当前有界 frontier 一次性进入同一个 speculative batch；配合 `q=0` 仍可能形成很宽的 class，增加 temporary GIA/SRM、冲突和 fixed-point 成本。round commit 会缩小下一张图，但不能降低当前超宽 batch 的成本。
 - discovery 依赖 reset-reachable samples 只影响候选召回/排序，不影响 correctness；所有 selected 都必须有 CBS 或完整 scorr proof。
 - 有限 `q` 可能在某一 snapshot 上截断较深 recipe；只有发生 commit 才会启动下一 round，因此不会把 `w` 当成无结构变化时的 iterator 分页。要提高召回应直接增大 `q`，再用适中的 `w` 捕获 commit 后出现的新机会。
 - discovery/dirty refresh 的 exact dynamic MFFC 仍为每次查询复制 reference snapshot；post-proof selection 已改为一份 live refs 加局部 fanin-ref 更新，不复制或重建 GIA。大 proved pool 上剩余热点是每轮扫描所有候选并执行可逆 deref/ref，而不是 reference snapshot 的全图复制。

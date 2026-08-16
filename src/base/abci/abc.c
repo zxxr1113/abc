@@ -42409,7 +42409,7 @@ usage:
     Abc_Print( -2, "\t-r     : toggle exhaustive root discovery (disables -G) [default = %s]\n", pPars->fRootExhaustive? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
-    Abc_Print( -2, "\t-t     : compatibility toggle; round mode always proves its bounded q frontier [default = %s]\n", pPars->fSeqAllCands? "on": "off" );
+    Abc_Print( -2, "\t-t     : toggle per-root proof frontier: top-1/all current q candidates [default = %s]\n", pPars->fSeqAllCands? "all": "top-1" );
     Abc_Print( -2, "\t-y     : toggle Build-only discovery (suppress constant/existing) [default = %s]\n", pPars->fBuildOnly? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );

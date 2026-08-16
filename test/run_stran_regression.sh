@@ -69,26 +69,28 @@ grep -q 'selection=dynamic-max-gain candidates=' "$tmp_dir/comb.log"
 grep -Eq 'stran-root commit selection: policy=dynamic-max-gain initial-proved=[1-9][0-9]* initial-positive=[1-9][0-9]* initial-max-gain=([1-9][0-9]*) first-gain=\1 rounds=[1-9][0-9]* gain-evals=[1-9][0-9]*' "$tmp_dir/comb.log"
 
 run_case seq_frontier test/stran_seq_only.blif ""
-grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_frontier.log"
+grep -q 'frontier=top-1' "$tmp_dir/seq_frontier.log"
+grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=1 split=0 unknown=0 roots=1 class-max=2' "$tmp_dir/seq_frontier.log"
 grep -q '^  SEQ CONSTANT 0 0 0 0 0 0$' "$tmp_dir/seq_frontier.log"
-grep -q '^  SEQ EXISTING 0 2 2 1 1 0$' "$tmp_dir/seq_frontier.log"
+grep -q '^  SEQ EXISTING 0 1 1 1 1 0$' "$tmp_dir/seq_frontier.log"
 grep -q 'stran-root round commit: round=1 phase=seq AND=1->0 gain=1' "$tmp_dir/seq_frontier.log"
 
 run_case seq_all test/stran_seq_only.blif "-t"
+grep -q 'frontier=all' "$tmp_dir/seq_all.log"
 grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_all.log"
 
-# Round mode proves the whole bounded q frontier.  A round with no commit is
-# terminal because rebuilding the same graph would regenerate the same set.
+# Top-1 proves one highest-priority relation per root.  A round with no commit
+# is terminal because rebuilding the same graph would regenerate the same set.
 run_case seq_order_frontier test/stran_seq_order.blif "-S 0"
 grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_frontier.log"
-grep -q '^  SEQ EXISTING 0 2 0 0 0 0$' "$tmp_dir/seq_order_frontier.log"
-grep -q 'candidates=3 seeded=3 comb-helper-seeds=0 proved=0 split=0 unknown=3' "$tmp_dir/seq_order_frontier.log"
+grep -q '^  SEQ EXISTING 0 0 0 0 0 0$' "$tmp_dir/seq_order_frontier.log"
+grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_order_frontier.log"
 
 run_case seq_order_round_stop test/stran_seq_order.blif "-S 0 -w 2"
 grep -q 'stran-root rounds summary: configured=2 completed=1 .*seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_order_round_stop.log"
 
 run_case seq_unknown test/stran_seq_only.blif "-S 0"
-grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=0 split=0 unknown=2' "$tmp_dir/seq_unknown.log"
+grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_unknown.log"
 grep -q 'selected-roots=0 marginal-AND=0 cleanup-exact-AND=0 AND=1->1' "$tmp_dir/seq_unknown.log"
 
 run_case seq_round_stop test/stran_seq_only.blif "-S 0 -w 2"
@@ -104,7 +106,7 @@ grep -Eq 'stran-root sequential relations: candidates=[0-9]+ seeded=[0-9]+ comb-
 grep -q 'Networks are equivalent' "$mixed_unknown_log"
 
 run_case proxy test/stran_proxy_roots.blif ""
-grep -q 'candidates=4 seeded=4 comb-helper-seeds=0 proved=4 split=0 unknown=0 roots=2 class-max=3' "$tmp_dir/proxy.log"
+grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=2 class-max=2' "$tmp_dir/proxy.log"
 
 run_case polarity test/stran_polarity.blif "-l"
 grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/polarity.log"
