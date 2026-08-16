@@ -42241,7 +42241,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwbaeMxclrgftph")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwbaeMxclrgftpyh")) != EOF )
     {
         switch ( c )
         {
@@ -42352,6 +42352,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 't':
             pPars->fSeqAllCands ^= 1;
             break;
+        case 'y':
+            pPars->fBuildOnly ^= 1;
+            break;
         case 'p':
             pPars->fProfile ^= 1;
             break;
@@ -42381,7 +42384,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwbae num] [-P root] [-Mxclrgftph]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwbae num] [-P root] [-Mxclrgftpyh]\n" );
     Abc_Print( -2, "\t         performs root-only sequential Direct resubstitution\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
@@ -42396,7 +42399,7 @@ usage:
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
-    Abc_Print( -2, "\t-w num : ordered candidate waves; top-1 re-proves each cumulative prefix (1..64) [default = %d]\n", pPars->nRootWaves );
+    Abc_Print( -2, "\t-w num : maximum rebuild/commit rounds (1..64) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
@@ -42406,7 +42409,8 @@ usage:
     Abc_Print( -2, "\t-r     : toggle exhaustive root discovery (disables -G) [default = %s]\n", pPars->fRootExhaustive? "yes": "no" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
-    Abc_Print( -2, "\t-t     : toggle cumulative all-candidate mode (off = top-1 prefix waves) [default = %s]\n", pPars->fSeqAllCands? "all-candidate": "top-1" );
+    Abc_Print( -2, "\t-t     : compatibility toggle; round mode always proves its bounded q frontier [default = %s]\n", pPars->fSeqAllCands? "on": "off" );
+    Abc_Print( -2, "\t-y     : toggle Build-only discovery (suppress constant/existing) [default = %s]\n", pPars->fBuildOnly? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;

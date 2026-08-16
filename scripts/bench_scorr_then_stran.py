@@ -245,27 +245,33 @@ def parse_stran(stdout: str) -> Dict[str, Any]:
         for metric in ("generated", "submitted", "proved", "selected"):
             match = re.search(rf"(?:^| ){metric}=(-?\d+)(?: |$)", stage_line)
             if match:
-                result[f"{stage}_{kind}_{metric}"] = int(match.group(1))
+                field = f"{stage}_{kind}_{metric}"
+                result[field] = result.get(field, 0) + int(match.group(1))
         for index, (metric, suffix) in enumerate(
             (("marginal-and", "and_gain"), ("marginal-reg", "reg_gain"))
         ):
             match = re.search(rf"(?:^| ){metric}=(-?\d+)(?: |$)", stage_line)
             if match:
                 value = int(match.group(1))
-                result[f"{stage}_{kind}_{suffix}"] = value
+                field = f"{stage}_{kind}_{suffix}"
+                result[field] = result.get(field, 0) + value
                 root_stage_gains[stage][index] += value
     if saw_root_effect:
         for stage in ("comb", "seq"):
             result[f"{stage}_stage_and_gain"] = root_stage_gains[stage][0]
             result[f"{stage}_stage_reg_gain"] = root_stage_gains[stage][1]
 
-    root_summary = next((
+    root_summaries = [
         item for item in reversed(stdout.splitlines())
         if "stran-root experiment-summary profile:" in item
-    ), "")
-    if root_summary:
-        before = re.search(r"(?:^| )and-before=(\d+)(?: |$)", root_summary)
-        after = re.search(r"(?:^| )and-after=(\d+)(?: |$)", root_summary)
+    ]
+    if root_summaries:
+        # The list is newest-first.  Round mode emits one summary per phase,
+        # so the global baseline is the oldest record, not the final pass.
+        before = re.search(
+            r"(?:^| )and-before=(\d+)(?: |$)", root_summaries[-1])
+        after = re.search(
+            r"(?:^| )and-after=(\d+)(?: |$)", root_summaries[0])
         if before and after:
             result["stage_and_before"] = int(before.group(1))
             result["stage_and_after_comb"] = (

@@ -20,16 +20,22 @@ run_case() {
     grep -q 'Networks are equivalent' "$out"
     awk '
         /^  (COMB|SEQ) (CONSTANT|EXISTING|BUILD) / {
-            rows++; selected += $6; marginal += $7
+            rows++; block_selected += $6; block_marginal += $7
         }
         /stran-root effect totals:/ {
+            total_selected = total_marginal = exact = -1
             for (i=1; i<=NF; i++) {
                 if ($i ~ /^selected-roots=/) {split($i,a,"="); total_selected=a[2]+0}
                 if ($i ~ /^marginal-AND=/) {split($i,a,"="); total_marginal=a[2]+0}
                 if ($i ~ /^cleanup-exact-AND=/) {split($i,a,"="); exact=a[2]+0}
             }
+            if (rows != 6 || block_selected != total_selected ||
+                block_marginal != total_marginal || block_marginal > exact)
+                exit 1
+            matrices++; rows = block_selected = block_marginal = 0
         }
         /stran-root sequential relations:/ {
+            seq_candidates = seeded = helpers = proved = splitn = unknown = -1
             for (i=1; i<=NF; i++) {
                 if ($i ~ /^candidates=/) {split($i,a,"="); seq_candidates=a[2]+0}
                 if ($i ~ /^seeded=/) {split($i,a,"="); seeded=a[2]+0}
@@ -38,75 +44,83 @@ run_case() {
                 if ($i ~ /^split=/) {split($i,a,"="); splitn=a[2]+0}
                 if ($i ~ /^unknown=/) {split($i,a,"="); unknown=a[2]+0}
             }
+            if (seq_candidates != proved + splitn + unknown ||
+                seeded != seq_candidates + helpers) exit 1
         }
         /stran-root resub iterator:/ {
+            initialized = exhausted = capped = invalid = -1
             for (i=1; i<=NF; i++) {
                 if ($i ~ /^initialized=/) {split($i,a,"="); initialized=a[2]+0}
                 if ($i ~ /^exhausted=/) {split($i,a,"="); exhausted=a[2]+0}
                 if ($i ~ /^capped=/) {split($i,a,"="); capped=a[2]+0}
                 if ($i ~ /^invalid=/) {split($i,a,"="); invalid=a[2]+0}
             }
+            if (initialized != exhausted + capped || invalid != 0) exit 1
         }
         END {
-            if (rows != 6 || selected != total_selected ||
-                marginal != total_marginal || marginal > exact ||
-                seq_candidates != proved + splitn + unknown ||
-                seeded != seq_candidates + helpers ||
-                initialized != exhausted + capped || invalid != 0) exit 1
+            if (matrices < 1 || rows != 0) exit 1
         }
     ' "$out"
 }
 
 run_case comb test/stran_comb.blif ""
 grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/comb.log"
+grep -q 'selection=dynamic-max-gain candidates=' "$tmp_dir/comb.log"
+grep -Eq 'stran-root commit selection: policy=dynamic-max-gain initial-proved=[1-9][0-9]* initial-positive=[1-9][0-9]* initial-max-gain=([1-9][0-9]*) first-gain=\1 rounds=[1-9][0-9]* gain-evals=[1-9][0-9]*' "$tmp_dir/comb.log"
 
-run_case seq_top1 test/stran_seq_only.blif ""
-grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=1 split=0 unknown=0 roots=1 class-max=2' "$tmp_dir/seq_top1.log"
-grep -q '^  SEQ CONSTANT 0 0 0 0 0 0$' "$tmp_dir/seq_top1.log"
-grep -q '^  SEQ EXISTING 0 1 1 1 1 0$' "$tmp_dir/seq_top1.log"
+run_case seq_frontier test/stran_seq_only.blif ""
+grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_frontier.log"
+grep -q '^  SEQ CONSTANT 0 0 0 0 0 0$' "$tmp_dir/seq_frontier.log"
+grep -q '^  SEQ EXISTING 0 2 2 1 1 0$' "$tmp_dir/seq_frontier.log"
+grep -q 'stran-root round commit: round=1 phase=seq AND=1->0 gain=1' "$tmp_dir/seq_frontier.log"
 
 run_case seq_all test/stran_seq_only.blif "-t"
 grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_all.log"
 
-# top-1 is the resub heuristic order, not a gain-first re-ranking: constant,
-# then existing, then Build.  With one wave only the constant is submitted.
-run_case seq_order_top1 test/stran_seq_order.blif "-S 0"
-grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_top1.log"
-grep -q '^  SEQ EXISTING 0 0 0 0 0 0$' "$tmp_dir/seq_order_top1.log"
-grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_order_top1.log"
+# Round mode proves the whole bounded q frontier.  A round with no commit is
+# terminal because rebuilding the same graph would regenerate the same set.
+run_case seq_order_frontier test/stran_seq_order.blif "-S 0"
+grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_frontier.log"
+grep -q '^  SEQ EXISTING 0 2 0 0 0 0$' "$tmp_dir/seq_order_frontier.log"
+grep -q 'candidates=3 seeded=3 comb-helper-seeds=0 proved=0 split=0 unknown=3' "$tmp_dir/seq_order_frontier.log"
 
-# The next wave advances to the existing literal and re-proves the cumulative
-# {constant, existing} prefix.  The first relation therefore appears in both
-# proof calls while candidate ordering remains unchanged.
-run_case seq_order_waves test/stran_seq_order.blif "-S 0 -w 2"
-grep -q '^  SEQ CONSTANT 0 2 0 0 0 0$' "$tmp_dir/seq_order_waves.log"
-grep -q '^  SEQ EXISTING 0 1 0 0 0 0$' "$tmp_dir/seq_order_waves.log"
-grep -q 'candidates=3 seeded=3 comb-helper-seeds=0 proved=0 split=0 unknown=3' "$tmp_dir/seq_order_waves.log"
+run_case seq_order_round_stop test/stran_seq_order.blif "-S 0 -w 2"
+grep -q 'stran-root rounds summary: configured=2 completed=1 .*seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_order_round_stop.log"
 
 run_case seq_unknown test/stran_seq_only.blif "-S 0"
-grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_unknown.log"
+grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=0 split=0 unknown=2' "$tmp_dir/seq_unknown.log"
 grep -q 'selected-roots=0 marginal-AND=0 cleanup-exact-AND=0 AND=1->1' "$tmp_dir/seq_unknown.log"
 
-# A submitted top-1 relation releases its frontier slot even when proof stops
-# early.  Wave two adds the other relation, then retries both as one prefix.
-run_case seq_waves test/stran_seq_only.blif "-S 0 -w 2"
-grep -q 'candidates=3 seeded=3 comb-helper-seeds=0 proved=0 split=0 unknown=3' "$tmp_dir/seq_waves.log"
-grep -q 'stran-root waves: w1=1/0/1/0/0 w2=1/0/1/0/0' "$tmp_dir/seq_waves.log"
+run_case seq_round_stop test/stran_seq_only.blif "-S 0 -w 2"
+grep -q 'stran-root rounds summary: configured=2 completed=1 .*seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_round_stop.log"
 
 # Regression for per-output UNKNOWN isolation.  With this small conflict limit,
 # standard scorr produces UNKNOWN obligations while other speculative classes
 # are still proved or split.  An UNKNOWN must never poison the complete batch.
 mixed_unknown_log="$tmp_dir/mixed_unknown.log"
-"$abc_bin" -q "&read benchmark/gen26.aig; &write $tmp_dir/mixed_unknown-before.aig; &stran -P root -p -t -q 2 -C 1 -V 0; &write $tmp_dir/mixed_unknown-after.aig; dsec $tmp_dir/mixed_unknown-before.aig $tmp_dir/mixed_unknown-after.aig" >"$mixed_unknown_log"
+"$abc_bin" -q "&read benchmark/gen26.aig; &write $tmp_dir/mixed_unknown-before.aig; &stran -P root -p -t -q 2 -C 1; &write $tmp_dir/mixed_unknown-after.aig; dsec $tmp_dir/mixed_unknown-before.aig $tmp_dir/mixed_unknown-after.aig" >"$mixed_unknown_log"
 grep -Eq 'stran-root scorr obligations: bmc=[0-9]+/[0-9]+/[1-9][0-9]*' "$mixed_unknown_log"
 grep -Eq 'stran-root sequential relations: candidates=[0-9]+ seeded=[0-9]+ comb-helper-seeds=[0-9]+ proved=[1-9][0-9]* split=[0-9]+ unknown=0' "$mixed_unknown_log"
 grep -q 'Networks are equivalent' "$mixed_unknown_log"
 
 run_case proxy test/stran_proxy_roots.blif ""
-grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=2 class-max=2' "$tmp_dir/proxy.log"
+grep -q 'candidates=4 seeded=4 comb-helper-seeds=0 proved=4 split=0 unknown=0 roots=2 class-max=3' "$tmp_dir/proxy.log"
 
 run_case polarity test/stran_polarity.blif "-l"
 grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/polarity.log"
+
+# Build-only mode must suppress direct constant/existing discovery in every
+# rebuilt phase while leaving both COMB Build and SEQ Build accounting intact.
+run_case build_only test/stran_polarity.blif "-l -y"
+grep -q 'candidates=build-only' "$tmp_dir/build_only.log"
+grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/build_only.log"
+awk '
+    /^  (COMB|SEQ) (CONSTANT|EXISTING) / {
+        for (i=3; i<=8; i++) if ($i != 0) exit 1
+        rows++
+    }
+    END { if (rows < 4) exit 1 }
+' "$tmp_dir/build_only.log"
 
 run_case q_cap test/stran_polarity.blif "-l -q 1"
 grep -q 'candidates=constant/existing/build q=1 divisor-route=TFI-only' "$tmp_dir/q_cap.log"
@@ -119,10 +133,11 @@ grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*exhausted=[1-9][0
 run_case dirty test/stran_dirty.blif ""
 grep -Eq 'stran-root dirty: root-free=[1-9]|root-MFFC-changed=[1-9]' "$tmp_dir/dirty.log"
 
-# Selection is deferred until all cumulative prefix proofs finish, so wave two
-# may add one more ordered candidate but the bundle is committed only once.
-run_case dirty_waves test/stran_dirty.blif "-w 2"
-grep -q 'stran-root waves: .*w2=3/0/1/1/1' "$tmp_dir/dirty_waves.log"
+# COMB closes and commits before the SEQ snapshot is built.  Since SEQ then
+# makes no change, a configured second round is not repeated mechanically.
+run_case dirty_rounds test/stran_dirty.blif "-w 2"
+grep -q 'stran-root round commit: round=1 phase=comb AND=3->1 gain=2' "$tmp_dir/dirty_rounds.log"
+grep -q 'stran-root rounds summary: configured=2 completed=1 comb-passes=2 comb-commits=1 seq-passes=1 seq-commits=0 AND=3->1 gain=2' "$tmp_dir/dirty_rounds.log"
 
 # A sequentially proved constant candidate used to assert while constructing
 # its proof-only proxy, then could lose a latch during final cleanup.
@@ -130,10 +145,11 @@ run_case constant test/stran_constant.blif ""
 grep -q '^  SEQ CONSTANT 0 1 1 1 1 0$' "$tmp_dir/constant.log"
 grep -q 'cleanup-exact-AND=1 AND=1->0' "$tmp_dir/constant.log"
 
-run_case deprecated test/stran_comb.blif "-q 3 -L 1 -z -i -u -s"
-grep -q -- '-L/-z/-i/-u/-s are deprecated and ignored' "$tmp_dir/deprecated.log"
-grep -q 'candidates=constant/existing/build q=3 divisor-route=TFI-only' "$tmp_dir/deprecated.log"
-grep -q 'AND=2->1' "$tmp_dir/deprecated.log"
+# The exact-MFFC divisor switch changes only divisor eligibility.  Both sides
+# must remain formally equivalent, and the startup banner must expose the
+# selected mode so batch experiments cannot silently mix configurations.
+run_case mffc_off test/stran_polarity.blif "-M"
+grep -q 'divisor-route=TFI-only mffc-divisors=off' "$tmp_dir/mffc_off.log"
 
 # The existing sequential sample remains a representative mixed-discovery
 # smoke test even when its final winner is discharged in COMB.
@@ -158,6 +174,9 @@ for stage in ("comb", "seq"):
         for metric in ("generated", "submitted", "proved", "selected"):
             assert isinstance(profile[f"{stage}_{kind}_{metric}"], int)
 assert isinstance(profile["final_and_gain"], int)
+assert profile["comb_constructed_selected"] == 1
+assert profile["comb_constructed_and_gain"] == 1
+assert profile["final_and_gain"] == 1
 PY
 
 # scorr may legitimately remove every latch before &stran is invoked.  This is

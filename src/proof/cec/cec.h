@@ -333,7 +333,7 @@ struct Cec_ParTran_t_
     int              nGainMin;      // minimum local structural gain admitted to discovery
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
-    int              nRootWaves;    // distinct candidate frontiers on one immutable snapshot
+    int              nRootWaves;    // maximum rebuild/commit rounds
     int              nRootConstrTop;// canonical Build candidates retained per root (1..64)
     int              nCombBTLimit;  // root CBS conflict limit per cube
     int              nFreeWords;    // 64-bit independent PI/RO words for combination screening
@@ -345,7 +345,8 @@ struct Cec_ParTran_t_
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fRootExhaustive;// disable the local-gain discovery gate
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
-    int              fSeqAllCands;  // root SEQ mode: 0=top-1, 1=all canonical candidates
+    int              fSeqAllCands;  // compatibility toggle; bounded frontier is always proved
+    int              fBuildOnly;    // suppress constant/existing candidates
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
 };
