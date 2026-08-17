@@ -99,7 +99,10 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     // selection is committed before the next snapshot is rediscovered.
     p->fRootExhaustive = 0;
     p->fUseFreeSim = 1;
-    p->fSeqAllCands = 0;
+    // Prove the complete bounded frontier in one shared batch.  q=1 is the
+    // explicit narrow experiment; larger q (or q=0) keeps the induction
+    // strength of the all-candidate hypothesis chosen by the caller.
+    p->fSeqAllCands = 1;
     p->fBuildOnly = 0;
 }
 
@@ -805,14 +808,44 @@ static inline int Cec_TranCopyLit( Gia_Man_t * p, int iLit )
 // AND-only gain accounting inconsistent and changes the register boundary.
 // The final root bundle therefore performs combinational cleanup/normalization
 // only; other proof and compatibility paths retain Cec_TranCleanup().
-static Gia_Man_t * Cec_TranCleanupKeepRegs( Gia_Man_t * p )
+static inline int Cec_TranMapLitByValue( Gia_Man_t * p, int iLit )
+{
+    int iMapped = Gia_ManObj(p, Abc_Lit2Var(iLit))->Value;
+    return iMapped == ~0 ? -1 :
+        Abc_LitNotCond( iMapped, Abc_LitIsCompl(iLit) );
+}
+
+// Return the exact input-object -> normalized-output literal map when asked.
+// This is the proof-history bridge across a commit: object IDs are disposable,
+// but a proved relation can be reused after both cleanup renumberings if every
+// endpoint and recipe leaf has a surviving mapped literal.
+static Gia_Man_t * Cec_TranCleanupKeepRegs( Gia_Man_t * p,
+    Vec_Int_t ** pvMap )
 {
     Gia_Man_t * pNew, * pTemp;
+    Vec_Int_t * vMap = pvMap ? Vec_IntStartFull(Gia_ManObjNum(p)) : NULL;
+    Gia_Obj_t * pObj;
+    int i, iLit;
     pNew = Gia_ManCleanup( pTemp = Gia_ManDup(p) );
+    if ( vMap )
+        Gia_ManForEachObj( p, pObj, i )
+        {
+            iLit = Cec_TranMapLitByValue( p, Abc_Var2Lit(i, 0) );
+            if ( iLit >= 0 )
+                iLit = Cec_TranMapLitByValue( pTemp, iLit );
+            Vec_IntWriteEntry( vMap, i, iLit );
+        }
     Gia_ManStop( pTemp );
     pNew = Gia_ManDupNormalize( pTemp = pNew, 0 );
+    if ( vMap )
+        Vec_IntForEachEntry( vMap, iLit, i )
+            if ( iLit >= 0 )
+                Vec_IntWriteEntry( vMap, i,
+                    Cec_TranMapLitByValue(pTemp, iLit) );
     Gia_ManStop( pTemp );
     assert( Gia_ManRegNum(pNew) == Gia_ManRegNum(p) );
+    if ( pvMap )
+        *pvMap = vMap;
     return pNew;
 }
 
@@ -1450,6 +1483,125 @@ static int Cec_TranCandVecFind( Cec_TranCandVec_t const * p,
         k = (k + 1) & (p->nHash - 1);
     }
     return -1;
+}
+
+static int Cec_TranProofHistoryCodeMap( int Code, Vec_Int_t * vMap,
+    int * pfValid )
+{
+    int iMapped;
+    if ( Cec_TranRecipeCodeIsGate(Code) )
+        return Code;
+    if ( Code < 0 || Abc_Lit2Var(Code) >= Vec_IntSize(vMap) )
+    {
+        *pfValid = 0;
+        return 0;
+    }
+    iMapped = Vec_IntEntry( vMap, Abc_Lit2Var(Code) );
+    if ( iMapped < 0 )
+    {
+        *pfValid = 0;
+        return 0;
+    }
+    return Abc_LitNotCond( iMapped, Abc_LitIsCompl(Code) );
+}
+
+static int Cec_TranProofHistoryTopoValid( Gia_Man_t * p,
+    Cec_TranCand_t const * pCand )
+{
+    int i, Code, iObj;
+    if ( pCand->iTarget <= 0 || pCand->iTarget >= Gia_ManObjNum(p) ||
+         !Gia_ObjIsAnd(Gia_ManObj(p, pCand->iTarget)) )
+        return 0;
+    for ( i = -1; i < 2 * pCand->nGates; i++ )
+    {
+        Code = i < 0 ? pCand->iOut : pCand->Recipe[i];
+        if ( Cec_TranRecipeCodeIsGate(Code) )
+        {
+            iObj = Abc_Lit2Var( Cec_TranRecipeGateLit(Code) );
+            if ( iObj >= (i < 0 ? pCand->nGates : i / 2) )
+                return 0;
+            continue;
+        }
+        iObj = Abc_Lit2Var( Code );
+        if ( Code < 0 || iObj >= Gia_ManObjNum(p) ||
+             (iObj != 0 && iObj >= pCand->iTarget) )
+            return 0;
+    }
+    return 1;
+}
+
+// Carry only formally proved relations across a commit.  UNKNOWN/split
+// obligations are deliberately not cached: retrying them on the smaller
+// graph is the proof-strengthening purpose of multiple waves.  A carried
+// relation is downgraded to a sequential certificate because a sequentially
+// proved commit need not preserve arbitrary-state internal identities.
+static void Cec_TranRemapProofHistory( Gia_Man_t * pNew,
+    Vec_Int_t * vOldToNew, Cec_TranCandVec_t const * pCarry,
+    Cec_TranCandVec_t * pHistory, Cec_TranProf_t * pProf )
+{
+    Cec_TranCand_t Cand;
+    int i, k, Code, iTargetLit, fValid;
+    Cec_TranCandVecClear( pHistory );
+    for ( i = 0; i < pCarry->nSize; i++ )
+    {
+        Cec_TranCand_t const * pOld = pCarry->pArray + i;
+        if ( pOld->iTarget < 0 || pOld->iTarget >= Vec_IntSize(vOldToNew) )
+        {
+            pProf->nHistoryTriedInvalidated++;
+            continue;
+        }
+        iTargetLit = Vec_IntEntry( vOldToNew, pOld->iTarget );
+        if ( iTargetLit < 0 )
+        {
+            pProf->nHistoryTriedInvalidated++;
+            continue;
+        }
+        Cand = *pOld;
+        Cand.Recipe = NULL;
+        Cand.iTarget = Abc_Lit2Var( iTargetLit );
+        Cand.nMffc = 0;
+        Cand.Gain = -1;
+        Cand.nProofStage = 2;
+        Cand.nStatus = CEC_TRAN_STATE_PROVED_SEQ;
+        fValid = 1;
+        if ( Cand.nGates )
+            Cand.Recipe = Cec_TranRecipeAlloc( 2 * Cand.nGates );
+        for ( k = 0; k < 2 * Cand.nGates; k++ )
+            Cand.Recipe[k] = Cec_TranProofHistoryCodeMap(
+                pOld->Recipe[k], vOldToNew, &fValid );
+        Cand.iOut = Cec_TranProofHistoryCodeMap(
+            pOld->iOut, vOldToNew, &fValid );
+        if ( fValid && Abc_LitIsCompl(iTargetLit) )
+            Cand.iOut = Cec_TranRecipeNotCode( Cand.iOut );
+        if ( fValid )
+            Cec_TranCandCanonicalizeRecipe( &Cand );
+        if ( !fValid || !Cec_TranProofHistoryTopoValid(pNew, &Cand) )
+        {
+            Cec_TranCandRecipeRelease( &Cand );
+            pProf->nHistoryTriedInvalidated++;
+            continue;
+        }
+        Cand.iDiv0 = Cand.iDiv1 = -1;
+        for ( k = -1; k < 2 * Cand.nGates; k++ )
+        {
+            Code = k < 0 ? Cand.iOut : Cand.Recipe[k];
+            if ( Cec_TranRecipeCodeIsGate(Code) || Abc_Lit2Var(Code) == 0 )
+                continue;
+            if ( Cand.iDiv0 == -1 )
+                Cand.iDiv0 = Code;
+            else if ( Abc_Lit2Var(Cand.iDiv0) != Abc_Lit2Var(Code) )
+            {
+                Cand.iDiv1 = Code;
+                break;
+            }
+        }
+        if ( !Cec_TranCandVecContains(pHistory, &Cand) )
+        {
+            Cec_TranCandVecPush( pHistory, Cand );
+            pProf->nHistoryTriedRemapped++;
+        }
+        Cec_TranCandRecipeRelease( &Cand );
+    }
 }
 
 static Cec_TranCand_t Cec_TranCandCreateLiteral( int iTarget, int iDiv,
@@ -3534,10 +3686,9 @@ static int Cec_TranRootConsumeProved( Gia_Man_t * p,
     return nSelected;
 }
 
-// Prove the selected frontier of one immutable phase: one candidate per root
-// by default, or the complete bounded q frontier under -t.  COMB-only closure
-// stops after CBS; the SEQ phase sends every CBS-unproved submitted relation
-// to one shared correspondence fixed point.
+// Prove the complete selected frontier on one immutable snapshot.  COMB-only
+// closure stops after CBS; the SEQ phase sends every CBS-unproved submitted
+// relation to one shared correspondence fixed point.
 static int Cec_TranRootProvePortfolio( Gia_Man_t * p,
     Cec_TranCandVec_t * pPortfolio, Cec_ParTran_t * pPars,
     Cec_TranProf_t * pProf, Cec_TranCandVec_t * pProved, int fCombOnly )
@@ -3581,15 +3732,22 @@ static int Cec_TranRootProvePortfolio( Gia_Man_t * p,
 
 static Gia_Man_t * Cec_TranCommitSelectedRootOnly( Gia_Man_t * p,
     Cec_TranCandVec_t * pSelected, Cec_ParTran_t * pPars,
-    Cec_TranProf_t * pProf )
+    Cec_TranProf_t * pProf, Cec_TranCandVec_t const * pCarry,
+    Cec_TranCandVec_t * pHistory )
 {
     Gia_Man_t * pDup, * pClean;
-    Vec_Int_t * vSelected;
+    Gia_Obj_t * pObj;
+    Vec_Int_t * vSelected, * vDupToClean, * vOldToClean;
     long long Marginal = 0;
-    int i, Gain, fProved = 1;
+    int i, iLit, iMapped, Gain, fProved = 1;
     abctime clk;
     if ( pSelected->nSize == 0 )
+    {
+        Cec_TranCandVecClear( pHistory );
+        for ( i = 0; i < pCarry->nSize; i++ )
+            Cec_TranCandVecPush( pHistory, pCarry->pArray[i] );
         return p;
+    }
     vSelected = Vec_IntAlloc( pSelected->nSize );
     for ( i = 0; i < pSelected->nSize; i++ )
         Vec_IntPush( vSelected, i ), Marginal += pSelected->pArray[i].Gain;
@@ -3597,8 +3755,21 @@ static Gia_Man_t * Cec_TranCommitSelectedRootOnly( Gia_Man_t * p,
     pDup = Cec_TranDupRootBundle( p, pSelected->pArray, vSelected );
     pProf->timeRootBundleDup += Abc_Clock() - clk;
     clk = Abc_Clock();
-    pClean = Cec_TranCleanupKeepRegs( pDup );
+    pClean = Cec_TranCleanupKeepRegs( pDup, &vDupToClean );
     pProf->timeRootCleanup += Abc_Clock() - clk;
+    vOldToClean = Vec_IntStartFull( Gia_ManObjNum(p) );
+    Gia_ManForEachObj( p, pObj, i )
+    {
+        iLit = Cec_TranMapLitByValue( p, Abc_Var2Lit(i, 0) );
+        if ( iLit < 0 || Abc_Lit2Var(iLit) >= Vec_IntSize(vDupToClean) )
+            continue;
+        iMapped = Vec_IntEntry( vDupToClean, Abc_Lit2Var(iLit) );
+        if ( iMapped >= 0 )
+            Vec_IntWriteEntry( vOldToClean, i,
+                Abc_LitNotCond(iMapped, Abc_LitIsCompl(iLit)) );
+    }
+    Cec_TranRemapProofHistory( pClean, vOldToClean, pCarry,
+        pHistory, pProf );
     clk = Abc_Clock();
     Gain = Cec_TranGain( p, pClean );
     pProf->timeRootExactAudit += Abc_Clock() - clk;
@@ -3618,6 +3789,8 @@ static Gia_Man_t * Cec_TranCommitSelectedRootOnly( Gia_Man_t * p,
     Gia_ManStop( p );
     Gia_ManStop( pDup );
     Vec_IntFree( vSelected );
+    Vec_IntFree( vDupToClean );
+    Vec_IntFree( vOldToClean );
     return pClean;
 }
 
@@ -3739,13 +3912,15 @@ static inline int Cec_TranRootCandBucket( int sz )
 }
 
 static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
-    Cec_ParTran_t * pPars, int iRound, int fCombOnly )
+    Cec_ParTran_t * pPars, int iRound, int fCombOnly,
+    Cec_TranCandVec_t * pHistory )
 {
     Cec_TranProf_t Prof = {0};
     Cec_TranDiscStat_t Disc = {0};
     Cec_TranCandVec_t Known = {0}, RootCands = {0};
     Cec_TranCandVec_t Seq = {0}, ProofCands = {0};
     Cec_TranCandVec_t Proved = {0}, Selected = {0};
+    Cec_TranCandVec_t HistoryLive = {0}, Carry = {0};
     Cec_TranRoot_t * pRoots;
     Cec_TranSigEnt_t * pSigIndex;
     Cec_TranSim_t * pSim;
@@ -3784,14 +3959,44 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
     Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable proof=bounded-q frontier=%s selection=dynamic-max-gain candidates=%s q=%d divisor-route=TFI-only mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
-        pPars->fSeqAllCands ? "all" : "top-1",
+        "all",
         pPars->fBuildOnly ? "build-only" : "constant/existing/build",
         pPars->nRootConstrTop,
         pPars->fUseMffcDivs ? "on" : "off" );
 
+    // Reuse exact relations formally proved on an earlier snapshot.  They are
+    // inserted into Known before discovery, so the iterator advances past the
+    // duplicate and spends q on genuinely new Build candidates.  Failed and
+    // UNKNOWN relations are absent from this cache and are intentionally
+    // retried after a simplifying commit.
+    for ( i = 0; i < pHistory->nSize; i++ )
+    {
+        Cec_TranCand_t Cand = pHistory->pArray[i];
+        int Gain;
+        if ( !Cec_TranProofHistoryTopoValid(p, &Cand) ||
+             !Cec_TranRecipeStructurallyValid(pSim, &Cand) ||
+             !Cec_TranRecipeMatchesRoot(pSim, &Cand, NULL) )
+        {
+            Prof.nHistoryTriedInvalidated++;
+            continue;
+        }
+        Cand.nProofStage = 2;
+        Cand.nStatus = CEC_TRAN_STATE_PROVED_SEQ;
+        Gain = Cec_TranCandDynamicGain( p, &Cand, pCovered, pUsed,
+            pMffc, vMffc, vSupport );
+        Cand.Gain = Gain;
+        Cand.nMffc = Vec_IntSize( vMffc );
+        Cec_TranCandVecPush( &HistoryLive, Cand );
+        Cec_TranCandVecPush( &Known, Cand );
+        Prof.nQueueTriedSkipped++;
+        if ( Gain > 0 )
+            Cec_TranCandVecPush( &Proved, Cand );
+    }
+
     // One pass owns one immutable snapshot.  Discover at most q Build
-    // candidates per root once, prove its top-1 or complete bounded frontier,
-    // commit, and discard every object-indexed cache before caller rebuilds.
+    // candidates per root once, prove the complete bounded frontier, commit
+    // its max-gain subset, and discard every object-indexed cache before the
+    // caller rebuilds.
     {
         abctime clkWave = Abc_Clock();
         clk = Abc_Clock();
@@ -3817,7 +4022,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         clk = Abc_Clock();
         Cec_TranRootPrepareSeqFrontier( p, pRoots, nRoots, &Known,
             pCovered, pUsed, pMffc, vMffc, vSupport,
-            pPars->fSeqAllCands, &Seq, &Prof );
+            1, &Seq, &Prof );
         Prof.timeRootRefresh += Abc_Clock() - clk;
         Prof.nRootWaveSubmitted[0] += Seq.nSize;
         for ( r = 0; r < Seq.nSize; r++ )
@@ -3847,6 +4052,19 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Prof.timeRootPostSelect += Abc_Clock() - clk;
     }
 
+    // Keep every still-live old certificate and every newly proved relation
+    // that was not consumed by this commit.  Selected relations map to their
+    // replacement and are deliberately removed from the carry set.
+    for ( i = 0; i < HistoryLive.nSize; i++ )
+        if ( !Cec_TranCandVecContains(&Selected, HistoryLive.pArray + i) )
+            Cec_TranCandVecPush( &Carry, HistoryLive.pArray[i] );
+    for ( i = 0; i < Proved.nSize; i++ )
+        if ( (Proved.pArray[i].nStatus == CEC_TRAN_STATE_PROVED_COMB ||
+              Proved.pArray[i].nStatus == CEC_TRAN_STATE_PROVED_SEQ) &&
+             !Cec_TranCandVecContains(&Selected, Proved.pArray + i) &&
+             !Cec_TranCandVecContains(&Carry, Proved.pArray + i) )
+            Cec_TranCandVecPush( &Carry, Proved.pArray[i] );
+
     // All proof and discovery data refer to the one immutable snapshot.  Tear
     // them down before the sole bundle duplication stops that snapshot.
     Cec_TranDepScratchStop( &Dep );
@@ -3855,7 +4073,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Cec_TranPatDbStop( pDb );
     pSim = NULL;
     pDb = NULL;
-    p = Cec_TranCommitSelectedRootOnly( p, &Selected, pPars, &Prof );
+    p = Cec_TranCommitSelectedRootOnly( p, &Selected, pPars, &Prof,
+        &Carry, pHistory );
     Prof.timeRootDivCi = Prof.timeRootDivPool;
     Prof.timeRootResubInit = Prof.timeRootDepInit;
     Prof.timeRootResubEnumCanon = Prof.timeRootDepSearch;
@@ -3871,6 +4090,9 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Prof.nRootBundleAndGain );
     Abc_Print( 1, "stran-root bounded portfolio: unique-candidates=%d unique-proved=%d proof-calls=%d.\n",
         ProofCands.nSize, Proved.nSize, Prof.nRootBatchCalls );
+    Abc_Print( 1, "stran-root cross-wave proof reuse: generation-skipped=%d remapped=%d invalidated=%d retained=%d.\n",
+        Prof.nQueueTriedSkipped, Prof.nHistoryTriedRemapped,
+        Prof.nHistoryTriedInvalidated, pHistory->nSize );
     Abc_Print( 1, "stran-root per-root candidates: discover-calls=%d total=%d max=%d avg=%.2f hist(0,1,2,3,4,5-8,9-16,17-32,33-64,65+)=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d.\n",
         nCandCalls, nCandSum, nCandMax,
         nCandCalls ? (float)nCandSum / nCandCalls : 0.0f,
@@ -3883,6 +4105,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Cec_TranCandVecStop( &ProofCands );
     Cec_TranCandVecStop( &Proved );
     Cec_TranCandVecStop( &Selected );
+    Cec_TranCandVecStop( &HistoryLive );
+    Cec_TranCandVecStop( &Carry );
     Vec_IntFree( vMffc );
     Vec_IntFree( vSupport );
     ABC_FREE( pMffc );
@@ -3897,6 +4121,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
 Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
 {
     Cec_ParTran_t PassPars;
+    Cec_TranCandVec_t ProofHistory = {0};
     Gia_Man_t * p = Gia_ManDup( pGia );
     Gia_Man_t * pNext;
     int iRound, nAndInitial = Gia_ManAndNum(p);
@@ -3904,7 +4129,12 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
     int nSeqPasses = 0, nSeqCommits = 0;
     if ( pPars->fRootExhaustive )
         pPars->nGainMin = 0;
-    for ( iRound = 0; iRound < pPars->nRootWaves; iRound++ )
+    // With -w 0, strict AND-count descent is the termination measure: every
+    // continuing round has committed a positive sequential reduction, while
+    // a no-gain round breaks below.  Finite -w values remain an explicit
+    // resource budget rather than a hidden fixed-point restriction.
+    for ( iRound = 0; pPars->nRootWaves == 0 ||
+         iRound < pPars->nRootWaves; iRound++ )
     {
         int nBefore, nAfter;
         // Close arbitrary-state reductions first.  Every positive COMB bundle
@@ -3916,7 +4146,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
             PassPars = *pPars;
             PassPars.nRootWaves = 1;
             pNext = Cec_ManSequentialRootPass( p, &PassPars,
-                iRound, 1 );
+                iRound, 1, &ProofHistory );
             Gia_ManStop( p );
             p = pNext;
             nAfter = Gia_ManAndNum( p );
@@ -3933,7 +4163,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         PassPars = *pPars;
         PassPars.nRootWaves = 1;
         pNext = Cec_ManSequentialRootPass( p, &PassPars,
-            iRound, 0 );
+            iRound, 0, &ProofHistory );
         Gia_ManStop( p );
         p = pNext;
         nAfter = Gia_ManAndNum( p );
@@ -3948,6 +4178,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         pPars->nRootWaves, nSeqPasses, nCombPasses, nCombCommits,
         nSeqPasses, nSeqCommits, nAndInitial, Gia_ManAndNum(p),
         nAndInitial - Gia_ManAndNum(p) );
+    Cec_TranCandVecStop( &ProofHistory );
     return p;
 }
 
