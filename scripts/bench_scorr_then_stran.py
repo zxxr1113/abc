@@ -18,7 +18,7 @@ Examples:
   # Small Build pages with an easily edited proof budget.
   python3 scripts/bench_scorr_then_stran.py \
       --aig-dir benchmark --abc ./abc --jobs 4 --timeout 1800 \
-      --stran-args '-P root -F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 -Q 4 -W 8 -q 1 -A 8 -L 32 -w 8'
+      --stran-args '-P root -F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 -Q 4 -W 8 -q 1 -w 8'
 """
 
 from __future__ import annotations
@@ -52,7 +52,7 @@ DEFAULT_OUT = "scorr_then_stran.csv"
 DEFAULT_SCORR_ARGS = "-F 1 -C 200"
 DEFAULT_STRAN_ARGS = (
     "-P root -F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 "
-    "-Q 4 -W 8 -q 1 -A 8 -L 32 -w 8 -p"
+    "-Q 4 -W 8 -q 1 -w 8 -p"
 )
 NA = "N/A"
 
@@ -233,7 +233,7 @@ def parse_stran(stdout: str) -> Dict[str, Any]:
     for _, record in stage_records.values():
         result.update(record)
 
-    # Root-only schema=3 reports the requested 2x3 generated/submitted/proved/
+    # Root-only schema 3/4 reports the 2x3 generated/submitted/proved/
     # selected matrix directly.  Build is named "constructed" in the existing
     # CSV columns to keep old analysis notebooks source-compatible.
     root_stage_gains = {"comb": [0, 0], "seq": [0, 0]}

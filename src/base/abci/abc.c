@@ -42231,7 +42231,7 @@ static int Abc_CommandAbc9StranResubTest( Abc_Frame_t * pAbc,
     if ( !Cec_TranRootSelfTest() )
         return 1;
     Abc_Print( 1, "stran resub iterator/polarity/canonicalization/MFFC self-test: PASS\n" );
-    Abc_Print( 1, "stran ranked-reservoir/global-Existing/helper-remap-HO/zero-gain/temp-AIG self-test: PASS\n" );
+    Abc_Print( 1, "stran ranked-reservoir/global-Existing/helper-remap-HO/all-helper-switch/zero-gain/temp-AIG self-test: PASS\n" );
     return 0;
 }
 
@@ -42242,7 +42242,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBLAPERIHUZqwbaeMxclrgftpyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwbaeMxclrgftupyh")) != EOF )
     {
         switch ( c )
         {
@@ -42291,41 +42291,6 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nConstrBaseMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nConstrBaseMax < 0 ) goto usage;
             break;
-        case 'L':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootBatchMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootBatchMax < 1 ) goto usage;
-            break;
-        case 'A':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootObligMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootObligMax < 1 ) goto usage;
-            break;
-        case 'E':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nHelperEndpointMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nHelperEndpointMax < 0 ) goto usage;
-            break;
-        case 'R':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nHelperGateMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nHelperGateMax < 0 ) goto usage;
-            break;
-        case 'I':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nSrmNodeMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nSrmNodeMax < 0 ) goto usage;
-            break;
-        case 'H':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nHelperClassMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nHelperClassMax < 0 ) goto usage;
-            break;
-        case 'U':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootPageMax = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootPageMax < 0 ) goto usage;
-            break;
         case 'M':
             pPars->fUseMffcDivs ^= 1;
             break;
@@ -42349,8 +42314,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'q':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nRootConstrTop < 0 ||
-                 pPars->nRootConstrTop > 64 ) goto usage;
+            if ( pPars->nRootConstrTop < 0 ) goto usage;
             break;
         case 'b':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42386,9 +42350,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->fShadow ^= 1;
             break;
         case 't':
-            // Keep the historical all-candidate spelling as an idempotent
-            // compatibility bit.  The active scheduler always paginates.
-            pPars->fSeqAllCands = 1;
+            // All current per-root candidates are always submitted.  Keep
+            // the historical spelling accepted for command compatibility.
+            break;
+        case 'u':
+            pPars->fUseHelpers ^= 1;
             break;
         case 'y':
             pPars->fBuildOnly ^= 1;
@@ -42402,8 +42368,6 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     }
     if ( pPars->fRootExhaustive )
         pPars->nGainMin = 0;
-    if ( pPars->nRootObligMax > pPars->nRootBatchMax )
-        goto usage;
     if ( pAbc->pGia == NULL )
     {
         Abc_Print( -1, "&stran: There is no AIG.\n" );
@@ -42424,7 +42388,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSNGQWKBLAERIHUZqwbae num] [-P root] [-Mxclrgftpyh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwbae num] [-P root] [-Mxclrgftupyh]\n" );
     Abc_Print( -2, "\t         performs root-only sequential Direct resubstitution\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
@@ -42435,28 +42399,22 @@ usage:
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : ranked physical nodes passed to Build (0 = complete allowed TFI) [default = %d]\n", pPars->nConstrBaseMax );
-    Abc_Print( -2, "\t-q num : Build candidates pulled per root/page (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
-    Abc_Print( -2, "\t-L num : maximum total active-helper + obligation relations per batch [default = %d]\n", pPars->nRootBatchMax );
-    Abc_Print( -2, "\t-A num : maximum new obligations per proof page (must be <= -L) [default = %d]\n", pPars->nRootObligMax );
-    Abc_Print( -2, "\t-E num : active-helper unique endpoint cap (0 = unlimited) [default = %d]\n", pPars->nHelperEndpointMax );
-    Abc_Print( -2, "\t-R num : active-helper materialized recipe-gate cap (0 = unlimited) [default = %d]\n", pPars->nHelperGateMax );
-    Abc_Print( -2, "\t-H num : active-helper class-width cap (0 = unlimited) [default = %d]\n", pPars->nHelperClassMax );
-    Abc_Print( -2, "\t-I num : estimated temporary proof/SRM node cap (0 = unlimited) [default = %d]\n", pPars->nSrmNodeMax );
-    Abc_Print( -2, "\t-U num : maximum proof pages per immutable snapshot (0 = exhaustion) [default = %d]\n", pPars->nRootPageMax );
+    Abc_Print( -2, "\t-q num : Build candidates pulled per root/wave (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
-    Abc_Print( -2, "\t-w num : maximum rebuild/commit rounds (0 = until fixed point) [default = %d]\n", pPars->nRootWaves );
+    Abc_Print( -2, "\t-w num : SEQ rebuild/commit rounds after the one initial COM wave (0 = fixed point) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
     Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle global topologically-earlier Existing lookup [default = %s]\n", pPars->fUseExisting? "yes": "no" );
-    Abc_Print( -2, "\t-r     : deprecated exhaustive-discovery spelling; accepted, scheduler still paginates\n" );
+    Abc_Print( -2, "\t-r     : deprecated exhaustive-discovery spelling; accepted for compatibility\n" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
-    Abc_Print( -2, "\t-t     : deprecated all-candidate spelling; accepted, scheduler still paginates\n" );
+    Abc_Print( -2, "\t-t     : accepted compatibility spelling; all current candidates are always submitted\n" );
+    Abc_Print( -2, "\t-u     : toggle retained-proof induction helpers [default = %s]\n", pPars->fUseHelpers? "yes": "no" );
     Abc_Print( -2, "\t-y     : toggle Build-only discovery (suppress constant/existing) [default = %s]\n", pPars->fBuildOnly? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );

@@ -47,13 +47,13 @@ BASE_FIELDS = [
     "comb_reduced_reg", "seq_reduced_reg", "total_reduced_reg",
 ]
 HISTORY_FIELDS = [
-    "root_helper_retained_max", "root_helper_active_events",
-    "root_helper_dormant_events", "root_helper_dedup",
+    "root_helper_retained_max", "root_helper_injected_events",
+    "root_helper_inactive_events", "root_helper_dedup",
     "root_helper_invalidated", "root_helper_classes",
     "root_helper_endpoints_max", "root_helper_materialized_gates",
     "root_batch_relations_max", "root_srm_nodes_max",
     "root_new_proved", "root_history_proved_selected",
-    "root_proof_pages", "root_page_continuations",
+    "root_proof_waves", "root_wave_continuations",
 ]
 STAGE_FIELDS = [
     f"{stage}_{metric}"
@@ -464,8 +464,8 @@ def print_report(cases: List[Dict[str, Any]], overall: Dict[str, Any]) -> None:
         f"new-proved={overall['root_new_proved']} "
         f"history-selected={overall['root_history_proved_selected']} | "
         f"retained-max={overall['root_helper_retained_max']} "
-        f"active-events={overall['root_helper_active_events']} "
-        f"dormant-events={overall['root_helper_dormant_events']}"
+        f"injected-events={overall['root_helper_injected_events']} "
+        f"inactive-events={overall['root_helper_inactive_events']}"
     )
     print(
         "  note selected/new-proved may exceed 100% when a remapped formal "

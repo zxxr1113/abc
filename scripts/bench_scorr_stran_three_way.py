@@ -6,8 +6,8 @@ measure the remaining potential of:
 
     0. &fraig (the common sweep baseline)
     1. &fraig followed by &scorr
-    2. &fraig followed by paged &stran -p
-    3. &fraig followed by &scorr and paged &stran -p
+    2. &fraig followed by per-root-q all-candidate &stran -p
+    3. &fraig followed by &scorr and per-root-q all-candidate &stran -p
 
 The script forces profiling (``-p``); paging/batch parameters remain explicit
 in ``--stran-args``.
@@ -53,7 +53,7 @@ DEFAULT_SWEEP_ARGS = ""
 DEFAULT_SCORR_ARGS = "-F 1 -C 100"
 DEFAULT_STRAN_ARGS = (
     "-b 100 -C 100 -P root -p -N 100 -B 64 "
-    "-q 1 -A 8 -L 32 -w 8"
+    "-q 1 -w 8"
 )
 RUN_SCHEMA_VERSION = "fraig-scorr-stran-three-way-v3"
 NA = "N/A"
@@ -719,7 +719,7 @@ def main() -> None:
     print(f"[INFO] &fraig sweep args: {args.sweep_args or '(defaults)'}")
     print(f"[INFO] &scorr args: {args.scorr_args}")
     print(f"[INFO] effective &stran args: {effective_stran_args}")
-    print("[INFO] forcing experiment profiling (-p); scheduler remains paged")
+    print("[INFO] forcing experiment profiling (-p); scheduler submits every current per-root frontier")
 
     tasks = [
         (

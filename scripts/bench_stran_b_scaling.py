@@ -35,9 +35,9 @@ NA = "N/A"
 DEFAULT_B_VALUES = "2,4,8,16,32,64,0"
 DEFAULT_STRAN_ARGS = (
     "-P root -F 1 -C 200 -S -1 -N 20 -K 32 -Q 4 -W 8 "
-    "-q 1 -A 8 -L 32 -w 8"
+    "-q 1 -w 8"
 )
-RUN_SCHEMA_VERSION = "stran-b-scaling-v3-paged"
+RUN_SCHEMA_VERSION = "stran-b-scaling-v4-all-current"
 
 # The C profiler bins exact yields 0..63 and folds every larger dynamically
 # enumerated result into y64.  Keep the full fixed profile to preserve root
@@ -384,7 +384,7 @@ def main() -> None:
 
     print(f"[INFO] case={aig.name} base AND={base_and} latches={base_latches}")
     print(f"[INFO] B sweep={b_values}; all other parameters fixed")
-    print("[INFO] forcing -p; each -B run uses the same paged scheduler")
+    print("[INFO] forcing -p; each -B run uses the same per-root-q all-candidate scheduler")
     rows: list[Dict[str, Any]] = []
     try:
         for index, b_value in enumerate(b_values, start=1):

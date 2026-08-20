@@ -21,6 +21,7 @@ ROOT_EFFECT_PREFIX = "stran-root experiment-effect profile:"
 ROOT_SUMMARY_PREFIX = "stran-root experiment-summary profile:"
 ROOT_HELPER_PREFIX = "stran-root helper history:"
 ROOT_PAGED_PREFIX = "stran-root paged portfolio:"
+ROOT_WAVE_PREFIX = "stran-root wave portfolio:"
 ROOT_ITERATOR_PREFIX = "stran-root resub iterator:"
 ROOT_SEQ_PREFIX = "stran-root sequential relations:"
 
@@ -87,12 +88,14 @@ ROOT_STAGE_GAIN_FIELDS = [
 # different names.  In particular, selected may include an old certificate
 # and therefore must not be compared only with this snapshot's new-proved.
 ROOT_HISTORY_FIELDS = [
+    "root_helper_injected_events", "root_helper_inactive_events",
     "root_helper_retained_max", "root_helper_active_events",
     "root_helper_dormant_events", "root_helper_dedup",
     "root_helper_invalidated", "root_helper_classes",
     "root_helper_endpoints_max", "root_helper_materialized_gates",
     "root_batch_relations_max", "root_srm_nodes_max",
     "root_new_proved", "root_history_proved_selected",
+    "root_proof_waves", "root_wave_continuations",
     "root_proof_pages", "root_page_continuations",
 ]
 ROOT_SEQ_FIELDS = [
@@ -101,6 +104,7 @@ ROOT_SEQ_FIELDS = [
 ]
 ROOT_ITERATOR_FIELDS = [
     "root_iterator_initialized", "root_iterator_next",
+    "root_iterator_q_wave_stops",
     "root_iterator_exhausted", "root_iterator_q_page_stops",
     "root_iterator_snapshot_discarded", "root_iterator_invalid",
 ]
@@ -272,7 +276,8 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         if not any(prefix in line for prefix in (
             TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX,
             ROOT_EFFECT_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_HELPER_PREFIX,
-            ROOT_PAGED_PREFIX, ROOT_ITERATOR_PREFIX, ROOT_SEQ_PREFIX,
+            ROOT_PAGED_PREFIX, ROOT_WAVE_PREFIX,
+            ROOT_ITERATOR_PREFIX, ROOT_SEQ_PREFIX,
         )):
             continue
         record = {key: _number(value) for key, value in _KEY_VALUE.findall(line)}
@@ -295,7 +300,7 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             root_summaries.append(record)
         elif ROOT_HELPER_PREFIX in line:
             root_helpers.append(record)
-        elif ROOT_PAGED_PREFIX in line:
+        elif ROOT_PAGED_PREFIX in line or ROOT_WAVE_PREFIX in line:
             root_paged.append(record)
         elif ROOT_ITERATOR_PREFIX in line:
             root_iterators.append(record)
@@ -313,10 +318,26 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         values = [record[key] for record in records if key in record]
         return max(values) if values else NA
 
+    def sum_alias(records: list[dict[str, int | float]], *keys: str) -> Any:
+        values = []
+        for record in records:
+            for key in keys:
+                if key in record:
+                    values.append(record[key])
+                    break
+        return sum(values) if values else NA
+
     result.update({
         "root_helper_retained_max": max_field(root_helpers, "retained"),
-        "root_helper_active_events": sum_field(root_helpers, "active-events"),
-        "root_helper_dormant_events": sum_field(root_helpers, "dormant-events"),
+        "root_helper_injected_events": sum_alias(
+            root_helpers, "injected-events", "active-events"),
+        "root_helper_inactive_events": sum_alias(
+            root_helpers, "inactive-events", "dormant-events"),
+        # Compatibility aliases for existing CSV consumers.
+        "root_helper_active_events": sum_alias(
+            root_helpers, "injected-events", "active-events"),
+        "root_helper_dormant_events": sum_alias(
+            root_helpers, "inactive-events", "dormant-events"),
         "root_helper_dedup": sum_field(root_helpers, "dedup"),
         "root_helper_invalidated": sum_field(root_helpers, "invalidated"),
         "root_helper_classes": sum_field(root_helpers, "classes"),
@@ -328,19 +349,25 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         "root_new_proved": sum_field(root_paged, "new-proved"),
         "root_history_proved_selected": sum_field(
             root_paged, "history-proved-selected"),
-        "root_proof_pages": sum_field(root_paged, "pages"),
+        "root_proof_waves": sum_alias(root_paged, "waves", "pages"),
+        "root_wave_continuations": sum_field(root_paged, "continuations"),
+        # Compatibility aliases for schema-3 CSV readers.
+        "root_proof_pages": sum_alias(root_paged, "waves", "pages"),
         "root_page_continuations": sum_field(root_paged, "continuations"),
         "root_seq_obligations": sum_field(root_seq, "candidates"),
         "root_seq_seeded": sum_field(root_seq, "seeded"),
-        "root_seq_helper_seeds": sum_field(root_seq, "comb-helper-seeds"),
+        "root_seq_helper_seeds": sum_alias(
+            root_seq, "helper-seeds", "comb-helper-seeds"),
         "root_seq_proved": sum_field(root_seq, "proved"),
         "root_seq_split": sum_field(root_seq, "split"),
         "root_seq_unknown": sum_field(root_seq, "unknown"),
         "root_iterator_initialized": sum_field(root_iterators, "initialized"),
         "root_iterator_next": sum_field(root_iterators, "next"),
         "root_iterator_exhausted": sum_field(root_iterators, "exhausted"),
-        "root_iterator_q_page_stops": sum_field(
-            root_iterators, "q-page-stops"),
+        "root_iterator_q_wave_stops": sum_alias(
+            root_iterators, "q-wave-stops", "q-page-stops"),
+        "root_iterator_q_page_stops": sum_alias(
+            root_iterators, "q-wave-stops", "q-page-stops"),
         "root_iterator_snapshot_discarded": sum_field(
             root_iterators, "snapshot-discarded"),
         "root_iterator_invalid": sum_field(root_iterators, "invalid"),

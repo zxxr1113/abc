@@ -334,14 +334,7 @@ struct Cec_ParTran_t_
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              nRootWaves;    // maximum rebuild/commit rounds (0 = fixed point)
-    int              nRootConstrTop;// Build candidates pulled per root/page (0 = iterator exhaustion)
-    int              nRootBatchMax; // total H+O relations materialized in one proof batch
-    int              nRootObligMax; // new obligations pulled in one proof page
-    int              nRootPageMax;  // proof pages per immutable snapshot (0 = exhaustion)
-    int              nHelperEndpointMax;// unique source endpoints in active helper basis
-    int              nHelperGateMax;// recipe gates materialized by active helpers
-    int              nHelperClassMax;// active helper edges incident to one source root
-    int              nSrmNodeMax;   // estimated temporary proof/SRM nodes (0 = unlimited)
+    int              nRootConstrTop;// Build candidates pulled per root/wave (0 = iterator exhaustion)
     int              nCombBTLimit;  // root CBS conflict limit per cube
     int              nFreeWords;    // 64-bit independent PI/RO words for combination screening
     int              nFreeCexMax;   // CBS free-state counterexamples retained per proof batch
@@ -352,7 +345,7 @@ struct Cec_ParTran_t_
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fRootExhaustive;// deprecated -r compatibility bit
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
-    int              fSeqAllCands;  // deprecated -t compatibility bit; scheduler always paginates
+    int              fUseHelpers;   // seed every valid retained proof as an induction helper
     int              fBuildOnly;    // suppress constant/existing candidates
     int              fShadow;       // whole-miter shadow audit for local proofs
     int              fProfile;      // print phase and target-gate profiles
