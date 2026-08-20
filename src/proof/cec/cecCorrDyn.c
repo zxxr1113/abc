@@ -958,12 +958,13 @@ Vec_Int_t * Cec_DynSrmOutLits( Cec_DynSrm_t * p ) { return p->vOutLits; }
 // circuit-SAT manager (allocated lazily; re-created after a core reset/compaction
 // since its pAig is freed there).  The CI-layout assert guards the CEX CioId ->
 // resim-input contract that the discarded view used to enforce in the main loop.
-Vec_Int_t * Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus, int fUseTas )
+Vec_Int_t * Cec_DynSrmSolveHooks( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus, int fUseTas, Gia_SolveHooks_t * pHooks )
 {
     assert( Gia_ManRegNum(p->pCore) == 0 );
     assert( Gia_ManCiNum(p->pCore) == p->nRegs + p->nFramesTotal * p->nPis );
     if ( fUseTas )
     {
+        assert( pHooks == NULL );
         if ( p->pTas == NULL )
             p->pTas = Tas_ManAlloc( p->pCore, nConfs );
         Tas_ManSetConflictNum( p->pTas, nConfs );
@@ -972,7 +973,12 @@ Vec_Int_t * Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus
     if ( p->pCbs == NULL )
         p->pCbs = Cbs_ManAlloc( p->pCore );
     Cbs_ManSetConflictNum( p->pCbs, nConfs );
-    return Cbs_ManSolveRoots( p->pCbs, p->vOutLits, pvStatus, 0 );
+    return Cbs_ManSolveRootsHooks( p->pCbs, p->vOutLits, pvStatus, 0, pHooks );
+}
+
+Vec_Int_t * Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus, int fUseTas )
+{
+    return Cec_DynSrmSolveHooks( p, nConfs, pvStatus, fUseTas, NULL );
 }
 
 static void Cec_DynSrmStoreCopyEntry( Vec_Int_t * vDest, Vec_Int_t * vSrc, int iStart, int iOut )

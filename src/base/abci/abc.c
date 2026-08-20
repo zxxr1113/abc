@@ -42044,8 +42044,9 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
     pPars->fDynSrm          = 1;
     pPars->fIncrSim         = 1;
     pPars->fSkipFailResim   = 1;
+    pPars->nIntraSkipMode   = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKYDpkrecqiIosvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZJKYDpkrecqiIosvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -42124,6 +42125,17 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
             nFlopIncFreq = atoi(argv[globalUtilOptind]);
             globalUtilOptind++;
             if ( nFlopIncFreq < 0 )
+                goto usage;
+            break;
+        case 'J':
+            if ( globalUtilOptind >= argc )
+            {
+                Abc_Print( -1, "Command line switch \"-J\" should be followed by 0, 1, or 2.\n" );
+                goto usage;
+            }
+            pPars->nIntraSkipMode = atoi(argv[globalUtilOptind]);
+            globalUtilOptind++;
+            if ( pPars->nIntraSkipMode < 0 || pPars->nIntraSkipMode > 2 )
                 goto usage;
             break;
         case 'p':
@@ -42249,7 +42261,7 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr2 [-FCGXPSZ num] [-pkrecqiDIsYKovh]\n" );
+    Abc_Print( -2, "usage: &scorr2 [-FCGXPSZJ num] [-pkrecqiDIsYKovh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation using the incremental scorr2 engine\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
@@ -42258,6 +42270,7 @@ usage:
     Abc_Print( -2, "\t-P num : the number of concurrent processes [default = %d]\n", pPars->nProcs );
     Abc_Print( -2, "\t-S num : the number of flops in one partition [default = %d]\n", pPars->nPartSize );
     Abc_Print( -2, "\t-Z num : the average flop include frequency [default = %d]\n", nFlopIncFreq );
+    Abc_Print( -2, "\t-J num : intra-round TFO skip: 0=off, 1=UNKNOWN, 2=UNKNOWN+SAT [default = %d]\n", pPars->nIntraSkipMode );
     Abc_Print( -2, "\t-p     : toggle using partitioning for the input AIG [default = %s]\n", fPartition? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle using constant correspondence [default = %s]\n", pPars->fConstCorr? "yes": "no" );
     Abc_Print( -2, "\t-r     : toggle using implication rings during refinement [default = %s]\n", pPars->fUseRings? "yes": "no" );

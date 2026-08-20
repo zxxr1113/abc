@@ -1064,7 +1064,7 @@ void Cbs_ManSatPrintStats( Cbs_Man_t * p )
   SeeAlso     []
 
 ***********************************************************************/
-Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals )
+Vec_Int_t * Cbs_ManSolveMiterNcOutValsHooks( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals, Gia_SolveHooks_t * pHooks )
 {
     extern void Gia_ManCollectTest( Gia_Man_t * pAig );
     extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
@@ -1072,7 +1072,7 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
     Vec_Int_t * vCex, * vVisit, * vCexStore, * vOutVals = NULL;
     Vec_Str_t * vStatus;
     Gia_Obj_t * pRoot;
-    int i, status;
+    int i, k, status, nOuts = Gia_ManPoNum(pAig);
     abctime clk, clkTotal = Abc_Clock();
     assert( Gia_ManRegNum(pAig) == 0 );
 //    Gia_ManCollectTest( pAig );
@@ -1086,8 +1086,13 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
     p = Cbs_ManAlloc( pAig );
     p->Pars.nBTLimit = nConfs;
     // create resulting data-structures
-    vStatus   = Vec_StrAlloc( Gia_ManPoNum(pAig) );
+    vStatus   = Vec_StrStart( nOuts );
     vCexStore = Vec_IntAlloc( 10000 );
+    if ( pHooks )
+    {
+        assert( pHooks->vOrder == NULL || Vec_IntSize(pHooks->vOrder) == nOuts );
+        pHooks->nSolved = pHooks->nSkipped = 0;
+    }
     if ( pvOutVals )
     {
         *pvOutVals = NULL;
@@ -1097,8 +1102,19 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
     vVisit    = Vec_IntAlloc( 100 );
     vCex      = Cbs_ReadModel( p );
     // solve for each output
-    Gia_ManForEachCo( pAig, pRoot, i )
+    for ( k = 0; k < nOuts; k++ )
     {
+        i = pHooks && pHooks->vOrder ? Vec_IntEntry(pHooks->vOrder, k) : k;
+        assert( i >= 0 && i < nOuts );
+        if ( pHooks && pHooks->pShouldSkip && pHooks->pShouldSkip(pHooks->pUser, i) )
+        {
+            Vec_StrWriteEntry( vStatus, i, GIA_SOLVE_STATUS_DEFERRED );
+            pHooks->nSkipped++;
+            continue;
+        }
+        if ( pHooks )
+            pHooks->nSolved++;
+        pRoot = Gia_ManCo( pAig, i );
 //        printf( "\n" );
 
         Vec_IntClear( vCex );
@@ -1108,13 +1124,16 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
             {
 //                printf( "Constant 1 output of SRM!!!\n" );
                 Cec_ManSatAddToStore( vCexStore, vCex, i ); // trivial counter-example
-                Vec_StrPush( vStatus, 0 );
+                status = 0;
             }
             else
             {
 //                printf( "Constant 0 output of SRM!!!\n" );
-                Vec_StrPush( vStatus, 1 );
+                status = 1;
             }
+            Vec_StrWriteEntry( vStatus, i, (char)status );
+            if ( pHooks && pHooks->pOnResult )
+                pHooks->pOnResult( pHooks->pUser, i, status );
             continue;
         }
         clk = Abc_Clock();
@@ -1136,7 +1155,9 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
             status = Cbs_ManSolve( p, Gia_ObjChild0(pRoot) );
         }
 */
-        Vec_StrPush( vStatus, (char)status );
+        Vec_StrWriteEntry( vStatus, i, (char)status );
+        if ( pHooks && pHooks->pOnResult )
+            pHooks->pOnResult( pHooks->pUser, i, status );
         if ( status == -1 )
         {
             p->nSatUndec++;
@@ -1161,7 +1182,7 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
         p->timeSatSat += Abc_Clock() - clk;
     }
     Vec_IntFree( vVisit );
-    p->nSatTotal = Gia_ManPoNum(pAig);
+    p->nSatTotal = pHooks ? pHooks->nSolved : nOuts;
     p->timeTotal = Abc_Clock() - clkTotal;
     if ( fVerbose )
         Cbs_ManSatPrintStats( p );
@@ -1177,6 +1198,11 @@ Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t 
 //         Vec_IntSize(vCexStore)-2*p->nSatUndec-2*p->nSatSat, 
 //        (Vec_IntSize(vCexStore)-2*p->nSatUndec-2*p->nSatSat)/p->nSatSat );
     return vCexStore;
+}
+
+Vec_Int_t * Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals )
+{
+    return Cbs_ManSolveMiterNcOutValsHooks( pAig, nConfs, pvStatus, f0Proved, fVerbose, vOutLits, pvOutVals, NULL );
 }
 
 Vec_Int_t * Cbs_ManSolveMiterNc( Gia_Man_t * pAig, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose )
@@ -1244,38 +1270,59 @@ void Cbs_ManSyncCore( Cbs_Man_t * p )
   SeeAlso     []
 
 ***********************************************************************/
-Vec_Int_t * Cbs_ManSolveRoots( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose )
+Vec_Int_t * Cbs_ManSolveRootsHooks( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose, Gia_SolveHooks_t * pHooks )
 {
     extern void Cec_ManSatAddToStore( Vec_Int_t * vCexStore, Vec_Int_t * vCex, int Out );
     Gia_Man_t * pAig = p->pAig;
     Vec_Int_t * vCex, * vCexStore;
     Vec_Str_t * vStatus;
-    int i, iLit, status;
+    int i, k, iLit, status, nRoots = Vec_IntSize(vRootLits);
     abctime clk, clkTotal = Abc_Clock();
     assert( Gia_ManRegNum(pAig) == 0 );
     Cbs_ManSyncCore( p ); // prep only objects appended since the last solve
-    vStatus   = Vec_StrAlloc( Vec_IntSize(vRootLits) );
+    vStatus   = Vec_StrStart( nRoots );
     vCexStore = Vec_IntAlloc( 10000 );
-    vCex      = Cbs_ReadModel( p );
-    Vec_IntForEachEntry( vRootLits, iLit, i )
+    if ( pHooks )
     {
+        assert( pHooks->vOrder == NULL || Vec_IntSize(pHooks->vOrder) == nRoots );
+        pHooks->nSolved = pHooks->nSkipped = 0;
+    }
+    vCex      = Cbs_ReadModel( p );
+    for ( k = 0; k < nRoots; k++ )
+    {
+        i = pHooks && pHooks->vOrder ? Vec_IntEntry(pHooks->vOrder, k) : k;
+        assert( i >= 0 && i < nRoots );
+        if ( pHooks && pHooks->pShouldSkip && pHooks->pShouldSkip(pHooks->pUser, i) )
+        {
+            Vec_StrWriteEntry( vStatus, i, GIA_SOLVE_STATUS_DEFERRED );
+            pHooks->nSkipped++;
+            continue;
+        }
+        if ( pHooks )
+            pHooks->nSolved++;
+        iLit = Vec_IntEntry( vRootLits, i );
         Vec_IntClear( vCex );
         if ( Abc_Lit2Var(iLit) == 0 ) // structural constant root
         {
             if ( Abc_LitIsCompl(iLit) ) // const 1: trivial counter-example
             {
                 Cec_ManSatAddToStore( vCexStore, vCex, i );
-                Vec_StrPush( vStatus, 0 );
+                status = 0;
             }
             else                        // const 0: proved
-                Vec_StrPush( vStatus, 1 );
+                status = 1;
+            Vec_StrWriteEntry( vStatus, i, (char)status );
+            if ( pHooks && pHooks->pOnResult )
+                pHooks->pOnResult( pHooks->pUser, i, status );
             continue;
         }
         clk = Abc_Clock();
         p->Pars.fUseHighest = 1;
         p->Pars.fUseLowest  = 0;
         status = Cbs_ManSolve( p, Gia_ObjFromLit(pAig, iLit) );
-        Vec_StrPush( vStatus, (char)status );
+        Vec_StrWriteEntry( vStatus, i, (char)status );
+        if ( pHooks && pHooks->pOnResult )
+            pHooks->pOnResult( pHooks->pUser, i, status );
         if ( status == -1 )
         {
             p->nSatUndec++;
@@ -1296,13 +1343,18 @@ Vec_Int_t * Cbs_ManSolveRoots( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t *
         Cec_ManSatAddToStore( vCexStore, vCex, i );
         p->timeSatSat += Abc_Clock() - clk;
     }
-    p->nSatTotal = Vec_IntSize( vRootLits );
+    p->nSatTotal = pHooks ? pHooks->nSolved : nRoots;
     p->timeTotal = Abc_Clock() - clkTotal;
     if ( fVerbose )
         Cbs_ManSatPrintStats( p );
     // manager is resident: caller (Cec_DynSrm) owns its lifetime
     *pvStatus = vStatus;
     return vCexStore;
+}
+
+Vec_Int_t * Cbs_ManSolveRoots( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose )
+{
+    return Cbs_ManSolveRootsHooks( p, vRootLits, pvStatus, fVerbose, NULL );
 }
 
 

@@ -1307,14 +1307,27 @@ extern Abc_Cex_t *         Gia_ManCexExtendToIncludeAllObjects( Gia_Man_t * p, A
 extern Vec_Int_t *         Cbs_ManSolveMiter( Gia_Man_t * pGia, int nConfs, Vec_Str_t ** pvStatus, int fVerbose );
 /*=== giaCsat.c ============================================================*/
 typedef struct Cbs_Man_t_  Cbs_Man_t;
+typedef struct Gia_SolveHooks_t_ Gia_SolveHooks_t;
+struct Gia_SolveHooks_t_
+{
+    Vec_Int_t *  vOrder;                         // optional original output indices in solve order
+    void *       pUser;                          // opaque client context
+    int        (*pShouldSkip)( void *, int );    // return 1 to defer this original output index
+    void       (*pOnResult)( void *, int, int ); // observe (original output index, status)
+    int          nSolved;                        // outputs actually sent to the solver
+    int          nSkipped;                       // outputs deferred by pShouldSkip
+};
+#define GIA_SOLVE_STATUS_DEFERRED 2
 extern Cbs_Man_t *         Cbs_ManAlloc( Gia_Man_t * pGia );
 extern void                Cbs_ManStop( Cbs_Man_t * p );
 extern int                 Cbs_ManSolve( Cbs_Man_t * p, Gia_Obj_t * pObj );
 extern int                 Cbs_ManSolve2( Cbs_Man_t * p, Gia_Obj_t * pObj, Gia_Obj_t * pObj2 );
 extern Vec_Int_t *         Cbs_ManSolveMiterNc( Gia_Man_t * pGia, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose );
 extern Vec_Int_t *         Cbs_ManSolveMiterNcOutVals( Gia_Man_t * pGia, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals );
+extern Vec_Int_t *         Cbs_ManSolveMiterNcOutValsHooks( Gia_Man_t * pGia, int nConfs, Vec_Str_t ** pvStatus, int f0Proved, int fVerbose, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals, Gia_SolveHooks_t * pHooks );
 extern void                Cbs_ManSyncCore( Cbs_Man_t * p );
 extern Vec_Int_t *         Cbs_ManSolveRoots( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose );
+extern Vec_Int_t *         Cbs_ManSolveRootsHooks( Cbs_Man_t * p, Vec_Int_t * vRootLits, Vec_Str_t ** pvStatus, int fVerbose, Gia_SolveHooks_t * pHooks );
 extern void                Cbs_ManSetConflictNum( Cbs_Man_t * p, int Num );
 extern Vec_Int_t *         Cbs_ReadModel( Cbs_Man_t * p );
 /*=== giaCTas.c ============================================================*/

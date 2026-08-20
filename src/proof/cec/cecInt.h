@@ -181,7 +181,30 @@ struct Cec_IncrMgr_t_
     Vec_Int_t *  vAliasNext;      // next member with the same representative
     Vec_Int_t *  vBfsCur;         // BFS frontier for current frame
     Vec_Int_t *  vBfsNext;        // BFS frontier carried to next frame
+    Vec_Int_t *  vDebtNodes;      // skipped output endpoints forced active next round
+    int *        pDebtMark;       // sparse debt membership, size = nObjs
+    Vec_Int_t *  vOnlineTouched;  // nodes reached by this round's online TFO
+    Vec_Wrd_t *  vOnlineQueue;    // online (frame,obj) relaxation queue
+    int *        pOnlineDepth;    // earliest frame reached online (-1 means clean)
+    abctime      timeTfoBatch;    // full per-round TFO time (includes alias rebuild)
+    abctime      timeTfoOnline;   // intra-round online TFO time
+    abctime      timeTfoAliases;  // alias rebuild time (one setup plus a subset of batch time)
+    ABC_INT64_T  nTfoBatchVisits; // accumulated nodes reached by batch TFO
+    ABC_INT64_T  nTfoOnlineVisits;// accumulated valid online queue visits
+    int          nTfoBatchCalls;
+    int          nTfoOnlineSeeds;
+    int          nTfoAliasBuilds;
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
+};
+
+typedef struct Cec_IncrSolve_t_ Cec_IncrSolve_t;
+struct Cec_IncrSolve_t_
+{
+    Cec_IncrMgr_t *   pMgr;
+    Vec_Int_t *       vOutputs;
+    Vec_Int_t *       vOrder;
+    Gia_SolveHooks_t  Hooks;
+    int               nSkipMode;  // 0=off, 1=UNKNOWN, 2=UNKNOWN+SAT
 };
 
 typedef enum Cec_IncrEmitMode_t_
@@ -394,6 +417,12 @@ extern int                  Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj );
 extern void                 Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern void                 Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p );
+extern int                  Cec_IncrMgrDebtNum( Cec_IncrMgr_t * p );
+extern void                 Cec_IncrMgrApplyDebt( Cec_IncrMgr_t * p );
+extern void                 Cec_IncrMgrConsumeDebt( Cec_IncrMgr_t * p );
+extern void                 Cec_IncrMgrPrintTfoStats( Cec_IncrMgr_t * p, char * pLabel, abctime TimeTotal );
+extern Cec_IncrSolve_t *    Cec_IncrSolveAlloc( Cec_IncrMgr_t * p, Vec_Int_t * vOutputs, int nSkipMode );
+extern void                 Cec_IncrSolveFree( Cec_IncrSolve_t * p );
 extern Gia_Man_t *          Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr, Cec_IncrEmitMode_t Mode, Vec_Int_t ** pvOutLits );
 extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark );
 /*=== cecCorrDyn.c ============================================================*/
@@ -409,6 +438,7 @@ extern Gia_Man_t *          Cec_DynSrmBuildInit( Cec_DynSrm_t * p, int nFrames, 
 extern void                 Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMask, Cec_IncrEmitMode_t Mode );
 extern Vec_Int_t *          Cec_DynSrmOutLits( Cec_DynSrm_t * p );
 extern Vec_Int_t *          Cec_DynSrmSolve( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus, int fUseTas );
+extern Vec_Int_t *          Cec_DynSrmSolveHooks( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus, int fUseTas, Gia_SolveHooks_t * pHooks );
 extern Vec_Int_t *          Cec_DynSrmSolveBmcAdaptive( Cec_DynSrm_t * p, int nConfs, Vec_Str_t ** pvStatus, int fUseTas );
 /*=== cecCorrIncrSim.c ============================================================*/
 extern Cec_SeedSim_t *      Cec_SeedSimAlloc( Gia_Man_t * pAig, int nFrames, int iSeedFrame, int nWords );
@@ -468,6 +498,7 @@ extern void                 Cec_ManSatSolveCSat( Cec_ManPat_t * pPat, Gia_Man_t 
 extern Vec_Str_t *          Cec_ManSatSolveSeq( Vec_Ptr_t * vPatts, Gia_Man_t * pAig, Cec_ParSat_t * pPars, int nRegs, int * pnPats );
 extern Vec_Int_t *          Cec_ManSatSolveMiter( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus );
 extern Vec_Int_t *          Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals );
+extern Vec_Int_t *          Cec_ManSatSolveMiterOutValsHooks( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals, Gia_SolveHooks_t * pHooks );
 extern int                  Cec_ManSatCheckNode( Cec_ManSat_t * p, Gia_Obj_t * pObj );
 extern int                  Cec_ManSatCheckNodeTwo( Cec_ManSat_t * p, Gia_Obj_t * pObj1, Gia_Obj_t * pObj2 );
 extern void                 Cec_ManSavePattern( Cec_ManSat_t * p, Gia_Obj_t * pObj1, Gia_Obj_t * pObj2 );

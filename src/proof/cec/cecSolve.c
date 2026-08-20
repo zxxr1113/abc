@@ -1093,7 +1093,7 @@ static void Cec_ManSatSaveOutVals( Cec_ManSat_t * p, Vec_Int_t * vOutLits, Vec_I
   SeeAlso     []
 
 ***********************************************************************/
-Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals )
+Vec_Int_t * Cec_ManSatSolveMiterOutValsHooks( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals, Gia_SolveHooks_t * pHooks )
 {
     Bar_Progress_t * pProgress = NULL;
     Vec_Int_t * vCexStore;
@@ -1101,15 +1101,20 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
     Vec_Str_t * vStatus;
     Cec_ManSat_t * p;
     Gia_Obj_t * pObj;
-    int i, status;
+    int i, k, status, nOuts = Gia_ManPoNum(pAig);
     abctime clk = Abc_Clock();
     // prepare AIG
     Gia_ManSetPhase( pAig );
     Gia_ManLevelNum( pAig );
     Gia_ManIncrementTravId( pAig );
     // create resulting data-structures
-    vStatus = Vec_StrAlloc( Gia_ManPoNum(pAig) );
+    vStatus = Vec_StrStart( nOuts );
     vCexStore = Vec_IntAlloc( 10000 );
+    if ( pHooks )
+    {
+        assert( pHooks->vOrder == NULL || Vec_IntSize(pHooks->vOrder) == nOuts );
+        pHooks->nSolved = pHooks->nSkipped = 0;
+    }
     if ( pvOutVals )
     {
         *pvOutVals = NULL;
@@ -1118,28 +1123,44 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
     }
     // perform solving
     p = Cec_ManSatCreate( pAig, pPars );
-    pProgress = Bar_ProgressStart( stdout, Gia_ManPoNum(pAig) );
-    Gia_ManForEachCo( pAig, pObj, i )
+    pProgress = Bar_ProgressStart( stdout, nOuts );
+    for ( k = 0; k < nOuts; k++ )
     {
+        i = pHooks && pHooks->vOrder ? Vec_IntEntry(pHooks->vOrder, k) : k;
+        assert( i >= 0 && i < nOuts );
+        if ( pHooks && pHooks->pShouldSkip && pHooks->pShouldSkip(pHooks->pUser, i) )
+        {
+            Vec_StrWriteEntry( vStatus, i, GIA_SOLVE_STATUS_DEFERRED );
+            pHooks->nSkipped++;
+            continue;
+        }
+        if ( pHooks )
+            pHooks->nSolved++;
+        pObj = Gia_ManCo( pAig, i );
         Vec_IntClear( p->vCex );
-        Bar_ProgressUpdate( pProgress, i, "SAT..." );
+        Bar_ProgressUpdate( pProgress, k, "SAT..." );
         if ( Gia_ObjIsConst0(Gia_ObjFanin0(pObj)) )
         {
             if ( Gia_ObjFaninC0(pObj) )
             {
 //                Abc_Print( 1, "Constant 1 output of SRM!!!\n" );
                 Cec_ManSatAddToStore( vCexStore, p->vCex, i ); // trivial counter-example
-                Vec_StrPush( vStatus, 0 );
+                status = 0;
             }
             else
             {
 //                Abc_Print( 1, "Constant 0 output of SRM!!!\n" );
-                Vec_StrPush( vStatus, 1 );
+                status = 1;
             }
+            Vec_StrWriteEntry( vStatus, i, (char)status );
+            if ( pHooks && pHooks->pOnResult )
+                pHooks->pOnResult( pHooks->pUser, i, status );
             continue;
         }
         status = Cec_ManSatCheckNode( p, Gia_ObjChild0(pObj) );
-        Vec_StrPush( vStatus, (char)status );
+        Vec_StrWriteEntry( vStatus, i, (char)status );
+        if ( pHooks && pHooks->pOnResult )
+            pHooks->pOnResult( pHooks->pUser, i, status );
         if ( status == -1 )
         {
             Cec_ManSatAddToStore( vCexStore, NULL, i ); // timeout
@@ -1169,6 +1190,11 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
     return vCexStore;
 }
 
+Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus, Vec_Int_t * vOutLits, Vec_Int_t ** pvOutVals )
+{
+    return Cec_ManSatSolveMiterOutValsHooks( pAig, pPars, pvStatus, vOutLits, pvOutVals, NULL );
+}
+
 Vec_Int_t * Cec_ManSatSolveMiter( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_Str_t ** pvStatus )
 {
     return Cec_ManSatSolveMiterOutVals( pAig, pPars, pvStatus, NULL, NULL );
@@ -1181,4 +1207,3 @@ Vec_Int_t * Cec_ManSatSolveMiter( Gia_Man_t * pAig, Cec_ParSat_t * pPars, Vec_St
 
 
 ABC_NAMESPACE_IMPL_END
-

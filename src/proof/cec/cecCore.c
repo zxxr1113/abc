@@ -195,6 +195,7 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->nIncrFallbackPct =   100;  // (-i) fall back to full SRM when active pairs exceed this percent
     p->nDynSrmRebuildPct =   20;  // (-D) cold-rebuild when active pairs exceed this percent
     p->nDynSrmCompactMult =  4;   // (-D) cold-compact when core exceeds this multiple of reset size
+    p->nIntraSkipMode =          0;   // (-J) intra-round TFO skip mode
     p->fLatchCorr     =       0;  // consider only latch outputs
     p->fConstCorr     =       0;  // consider only constants
     p->fUseRings      =       1;  // combine classes into rings

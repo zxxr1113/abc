@@ -20,6 +20,25 @@
 
 ABC_NAMESPACE_IMPL_START
 
+static void Cec_IncrMgrBuildAliases( Cec_IncrMgr_t * p )
+{
+    Gia_Man_t * pAig = p->pAig;
+    abctime clk = Abc_Clock();
+    int Id, ReprId;
+    Vec_IntFill( p->vAliasHeads, p->nObjs, -1 );
+    Vec_IntFill( p->vAliasNext,  p->nObjs, -1 );
+    for ( Id = 1; Id < p->nObjs; Id++ )
+    {
+        ReprId = Gia_ObjRepr( pAig, Id );
+        if ( ReprId <= 0 || ReprId == GIA_VOID )
+            continue;
+        Vec_IntWriteEntry( p->vAliasNext, Id, Vec_IntEntry(p->vAliasHeads, ReprId) );
+        Vec_IntWriteEntry( p->vAliasHeads, ReprId, Id );
+    }
+    p->timeTfoAliases += Abc_Clock() - clk;
+    p->nTfoAliasBuilds++;
+}
+
 ////////////////////////////////////////////////////////////////////////
 ///                     FUNCTION DEFINITIONS                         ///
 ////////////////////////////////////////////////////////////////////////
@@ -54,11 +73,17 @@ Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
     p->vAliasNext  = Vec_IntStartFull( p->nObjs );
     p->vBfsCur   = Vec_IntAlloc( 1024 );
     p->vBfsNext  = Vec_IntAlloc( 1024 );
+    p->vDebtNodes = Vec_IntAlloc( 256 );
+    p->pDebtMark  = ABC_CALLOC( int, p->nObjs );
+    p->vOnlineTouched = Vec_IntAlloc( 1024 );
+    p->vOnlineQueue   = Vec_WrdAlloc( 1024 );
+    p->pOnlineDepth   = ABC_FALLOC( int, p->nObjs );
     if ( pAig->vFanout == NULL )
     {
         Gia_ManStaticFanoutStart( pAig );
         p->fOwnsFanout = 1;
     }
+    Cec_IncrMgrBuildAliases( p );
     return p;
 }
 
@@ -88,6 +113,11 @@ void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
     Vec_IntFree( p->vAliasNext );
     Vec_IntFree( p->vBfsCur );
     Vec_IntFree( p->vBfsNext );
+    Vec_IntFree( p->vDebtNodes );
+    Vec_IntFree( p->vOnlineTouched );
+    Vec_WrdFree( p->vOnlineQueue );
+    ABC_FREE( p->pDebtMark );
+    ABC_FREE( p->pOnlineDepth );
     ABC_FREE( p->pTfoMark );
     ABC_FREE( p );
 }
@@ -323,7 +353,8 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
 {
     Gia_Man_t * pAig = p->pAig;
     int * pMark = p->pTfoMark;
-    int f, i, k, Id, FanId, RoId, ReprId, AliasId;
+    abctime clk = Abc_Clock();
+    int f, i, k, Id, FanId, RoId, AliasId;
 
     Vec_IntForEachEntry( p->vTfoNodes, Id, i )
         pMark[Id] = 0;
@@ -331,16 +362,7 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
     Vec_IntClear( p->vBfsCur );
     Vec_IntClear( p->vBfsNext );
 
-    Vec_IntFill( p->vAliasHeads, p->nObjs, -1 );
-    Vec_IntFill( p->vAliasNext,  p->nObjs, -1 );
-    for ( Id = 1; Id < p->nObjs; Id++ )
-    {
-        ReprId = Gia_ObjRepr( pAig, Id );
-        if ( ReprId <= 0 || ReprId == GIA_VOID )
-            continue;
-        Vec_IntWriteEntry( p->vAliasNext, Id, Vec_IntEntry(p->vAliasHeads, ReprId) );
-        Vec_IntWriteEntry( p->vAliasHeads, ReprId, Id );
-    }
+    Cec_IncrMgrBuildAliases( p );
 
     Vec_IntForEachEntry( p->vSeeds, Id, i )
     {
@@ -408,6 +430,192 @@ void Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p )
         if ( Vec_IntSize(p->vBfsCur) == 0 )
             break;
     }
+    p->timeTfoBatch += Abc_Clock() - clk;
+    p->nTfoBatchCalls++;
+    p->nTfoBatchVisits += Vec_IntSize(p->vTfoNodes);
+}
+
+int Cec_IncrMgrDebtNum( Cec_IncrMgr_t * p )
+{
+    return p ? Vec_IntSize(p->vDebtNodes) : 0;
+}
+
+void Cec_IncrMgrApplyDebt( Cec_IncrMgr_t * p )
+{
+    int Id, i;
+    Vec_IntForEachEntry( p->vDebtNodes, Id, i )
+        if ( !p->pTfoMark[Id] )
+        {
+            p->pTfoMark[Id] = 1;
+            Vec_IntPush( p->vTfoNodes, Id );
+        }
+}
+
+void Cec_IncrMgrConsumeDebt( Cec_IncrMgr_t * p )
+{
+    int Id, i;
+    if ( p == NULL )
+        return;
+    Vec_IntForEachEntry( p->vDebtNodes, Id, i )
+        p->pDebtMark[Id] = 0;
+    Vec_IntClear( p->vDebtNodes );
+}
+
+void Cec_IncrMgrPrintTfoStats( Cec_IncrMgr_t * p, char * pLabel, abctime TimeTotal )
+{
+    abctime TimeTfo;
+    if ( p == NULL )
+        return;
+    TimeTfo = p->timeTfoBatch + p->timeTfoOnline;
+    Abc_Print( 1, "%s TFO: total = %.6f sec (%.2f%%), batch = %.6f sec/%d calls/%lld visits, online = %.6f sec/%d seeds/%lld visits, aliases = %.6f sec/%d builds (one setup, then included in batch).\n",
+        pLabel,
+        1.0 * TimeTfo / CLOCKS_PER_SEC,
+        TimeTotal ? 100.0 * TimeTfo / TimeTotal : 0.0,
+        1.0 * p->timeTfoBatch / CLOCKS_PER_SEC,
+        p->nTfoBatchCalls, (long long)p->nTfoBatchVisits,
+        1.0 * p->timeTfoOnline / CLOCKS_PER_SEC,
+        p->nTfoOnlineSeeds, (long long)p->nTfoOnlineVisits,
+        1.0 * p->timeTfoAliases / CLOCKS_PER_SEC,
+        p->nTfoAliasBuilds );
+}
+
+static void Cec_IncrMgrAddDebt( Cec_IncrMgr_t * p, int Id )
+{
+    assert( Id >= 0 && Id < p->nObjs );
+    if ( Id <= 0 || p->pDebtMark[Id] )
+        return;
+    p->pDebtMark[Id] = 1;
+    Vec_IntPush( p->vDebtNodes, Id );
+}
+
+static void Cec_IncrMgrOnlineRelax( Cec_IncrMgr_t * p, int Id, int Frame )
+{
+    int Prev;
+    assert( Id >= 0 && Id < p->nObjs );
+    assert( Frame >= 0 && Frame <= p->nFrames );
+    Prev = p->pOnlineDepth[Id];
+    if ( Prev >= 0 && Prev <= Frame )
+        return;
+    if ( Prev < 0 )
+        Vec_IntPush( p->vOnlineTouched, Id );
+    p->pOnlineDepth[Id] = Frame;
+    Vec_WrdPush( p->vOnlineQueue, ((word)(unsigned)Frame << 32) | (unsigned)Id );
+}
+
+static void Cec_IncrMgrOnlineAddSeed( Cec_IncrMgr_t * p, int Seed )
+{
+    Gia_Man_t * pAig = p->pAig;
+    abctime clk = Abc_Clock();
+    word Entry;
+    int Head = 0, Id, Frame, AliasId, FanId, RoId, k, nVisits = 0;
+    Vec_WrdClear( p->vOnlineQueue );
+    Cec_IncrMgrOnlineRelax( p, Seed, 0 );
+    while ( Head < Vec_WrdSize(p->vOnlineQueue) )
+    {
+        Gia_Obj_t * pFan;
+        Entry = Vec_WrdEntry( p->vOnlineQueue, Head++ );
+        Id = (int)(unsigned)Entry;
+        Frame = (int)(Entry >> 32);
+        if ( p->pOnlineDepth[Id] != Frame )
+            continue;
+        nVisits++;
+        for ( AliasId = Vec_IntEntry(p->vAliasHeads, Id);
+              AliasId >= 0;
+              AliasId = Vec_IntEntry(p->vAliasNext, AliasId) )
+            Cec_IncrMgrOnlineRelax( p, AliasId, Frame );
+        for ( k = 0; k < Gia_ObjFanoutNumId(pAig, Id); k++ )
+        {
+            FanId = Gia_ObjFanoutId( pAig, Id, k );
+            pFan  = Gia_ManObj( pAig, FanId );
+            if ( Gia_ObjIsRi(pAig, pFan) )
+            {
+                if ( Frame < p->nFrames )
+                {
+                    RoId = Gia_ObjRiToRoId( pAig, FanId );
+                    Cec_IncrMgrOnlineRelax( p, RoId, Frame + 1 );
+                }
+            }
+            else if ( !Gia_ObjIsCo(pFan) )
+                Cec_IncrMgrOnlineRelax( p, FanId, Frame );
+        }
+    }
+    p->timeTfoOnline += Abc_Clock() - clk;
+    p->nTfoOnlineSeeds++;
+    p->nTfoOnlineVisits += nVisits;
+}
+
+static int Cec_IncrSolveShouldSkip( void * pUser, int iOut )
+{
+    Cec_IncrSolve_t * p = (Cec_IncrSolve_t *)pUser;
+    int iRepr, iObj;
+    assert( iOut >= 0 && 2*iOut + 1 < Vec_IntSize(p->vOutputs) );
+    iRepr = Vec_IntEntry( p->vOutputs, 2*iOut );
+    iObj  = Vec_IntEntry( p->vOutputs, 2*iOut + 1 );
+    assert( iRepr >= 0 && iRepr < p->pMgr->nObjs );
+    assert( iObj  >= 0 && iObj  < p->pMgr->nObjs );
+    if ( p->pMgr->pOnlineDepth[iRepr] < 0 && p->pMgr->pOnlineDepth[iObj] < 0 )
+        return 0;
+    Cec_IncrMgrAddDebt( p->pMgr, iObj );
+    return 1;
+}
+
+static void Cec_IncrSolveOnResult( void * pUser, int iOut, int Status )
+{
+    Cec_IncrSolve_t * p = (Cec_IncrSolve_t *)pUser;
+    int iObj;
+    assert( iOut >= 0 && 2*iOut + 1 < Vec_IntSize(p->vOutputs) );
+    if ( Status != -1 && !(p->nSkipMode == 2 && Status == 0) )
+        return;
+    iObj = Vec_IntEntry( p->vOutputs, 2*iOut + 1 );
+    Cec_IncrMgrOnlineAddSeed( p->pMgr, iObj );
+}
+
+Cec_IncrSolve_t * Cec_IncrSolveAlloc( Cec_IncrMgr_t * pMgr, Vec_Int_t * vOutputs, int nSkipMode )
+{
+    Cec_IncrSolve_t * p;
+    Vec_Wrd_t * vSort;
+    word Entry;
+    int i, iRepr, iObj, Key, nOuts = Vec_IntSize(vOutputs) / 2;
+    assert( nSkipMode >= 0 && nSkipMode <= 2 );
+    assert( Vec_IntSize(vOutputs) % 2 == 0 );
+    if ( pMgr == NULL || nSkipMode == 0 )
+        return NULL;
+    p = ABC_CALLOC( Cec_IncrSolve_t, 1 );
+    p->pMgr = pMgr;
+    p->vOutputs = vOutputs;
+    p->nSkipMode = nSkipMode;
+    Vec_IntForEachEntry( pMgr->vOnlineTouched, iObj, i )
+        pMgr->pOnlineDepth[iObj] = -1;
+    Vec_IntClear( pMgr->vOnlineTouched );
+    Vec_WrdClear( pMgr->vOnlineQueue );
+    vSort = Vec_WrdAlloc( nOuts );
+    for ( i = 0; i < nOuts; i++ )
+    {
+        iRepr = Vec_IntEntry( vOutputs, 2*i );
+        iObj  = Vec_IntEntry( vOutputs, 2*i + 1 );
+        assert( iRepr >= 0 && iRepr < pMgr->nObjs );
+        assert( iObj  >= 0 && iObj  < pMgr->nObjs );
+        Key = Abc_MaxInt( iRepr, iObj );
+        Vec_WrdPush( vSort, ((word)(unsigned)Key << 32) | (unsigned)i );
+    }
+    Vec_WrdSortUnsigned( vSort );
+    p->vOrder = Vec_IntAlloc( nOuts );
+    Vec_WrdForEachEntry( vSort, Entry, i )
+        Vec_IntPush( p->vOrder, (int)(unsigned)Entry );
+    Vec_WrdFree( vSort );
+    p->Hooks.vOrder = p->vOrder;
+    p->Hooks.pUser = p;
+    p->Hooks.pShouldSkip = Cec_IncrSolveShouldSkip;
+    p->Hooks.pOnResult = Cec_IncrSolveOnResult;
+    return p;
+}
+
+void Cec_IncrSolveFree( Cec_IncrSolve_t * p )
+{
+    if ( p == NULL )
+        return;
+    Vec_IntFree( p->vOrder );
+    ABC_FREE( p );
 }
 
 /**Function*************************************************************

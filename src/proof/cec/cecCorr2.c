@@ -961,6 +961,8 @@ int Gia_ManCheckRefinements2( Gia_Man_t * p, Vec_Str_t * vStatus, Vec_Int_t * vO
     {
         iRepr = Vec_IntEntry( vOutputs, 2*i );
         iObj  = Vec_IntEntry( vOutputs, 2*i+1 );
+        if ( status == GIA_SOLVE_STATUS_DEFERRED )
+            continue;
         if ( status == 1 )
             continue;
         if ( status == 0 )
@@ -1071,7 +1073,7 @@ Gia_Man_t * Gia_ManCorr2Reduce( Gia_Man_t * p )
 void Cec_Man2RefinedClassPrintStats( Gia_Man_t * p, Vec_Str_t * vStatus, int iIter, abctime Time )
 {
     int nLits, CounterX = 0, Counter0 = 0, Counter = 0;
-    int i, Entry, nProve = 0, nDispr = 0, nFail = 0;
+    int i, Entry, nProve = 0, nDispr = 0, nFail = 0, nDefer = 0;
     for ( i = 1; i < Gia_ManObjNum(p); i++ )
     {
         if ( Gia_ObjIsNone(p, i) )
@@ -1097,8 +1099,10 @@ void Cec_Man2RefinedClassPrintStats( Gia_Man_t * p, Vec_Str_t * vStatus, int iIt
             nDispr++;
         else if ( Entry == -1 )
             nFail++;
+        else if ( Entry == GIA_SOLVE_STATUS_DEFERRED )
+            nDefer++;
     }
-    Abc_Print( 1, "p =%6d  d =%6d  f =%6d  ", nProve, nDispr, nFail );
+    Abc_Print( 1, "p =%6d  d =%6d  f =%6d  x =%6d  ", nProve, nDispr, nFail, nDefer );
     Abc_Print( 1, "%c  ", Gia_ObjIsConst( p, Gia_ObjFaninId0p(p, Gia_ManPo(p, 0)) ) ? '+' : '-' );
     Abc_PrintTime( 1, "T", Time );
 }
@@ -1139,8 +1143,10 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     Cec_ManSim_t * pSim;
     Gia_Man_t * pSrm;
     int fChanges, i;
+    abctime clkBmcTotal = Abc_Clock();
     int nBmcResimFrames = pPars->nFrames + 1 + nPrefs;
     int fBmcPersist = 0;
+    ABC_INT64_T nBmcIntraSolved = 0, nBmcIntraDeferred = 0;
     // BMC SRM is keyed only on pReprs (Gia_ManCorr2SpecReduceInit ignores
     // its fRings flag).  So the incremental filter only needs pReprs-based
     // seeds; pNexts changes cannot affect this SRM and there are no ring
@@ -1179,8 +1185,9 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     for ( i = 0; fChanges && (!pPars->nLimitMax || i < pPars->nLimitMax); i++ )
     {
         int * pTfoMask = NULL;
-        int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0;
-        int nBmcPos = 0;
+        int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0, nDebt = 0;
+        int nBmcPos = 0, nSolveCalls = 0;
+        Cec_IncrSolve_t * pIncrSolve = NULL;
         abctime tSat;
         if ( Cec_ParCorShouldStop( pPars ) )
             break;
@@ -1191,12 +1198,14 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
         if ( pBmcMgr && i > 0 )
         {
             nReprSeeds = Cec_IncrMgrComputeSeeds( pBmcMgr );
-            if ( nReprSeeds == 0 )
+            nDebt = Cec_IncrMgrDebtNum( pBmcMgr );
+            if ( nReprSeeds == 0 && nDebt == 0 )
             {
                 // No pReprs change.  BMC SRM topology is unchanged.
                 break;
             }
             Cec_IncrMgrComputeTfo( pBmcMgr );
+            Cec_IncrMgrApplyDebt( pBmcMgr );
             // BMC SRM is non-ring; pass fRings=0 so we count (head, member)
             // pairs only and skip any ring-edge bookkeeping.
             if ( pBmcDynSrm )
@@ -1204,7 +1213,10 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
             else
                 Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
             if ( nActivePairs == 0 )
+            {
+                Cec_IncrMgrConsumeDebt( pBmcMgr );
                 break;
+            }
             {
                 int fIncrFallback = nTotalPairs > 0 &&
                     (ABC_INT64_T)100 * nActivePairs > (ABC_INT64_T)pPars->nIncrFallbackPct * nTotalPairs;
@@ -1232,7 +1244,10 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
         // class state whose pairs were just emitted.  The next iteration's
         // diff vs this snapshot tells us which pairs are stale.
         if ( pBmcMgr )
+        {
             Cec_IncrMgrSnapshotClasses( pBmcMgr );
+            Cec_IncrMgrConsumeDebt( pBmcMgr );
+        }
         if ( nBmcPos == 0 )
         {
             if ( pSrm )
@@ -1240,19 +1255,29 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
             Vec_IntFree( vOutputs );
             break;
         }
+        if ( pPars->nIntraSkipMode > 0 &&
+             ((fBmcPersist && !pPars->fUseTas && !pPars->fBmcTasAdaptive) ||
+              (!fBmcPersist && !pPars->fUseCSat)) )
+            pIncrSolve = Cec_IncrSolveAlloc( pBmcMgr, vOutputs, pPars->nIntraSkipMode );
         pParsSat->nBTLimit *= 10;
         tSat = Abc_ClockHr();
         if ( fBmcPersist && (pPars->fUseTas || pPars->fBmcTasAdaptive) )
             vCexStore = Cec_DynSrmSolveBmcAdaptive( pBmcDynSrm, pPars->nBTLimit, &vStatus, pPars->fUseTas );
         else if ( fBmcPersist )
-            vCexStore = Cec_DynSrmSolve( pBmcDynSrm, pPars->nBTLimit, &vStatus, 0 );
+            vCexStore = Cec_DynSrmSolveHooks( pBmcDynSrm, pPars->nBTLimit, &vStatus, 0,
+                pIncrSolve ? &pIncrSolve->Hooks : NULL );
         else if ( pPars->fUseCSat )
             vCexStore = Tas_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0 );
         else
-            vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
+            vCexStore = Cec_ManSatSolveMiterOutValsHooks( pSrm, pParsSat, &vStatus,
+                NULL, NULL, pIncrSolve ? &pIncrSolve->Hooks : NULL );
         tSat = Abc_ClockHr() - tSat;
+        nSolveCalls = pIncrSolve ? pIncrSolve->Hooks.nSolved : nBmcPos;
+        nBmcIntraSolved += nSolveCalls;
+        nBmcIntraDeferred += pIncrSolve ? pIncrSolve->Hooks.nSkipped : 0;
+        Cec_IncrSolveFree( pIncrSolve );
         if ( pBmcDynSrm && Vec_IntSize(vCexStore) == 0 )
-            Cec_DynSrmRecordSolveStats( pBmcDynSrm, nBmcPos, 0, 0, 0, tSat );
+            Cec_DynSrmRecordSolveStats( pBmcDynSrm, nSolveCalls, 0, 0, 0, tSat );
         // refine classes with these counter-examples
         if ( Vec_IntSize(vCexStore) )
         {
@@ -1260,7 +1285,7 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
             // classify CEX entries: real (nLits>0) / trivial (==0) / fail (==-1)
             Cec_ManCexStoreClassify( vCexStore, &nCexReal, &nCexTriv, &nCexFail );
             if ( pBmcDynSrm )
-                Cec_DynSrmRecordSolveStats( pBmcDynSrm, nBmcPos,
+                Cec_DynSrmRecordSolveStats( pBmcDynSrm, nSolveCalls,
                     nCexReal, nCexTriv, nCexFail, tSat );
             // only invoke resim when there is a real CEX (nLits>0).  Trivial
             // (nLits==0) and fail (==-1) entries carry no literals; trivial
@@ -1291,6 +1316,11 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
         if ( Cec_ParCorShouldStop( pPars ) )
             break;
     }
+    if ( pPars->fVerbose && pPars->nIntraSkipMode > 0 )
+        Abc_Print( 1, "BMC intra: mode = %d, solved = %lld, deferred = %lld\n",
+            pPars->nIntraSkipMode, (long long)nBmcIntraSolved, (long long)nBmcIntraDeferred );
+    if ( pPars->fVerbose )
+        Cec_IncrMgrPrintTfoStats( pBmcMgr, "BMC", Abc_Clock() - clkBmcTotal );
     Cec_DynSrmFree( pBmcDynSrm );
     Cec_IncrMgrFree( pBmcMgr );
     Cec_ManSimStop( pSim );
@@ -1325,7 +1355,8 @@ int Cec_ManLSCorrAnalyzeDependence2( Gia_Man_t * p, Vec_Int_t * vEquivs, Vec_Str
         iRepr = Vec_IntEntry(vEquivs, 2*i);
         iObj = Vec_IntEntry(vEquivs, 2*i+1);
         assert( iRepr == Gia_ObjRepr(p, iObj) );
-        if ( Vec_StrEntry(vStatus, i) != 1 ) // disproved or undecided
+        if ( Vec_StrEntry(vStatus, i) != 1 &&
+             Vec_StrEntry(vStatus, i) != GIA_SOLVE_STATUS_DEFERRED ) // disproved or undecided
         {
             Gia_ManObj(p, iObj)->fMark1 = 1;
             Count0++;
@@ -1485,6 +1516,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clkIncr = 0;
     abctime tSat = 0;
     int nIncrSkipped = 0, nIncrFallback = 0;
+    ABC_INT64_T nIntraSolved = 0, nIntraDeferred = 0;
     if ( Gia_ManRegNum(pAig) == 0 )
     {
         Abc_Print( 1, "Cec_ManLatchCorrespondence(): Not a sequential AIG.\n" );
@@ -1515,9 +1547,9 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
     if ( pPars->fVerbose )
     {
-        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d. IncrFb = %d%%. DynRb = %d%%. DynCmp = %dx.\n",
+        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d. IntraSkip = %d. IncrFb = %d%%. DynRb = %d%%. DynCmp = %dx.\n",
             Gia_ManObjNum(pAig), Gia_ManAndNum(pAig),
-            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt, pPars->nIncrFallbackPct, pPars->nDynSrmRebuildPct, pPars->nDynSrmCompactMult );
+            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt, pPars->nIntraSkipMode, pPars->nIncrFallbackPct, pPars->nDynSrmRebuildPct, pPars->nDynSrmCompactMult );
         Cec_Man2RefinedClassPrintStats( pAig, NULL, 0, Abc_Clock() - clk );
     }
     // check the base case
@@ -1559,6 +1591,8 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     // perform refinement of equivalence classes
     for ( r = 0; r < nIterMax; r++ )
     {
+        Cec_IncrSolve_t * pIncrSolve = NULL;
+        int nSolveCalls = 0;
         if ( Cec_ParCorShouldStop( pPars ) )
         {
             Cec_ManSimStop( pSim );
@@ -1581,7 +1615,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         clk2 = Abc_Clock();
         {
             int * pTfoMask = NULL;
-            int nReprSeeds = 0, nNextChanges = 0;
+            int nReprSeeds = 0, nNextChanges = 0, nDebt = 0;
             int nTotalPairs = 0, nActivePairs = 0;
             int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
@@ -1591,7 +1625,8 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 abctime clkI = Abc_Clock();
                 nReprSeeds = Cec_IncrMgrComputeSeeds( pMgr );
                 nNextChanges = pPars->fUseRings ? Cec_IncrMgrCountNextChanges( pMgr ) : 0;
-                if ( nReprSeeds == 0 && nNextChanges == 0 )
+                nDebt = Cec_IncrMgrDebtNum( pMgr );
+                if ( nReprSeeds == 0 && nNextChanges == 0 && nDebt == 0 )
                 {
                     if ( !pPars->fIncrOracle )
                     {
@@ -1616,6 +1651,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 else
                 {
                     Cec_IncrMgrComputeTfo( pMgr );
+                    Cec_IncrMgrApplyDebt( pMgr );
                     if ( pDynSrm )
                         Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
                     else
@@ -1628,6 +1664,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                             // depends on the changes and no new ring edge exists.
                             clkIncr += Abc_Clock() - clkI;
                             clkSrm  += Abc_Clock() - clk2;
+                            Cec_IncrMgrConsumeDebt( pMgr );
                             break;
                         }
                         pTfoMask = pMgr->pTfoMark;
@@ -1705,7 +1742,10 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             // the old pNexts snapshot to recognize newly-created ring edges.
             // SAT/sim refinement below is what creates the next iteration's diff.
             if ( pMgr )
+            {
                 Cec_IncrMgrSnapshotClasses( pMgr );
+                Cec_IncrMgrConsumeDebt( pMgr );
+            }
         }
         assert( fPersist || (Gia_ManRegNum(pSrm) == 0 && Gia_ManPiNum(pSrm) == Gia_ManRegNum(pAig)+(pPars->nFrames+!pPars->fLatchCorr)*Gia_ManPiNum(pAig)) );
         clkSrm += Abc_Clock() - clk2;
@@ -1717,23 +1757,31 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             break;
         }
 //Gia_DumpAiger( pSrm, "corrsrm", r, 2 );
+        pIncrSolve = Cec_IncrSolveAlloc( pMgr, vOutputs, pPars->nIntraSkipMode );
         // found counter-examples to speculation
         clk2 = Abc_Clock();
         tSat = Abc_ClockHr();
         if ( fPersist )
-            vCexStore = Cec_DynSrmSolve( pDynSrm, pPars->nBTLimit, &vStatus, 0 );
+            vCexStore = Cec_DynSrmSolveHooks( pDynSrm, pPars->nBTLimit, &vStatus, 0,
+                pIncrSolve ? &pIncrSolve->Hooks : NULL );
         else if ( pPars->fUseCSat )
-            vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
+            vCexStore = Cbs_ManSolveMiterNcOutValsHooks( pSrm, pPars->nBTLimit,
+                &vStatus, 0, 0, NULL, NULL, pIncrSolve ? &pIncrSolve->Hooks : NULL );
         else
-            vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
+            vCexStore = Cec_ManSatSolveMiterOutValsHooks( pSrm, pParsSat, &vStatus,
+                NULL, NULL, pIncrSolve ? &pIncrSolve->Hooks : NULL );
         tSat = Abc_ClockHr() - tSat;
+        nSolveCalls = pIncrSolve ? pIncrSolve->Hooks.nSolved : Vec_IntSize(vOutputs) / 2;
+        nIntraSolved += nSolveCalls;
+        nIntraDeferred += pIncrSolve ? pIncrSolve->Hooks.nSkipped : 0;
+        Cec_IncrSolveFree( pIncrSolve );
         if ( pSrm )
             Gia_ManStop( pSrm );
         clkSat += Abc_Clock() - clk2;
         if ( Vec_IntSize(vCexStore) == 0 )
         {
             if ( pDynSrm )
-                Cec_DynSrmRecordSolveStats( pDynSrm, Vec_IntSize(vOutputs) / 2, 0, 0, 0, tSat );
+                Cec_DynSrmRecordSolveStats( pDynSrm, nSolveCalls, 0, 0, 0, tSat );
             Vec_IntFree( vCexStore );
             Vec_StrFree( vStatus );
             Vec_IntFree( vOutputs );
@@ -1747,7 +1795,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             int nCexReal = 0, nCexTriv = 0, nCexFail = 0;
             Cec_ManCexStoreClassify( vCexStore, &nCexReal, &nCexTriv, &nCexFail );
             if ( pDynSrm )
-                Cec_DynSrmRecordSolveStats( pDynSrm, Vec_IntSize(vOutputs) / 2,
+                Cec_DynSrmRecordSolveStats( pDynSrm, nSolveCalls,
                     nCexReal, nCexTriv, nCexFail, tSat );
             if ( nCexReal > 0 || !pPars->fSkipFailResim )
             {
@@ -1901,6 +1949,10 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             ABC_PRTP( "Incr ", clkIncr, clkTotal );
             Abc_Print( 1, "Incr: fallback rounds = %d, skipped candidate pairs = %d\n", nIncrFallback, nIncrSkipped );
+            if ( pPars->nIntraSkipMode > 0 )
+                Abc_Print( 1, "Intra: mode = %d, solved = %lld, deferred = %lld\n",
+                    pPars->nIntraSkipMode, (long long)nIntraSolved, (long long)nIntraDeferred );
+            Cec_IncrMgrPrintTfoStats( pMgr, "Main", clkTotal );
         }
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }

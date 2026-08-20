@@ -162,6 +162,7 @@ struct Cec_ParCor_t_
     int              nIncrFallbackPct; // (-i) fall back to full SRM when active pairs exceed this percent
     int              nDynSrmRebuildPct; // (-D) cold-rebuild when active pairs exceed this percent
     int              nDynSrmCompactMult; // (-D) cold-compact when core exceeds this multiple of reset size
+    int              nIntraSkipMode; // (-J) intra-round TFO skip: 0=off, 1=UNKNOWN, 2=UNKNOWN+SAT
     int              fLatchCorr;    // consider only latch outputs
     int              fConstCorr;    // consider only constants
     int              fUseRings;     // use rings
