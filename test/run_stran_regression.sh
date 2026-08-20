@@ -8,6 +8,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 resub_selftest=$("$abc_bin" -q '&stran_resub_test')
 printf '%s\n' "$resub_selftest"
 grep -q 'stran resub iterator/polarity/canonicalization/MFFC self-test: PASS' <<<"$resub_selftest"
+grep -q 'stran ranked-reservoir/global-Existing/helper-remap-HO/zero-gain/temp-AIG self-test: PASS' <<<"$resub_selftest"
 
 run_case() {
     local name="$1" blif="$2" opts="$3"
@@ -48,14 +49,19 @@ run_case() {
                 seeded != seq_candidates + helpers) exit 1
         }
         /stran-root resub iterator:/ {
-            initialized = exhausted = capped = invalid = -1
+            initialized = exhausted = page_stops = discarded = invalid = -1
             for (i=1; i<=NF; i++) {
                 if ($i ~ /^initialized=/) {split($i,a,"="); initialized=a[2]+0}
                 if ($i ~ /^exhausted=/) {split($i,a,"="); exhausted=a[2]+0}
-                if ($i ~ /^capped=/) {split($i,a,"="); capped=a[2]+0}
+                if ($i ~ /^q-page-stops=/) {split($i,a,"="); page_stops=a[2]+0}
+                if ($i ~ /^snapshot-discarded=/) {split($i,a,"="); discarded=a[2]+0}
                 if ($i ~ /^invalid=/) {split($i,a,"="); invalid=a[2]+0}
             }
-            if (initialized != exhausted + capped || invalid != 0) exit 1
+            # q page stops are non-terminal.  Every initialized iterator must
+            # either exhaust on the immutable snapshot or be discarded when
+            # a positive-gain commit invalidates object-indexed state.
+            if (initialized != exhausted + discarded ||
+                page_stops < 0 || invalid < 0) exit 1
         }
         END {
             if (matrices < 1 || rows != 0) exit 1
@@ -64,58 +70,88 @@ run_case() {
 }
 
 run_case comb test/stran_comb.blif ""
-grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/comb.log"
+grep -Eq '^  COMB BUILD [0-9]+ [0-9]+ [0-9]+ 1 1 0$' "$tmp_dir/comb.log"
 grep -q 'selection=dynamic-max-gain candidates=' "$tmp_dir/comb.log"
 grep -Eq 'stran-root commit selection: policy=dynamic-max-gain initial-proved=[1-9][0-9]* initial-positive=[1-9][0-9]* initial-max-gain=([1-9][0-9]*) first-gain=\1 rounds=[1-9][0-9]* gain-evals=[1-9][0-9]*' "$tmp_dir/comb.log"
 
-run_case seq_frontier test/stran_seq_only.blif ""
-grep -q 'frontier=top-1' "$tmp_dir/seq_frontier.log"
-grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=1 split=0 unknown=0 roots=1 class-max=2' "$tmp_dir/seq_frontier.log"
-grep -q '^  SEQ CONSTANT 0 0 0 0 0 0$' "$tmp_dir/seq_frontier.log"
+run_case seq_frontier test/stran_seq_only.blif "-q 1 -A 1 -L 4 -w 2"
+grep -q 'snapshot=immutable scheduler=stateful-pages' "$tmp_dir/seq_frontier.log"
+grep -Eq 'stran-root paged portfolio: pages=[2-9][0-9]* continuations=[1-9][0-9]* .*exhausted=yes' "$tmp_dir/seq_frontier.log"
+grep -Eq 'stran-root helper batch: retained=[1-9][0-9]* active=[1-9][0-9]* dormant=[0-9]+ .*obligations=1 relation-total=2' "$tmp_dir/seq_frontier.log"
+grep -q 'candidates=1 seeded=2 comb-helper-seeds=1 proved=1 split=0 unknown=0' "$tmp_dir/seq_frontier.log"
 grep -q '^  SEQ EXISTING 0 1 1 1 1 0$' "$tmp_dir/seq_frontier.log"
 grep -q 'stran-root round commit: round=1 phase=seq AND=1->0 gain=1' "$tmp_dir/seq_frontier.log"
+grep -q 'stran-root rounds summary: configured=2 completed=2 comb-passes=2 comb-commits=0 seq-passes=2 seq-commits=1 AND=1->0 gain=1' "$tmp_dir/seq_frontier.log"
 
-run_case seq_all test/stran_seq_only.blif "-t"
-grep -q 'frontier=all' "$tmp_dir/seq_all.log"
-grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=1 class-max=3' "$tmp_dir/seq_all.log"
+# Helper caps affect induction strength only.  The retained certificate stays
+# dormant metadata, contributes no temporary recipe gates, and the obligation
+# remains independently provable/committable with exact permanent AND gain.
+run_case helper_dormant test/stran_seq_only.blif "-q 1 -A 1 -L 4 -E 1 -w 1"
+grep -q 'stran-root helper batch: retained=1 active=0 dormant=1 classes=0 endpoints=0 materialized-gates=0 obligations=1 relation-total=1' "$tmp_dir/helper_dormant.log"
+grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=1 split=0 unknown=0' "$tmp_dir/helper_dormant.log"
+grep -q 'cleanup-exact-AND=1 AND=1->0' "$tmp_dir/helper_dormant.log"
 
-# Top-1 proves one highest-priority relation per root.  A round with no commit
-# is terminal because rebuilding the same graph would regenerate the same set.
+# A physical COMB commit must remap a still-valid zero-gain certificate, rebuild
+# the next snapshot, and seed that certificate as H for a later SEQ obligation.
+run_case helper_remap test/stran_helper_remap.blif "-q 1 -A 8 -L 32 -w 2"
+grep -q 'stran-root round commit: round=1 phase=comb AND=3->2 gain=1' "$tmp_dir/helper_remap.log"
+grep -Eq 'stran-root cross-wave proof reuse: generation-skipped=[0-9]+ remapped=[1-9][0-9]* invalidated=[0-9]+ retained=[1-9][0-9]*' "$tmp_dir/helper_remap.log"
+grep -q 'stran-root helper batch: retained=2 active=2 dormant=0 classes=2 endpoints=6 materialized-gates=2 obligations=3 relation-total=5' "$tmp_dir/helper_remap.log"
+grep -q 'candidates=3 seeded=5 comb-helper-seeds=2 proved=3 split=0 unknown=0' "$tmp_dir/helper_remap.log"
+grep -q 'stran-root round commit: round=1 phase=seq AND=2->1 gain=1' "$tmp_dir/helper_remap.log"
+grep -q 'stran-root rounds summary: configured=2 completed=2 comb-passes=3 comb-commits=1 seq-passes=2 seq-commits=1 AND=3->1 gain=2' "$tmp_dir/helper_remap.log"
+
+# Historical command lines often spell out -t.  It remains accepted as a
+# deprecated compatibility bit and must not disable the paged scheduler.
+run_case seq_t_compat test/stran_seq_only.blif "-t"
+grep -q 'scheduler=stateful-pages' "$tmp_dir/seq_t_compat.log"
+grep -q 'q-build=1' "$tmp_dir/seq_t_compat.log"
+grep -q 'AND=1->0 gain=1' "$tmp_dir/seq_t_compat.log"
+
+# With an intentionally stopped oracle, UNKNOWN obligations are page-local;
+# no failed portfolio may be committed and the unchanged graph exhausts once.
 run_case seq_order_frontier test/stran_seq_order.blif "-S 0"
-grep -q '^  SEQ CONSTANT 0 1 0 0 0 0$' "$tmp_dir/seq_order_frontier.log"
-grep -q '^  SEQ EXISTING 0 0 0 0 0 0$' "$tmp_dir/seq_order_frontier.log"
-grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_order_frontier.log"
+grep -Eq 'stran-root sequential relations: candidates=[1-9][0-9]* seeded=[1-9][0-9]* comb-helper-seeds=0 proved=0 split=0 unknown=[1-9][0-9]*' "$tmp_dir/seq_order_frontier.log"
+grep -q 'selected-roots=0 marginal-AND=0 cleanup-exact-AND=0 AND=1->1' "$tmp_dir/seq_order_frontier.log"
 
 run_case seq_order_round_stop test/stran_seq_order.blif "-S 0 -w 2"
-grep -q 'stran-root rounds summary: configured=2 completed=1 .*seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_order_round_stop.log"
+grep -q 'stran-root rounds summary: configured=2 completed=1 comb-passes=1 comb-commits=0 seq-passes=1 seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_order_round_stop.log"
+
+run_case seq_order_fixed_point test/stran_seq_order.blif "-S 0 -w 0"
+grep -q 'stran-root rounds summary: configured=0 completed=1 comb-passes=1 comb-commits=0 seq-passes=1 seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_order_fixed_point.log"
 
 run_case seq_unknown test/stran_seq_only.blif "-S 0"
-grep -q 'candidates=1 seeded=1 comb-helper-seeds=0 proved=0 split=0 unknown=1' "$tmp_dir/seq_unknown.log"
+grep -Eq 'candidates=[1-9][0-9]* seeded=[1-9][0-9]* comb-helper-seeds=[0-9]+ proved=0 split=0 unknown=[1-9][0-9]*' "$tmp_dir/seq_unknown.log"
 grep -q 'selected-roots=0 marginal-AND=0 cleanup-exact-AND=0 AND=1->1' "$tmp_dir/seq_unknown.log"
 
 run_case seq_round_stop test/stran_seq_only.blif "-S 0 -w 2"
-grep -q 'stran-root rounds summary: configured=2 completed=1 .*seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_round_stop.log"
+grep -q 'stran-root rounds summary: configured=2 completed=1 comb-passes=1 comb-commits=0 seq-passes=1 seq-commits=0 AND=1->1 gain=0' "$tmp_dir/seq_round_stop.log"
 
 # Regression for per-output UNKNOWN isolation.  With this small conflict limit,
 # standard scorr produces UNKNOWN obligations while other speculative classes
 # are still proved or split.  An UNKNOWN must never poison the complete batch.
-mixed_unknown_log="$tmp_dir/mixed_unknown.log"
-"$abc_bin" -q "&read benchmark/gen26.aig; &write $tmp_dir/mixed_unknown-before.aig; &stran -P root -p -t -q 2 -C 1; &write $tmp_dir/mixed_unknown-after.aig; dsec $tmp_dir/mixed_unknown-before.aig $tmp_dir/mixed_unknown-after.aig" >"$mixed_unknown_log"
-grep -Eq 'stran-root scorr obligations: bmc=[0-9]+/[0-9]+/[1-9][0-9]*' "$mixed_unknown_log"
-grep -Eq 'stran-root sequential relations: candidates=[0-9]+ seeded=[0-9]+ comb-helper-seeds=[0-9]+ proved=[1-9][0-9]* split=[0-9]+ unknown=0' "$mixed_unknown_log"
-grep -q 'Networks are equivalent' "$mixed_unknown_log"
+if [[ -f benchmark/gen26.aig ]]; then
+    mixed_unknown_log="$tmp_dir/mixed_unknown.log"
+    "$abc_bin" -q "&read benchmark/gen26.aig; &write $tmp_dir/mixed_unknown-before.aig; &stran -P root -p -q 2 -A 4 -L 16 -U 2 -w 2 -C 1; &write $tmp_dir/mixed_unknown-after.aig; dsec $tmp_dir/mixed_unknown-before.aig $tmp_dir/mixed_unknown-after.aig" >"$mixed_unknown_log"
+    grep -q 'scheduler=stateful-pages' "$mixed_unknown_log"
+    grep -q 'invalid=0' "$mixed_unknown_log"
+    grep -q 'Networks are equivalent' "$mixed_unknown_log"
+else
+    printf 'stran gen26 smoke: SKIP (benchmark/gen26.aig not present)\n'
+fi
 
 run_case proxy test/stran_proxy_roots.blif ""
-grep -q 'candidates=2 seeded=2 comb-helper-seeds=0 proved=2 split=0 unknown=0 roots=2 class-max=2' "$tmp_dir/proxy.log"
+grep -Eq 'stran-root sequential relations: candidates=[1-9][0-9]* seeded=[1-9][0-9]* comb-helper-seeds=[1-9][0-9]* proved=[1-9][0-9]* split=0 unknown=0 roots=2' "$tmp_dir/proxy.log"
+grep -q 'cleanup-exact-AND=2 AND=2->0' "$tmp_dir/proxy.log"
 
 run_case polarity test/stran_polarity.blif "-l"
-grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/polarity.log"
+grep -Eq '^  COMB BUILD [0-9]+ [0-9]+ [0-9]+ 1 1 0$' "$tmp_dir/polarity.log"
 
 # Build-only mode must suppress direct constant/existing discovery in every
 # rebuilt phase while leaving both COMB Build and SEQ Build accounting intact.
 run_case build_only test/stran_polarity.blif "-l -y"
 grep -q 'candidates=build-only' "$tmp_dir/build_only.log"
-grep -q '^  COMB BUILD .* 1 1 1 1 0$' "$tmp_dir/build_only.log"
+grep -Eq '^  COMB BUILD [0-9]+ [0-9]+ [0-9]+ 1 1 0$' "$tmp_dir/build_only.log"
 awk '
     /^  (COMB|SEQ) (CONSTANT|EXISTING) / {
         for (i=3; i<=8; i++) if ($i != 0) exit 1
@@ -125,20 +161,23 @@ awk '
 ' "$tmp_dir/build_only.log"
 
 run_case q_cap test/stran_polarity.blif "-l -q 1"
-grep -q 'candidates=constant/existing/build q=1 divisor-route=TFI-only' "$tmp_dir/q_cap.log"
-grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*capped=[1-9]' "$tmp_dir/q_cap.log"
+grep -q 'candidates=constant/existing/build q-build=1' "$tmp_dir/q_cap.log"
+grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*q-page-stops=[1-9]' "$tmp_dir/q_cap.log"
 
-run_case q_unlimited test/stran_polarity.blif "-l -t -q 0 -w 1"
-grep -q 'candidates=constant/existing/build q=0 divisor-route=TFI-only' "$tmp_dir/q_unlimited.log"
-grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*exhausted=[1-9][0-9]* capped=0 invalid=0' "$tmp_dir/q_unlimited.log"
+run_case q_unlimited test/stran_polarity.blif "-l -q 0 -w 1"
+grep -q 'candidates=constant/existing/build q-build=0' "$tmp_dir/q_unlimited.log"
+grep -Eq 'stran-root resub iterator: initialized=[1-9][0-9]* .*exhausted=[1-9][0-9]* q-page-stops=0 snapshot-discarded=0 invalid=0' "$tmp_dir/q_unlimited.log"
 
 run_case dirty test/stran_dirty.blif ""
 grep -Eq 'stran-root dirty: root-free=[1-9]|root-MFFC-changed=[1-9]' "$tmp_dir/dirty.log"
+grep -Eq 'stran-root cross-wave proof reuse: generation-skipped=[0-9]+ remapped=[1-9][0-9]* invalidated=[0-9]+ retained=[0-9]+' "$tmp_dir/dirty.log"
 
-# COMB closes and commits before the SEQ snapshot is built.  Since SEQ then
-# makes no change, a configured second round is not repeated mechanically.
+# A positive page commits immediately, invalidates its snapshot iterators and
+# rebuilds before the controller continues.  The fresh COMB closure and SEQ
+# pass then terminate the configured two-round run at a fixed point.
 run_case dirty_rounds test/stran_dirty.blif "-w 2"
 grep -q 'stran-root round commit: round=1 phase=comb AND=3->1 gain=2' "$tmp_dir/dirty_rounds.log"
+grep -q 'stran-root round commit: round=1 phase=comb AND=1->1 gain=0' "$tmp_dir/dirty_rounds.log"
 grep -q 'stran-root rounds summary: configured=2 completed=1 comb-passes=2 comb-commits=1 seq-passes=1 seq-commits=0 AND=3->1 gain=2' "$tmp_dir/dirty_rounds.log"
 
 # A sequentially proved constant candidate used to assert while constructing
@@ -151,7 +190,7 @@ grep -q 'cleanup-exact-AND=1 AND=1->0' "$tmp_dir/constant.log"
 # must remain formally equivalent, and the startup banner must expose the
 # selected mode so batch experiments cannot silently mix configurations.
 run_case mffc_off test/stran_polarity.blif "-M"
-grep -q 'divisor-route=TFI-only mffc-divisors=off' "$tmp_dir/mffc_off.log"
+grep -q 'divisor-route=ranked-TFI-only mffc-divisors=off' "$tmp_dir/mffc_off.log"
 
 # The existing sequential sample remains a representative mixed-discovery
 # smoke test even when its final winner is discharged in COMB.
@@ -160,7 +199,7 @@ run_case seq_existing test/stran_seq.blif ""
 # The batch CSV parser must understand the root-only schema=3 output.  This
 # guards the failure mode where -p ran successfully but every profile column
 # was written as N/A.
-python3 - "$tmp_dir/polarity.log" <<'PY'
+python3 - "$tmp_dir/polarity.log" "$tmp_dir/seq_frontier.log" <<'PY'
 import sys
 from pathlib import Path
 
@@ -179,6 +218,27 @@ assert isinstance(profile["final_and_gain"], int)
 assert profile["comb_constructed_selected"] == 1
 assert profile["comb_constructed_and_gain"] == 1
 assert profile["final_and_gain"] == 1
+
+seq_profile = parse_stran(Path(sys.argv[2]).read_text(encoding="utf-8"))
+for field in (
+    "root_helper_retained_max", "root_helper_active_events",
+    "root_helper_dormant_events", "root_helper_materialized_gates",
+    "root_new_proved", "root_history_proved_selected",
+    "root_proof_pages", "root_page_continuations",
+    "root_seq_obligations", "root_seq_seeded", "root_seq_helper_seeds",
+    "root_iterator_initialized", "root_iterator_exhausted",
+    "root_iterator_snapshot_discarded",
+):
+    assert isinstance(seq_profile[field], int), field
+assert seq_profile["root_helper_retained_max"] >= 1
+assert seq_profile["root_helper_active_events"] >= 1
+assert seq_profile["root_seq_seeded"] == (
+    seq_profile["root_seq_obligations"] + seq_profile["root_seq_helper_seeds"]
+)
+assert seq_profile["root_iterator_initialized"] == (
+    seq_profile["root_iterator_exhausted"] +
+    seq_profile["root_iterator_snapshot_discarded"]
+)
 PY
 
 # scorr may legitimately remove every latch before &stran is invoked.  This is

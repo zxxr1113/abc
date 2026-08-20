@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Compare three independent reduction pipelines on the same AIG inputs.
+"""Compare three post-sweep reduction pipelines on the same AIG inputs.
 
-For each normalized input, measure:
+For each normalized input, first run a common combinational SAT sweep and then
+measure the remaining potential of:
 
-    1. &scorr
-    2. &stran -r -p
-    3. &scorr followed by &stran -r -p
+    0. &fraig (the common sweep baseline)
+    1. &fraig followed by &scorr
+    2. &fraig followed by paged &stran -p
+    3. &fraig followed by &scorr and paged &stran -p
 
-The script forces exhaustive root search (``-r``) and profiling (``-p``).
+The script forces profiling (``-p``); paging/batch parameters remain explicit
+in ``--stran-args``.
 Besides final sizes and wall time, the CSV captures &stran's stable experiment
-profile: exact sequential Build contribution, candidate funnel, Build search
-time, shared sequential-proof time, selection/commit time, and profiling
-overhead.
+profile: the comb/seq x constant/existing/Build effect matrix, exact sequential
+Build contribution, candidate funnel, Build search time, shared
+sequential-proof time, selection/commit time, and profiling overhead.
 
 Example:
   python3 scripts/bench_scorr_stran_three_way.py \
@@ -45,17 +48,20 @@ DEFAULT_AIG_DIR = os.path.expanduser("~/benchmark/all_test/all/bitlevel/")
 DEFAULT_ABC = os.path.expanduser("~/abc/abc")
 DEFAULT_TIMEOUT = 600
 DEFAULT_JOBS = 64
-DEFAULT_OUT = "scorr_stran_three_way_B64_dynamic_w1.csv"
+DEFAULT_OUT = "fraig_scorr_stran_three_way_B64_dynamic_w1.csv"
+DEFAULT_SWEEP_ARGS = ""
 DEFAULT_SCORR_ARGS = "-F 1 -C 100"
 DEFAULT_STRAN_ARGS = (
-    "-b 100 -C 100 -P root -p -V 0 -N 100 -B 64 -z -w 1 -r"
+    "-b 100 -C 100 -P root -p -N 100 -B 64 "
+    "-q 1 -A 8 -L 32 -w 8"
 )
-RUN_SCHEMA_VERSION = "all_scorr-stran-three-way-v2"
+RUN_SCHEMA_VERSION = "fraig-scorr-stran-three-way-v3"
 NA = "N/A"
 
 RUN_METADATA_FIELDS = [
     "run_schema", "run_started_at", "git_commit", "git_dirty",
-    "abc_sha256", "script_sha256", "scorr_args",
+    "abc_sha256", "script_sha256", "profile_parser_sha256",
+    "sweep_command", "sweep_args", "scorr_args",
     "stran_args_requested", "stran_args_effective", "timeout_s", "dsec_mode",
 ]
 
@@ -69,15 +75,19 @@ STRAN_METRICS = [
 ]
 
 PIPELINE_FIELDS = [
-    "status", "dsec_status", "time_ms", "dsec_time_ms", "and", "latches",
+    "status", "dsec_status", "time_ms", "pipeline_time_ms", "dsec_time_ms",
+    "and", "latches",
     "and_reduction", "and_reduction_pct", "latch_reduction",
     "latch_reduction_pct",
+    "total_and_reduction", "total_and_reduction_pct",
+    "total_latch_reduction", "total_latch_reduction_pct",
 ]
 
 CSV_FIELDS = [
     "file", *RUN_METADATA_FIELDS,
     "source_and", "source_latches", "normalize_status", "normalize_time_ms",
     "base_and", "base_latches",
+    *[f"sweep_{field}" for field in PIPELINE_FIELDS],
     *[f"scorr_{field}" for field in PIPELINE_FIELDS],
     *[f"stran_{field}" for field in PIPELINE_FIELDS],
     *[f"stran_{field}" for field in STRAN_METRICS],
@@ -196,6 +206,7 @@ def git_text(repo: Path, *args: str) -> str:
 def make_run_metadata(
     repo: Path,
     abc: Path,
+    sweep_args: str,
     scorr_args: str,
     requested_stran_args: str,
     effective_stran_args: str,
@@ -209,6 +220,11 @@ def make_run_metadata(
         "git_dirty": "yes" if git_text(repo, "status", "--porcelain") else "no",
         "abc_sha256": sha256_file(abc),
         "script_sha256": sha256_file(Path(__file__).resolve()),
+        "profile_parser_sha256": sha256_file(
+            Path(__file__).resolve().with_name("stran_profile.py")
+        ),
+        "sweep_command": "&fraig",
+        "sweep_args": sweep_args,
         "scorr_args": scorr_args,
         "stran_args_requested": requested_stran_args,
         "stran_args_effective": effective_stran_args,
@@ -309,7 +325,16 @@ def run_dsec(abc: str, base: Path, result: Path, timeout: int) -> Tuple[str, int
     return status, elapsed, stdout + stderr
 
 
-def record_size(row: Dict[str, Any], prefix: str, before_and: Any, before_latches: Any, stdout: str) -> None:
+def record_size(
+    row: Dict[str, Any],
+    prefix: str,
+    before_and: Any,
+    before_latches: Any,
+    stdout: str,
+    total_before_and: Any | None = None,
+    total_before_latches: Any | None = None,
+) -> None:
+    """Record incremental reduction and optional end-to-end reduction."""
     and_count, latch_count = parse_ps(stdout)
     row[f"{prefix}_and"] = and_count
     row[f"{prefix}_latches"] = latch_count
@@ -317,6 +342,20 @@ def record_size(row: Dict[str, Any], prefix: str, before_and: Any, before_latche
     row[f"{prefix}_and_reduction_pct"] = reduction_pct(before_and, and_count)
     row[f"{prefix}_latch_reduction"] = subtract(before_latches, latch_count)
     row[f"{prefix}_latch_reduction_pct"] = reduction_pct(before_latches, latch_count)
+    total_before_and = before_and if total_before_and is None else total_before_and
+    total_before_latches = (
+        before_latches if total_before_latches is None else total_before_latches
+    )
+    row[f"{prefix}_total_and_reduction"] = subtract(total_before_and, and_count)
+    row[f"{prefix}_total_and_reduction_pct"] = reduction_pct(
+        total_before_and, and_count
+    )
+    row[f"{prefix}_total_latch_reduction"] = subtract(
+        total_before_latches, latch_count
+    )
+    row[f"{prefix}_total_latch_reduction_pct"] = reduction_pct(
+        total_before_latches, latch_count
+    )
 
 
 def add_stran_metrics(row: Dict[str, Any], prefix: str, stdout: str) -> None:
@@ -326,7 +365,7 @@ def add_stran_metrics(row: Dict[str, Any], prefix: str, stdout: str) -> None:
 
 def worker(task: Tuple[Any, ...]) -> Dict[str, Any]:
     (
-        aig_name, relative_name, abc, scorr_args, stran_args, timeout,
+        aig_name, relative_name, abc, sweep_args, scorr_args, stran_args, timeout,
         keep_artifacts, dsec, artifacts_root, run_metadata,
     ) = task
     source = Path(aig_name)
@@ -346,6 +385,7 @@ def worker(task: Tuple[Any, ...]) -> Dict[str, Any]:
         work_dir.mkdir(parents=True, exist_ok=True)
 
     base = work_dir / "base.aig"
+    swept_aig = work_dir / "swept.aig"
     scorr_aig = work_dir / "scorr.aig"
     stran_aig = work_dir / "stran.aig"
     combo_aig = work_dir / "scorr_then_stran.aig"
@@ -364,15 +404,51 @@ def worker(task: Tuple[Any, ...]) -> Dict[str, Any]:
             return row
         row["base_and"], row["base_latches"] = parse_ps(stdout)
 
-        # Branch A: &scorr only.
+        # Common baseline: combinational SAT sweeping in the same GIA space as
+        # &scorr and &stran.  Every comparison branch below starts from this
+        # exact persisted AIG.
+        sweep_command = "&fraig" + (f" {sweep_args}" if sweep_args else "")
         stdout, stderr, rc, elapsed = run_abc(
-            abc, f"&read {base}; &scorr {scorr_args}; &write {scorr_aig}; &ps", timeout
+            abc, f"&read {base}; {sweep_command}; &write {swept_aig}; &ps", timeout
+        )
+        logs["sweep.log"] = stdout + stderr
+        row["sweep_time_ms"] = elapsed
+        row["sweep_pipeline_time_ms"] = elapsed
+        row["sweep_status"] = status_from(rc, swept_aig)
+        if row["sweep_status"] != "PASS":
+            errors.append(
+                f"sweep:{row['sweep_status']}: {short_error(stdout, stderr)}"
+            )
+            for prefix in ("scorr", "stran", "scorr_then_stran"):
+                row[f"{prefix}_status"] = "SWEEP_FAILED"
+            return row
+        record_size(
+            row, "sweep", row["base_and"], row["base_latches"], stdout
+        )
+        if dsec:
+            status, dsec_ms, log = run_dsec(abc, base, swept_aig, timeout)
+            row["sweep_dsec_status"], row["sweep_dsec_time_ms"] = status, dsec_ms
+            logs["sweep_dsec.log"] = log
+            if status != "PASS":
+                errors.append(f"sweep_dsec:{status}")
+        else:
+            row["sweep_dsec_status"], row["sweep_dsec_time_ms"] = "SKIP", 0
+
+        # Branch A: &scorr after the common sweep.
+        stdout, stderr, rc, elapsed = run_abc(
+            abc,
+            f"&read {swept_aig}; &scorr {scorr_args}; &write {scorr_aig}; &ps",
+            timeout,
         )
         logs["scorr.log"] = stdout + stderr
         row["scorr_time_ms"] = elapsed
+        row["scorr_pipeline_time_ms"] = row["sweep_time_ms"] + elapsed
         row["scorr_status"] = status_from(rc, scorr_aig)
         if row["scorr_status"] == "PASS":
-            record_size(row, "scorr", row["base_and"], row["base_latches"], stdout)
+            record_size(
+                row, "scorr", row["sweep_and"], row["sweep_latches"], stdout,
+                row["base_and"], row["base_latches"],
+            )
             if dsec:
                 status, dsec_ms, log = run_dsec(abc, base, scorr_aig, timeout)
                 row["scorr_dsec_status"], row["scorr_dsec_time_ms"] = status, dsec_ms
@@ -384,16 +460,22 @@ def worker(task: Tuple[Any, ...]) -> Dict[str, Any]:
         else:
             errors.append(f"scorr:{row['scorr_status']}: {short_error(stdout, stderr)}")
 
-        # Branch B: profiled exhaustive &stran, from the normalized input.
+        # Branch B: profiled exhaustive &stran after the common sweep.
         stdout, stderr, rc, elapsed = run_abc(
-            abc, f"&read {base}; &stran {stran_args}; &write {stran_aig}; &ps", timeout
+            abc,
+            f"&read {swept_aig}; &stran {stran_args}; &write {stran_aig}; &ps",
+            timeout,
         )
         logs["stran.log"] = stdout + stderr
         row["stran_time_ms"] = elapsed
+        row["stran_pipeline_time_ms"] = row["sweep_time_ms"] + elapsed
         row["stran_status"] = status_from(rc, stran_aig)
         add_stran_metrics(row, "stran", stdout)
         if row["stran_status"] == "PASS":
-            record_size(row, "stran", row["base_and"], row["base_latches"], stdout)
+            record_size(
+                row, "stran", row["sweep_and"], row["sweep_latches"], stdout,
+                row["base_and"], row["base_latches"],
+            )
             if dsec:
                 status, dsec_ms, log = run_dsec(abc, base, stran_aig, timeout)
                 row["stran_dsec_status"], row["stran_dsec_time_ms"] = status, dsec_ms
@@ -416,11 +498,16 @@ def worker(task: Tuple[Any, ...]) -> Dict[str, Any]:
             logs["scorr_then_stran.log"] = stdout + stderr
             row["scorr_then_stran_stran_time_ms"] = elapsed
             row["scorr_then_stran_time_ms"] = row["scorr_time_ms"] + elapsed
+            row["scorr_then_stran_pipeline_time_ms"] = (
+                row["sweep_time_ms"] + row["scorr_then_stran_time_ms"]
+            )
             row["scorr_then_stran_status"] = status_from(rc, combo_aig)
             add_stran_metrics(row, "scorr_then_stran", stdout)
             if row["scorr_then_stran_status"] == "PASS":
                 record_size(
-                    row, "scorr_then_stran", row["base_and"], row["base_latches"], stdout
+                    row, "scorr_then_stran", row["sweep_and"],
+                    row["sweep_latches"], stdout, row["base_and"],
+                    row["base_latches"],
                 )
                 row["scorr_then_stran_extra_and_reduction"] = subtract(
                     row["scorr_and"], row["scorr_then_stran_and"]
@@ -448,7 +535,7 @@ def worker(task: Tuple[Any, ...]) -> Dict[str, Any]:
 
         sizes = {
             name: row[f"{name}_and"]
-            for name in ("scorr", "stran", "scorr_then_stran")
+            for name in ("sweep", "scorr", "stran", "scorr_then_stran")
             if row[f"{name}_status"] == "PASS"
             and isinstance(row[f"{name}_and"], int)
         }
@@ -480,7 +567,25 @@ def write_csv_atomic(output: Path, rows: list[Dict[str, Any]]) -> None:
 
 
 def print_summary(rows: list[Dict[str, Any]]) -> None:
-    print("\n[SUMMARY] Reduction from the same normalized baseline")
+    print("\n[SUMMARY] Common &fraig sweep from the normalized input")
+    sweep_valid = [
+        row for row in rows
+        if row["sweep_status"] == "PASS"
+        and row["sweep_dsec_status"] in {"PASS", "SKIP"}
+        and isinstance(row["sweep_and_reduction"], int)
+    ]
+    sweep_pcts = [
+        row["sweep_and_reduction_pct"] for row in sweep_valid
+        if isinstance(row["sweep_and_reduction_pct"], (int, float))
+    ]
+    sweep_median = statistics.median(sweep_pcts) if sweep_pcts else float("nan")
+    print(
+        f"  sweep              valid={len(sweep_valid):4d} "
+        f"AND-reduction-sum={sum(row['sweep_and_reduction'] for row in sweep_valid):9d} "
+        f"median={sweep_median:8.3f}%"
+    )
+
+    print("\n[SUMMARY] Additional reduction from the common swept baseline")
     for pipeline in ("scorr", "stran", "scorr_then_stran"):
         valid = [
             row for row in rows
@@ -499,6 +604,40 @@ def print_summary(rows: list[Dict[str, Any]]) -> None:
             f"AND-reduction-sum={sum(reductions):9d} median={median_pct:8.3f}%"
         )
 
+    print("\n[SUMMARY] &stran comb/seq x constant/existing/Build profile")
+    for prefix, label in (
+        ("stran", "sweep -> stran"),
+        ("scorr_then_stran", "sweep -> scorr -> stran"),
+    ):
+        valid = [row for row in rows if row[f"{prefix}_status"] == "PASS"]
+        print(f"  {label} (valid={len(valid)})")
+        for stage in ("comb", "seq"):
+            cells = []
+            for kind in ("constant", "existing", "build"):
+                base = f"{prefix}_{stage}_stage_{kind}"
+                gains = [row[f"{base}_and_gain"] for row in valid]
+                selected = [row[f"{base}_selected"] for row in valid]
+                proved = [row[f"{base}_proved"] for row in valid]
+                gain_text = (
+                    str(sum(gains)) if gains and all(isinstance(x, int) for x in gains)
+                    else NA
+                )
+                selected_text = (
+                    str(sum(selected))
+                    if selected and all(isinstance(x, int) for x in selected)
+                    else NA
+                )
+                proved_text = (
+                    str(sum(proved))
+                    if proved and all(isinstance(x, int) for x in proved)
+                    else NA
+                )
+                cells.append(
+                    f"{kind}:gain={gain_text},selected/proved="
+                    f"{selected_text}/{proved_text}"
+                )
+            print(f"    {stage}: " + " | ".join(cells))
+
     winner_counts: Dict[str, int] = {}
     for row in rows:
         winner = row.get("best_pipelines")
@@ -513,7 +652,10 @@ def print_summary(rows: list[Dict[str, Any]]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Compare &scorr, profiled exhaustive &stran, and their composition."
+        description=(
+            "Sweep with &fraig, then compare &scorr, profiled exhaustive &stran, "
+            "and their composition."
+        )
     )
     parser.add_argument("--aig-dir", default=DEFAULT_AIG_DIR)
     parser.add_argument("--abc", default=DEFAULT_ABC)
@@ -522,15 +664,22 @@ def main() -> None:
     parser.add_argument("--out", default=DEFAULT_OUT)
     parser.add_argument("--jobs", type=int, default=DEFAULT_JOBS)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--sweep-args", default=DEFAULT_SWEEP_ARGS,
+        help="arguments passed to the common &fraig combinational SAT sweep",
+    )
     parser.add_argument("--scorr-args", default=DEFAULT_SCORR_ARGS)
     parser.add_argument(
         "--stran-args", default=DEFAULT_STRAN_ARGS,
-        help="&stran arguments; exactly one each of -r and -p is enforced",
+        help="&stran arguments; exactly one -p is enforced",
     )
     parser.add_argument("--keep-artifacts", action="store_true",
                         help="keep AIGs and logs next to the CSV")
     parser.add_argument("--dsec", action="store_true",
-                        help="also run equivalence checks for all three results (disabled by default)")
+                        help=(
+                            "also run equivalence checks for the sweep and all three "
+                            "post-sweep results (disabled by default)"
+                        ))
     args = parser.parse_args()
 
     if args.timeout < 1 or args.jobs < 1:
@@ -538,7 +687,7 @@ def main() -> None:
     if args.limit is not None and args.limit < 0:
         sys.exit("[ERROR] --limit must be nonnegative")
     try:
-        effective_stran_args = force_flags(args.stran_args, "-r", "-p")
+        effective_stran_args = force_flags(args.stran_args, "-p")
     except ValueError as exc:
         sys.exit(f"[ERROR] {exc}")
 
@@ -557,22 +706,26 @@ def main() -> None:
 
     repo = Path(__file__).resolve().parents[1]
     run_metadata = make_run_metadata(
-        repo, abc_path, args.scorr_args, args.stran_args, effective_stran_args,
-        args.timeout, args.dsec,
+        repo, abc_path, args.sweep_args, args.scorr_args, args.stran_args,
+        effective_stran_args, args.timeout, args.dsec,
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     artifacts_root = output.parent / f"{output.stem}_artifacts"
-    print("[INFO] Pipelines: &scorr | &stran -r -p | &scorr -> &stran -r -p")
+    print(
+        "[INFO] Pipelines: &fraig baseline | &fraig -> &scorr | "
+        "&fraig -> &stran -p | &fraig -> &scorr -> &stran -p"
+    )
     print(f"[INFO] Files={len(aigs)} jobs={args.jobs} timeout={args.timeout}s")
+    print(f"[INFO] &fraig sweep args: {args.sweep_args or '(defaults)'}")
     print(f"[INFO] &scorr args: {args.scorr_args}")
     print(f"[INFO] effective &stran args: {effective_stran_args}")
-    print("[INFO] forcing exhaustive root search (-r) and experiment profiling (-p)")
+    print("[INFO] forcing experiment profiling (-p); scheduler remains paged")
 
     tasks = [
         (
-            str(path), str(path.relative_to(aig_dir)), str(abc_path), args.scorr_args,
-            effective_stran_args, args.timeout, args.keep_artifacts, args.dsec,
-            str(artifacts_root), run_metadata,
+            str(path), str(path.relative_to(aig_dir)), str(abc_path), args.sweep_args,
+            args.scorr_args, effective_stran_args, args.timeout,
+            args.keep_artifacts, args.dsec, str(artifacts_root), run_metadata,
         )
         for path in aigs
     ]
@@ -591,7 +744,8 @@ def main() -> None:
         write_csv_atomic(output, rows)
         print(
             f"[{done:>4}/{len(tasks)}] {name:42s} "
-            f"reduction AND: scorr={row['scorr_and_reduction']} "
+            f"reduction AND: sweep={row['sweep_and_reduction']} "
+            f"post-sweep scorr={row['scorr_and_reduction']} "
             f"stran={row['stran_and_reduction']} "
             f"scorr+stran={row['scorr_then_stran_and_reduction']} "
             f"best={row['best_pipelines']}"

@@ -14,6 +14,12 @@ multiplied by that kind's share of the stage gain, for example::
 
     seq_constructed_reduction_pct
         = seq_reduction_pct * seq_constructed_gain_share_pct / 100
+
+For root schema 3, ``proved`` means newly proved events in the current
+snapshot, while ``selected`` may consume a remapped history certificate.
+Consequently ``selected/proved`` can exceed 100%; the report carries
+``root_history_proved_selected`` separately instead of treating this as a
+profiling error.
 """
 
 from __future__ import annotations
@@ -39,6 +45,15 @@ BASE_FIELDS = [
     "total_reduced_and", "total_reduction_pct",
     "input_reg", "after_comb_reg", "after_seq_reg",
     "comb_reduced_reg", "seq_reduced_reg", "total_reduced_reg",
+]
+HISTORY_FIELDS = [
+    "root_helper_retained_max", "root_helper_active_events",
+    "root_helper_dormant_events", "root_helper_dedup",
+    "root_helper_invalidated", "root_helper_classes",
+    "root_helper_endpoints_max", "root_helper_materialized_gates",
+    "root_batch_relations_max", "root_srm_nodes_max",
+    "root_new_proved", "root_history_proved_selected",
+    "root_proof_pages", "root_page_continuations",
 ]
 STAGE_FIELDS = [
     f"{stage}_{metric}"
@@ -87,7 +102,7 @@ OVERALL_FIELDS = [
     "mean_case_seq_reduction_pct", "median_case_seq_reduction_pct",
 ]
 CSV_FIELDS = (
-    BASE_FIELDS + STAGE_FIELDS + ATTRIBUTION_FIELDS + KIND_FIELDS + BUILD_ONLY_FIELDS +
+    BASE_FIELDS + HISTORY_FIELDS + STAGE_FIELDS + ATTRIBUTION_FIELDS + KIND_FIELDS + BUILD_ONLY_FIELDS +
     CONSTRUCT_FIELDS + TIME_FIELDS + OVERALL_FIELDS
 )
 
@@ -148,6 +163,8 @@ def make_case(row: Dict[str, str]) -> Dict[str, Any]:
     result: Dict[str, Any] = {field: "" for field in CSV_FIELDS}
     result.update({"row_type": "case", "case": row.get("file", ""),
                    "status": case_status(row)})
+    for field in HISTORY_FIELDS:
+        result[field] = clean_number(integer(row.get(field)), integral=True)
 
     input_and = first_number(row, "stage_and_before", "scorr_and")
     after_comb_and = first_number(row, "stage_and_after_comb")
@@ -250,10 +267,11 @@ def make_case(row: Dict[str, str]) -> Dict[str, Any]:
                        "selected_max_gates"):
             result[f"{stage}_constructed_{metric}"] = clean_number(
                 integer(row.get(f"{stage}_constructed_{metric}")), integral=True)
+        selected_gates = number(result[f"{stage}_constructed_selected_gates"])
+        selected_structures = number(result[f"{stage}_constructed_selected"])
         result[f"{stage}_constructed_gates_per_selected"] = clean_number(
-            (number(result[f"{stage}_constructed_selected_gates"]) /
-             number(result[f"{stage}_constructed_selected"])
-             if number(result[f"{stage}_constructed_selected"]) else None))
+            selected_gates / selected_structures
+            if selected_gates is not None and selected_structures else None)
 
     for field in TIME_FIELDS:
         result[field] = clean_number(number(row.get(field)))
@@ -287,6 +305,10 @@ def make_overall(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
         *[field for field in CONSTRUCT_FIELDS
           if not field.endswith(("_max_gates", "_per_selected"))],
         *[field for field in TIME_FIELDS if field.endswith("_sec")],
+        *[field for field in HISTORY_FIELDS if field not in {
+            "root_helper_retained_max", "root_helper_endpoints_max",
+            "root_batch_relations_max", "root_srm_nodes_max",
+        }],
     ]
     for field in sum_fields:
         vals = numeric_values(valid, field)
@@ -296,6 +318,13 @@ def make_overall(cases: List[Dict[str, Any]]) -> Dict[str, Any]:
                 ("_and_gain", "_reg_gain"))
             overall[field] = clean_number(value, integral=integral)
     for field in [field for field in CONSTRUCT_FIELDS if field.endswith("_max_gates")]:
+        vals = numeric_values(valid, field)
+        if vals:
+            overall[field] = int(max(vals))
+    for field in (
+        "root_helper_retained_max", "root_helper_endpoints_max",
+        "root_batch_relations_max", "root_srm_nodes_max",
+    ):
         vals = numeric_values(valid, field)
         if vals:
             overall[field] = int(max(vals))
@@ -373,7 +402,7 @@ def render_stage(row: Dict[str, Any], stage: str) -> str:
             if build_only_gain != "":
                 g_str += f" build-only={build_only_gain}({build_only_pct}%)"
         parts.append(
-            f"{label}:{row.get(f'{stage}_{kind}_selected', '')}/"
+            f"{label}:sel/new={row.get(f'{stage}_{kind}_selected', '')}/"
             f"{row.get(f'{stage}_{kind}_proved', '')} {g_str}"
         )
     return " | ".join(parts)
@@ -385,7 +414,7 @@ def print_report(cases: List[Dict[str, Any]], overall: Dict[str, Any]) -> None:
         key=lambda r: number(r.get("total_reduction_pct")) or 0.0,
         reverse=True,
     )
-    top = sorted_cases[:25]
+    top = sorted_cases[:100]
 
     CW = 24   # Case
     IW = 7    # Input
@@ -431,6 +460,18 @@ def print_report(cases: List[Dict[str, Any]], overall: Dict[str, Any]) -> None:
     print(f"  comb {render_stage(overall, 'comb')}")
     print(f"  seq  {render_stage(overall, 'seq')}")
     print(
+        "  history/helper "
+        f"new-proved={overall['root_new_proved']} "
+        f"history-selected={overall['root_history_proved_selected']} | "
+        f"retained-max={overall['root_helper_retained_max']} "
+        f"active-events={overall['root_helper_active_events']} "
+        f"dormant-events={overall['root_helper_dormant_events']}"
+    )
+    print(
+        "  note selected/new-proved may exceed 100% when a remapped formal "
+        "certificate is selected in a later phase"
+    )
+    print(
         "  time "+
         f"Build-search={overall['profile_build_discovery_sec']}s "
         f"({overall['profile_build_discovery_pct']}%) | "
@@ -446,11 +487,10 @@ def main() -> None:
         description="Analyze &stran combination/sequential stage profiling CSV")
     parser.add_argument("csv", type=Path, help="bench_scorr_then_stran.py output")
     parser.add_argument("--out", type=Path, default=None,
-                        help="default: <input-stem>_stage_analysis.csv")
+                        help="write CSV to this path (no file written if omitted)")
     parser.add_argument("--quiet", action="store_true",
-                        help="write CSV without printing the per-case report")
+                        help="suppress the per-case report")
     args = parser.parse_args()
-    output = args.out or args.csv.with_name(args.csv.stem + "_stage_analysis.csv")
 
     with args.csv.open("r", newline="", encoding="utf-8") as handle:
         source_rows = list(csv.DictReader(handle))
@@ -475,16 +515,20 @@ def main() -> None:
 
     cases = [make_case(row) for row in source_rows]
     overall = make_overall(cases)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output.with_name(output.name + ".tmp")
-    with temporary.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
-        writer.writeheader()
-        writer.writerows(cases + [overall])
-    temporary.replace(output)
+
+    if args.out:
+        output = args.out
+        output.parent.mkdir(parents=True, exist_ok=True)
+        temporary = output.with_name(output.name + ".tmp")
+        with temporary.open("w", newline="", encoding="utf-8") as handle:
+            writer = csv.DictWriter(handle, fieldnames=CSV_FIELDS)
+            writer.writeheader()
+            writer.writerows(cases + [overall])
+        temporary.replace(output)
+        print(f"[INFO] analysis CSV: {output}")
+
     if not args.quiet:
         print_report(cases, overall)
-    print(f"[INFO] analysis CSV: {output}")
 
 
 if __name__ == "__main__":

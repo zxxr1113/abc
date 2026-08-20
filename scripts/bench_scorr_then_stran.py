@@ -15,10 +15,10 @@ Examples:
       --aig-dir ~/benchmark/all_test/all --abc ~/abc/abc \
       --out scorr_then_stran.csv --jobs 64 --timeout 12800
 
-  # Test two-leaf transactions with an easily edited proof budget.
+  # Small Build pages with an easily edited proof budget.
   python3 scripts/bench_scorr_then_stran.py \
       --aig-dir benchmark --abc ./abc --jobs 4 --timeout 1800 \
-      --stran-args '-M 2 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8'
+      --stran-args '-P root -F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 -Q 4 -W 8 -q 1 -A 8 -L 32 -w 8'
 """
 
 from __future__ import annotations
@@ -50,7 +50,10 @@ DEFAULT_OUT = "scorr_then_stran.csv"
 # Keep the baseline at the user's normal &scorr defaults.  Do not add -r:
 # it toggles implication rings *off* because they are enabled by default.
 DEFAULT_SCORR_ARGS = "-F 1 -C 200"
-DEFAULT_STRAN_ARGS = "-M 1 -F 1 -C 1000 -S -1 -T 1000 -N 100 -D 32 -B 64 -K 32 -Q 4 -W 8 -r -p"
+DEFAULT_STRAN_ARGS = (
+    "-P root -F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 "
+    "-Q 4 -W 8 -q 1 -A 8 -L 32 -w 8 -p"
+)
 NA = "N/A"
 
 STAGE_PROFILE_FIELDS = [
@@ -98,7 +101,12 @@ def run_abc(abc: str, command: str, timeout: int) -> Tuple[str, str, int, int]:
         return result.stdout, result.stderr, result.returncode, elapsed
     except subprocess.TimeoutExpired as exc:
         elapsed = int((time.perf_counter() - started) * 1000)
-        return exc.stdout or "", "TIMEOUT", -1, elapsed
+        # Python >=3.13 returns bytes from TimeoutExpired.stdout even when
+        # text=True was passed to run(); decode so callers only ever see str.
+        stdout = exc.stdout
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        return stdout or "", "TIMEOUT", -1, elapsed
     except FileNotFoundError as exc:
         elapsed = int((time.perf_counter() - started) * 1000)
         return "", str(exc), -2, elapsed
@@ -132,14 +140,14 @@ def subtract(left: Any, right: Any) -> Any:
     return left - right if isinstance(left, int) and isinstance(right, int) else NA
 
 
-def profiled_exhaustive_args(arguments: str) -> str:
-    """Force exactly one -r and -p for comparable experiment records."""
+def profiled_args(arguments: str) -> str:
+    """Force exactly one -p for comparable experiment records."""
     try:
         tokens = shlex.split(arguments)
     except ValueError as exc:
         raise ValueError(f"cannot parse &stran arguments: {exc}") from exc
-    tokens = [token for token in tokens if token not in {"-r", "-p"}]
-    tokens.extend(["-r", "-p"])
+    tokens = [token for token in tokens if token != "-p"]
+    tokens.append("-p")
     return " ".join(tokens)
 
 
@@ -504,7 +512,7 @@ def main() -> None:
     args = parser.parse_args()
 
     try:
-        stran_args = profiled_exhaustive_args(args.stran_args)
+        stran_args = profiled_args(args.stran_args)
     except ValueError as exc:
         sys.exit(f"[ERROR] {exc}")
 

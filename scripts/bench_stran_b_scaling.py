@@ -34,10 +34,10 @@ from stran_profile import PROFILE_FIELDS, parse_experiment_profile
 NA = "N/A"
 DEFAULT_B_VALUES = "2,4,8,16,32,64,0"
 DEFAULT_STRAN_ARGS = (
-    "-M 1 -F 1 -C 200 -S -1 -T 1000 -N 20 -D 32 "
-    "-K 32 -Q 4 -W 8 -w 1 -L 128"
+    "-P root -F 1 -C 200 -S -1 -N 20 -K 32 -Q 4 -W 8 "
+    "-q 1 -A 8 -L 32 -w 8"
 )
-RUN_SCHEMA_VERSION = "stran-b-scaling-v2"
+RUN_SCHEMA_VERSION = "stran-b-scaling-v3-paged"
 
 # The C profiler bins exact yields 0..63 and folds every larger dynamically
 # enumerated result into y64.  Keep the full fixed profile to preserve root
@@ -152,7 +152,7 @@ def parse_b_values(text: str) -> list[int]:
 
 
 def effective_args(base_arguments: str, b_value: int) -> str:
-    """Replace -B and force exactly one each of the -r/-p toggle flags."""
+    """Replace -B and force exactly one -p toggle flag."""
     try:
         tokens = shlex.split(base_arguments)
     except ValueError as exc:
@@ -166,12 +166,12 @@ def effective_args(base_arguments: str, b_value: int) -> str:
                 raise ValueError("-B in --stran-args is missing its value")
             index += 2
             continue
-        if token in {"-r", "-p"}:
+        if token == "-p":
             index += 1
             continue
         cleaned.append(token)
         index += 1
-    cleaned.extend(["-B", str(b_value), "-r", "-p"])
+    cleaned.extend(["-B", str(b_value), "-p"])
     return " ".join(cleaned)
 
 
@@ -329,7 +329,7 @@ def main() -> None:
     parser.add_argument("--abc", type=Path, default=Path("./abc"))
     parser.add_argument("--b-values", default=DEFAULT_B_VALUES)
     parser.add_argument("--stran-args", default=DEFAULT_STRAN_ARGS,
-                        help="fixed args; -B is replaced and one each of -r/-p is forced")
+                        help="fixed args; -B is replaced and one -p is forced")
     parser.add_argument("--timeout", type=int, default=300,
                         help="seconds per &stran or dsec invocation")
     parser.add_argument("--out", type=Path,
@@ -384,7 +384,7 @@ def main() -> None:
 
     print(f"[INFO] case={aig.name} base AND={base_and} latches={base_latches}")
     print(f"[INFO] B sweep={b_values}; all other parameters fixed")
-    print("[INFO] forcing -r (exhaustive root search) and -p (experiment profiling)")
+    print("[INFO] forcing -p; each -B run uses the same paged scheduler")
     rows: list[Dict[str, Any]] = []
     try:
         for index, b_value in enumerate(b_values, start=1):

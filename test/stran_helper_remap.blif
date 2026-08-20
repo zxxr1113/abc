@@ -1,0 +1,22 @@
+.model stran_helper_remap
+.inputs a b c
+.outputs q y keep_r keep_s
+.latch x q 0
+.latch c r 0
+.latch c s 0
+
+# The first cone has a positive combinational Build rewrite and forces a
+# physical commit/rebuild.  The second cone contributes a zero-gain formally
+# proved Build relation plus sequential Existing obligations.  The Build
+# certificate must remap across the first commit and become H in the later SRM.
+.names a b ab
+11 1
+.names ab a x
+11 1
+.names r s y
+11 1
+.names r keep_r
+1 1
+.names s keep_s
+1 1
+.end

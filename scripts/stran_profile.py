@@ -19,6 +19,10 @@ BUILD_PREFIX = "Sequential direct seq-build experiment profile:"
 ROOT_TIME_PREFIX = "stran-root experiment-time profile:"
 ROOT_EFFECT_PREFIX = "stran-root experiment-effect profile:"
 ROOT_SUMMARY_PREFIX = "stran-root experiment-summary profile:"
+ROOT_HELPER_PREFIX = "stran-root helper history:"
+ROOT_PAGED_PREFIX = "stran-root paged portfolio:"
+ROOT_ITERATOR_PREFIX = "stran-root resub iterator:"
+ROOT_SEQ_PREFIX = "stran-root sequential relations:"
 
 TIME_KEYS = (
     "total-sec", "sim-sec", "care-sec", "root-discovery-sec",
@@ -59,6 +63,48 @@ ROOT_PROFILE_FIELDS = [
                    "shadow-sec", "unprofiled-sec"}
 ]
 
+# Root-mode schema 3 exposes the exact 2 x 3 stage/kind matrix requested by the
+# experiments: combinational/sequential proof stage crossed with
+# constant/existing/Build substitutions.  Keep ``stage`` in the field names so
+# these values cannot collide with the long-lived aggregate ``seq_build_*``
+# rollups below.
+ROOT_EFFECT_METRICS = (
+    "generated", "submitted", "proved", "selected", "and_gain", "reg_gain",
+)
+ROOT_EFFECT_FIELDS = [
+    f"{stage}_stage_{kind}_{metric}"
+    for stage in ("comb", "seq")
+    for kind in ("constant", "existing", "build")
+    for metric in ROOT_EFFECT_METRICS
+]
+ROOT_STAGE_GAIN_FIELDS = [
+    f"{stage}_stage_{metric}_gain"
+    for stage in ("comb", "seq")
+    for metric in ("and", "reg")
+]
+
+# History watermarks and materialization/proof events deliberately have
+# different names.  In particular, selected may include an old certificate
+# and therefore must not be compared only with this snapshot's new-proved.
+ROOT_HISTORY_FIELDS = [
+    "root_helper_retained_max", "root_helper_active_events",
+    "root_helper_dormant_events", "root_helper_dedup",
+    "root_helper_invalidated", "root_helper_classes",
+    "root_helper_endpoints_max", "root_helper_materialized_gates",
+    "root_batch_relations_max", "root_srm_nodes_max",
+    "root_new_proved", "root_history_proved_selected",
+    "root_proof_pages", "root_page_continuations",
+]
+ROOT_SEQ_FIELDS = [
+    "root_seq_obligations", "root_seq_seeded", "root_seq_helper_seeds",
+    "root_seq_proved", "root_seq_split", "root_seq_unknown",
+]
+ROOT_ITERATOR_FIELDS = [
+    "root_iterator_initialized", "root_iterator_next",
+    "root_iterator_exhausted", "root_iterator_q_page_stops",
+    "root_iterator_snapshot_discarded", "root_iterator_invalid",
+]
+
 PROFILE_FIELDS = [
     "profile_schema", "profile_time_records", "profile_seq_build_records",
     *[("profile_overhead_sec" if key == "profile-overhead-sec"
@@ -80,6 +126,11 @@ PROFILE_FIELDS = [
     "seq_build_ordered_final_gain_share_pct",
     "seq_build_path_upper_bound_sec", "seq_build_path_upper_bound_pct",
     "seq_build_ordered_gain_per_upper_bound_sec",
+    *ROOT_STAGE_GAIN_FIELDS,
+    *ROOT_EFFECT_FIELDS,
+    *ROOT_HISTORY_FIELDS,
+    *ROOT_SEQ_FIELDS,
+    *ROOT_ITERATOR_FIELDS,
     *ROOT_PROFILE_FIELDS,
 ]
 
@@ -172,6 +223,38 @@ def _root_effect_to_build(
     return result
 
 
+def _root_effect_matrix(
+    effects: list[tuple[str, str, dict[str, int | float]]],
+) -> dict[str, int | float]:
+    """Aggregate schema-3 comb/seq x constant/existing/Build records."""
+    result: dict[str, int | float] = {}
+    source_keys = {
+        "generated": "generated",
+        "submitted": "submitted",
+        "proved": "proved",
+        "selected": "selected",
+        "and_gain": "marginal-and",
+        "reg_gain": "marginal-reg",
+    }
+    for stage, kind, record in effects:
+        for metric, source_key in source_keys.items():
+            if source_key not in record:
+                continue
+            field = f"{stage}_stage_{kind}_{metric}"
+            result[field] = result.get(field, 0) + record[source_key]
+
+    for stage in ("comb", "seq"):
+        for metric in ("and", "reg"):
+            fields = [
+                f"{stage}_stage_{kind}_{metric}_gain"
+                for kind in ("constant", "existing", "build")
+            ]
+            values = [result[field] for field in fields if field in result]
+            if values:
+                result[f"{stage}_stage_{metric}_gain"] = sum(values)
+    return result
+
+
 def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     """Return fixed-schema metrics from one &stran stdout string."""
     result = {field: NA for field in PROFILE_FIELDS}
@@ -180,11 +263,16 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_time_records: list[dict[str, int | float]] = []
     root_effects: list[tuple[str, str, dict[str, int | float]]] = []
     root_summaries: list[dict[str, int | float]] = []
+    root_helpers: list[dict[str, int | float]] = []
+    root_paged: list[dict[str, int | float]] = []
+    root_iterators: list[dict[str, int | float]] = []
+    root_seq: list[dict[str, int | float]] = []
     schemas: list[int] = []
     for line in stdout.splitlines():
         if not any(prefix in line for prefix in (
             TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX,
-            ROOT_EFFECT_PREFIX, ROOT_SUMMARY_PREFIX,
+            ROOT_EFFECT_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_HELPER_PREFIX,
+            ROOT_PAGED_PREFIX, ROOT_ITERATOR_PREFIX, ROOT_SEQ_PREFIX,
         )):
             continue
         record = {key: _number(value) for key, value in _KEY_VALUE.findall(line)}
@@ -205,8 +293,58 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                 root_effects.append((stage.group(1), kind.group(1), record))
         elif ROOT_SUMMARY_PREFIX in line:
             root_summaries.append(record)
+        elif ROOT_HELPER_PREFIX in line:
+            root_helpers.append(record)
+        elif ROOT_PAGED_PREFIX in line:
+            root_paged.append(record)
+        elif ROOT_ITERATOR_PREFIX in line:
+            root_iterators.append(record)
+        elif ROOT_SEQ_PREFIX in line:
+            root_seq.append(record)
     if root_effects or root_summaries:
         build_records.append(_root_effect_to_build(root_effects, root_summaries))
+    result.update(_root_effect_matrix(root_effects))
+
+    def sum_field(records: list[dict[str, int | float]], key: str) -> Any:
+        values = [record[key] for record in records if key in record]
+        return sum(values) if values else NA
+
+    def max_field(records: list[dict[str, int | float]], key: str) -> Any:
+        values = [record[key] for record in records if key in record]
+        return max(values) if values else NA
+
+    result.update({
+        "root_helper_retained_max": max_field(root_helpers, "retained"),
+        "root_helper_active_events": sum_field(root_helpers, "active-events"),
+        "root_helper_dormant_events": sum_field(root_helpers, "dormant-events"),
+        "root_helper_dedup": sum_field(root_helpers, "dedup"),
+        "root_helper_invalidated": sum_field(root_helpers, "invalidated"),
+        "root_helper_classes": sum_field(root_helpers, "classes"),
+        "root_helper_endpoints_max": max_field(root_helpers, "endpoints-max"),
+        "root_helper_materialized_gates": sum_field(
+            root_helpers, "materialized-gates"),
+        "root_batch_relations_max": max_field(root_helpers, "batch-relations-max"),
+        "root_srm_nodes_max": max_field(root_helpers, "srm-nodes-max"),
+        "root_new_proved": sum_field(root_paged, "new-proved"),
+        "root_history_proved_selected": sum_field(
+            root_paged, "history-proved-selected"),
+        "root_proof_pages": sum_field(root_paged, "pages"),
+        "root_page_continuations": sum_field(root_paged, "continuations"),
+        "root_seq_obligations": sum_field(root_seq, "candidates"),
+        "root_seq_seeded": sum_field(root_seq, "seeded"),
+        "root_seq_helper_seeds": sum_field(root_seq, "comb-helper-seeds"),
+        "root_seq_proved": sum_field(root_seq, "proved"),
+        "root_seq_split": sum_field(root_seq, "split"),
+        "root_seq_unknown": sum_field(root_seq, "unknown"),
+        "root_iterator_initialized": sum_field(root_iterators, "initialized"),
+        "root_iterator_next": sum_field(root_iterators, "next"),
+        "root_iterator_exhausted": sum_field(root_iterators, "exhausted"),
+        "root_iterator_q_page_stops": sum_field(
+            root_iterators, "q-page-stops"),
+        "root_iterator_snapshot_discarded": sum_field(
+            root_iterators, "snapshot-discarded"),
+        "root_iterator_invalid": sum_field(root_iterators, "invalid"),
+    })
 
     if schemas:
         result["profile_schema"] = max(schemas)
