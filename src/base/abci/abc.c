@@ -42231,7 +42231,7 @@ static int Abc_CommandAbc9StranResubTest( Abc_Frame_t * pAbc,
     if ( !Cec_TranRootSelfTest() )
         return 1;
     Abc_Print( 1, "stran resub iterator/polarity/canonicalization/MFFC self-test: PASS\n" );
-    Abc_Print( 1, "stran ranked-reservoir/global-Existing/helper-remap-HO/all-helper-switch/zero-gain/temp-AIG self-test: PASS\n" );
+    Abc_Print( 1, "stran ranked-reservoir/TFI-Existing/helper-remap-HO/all-helper-switch/positive-gain/temp-AIG self-test: PASS\n" );
     return 0;
 }
 
@@ -42409,7 +42409,7 @@ usage:
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
     Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
-    Abc_Print( -2, "\t-l     : toggle global topologically-earlier Existing lookup [default = %s]\n", pPars->fUseExisting? "yes": "no" );
+    Abc_Print( -2, "\t-l     : toggle Existing lookup inside the ranked TFI divisor pool [default = %s]\n", pPars->fUseExisting? "yes": "no" );
     Abc_Print( -2, "\t-r     : deprecated exhaustive-discovery spelling; accepted for compatibility\n" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );

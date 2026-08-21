@@ -270,24 +270,45 @@ def parse_stran(stdout: str) -> Dict[str, Any]:
             result[f"{stage}_stage_reg_gain"] = root_stage_gains[stage][1]
 
     root_summaries = [
-        item for item in reversed(stdout.splitlines())
+        item for item in stdout.splitlines()
         if "stran-root experiment-summary profile:" in item
     ]
     if root_summaries:
-        # The list is newest-first.  Round mode emits one summary per phase,
-        # so the global baseline is the oldest record, not the final pass.
-        before = re.search(
-            r"(?:^| )and-before=(\d+)(?: |$)", root_summaries[-1])
-        after = re.search(
-            r"(?:^| )and-after=(\d+)(?: |$)", root_summaries[0])
-        if before and after:
-            result["stage_and_before"] = int(before.group(1))
-            result["stage_and_after_comb"] = (
-                int(before.group(1)) - root_stage_gains["comb"][0])
-            # This is the virtual serial marginal endpoint.  The separate
-            # final_and_gain field includes any extra cleanup gain.
-            result["stage_and_after_scorr"] = (
-                result["stage_and_after_comb"] - root_stage_gains["seq"][0])
+        def summary_int(line: str, key: str) -> int | None:
+            match = re.search(rf"(?:^| ){key}=(-?\d+)(?: |$)", line)
+            return int(match.group(1)) if match else None
+
+        first_and = summary_int(root_summaries[0], "and-before")
+        final_and = summary_int(root_summaries[-1], "and-after")
+        first_reg = summary_int(root_summaries[0], "reg-before")
+        final_reg = summary_int(root_summaries[-1], "reg-after")
+        comb_summaries = [
+            line for line in root_summaries
+            if re.search(r"(?:^| )phase=comb(?: |$)", line)
+        ]
+        if first_and is not None and final_and is not None:
+            result["stage_and_before"] = first_and
+            result["stage_and_after_scorr"] = final_and
+            if comb_summaries:
+                after_comb = summary_int(comb_summaries[-1], "and-after")
+                if after_comb is not None:
+                    result["stage_and_after_comb"] = after_comb
+                    result["comb_stage_and_gain"] = first_and - after_comb
+                    result["seq_stage_and_gain"] = after_comb - final_and
+            else:
+                # Backward-compatible schema <=4 fallback.  These records did
+                # not identify the chronological phase explicitly.
+                result["stage_and_after_comb"] = (
+                    first_and - root_stage_gains["comb"][0])
+        if first_reg is not None and final_reg is not None:
+            result["stage_reg_before"] = first_reg
+            result["stage_reg_after_scorr"] = final_reg
+            if comb_summaries:
+                after_comb_reg = summary_int(comb_summaries[-1], "reg-after")
+                if after_comb_reg is not None:
+                    result["stage_reg_after_comb"] = after_comb_reg
+                    result["comb_stage_reg_gain"] = first_reg - after_comb_reg
+                    result["seq_stage_reg_gain"] = after_comb_reg - final_reg
 
     ordered_records: Dict[str, Tuple[float, Dict[str, Any]]] = {}
     for ordered_line in (

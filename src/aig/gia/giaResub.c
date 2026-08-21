@@ -1694,6 +1694,7 @@ Vec_Int_t * Gia_ManResubOne( Vec_Ptr_t * vDivs, int nWords, int nLimit, int nDiv
 
 ***********************************************************************/
 static Gia_ResbMan_t * s_pResbMan = NULL;
+void Abc_ResubPrepareManager( int nWords );
 
 // Stateful finite recipe iterator used by &stran root discovery.  Exact
 // templates keep nested-loop cursors, while greedy diversity advances one
@@ -1913,6 +1914,57 @@ void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs, int nWords,
     return pIt;
 }
 
+// Resume one iterator cursor on the pass-owned resubstitution manager.  Only
+// the five scalar loop cursors survive between roots/waves; all heavyweight
+// truth-table sorting and recipe scratch is shared.  Rebinding is
+// deterministic because callers present the same ordered divisor set while
+// the circuit snapshot is immutable.
+void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
+    int nLimit, int nDivsMax, int fUseZero, int fUseXor, int * pCursor )
+{
+    Gia_ResbIter_t * pIt = ABC_CALLOC( Gia_ResbIter_t, 1 );
+    Vec_Ptr_t Divs = { nDivs, nDivs, ppDivs };
+    assert( s_pResbMan != NULL );
+    assert( s_pResbMan->nWords == nWords );
+    pIt->p = s_pResbMan;
+    Gia_ResbInit( pIt->p, &Divs, nWords, nLimit, nDivsMax, 0,
+        fUseZero, fUseXor, 0, 0, 0 );
+    if ( pCursor[0] )
+    {
+        pIt->Stage = pCursor[0];
+        pIt->n = pCursor[1];
+        pIt->i = pCursor[2];
+        pIt->k = pCursor[3];
+        pIt->iGreedy = pCursor[4];
+        // Stages 3/4 index the deterministic exact-pair arrays prepared by
+        // stage 1.  Reconstruct these arrays once after rebinding.
+        if ( pIt->Stage == 3 || pIt->Stage == 4 )
+            Gia_ResbIterPreparePairs( pIt );
+    }
+    else
+    {
+        pIt->Stage = fUseXor ? 5 : 1;
+        pIt->n = pIt->i = 0;
+        pIt->k = 1;
+    }
+    return pIt;
+}
+
+void Abc_ResubIteratorResumeStop( void * pVoid, int * pCursor )
+{
+    Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
+    if ( pIt == NULL )
+        return;
+    pCursor[0] = pIt->Stage;
+    pCursor[1] = pIt->n;
+    pCursor[2] = pIt->i;
+    pCursor[3] = pIt->k;
+    pCursor[4] = pIt->iGreedy;
+    // The manager belongs to Abc_ResubPrepareManager(), not this cursor.
+    pIt->p = NULL;
+    ABC_FREE( pIt );
+}
+
 int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
     int * pnAttempt, int * pfExhausted, int * pfInvalid )
 {
@@ -2019,7 +2071,8 @@ void Abc_ResubIteratorStop( void * pVoid )
 // Focused invariant checks for the root-only iterator.  These truth tables
 // encode the polarity example T=1101,d=1000 and a finite two-divisor cover.
 // The helper is intentionally exported only to the in-repository regression
-// command; production discovery uses the same Start/Next/Stop implementation.
+// command; production discovery uses the same Next implementation with a
+// pass-owned manager and a five-integer resumable cursor.
 int Abc_ResubIteratorSelfTest()
 {
     word Off = 0x2, On = 0xD, D = 0x8, E = 0x5;
@@ -2028,9 +2081,12 @@ int Abc_ResubIteratorSelfTest()
     void * RandDivs[6];
     Vec_Ptr_t V = {4, 4, Divs};
     Vec_Int_t U = {0}, N = {0}, P = {0};
-    void * pIt;
-    int * pArray = NULL, Attempt, Exhausted, Invalid, nArray;
-    int fSawD = 0, fSawNotD = 0, nNext = 0, nInvalid = 0;
+    void * pIt, * pItShared;
+    int * pArray = NULL, * pArrayShared = NULL;
+    int Attempt, AttemptShared, Exhausted, ExhaustedShared;
+    int Invalid, InvalidShared, nArray, nArrayShared, Cursor[5] = {0};
+    int fSawD = 0, fSawNotD = 0, fSawResumedPair = 0;
+    int nNext = 0, nInvalid = 0;
     int t, j, nRounds;
     unsigned Rand = 0x51A7E123;
     U.nCap = N.nCap = P.nCap = 8;
@@ -2093,6 +2149,7 @@ int Abc_ResubIteratorSelfTest()
     // makes it small enough for every in-repository regression run.
     for ( j = 0; j < 6; j++ )
         RandDivs[j] = RandData + j;
+    Abc_ResubPrepareManager( 1 );
     for ( t = 0; t < 32; t++ )
     {
         for ( j = 0; j < 6; j++ )
@@ -2102,8 +2159,23 @@ int Abc_ResubIteratorSelfTest()
             Rand = 1664525 * Rand + 1013904223;
             RandData[j] ^= Rand;
         }
-        Care = RandData[0] | (word)1;
-        Target = RandData[1];
+        if ( t < 2 )
+        {
+            RandData[2] = ABC_CONST(0xAAAAAAAAAAAAAAAA);
+            RandData[3] = ABC_CONST(0xCCCCCCCCCCCCCCCC);
+            RandData[4] = ABC_CONST(0xF0F0F0F0F0F0F0F0);
+            RandData[5] = ABC_CONST(0xFF00FF00FF00FF00);
+            Care = ~(word)0;
+            Target = t == 0 ?
+                RandData[2] | (RandData[3] & RandData[4]) :
+                (RandData[2] | RandData[3]) &
+                (RandData[4] & RandData[5]);
+        }
+        else
+        {
+            Care = RandData[0] | (word)1;
+            Target = RandData[1];
+        }
         RandData[0] = ~Target & Care;
         RandData[1] =  Target & Care;
         pIt = Abc_ResubIteratorStart( RandDivs, 6, 1, 3, 4, 0, 0 );
@@ -2123,23 +2195,43 @@ int Abc_ResubIteratorSelfTest()
                 Gia_ManResubVerify(((Gia_ResbIter_t *)pIt)->p, NULL) );
         Abc_ResubIteratorStop( pIt );
         // Public Next() must exhaust exact templates plus the finite B-wide
-        // greedy frontier.  This catches the loopv3 regression where failed
-        // greedy choices kept appending pair scratch and never exhausted.
+        // greedy frontier.  Compare it recipe-for-recipe with a cursor that
+        // is rebound to the shared manager after every yield.  This catches
+        // both the loopv3 nontermination regression and loss/duplication at
+        // wave boundaries, including reconstruction of stage-3/4 pair data.
         pIt = Abc_ResubIteratorStart( RandDivs, 6, 1, 3, 4, 0, 0 );
+        memset( Cursor, 0, sizeof(Cursor) );
         nRounds = 0;
         do {
             nArray = Abc_ResubIteratorNext( pIt, &pArray, &Attempt,
                 &Exhausted, &Invalid );
+            pItShared = Abc_ResubIteratorResumeStart( RandDivs, 6, 1,
+                3, 4, 0, 0, Cursor );
+            nArrayShared = Abc_ResubIteratorNext( pItShared,
+                &pArrayShared, &AttemptShared, &ExhaustedShared,
+                &InvalidShared );
+            assert( nArrayShared == nArray );
+            assert( ExhaustedShared == Exhausted );
+            assert( InvalidShared == Invalid );
+            if ( !Exhausted && !Invalid )
+            {
+                assert( AttemptShared == Attempt );
+                assert( !memcmp(pArrayShared, pArray,
+                    sizeof(int) * nArray) );
+                fSawResumedPair |= Attempt == 3 || Attempt == 4;
+            }
+            Abc_ResubIteratorResumeStop( pItShared, Cursor );
             assert( ++nRounds < 4096 );
             assert( Exhausted || Invalid ||
                 (nArray > 0 && (nArray & 1)) );
         } while ( !Exhausted );
         Abc_ResubIteratorStop( pIt );
     }
+    Abc_ResubPrepareManager( 0 );
     ABC_FREE( U.pArray );
     ABC_FREE( N.pArray );
     ABC_FREE( P.pArray );
-    assert( nNext > 0 && nInvalid == 0 );
+    assert( nNext > 0 && nInvalid == 0 && fSawResumedPair );
     return 1;
 }
 

@@ -18,6 +18,7 @@ TIME_PREFIX = "Sequential direct experiment-time profile:"
 BUILD_PREFIX = "Sequential direct seq-build experiment profile:"
 ROOT_TIME_PREFIX = "stran-root experiment-time profile:"
 ROOT_EFFECT_PREFIX = "stran-root experiment-effect profile:"
+ROOT_LANE_PREFIX = "stran-root experiment-proof-lane profile:"
 ROOT_SUMMARY_PREFIX = "stran-root experiment-summary profile:"
 ROOT_HELPER_PREFIX = "stran-root helper history:"
 ROOT_PAGED_PREFIX = "stran-root paged portfolio:"
@@ -64,11 +65,10 @@ ROOT_PROFILE_FIELDS = [
                    "shadow-sec", "unprofiled-sec"}
 ]
 
-# Root-mode schema 3 exposes the exact 2 x 3 stage/kind matrix requested by the
-# experiments: combinational/sequential proof stage crossed with
-# constant/existing/Build substitutions.  Keep ``stage`` in the field names so
-# these values cannot collide with the long-lived aggregate ``seq_build_*``
-# rollups below.
+# Root-mode schema 5 exposes two independent 2 x 3 matrices.  The stage matrix
+# is the original algorithm phase (initial COMB or later SEQ) crossed with
+# candidate kind; the lane matrix is the proof engine (CBS or scorr).  Older
+# schemas used stage for the proof lane, which is why schema 5 is explicit.
 ROOT_EFFECT_METRICS = (
     "generated", "submitted", "proved", "selected", "and_gain", "reg_gain",
 )
@@ -77,6 +77,13 @@ ROOT_EFFECT_FIELDS = [
     for stage in ("comb", "seq")
     for kind in ("constant", "existing", "build")
     for metric in ROOT_EFFECT_METRICS
+]
+ROOT_LANE_METRICS = ("submitted", "proved", "selected")
+ROOT_LANE_FIELDS = [
+    f"{lane}_lane_{kind}_{metric}"
+    for lane in ("cbs", "scorr")
+    for kind in ("constant", "existing", "build")
+    for metric in ROOT_LANE_METRICS
 ]
 ROOT_STAGE_GAIN_FIELDS = [
     f"{stage}_stage_{metric}_gain"
@@ -106,7 +113,8 @@ ROOT_ITERATOR_FIELDS = [
     "root_iterator_initialized", "root_iterator_next",
     "root_iterator_q_wave_stops",
     "root_iterator_exhausted", "root_iterator_q_page_stops",
-    "root_iterator_snapshot_discarded", "root_iterator_invalid",
+    "root_iterator_snapshot_discarded", "root_iterator_live_max",
+    "root_iterator_live_final", "root_iterator_invalid",
 ]
 
 PROFILE_FIELDS = [
@@ -132,6 +140,7 @@ PROFILE_FIELDS = [
     "seq_build_ordered_gain_per_upper_bound_sec",
     *ROOT_STAGE_GAIN_FIELDS,
     *ROOT_EFFECT_FIELDS,
+    *ROOT_LANE_FIELDS,
     *ROOT_HISTORY_FIELDS,
     *ROOT_SEQ_FIELDS,
     *ROOT_ITERATOR_FIELDS,
@@ -198,19 +207,39 @@ def _root_time_to_legacy(record: dict[str, int | float]) -> dict[str, int | floa
 
 def _root_effect_to_build(
     effects: list[tuple[str, str, dict[str, int | float]]],
+    lanes: list[tuple[str, str, dict[str, int | float]]],
     summaries: list[dict[str, int | float]],
 ) -> dict[str, int | float]:
-    """Aggregate the root-only 2x3 matrix into legacy Build rollups."""
+    """Aggregate phase and proof-lane matrices into legacy Build rollups."""
     result: dict[str, int | float] = {}
     gains: dict[tuple[str, str, str], int | float] = {}
     for stage, kind, record in effects:
         if kind == "build":
             result["generated"] = result.get("generated", 0) + record.get("generated", 0)
             result["submitted"] = result.get("submitted", 0) + record.get("submitted", 0)
-            result[f"{stage}-proved"] = result.get(f"{stage}-proved", 0) + record.get("proved", 0)
-            result[f"{stage}-selected"] = result.get(f"{stage}-selected", 0) + record.get("selected", 0)
         gains[(stage, kind, "and")] = gains.get((stage, kind, "and"), 0) + record.get("marginal-and", 0)
         gains[(stage, kind, "reg")] = gains.get((stage, kind, "reg"), 0) + record.get("marginal-reg", 0)
+    for lane, kind, record in lanes:
+        if kind != "build":
+            continue
+        legacy = "comb" if lane == "cbs" else "seq"
+        result[f"{legacy}-proved"] = (
+            result.get(f"{legacy}-proved", 0) + record.get("proved", 0)
+        )
+        result[f"{legacy}-selected"] = (
+            result.get(f"{legacy}-selected", 0) + record.get("selected", 0)
+        )
+    # Schema <=4 used comb/seq stage names for the proof engine itself.
+    if not lanes:
+        for stage, kind, record in effects:
+            if kind != "build":
+                continue
+            result[f"{stage}-proved"] = (
+                result.get(f"{stage}-proved", 0) + record.get("proved", 0)
+            )
+            result[f"{stage}-selected"] = (
+                result.get(f"{stage}-selected", 0) + record.get("selected", 0)
+            )
     for metric in ("and", "reg"):
         build = gains.get(("seq", "build", metric), 0)
         direct = gains.get(("seq", "constant", metric), 0) + gains.get(("seq", "existing", metric), 0)
@@ -259,6 +288,38 @@ def _root_effect_matrix(
     return result
 
 
+def _root_lane_matrix(
+    lanes: list[tuple[str, str, dict[str, int | float]]],
+) -> dict[str, int | float]:
+    """Aggregate schema-5 CBS/scorr x constant/existing/Build records."""
+    result: dict[str, int | float] = {}
+    for lane, kind, record in lanes:
+        for metric in ROOT_LANE_METRICS:
+            if metric not in record:
+                continue
+            field = f"{lane}_lane_{kind}_{metric}"
+            result[field] = result.get(field, 0) + record[metric]
+    return result
+
+
+def _root_summary_stage_gains(
+    summaries: list[dict[str, int | float]],
+) -> dict[str, int | float]:
+    """Use exact cleanup gains, not per-candidate marginal gains, per phase."""
+    result: dict[str, int | float] = {}
+    for record in summaries:
+        phase_id = record.get("phase-id")
+        if phase_id not in (0, 1):
+            continue
+        stage = "comb" if phase_id == 0 else "seq"
+        for metric in ("and", "reg"):
+            key = f"final-{metric}-gain"
+            if key in record:
+                field = f"{stage}_stage_{metric}_gain"
+                result[field] = result.get(field, 0) + record[key]
+    return result
+
+
 def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     """Return fixed-schema metrics from one &stran stdout string."""
     result = {field: NA for field in PROFILE_FIELDS}
@@ -266,6 +327,7 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     build_records: list[dict[str, int | float]] = []
     root_time_records: list[dict[str, int | float]] = []
     root_effects: list[tuple[str, str, dict[str, int | float]]] = []
+    root_lanes: list[tuple[str, str, dict[str, int | float]]] = []
     root_summaries: list[dict[str, int | float]] = []
     root_helpers: list[dict[str, int | float]] = []
     root_paged: list[dict[str, int | float]] = []
@@ -275,7 +337,8 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     for line in stdout.splitlines():
         if not any(prefix in line for prefix in (
             TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX,
-            ROOT_EFFECT_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_HELPER_PREFIX,
+            ROOT_EFFECT_PREFIX, ROOT_LANE_PREFIX, ROOT_SUMMARY_PREFIX,
+            ROOT_HELPER_PREFIX,
             ROOT_PAGED_PREFIX, ROOT_WAVE_PREFIX,
             ROOT_ITERATOR_PREFIX, ROOT_SEQ_PREFIX,
         )):
@@ -296,7 +359,15 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             kind = re.search(r"(?:^| )kind=(constant|existing|build)(?: |$)", line)
             if stage and kind:
                 root_effects.append((stage.group(1), kind.group(1), record))
+        elif ROOT_LANE_PREFIX in line:
+            lane = re.search(r"(?:^| )lane=(cbs|scorr)(?: |$)", line)
+            kind = re.search(r"(?:^| )kind=(constant|existing|build)(?: |$)", line)
+            if lane and kind:
+                root_lanes.append((lane.group(1), kind.group(1), record))
         elif ROOT_SUMMARY_PREFIX in line:
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                record["phase-id"] = 0 if phase.group(1) == "comb" else 1
             root_summaries.append(record)
         elif ROOT_HELPER_PREFIX in line:
             root_helpers.append(record)
@@ -306,9 +377,13 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             root_iterators.append(record)
         elif ROOT_SEQ_PREFIX in line:
             root_seq.append(record)
-    if root_effects or root_summaries:
-        build_records.append(_root_effect_to_build(root_effects, root_summaries))
+    if root_effects or root_lanes or root_summaries:
+        build_records.append(
+            _root_effect_to_build(root_effects, root_lanes, root_summaries)
+        )
     result.update(_root_effect_matrix(root_effects))
+    result.update(_root_lane_matrix(root_lanes))
+    result.update(_root_summary_stage_gains(root_summaries))
 
     def sum_field(records: list[dict[str, int | float]], key: str) -> Any:
         values = [record[key] for record in records if key in record]
@@ -370,6 +445,8 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             root_iterators, "q-wave-stops", "q-page-stops"),
         "root_iterator_snapshot_discarded": sum_field(
             root_iterators, "snapshot-discarded"),
+        "root_iterator_live_max": max_field(root_iterators, "live-max"),
+        "root_iterator_live_final": sum_field(root_iterators, "live-final"),
         "root_iterator_invalid": sum_field(root_iterators, "invalid"),
     })
 
