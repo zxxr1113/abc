@@ -333,7 +333,7 @@ struct Cec_ParTran_t_
     int              nGainMin;      // deprecated -G compatibility value; not a proof/helper gate
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
-    int              nRootWaves;    // maximum rebuild/commit rounds (0 = fixed point)
+    int              nRootWaves;    // maximum SEQ proof epochs (0 = fixed point)
     int              nRootConstrTop;// Build candidates pulled per root/wave (0 = iterator exhaustion)
     int              nCombBTLimit;  // root CBS conflict limit per cube
     int              nFreeWords;    // 64-bit independent PI/RO words for combination screening

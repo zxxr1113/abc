@@ -42403,7 +42403,7 @@ usage:
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
-    Abc_Print( -2, "\t-w num : SEQ rebuild/commit rounds after the one initial COM wave (0 = fixed point) [default = %d]\n", pPars->nRootWaves );
+    Abc_Print( -2, "\t-w num : SEQ candidate-generation/proof epochs; each drains commit waves to fixed point (0 = global fixed point) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
     Abc_Print( -2, "\t-a num : free-state 64-bit random words (0 = learned CEX only) [default = %d]\n", pPars->nFreeWords );
     Abc_Print( -2, "\t-e num : free-state CBS counterexamples retained per batch (0 = random only) [default = %d]\n", pPars->nFreeCexMax );
