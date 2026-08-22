@@ -138,10 +138,10 @@ struct Cec_DynSrm_t_
 
 // Active-pair selection mirrors -i exactly: a pair is active iff an endpoint is
 // in the alias-aware TFO (or, in ring mode, the ring edge itself changed).  The
-// earlier "pending" set that force-re-emitted still-merged SAT pairs has been
-// removed: per md/scorr_i_correctness_bug_report.md the alias-aware TFO is the
-// real fix, and the retry/pending protection was shown to be both unnecessary
-// (alias-only passes -d) and incomplete.  -d (incr-oracle) certifies soundness.
+// earlier TFO-only "pending" workaround was removed: alias-aware TFO is the
+// corresponding correctness fix.  Structural proof reuse has its own explicit
+// per-obligation PENDING/UNSAT lifecycle in Cec_DepGraph_t; these two notions
+// must not be conflated.
 static int Cec_DynSrmActiveConst( Cec_DynSrm_t * p, int * pTfoMark, int ObjId )
 {
     (void)p;

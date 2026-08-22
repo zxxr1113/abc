@@ -277,12 +277,28 @@ struct Cec_DepGraph_t_
     int *       pProofLhs;
     char *      pActionActive;
     char *      pProofActive;
-    char *      pProofProved;
+    char *      pProofKind;
+    char *      pProofState;
     int *       pSeenRaw;
     int *       pSeenSpec;
     int         nSeen;
     int         TravId;
 };
+
+typedef enum Cec_DepProofKind_t_
+{
+    CEC_DEP_PROOF_NONE = 0,
+    CEC_DEP_PROOF_CONST,
+    CEC_DEP_PROOF_EQUIV,
+    CEC_DEP_PROOF_RING
+} Cec_DepProofKind_t;
+
+typedef enum Cec_DepProofState_t_
+{
+    CEC_DEP_PROOF_INACTIVE = 0,
+    CEC_DEP_PROOF_PENDING,
+    CEC_DEP_PROOF_UNSAT
+} Cec_DepProofState_t;
 
 static inline int Cec_DepActionNode( Cec_DepGraph_t * p, int ObjId ) { return ObjId; }
 static inline int Cec_DepProofNode ( Cec_DepGraph_t * p, int ObjId ) { return p->nObjs + ObjId; }
@@ -378,6 +394,8 @@ static void Cec_DepGraphCreateProofNodes( Cec_DepGraph_t * p )
             {
                 p->pProofActive[i] = 1;
                 p->pProofLhs[i] = p->pActionRepr[i];
+                p->pProofKind[i] = CEC_DEP_PROOF_EQUIV;
+                p->pProofState[i] = CEC_DEP_PROOF_PENDING;
             }
         return;
     }
@@ -387,6 +405,8 @@ static void Cec_DepGraphCreateProofNodes( Cec_DepGraph_t * p )
         {
             p->pProofActive[i] = 1;
             p->pProofLhs[i] = 0;
+            p->pProofKind[i] = CEC_DEP_PROOF_CONST;
+            p->pProofState[i] = CEC_DEP_PROOF_PENDING;
         }
         else if ( Gia_ObjIsHead(pAig, i) )
         {
@@ -395,11 +415,15 @@ static void Cec_DepGraphCreateProofNodes( Cec_DepGraph_t * p )
             {
                 p->pProofActive[iObj] = 1;
                 p->pProofLhs[iObj] = iPrev;
+                p->pProofKind[iObj] = CEC_DEP_PROOF_RING;
+                p->pProofState[iObj] = CEC_DEP_PROOF_PENDING;
                 iPrev = iObj;
             }
             // The head uniquely keys the closing edge tail -> head.
             p->pProofActive[i] = 1;
             p->pProofLhs[i] = iPrev;
+            p->pProofKind[i] = CEC_DEP_PROOF_RING;
+            p->pProofState[i] = CEC_DEP_PROOF_PENDING;
         }
     }
 }
@@ -425,7 +449,8 @@ Cec_DepGraph_t * Cec_DepGraphBuild( Cec_IncrMgr_t * pIncr, int nFrames,
     p->pProofLhs = ABC_ALLOC( int, p->nObjs );
     p->pActionActive = ABC_CALLOC( char, p->nObjs );
     p->pProofActive = ABC_CALLOC( char, p->nObjs );
-    p->pProofProved = ABC_CALLOC( char, p->nObjs );
+    p->pProofKind = ABC_CALLOC( char, p->nObjs );
+    p->pProofState = ABC_CALLOC( char, p->nObjs );
     p->nSeen = p->nFrames * p->nObjs;
     p->pSeenRaw = ABC_CALLOC( int, p->nSeen );
     p->pSeenSpec = ABC_CALLOC( int, p->nSeen );
@@ -465,7 +490,8 @@ void Cec_DepGraphFree( Cec_DepGraph_t * p )
     ABC_FREE( p->pProofLhs );
     ABC_FREE( p->pActionActive );
     ABC_FREE( p->pProofActive );
-    ABC_FREE( p->pProofProved );
+    ABC_FREE( p->pProofKind );
+    ABC_FREE( p->pProofState );
     ABC_FREE( p->pSeenRaw );
     ABC_FREE( p->pSeenSpec );
     ABC_FREE( p );
@@ -521,7 +547,8 @@ int Cec_DepGraphComputeDirty( Cec_IncrMgr_t * pIncr, Cec_DepGraph_t * pOld,
              pOld->pActionRepr[i] != pNew->pActionRepr[i]);
         fProofChange = pOld->pProofActive[i] != pNew->pProofActive[i] ||
             (pOld->pProofActive[i] && pNew->pProofActive[i] &&
-             pOld->pProofLhs[i] != pNew->pProofLhs[i]);
+             (pOld->pProofLhs[i] != pNew->pProofLhs[i] ||
+              pOld->pProofKind[i] != pNew->pProofKind[i]));
         if ( fActionChange || fProofChange )
             (*pnChanged)++;
         if ( fActionChange )
@@ -542,8 +569,10 @@ int Cec_DepGraphComputeDirty( Cec_IncrMgr_t * pIncr, Cec_DepGraph_t * pOld,
             int fInvalid = pMarkOld[Cec_DepProofNode(pOld, i)] ||
                            pMarkNew[Cec_DepProofNode(pNew, i)];
             int fSameProof = pOld->pProofActive[i] &&
-                             pOld->pProofLhs[i] == pNew->pProofLhs[i];
-            int fPending = fSameProof && !pOld->pProofProved[i];
+                             pOld->pProofLhs[i] == pNew->pProofLhs[i] &&
+                             pOld->pProofKind[i] == pNew->pProofKind[i];
+            int fPending = fSameProof &&
+                           pOld->pProofState[i] != CEC_DEP_PROOF_UNSAT;
             if ( fInvalid || fPending )
             {
                 pIncr->pDepMark[i] = 1;
@@ -611,10 +640,13 @@ void Cec_DepGraphCommitProofDeps( Cec_IncrMgr_t * pIncr,
     pNew->vFanouts = vMerged;
     for ( ProofObj = 1; ProofObj < pNew->nObjs; ProofObj++ )
         if ( pNew->pProofActive[ProofObj] )
-            pNew->pProofProved[ProofObj] = pIncr->pDepMark[ProofObj] ? 0 :
+            pNew->pProofState[ProofObj] = pIncr->pDepMark[ProofObj] ?
+                CEC_DEP_PROOF_PENDING :
                 (pOld->pProofActive[ProofObj] &&
                  pOld->pProofLhs[ProofObj] == pNew->pProofLhs[ProofObj] &&
-                 pOld->pProofProved[ProofObj]);
+                 pOld->pProofKind[ProofObj] == pNew->pProofKind[ProofObj] &&
+                 pOld->pProofState[ProofObj] == CEC_DEP_PROOF_UNSAT ?
+                    CEC_DEP_PROOF_UNSAT : CEC_DEP_PROOF_PENDING);
 }
 
 int Cec_DepGraphCountUnproved( Cec_DepGraph_t * p )
@@ -623,7 +655,8 @@ int Cec_DepGraphCountUnproved( Cec_DepGraph_t * p )
     if ( p == NULL )
         return 0;
     for ( i = 1; i < p->nObjs; i++ )
-        Count += p->pProofActive[i] && !p->pProofProved[i];
+        Count += p->pProofActive[i] &&
+                 p->pProofState[i] != CEC_DEP_PROOF_UNSAT;
     return Count;
 }
 
@@ -640,13 +673,15 @@ void Cec_DepGraphPrepareEmission( Cec_DepGraph_t * p, Cec_IncrMgr_t * pIncr,
     assert( (Vec_IntSize(vOutputs) & 1) == 0 );
     for ( i = 1; i < p->nObjs; i++ )
         if ( p->pProofActive[i] && (fEmitAll || pIncr->pDepMark[i]) )
-            p->pProofProved[i] = 1; // emitted but simplified away is a proof
+            // Start optimistically: an emitted obligation which has no SAT
+            // root after structural simplification is already proved.
+            p->pProofState[i] = CEC_DEP_PROOF_UNSAT;
     for ( i = 0; i < Vec_IntSize(vOutputs); i += 2 )
     {
         ProofObj = Vec_IntEntry( vOutputs, i + 1 );
         assert( ProofObj > 0 && ProofObj < p->nObjs );
         assert( p->pProofActive[ProofObj] );
-        p->pProofProved[ProofObj] = 0; // pending solver status
+        p->pProofState[ProofObj] = CEC_DEP_PROOF_PENDING;
     }
 }
 
@@ -661,11 +696,22 @@ void Cec_DepGraphRecordStatuses( Cec_DepGraph_t * p, Vec_Int_t * vOutputs,
     int i, ProofObj, Status;
     assert( p != NULL && vOutputs != NULL && vStatus != NULL );
     assert( 2 * Vec_StrSize(vStatus) == Vec_IntSize(vOutputs) );
+    // BMC emits the same target at several frames.  The candidate-level proof
+    // is reusable only when every frame-specific obligation is UNSAT.  Reset
+    // each represented target once, then monotonically downgrade it on any
+    // SAT/UNKNOWN result; iteration order can no longer change the answer.
+    for ( i = 0; i < Vec_IntSize(vOutputs); i += 2 )
+    {
+        ProofObj = Vec_IntEntry( vOutputs, i + 1 );
+        assert( ProofObj > 0 && ProofObj < p->nObjs );
+        p->pProofState[ProofObj] = CEC_DEP_PROOF_UNSAT;
+    }
     Vec_StrForEachEntry( vStatus, Status, i )
     {
         ProofObj = Vec_IntEntry( vOutputs, 2*i + 1 );
         assert( ProofObj > 0 && ProofObj < p->nObjs );
-        p->pProofProved[ProofObj] = Status == 1;
+        if ( Status != 1 )
+            p->pProofState[ProofObj] = CEC_DEP_PROOF_PENDING;
     }
 }
 
