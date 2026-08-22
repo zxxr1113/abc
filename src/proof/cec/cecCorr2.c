@@ -1141,7 +1141,7 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     int fChanges, i;
     int nBmcResimFrames = pPars->nFrames + 1 + nPrefs;
     int fBmcPersist = 0;
-    ABC_INT64_T nDepTfoTotal = 0, nDepProofTotal = 0;
+    ABC_INT64_T nDepFullTotal = 0, nDepProofTotal = 0;
     // BMC SRM is keyed only on pReprs (Gia_ManCorr2SpecReduceInit ignores
     // its fRings flag).  So the incremental filter only needs pReprs-based
     // seeds; pNexts changes cannot affect this SRM and there are no ring
@@ -1183,7 +1183,7 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     {
         int * pTfoMask = NULL;
         int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0;
-        int nTfoActivePairs = 0, nDepInvalidPairs = 0, nDepChanges = 0;
+        int nDepInvalidPairs = 0, nDepChanges = 0;
         int nBmcPos = 0;
         abctime tSat;
         if ( Cec_ParCorShouldStop( pPars ) )
@@ -1201,14 +1201,6 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
                 // No pReprs change.  BMC SRM topology is unchanged.
                 break;
             }
-            Cec_IncrMgrComputeTfo( pBmcMgr );
-            // BMC SRM is non-ring; pass fRings=0 so we count (head, member)
-            // pairs only and skip any ring-edge bookkeeping.
-            if ( pBmcDynSrm )
-                Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
-            else
-                Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
-            nActivePairs = nTfoActivePairs;
             if ( pPars->fStructDep )
             {
                 Cec_DepGraph_t * pDepNew;
@@ -1229,15 +1221,26 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
                 else
                     Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pDepInvalidMark,
                         &nTotalPairs, &nDepInvalidPairs );
-                assert( Cec_IncrMgrCountDepOnlyPairs(pBmcMgr, 0) == 0 );
-                Abc_Print( 1, "[struct-dep] phase=bmc round=%d changes=%d pairs=%d tfo=%d dirty=%d pending=%d emit=%d saved=%d\n",
-                    i, nDepChanges, nTotalPairs, nTfoActivePairs, nDepInvalidPairs,
+                Abc_Print( 1, "[struct-dep] phase=bmc round=%d changes=%d pairs=%d dirty=%d pending=%d emit=%d reused=%d\n",
+                    i, nDepChanges, nTotalPairs, nDepInvalidPairs,
                     nActivePairs - nDepInvalidPairs, nActivePairs,
-                    nTfoActivePairs - nActivePairs );
-                nDepTfoTotal += nTfoActivePairs;
+                    nTotalPairs - nActivePairs );
+                nDepFullTotal += nTotalPairs;
                 nDepProofTotal += nActivePairs;
                 Cec_DepGraphFree( pBmcDep );
                 pBmcDep = pDepNew;
+            }
+            else
+            {
+                Cec_IncrMgrComputeTfo( pBmcMgr );
+                // BMC SRM is non-ring; pass fRings=0 so we count
+                // (head, member) pairs only.
+                if ( pBmcDynSrm )
+                    Cec_DynSrmCountActivePairs( pBmcDynSrm, 0,
+                        pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                else
+                    Cec_IncrMgrCountActivePairs( pBmcMgr, 0,
+                        pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
             }
             if ( nActivePairs == 0 )
                 break;
@@ -1336,9 +1339,9 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
             break;
     }
     if ( pPars->fStructDep )
-        Abc_Print( 1, "[struct-dep-total] phase=bmc tfo=%lld dep=%lld saved=%lld\n",
-            (long long)nDepTfoTotal, (long long)nDepProofTotal,
-            (long long)(nDepTfoTotal - nDepProofTotal) );
+        Abc_Print( 1, "[struct-dep-total] phase=bmc full=%lld emit=%lld reused=%lld\n",
+            (long long)nDepFullTotal, (long long)nDepProofTotal,
+            (long long)(nDepFullTotal - nDepProofTotal) );
     Cec_DepGraphFree( pBmcDep );
     Cec_DynSrmFree( pBmcDynSrm );
     Cec_IncrMgrFree( pBmcMgr );
@@ -1525,7 +1528,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     // Incremental active-list manager (NULL if -i not set)
     Cec_IncrMgr_t * pMgr = NULL;
     // Structural-dependency snapshot for the class state represented by the
-    // previous SRM.  The experiment intentionally rebuilds it each round.
+    // previous SRM.
     Cec_DepGraph_t * pDep = NULL;
     // Persistent dynamic SRM construction manager (NULL without -D).
     // Resimulation is controlled only by -I: without -I, counterexamples are
@@ -1537,7 +1540,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clkIncr = 0;
     abctime tSat = 0;
     int nIncrSkipped = 0, nIncrFallback = 0;
-    ABC_INT64_T nDepTfoTotal = 0, nDepProofTotal = 0;
+    ABC_INT64_T nDepFullTotal = 0, nDepProofTotal = 0;
     if ( Gia_ManRegNum(pAig) == 0 )
     {
         Abc_Print( 1, "Cec_ManLatchCorrespondence(): Not a sequential AIG.\n" );
@@ -1638,7 +1641,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             int * pTfoMask = NULL;
             int nReprSeeds = 0, nNextChanges = 0;
-            int nTotalPairs = 0, nActivePairs = 0, nTfoActivePairs = 0, nDepInvalidPairs = 0;
+            int nTotalPairs = 0, nActivePairs = 0, nDepInvalidPairs = 0;
             int nDepChanges = 0;
             int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
@@ -1659,14 +1662,15 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                         clkSrm  += Abc_Clock() - clk2;
                         break;
                     }
-                    // Clear the previous TFO marks.  The skipped complement is
-                    // now every current pair, providing a final certificate.
-                    Cec_IncrMgrComputeTfo( pMgr );
                     if ( pPars->fStructDep )
                     {
                         assert( pDep != NULL );
                         Cec_DepGraphComputeDirty( pMgr, pDep, pDep, &nDepChanges );
                     }
+                    else
+                        // Clear the previous TFO marks.  The skipped complement
+                        // is now every current pair, providing a final oracle.
+                        Cec_IncrMgrComputeTfo( pMgr );
                     if ( pDynSrm )
                         Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
                             pPars->fStructDep ? pMgr->pDepMark : pMgr->pTfoMark,
@@ -1682,14 +1686,6 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 }
                 else
                 {
-                    Cec_IncrMgrComputeTfo( pMgr );
-                    if ( pDynSrm )
-                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
-                            pMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
-                    else
-                        Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings,
-                            pMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
-                    nActivePairs = nTfoActivePairs;
                     if ( pPars->fStructDep )
                     {
                         Cec_DepGraph_t * pDepNew;
@@ -1710,15 +1706,26 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                         else
                             Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings,
                                 pMgr->pDepInvalidMark, &nTotalPairs, &nDepInvalidPairs );
-                        assert( Cec_IncrMgrCountDepOnlyPairs(pMgr, pPars->fUseRings) == 0 );
-                        Abc_Print( 1, "[struct-dep] phase=main round=%d changes=%d pairs=%d tfo=%d dirty=%d pending=%d emit=%d saved=%d\n",
-                            r, nDepChanges, nTotalPairs, nTfoActivePairs,
+                        Abc_Print( 1, "[struct-dep] phase=main round=%d changes=%d pairs=%d dirty=%d pending=%d emit=%d reused=%d\n",
+                            r, nDepChanges, nTotalPairs,
                             nDepInvalidPairs, nActivePairs - nDepInvalidPairs,
-                            nActivePairs, nTfoActivePairs - nActivePairs );
-                        nDepTfoTotal += nTfoActivePairs;
+                            nActivePairs, nTotalPairs - nActivePairs );
+                        nDepFullTotal += nTotalPairs;
                         nDepProofTotal += nActivePairs;
                         Cec_DepGraphFree( pDep );
                         pDep = pDepNew;
+                    }
+                    else
+                    {
+                        Cec_IncrMgrComputeTfo( pMgr );
+                        if ( pDynSrm )
+                            Cec_DynSrmCountActivePairs( pDynSrm,
+                                pPars->fUseRings, pMgr->pTfoMark,
+                                &nTotalPairs, &nActivePairs );
+                        else
+                            Cec_IncrMgrCountActivePairs( pMgr,
+                                pPars->fUseRings, pMgr->pTfoMark,
+                                &nTotalPairs, &nActivePairs );
                     }
                     if ( nActivePairs == 0 )
                     {
@@ -2018,9 +2025,9 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }
     if ( pPars->fStructDep )
-        Abc_Print( 1, "[struct-dep-total] phase=main tfo=%lld dep=%lld saved=%lld\n",
-            (long long)nDepTfoTotal, (long long)nDepProofTotal,
-            (long long)(nDepTfoTotal - nDepProofTotal) );
+        Abc_Print( 1, "[struct-dep-total] phase=main full=%lld emit=%lld reused=%lld\n",
+            (long long)nDepFullTotal, (long long)nDepProofTotal,
+            (long long)(nDepFullTotal - nDepProofTotal) );
     Cec_DepGraphFree( pDep );
     Cec_IncrMgrFree( pMgr );
     Cec_DynSrmFree( pDynSrm );
