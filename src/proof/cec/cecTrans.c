@@ -3582,7 +3582,7 @@ struct Cec_TranWaveHeap_t_
 {
     int * pHeap;
     int * pPos;
-    int * pDegree;
+    long long * pLoss;
     int   nSize;
     Cec_TranCandVec_t const * pVertices;
 };
@@ -3592,8 +3592,13 @@ static int Cec_TranWaveHeapBetter( Cec_TranWaveHeap_t const * pHeap,
 {
     Cec_TranCand_t const * pC0 = pHeap->pVertices->pArray + iV0;
     Cec_TranCand_t const * pC1 = pHeap->pVertices->pArray + iV1;
-    long long Left = (long long)pC0->Gain * (pHeap->pDegree[iV1] + 1);
-    long long Right = (long long)pC1->Gain * (pHeap->pDegree[iV0] + 1);
+    // Compare Gain(c)^2 / (Gain(c) + Loss(c)) without division.  long double
+    // avoids overflowing a 64-bit cross product on large proved pools while
+    // the deterministic tie-breaks below keep equal priorities stable.
+    long double Left = (long double)pC0->Gain * pC0->Gain *
+        (pC1->Gain + pHeap->pLoss[iV1]);
+    long double Right = (long double)pC1->Gain * pC1->Gain *
+        (pC0->Gain + pHeap->pLoss[iV0]);
     if ( Left != Right )
         return Left > Right;
     if ( pC0->Gain != pC1->Gain )
@@ -3647,14 +3652,14 @@ static void Cec_TranWaveHeapDown( Cec_TranWaveHeap_t * pHeap, int i )
 }
 
 static void Cec_TranWaveHeapStart( Cec_TranWaveHeap_t * pHeap,
-    Cec_TranCandVec_t const * pVertices, int * pDegree )
+    Cec_TranCandVec_t const * pVertices, long long * pLoss )
 {
     int i;
     memset( pHeap, 0, sizeof(Cec_TranWaveHeap_t) );
     pHeap->nSize = pVertices->nSize;
     pHeap->pHeap = ABC_ALLOC( int, pHeap->nSize );
     pHeap->pPos = ABC_ALLOC( int, pHeap->nSize );
-    pHeap->pDegree = pDegree;
+    pHeap->pLoss = pLoss;
     pHeap->pVertices = pVertices;
     for ( i = 0; i < pHeap->nSize; i++ )
         pHeap->pHeap[i] = pHeap->pPos[i] = i;
@@ -3695,8 +3700,59 @@ static void Cec_TranWaveHeapStop( Cec_TranWaveHeap_t * pHeap )
     memset( pHeap, 0, sizeof(Cec_TranWaveHeap_t) );
 }
 
-// Dynamic GWMIN: maximize gain/(current degree+1), remove the selected closed
-// neighborhood, and update only degrees incident to that neighborhood.
+// Compute the opportunity loss of one candidate in the current induced
+// conflict graph.  Conflicting candidates are compressed by root: because at
+// most one candidate of a root can be committed, that root contributes only
+// the largest gain among its active conflicting candidates.
+static long long Cec_TranConflictGraphRootLoss(
+    Cec_TranConflictGraph_t * pGraph, Cec_TranCandVec_t const * pVertices,
+    int iVertex, char const * pActive, Vec_Int_t * vNeighbors,
+    int * pRootBest, unsigned * pRootSeen, unsigned * pRootTravId,
+    int * pnActiveNeighbors )
+{
+    long long Loss = 0;
+    int i, iOther, iRoot, Gain, nActive = 0;
+    if ( ++*pRootTravId == 0 )
+    {
+        memset( pRootSeen, 0,
+            sizeof(unsigned) * Vec_WecSize(pGraph->vUsers) );
+        *pRootTravId = 1;
+    }
+    Cec_TranConflictGraphNeighbors( pGraph, iVertex, vNeighbors );
+    Vec_IntForEachEntry( vNeighbors, iOther, i )
+    {
+        if ( !pActive[iOther] )
+            continue;
+        nActive++;
+        iRoot = pVertices->pArray[iOther].iTarget;
+        Gain = pVertices->pArray[iOther].Gain;
+        assert( iRoot >= 0 && iRoot < Vec_WecSize(pGraph->vUsers) );
+        assert( Gain > 0 );
+        if ( pRootSeen[iRoot] != *pRootTravId )
+        {
+            pRootSeen[iRoot] = *pRootTravId;
+            pRootBest[iRoot] = Gain;
+            Loss += Gain;
+        }
+        else if ( pRootBest[iRoot] < Gain )
+        {
+            Loss += Gain - pRootBest[iRoot];
+            pRootBest[iRoot] = Gain;
+        }
+    }
+    if ( pnActiveNeighbors )
+        *pnActiveNeighbors = nActive;
+    return Loss;
+}
+
+// Dynamic root-compressed weighted-loss GWMIN.  The priority is
+//
+//        Gain(c)^2 / (Gain(c) + Loss(c)),
+//
+// where Loss(c) sums the best conflicting gain once per distinct root in the
+// current induced graph.  Removing a closed neighborhood can only decrease
+// the loss of its remaining neighbors, so only those heap entries are
+// recomputed and promoted.
 static long long Cec_TranConflictGraphGwmin(
     Cec_TranConflictGraph_t * pGraph, Cec_TranCandVec_t const * pVertices,
     char * pChosen, long long * pnEdges, int * pFirstGain )
@@ -3704,21 +3760,28 @@ static long long Cec_TranConflictGraphGwmin(
     Cec_TranWaveHeap_t Heap;
     Vec_Int_t * vNeighbors = Vec_IntAlloc( 64 );
     Vec_Int_t * vRemoved = Vec_IntAlloc( 64 );
-    int * pDegree = ABC_ALLOC( int, pVertices->nSize );
+    Vec_Int_t * vDirty = Vec_IntAlloc( 64 );
+    long long * pLoss = ABC_ALLOC( long long, pVertices->nSize );
     char * pActive = ABC_ALLOC( char, pVertices->nSize );
+    char * pDirty = ABC_CALLOC( char, pVertices->nSize );
+    int * pRootBest = ABC_ALLOC( int, Vec_WecSize(pGraph->vUsers) );
+    unsigned * pRootSeen = ABC_CALLOC( unsigned,
+        Vec_WecSize(pGraph->vUsers) );
+    unsigned RootTravId = 0;
     long long SumDegree = 0, Weight = 0;
-    int i, k, iVertex, iOther;
+    int i, k, iVertex, iOther, nActiveNeighbors;
     memset( pChosen, 0, pVertices->nSize );
     memset( pActive, 1, pVertices->nSize );
     *pFirstGain = 0;
     for ( i = 0; i < pVertices->nSize; i++ )
     {
-        Cec_TranConflictGraphNeighbors( pGraph, i, vNeighbors );
-        pDegree[i] = Vec_IntSize( vNeighbors );
-        SumDegree += pDegree[i];
+        pLoss[i] = Cec_TranConflictGraphRootLoss( pGraph, pVertices, i,
+            pActive, vNeighbors, pRootBest, pRootSeen, &RootTravId,
+            &nActiveNeighbors );
+        SumDegree += nActiveNeighbors;
     }
     *pnEdges = SumDegree / 2;
-    Cec_TranWaveHeapStart( &Heap, pVertices, pDegree );
+    Cec_TranWaveHeapStart( &Heap, pVertices, pLoss );
     while ( Heap.nSize )
     {
         iVertex = Cec_TranWaveHeapPop( &Heap );
@@ -3738,23 +3801,37 @@ static long long Cec_TranConflictGraphGwmin(
                 Cec_TranWaveHeapRemove( &Heap, iOther );
                 Vec_IntPush( vRemoved, iOther );
             }
+        Vec_IntClear( vDirty );
         Vec_IntForEachEntry( vRemoved, iOther, i )
         {
             Cec_TranConflictGraphNeighbors( pGraph, iOther, vNeighbors );
             Vec_IntForEachEntry( vNeighbors, iVertex, k )
-                if ( pActive[iVertex] )
+                if ( pActive[iVertex] && !pDirty[iVertex] )
                 {
-                    assert( pDegree[iVertex] > 0 );
-                    pDegree[iVertex]--;
-                    Cec_TranWaveHeapUp( &Heap, Heap.pPos[iVertex] );
+                    pDirty[iVertex] = 1;
+                    Vec_IntPush( vDirty, iVertex );
                 }
+        }
+        Vec_IntForEachEntry( vDirty, iVertex, i )
+        {
+            long long OldLoss = pLoss[iVertex];
+            pLoss[iVertex] = Cec_TranConflictGraphRootLoss( pGraph,
+                pVertices, iVertex, pActive, vNeighbors, pRootBest,
+                pRootSeen, &RootTravId, NULL );
+            assert( pLoss[iVertex] <= OldLoss );
+            pDirty[iVertex] = 0;
+            Cec_TranWaveHeapUp( &Heap, Heap.pPos[iVertex] );
         }
     }
     Cec_TranWaveHeapStop( &Heap );
     Vec_IntFree( vNeighbors );
     Vec_IntFree( vRemoved );
-    ABC_FREE( pDegree );
+    Vec_IntFree( vDirty );
+    ABC_FREE( pLoss );
     ABC_FREE( pActive );
+    ABC_FREE( pDirty );
+    ABC_FREE( pRootBest );
+    ABC_FREE( pRootSeen );
     return Weight;
 }
 
@@ -3862,7 +3939,7 @@ static int Cec_TranRootConsumeProved( Gia_Man_t * p,
             nSelected++;
         }
     assert( (nSelected == 0) == (SelectedWeight == 0) );
-    Abc_Print( 1, "stran-root commit selection: policy=commit-wave-gwmin initial-proved=%d initial-positive=%d initial-max-gain=%d first-gain=%d rounds=%d gain-evals=%d graph-vertices=%d graph-edges=%lld selected-weight=%lld refreshes=1.\n",
+    Abc_Print( 1, "stran-root commit selection: policy=commit-wave-root-loss-gwmin initial-proved=%d initial-positive=%d initial-max-gain=%d first-gain=%d rounds=%d gain-evals=%d graph-vertices=%d graph-edges=%lld selected-weight=%lld refreshes=1.\n",
         nInitialProved, nInitialPositive, InitialMaxGain, FirstGain,
         nSelected, nGainEvals, Vertices.nSize, nEdges, SelectedWeight );
     ABC_FREE( pChosen );
@@ -3881,40 +3958,53 @@ static int Cec_TranCommitWaveSelfTest()
     Cec_TranCand_t Cand;
     Vec_Int_t * vMffc = Vec_IntAlloc( 2 );
     Vec_Int_t * vSupport = Vec_IntAlloc( 1 );
-    char Chosen[3] = {0};
-    long long nEdges = 0, Weight;
-    int i, FirstGain;
-    Cec_TranConflictGraphStart( &Graph, 8 );
-    for ( i = 0; i < 3; i++ )
+    Vec_Int_t * vNeighbors = Vec_IntAlloc( 8 );
+    char Chosen[5] = {0}, Active[5] = {1, 1, 1, 1, 1};
+    int RootBest[10] = {0};
+    unsigned RootSeen[10] = {0}, RootTravId = 0;
+    long long nEdges = 0, Weight, Loss;
+    int i, FirstGain, nActiveNeighbors;
+    Cec_TranConflictGraphStart( &Graph, 10 );
+    for ( i = 0; i < 5; i++ )
     {
         memset( &Cand, 0, sizeof(Cand) );
-        Cand.iTarget = i + 1;
-        Cand.Gain = i ? 4 : 5;
-        Cand.nMffc = i == 2 ? 1 : 2;
+        Cand.iTarget = i == 2 ? 2 : i + 1;
+        Cand.Gain = i == 0 ? 20 : i == 1 ? 15 :
+            i == 2 ? 14 : i == 3 ? 8 : 7;
+        Cand.nMffc = 1;
         Cec_TranCandVecPush( &Vertices, Cand );
         Vec_IntClear( vMffc );
         Vec_IntClear( vSupport );
         if ( i == 0 )
-            Vec_IntPush(vMffc, 1), Vec_IntPush(vMffc, 2),
-            Vec_IntPush(vSupport, 5);
-        else if ( i == 1 )
-            Vec_IntPush(vMffc, 2), Vec_IntPush(vMffc, 3),
-            Vec_IntPush(vSupport, 6);
+            Vec_IntPush( vMffc, 1 );
+        else if ( i == 1 || i == 2 )
+            Vec_IntPush( vMffc, 2 ), Vec_IntPush( vSupport, 1 );
+        else if ( i == 3 )
+            Vec_IntPush( vMffc, 3 ), Vec_IntPush( vSupport, 1 );
         else
-            Vec_IntPush(vMffc, 4), Vec_IntPush(vSupport, 1);
+            Vec_IntPush( vMffc, 4 ), Vec_IntPush( vSupport, 2 );
         Cec_TranConflictGraphAdd( &Graph, vMffc, vSupport );
     }
     Cec_TranConflictGraphFinalize( &Graph );
+    Loss = Cec_TranConflictGraphRootLoss( &Graph, &Vertices, 0,
+        Active, vNeighbors, RootBest, RootSeen, &RootTravId,
+        &nActiveNeighbors );
+    // v0 sees three conflicting candidates, but v1 and v2 belong to the same
+    // root.  Its loss is therefore max(15,14)+8, not 15+14+8.
+    assert( nActiveNeighbors == 3 && Loss == 23 );
     Weight = Cec_TranConflictGraphGwmin( &Graph, &Vertices,
         Chosen, &nEdges, &FirstGain );
-    // v0 conflicts with v1 through MFFC overlap and with v2 through divisor
-    // dependency.  v1 and v2 form the higher-weight independent set.
-    assert( nEdges == 2 && Weight == 8 && FirstGain == 4 );
-    assert( !Chosen[0] && Chosen[1] && Chosen[2] );
+    // Root-loss GWMIN selects v0 first.  Removing its neighborhood also
+    // removes both root-2 alternatives; v4 survives, drops from loss 15 to 0,
+    // and is promoted into the independent set.
+    assert( nEdges == 6 && Weight == 27 && FirstGain == 20 );
+    assert( Chosen[0] && !Chosen[1] && !Chosen[2] &&
+        !Chosen[3] && Chosen[4] );
     Cec_TranConflictGraphStop( &Graph );
     Cec_TranCandVecStop( &Vertices );
     Vec_IntFree( vMffc );
     Vec_IntFree( vSupport );
+    Vec_IntFree( vNeighbors );
     return 1;
 }
 
@@ -4530,7 +4620,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Abc_ResubPrepareManager( pSim->nSlots );
     Cec_TranDepScratchStart( &Dep, pSim->nSlots,
         pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
-    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates selection=commit-wave-gwmin candidates=%s q-build-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
+    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates selection=commit-wave-root-loss-gwmin candidates=%s q-build-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
         pPars->fBuildOnly ? "build-only" : "constant/existing/build",
         pPars->nRootConstrTop, pPars->fUseHelpers ? "on" : "off",
