@@ -1203,12 +1203,8 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
             }
             if ( pPars->fStructDep )
             {
-                Cec_DepGraph_t * pDepNew;
                 assert( pBmcDep != NULL );
-                pDepNew = Cec_DepGraphBuild( pBmcMgr, pPars->nFrames, nPrefs,
-                    !pPars->fLatchCorr, 1, 0 );
-                Cec_DepGraphComputeDirty( pBmcMgr, pBmcDep, pDepNew, &nDepChanges );
-                Cec_DepGraphCommitProofDeps( pBmcMgr, pBmcDep, pDepNew );
+                Cec_DepGraphUpdate( pBmcMgr, pBmcDep, &nDepChanges );
                 if ( pBmcDynSrm )
                     Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pDepMark,
                         &nTotalPairs, &nActivePairs );
@@ -1227,8 +1223,6 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
                     nTotalPairs - nActivePairs );
                 nDepFullTotal += nTotalPairs;
                 nDepProofTotal += nActivePairs;
-                Cec_DepGraphFree( pBmcDep );
-                pBmcDep = pDepNew;
             }
             else
             {
@@ -1665,7 +1659,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     if ( pPars->fStructDep )
                     {
                         assert( pDep != NULL );
-                        Cec_DepGraphComputeDirty( pMgr, pDep, pDep, &nDepChanges );
+                        Cec_DepGraphUpdate( pMgr, pDep, &nDepChanges );
                     }
                     else
                         // Clear the previous TFO marks.  The skipped complement
@@ -1688,12 +1682,8 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 {
                     if ( pPars->fStructDep )
                     {
-                        Cec_DepGraph_t * pDepNew;
                         assert( pDep != NULL );
-                        pDepNew = Cec_DepGraphBuild( pMgr, pPars->nFrames, 0,
-                            !pPars->fLatchCorr, 0, pPars->fUseRings );
-                        Cec_DepGraphComputeDirty( pMgr, pDep, pDepNew, &nDepChanges );
-                        Cec_DepGraphCommitProofDeps( pMgr, pDep, pDepNew );
+                        Cec_DepGraphUpdate( pMgr, pDep, &nDepChanges );
                         if ( pDynSrm )
                             Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
                                 pMgr->pDepMark, &nTotalPairs, &nActivePairs );
@@ -1712,8 +1702,6 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                             nActivePairs, nTotalPairs - nActivePairs );
                         nDepFullTotal += nTotalPairs;
                         nDepProofTotal += nActivePairs;
-                        Cec_DepGraphFree( pDep );
-                        pDep = pDepNew;
                     }
                     else
                     {
