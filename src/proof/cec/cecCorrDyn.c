@@ -43,6 +43,9 @@ struct Cec_DynSrm_t_
     int              nCompactMult;
     int              fForceRebuild;
     Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
+    Vec_Wec_t *      vCacheFanouts; // materialized cache reverse dependencies
+    int *            pCacheSeen;    // invalidation traversal stamps per cache key
+    int              CacheTravId;
     Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
     Vec_Int_t *      vPiMap;        // host obj id -> PI index
@@ -179,6 +182,20 @@ static void Cec_DynSrmCacheWrite( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj, int
     Vec_IntWriteEntry( p->vSpecLits, Cec_DynSrmCacheIndex(p, f, Gia_ObjId(p->pAig, pObj)), Lit );
 }
 
+// Records that the cached value of (ParentFrame, ParentObj) was materialized
+// from (ChildFrame, ChildObj).  Edges intentionally survive cache rewrites:
+// stale edges only over-invalidate, while deleting them would require an
+// expensive per-entry ownership structure.  A cold core rebuild clears all
+// watchers together with the cache.
+static void Cec_DynSrmCacheWatch( Cec_DynSrm_t * p,
+    int ChildFrame, Gia_Obj_t * pChild, int ParentFrame, Gia_Obj_t * pParent )
+{
+    int Child = Cec_DynSrmCacheIndex( p, ChildFrame, Gia_ObjId(p->pAig, pChild) );
+    int Parent = Cec_DynSrmCacheIndex( p, ParentFrame, Gia_ObjId(p->pAig, pParent) );
+    if ( Child != Parent )
+        Vec_IntPushUnique( Vec_WecEntry(p->vCacheFanouts, Child), Parent );
+}
+
 static int Cec_DynSrmHostPiLit( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj )
 {
     int ObjId = Gia_ObjId( p->pAig, pObj );
@@ -209,6 +226,9 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
     p->pCore = NULL;
     p->nCoreObjsAtReset = 0;
     Vec_IntFreeP( &p->vSpecLits );
+    Vec_WecFreeP( &p->vCacheFanouts );
+    ABC_FREE( p->pCacheSeen );
+    p->CacheTravId = 0;
     Vec_IntFreeP( &p->vOutLits );
     Vec_IntFreeP( &p->vCopyTouched );
     Vec_IntFreeP( &p->vPiMap );
@@ -324,6 +344,8 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     p->nRegs = Gia_ManRegNum( p->pAig );
     p->nFramesTotal = nFramesTotal;
     p->vSpecLits = Vec_IntStartFull( p->nFramesTotal * p->nObjs );
+    p->vCacheFanouts = Vec_WecStart( p->nFramesTotal * p->nObjs );
+    p->pCacheSeen = ABC_CALLOC( int, p->nFramesTotal * p->nObjs );
     p->vOutLits = Vec_IntAlloc( 1000 );
     p->vCopyTouched = Vec_IntAlloc( 1000 );
     p->vPiMap = Vec_IntStartFull( p->nObjs );
@@ -350,17 +372,54 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     p->nCoreResets++;
 }
 
-static void Cec_DynSrmInvalidateCache( Cec_DynSrm_t * p, int * pTfoMask )
+static void Cec_DynSrmInvalidateCache( Cec_DynSrm_t * p, int * pTfoMask, int nPrefix )
 {
     int f, i, Counter = 0;
     assert( p->vSpecLits != NULL );
-    // Dependency marks select proof roots, not necessarily every cached
-    // internal literal affected by a rewrite.  For this first experiment,
-    // invalidate the whole speculative cache and measure only re-proof
-    // reduction.  A dependency-aware cache invalidator is a separate step.
-    if ( pTfoMask != NULL && p->pIncr != NULL && p->pIncr->fStructDep &&
-         pTfoMask == p->pIncr->pDepMark )
-        pTfoMask = NULL;
+    assert( nPrefix >= 0 && nPrefix < p->nFramesTotal );
+    // The structural dependency path already computed the exact rewrite
+    // events in vSeeds.  Propagate these events over dependencies recorded
+    // when cache entries were materialized; this avoids both a new TFO walk
+    // and the former whole-cache clear.  Propagation visits empty entries as
+    // well, because an old materialization may still have cached parents.
+    if ( p->pIncr != NULL && p->pIncr->fStructDep )
+    {
+        Vec_Int_t * vQueue = Vec_IntAlloc( 64 );
+        int Head = 0, Key, Parent;
+        if ( ++p->CacheTravId <= 0 )
+        {
+            memset( p->pCacheSeen, 0,
+                sizeof(int) * p->nFramesTotal * p->nObjs );
+            p->CacheTravId = 1;
+        }
+        Vec_IntForEachEntry( p->pIncr->vSeeds, i, Key )
+            for ( f = nPrefix; f < p->nFramesTotal; f++ )
+            {
+                int Seed = Cec_DynSrmCacheIndex( p, f, i );
+                if ( p->pCacheSeen[Seed] == p->CacheTravId )
+                    continue;
+                p->pCacheSeen[Seed] = p->CacheTravId;
+                Vec_IntPush( vQueue, Seed );
+            }
+        while ( Head < Vec_IntSize(vQueue) )
+        {
+            Key = Vec_IntEntry( vQueue, Head++ );
+            if ( Vec_IntEntry(p->vSpecLits, Key) >= 0 )
+                Counter++;
+            Vec_IntWriteEntry( p->vSpecLits, Key, -1 );
+            Vec_IntForEachEntry( Vec_WecEntry(p->vCacheFanouts, Key), Parent, i )
+            {
+                if ( p->pCacheSeen[Parent] == p->CacheTravId )
+                    continue;
+                p->pCacheSeen[Parent] = p->CacheTravId;
+                Vec_IntPush( vQueue, Parent );
+            }
+        }
+        Vec_IntFree( vQueue );
+        p->nCacheLocalClears++;
+        p->nCacheLocalEntries += Counter;
+        return;
+    }
     if ( pTfoMask == NULL )
     {
         Vec_IntFill( p->vSpecLits, p->nFramesTotal * p->nObjs, -1 );
@@ -390,6 +449,8 @@ static int Cec_DynSrmRealLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPr
     {
         int iLit0 = Cec_DynSrmSpecLit( p, Gia_ObjFanin0(pObj), f, nPrefix );
         int iLit1 = Cec_DynSrmSpecLit( p, Gia_ObjFanin1(pObj), f, nPrefix );
+        Cec_DynSrmCacheWatch( p, f, Gia_ObjFanin0(pObj), f, pObj );
+        Cec_DynSrmCacheWatch( p, f, Gia_ObjFanin1(pObj), f, pObj );
         iLit0 = Abc_LitNotCond( iLit0, Gia_ObjFaninC0(pObj) );
         iLit1 = Abc_LitNotCond( iLit1, Gia_ObjFaninC1(pObj) );
         return Gia_ManHashAnd( p->pCore, iLit0, iLit1 );
@@ -405,6 +466,8 @@ static int Cec_DynSrmRealLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPr
     pObj = Gia_ObjRoToRi( p->pAig, pObj );
     {
         int iLit = Cec_DynSrmSpecLit( p, Gia_ObjFanin0(pObj), f-1, nPrefix );
+        Cec_DynSrmCacheWatch( p, f-1, Gia_ObjFanin0(pObj), f,
+            Gia_ObjRiToRo(p->pAig, pObj) );
         return Abc_LitNotCond( iLit, Gia_ObjFaninC0(pObj) );
     }
 }
@@ -427,6 +490,7 @@ static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPr
     if ( f >= nPrefix && (pRepr = Gia_ObjReprObj(p->pAig, Gia_ObjId(p->pAig, pObj))) )
     {
         iLit = Cec_DynSrmSpecLit( p, pRepr, f, nPrefix );
+        Cec_DynSrmCacheWatch( p, f, pRepr, f, pObj );
         iLit = Abc_LitNotCond( iLit, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
         Cec_DynSrmCacheWrite( p, f, pObj, iLit );
         return iLit;
@@ -449,6 +513,8 @@ static int Cec_DynSrmRealLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int
     {
         int iLit0 = Cec_DynSrmSpecLitInit( p, Gia_ObjFanin0(pObj), f, nPrefix );
         int iLit1 = Cec_DynSrmSpecLitInit( p, Gia_ObjFanin1(pObj), f, nPrefix );
+        Cec_DynSrmCacheWatch( p, f, Gia_ObjFanin0(pObj), f, pObj );
+        Cec_DynSrmCacheWatch( p, f, Gia_ObjFanin1(pObj), f, pObj );
         iLit0 = Abc_LitNotCond( iLit0, Gia_ObjFaninC0(pObj) );
         iLit1 = Abc_LitNotCond( iLit1, Gia_ObjFaninC1(pObj) );
         return Gia_ManHashAnd( p->pCore, iLit0, iLit1 );
@@ -464,6 +530,8 @@ static int Cec_DynSrmRealLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int
     pObj = Gia_ObjRoToRi( p->pAig, pObj );
     {
         int iLit = Cec_DynSrmSpecLitInit( p, Gia_ObjFanin0(pObj), f-1, nPrefix );
+        Cec_DynSrmCacheWatch( p, f-1, Gia_ObjFanin0(pObj), f,
+            Gia_ObjRiToRo(p->pAig, pObj) );
         return Abc_LitNotCond( iLit, Gia_ObjFaninC0(pObj) );
     }
 }
@@ -490,6 +558,7 @@ static int Cec_DynSrmSpecLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int
     if ( f >= nPrefix && (pRepr = Gia_ObjReprObj(p->pAig, Gia_ObjId(p->pAig, pObj))) )
     {
         iLit = Cec_DynSrmSpecLitInit( p, pRepr, f, nPrefix );
+        Cec_DynSrmCacheWatch( p, f, pRepr, f, pObj );
         iLit = Abc_LitNotCond( iLit, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
         Cec_DynSrmCacheWrite( p, f, pObj, iLit );
         return iLit;
@@ -765,7 +834,7 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     if ( fMeasure ) tEnsure = Abc_ClockHr() - tStep;
     nCoreObjsBefore = Gia_ManObjNum( p->pCore );
     tStep = fMeasure ? Abc_ClockHr() : 0;
-    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
+    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask, 0 );
     if ( fMeasure ) tInvalidate = Abc_ClockHr() - tStep;
     tStep = fMeasure ? Abc_ClockHr() : 0;
     Gia_ManSetPhase( p->pAig );
@@ -902,7 +971,7 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
     if ( fMeasure ) tEnsure = Abc_ClockHr() - tStep;
     nCoreObjsBefore = Gia_ManObjNum( p->pCore );
     tStep = fMeasure ? Abc_ClockHr() : 0;
-    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask );
+    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask, nPrefix );
     if ( fMeasure ) tInvalidate = Abc_ClockHr() - tStep;
     tStep = fMeasure ? Abc_ClockHr() : 0;
     Gia_ManSetPhase( p->pAig );
