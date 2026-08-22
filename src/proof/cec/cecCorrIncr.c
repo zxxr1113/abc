@@ -50,6 +50,8 @@ Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
     p->vSeeds    = Vec_IntAlloc( 64 );
     p->vTfoNodes = Vec_IntAlloc( 1024 );
     p->pTfoMark  = ABC_CALLOC( int, p->nObjs );
+    p->vDepNodes = Vec_IntAlloc( 1024 );
+    p->pDepMark  = ABC_CALLOC( int, p->nObjs );
     p->vAliasHeads = Vec_IntStartFull( p->nObjs );
     p->vAliasNext  = Vec_IntStartFull( p->nObjs );
     p->vBfsCur   = Vec_IntAlloc( 1024 );
@@ -84,11 +86,13 @@ void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
     Vec_IntFree( p->vNextPrev );
     Vec_IntFree( p->vSeeds );
     Vec_IntFree( p->vTfoNodes );
+    Vec_IntFree( p->vDepNodes );
     Vec_IntFree( p->vAliasHeads );
     Vec_IntFree( p->vAliasNext );
     Vec_IntFree( p->vBfsCur );
     Vec_IntFree( p->vBfsNext );
     ABC_FREE( p->pTfoMark );
+    ABC_FREE( p->pDepMark );
     ABC_FREE( p );
 }
 
@@ -222,6 +226,342 @@ int Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj )
 
 /**Function*************************************************************
 
+  Synopsis    [Tests whether one current proof pair is selected.]
+
+  Description [The original incremental mode marks affected GIA objects,
+  hence a pair is active when either endpoint is in the bounded TFO.  The
+  structural-dependency experiment instead marks proof targets: in a ring,
+  every object is the unique target of exactly one current incoming edge
+  (including the head, whose incoming edge is the closing edge).  Target-only
+  selection therefore preserves pair precision without a separate edge hash.
+  Rewired ring edges remain unconditionally active as a safety backstop.]
+
+***********************************************************************/
+int Cec_IncrMgrPairActive( Cec_IncrMgr_t * p, int * pMark, int fRings, int iPrev, int iObj )
+{
+    if ( pMark == NULL )
+        return 1;
+    if ( p != NULL && p->fStructDep && pMark == p->pDepMark )
+        return pMark[iObj] || (fRings && Cec_IncrMgrRingEdgeChanged(p, iPrev, iObj));
+    return pMark[iPrev] || pMark[iObj] ||
+           (fRings && Cec_IncrMgrRingEdgeChanged(p, iPrev, iObj));
+}
+
+////////////////////////////////////////////////////////////////////////
+///              STRUCTURAL DEPENDENCY EXPERIMENT                    ///
+////////////////////////////////////////////////////////////////////////
+
+// Node layout in vFanouts (invalidation direction):
+//   [0, N)     speculative rewrite actions, keyed by rewritten object
+//   [N, 2N)    proof obligations, keyed by their unique target object
+//   [2N, 3N)   ring-class support bundles, keyed by current class head
+struct Cec_DepGraph_t_
+{
+    Gia_Man_t * pAig;
+    int         nObjs;
+    int         nNodes;
+    int         nFrames;
+    int         nPrefix;
+    int         fBmc;
+    int         fRings;
+    Vec_Wec_t * vFanouts;
+    int *       pActionRepr;
+    int *       pProofLhs;
+    char *      pActionActive;
+    char *      pProofActive;
+    char *      pClassActive;
+    int *       pSeenRaw;
+    int *       pSeenSpec;
+    int         nSeen;
+    int         TravId;
+};
+
+static inline int Cec_DepActionNode( Cec_DepGraph_t * p, int ObjId ) { return ObjId; }
+static inline int Cec_DepProofNode ( Cec_DepGraph_t * p, int ObjId ) { return p->nObjs + ObjId; }
+static inline int Cec_DepClassNode ( Cec_DepGraph_t * p, int ObjId ) { return 2 * p->nObjs + ObjId; }
+
+static void Cec_DepGraphAddEdge( Cec_DepGraph_t * p, int Source, int Dest )
+{
+    Vec_Int_t * vEdges;
+    assert( Source >= 0 && Source < p->nNodes );
+    assert( Dest >= 0 && Dest < p->nNodes );
+    if ( Source == Dest )
+        return;
+    vEdges = Vec_WecEntry( p->vFanouts, Source );
+    if ( Vec_IntFind(vEdges, Dest) == -1 )
+        Vec_IntPush( vEdges, Dest );
+}
+
+static void Cec_DepGraphCollectRaw( Cec_DepGraph_t * p, int ProofObj, int ObjId, int f );
+
+static void Cec_DepGraphCollectSpec( Cec_DepGraph_t * p, int ProofObj, int ObjId, int f )
+{
+    Gia_Obj_t * pObj;
+    int Index;
+    if ( ObjId == 0 || f < 0 )
+        return;
+    assert( f < p->nFrames );
+    Index = f * p->nObjs + ObjId;
+    if ( p->pSeenSpec[Index] == p->TravId )
+        return;
+    p->pSeenSpec[Index] = p->TravId;
+    pObj = Gia_ManObj( p->pAig, ObjId );
+    // The init/BMC builder fixes frame-0 ROs before speculative reduction.
+    if ( p->fBmc && f == 0 && Gia_ObjIsRo(p->pAig, pObj) )
+    {
+        Cec_DepGraphCollectRaw( p, ProofObj, ObjId, f );
+        return;
+    }
+    if ( p->pActionActive[ObjId] && (!p->fBmc || f >= p->nPrefix) )
+    {
+        Cec_DepGraphAddEdge( p, Cec_DepActionNode(p, ObjId),
+                                Cec_DepProofNode(p, ProofObj) );
+        return; // one-hot boundary: transitive support is carried by A_ObjId
+    }
+    Cec_DepGraphCollectRaw( p, ProofObj, ObjId, f );
+}
+
+static void Cec_DepGraphCollectRaw( Cec_DepGraph_t * p, int ProofObj, int ObjId, int f )
+{
+    Gia_Obj_t * pObj;
+    int Index;
+    if ( ObjId == 0 || f < 0 )
+        return;
+    assert( f < p->nFrames );
+    Index = f * p->nObjs + ObjId;
+    if ( p->pSeenRaw[Index] == p->TravId )
+        return;
+    p->pSeenRaw[Index] = p->TravId;
+    pObj = Gia_ManObj( p->pAig, ObjId );
+    if ( Gia_ObjIsAnd(pObj) )
+    {
+        Cec_DepGraphCollectSpec( p, ProofObj, Gia_ObjFaninId0p(p->pAig, pObj), f );
+        Cec_DepGraphCollectSpec( p, ProofObj, Gia_ObjFaninId1p(p->pAig, pObj), f );
+    }
+    else if ( Gia_ObjIsRo(p->pAig, pObj) )
+    {
+        if ( f > 0 )
+        {
+            Gia_Obj_t * pRi = Gia_ObjRoToRi( p->pAig, pObj );
+            Cec_DepGraphCollectSpec( p, ProofObj,
+                Gia_ObjFaninId0p(p->pAig, pRi), f - 1 );
+        }
+    }
+    else if ( Gia_ObjIsCo(pObj) )
+        Cec_DepGraphCollectSpec( p, ProofObj,
+            Gia_ObjFaninId0p(p->pAig, pObj), f );
+    // Constants and CIs terminate the raw traversal.
+}
+
+static void Cec_DepGraphCreateProofNodes( Cec_DepGraph_t * p )
+{
+    Gia_Man_t * pAig = p->pAig;
+    Gia_Obj_t * pObj;
+    int i, iPrev, iObj;
+    for ( i = 1; i < p->nObjs; i++ )
+        if ( Gia_ObjHasRepr(pAig, i) )
+        {
+            p->pActionActive[i] = 1;
+            p->pActionRepr[i] = Gia_ObjRepr( pAig, i );
+        }
+    if ( p->fBmc || !p->fRings )
+    {
+        for ( i = 1; i < p->nObjs; i++ )
+            if ( p->pActionActive[i] )
+            {
+                p->pProofActive[i] = 1;
+                p->pProofLhs[i] = p->pActionRepr[i];
+                Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, i),
+                                        Cec_DepActionNode(p, i) );
+            }
+        return;
+    }
+    Gia_ManForEachObj1( pAig, pObj, i )
+    {
+        if ( Gia_ObjIsConst(pAig, i) )
+        {
+            p->pProofActive[i] = 1;
+            p->pProofLhs[i] = 0;
+            Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, i),
+                                    Cec_DepActionNode(p, i) );
+        }
+        else if ( Gia_ObjIsHead(pAig, i) )
+        {
+            p->pClassActive[i] = 1;
+            iPrev = i;
+            Gia_ClassForEachObj1( pAig, i, iObj )
+            {
+                p->pProofActive[iObj] = 1;
+                p->pProofLhs[iObj] = iPrev;
+                Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, iObj),
+                                        Cec_DepClassNode(p, i) );
+                Cec_DepGraphAddEdge( p, Cec_DepClassNode(p, i),
+                                        Cec_DepActionNode(p, iObj) );
+                iPrev = iObj;
+            }
+            // The head uniquely keys the closing edge tail -> head.
+            p->pProofActive[i] = 1;
+            p->pProofLhs[i] = iPrev;
+            Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, i),
+                                    Cec_DepClassNode(p, i) );
+        }
+    }
+}
+
+Cec_DepGraph_t * Cec_DepGraphBuild( Cec_IncrMgr_t * pIncr, int nFrames,
+    int nPrefix, int fScorr, int fBmc, int fRings )
+{
+    Cec_DepGraph_t * p = ABC_CALLOC( Cec_DepGraph_t, 1 );
+    int i, f, Lhs;
+    p->pAig = pIncr->pAig;
+    p->nObjs = pIncr->nObjs;
+    p->nNodes = 3 * p->nObjs;
+    p->nPrefix = nPrefix;
+    p->fBmc = fBmc;
+    p->fRings = fRings;
+    // Main-step targets live in frame nFrames; BMC targets occupy
+    // [nPrefix, nPrefix+nFrames).  fScorr affects PI allocation, not the
+    // target-frame range, but is retained in the interface for symmetry.
+    (void)fScorr;
+    p->nFrames = fBmc ? nPrefix + nFrames : nFrames + 1;
+    p->vFanouts = Vec_WecStart( p->nNodes );
+    p->pActionRepr = ABC_ALLOC( int, p->nObjs );
+    p->pProofLhs = ABC_ALLOC( int, p->nObjs );
+    p->pActionActive = ABC_CALLOC( char, p->nObjs );
+    p->pProofActive = ABC_CALLOC( char, p->nObjs );
+    p->pClassActive = ABC_CALLOC( char, p->nObjs );
+    p->nSeen = p->nFrames * p->nObjs;
+    p->pSeenRaw = ABC_CALLOC( int, p->nSeen );
+    p->pSeenSpec = ABC_CALLOC( int, p->nSeen );
+    for ( i = 0; i < p->nObjs; i++ )
+        p->pActionRepr[i] = p->pProofLhs[i] = -1;
+    Cec_DepGraphCreateProofNodes( p );
+    for ( i = 1; i < p->nObjs; i++ )
+    {
+        if ( !p->pProofActive[i] )
+            continue;
+        Lhs = p->pProofLhs[i];
+        if ( fBmc )
+        {
+            for ( f = nPrefix; f < nPrefix + nFrames; f++ )
+            {
+                p->TravId++;
+                Cec_DepGraphCollectRaw( p, i, Lhs, f );
+                Cec_DepGraphCollectRaw( p, i, i, f );
+            }
+        }
+        else
+        {
+            p->TravId++;
+            Cec_DepGraphCollectRaw( p, i, Lhs, nFrames );
+            Cec_DepGraphCollectRaw( p, i, i, nFrames );
+        }
+    }
+    return p;
+}
+
+void Cec_DepGraphFree( Cec_DepGraph_t * p )
+{
+    if ( p == NULL )
+        return;
+    Vec_WecFree( p->vFanouts );
+    ABC_FREE( p->pActionRepr );
+    ABC_FREE( p->pProofLhs );
+    ABC_FREE( p->pActionActive );
+    ABC_FREE( p->pProofActive );
+    ABC_FREE( p->pClassActive );
+    ABC_FREE( p->pSeenRaw );
+    ABC_FREE( p->pSeenSpec );
+    ABC_FREE( p );
+}
+
+static void Cec_DepGraphClosure( Cec_DepGraph_t * p, char * pMark, Vec_Int_t * vQueue )
+{
+    int Head = 0, Node, Fan, i;
+    while ( Head < Vec_IntSize(vQueue) )
+    {
+        Node = Vec_IntEntry( vQueue, Head++ );
+        Vec_IntForEachEntry( Vec_WecEntry(p->vFanouts, Node), Fan, i )
+            if ( !pMark[Fan] )
+            {
+                pMark[Fan] = 1;
+                Vec_IntPush( vQueue, Fan );
+            }
+    }
+}
+
+static void Cec_DepGraphSeed( char * pMark, Vec_Int_t * vQueue, int Node )
+{
+    if ( !pMark[Node] )
+    {
+        pMark[Node] = 1;
+        Vec_IntPush( vQueue, Node );
+    }
+}
+
+int Cec_DepGraphComputeDirty( Cec_IncrMgr_t * pIncr, Cec_DepGraph_t * pOld,
+    Cec_DepGraph_t * pNew, int * pnChanged )
+{
+    char * pMarkOld, * pMarkNew;
+    Vec_Int_t * vQueueOld, * vQueueNew;
+    int i, k, fActionChange, fProofChange, fClassChange, nDirty = 0;
+    assert( pOld != NULL && pNew != NULL );
+    assert( pOld->nObjs == pNew->nObjs && pOld->nObjs == pIncr->nObjs );
+    Vec_IntForEachEntry( pIncr->vDepNodes, i, k )
+        pIncr->pDepMark[i] = 0;
+    Vec_IntClear( pIncr->vDepNodes );
+    pMarkOld = ABC_CALLOC( char, pOld->nNodes );
+    pMarkNew = ABC_CALLOC( char, pNew->nNodes );
+    vQueueOld = Vec_IntAlloc( 128 );
+    vQueueNew = Vec_IntAlloc( 128 );
+    *pnChanged = 0;
+    for ( i = 1; i < pIncr->nObjs; i++ )
+    {
+        fActionChange = pOld->pActionActive[i] != pNew->pActionActive[i] ||
+            (pOld->pActionActive[i] && pNew->pActionActive[i] &&
+             pOld->pActionRepr[i] != pNew->pActionRepr[i]);
+        fProofChange = pOld->pProofActive[i] != pNew->pProofActive[i] ||
+            (pOld->pProofActive[i] && pNew->pProofActive[i] &&
+             pOld->pProofLhs[i] != pNew->pProofLhs[i]);
+        fClassChange = pOld->pClassActive[i] != pNew->pClassActive[i];
+        if ( fActionChange || fProofChange || fClassChange )
+            (*pnChanged)++;
+        if ( fActionChange )
+        {
+            Cec_DepGraphSeed( pMarkOld, vQueueOld, Cec_DepActionNode(pOld, i) );
+            Cec_DepGraphSeed( pMarkNew, vQueueNew, Cec_DepActionNode(pNew, i) );
+        }
+        if ( fProofChange )
+        {
+            Cec_DepGraphSeed( pMarkOld, vQueueOld, Cec_DepProofNode(pOld, i) );
+            Cec_DepGraphSeed( pMarkNew, vQueueNew, Cec_DepProofNode(pNew, i) );
+        }
+        if ( fClassChange )
+        {
+            Cec_DepGraphSeed( pMarkOld, vQueueOld, Cec_DepClassNode(pOld, i) );
+            Cec_DepGraphSeed( pMarkNew, vQueueNew, Cec_DepClassNode(pNew, i) );
+        }
+    }
+    Cec_DepGraphClosure( pOld, pMarkOld, vQueueOld );
+    Cec_DepGraphClosure( pNew, pMarkNew, vQueueNew );
+    for ( i = 1; i < pIncr->nObjs; i++ )
+        if ( pNew->pProofActive[i] &&
+             (pMarkOld[Cec_DepProofNode(pOld, i)] ||
+              pMarkNew[Cec_DepProofNode(pNew, i)]) )
+        {
+            pIncr->pDepMark[i] = 1;
+            Vec_IntPush( pIncr->vDepNodes, i );
+            nDirty++;
+        }
+    Vec_IntFree( vQueueOld );
+    Vec_IntFree( vQueueNew );
+    ABC_FREE( pMarkOld );
+    ABC_FREE( pMarkNew );
+    return nDirty;
+}
+
+/**Function*************************************************************
+
   Synopsis    [Counts total and active candidate pairs before SRM build.]
 
   Description [Mirrors the PO-emission loops in the active SRM builders
@@ -262,14 +602,12 @@ void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
                 Gia_ClassForEachObj1( pAig, i, iObj )
                 {
                     (*pnTotal)++;
-                    (*pnActive) += pTfoMark == NULL || pTfoMark[iPrev] || pTfoMark[iObj] ||
-                                   Cec_IncrMgrRingEdgeChanged( p, iPrev, iObj );
+                    (*pnActive) += Cec_IncrMgrPairActive( p, pTfoMark, 1, iPrev, iObj );
                     iPrev = iObj;
                 }
                 iObj = i; // closing edge tail -> head
                 (*pnTotal)++;
-                (*pnActive) += pTfoMark == NULL || pTfoMark[iPrev] || pTfoMark[iObj] ||
-                               Cec_IncrMgrRingEdgeChanged( p, iPrev, iObj );
+                (*pnActive) += Cec_IncrMgrPairActive( p, pTfoMark, 1, iPrev, iObj );
             }
         }
     }
@@ -283,7 +621,7 @@ void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
                 continue;
             idR = Gia_ObjId( pAig, pRepr );
             (*pnTotal)++;
-            (*pnActive) += pTfoMark == NULL || pTfoMark[i] || pTfoMark[idR];
+            (*pnActive) += Cec_IncrMgrPairActive( p, pTfoMark, 0, idR, i );
         }
     }
 }
@@ -499,9 +837,7 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr,
                 iPrev = i;
                 Gia_ClassForEachObj1( p, i, iObj )
                 {
-                    int fActive = pTfoMark != NULL &&
-                                  (pTfoMark[iPrev] || pTfoMark[iObj] ||
-                                   Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj ));
+                    int fActive = Cec_IncrMgrPairActive( pIncr, pTfoMark, 1, iPrev, iObj );
                     int fEmit = Mode == CEC_EMIT_ALL ||
                                 (Mode == CEC_EMIT_ACTIVE  &&  fActive) ||
                                 (Mode == CEC_EMIT_SKIPPED && !fActive);
@@ -528,9 +864,7 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr,
                 // Closing edge tail -> head
                 iObj = i;
                 {
-                    int fActive = pTfoMark != NULL &&
-                                  (pTfoMark[iPrev] || pTfoMark[iObj] ||
-                                   Cec_IncrMgrRingEdgeChanged( pIncr, iPrev, iObj ));
+                    int fActive = Cec_IncrMgrPairActive( pIncr, pTfoMark, 1, iPrev, iObj );
                     int fEmit = Mode == CEC_EMIT_ALL ||
                                 (Mode == CEC_EMIT_ACTIVE  &&  fActive) ||
                                 (Mode == CEC_EMIT_SKIPPED && !fActive);
@@ -565,7 +899,7 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr,
                 continue;
             {
                 int idR = Gia_ObjId(p, pRepr);
-                int fActive = pTfoMark != NULL && (pTfoMark[i] || pTfoMark[idR]);
+                int fActive = Cec_IncrMgrPairActive( pIncr, pTfoMark, 0, idR, i );
                 int fEmit = Mode == CEC_EMIT_ALL ||
                             (Mode == CEC_EMIT_ACTIVE  &&  fActive) ||
                             (Mode == CEC_EMIT_SKIPPED && !fActive);
@@ -621,7 +955,7 @@ Gia_Man_t * Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr,
 
 ***********************************************************************/
 Gia_Man_t * Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr,
-                                              Vec_Int_t ** pvOutputs, int * pTfoMark )
+                                              Vec_Int_t ** pvOutputs, int * pTfoMark, Cec_IncrMgr_t * pIncr )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj, * pRepr;
@@ -659,7 +993,7 @@ Gia_Man_t * Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nP
             if ( pTfoMark )
             {
                 int idR = Gia_ObjId(p, pRepr);
-                if ( !pTfoMark[i] && !pTfoMark[idR] )
+                if ( !Cec_IncrMgrPairActive(pIncr, pTfoMark, 0, idR, i) )
                     continue;
             }
             iPrevNew = Gia_ObjIsConst(p, i)? 0 : Gia_ManCorr2SpecReal( pNew, p, pRepr, f, nPrefix );

@@ -1141,12 +1141,14 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     int fChanges, i;
     int nBmcResimFrames = pPars->nFrames + 1 + nPrefs;
     int fBmcPersist = 0;
+    ABC_INT64_T nDepTfoTotal = 0, nDepProofTotal = 0;
     // BMC SRM is keyed only on pReprs (Gia_ManCorr2SpecReduceInit ignores
     // its fRings flag).  So the incremental filter only needs pReprs-based
     // seeds; pNexts changes cannot affect this SRM and there are no ring
     // closing edges to reprove -- BMC is structurally simpler than the
     // main inductive loop.
     Cec_IncrMgr_t * pBmcMgr = NULL;
+    Cec_DepGraph_t * pBmcDep = NULL;
     Cec_DynSrm_t * pBmcDynSrm = NULL;
     // prepare simulation manager
     Cec_ManSimSetDefaultParams( pParsSim );
@@ -1167,6 +1169,7 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
         // the main loop's depth, but be defensive in case of non-default
         // nPrefs callers.
         pBmcMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames + nPrefs );
+        pBmcMgr->fStructDep = pPars->fStructDep;
         Cec_IncrMgrSnapshotClasses( pBmcMgr );
     }
     if ( pPars->fDynSrm && pBmcMgr )
@@ -1180,6 +1183,7 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     {
         int * pTfoMask = NULL;
         int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0;
+        int nTfoActivePairs = 0, nDepChanges = 0;
         int nBmcPos = 0;
         abctime tSat;
         if ( Cec_ParCorShouldStop( pPars ) )
@@ -1200,9 +1204,31 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
             // BMC SRM is non-ring; pass fRings=0 so we count (head, member)
             // pairs only and skip any ring-edge bookkeeping.
             if ( pBmcDynSrm )
-                Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
             else
-                Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
+            nActivePairs = nTfoActivePairs;
+            if ( pPars->fStructDep )
+            {
+                Cec_DepGraph_t * pDepNew;
+                assert( pBmcDep != NULL );
+                pDepNew = Cec_DepGraphBuild( pBmcMgr, pPars->nFrames, nPrefs,
+                    !pPars->fLatchCorr, 1, 0 );
+                Cec_DepGraphComputeDirty( pBmcMgr, pBmcDep, pDepNew, &nDepChanges );
+                if ( pBmcDynSrm )
+                    Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pDepMark,
+                        &nTotalPairs, &nActivePairs );
+                else
+                    Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pDepMark,
+                        &nTotalPairs, &nActivePairs );
+                Abc_Print( 1, "[struct-dep] phase=bmc round=%d changes=%d pairs=%d tfo=%d dep=%d saved=%d\n",
+                    i, nDepChanges, nTotalPairs, nTfoActivePairs, nActivePairs,
+                    nTfoActivePairs - nActivePairs );
+                nDepTfoTotal += nTfoActivePairs;
+                nDepProofTotal += nActivePairs;
+                Cec_DepGraphFree( pBmcDep );
+                pBmcDep = pDepNew;
+            }
             if ( nActivePairs == 0 )
                 break;
             {
@@ -1215,16 +1241,20 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
                 // The -i fallback threshold controls whether to drop the
                 // active mask.  The -D threshold only controls cold rebuild.
                 if ( !fIncrFallback )
-                    pTfoMask = pBmcMgr->pTfoMark;
+                    pTfoMask = pPars->fStructDep ? pBmcMgr->pDepMark : pBmcMgr->pTfoMark;
             }
         }
+        if ( pBmcMgr && pPars->fStructDep && i == 0 )
+            pBmcDep = Cec_DepGraphBuild( pBmcMgr, pPars->nFrames, nPrefs,
+                !pPars->fLatchCorr, 1, 0 );
         pSrm = NULL;
         if ( fBmcPersist )
             Cec_DynSrmBuildCoreInit( pBmcDynSrm, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pTfoMask, pTfoMask ? CEC_EMIT_ACTIVE : CEC_EMIT_ALL );
         else if ( pBmcDynSrm )
             pSrm = Cec_DynSrmBuildInit( pBmcDynSrm, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pTfoMask, pTfoMask ? CEC_EMIT_ACTIVE : CEC_EMIT_ALL );
         else if ( pTfoMask )
-            pSrm = Gia_ManCorrSpecReduceInit_Active( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pTfoMask );
+            pSrm = Gia_ManCorrSpecReduceInit_Active( pAig, pPars->nFrames, nPrefs,
+                !pPars->fLatchCorr, &vOutputs, pTfoMask, pBmcMgr );
         else
             pSrm = Gia_ManCorr2SpecReduceInit( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
         nBmcPos = fBmcPersist ? Vec_IntSize(Cec_DynSrmOutLits(pBmcDynSrm)) : Gia_ManCoNum(pSrm);
@@ -1291,6 +1321,11 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
         if ( Cec_ParCorShouldStop( pPars ) )
             break;
     }
+    if ( pPars->fStructDep )
+        Abc_Print( 1, "[struct-dep-total] phase=bmc tfo=%lld dep=%lld saved=%lld\n",
+            (long long)nDepTfoTotal, (long long)nDepProofTotal,
+            (long long)(nDepTfoTotal - nDepProofTotal) );
+    Cec_DepGraphFree( pBmcDep );
     Cec_DynSrmFree( pBmcDynSrm );
     Cec_IncrMgrFree( pBmcMgr );
     Cec_ManSimStop( pSim );
@@ -1475,6 +1510,9 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clk2, clk = Abc_Clock();
     // Incremental active-list manager (NULL if -i not set)
     Cec_IncrMgr_t * pMgr = NULL;
+    // Structural-dependency snapshot for the class state represented by the
+    // previous SRM.  The experiment intentionally rebuilds it each round.
+    Cec_DepGraph_t * pDep = NULL;
     // Persistent dynamic SRM construction manager (NULL without -D).
     // Resimulation is controlled only by -I: without -I, counterexamples are
     // replayed by the original host-AIG resimulation path.
@@ -1485,6 +1523,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     abctime clkIncr = 0;
     abctime tSat = 0;
     int nIncrSkipped = 0, nIncrFallback = 0;
+    ABC_INT64_T nDepTfoTotal = 0, nDepProofTotal = 0;
     if ( Gia_ManRegNum(pAig) == 0 )
     {
         Abc_Print( 1, "Cec_ManLatchCorrespondence(): Not a sequential AIG.\n" );
@@ -1515,9 +1554,9 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );
     if ( pPars->fVerbose )
     {
-        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. DynAdapt = %d. IncrFb = %d%%. DynRb = %d%%. DynCmp = %dx.\n",
+        Abc_Print( 1, "Obj = %7d. And = %7d. Conf = %5d. Fr = %d. Lcorr = %d. Ring = %d. CSat = %d. Oracle = %d. Dyn = %d. Dep = %d. DynAdapt = %d. IncrFb = %d%%. DynRb = %d%%. DynCmp = %dx.\n",
             Gia_ManObjNum(pAig), Gia_ManAndNum(pAig),
-            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fDynSrm && !pPars->fDynSrmNoAdapt, pPars->nIncrFallbackPct, pPars->nDynSrmRebuildPct, pPars->nDynSrmCompactMult );
+            pPars->nBTLimit, pPars->nFrames, pPars->fLatchCorr, pPars->fUseRings, pPars->fUseCSat, pPars->fIncrOracle, pPars->fDynSrm, pPars->fStructDep, pPars->fDynSrm && !pPars->fDynSrmNoAdapt, pPars->nIncrFallbackPct, pPars->nDynSrmRebuildPct, pPars->nDynSrmCompactMult );
         Cec_Man2RefinedClassPrintStats( pAig, NULL, 0, Abc_Clock() - clk );
     }
     // check the base case
@@ -1540,6 +1579,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     if ( pPars->fIncremental )
     {
         pMgr = Cec_IncrMgrAlloc( pAig, pPars->nFrames );
+        pMgr->fStructDep = pPars->fStructDep;
         Cec_IncrMgrSnapshotClasses( pMgr );  // initial snapshot (post-BMC classes)
     }
     if ( pPars->fDynSrm && pMgr )
@@ -1563,6 +1603,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
+            Cec_DepGraphFree( pDep );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             return 1;
@@ -1571,6 +1612,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
+            Cec_DepGraphFree( pDep );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             Abc_Print( 1, "Stopped signal correspondence after %d refiment iterations.\n", r );
@@ -1582,7 +1624,8 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             int * pTfoMask = NULL;
             int nReprSeeds = 0, nNextChanges = 0;
-            int nTotalPairs = 0, nActivePairs = 0;
+            int nTotalPairs = 0, nActivePairs = 0, nTfoActivePairs = 0;
+            int nDepChanges = 0;
             int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
             // Skip on r==0 because the first full SRM establishes the cache.
@@ -1604,12 +1647,21 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     // Clear the previous TFO marks.  The skipped complement is
                     // now every current pair, providing a final certificate.
                     Cec_IncrMgrComputeTfo( pMgr );
+                    if ( pPars->fStructDep )
+                    {
+                        assert( pDep != NULL );
+                        Cec_DepGraphComputeDirty( pMgr, pDep, pDep, &nDepChanges );
+                    }
                     if ( pDynSrm )
-                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
+                            pPars->fStructDep ? pMgr->pDepMark : pMgr->pTfoMark,
+                            &nTotalPairs, &nActivePairs );
                     else
-                        Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                        Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings,
+                            pPars->fStructDep ? pMgr->pDepMark : pMgr->pTfoMark,
+                            &nTotalPairs, &nActivePairs );
                     assert( nActivePairs == 0 );
-                    pTfoMask = pMgr->pTfoMark;
+                    pTfoMask = pPars->fStructDep ? pMgr->pDepMark : pMgr->pTfoMark;
                     nIncrSkipped += nTotalPairs;
                     fStopAfterOracle = 1;
                 }
@@ -1617,9 +1669,33 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 {
                     Cec_IncrMgrComputeTfo( pMgr );
                     if ( pDynSrm )
-                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                        Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
+                            pMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
                     else
-                        Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings, pMgr->pTfoMark, &nTotalPairs, &nActivePairs );
+                        Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings,
+                            pMgr->pTfoMark, &nTotalPairs, &nTfoActivePairs );
+                    nActivePairs = nTfoActivePairs;
+                    if ( pPars->fStructDep )
+                    {
+                        Cec_DepGraph_t * pDepNew;
+                        assert( pDep != NULL );
+                        pDepNew = Cec_DepGraphBuild( pMgr, pPars->nFrames, 0,
+                            !pPars->fLatchCorr, 0, pPars->fUseRings );
+                        Cec_DepGraphComputeDirty( pMgr, pDep, pDepNew, &nDepChanges );
+                        if ( pDynSrm )
+                            Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
+                                pMgr->pDepMark, &nTotalPairs, &nActivePairs );
+                        else
+                            Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings,
+                                pMgr->pDepMark, &nTotalPairs, &nActivePairs );
+                        Abc_Print( 1, "[struct-dep] phase=main round=%d changes=%d pairs=%d tfo=%d dep=%d saved=%d\n",
+                            r, nDepChanges, nTotalPairs, nTfoActivePairs,
+                            nActivePairs, nTfoActivePairs - nActivePairs );
+                        nDepTfoTotal += nTfoActivePairs;
+                        nDepProofTotal += nActivePairs;
+                        Cec_DepGraphFree( pDep );
+                        pDep = pDepNew;
+                    }
                     if ( nActivePairs == 0 )
                     {
                         if ( !pPars->fIncrOracle )
@@ -1630,7 +1706,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                             clkSrm  += Abc_Clock() - clk2;
                             break;
                         }
-                        pTfoMask = pMgr->pTfoMark;
+                        pTfoMask = pPars->fStructDep ? pMgr->pDepMark : pMgr->pTfoMark;
                         nIncrSkipped += nTotalPairs;
                         fStopAfterOracle = 1;
                     }
@@ -1648,13 +1724,17 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                             nIncrFallback++;
                         else
                         {
-                            pTfoMask = pMgr->pTfoMark;
+                            pTfoMask = pPars->fStructDep ? pMgr->pDepMark : pMgr->pTfoMark;
                             nIncrSkipped += nTotalPairs - nActivePairs;
                         }
                     }
                 }
                 clkIncr += Abc_Clock() - clkI;
             }
+
+            if ( pMgr && pPars->fStructDep && r == 0 )
+                pDep = Cec_DepGraphBuild( pMgr, pPars->nFrames, 0,
+                    !pPars->fLatchCorr, 0, pPars->fUseRings );
 
             if ( pTfoMask && pPars->fIncrOracle )
             {
@@ -1673,6 +1753,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                     Vec_IntFree( vShadowOutputs );
                     Cec_ManSimStop( pSim );
                     Cec_DynSrmFree( pDynSrm );
+                    Cec_DepGraphFree( pDep );
                     Cec_IncrMgrFree( pMgr );
                     Cec_SeedSimFree( pSeedSim );
                     return 0;
@@ -1770,6 +1851,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
+            Cec_DepGraphFree( pDep );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             return 1;
@@ -1781,6 +1863,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             printf( "because the property output is no longer a candidate constant.\n" );
             Cec_ManSimStop( pSim );
             Cec_DynSrmFree( pDynSrm );
+            Cec_DepGraphFree( pDep );
             Cec_IncrMgrFree( pMgr );
             Cec_SeedSimFree( pSeedSim );
             return 0;
@@ -1794,6 +1877,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 printf( "because refinement does not proceed quickly.\n" );
                 Cec_ManSimStop( pSim );
                 Cec_DynSrmFree( pDynSrm );
+                Cec_DepGraphFree( pDep );
                 Cec_IncrMgrFree( pMgr );
                 Cec_SeedSimFree( pSeedSim );
                 ABC_FREE( pAig->pReprs );
@@ -1875,6 +1959,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     if ( fCertFailed )
     {
         Cec_ManSimStop( pSim );
+        Cec_DepGraphFree( pDep );
         Cec_IncrMgrFree( pMgr );
         Cec_DynSrmFree( pDynSrm );
         Cec_SeedSimFree( pSeedSim );
@@ -1904,6 +1989,11 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         }
         Abc_PrintTime( 1, "TOTAL",  clkTotal );
     }
+    if ( pPars->fStructDep )
+        Abc_Print( 1, "[struct-dep-total] phase=main tfo=%lld dep=%lld saved=%lld\n",
+            (long long)nDepTfoTotal, (long long)nDepProofTotal,
+            (long long)(nDepTfoTotal - nDepProofTotal) );
+    Cec_DepGraphFree( pDep );
     Cec_IncrMgrFree( pMgr );
     Cec_DynSrmFree( pDynSrm );
     Cec_SeedSimFree( pSeedSim );

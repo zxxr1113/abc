@@ -165,6 +165,8 @@ struct Cec_ManFra_t_
     abctime          timeTotal;      // total runtime
 };
 
+typedef struct Cec_DepGraph_t_ Cec_DepGraph_t;
+
 // incremental active-list manager for &scorr -i
 typedef struct Cec_IncrMgr_t_ Cec_IncrMgr_t;
 struct Cec_IncrMgr_t_
@@ -177,10 +179,13 @@ struct Cec_IncrMgr_t_
     Vec_Int_t *  vSeeds;          // repr-change TFO seeds
     Vec_Int_t *  vTfoNodes;       // ids currently in TFO (for fast clearing)
     int *        pTfoMark;        // dense mark array, size = nObjs
+    Vec_Int_t *  vDepNodes;       // proof targets currently dependency-dirty
+    int *        pDepMark;        // dense dirty-proof mark array, size = nObjs
     Vec_Int_t *  vAliasHeads;     // repr -> first member using it in the SRM
     Vec_Int_t *  vAliasNext;      // next member with the same representative
     Vec_Int_t *  vBfsCur;         // BFS frontier for current frame
     Vec_Int_t *  vBfsNext;        // BFS frontier carried to next frame
+    int          fStructDep;      // use proof-target dependency marks for emission
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
 };
 
@@ -392,10 +397,14 @@ extern void                 Cec_IncrMgrSnapshotClasses( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrComputeSeeds( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrCountNextChanges( Cec_IncrMgr_t * p );
 extern int                  Cec_IncrMgrRingEdgeChanged( Cec_IncrMgr_t * p, int iPrev, int iObj );
+extern int                  Cec_IncrMgrPairActive( Cec_IncrMgr_t * p, int * pMark, int fRings, int iPrev, int iObj );
 extern void                 Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );
 extern void                 Cec_IncrMgrComputeTfo( Cec_IncrMgr_t * p );
+extern Cec_DepGraph_t *     Cec_DepGraphBuild( Cec_IncrMgr_t * p, int nFrames, int nPrefix, int fScorr, int fBmc, int fRings );
+extern void                 Cec_DepGraphFree( Cec_DepGraph_t * p );
+extern int                  Cec_DepGraphComputeDirty( Cec_IncrMgr_t * p, Cec_DepGraph_t * pOld, Cec_DepGraph_t * pNew, int * pnChanged );
 extern Gia_Man_t *          Gia_ManCorrSpecReduce_Emit( Gia_Man_t * p, int nFrames, int fScorr, Vec_Int_t ** pvOutputs, int fRings, int * pTfoMark, Cec_IncrMgr_t * pIncr, Cec_IncrEmitMode_t Mode, Vec_Int_t ** pvOutLits );
-extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark );
+extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int nFrames, int nPrefix, int fScorr, Vec_Int_t ** pvOutputs, int * pTfoMark, Cec_IncrMgr_t * pIncr );
 /*=== cecCorrDyn.c ============================================================*/
 extern Cec_DynSrm_t *       Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr, int fUseAdaptive );
 extern void                 Cec_DynSrmSetParams( Cec_DynSrm_t * p, Cec_ParCor_t * pPars );

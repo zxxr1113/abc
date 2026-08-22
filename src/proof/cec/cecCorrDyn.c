@@ -152,10 +152,7 @@ static int Cec_DynSrmActivePair( Cec_DynSrm_t * p, int * pTfoMark, int fRings, i
 {
     if ( pTfoMark == NULL )
         return 0;
-    if ( !fRings )
-        return pTfoMark[iPrev] || pTfoMark[iObj];
-    return pTfoMark[iPrev] || pTfoMark[iObj] ||
-           Cec_IncrMgrRingEdgeChanged( p->pIncr, iPrev, iObj );
+    return Cec_IncrMgrPairActive( p->pIncr, pTfoMark, fRings, iPrev, iObj );
 }
 
 static int Cec_DynSrmEmitModeAccept( int fActive, Cec_IncrEmitMode_t Mode )
@@ -357,6 +354,13 @@ static void Cec_DynSrmInvalidateCache( Cec_DynSrm_t * p, int * pTfoMask )
 {
     int f, i, Counter = 0;
     assert( p->vSpecLits != NULL );
+    // Dependency marks select proof roots, not necessarily every cached
+    // internal literal affected by a rewrite.  For this first experiment,
+    // invalidate the whole speculative cache and measure only re-proof
+    // reduction.  A dependency-aware cache invalidator is a separate step.
+    if ( pTfoMask != NULL && p->pIncr != NULL && p->pIncr->fStructDep &&
+         pTfoMask == p->pIncr->pDepMark )
+        pTfoMask = NULL;
     if ( pTfoMask == NULL )
     {
         Vec_IntFill( p->vSpecLits, p->nFramesTotal * p->nObjs, -1 );

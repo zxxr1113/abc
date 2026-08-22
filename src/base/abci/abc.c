@@ -42045,7 +42045,7 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
     pPars->fIncrSim         = 1;
     pPars->fSkipFailResim   = 1;
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKYDpkrecqiIosvh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "FCGXPSZKYDpkrecqdiIosvh" ) ) != EOF )
     {
         switch ( c )
         {
@@ -42147,6 +42147,9 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'i':
             pPars->fIncremental ^= 1;
             break;
+        case 'd':
+            pPars->fStructDep ^= 1;
+            break;
         case 'D':
             pPars->fDynSrm ^= 1;
             break;
@@ -42175,6 +42178,11 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
     if ( pPars->fDynSrm && !pPars->fIncremental )
     {
         Abc_Print( -1, "The dynamic SRM manager (-D) requires -i.\n" );
+        return 1;
+    }
+    if ( pPars->fStructDep && !pPars->fIncremental )
+    {
+        Abc_Print( -1, "The structural dependency experiment (-d) requires -i.\n" );
         return 1;
     }
     if ( pPars->fBmcTasAdaptive && !pPars->fDynSrm )
@@ -42249,7 +42257,7 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &scorr2 [-FCGXPSZ num] [-pkrecqiDIsYKovh]\n" );
+    Abc_Print( -2, "usage: &scorr2 [-FCGXPSZ num] [-pkrecqdiDIsYKovh]\n" );
     Abc_Print( -2, "\t         performs signal correpondence computation using the incremental scorr2 engine\n" );
     Abc_Print( -2, "\t-C num : the max number of conflicts at a node [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-F num : the number of timeframes in inductive case [default = %d]\n", pPars->nFrames );
@@ -42265,6 +42273,7 @@ usage:
     Abc_Print( -2, "\t-c     : toggle using circuit-based SAT solver [default = %s]\n", pPars->fUseCSat? "yes": "no" );
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-i     : toggle incremental TFO-triggered re-proof [default = %s]\n", pPars->fIncremental? "yes": "no" );
+    Abc_Print( -2, "\t-d     : toggle structural-dependency dirty closure experiment [default = %s]\n", pPars->fStructDep? "yes": "no" );
     Abc_Print( -2, "\t-D     : toggle persistent dynamic SRM construction [default = %s]\n", pPars->fDynSrm? "yes": "no" );
     Abc_Print( -2, "\t-I     : toggle persistent event-driven resimulation [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resimulation without a real CEX [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );

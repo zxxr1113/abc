@@ -198,6 +198,7 @@ void Cec_ManCorSetDefaultParams( Cec_ParCor_t * p )
     p->fLatchCorr     =       0;  // consider only latch outputs
     p->fConstCorr     =       0;  // consider only constants
     p->fUseRings      =       1;  // combine classes into rings
+    p->fStructDep     =       0;  // experimental structural-dependency dirty closure
     p->fIncrOracle    =       0;  // internal unbounded shadow SAT for pairs skipped by -i
     p->fSkipFailResim =       0;  // skip resim when a round has no real CEX (only timeout/fail)
     p->fDynSrmNoAdapt =       1;  // timing-guided DynSRM rebuild heuristic is opt-in
