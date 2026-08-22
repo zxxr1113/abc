@@ -1162,6 +1162,10 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     Cec_ManSatSetDefaultParams( pParsSat );
     pParsSat->nBTLimit = pPars->nBTLimit;
     pParsSat->fVerbose = pPars->fVerbose;
+    // Structural certificates are root-local.  The CNF backend otherwise
+    // turns each UNSAT output into a permanent unit which creates an
+    // unrecorded proof dependency for later outputs.
+    pParsSat->fIndependent = pPars->fStructDep;
     if ( pPars->fIncremental )
     {
         // Use the deepest BMC unrolling depth so the TFO BFS covers every
@@ -1560,6 +1564,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     Cec_ManSatSetDefaultParams( pParsSat );
     pParsSat->nBTLimit = pPars->nBTLimit;
     pParsSat->fVerbose = pPars->fVerbose;
+    pParsSat->fIndependent = pPars->fStructDep;
     // limit the number of conflicts in the circuit-based solver
     if ( pPars->fUseCSat )
         pParsSat->nBTLimit = Abc_MinInt( pParsSat->nBTLimit, 1000 );

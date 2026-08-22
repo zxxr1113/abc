@@ -53,6 +53,7 @@ struct Cec_ParSat_t_
 //    int              fFirstStop;    // stop on the first sat output
     int              fLearnCls;     // perform clause learning
     int              fSaveCexes;    // saves counter-examples
+    int              fIndependent;  // solve each miter root in a fresh CNF solver
     int              fVerbose;      // verbose stats
 };
 

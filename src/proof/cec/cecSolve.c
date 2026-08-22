@@ -1138,6 +1138,12 @@ Vec_Int_t * Cec_ManSatSolveMiterOutVals( Gia_Man_t * pAig, Cec_ParSat_t * pPars,
             }
             continue;
         }
+        // A retained structural proof may only use the current root's cone.
+        // Recycle here to remove permanent UNSAT units and learned state from
+        // earlier roots; otherwise proof reuse would require explicit
+        // cross-root proof-dependency/core tracking.
+        if ( pPars->fIndependent && p->nSatTotal > 0 )
+            Cec_ManSatSolverRecycle( p );
         status = Cec_ManSatCheckNode( p, Gia_ObjChild0(pObj) );
         Vec_StrPush( vStatus, (char)status );
         if ( status == -1 )
