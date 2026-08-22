@@ -279,10 +279,6 @@ struct Cec_DepGraph_t_
     char *      pProofActive;
     char *      pProofKind;
     char *      pProofState;
-    int *       pSeenRaw;
-    int *       pSeenSpec;
-    int         nSeen;
-    int         TravId;
 };
 
 typedef enum Cec_DepProofKind_t_
@@ -315,65 +311,88 @@ static void Cec_DepGraphAddEdge( Cec_DepGraph_t * p, int Source, int Dest )
         Vec_IntPush( vEdges, Dest );
 }
 
-static void Cec_DepGraphCollectRaw( Cec_DepGraph_t * p, int ProofObj, int ObjId, int f );
-
-static void Cec_DepGraphCollectSpec( Cec_DepGraph_t * p, int ProofObj, int ObjId, int f )
+static inline int Cec_DepGraphLabelKey( Cec_DepGraph_t * p, int ObjId, int f )
 {
-    Gia_Obj_t * pObj;
-    int Index;
-    if ( ObjId == 0 || f < 0 )
-        return;
-    assert( f < p->nFrames );
-    Index = f * p->nObjs + ObjId;
-    if ( p->pSeenSpec[Index] == p->TravId )
-        return;
-    p->pSeenSpec[Index] = p->TravId;
-    pObj = Gia_ManObj( p->pAig, ObjId );
-    // The init/BMC builder fixes frame-0 ROs before speculative reduction.
-    if ( p->fBmc && f == 0 && Gia_ObjIsRo(p->pAig, pObj) )
-    {
-        Cec_DepGraphCollectRaw( p, ProofObj, ObjId, f );
-        return;
-    }
-    if ( p->pActionActive[ObjId] && (!p->fBmc || f >= p->nPrefix) )
-    {
-        Cec_DepGraphAddEdge( p, Cec_DepActionNode(p, ObjId),
-                                Cec_DepProofNode(p, ProofObj) );
-        return; // one-hot boundary: transitive support is carried by A_ObjId
-    }
-    Cec_DepGraphCollectRaw( p, ProofObj, ObjId, f );
+    assert( ObjId >= 0 && ObjId < p->nObjs );
+    assert( f >= 0 && f < p->nFrames );
+    return f * p->nObjs + ObjId;
 }
 
-static void Cec_DepGraphCollectRaw( Cec_DepGraph_t * p, int ProofObj, int ObjId, int f )
+static void Cec_DepGraphLabelAppend( Vec_Int_t * vDest, Vec_Int_t * vSource )
+{
+    int Action, i;
+    Vec_IntForEachEntry( vSource, Action, i )
+        Vec_IntPushUnique( vDest, Action );
+}
+
+// Appends the one-hot frontier propagated by a speculative read.  Candidate
+// rewrites are graph boundaries; inactive/non-speculative nodes expose their
+// already-computed raw frontier.  BMC frame-0 ROs are initialized before any
+// speculative substitution and therefore never form a boundary in that frame.
+static void Cec_DepGraphLabelAppendSpec( Cec_DepGraph_t * p, Vec_Wec_t * vLabels,
+    Vec_Int_t * vDest, int ObjId, int f )
 {
     Gia_Obj_t * pObj;
-    int Index;
-    if ( ObjId == 0 || f < 0 )
+    if ( ObjId == 0 )
         return;
-    assert( f < p->nFrames );
-    Index = f * p->nObjs + ObjId;
-    if ( p->pSeenRaw[Index] == p->TravId )
-        return;
-    p->pSeenRaw[Index] = p->TravId;
     pObj = Gia_ManObj( p->pAig, ObjId );
-    if ( Gia_ObjIsAnd(pObj) )
+    if ( !(p->fBmc && f == 0 && Gia_ObjIsRo(p->pAig, pObj)) &&
+         p->pActionActive[ObjId] && (!p->fBmc || f >= p->nPrefix) )
     {
-        Cec_DepGraphCollectSpec( p, ProofObj, Gia_ObjFaninId0p(p->pAig, pObj), f );
-        Cec_DepGraphCollectSpec( p, ProofObj, Gia_ObjFaninId1p(p->pAig, pObj), f );
+        Vec_IntPushUnique( vDest, ObjId );
+        return;
     }
-    else if ( Gia_ObjIsRo(p->pAig, pObj) )
-    {
-        if ( f > 0 )
+    Cec_DepGraphLabelAppend( vDest,
+        Vec_WecEntry(vLabels, Cec_DepGraphLabelKey(p, ObjId, f)) );
+}
+
+// 2024-style forward labeling: each time-expanded GIA object is visited once.
+// Raw labels merge the speculative frontiers of their fanins; a speculative
+// rewrite resets the propagated label to its one-hot action ID.  This replaces
+// the previous per-proof recursive TFI walk while producing the same direct
+// action -> proof edges.
+static Vec_Wec_t * Cec_DepGraphBuildLabels( Cec_DepGraph_t * p )
+{
+    Vec_Wec_t * vLabels = Vec_WecStart( p->nFrames * p->nObjs );
+    Gia_Obj_t * pObj;
+    int f, i;
+    for ( f = 0; f < p->nFrames; f++ )
+        Gia_ManForEachObj1( p->pAig, pObj, i )
         {
-            Gia_Obj_t * pRi = Gia_ObjRoToRi( p->pAig, pObj );
-            Cec_DepGraphCollectSpec( p, ProofObj,
-                Gia_ObjFaninId0p(p->pAig, pRi), f - 1 );
+            Vec_Int_t * vRaw = Vec_WecEntry( vLabels,
+                Cec_DepGraphLabelKey(p, i, f) );
+            if ( Gia_ObjIsAnd(pObj) )
+            {
+                Cec_DepGraphLabelAppendSpec( p, vLabels, vRaw,
+                    Gia_ObjFaninId0p(p->pAig, pObj), f );
+                Cec_DepGraphLabelAppendSpec( p, vLabels, vRaw,
+                    Gia_ObjFaninId1p(p->pAig, pObj), f );
+            }
+            else if ( Gia_ObjIsRo(p->pAig, pObj) && f > 0 )
+            {
+                Gia_Obj_t * pRi = Gia_ObjRoToRi( p->pAig, pObj );
+                Cec_DepGraphLabelAppendSpec( p, vLabels, vRaw,
+                    Gia_ObjFaninId0p(p->pAig, pRi), f - 1 );
+            }
+            else if ( Gia_ObjIsCo(pObj) )
+                Cec_DepGraphLabelAppendSpec( p, vLabels, vRaw,
+                    Gia_ObjFaninId0p(p->pAig, pObj), f );
+            // Constants, PIs, and frame-0 ROs terminate the raw frontier.
         }
-    }
-    else if ( Gia_ObjIsCo(pObj) )
-        Cec_DepGraphCollectSpec( p, ProofObj,
-            Gia_ObjFaninId0p(p->pAig, pObj), f );
-    // Constants and CIs terminate the raw traversal.
+    return vLabels;
+}
+
+static void Cec_DepGraphAddLabelEdges( Cec_DepGraph_t * p, Vec_Wec_t * vLabels,
+    int ProofObj, int ObjId, int f )
+{
+    Vec_Int_t * vRaw;
+    int Action, i;
+    if ( ObjId == 0 )
+        return;
+    vRaw = Vec_WecEntry( vLabels, Cec_DepGraphLabelKey(p, ObjId, f) );
+    Vec_IntForEachEntry( vRaw, Action, i )
+        Cec_DepGraphAddEdge( p, Cec_DepActionNode(p, Action),
+            Cec_DepProofNode(p, ProofObj) );
 }
 
 static void Cec_DepGraphCreateProofNodes( Cec_DepGraph_t * p )
@@ -432,6 +451,7 @@ Cec_DepGraph_t * Cec_DepGraphBuild( Cec_IncrMgr_t * pIncr, int nFrames,
     int nPrefix, int fScorr, int fBmc, int fRings )
 {
     Cec_DepGraph_t * p = ABC_CALLOC( Cec_DepGraph_t, 1 );
+    Vec_Wec_t * vLabels;
     int i, f, Lhs;
     p->pAig = pIncr->pAig;
     p->nObjs = pIncr->nObjs;
@@ -451,12 +471,10 @@ Cec_DepGraph_t * Cec_DepGraphBuild( Cec_IncrMgr_t * pIncr, int nFrames,
     p->pProofActive = ABC_CALLOC( char, p->nObjs );
     p->pProofKind = ABC_CALLOC( char, p->nObjs );
     p->pProofState = ABC_CALLOC( char, p->nObjs );
-    p->nSeen = p->nFrames * p->nObjs;
-    p->pSeenRaw = ABC_CALLOC( int, p->nSeen );
-    p->pSeenSpec = ABC_CALLOC( int, p->nSeen );
     for ( i = 0; i < p->nObjs; i++ )
         p->pActionRepr[i] = p->pProofLhs[i] = -1;
     Cec_DepGraphCreateProofNodes( p );
+    vLabels = Cec_DepGraphBuildLabels( p );
     for ( i = 1; i < p->nObjs; i++ )
     {
         if ( !p->pProofActive[i] )
@@ -466,18 +484,17 @@ Cec_DepGraph_t * Cec_DepGraphBuild( Cec_IncrMgr_t * pIncr, int nFrames,
         {
             for ( f = nPrefix; f < nPrefix + nFrames; f++ )
             {
-                p->TravId++;
-                Cec_DepGraphCollectRaw( p, i, Lhs, f );
-                Cec_DepGraphCollectRaw( p, i, i, f );
+                Cec_DepGraphAddLabelEdges( p, vLabels, i, Lhs, f );
+                Cec_DepGraphAddLabelEdges( p, vLabels, i, i, f );
             }
         }
         else
         {
-            p->TravId++;
-            Cec_DepGraphCollectRaw( p, i, Lhs, nFrames );
-            Cec_DepGraphCollectRaw( p, i, i, nFrames );
+            Cec_DepGraphAddLabelEdges( p, vLabels, i, Lhs, nFrames );
+            Cec_DepGraphAddLabelEdges( p, vLabels, i, i, nFrames );
         }
     }
+    Vec_WecFree( vLabels );
     return p;
 }
 
@@ -492,8 +509,6 @@ void Cec_DepGraphFree( Cec_DepGraph_t * p )
     ABC_FREE( p->pProofActive );
     ABC_FREE( p->pProofKind );
     ABC_FREE( p->pProofState );
-    ABC_FREE( p->pSeenRaw );
-    ABC_FREE( p->pSeenSpec );
     ABC_FREE( p );
 }
 
