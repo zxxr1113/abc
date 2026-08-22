@@ -52,6 +52,7 @@ Cec_IncrMgr_t * Cec_IncrMgrAlloc( Gia_Man_t * pAig, int nFrames )
     p->pTfoMark  = ABC_CALLOC( int, p->nObjs );
     p->vDepNodes = Vec_IntAlloc( 1024 );
     p->pDepMark  = ABC_CALLOC( int, p->nObjs );
+    p->pDepInvalidMark = ABC_CALLOC( int, p->nObjs );
     p->vAliasHeads = Vec_IntStartFull( p->nObjs );
     p->vAliasNext  = Vec_IntStartFull( p->nObjs );
     p->vBfsCur   = Vec_IntAlloc( 1024 );
@@ -93,6 +94,7 @@ void Cec_IncrMgrFree( Cec_IncrMgr_t * p )
     Vec_IntFree( p->vBfsNext );
     ABC_FREE( p->pTfoMark );
     ABC_FREE( p->pDepMark );
+    ABC_FREE( p->pDepInvalidMark );
     ABC_FREE( p );
 }
 
@@ -241,7 +243,8 @@ int Cec_IncrMgrPairActive( Cec_IncrMgr_t * p, int * pMark, int fRings, int iPrev
 {
     if ( pMark == NULL )
         return 1;
-    if ( p != NULL && p->fStructDep && pMark == p->pDepMark )
+    if ( p != NULL && p->fStructDep &&
+         (pMark == p->pDepMark || pMark == p->pDepInvalidMark) )
         return pMark[iObj] || (fRings && Cec_IncrMgrRingEdgeChanged(p, iPrev, iObj));
     return pMark[iPrev] || pMark[iObj] ||
            (fRings && Cec_IncrMgrRingEdgeChanged(p, iPrev, iObj));
@@ -254,7 +257,12 @@ int Cec_IncrMgrPairActive( Cec_IncrMgr_t * p, int * pMark, int fRings, int iPrev
 // Node layout in vFanouts (invalidation direction):
 //   [0, N)     speculative rewrite actions, keyed by rewritten object
 //   [N, 2N)    proof obligations, keyed by their unique target object
-//   [2N, 3N)   ring-class support bundles, keyed by current class head
+//
+// The graph stores the dependencies of the proof certificate actually kept
+// for each obligation.  A stale proof is re-emitted, but that alone is not an
+// assumption change: only a later class refinement changes A_i and invalidates
+// the certificates which used it.  This distinction lets proof reuse proceed
+// one sound dependency frontier at a time, matching the existing -i loop.
 struct Cec_DepGraph_t_
 {
     Gia_Man_t * pAig;
@@ -269,7 +277,7 @@ struct Cec_DepGraph_t_
     int *       pProofLhs;
     char *      pActionActive;
     char *      pProofActive;
-    char *      pClassActive;
+    char *      pProofProved;
     int *       pSeenRaw;
     int *       pSeenSpec;
     int         nSeen;
@@ -278,7 +286,6 @@ struct Cec_DepGraph_t_
 
 static inline int Cec_DepActionNode( Cec_DepGraph_t * p, int ObjId ) { return ObjId; }
 static inline int Cec_DepProofNode ( Cec_DepGraph_t * p, int ObjId ) { return p->nObjs + ObjId; }
-static inline int Cec_DepClassNode ( Cec_DepGraph_t * p, int ObjId ) { return 2 * p->nObjs + ObjId; }
 
 static void Cec_DepGraphAddEdge( Cec_DepGraph_t * p, int Source, int Dest )
 {
@@ -371,8 +378,6 @@ static void Cec_DepGraphCreateProofNodes( Cec_DepGraph_t * p )
             {
                 p->pProofActive[i] = 1;
                 p->pProofLhs[i] = p->pActionRepr[i];
-                Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, i),
-                                        Cec_DepActionNode(p, i) );
             }
         return;
     }
@@ -382,28 +387,19 @@ static void Cec_DepGraphCreateProofNodes( Cec_DepGraph_t * p )
         {
             p->pProofActive[i] = 1;
             p->pProofLhs[i] = 0;
-            Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, i),
-                                    Cec_DepActionNode(p, i) );
         }
         else if ( Gia_ObjIsHead(pAig, i) )
         {
-            p->pClassActive[i] = 1;
             iPrev = i;
             Gia_ClassForEachObj1( pAig, i, iObj )
             {
                 p->pProofActive[iObj] = 1;
                 p->pProofLhs[iObj] = iPrev;
-                Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, iObj),
-                                        Cec_DepClassNode(p, i) );
-                Cec_DepGraphAddEdge( p, Cec_DepClassNode(p, i),
-                                        Cec_DepActionNode(p, iObj) );
                 iPrev = iObj;
             }
             // The head uniquely keys the closing edge tail -> head.
             p->pProofActive[i] = 1;
             p->pProofLhs[i] = iPrev;
-            Cec_DepGraphAddEdge( p, Cec_DepProofNode(p, i),
-                                    Cec_DepClassNode(p, i) );
         }
     }
 }
@@ -415,7 +411,7 @@ Cec_DepGraph_t * Cec_DepGraphBuild( Cec_IncrMgr_t * pIncr, int nFrames,
     int i, f, Lhs;
     p->pAig = pIncr->pAig;
     p->nObjs = pIncr->nObjs;
-    p->nNodes = 3 * p->nObjs;
+    p->nNodes = 2 * p->nObjs;
     p->nPrefix = nPrefix;
     p->fBmc = fBmc;
     p->fRings = fRings;
@@ -429,7 +425,7 @@ Cec_DepGraph_t * Cec_DepGraphBuild( Cec_IncrMgr_t * pIncr, int nFrames,
     p->pProofLhs = ABC_ALLOC( int, p->nObjs );
     p->pActionActive = ABC_CALLOC( char, p->nObjs );
     p->pProofActive = ABC_CALLOC( char, p->nObjs );
-    p->pClassActive = ABC_CALLOC( char, p->nObjs );
+    p->pProofProved = ABC_CALLOC( char, p->nObjs );
     p->nSeen = p->nFrames * p->nObjs;
     p->pSeenRaw = ABC_CALLOC( int, p->nSeen );
     p->pSeenSpec = ABC_CALLOC( int, p->nSeen );
@@ -469,7 +465,7 @@ void Cec_DepGraphFree( Cec_DepGraph_t * p )
     ABC_FREE( p->pProofLhs );
     ABC_FREE( p->pActionActive );
     ABC_FREE( p->pProofActive );
-    ABC_FREE( p->pClassActive );
+    ABC_FREE( p->pProofProved );
     ABC_FREE( p->pSeenRaw );
     ABC_FREE( p->pSeenSpec );
     ABC_FREE( p );
@@ -504,11 +500,14 @@ int Cec_DepGraphComputeDirty( Cec_IncrMgr_t * pIncr, Cec_DepGraph_t * pOld,
 {
     char * pMarkOld, * pMarkNew;
     Vec_Int_t * vQueueOld, * vQueueNew;
-    int i, k, fActionChange, fProofChange, fClassChange, nDirty = 0;
+    int i, k, fActionChange, fProofChange, nDirty = 0;
     assert( pOld != NULL && pNew != NULL );
     assert( pOld->nObjs == pNew->nObjs && pOld->nObjs == pIncr->nObjs );
     Vec_IntForEachEntry( pIncr->vDepNodes, i, k )
+    {
         pIncr->pDepMark[i] = 0;
+        pIncr->pDepInvalidMark[i] = 0;
+    }
     Vec_IntClear( pIncr->vDepNodes );
     pMarkOld = ABC_CALLOC( char, pOld->nNodes );
     pMarkNew = ABC_CALLOC( char, pNew->nNodes );
@@ -523,41 +522,151 @@ int Cec_DepGraphComputeDirty( Cec_IncrMgr_t * pIncr, Cec_DepGraph_t * pOld,
         fProofChange = pOld->pProofActive[i] != pNew->pProofActive[i] ||
             (pOld->pProofActive[i] && pNew->pProofActive[i] &&
              pOld->pProofLhs[i] != pNew->pProofLhs[i]);
-        fClassChange = pOld->pClassActive[i] != pNew->pClassActive[i];
-        if ( fActionChange || fProofChange || fClassChange )
+        if ( fActionChange || fProofChange )
             (*pnChanged)++;
         if ( fActionChange )
-        {
             Cec_DepGraphSeed( pMarkOld, vQueueOld, Cec_DepActionNode(pOld, i) );
-            Cec_DepGraphSeed( pMarkNew, vQueueNew, Cec_DepActionNode(pNew, i) );
-        }
         if ( fProofChange )
         {
-            Cec_DepGraphSeed( pMarkOld, vQueueOld, Cec_DepProofNode(pOld, i) );
-            Cec_DepGraphSeed( pMarkNew, vQueueNew, Cec_DepProofNode(pNew, i) );
-        }
-        if ( fClassChange )
-        {
-            Cec_DepGraphSeed( pMarkOld, vQueueOld, Cec_DepClassNode(pOld, i) );
-            Cec_DepGraphSeed( pMarkNew, vQueueNew, Cec_DepClassNode(pNew, i) );
+            if ( pNew->pProofActive[i] )
+                Cec_DepGraphSeed( pMarkNew, vQueueNew, Cec_DepProofNode(pNew, i) );
         }
     }
+    // Only the graph of the retained certificates may invalidate them.  New
+    // dependencies become authoritative only after their proof is re-emitted
+    // and are installed by Cec_DepGraphCommitProofDeps().
     Cec_DepGraphClosure( pOld, pMarkOld, vQueueOld );
-    Cec_DepGraphClosure( pNew, pMarkNew, vQueueNew );
     for ( i = 1; i < pIncr->nObjs; i++ )
-        if ( pNew->pProofActive[i] &&
-             (pMarkOld[Cec_DepProofNode(pOld, i)] ||
-              pMarkNew[Cec_DepProofNode(pNew, i)]) )
+        if ( pNew->pProofActive[i] )
         {
-            pIncr->pDepMark[i] = 1;
-            Vec_IntPush( pIncr->vDepNodes, i );
-            nDirty++;
+            int fInvalid = pMarkOld[Cec_DepProofNode(pOld, i)] ||
+                           pMarkNew[Cec_DepProofNode(pNew, i)];
+            int fSameProof = pOld->pProofActive[i] &&
+                             pOld->pProofLhs[i] == pNew->pProofLhs[i];
+            int fPending = fSameProof && !pOld->pProofProved[i];
+            if ( fInvalid || fPending )
+            {
+                pIncr->pDepMark[i] = 1;
+                pIncr->pDepInvalidMark[i] = fInvalid;
+                Vec_IntPush( pIncr->vDepNodes, i );
+                nDirty++;
+            }
         }
     Vec_IntFree( vQueueOld );
     Vec_IntFree( vQueueNew );
     ABC_FREE( pMarkOld );
     ABC_FREE( pMarkNew );
     return nDirty;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Commits dependency rows for proofs emitted this round.]
+
+  Description [pNew is initially the structural graph of the current SRM.
+  For every dirty proof, retain its current dependencies because that proof is
+  about to be emitted.  For every reused proof, replace the freshly-computed
+  row by the old row: its retained UNSAT certificate was created in the old
+  SRM and must keep the dependencies of that certificate.  This is the graph
+  evolution invariant needed to avoid losing dependencies when a new
+  speculative reduction would give a reused proof a different cone.]
+
+***********************************************************************/
+void Cec_DepGraphCommitProofDeps( Cec_IncrMgr_t * pIncr,
+    Cec_DepGraph_t * pOld, Cec_DepGraph_t * pNew )
+{
+    Vec_Wec_t * vMerged;
+    Vec_Int_t * vEdges;
+    int Source, Proof, i, ProofObj;
+    assert( pOld != NULL && pNew != NULL );
+    assert( pOld->nObjs == pNew->nObjs && pNew->nObjs == pIncr->nObjs );
+    vMerged = Vec_WecStart( pNew->nNodes );
+    // Reused certificates keep their old dependency rows.
+    for ( Source = 0; Source < pOld->nObjs; Source++ )
+    {
+        vEdges = Vec_WecEntry( pOld->vFanouts, Cec_DepActionNode(pOld, Source) );
+        Vec_IntForEachEntry( vEdges, Proof, i )
+        {
+            ProofObj = Proof - pOld->nObjs;
+            if ( ProofObj > 0 && ProofObj < pNew->nObjs &&
+                 pNew->pProofActive[ProofObj] && !pIncr->pDepMark[ProofObj] )
+                Vec_IntPushUnique( Vec_WecEntry(vMerged,
+                    Cec_DepActionNode(pNew, Source)), Cec_DepProofNode(pNew, ProofObj) );
+        }
+    }
+    // Re-emitted certificates take their dependencies from the current SRM.
+    for ( Source = 0; Source < pNew->nObjs; Source++ )
+    {
+        vEdges = Vec_WecEntry( pNew->vFanouts, Cec_DepActionNode(pNew, Source) );
+        Vec_IntForEachEntry( vEdges, Proof, i )
+        {
+            ProofObj = Proof - pNew->nObjs;
+            if ( ProofObj > 0 && ProofObj < pNew->nObjs &&
+                 pNew->pProofActive[ProofObj] && pIncr->pDepMark[ProofObj] )
+                Vec_IntPushUnique( Vec_WecEntry(vMerged,
+                    Cec_DepActionNode(pNew, Source)), Cec_DepProofNode(pNew, ProofObj) );
+        }
+    }
+    Vec_WecFree( pNew->vFanouts );
+    pNew->vFanouts = vMerged;
+    for ( ProofObj = 1; ProofObj < pNew->nObjs; ProofObj++ )
+        if ( pNew->pProofActive[ProofObj] )
+            pNew->pProofProved[ProofObj] = pIncr->pDepMark[ProofObj] ? 0 :
+                (pOld->pProofActive[ProofObj] &&
+                 pOld->pProofLhs[ProofObj] == pNew->pProofLhs[ProofObj] &&
+                 pOld->pProofProved[ProofObj]);
+}
+
+int Cec_DepGraphCountUnproved( Cec_DepGraph_t * p )
+{
+    int i, Count = 0;
+    if ( p == NULL )
+        return 0;
+    for ( i = 1; i < p->nObjs; i++ )
+        Count += p->pProofActive[i] && !p->pProofProved[i];
+    return Count;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Marks emitted proofs as trivial or pending a solver result.]
+
+***********************************************************************/
+void Cec_DepGraphPrepareEmission( Cec_DepGraph_t * p, Cec_IncrMgr_t * pIncr,
+    Vec_Int_t * vOutputs, int fEmitAll )
+{
+    int i, ProofObj;
+    assert( p != NULL && vOutputs != NULL );
+    assert( (Vec_IntSize(vOutputs) & 1) == 0 );
+    for ( i = 1; i < p->nObjs; i++ )
+        if ( p->pProofActive[i] && (fEmitAll || pIncr->pDepMark[i]) )
+            p->pProofProved[i] = 1; // emitted but simplified away is a proof
+    for ( i = 0; i < Vec_IntSize(vOutputs); i += 2 )
+    {
+        ProofObj = Vec_IntEntry( vOutputs, i + 1 );
+        assert( ProofObj > 0 && ProofObj < p->nObjs );
+        assert( p->pProofActive[ProofObj] );
+        p->pProofProved[ProofObj] = 0; // pending solver status
+    }
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Records which emitted obligations produced reusable UNSAT.]
+
+***********************************************************************/
+void Cec_DepGraphRecordStatuses( Cec_DepGraph_t * p, Vec_Int_t * vOutputs,
+    Vec_Str_t * vStatus )
+{
+    int i, ProofObj, Status;
+    assert( p != NULL && vOutputs != NULL && vStatus != NULL );
+    assert( 2 * Vec_StrSize(vStatus) == Vec_IntSize(vOutputs) );
+    Vec_StrForEachEntry( vStatus, Status, i )
+    {
+        ProofObj = Vec_IntEntry( vOutputs, 2*i + 1 );
+        assert( ProofObj > 0 && ProofObj < p->nObjs );
+        p->pProofProved[ProofObj] = Status == 1;
+    }
 }
 
 /**Function*************************************************************
@@ -624,6 +733,79 @@ void Cec_IncrMgrCountActivePairs( Cec_IncrMgr_t * p, int fRings, int * pTfoMark,
             (*pnActive) += Cec_IncrMgrPairActive( p, pTfoMark, 0, idR, i );
         }
     }
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Checks the experiment's Dep-active subset TFO-active invariant.]
+
+  Description [Returns the number of current candidate pairs selected by the
+  structural dependency mask but not by the original TFO mask.  New/rewired
+  ring edges are selected by both policies and therefore cannot create a
+  false violation.  A non-zero result violates the defining invariant of this
+  structural-dirty experiment and is asserted by the caller.]
+
+***********************************************************************/
+int Cec_IncrMgrCountDepOnlyPairs( Cec_IncrMgr_t * p, int fRings )
+{
+    Gia_Man_t * pAig = p->pAig;
+    Gia_Obj_t * pObj, * pRepr;
+    int i, iPrev, iObj, nBad = 0;
+    assert( p->fStructDep );
+    if ( fRings )
+    {
+        Gia_ManForEachObj1( pAig, pObj, i )
+        {
+            if ( Gia_ObjIsConst(pAig, i) )
+            {
+                if ( p->pDepInvalidMark[i] && !p->pTfoMark[i] )
+                {
+                    if ( nBad++ < 8 )
+                        Abc_Print( -1, "[struct-dep-bug] dep-only const pair 0 -> %d\n", i );
+                }
+            }
+            else if ( Gia_ObjIsHead(pAig, i) )
+            {
+                iPrev = i;
+                Gia_ClassForEachObj1( pAig, i, iObj )
+                {
+                    int fDep = Cec_IncrMgrPairActive( p, p->pDepInvalidMark, 1, iPrev, iObj );
+                    int fTfo = Cec_IncrMgrPairActive( p, p->pTfoMark, 1, iPrev, iObj );
+                    if ( fDep && !fTfo )
+                    {
+                        if ( nBad++ < 8 )
+                            Abc_Print( -1, "[struct-dep-bug] dep-only ring pair %d -> %d\n", iPrev, iObj );
+                    }
+                    iPrev = iObj;
+                }
+                iObj = i;
+                if ( Cec_IncrMgrPairActive(p, p->pDepInvalidMark, 1, iPrev, iObj) &&
+                    !Cec_IncrMgrPairActive(p, p->pTfoMark, 1, iPrev, iObj) )
+                {
+                    if ( nBad++ < 8 )
+                        Abc_Print( -1, "[struct-dep-bug] dep-only closing pair %d -> %d\n", iPrev, iObj );
+                }
+            }
+        }
+    }
+    else
+    {
+        Gia_ManForEachObj1( pAig, pObj, i )
+        {
+            int idR;
+            pRepr = Gia_ObjReprObj( pAig, i );
+            if ( pRepr == NULL )
+                continue;
+            idR = Gia_ObjId( pAig, pRepr );
+            if ( Cec_IncrMgrPairActive(p, p->pDepInvalidMark, 0, idR, i) &&
+                !Cec_IncrMgrPairActive(p, p->pTfoMark, 0, idR, i) )
+            {
+                if ( nBad++ < 8 )
+                    Abc_Print( -1, "[struct-dep-bug] dep-only pair %d -> %d\n", idR, i );
+            }
+        }
+    }
+    return nBad;
 }
 
 /**Function*************************************************************

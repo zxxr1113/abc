@@ -1183,7 +1183,7 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
     {
         int * pTfoMask = NULL;
         int nReprSeeds = 0, nTotalPairs = 0, nActivePairs = 0;
-        int nTfoActivePairs = 0, nDepChanges = 0;
+        int nTfoActivePairs = 0, nDepInvalidPairs = 0, nDepChanges = 0;
         int nBmcPos = 0;
         abctime tSat;
         if ( Cec_ParCorShouldStop( pPars ) )
@@ -1195,7 +1195,8 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
         if ( pBmcMgr && i > 0 )
         {
             nReprSeeds = Cec_IncrMgrComputeSeeds( pBmcMgr );
-            if ( nReprSeeds == 0 )
+            if ( nReprSeeds == 0 &&
+                 (!pPars->fStructDep || Cec_DepGraphCountUnproved(pBmcDep) == 0) )
             {
                 // No pReprs change.  BMC SRM topology is unchanged.
                 break;
@@ -1215,14 +1216,23 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
                 pDepNew = Cec_DepGraphBuild( pBmcMgr, pPars->nFrames, nPrefs,
                     !pPars->fLatchCorr, 1, 0 );
                 Cec_DepGraphComputeDirty( pBmcMgr, pBmcDep, pDepNew, &nDepChanges );
+                Cec_DepGraphCommitProofDeps( pBmcMgr, pBmcDep, pDepNew );
                 if ( pBmcDynSrm )
                     Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pDepMark,
                         &nTotalPairs, &nActivePairs );
                 else
                     Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pDepMark,
                         &nTotalPairs, &nActivePairs );
-                Abc_Print( 1, "[struct-dep] phase=bmc round=%d changes=%d pairs=%d tfo=%d dep=%d saved=%d\n",
-                    i, nDepChanges, nTotalPairs, nTfoActivePairs, nActivePairs,
+                if ( pBmcDynSrm )
+                    Cec_DynSrmCountActivePairs( pBmcDynSrm, 0, pBmcMgr->pDepInvalidMark,
+                        &nTotalPairs, &nDepInvalidPairs );
+                else
+                    Cec_IncrMgrCountActivePairs( pBmcMgr, 0, pBmcMgr->pDepInvalidMark,
+                        &nTotalPairs, &nDepInvalidPairs );
+                assert( Cec_IncrMgrCountDepOnlyPairs(pBmcMgr, 0) == 0 );
+                Abc_Print( 1, "[struct-dep] phase=bmc round=%d changes=%d pairs=%d tfo=%d dirty=%d pending=%d emit=%d saved=%d\n",
+                    i, nDepChanges, nTotalPairs, nTfoActivePairs, nDepInvalidPairs,
+                    nActivePairs - nDepInvalidPairs, nActivePairs,
                     nTfoActivePairs - nActivePairs );
                 nDepTfoTotal += nTfoActivePairs;
                 nDepProofTotal += nActivePairs;
@@ -1257,6 +1267,8 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
                 !pPars->fLatchCorr, &vOutputs, pTfoMask, pBmcMgr );
         else
             pSrm = Gia_ManCorr2SpecReduceInit( pAig, pPars->nFrames, nPrefs, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings );
+        if ( pPars->fStructDep )
+            Cec_DepGraphPrepareEmission( pBmcDep, pBmcMgr, vOutputs, pTfoMask == NULL );
         nBmcPos = fBmcPersist ? Vec_IntSize(Cec_DynSrmOutLits(pBmcDynSrm)) : Gia_ManCoNum(pSrm);
         // Snapshot after SRM construction, before SAT/refine: this is the
         // class state whose pairs were just emitted.  The next iteration's
@@ -1280,6 +1292,8 @@ void Cec_ManLSCorrespondenceBmc2( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nP
             vCexStore = Tas_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
+        if ( pPars->fStructDep )
+            Cec_DepGraphRecordStatuses( pBmcDep, vOutputs, vStatus );
         tSat = Abc_ClockHr() - tSat;
         if ( pBmcDynSrm && Vec_IntSize(vCexStore) == 0 )
             Cec_DynSrmRecordSolveStats( pBmcDynSrm, nBmcPos, 0, 0, 0, tSat );
@@ -1624,7 +1638,7 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             int * pTfoMask = NULL;
             int nReprSeeds = 0, nNextChanges = 0;
-            int nTotalPairs = 0, nActivePairs = 0, nTfoActivePairs = 0;
+            int nTotalPairs = 0, nActivePairs = 0, nTfoActivePairs = 0, nDepInvalidPairs = 0;
             int nDepChanges = 0;
             int fStopAfterOracle = 0;
             // Decide whether to apply incremental TFO mask this iteration.
@@ -1634,7 +1648,8 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 abctime clkI = Abc_Clock();
                 nReprSeeds = Cec_IncrMgrComputeSeeds( pMgr );
                 nNextChanges = pPars->fUseRings ? Cec_IncrMgrCountNextChanges( pMgr ) : 0;
-                if ( nReprSeeds == 0 && nNextChanges == 0 )
+                if ( nReprSeeds == 0 && nNextChanges == 0 &&
+                     (!pPars->fStructDep || Cec_DepGraphCountUnproved(pDep) == 0) )
                 {
                     if ( !pPars->fIncrOracle )
                     {
@@ -1682,14 +1697,23 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                         pDepNew = Cec_DepGraphBuild( pMgr, pPars->nFrames, 0,
                             !pPars->fLatchCorr, 0, pPars->fUseRings );
                         Cec_DepGraphComputeDirty( pMgr, pDep, pDepNew, &nDepChanges );
+                        Cec_DepGraphCommitProofDeps( pMgr, pDep, pDepNew );
                         if ( pDynSrm )
                             Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
                                 pMgr->pDepMark, &nTotalPairs, &nActivePairs );
                         else
                             Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings,
                                 pMgr->pDepMark, &nTotalPairs, &nActivePairs );
-                        Abc_Print( 1, "[struct-dep] phase=main round=%d changes=%d pairs=%d tfo=%d dep=%d saved=%d\n",
+                        if ( pDynSrm )
+                            Cec_DynSrmCountActivePairs( pDynSrm, pPars->fUseRings,
+                                pMgr->pDepInvalidMark, &nTotalPairs, &nDepInvalidPairs );
+                        else
+                            Cec_IncrMgrCountActivePairs( pMgr, pPars->fUseRings,
+                                pMgr->pDepInvalidMark, &nTotalPairs, &nDepInvalidPairs );
+                        assert( Cec_IncrMgrCountDepOnlyPairs(pMgr, pPars->fUseRings) == 0 );
+                        Abc_Print( 1, "[struct-dep] phase=main round=%d changes=%d pairs=%d tfo=%d dirty=%d pending=%d emit=%d saved=%d\n",
                             r, nDepChanges, nTotalPairs, nTfoActivePairs,
+                            nDepInvalidPairs, nActivePairs - nDepInvalidPairs,
                             nActivePairs, nTfoActivePairs - nActivePairs );
                         nDepTfoTotal += nTfoActivePairs;
                         nDepProofTotal += nActivePairs;
@@ -1782,6 +1806,8 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 pSrm = Gia_ManCorrSpecReduce_Emit( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, pTfoMask, pMgr, CEC_EMIT_ACTIVE, NULL );
             else
                 pSrm = Gia_ManCorr2SpecReduce( pAig, pPars->nFrames, !pPars->fLatchCorr, &vOutputs, pPars->fUseRings, NULL );
+            if ( pPars->fStructDep )
+                Cec_DepGraphPrepareEmission( pDep, pMgr, vOutputs, pTfoMask == NULL );
             // Snapshot after SRM construction: the active builder still needs
             // the old pNexts snapshot to recognize newly-created ring edges.
             // SAT/sim refinement below is what creates the next iteration's diff.
@@ -1807,6 +1833,8 @@ int Cec_ManLSCorrespondenceClasses2( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
             vCexStore = Cbs_ManSolveMiterNc( pSrm, pPars->nBTLimit, &vStatus, 0, 0 );
         else
             vCexStore = Cec_ManSatSolveMiter( pSrm, pParsSat, &vStatus );
+        if ( pPars->fStructDep )
+            Cec_DepGraphRecordStatuses( pDep, vOutputs, vStatus );
         tSat = Abc_ClockHr() - tSat;
         if ( pSrm )
             Gia_ManStop( pSrm );
