@@ -43,8 +43,15 @@ struct Cec_DynSrm_t_
     int              nCompactMult;
     int              fForceRebuild;
     Vec_Int_t *      vSpecLits;     // cached core literals, indexed by frame/object
-    Vec_Wec_t *      vCacheFanouts; // materialized cache reverse dependencies
-    int *            pCacheSeen;    // invalidation traversal stamps per cache key
+    Vec_Wec_t *      vCacheFanouts; // previous live logical-SRM reverse edges
+    Vec_Wec_t *      vCacheProofs;  // logical SRM key -> retained proof roots
+    int *            pCacheSeen;    // logical-SRM TFO traversal stamps
+    int *            pCacheVersion; // semantic version of each logical SRM key
+    int *            pGraphVersion; // version whose incoming edges were recorded
+    char *           pCacheBuilding;// key is being materialized through SpecLit
+    char *           pCacheRecording;// current miss records a new logical version
+    int *            pProofVersion; // current watcher version per proof target
+    int *            pProofBuild;   // last build which rebound each proof target
     int              CacheTravId;
     Vec_Int_t *      vOutLits;      // core literals selected as current SAT outputs
     Vec_Int_t *      vCopyTouched;  // core ANDs copied into the current view
@@ -179,21 +186,112 @@ static int Cec_DynSrmCacheRead( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj )
 
 static void Cec_DynSrmCacheWrite( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj, int Lit )
 {
-    Vec_IntWriteEntry( p->vSpecLits, Cec_DynSrmCacheIndex(p, f, Gia_ObjId(p->pAig, pObj)), Lit );
+    int Key = Cec_DynSrmCacheIndex( p, f, Gia_ObjId(p->pAig, pObj) );
+    Vec_IntWriteEntry( p->vSpecLits, Key, Lit );
+    if ( p->pCacheBuilding )
+    {
+        assert( p->pCacheBuilding[Key] );
+        if ( p->pCacheRecording[Key] )
+            p->pGraphVersion[Key] = p->pCacheVersion[Key];
+        p->pCacheBuilding[Key] = 0;
+        p->pCacheRecording[Key] = 0;
+    }
 }
 
-// Records that the cached value of (ParentFrame, ParentObj) was materialized
-// from (ChildFrame, ChildObj).  Edges intentionally survive cache rewrites:
-// stale edges only over-invalidate, while deleting them would require an
-// expensive per-entry ownership structure.  A cold core rebuild clears all
-// watchers together with the cache.
+static void Cec_DynSrmCacheBegin( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj )
+{
+    int Key = Cec_DynSrmCacheIndex( p, f, Gia_ObjId(p->pAig, pObj) );
+    if ( p->pCacheBuilding == NULL )
+        return;
+    assert( !p->pCacheBuilding[Key] );
+    p->pCacheBuilding[Key] = 1;
+    p->pCacheRecording[Key] =
+        p->pGraphVersion[Key] != p->pCacheVersion[Key];
+}
+
+// Records one edge of the previous live logical SRM when a cache miss actually
+// materializes Parent from Spec(Child).  This is the SRM itself, not a second
+// structural graph inferred from the host AIG.  In particular, Spec(x)=Spec(r)
+// does not add r->x: an active speculative rewrite is the same one-hot boundary
+// that a freshly constructed SRM presents to induction proofs.  Parent versions
+// make the old row inert after a semantic cache invalidation.  The append-only
+// pCore (and therefore obsolete XOR roots) is never traversed here.
 static void Cec_DynSrmCacheWatch( Cec_DynSrm_t * p,
     int ChildFrame, Gia_Obj_t * pChild, int ParentFrame, Gia_Obj_t * pParent )
 {
+    Vec_Int_t * vParents;
+    int Version;
+    if ( p->pIncr == NULL || !p->pIncr->fStructDep )
+        return;
     int Child = Cec_DynSrmCacheIndex( p, ChildFrame, Gia_ObjId(p->pAig, pChild) );
     int Parent = Cec_DynSrmCacheIndex( p, ParentFrame, Gia_ObjId(p->pAig, pParent) );
-    if ( Child != Parent )
-        Vec_IntPushUnique( Vec_WecEntry(p->vCacheFanouts, Child), Parent );
+    if ( Child == Parent || !p->pCacheBuilding[Parent] ||
+         !p->pCacheRecording[Parent] )
+        return;
+    Version = p->pCacheVersion[Parent];
+    vParents = Vec_WecEntry( p->vCacheFanouts, Child );
+    assert( (Vec_IntSize(vParents) & 1) == 0 );
+    Vec_IntPush( vParents, Parent );
+    Vec_IntPush( vParents, Version );
+}
+
+// Starts a new materialized dependency row for one emitted proof.  BMC may
+// emit the same target at several endpoint frames in one build, so the build
+// stamp advances its version only once and all frame roots share that version.
+static void Cec_DynSrmProofBegin( Cec_DynSrm_t * p, int ProofObj,
+    Cec_IncrEmitMode_t Mode )
+{
+    if ( p->pIncr == NULL || !p->pIncr->fStructDep ||
+         Mode == CEC_EMIT_SKIPPED || p->pProofBuild[ProofObj] == p->nBuilds )
+        return;
+    assert( ProofObj > 0 && ProofObj < p->nObjs );
+    p->pProofBuild[ProofObj] = p->nBuilds;
+    if ( ++p->pProofVersion[ProofObj] <= 0 )
+        p->pProofVersion[ProofObj] = 1;
+}
+
+static void Cec_DynSrmProofWatchKey( Cec_DynSrm_t * p, int f,
+    Gia_Obj_t * pObj, int ProofObj )
+{
+    Vec_Int_t * vProofs;
+    int Version;
+    if ( p->pIncr == NULL || !p->pIncr->fStructDep ||
+         p->pProofBuild[ProofObj] != p->nBuilds )
+        return;
+    Version = p->pProofVersion[ProofObj];
+    vProofs = Vec_WecEntry( p->vCacheProofs,
+        Cec_DynSrmCacheIndex(p, f, Gia_ObjId(p->pAig, pObj)) );
+    assert( (Vec_IntSize(vProofs) & 1) == 0 );
+    Vec_IntPush( vProofs, ProofObj );
+    Vec_IntPush( vProofs, Version );
+}
+
+// Attaches a proof root to the speculative cache reads made by RealLit().
+// Watching these immediate reads, rather than the raw endpoint object, avoids
+// treating the endpoint's own rewrite as a data dependency.  Transitive
+// reachability is supplied by vCacheFanouts during SRM-TFO propagation.  The
+// raw final-frame endpoint therefore needs no host-AIG TFO special case:
+// RealLit expands only that endpoint and crosses into SpecLit at its fanins.
+static void Cec_DynSrmProofWatchReal( Cec_DynSrm_t * p, Gia_Obj_t * pObj,
+    int f, int ProofObj, int fInit )
+{
+    if ( Gia_ObjIsAnd(pObj) )
+    {
+        Cec_DynSrmProofWatchKey( p, f, Gia_ObjFanin0(pObj), ProofObj );
+        Cec_DynSrmProofWatchKey( p, f, Gia_ObjFanin1(pObj), ProofObj );
+        return;
+    }
+    if ( Gia_ObjIsPi(p->pAig, pObj) )
+        return;
+    assert( Gia_ObjIsRo(p->pAig, pObj) );
+    if ( f == 0 )
+    {
+        if ( !fInit )
+            Cec_DynSrmProofWatchKey( p, f, pObj, ProofObj );
+        return;
+    }
+    pObj = Gia_ObjRoToRi( p->pAig, pObj );
+    Cec_DynSrmProofWatchKey( p, f-1, Gia_ObjFanin0(pObj), ProofObj );
 }
 
 static int Cec_DynSrmHostPiLit( Cec_DynSrm_t * p, int f, Gia_Obj_t * pObj )
@@ -213,7 +311,7 @@ static int Cec_DynSrmHostRoLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj )
     return Gia_ManCiLit( p->pCore, iRo );
 }
 
-static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
+static void Cec_DynSrmResetCore( Cec_DynSrm_t * p, int fKeepDeps )
 {
     if ( p->pCbs )       // stop resident solver before its pCore is freed
         Cbs_ManStop( p->pCbs );
@@ -226,9 +324,19 @@ static void Cec_DynSrmResetCore( Cec_DynSrm_t * p )
     p->pCore = NULL;
     p->nCoreObjsAtReset = 0;
     Vec_IntFreeP( &p->vSpecLits );
-    Vec_WecFreeP( &p->vCacheFanouts );
-    ABC_FREE( p->pCacheSeen );
-    p->CacheTravId = 0;
+    if ( !fKeepDeps )
+    {
+        Vec_WecFreeP( &p->vCacheFanouts );
+        Vec_WecFreeP( &p->vCacheProofs );
+        ABC_FREE( p->pCacheSeen );
+        ABC_FREE( p->pCacheVersion );
+        ABC_FREE( p->pGraphVersion );
+        ABC_FREE( p->pCacheBuilding );
+        ABC_FREE( p->pCacheRecording );
+        ABC_FREE( p->pProofVersion );
+        ABC_FREE( p->pProofBuild );
+        p->CacheTravId = 0;
+    }
     Vec_IntFreeP( &p->vOutLits );
     Vec_IntFreeP( &p->vCopyTouched );
     Vec_IntFreeP( &p->vPiMap );
@@ -335,7 +443,7 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     if ( ResetReason == CEC_DYN_RESET_ADAPT )
         p->nAdaptiveResets++;
     p->nLastResetSpan = p->nBuildsSinceReset;
-    Cec_DynSrmResetCore( p );
+    Cec_DynSrmResetCore( p, fSameShape );
     p->nLastBuildReset = 1;
     p->nLastResetReason = ResetReason;
     p->nBuildsSinceReset = 0;
@@ -344,8 +452,28 @@ static void Cec_DynSrmEnsureCore( Cec_DynSrm_t * p, int nFrames, int fScorr )
     p->nRegs = Gia_ManRegNum( p->pAig );
     p->nFramesTotal = nFramesTotal;
     p->vSpecLits = Vec_IntStartFull( p->nFramesTotal * p->nObjs );
-    p->vCacheFanouts = Vec_WecStart( p->nFramesTotal * p->nObjs );
-    p->pCacheSeen = ABC_CALLOC( int, p->nFramesTotal * p->nObjs );
+    if ( p->pIncr != NULL && p->pIncr->fStructDep &&
+         p->vCacheFanouts == NULL )
+    {
+        p->vCacheFanouts = Vec_WecStart( p->nFramesTotal * p->nObjs );
+        p->vCacheProofs = Vec_WecStart( p->nFramesTotal * p->nObjs );
+        p->pCacheSeen = ABC_CALLOC( int, p->nFramesTotal * p->nObjs );
+        p->pCacheVersion = ABC_ALLOC( int, p->nFramesTotal * p->nObjs );
+        p->pGraphVersion = ABC_CALLOC( int, p->nFramesTotal * p->nObjs );
+        p->pCacheBuilding = ABC_CALLOC( char, p->nFramesTotal * p->nObjs );
+        p->pCacheRecording = ABC_CALLOC( char, p->nFramesTotal * p->nObjs );
+        p->pProofVersion = ABC_CALLOC( int, p->nObjs );
+        p->pProofBuild = ABC_CALLOC( int, p->nObjs );
+        for ( i = 0; i < p->nFramesTotal * p->nObjs; i++ )
+            p->pCacheVersion[i] = 1;
+    }
+    else if ( p->pCacheBuilding != NULL )
+    {
+        memset( p->pCacheBuilding, 0,
+            sizeof(char) * p->nFramesTotal * p->nObjs );
+        memset( p->pCacheRecording, 0,
+            sizeof(char) * p->nFramesTotal * p->nObjs );
+    }
     p->vOutLits = Vec_IntAlloc( 1000 );
     p->vCopyTouched = Vec_IntAlloc( 1000 );
     p->vPiMap = Vec_IntStartFull( p->nObjs );
@@ -377,49 +505,6 @@ static void Cec_DynSrmInvalidateCache( Cec_DynSrm_t * p, int * pTfoMask, int nPr
     int f, i, Counter = 0;
     assert( p->vSpecLits != NULL );
     assert( nPrefix >= 0 && nPrefix < p->nFramesTotal );
-    // The structural dependency path already computed the exact rewrite
-    // events in vSeeds.  Propagate these events over dependencies recorded
-    // when cache entries were materialized; this avoids both a new TFO walk
-    // and the former whole-cache clear.  Propagation visits empty entries as
-    // well, because an old materialization may still have cached parents.
-    if ( p->pIncr != NULL && p->pIncr->fStructDep )
-    {
-        Vec_Int_t * vQueue = Vec_IntAlloc( 64 );
-        int Head = 0, Key, Parent;
-        if ( ++p->CacheTravId <= 0 )
-        {
-            memset( p->pCacheSeen, 0,
-                sizeof(int) * p->nFramesTotal * p->nObjs );
-            p->CacheTravId = 1;
-        }
-        Vec_IntForEachEntry( p->pIncr->vSeeds, i, Key )
-            for ( f = nPrefix; f < p->nFramesTotal; f++ )
-            {
-                int Seed = Cec_DynSrmCacheIndex( p, f, i );
-                if ( p->pCacheSeen[Seed] == p->CacheTravId )
-                    continue;
-                p->pCacheSeen[Seed] = p->CacheTravId;
-                Vec_IntPush( vQueue, Seed );
-            }
-        while ( Head < Vec_IntSize(vQueue) )
-        {
-            Key = Vec_IntEntry( vQueue, Head++ );
-            if ( Vec_IntEntry(p->vSpecLits, Key) >= 0 )
-                Counter++;
-            Vec_IntWriteEntry( p->vSpecLits, Key, -1 );
-            Vec_IntForEachEntry( Vec_WecEntry(p->vCacheFanouts, Key), Parent, i )
-            {
-                if ( p->pCacheSeen[Parent] == p->CacheTravId )
-                    continue;
-                p->pCacheSeen[Parent] = p->CacheTravId;
-                Vec_IntPush( vQueue, Parent );
-            }
-        }
-        Vec_IntFree( vQueue );
-        p->nCacheLocalClears++;
-        p->nCacheLocalEntries += Counter;
-        return;
-    }
     if ( pTfoMask == NULL )
     {
         Vec_IntFill( p->vSpecLits, p->nFramesTotal * p->nObjs, -1 );
@@ -430,9 +515,10 @@ static void Cec_DynSrmInvalidateCache( Cec_DynSrm_t * p, int * pTfoMask, int nPr
     {
         if ( !pTfoMask[i] )
             continue;
-        for ( f = 0; f < p->nFramesTotal; f++ )
+        for ( f = nPrefix; f < p->nFramesTotal; f++ )
         {
-            Vec_IntWriteEntry( p->vSpecLits, Cec_DynSrmCacheIndex(p, f, i), -1 );
+            int Key = Cec_DynSrmCacheIndex( p, f, i );
+            Vec_IntWriteEntry( p->vSpecLits, Key, -1 );
             Counter++;
         }
     }
@@ -481,6 +567,7 @@ static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPr
     iLit = Cec_DynSrmCacheRead( p, f, pObj );
     if ( iLit >= 0 )
         return iLit;
+    Cec_DynSrmCacheBegin( p, f, pObj );
     if ( Gia_ObjIsPi(p->pAig, pObj) )
     {
         iLit = Cec_DynSrmHostPiLit( p, f, pObj );
@@ -490,7 +577,6 @@ static int Cec_DynSrmSpecLit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int nPr
     if ( f >= nPrefix && (pRepr = Gia_ObjReprObj(p->pAig, Gia_ObjId(p->pAig, pObj))) )
     {
         iLit = Cec_DynSrmSpecLit( p, pRepr, f, nPrefix );
-        Cec_DynSrmCacheWatch( p, f, pRepr, f, pObj );
         iLit = Abc_LitNotCond( iLit, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
         Cec_DynSrmCacheWrite( p, f, pObj, iLit );
         return iLit;
@@ -549,6 +635,7 @@ static int Cec_DynSrmSpecLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int
     iLit = Cec_DynSrmCacheRead( p, f, pObj );
     if ( iLit >= 0 )
         return iLit;
+    Cec_DynSrmCacheBegin( p, f, pObj );
     if ( Gia_ObjIsPi(p->pAig, pObj) )
     {
         iLit = Cec_DynSrmHostPiLit( p, f, pObj );
@@ -558,7 +645,11 @@ static int Cec_DynSrmSpecLitInit( Cec_DynSrm_t * p, Gia_Obj_t * pObj, int f, int
     if ( f >= nPrefix && (pRepr = Gia_ObjReprObj(p->pAig, Gia_ObjId(p->pAig, pObj))) )
     {
         iLit = Cec_DynSrmSpecLitInit( p, pRepr, f, nPrefix );
-        Cec_DynSrmCacheWatch( p, f, pRepr, f, pObj );
+        // The initial-state proof treats frame-0 ROs as initialized terminals,
+        // not as induction-hypothesis boundaries.  Preserve the previous SRM's
+        // raw dependency frontier through this one special alias.
+        if ( f == 0 && Gia_ObjIsRo(p->pAig, pObj) )
+            Cec_DynSrmCacheWatch( p, f, pRepr, f, pObj );
         iLit = Abc_LitNotCond( iLit, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
         Cec_DynSrmCacheWrite( p, f, pObj, iLit );
         return iLit;
@@ -698,11 +789,105 @@ void Cec_DynSrmForceRebuild( Cec_DynSrm_t * p, int fIncrFallback )
         p->nForceResetReason = CEC_DYN_RESET_DACTIVE;
 }
 
+// Traverses the previous live logical SRM before cache invalidation.  Rewrite
+// events seed their time-frame action instances; cache-miss edges provide the
+// actual SRM TFO and retained root watchers identify the proofs it reaches.
+// Version checks exclude obsolete logical materializations without ever walking
+// the append-only physical pCore or any stale XOR roots stored in it.
+void Cec_DynSrmCollectProofDirty( Cec_DynSrm_t * p, int nPrefix )
+{
+    Vec_Int_t * vQueue;
+    int f, i, k, Head = 0, Key, ProofObj;
+    if ( p == NULL || p->pCore == NULL || p->pIncr == NULL ||
+         !p->pIncr->fStructDep || p->vCacheFanouts == NULL )
+        return;
+    Vec_IntForEachEntry( p->pIncr->vSrmProofNodes, ProofObj, i )
+        p->pIncr->pSrmProofMark[ProofObj] = 0;
+    Vec_IntClear( p->pIncr->vSrmProofNodes );
+    if ( ++p->CacheTravId <= 0 )
+    {
+        memset( p->pCacheSeen, 0,
+            sizeof(int) * p->nFramesTotal * p->nObjs );
+        p->CacheTravId = 1;
+    }
+    vQueue = Vec_IntAlloc( 64 );
+    Vec_IntForEachEntry( p->pIncr->vSeeds, ProofObj, i )
+        for ( f = nPrefix; f < p->nFramesTotal; f++ )
+        {
+            Key = Cec_DynSrmCacheIndex( p, f, ProofObj );
+            if ( p->pCacheSeen[Key] == p->CacheTravId )
+                continue;
+            p->pCacheSeen[Key] = p->CacheTravId;
+            Vec_IntPush( vQueue, Key );
+        }
+    while ( Head < Vec_IntSize(vQueue) )
+    {
+        Vec_Int_t * vProofs, * vParents;
+        int * pArray;
+        int nLive;
+        Key = Vec_IntEntry( vQueue, Head++ );
+
+        vProofs = Vec_WecEntry( p->vCacheProofs, Key );
+        pArray = Vec_IntArray( vProofs );
+        assert( (Vec_IntSize(vProofs) & 1) == 0 );
+        for ( k = nLive = 0; k < Vec_IntSize(vProofs); k += 2 )
+        {
+            int Version = pArray[k+1];
+            ProofObj = pArray[k];
+            if ( p->pProofVersion[ProofObj] != Version )
+                continue;
+            pArray[2*nLive] = ProofObj;
+            pArray[2*nLive+1] = Version;
+            nLive++;
+            if ( !p->pIncr->pSrmProofMark[ProofObj] )
+            {
+                p->pIncr->pSrmProofMark[ProofObj] = 1;
+                Vec_IntPush( p->pIncr->vSrmProofNodes, ProofObj );
+            }
+        }
+        if ( Vec_IntSize(vProofs) >= 64 &&
+             4 * nLive < Vec_IntSize(vProofs) / 2 )
+            Vec_IntShrink( vProofs, 2 * nLive );
+
+        vParents = Vec_WecEntry( p->vCacheFanouts, Key );
+        pArray = Vec_IntArray( vParents );
+        assert( (Vec_IntSize(vParents) & 1) == 0 );
+        for ( k = nLive = 0; k < Vec_IntSize(vParents); k += 2 )
+        {
+            int Parent = pArray[k];
+            int Version = pArray[k+1];
+            if ( p->pCacheVersion[Parent] != Version )
+                continue;
+            pArray[2*nLive] = Parent;
+            pArray[2*nLive+1] = Version;
+            nLive++;
+            if ( p->pCacheSeen[Parent] == p->CacheTravId )
+                continue;
+            p->pCacheSeen[Parent] = p->CacheTravId;
+            Vec_IntPush( vQueue, Parent );
+        }
+        if ( Vec_IntSize(vParents) >= 64 &&
+             4 * nLive < Vec_IntSize(vParents) / 2 )
+            Vec_IntShrink( vParents, 2 * nLive );
+    }
+    // Only the old logical-SRM TFO changes certificate provenance.  The host
+    // cache TFO is deliberately broader (it crosses speculative aliases), so
+    // using cache invalidation to version these rows would discard dependency
+    // generations still owned by clean retained proofs.
+    Vec_IntForEachEntry( vQueue, Key, i )
+        if ( ++p->pCacheVersion[Key] <= 0 )
+        {
+            p->pCacheVersion[Key] = 1;
+            p->pGraphVersion[Key] = 0;
+        }
+    Vec_IntFree( vQueue );
+}
+
 void Cec_DynSrmFree( Cec_DynSrm_t * p )
 {
     if ( p == NULL )
         return;
-    Cec_DynSrmResetCore( p );
+    Cec_DynSrmResetCore( p, 0 );
     ABC_FREE( p );
 }
 
@@ -834,7 +1019,10 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
     if ( fMeasure ) tEnsure = Abc_ClockHr() - tStep;
     nCoreObjsBefore = Gia_ManObjNum( p->pCore );
     tStep = fMeasure ? Abc_ClockHr() : 0;
-    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask, 0 );
+    Cec_DynSrmInvalidateCache( p,
+        Mode == CEC_EMIT_SKIPPED ? NULL :
+        (p->pIncr != NULL && p->pIncr->fStructDep ?
+            p->pIncr->pTfoMark : pTfoMask), 0 );
     if ( fMeasure ) tInvalidate = Abc_ClockHr() - tStep;
     tStep = fMeasure ? Abc_ClockHr() : 0;
     Gia_ManSetPhase( p->pAig );
@@ -849,7 +1037,9 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
                 int fActive = Cec_DynSrmActiveConst( p, pTfoMask, i );
                 if ( !Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     continue;
+                Cec_DynSrmProofBegin( p, i, Mode );
                 iObjRaw = Cec_DynSrmRealLit( p, pObj, nFrames, 0 );
+                Cec_DynSrmProofWatchReal( p, pObj, nFrames, i, 0 );
                 iObjNew = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pObj) );
                 if ( iObjNew != 0 )
                 {
@@ -866,8 +1056,11 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
                     int fActive = Cec_DynSrmActivePair( p, pTfoMask, 1, iPrev, iObj );
                     if ( Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     {
+                        Cec_DynSrmProofBegin( p, iObj, Mode );
                         iPrevRaw = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iPrev), nFrames, 0 );
                         iObjRaw  = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iObj), nFrames, 0 );
+                        Cec_DynSrmProofWatchReal( p, Gia_ManObj(p->pAig, iPrev), nFrames, iObj, 0 );
+                        Cec_DynSrmProofWatchReal( p, Gia_ManObj(p->pAig, iObj), nFrames, iObj, 0 );
                         iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iPrev)) );
                         iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iObj)) );
                         if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
@@ -884,8 +1077,11 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
                     int fActive = Cec_DynSrmActivePair( p, pTfoMask, 1, iPrev, iObj );
                     if ( Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     {
+                        Cec_DynSrmProofBegin( p, iObj, Mode );
                         iPrevRaw = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iPrev), nFrames, 0 );
                         iObjRaw  = Cec_DynSrmRealLit( p, Gia_ManObj(p->pAig, iObj), nFrames, 0 );
+                        Cec_DynSrmProofWatchReal( p, Gia_ManObj(p->pAig, iPrev), nFrames, iObj, 0 );
+                        Cec_DynSrmProofWatchReal( p, Gia_ManObj(p->pAig, iObj), nFrames, iObj, 0 );
                         iPrevNew = Abc_LitNotCond( iPrevRaw, Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iPrev)) );
                         iObjNew  = Abc_LitNotCond( iObjRaw,  Gia_ObjPhase(pObj) ^ Gia_ObjPhase(Gia_ManObj(p->pAig, iObj)) );
                         if ( iPrevNew != iObjNew && iPrevNew != 0 && iObjNew != 1 )
@@ -912,8 +1108,12 @@ void Cec_DynSrmBuildCore( Cec_DynSrm_t * p, int nFrames, int fScorr,
                 if ( !Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     continue;
             }
+            Cec_DynSrmProofBegin( p, i, Mode );
             iPrevRaw = Gia_ObjIsConst(p->pAig, i)? 0 : Cec_DynSrmRealLit( p, pRepr, nFrames, 0 );
             iObjRaw  = Cec_DynSrmRealLit( p, pObj, nFrames, 0 );
+            if ( !Gia_ObjIsConst(p->pAig, i) )
+                Cec_DynSrmProofWatchReal( p, pRepr, nFrames, i, 0 );
+            Cec_DynSrmProofWatchReal( p, pObj, nFrames, i, 0 );
             iPrevNew = iPrevRaw;
             iObjNew  = Abc_LitNotCond( iObjRaw, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
             if ( iPrevNew != iObjNew )
@@ -971,7 +1171,10 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
     if ( fMeasure ) tEnsure = Abc_ClockHr() - tStep;
     nCoreObjsBefore = Gia_ManObjNum( p->pCore );
     tStep = fMeasure ? Abc_ClockHr() : 0;
-    Cec_DynSrmInvalidateCache( p, Mode == CEC_EMIT_SKIPPED ? NULL : pTfoMask, nPrefix );
+    Cec_DynSrmInvalidateCache( p,
+        Mode == CEC_EMIT_SKIPPED ? NULL :
+        (p->pIncr != NULL && p->pIncr->fStructDep ?
+            p->pIncr->pTfoMark : pTfoMask), nPrefix );
     if ( fMeasure ) tInvalidate = Abc_ClockHr() - tStep;
     tStep = fMeasure ? Abc_ClockHr() : 0;
     Gia_ManSetPhase( p->pAig );
@@ -990,8 +1193,12 @@ void Cec_DynSrmBuildCoreInit( Cec_DynSrm_t * p, int nFrames, int nPrefix, int fS
                 if ( !Cec_DynSrmEmitModeAccept(fActive, Mode) )
                     continue;
             }
+            Cec_DynSrmProofBegin( p, i, Mode );
             iPrevNew = Gia_ObjIsConst(p->pAig, i)? 0 : Cec_DynSrmRealLitInit( p, pRepr, f, nPrefix );
             iObjNew  = Cec_DynSrmRealLitInit( p, pObj, f, nPrefix );
+            if ( !Gia_ObjIsConst(p->pAig, i) )
+                Cec_DynSrmProofWatchReal( p, pRepr, f, i, 1 );
+            Cec_DynSrmProofWatchReal( p, pObj, f, i, 1 );
             iObjNew  = Abc_LitNotCond( iObjNew, Gia_ObjPhase(pRepr) ^ Gia_ObjPhase(pObj) );
             if ( iPrevNew != iObjNew )
             {

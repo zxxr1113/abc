@@ -172,7 +172,7 @@ struct Cec_ParCor_t_
     int              fUseSmartCnf;  // use smart CNF computation
     int              fStopWhenGone; // quit when PO is not a candidate constant
     int              fIncremental;  // active-list/TFO-triggered reproof in main loop
-    int              fStructDep;    // experimental structural-dependency dirty closure
+    int              fStructDep;    // previous-logical-SRM dependency proof reuse
     int              fIncrOracle;   // internal unbounded shadow SAT for pairs skipped by -i
     int              fIncrSim;      // persistent CEX-TFO-only resimulation after SAT
     int              fDynSrm;       // persistent dynamic SRM and true-unroll resimulation

@@ -182,11 +182,13 @@ struct Cec_IncrMgr_t_
     Vec_Int_t *  vDepNodes;       // proof targets currently dependency-dirty
     int *        pDepMark;        // dense emitted-proof mark (dirty or pending)
     int *        pDepInvalidMark; // old UNSAT proofs invalidated by dependencies
+    Vec_Int_t *  vSrmProofNodes;  // proof targets reached by materialized SRM TFO
+    int *        pSrmProofMark;   // dense SRM-TFO proof mark, size = nObjs
     Vec_Int_t *  vAliasHeads;     // repr -> first member using it in the SRM
     Vec_Int_t *  vAliasNext;      // next member with the same representative
     Vec_Int_t *  vBfsCur;         // BFS frontier for current frame
     Vec_Int_t *  vBfsNext;        // BFS frontier carried to next frame
-    int          fStructDep;      // use proof-target dependency marks for emission
+    int          fStructDep;      // use logical-SRM proof-target marks for emission
     int          fOwnsFanout;     // 1 if we built static fanout (must free)
 };
 
@@ -413,6 +415,7 @@ extern Gia_Man_t *          Gia_ManCorrSpecReduceInit_Active( Gia_Man_t * p, int
 extern Cec_DynSrm_t *       Cec_DynSrmAlloc( Gia_Man_t * pAig, Cec_IncrMgr_t * pIncr, int fUseAdaptive );
 extern void                 Cec_DynSrmSetParams( Cec_DynSrm_t * p, Cec_ParCor_t * pPars );
 extern void                 Cec_DynSrmForceRebuild( Cec_DynSrm_t * p, int fIncrFallback );
+extern void                 Cec_DynSrmCollectProofDirty( Cec_DynSrm_t * p, int nPrefix );
 extern void                 Cec_DynSrmFree( Cec_DynSrm_t * p );
 extern void                 Cec_DynSrmRecordSolveStats( Cec_DynSrm_t * p, int nCalls, int nReal, int nTriv, int nFail, abctime tSat );
 extern void                 Cec_DynSrmCountActivePairs( Cec_DynSrm_t * p, int fRings, int * pTfoMark, int * pnTotal, int * pnActive );

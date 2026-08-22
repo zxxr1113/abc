@@ -42182,7 +42182,7 @@ int Abc_CommandAbc9Scorr2( Abc_Frame_t * pAbc, int argc, char ** argv )
     }
     if ( pPars->fStructDep && !pPars->fIncremental )
     {
-        Abc_Print( -1, "The structural dependency experiment (-d) requires -i.\n" );
+        Abc_Print( -1, "Logical-SRM dependency proof reuse (-d) requires -i.\n" );
         return 1;
     }
     if ( pPars->fBmcTasAdaptive && !pPars->fDynSrm )
@@ -42273,7 +42273,7 @@ usage:
     Abc_Print( -2, "\t-c     : toggle using circuit-based SAT solver [default = %s]\n", pPars->fUseCSat? "yes": "no" );
     Abc_Print( -2, "\t-q     : toggle quitting when PO is not a constant candidate [default = %s]\n", pPars->fStopWhenGone? "yes": "no" );
     Abc_Print( -2, "\t-i     : toggle incremental TFO-triggered re-proof [default = %s]\n", pPars->fIncremental? "yes": "no" );
-    Abc_Print( -2, "\t-d     : toggle structural-dependency dirty closure experiment [default = %s]\n", pPars->fStructDep? "yes": "no" );
+    Abc_Print( -2, "\t-d     : toggle previous-logical-SRM dependency proof reuse [default = %s]\n", pPars->fStructDep? "yes": "no" );
     Abc_Print( -2, "\t-D     : toggle persistent dynamic SRM construction [default = %s]\n", pPars->fDynSrm? "yes": "no" );
     Abc_Print( -2, "\t-I     : toggle persistent event-driven resimulation [default = %s]\n", pPars->fIncrSim? "yes": "no" );
     Abc_Print( -2, "\t-s     : toggle skipping resimulation without a real CEX [default = %s]\n", pPars->fSkipFailResim? "yes": "no" );
