@@ -1,0 +1,19 @@
+.model stran_microbatch_helper
+.inputs a c
+.outputs y keep_r keep_s
+.latch a r 0
+.latch a s 0
+
+# The two latches are equal only on reset-reachable traces.  The original
+# y=(r&s)&c has several one-gate Build recipes such as r&c and s&c.  They are
+# rejected by the COM lane but proved in separate SEQ micro-batches, allowing
+# the second batch to exercise same-snapshot helper reuse from the first.
+.names r s rs
+11 1
+.names rs c y
+11 1
+.names r keep_r
+1 1
+.names s keep_s
+1 1
+.end

@@ -42242,7 +42242,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwbaeMxclrgftupyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwjbaeMxclrgftupyh")) != EOF )
     {
         switch ( c )
         {
@@ -42316,6 +42316,11 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
             if ( pPars->nRootConstrTop < 0 ) goto usage;
             break;
+        case 'j':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nRootProofBatch = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRootProofBatch < 0 ) goto usage;
+            break;
         case 'b':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nCombBTLimit = atoi(argv[globalUtilOptind++]);
@@ -42388,7 +42393,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwbae num] [-P root] [-Mxclrgftupyh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwjbae num] [-P root] [-Mxclrgftupyh]\n" );
     Abc_Print( -2, "\t         performs root-only sequential Direct resubstitution\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
@@ -42399,7 +42404,8 @@ usage:
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : ranked physical nodes passed to Build (0 = complete allowed TFI) [default = %d]\n", pPars->nConstrBaseMax );
-    Abc_Print( -2, "\t-q num : Build candidates pulled per root/wave (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
+    Abc_Print( -2, "\t-q num : SEQ Build candidates per root/wave, or pre-commit horizon with -j (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
+    Abc_Print( -2, "\t-j num : SEQ Build candidates per root/proof batch; batch 1 also includes all Direct candidates (0 = legacy immediate commit) [default = %d]\n", pPars->nRootProofBatch );
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );

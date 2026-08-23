@@ -24,6 +24,12 @@
 
 ABC_NAMESPACE_IMPL_START
 
+// COM is deliberately independent of the SEQ q/j experiment.  Arbitrary-
+// state certificates do not use retained induction helpers, so COM submits
+// one modest frontier and commits it immediately instead of accumulating
+// proof micro-batches on the initial graph.
+#define CEC_TRAN_COMB_BUILD_Q 4
+
 enum
 {
     CEC_TRAN_CAND_CONST = 0,
@@ -53,6 +59,7 @@ static int Cec_TranCanonicalizeSelfTest();
 static int Cec_TranMffcSelfTest();
 static int Cec_TranPipelineSelfTest();
 static int Cec_TranCommitWaveSelfTest();
+static int Cec_TranProofMicroBatchSelfTest();
 static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
     int nDepthMax, int nNodesMax, int fUseMffcDivs,
     char const * pCovered, char const * pUsed,
@@ -61,7 +68,7 @@ int Cec_TranRootSelfTest()
 {
     return Abc_ResubIteratorSelfTest() && Cec_TranCanonicalizeSelfTest() &&
         Cec_TranMffcSelfTest() && Cec_TranPipelineSelfTest() &&
-        Cec_TranCommitWaveSelfTest();
+        Cec_TranCommitWaveSelfTest() && Cec_TranProofMicroBatchSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -78,6 +85,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nSimFrames  = 8;
     p->nRootWaves  = 8;
     p->nRootConstrTop = 1;
+    p->nRootProofBatch = 0;
     // Use the same per-obligation conflict budget for the combinational CBS
     // certificate lane and the sequential scorr oracle by default.  The two
     // budgets remain independently configurable through -b and -C.
@@ -1333,9 +1341,64 @@ struct Cec_TranRootCursor_t_
 {
     int State[5];               // Gia resub Stage/n/i/k/iGreedy
     int nBuildYield;
+    int nBuildAccepted;         // unique positive-gain Build candidates emitted on this snapshot
     int nPages;
     int fExhausted;
 };
+
+// With proof micro-batching disabled, q retains its historical meaning: one
+// discovery wave pulls q Build candidates (or drains the iterator for q=0)
+// and a positive proof is immediately eligible for selection.  With -j, q is
+// instead the per-snapshot commit horizon and -j is the per-proof-call slice.
+// Returning zero means either "legacy unlimited" (q=0, -j=0) or "horizon
+// reached" (-j>0); callers distinguish these cases through nRootProofBatch.
+static int Cec_TranRootBuildBudget( Cec_ParTran_t const * pPars,
+    Cec_TranRootCursor_t const * pCursor )
+{
+    int nRemain;
+    if ( pCursor->fExhausted )
+        return 0;
+    if ( pPars->nRootProofBatch <= 0 )
+        return pPars->nRootConstrTop;
+    if ( pPars->nRootConstrTop == 0 )
+        return pPars->nRootProofBatch;
+    nRemain = pPars->nRootConstrTop - pCursor->nBuildAccepted;
+    return nRemain <= 0 ? 0 :
+        Abc_MinInt( pPars->nRootProofBatch, nRemain );
+}
+
+static int Cec_TranRootBuildHorizonReached( Cec_ParTran_t const * pPars,
+    Cec_TranRootCursor_t const * pCursor )
+{
+    assert( pPars->nRootProofBatch > 0 );
+    return pCursor->fExhausted ||
+        (pPars->nRootConstrTop > 0 &&
+         pCursor->nBuildAccepted >= pPars->nRootConstrTop);
+}
+
+static int Cec_TranProofMicroBatchSelfTest()
+{
+    Cec_ParTran_t Pars;
+    Cec_TranRootCursor_t Cursor = {{0}};
+    Cec_ManTranSetDefaultParams( &Pars );
+    Pars.nRootConstrTop = 100;
+    assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 100 );
+    Pars.nRootProofBatch = 5;
+    assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 5 );
+    Cursor.nBuildAccepted = 97;
+    assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 3 );
+    Cursor.nBuildAccepted = 100;
+    assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 0 );
+    assert( Cec_TranRootBuildHorizonReached(&Pars, &Cursor) );
+    Cursor.nBuildAccepted = 0;
+    Pars.nRootConstrTop = 0;
+    assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 5 );
+    assert( !Cec_TranRootBuildHorizonReached(&Pars, &Cursor) );
+    Cursor.fExhausted = 1;
+    assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 0 );
+    assert( Cec_TranRootBuildHorizonReached(&Pars, &Cursor) );
+    return 1;
+}
 
 typedef struct Cec_TranCandVec_t_ Cec_TranCandVec_t;
 struct Cec_TranCandVec_t_
@@ -3207,10 +3270,13 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     (void)pUsed;
     (void)pMffc;
     (void)vMffc;
-    // q limits the Build frontier of this phase.  q=0 is the exhaustive
-    // reference mode and runs the finite iterator to completion.
-    fUnlimited = pPars->nRootConstrTop == 0;
-    nBudget = fUnlimited ? 0 : pPars->nRootConstrTop;
+    // In legacy mode q is this call's frontier and q=0 drains the iterator.
+    // In micro-batch mode -j is this call's frontier while q is the cumulative
+    // number of accepted Build candidates allowed before the snapshot's one
+    // selection/commit point.  The last call may therefore be smaller than j.
+    fUnlimited = pPars->nRootProofBatch == 0 &&
+        pPars->nRootConstrTop == 0;
+    nBudget = Cec_TranRootBuildBudget( pPars, pCursor );
     pStat->nConstructed++;
     pStat->nSigChecks++;
     if ( pCursor->fExhausted || (!fUnlimited && nBudget <= 0) ||
@@ -3286,6 +3352,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
              !Cec_TranCandVecContains(pConstr, &Cand) )
         {
             Cec_TranCandVecPush( pConstr, Cand );
+            pCursor->nBuildAccepted++;
             pProf->nRootWaveRecipes[iProfWave]++;
             pStat->nSigMatched++;
         }
@@ -3354,7 +3421,12 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     timePart = Abc_Clock() - clk;
     pProf->timeRootDivPool += timePart;
     clk = Abc_Clock();
-    if ( !pPars->fBuildOnly )
+    // Under SEQ proof micro-batching Direct belongs only to the first batch.
+    // The snapshot is immutable until the q horizon, so no later Constant or
+    // Existing relation can become newly visible.  Legacy mode keeps its old
+    // behavior, including the harmless Known-filtered rescan on later waves.
+    if ( !pPars->fBuildOnly &&
+         (pPars->nRootProofBatch == 0 || iWave == 0) )
         Cec_TranCollectRootDirectTfi( p, pSim, pPars, pRoot, vPool,
             pKnown, &Exist, pDisc, pProf );
     for ( i = 0; i < Exist.nSize; i++ )
@@ -4597,6 +4669,10 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     char * pUsed = ABC_CALLOC( char, Gia_ManObjNum(p) );
     int nRoots = 0, r, i, nSelected = 0;
     int nWaves = 0, fSnapshotExhausted = 0;
+    int fMicroBatch = pPars->nRootProofBatch > 0;
+    int fCommitHorizonReached = 0;
+    int nBuildAcceptedTotal = 0, nBuildAcceptedMax = 0;
+    int nBuildHorizonRoots = 0;
     int iPhase = fCombOnly ? 0 : 1;
     int nCandCalls = 0, nCandSum = 0, nCandMax = 0;
     int nCandHist[10] = {0};
@@ -4620,11 +4696,18 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Abc_ResubPrepareManager( pSim->nSlots );
     Cec_TranDepScratchStart( &Dep, pSim->nSlots,
         pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
-    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates selection=commit-wave-root-loss-gwmin candidates=%s q-build-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
+    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
+        fMicroBatch ? "deferred-q-horizon-root-loss-gwmin" :
+            "commit-wave-root-loss-gwmin",
         pPars->fBuildOnly ? "build-only" : "constant/existing/build",
-        pPars->nRootConstrTop, pPars->fUseHelpers ? "on" : "off",
+        pPars->nRootConstrTop, pPars->nRootProofBatch,
+        pPars->fUseHelpers ? "on" : "off",
         pPars->fUseMffcDivs ? "on" : "off" );
+    if ( fMicroBatch )
+        Abc_Print( 1, "stran-root proof micro-batching: enabled=yes build-per-root-per-proof=%d commit-build-horizon-per-root=%d horizon-zero=%s commit-policy=deferred-until-horizon.\n",
+            pPars->nRootProofBatch, pPars->nRootConstrTop,
+            pPars->nRootConstrTop ? "bounded" : "iterator-exhaustion" );
 
     // Reuse exact relations formally proved on an earlier snapshot.  They are
     // inserted into Known before discovery, so the iterator advances past the
@@ -4662,7 +4745,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
 
     // A positive retained certificate may become profitable after an earlier
     // commit.  It is eligible for commit without being re-proved.
-    if ( Proved.nSize )
+    if ( Proved.nSize && !fMicroBatch )
     {
         clk = Abc_Clock();
         nSelected = Cec_TranRootConsumeProved( p, &Proved,
@@ -4678,6 +4761,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     while ( Selected.nSize == 0 )
     {
         int iWave = nWaves, iProfWave = Abc_MinInt(iWave, 63);
+        int nLiveRoots = 0, nHorizonRoots = 0;
         Cec_TranCandVecClear( &Page );
         Cec_TranCandVecClear( &ProofCands );
         Cec_TranCandVecClear( &BatchProved );
@@ -4687,6 +4771,14 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             int nGot;
             if ( pRoots[r].nMffc <= 0 )
                 continue;
+            nLiveRoots++;
+            if ( fMicroBatch && pPars->fUseConstr &&
+                 Cec_TranRootBuildHorizonReached(pPars,
+                    pCursors + pRoots[r].iObj) )
+            {
+                nHorizonRoots++;
+                continue;
+            }
             Cec_TranRootDiscoverOne( p, pSim, pPars, pRoots + r,
                 pCursors + pRoots[r].iObj, iWave, &Known, pSolved,
                 pCovered, pUsed, pMffc, vMffc, &Dep, &Disc, &Prof,
@@ -4701,7 +4793,9 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         }
         if ( Page.nSize == 0 )
         {
-            fSnapshotExhausted = 1;
+            fCommitHorizonReached = fMicroBatch && nLiveRoots > 0 &&
+                nHorizonRoots == nLiveRoots;
+            fSnapshotExhausted = !fCommitHorizonReached;
             break;
         }
         nWaves++;
@@ -4747,7 +4841,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
                         BatchProved.pArray[i] );
             }
         }
-        if ( Proved.nSize )
+        if ( Proved.nSize && !fMicroBatch )
         {
             clk = Abc_Clock();
             nSelected = Cec_TranRootConsumeProved( p, &Proved,
@@ -4756,13 +4850,41 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             Prof.timeRootPostSelect += Abc_Clock() - clk;
             Prof.nRootWaveSelected[iProfWave] += nSelected;
         }
-        if ( fCombOnly )
+        if ( fCombOnly && !fMicroBatch )
             break;
+    }
+
+    // In opt-in micro-batch mode every proof result remains metadata on the
+    // immutable snapshot until the per-root q horizon (or iterator end) is
+    // reached.  HistoryLive was already passed to every later SEQ proof as H,
+    // so this is the first selection point, not a second proof phase.
+    if ( fMicroBatch && Proved.nSize )
+    {
+        int iProfWave = Abc_MinInt(Abc_MaxInt(nWaves - 1, 0), 63);
+        clk = Abc_Clock();
+        nSelected = Cec_TranRootConsumeProved( p, &Proved,
+            pCovered, pUsed, pSolved, pMffc, vMffc,
+            vSupport, &Selected, &Prof );
+        Prof.timeRootPostSelect += Abc_Clock() - clk;
+        Prof.nRootWaveSelected[iProfWave] += nSelected;
     }
 
     for ( i = 0; i < Selected.nSize; i++ )
         Prof.nRootHistorySelected +=
             Cec_TranCandVecContains(pHistory, Selected.pArray + i);
+
+    if ( fMicroBatch )
+        for ( r = 0; r < nRoots; r++ )
+            if ( pRoots[r].nMffc > 0 )
+            {
+                Cec_TranRootCursor_t const * pCursor =
+                    pCursors + pRoots[r].iObj;
+                nBuildAcceptedTotal += pCursor->nBuildAccepted;
+                nBuildAcceptedMax = Abc_MaxInt( nBuildAcceptedMax,
+                    pCursor->nBuildAccepted );
+                nBuildHorizonRoots += pPars->fUseConstr &&
+                    Cec_TranRootBuildHorizonReached(pPars, pCursor);
+            }
 
     // Keep every still-live old certificate and every newly proved relation
     // that was not consumed by this commit.  Selected relations map to their
@@ -4802,6 +4924,12 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Prof.nRootNewProved, Prof.nRootHistorySelected, Proved.nSize,
         Prof.nRootBatchCalls,
         fSnapshotExhausted ? "yes" : "no" );
+    if ( fMicroBatch )
+        Abc_Print( 1, "stran-root proof micro-batch summary: proof-waves=%d proof-calls=%d build-accepted-total=%d build-accepted-max-per-root=%d roots-at-horizon=%d stop=%s selected-after-stop=%d.\n",
+            Prof.nRootProofWaves, Prof.nRootBatchCalls,
+            nBuildAcceptedTotal, nBuildAcceptedMax, nBuildHorizonRoots,
+            fCommitHorizonReached ? "commit-horizon" : "no-new-candidate",
+            Selected.nSize );
     Abc_Print( 1, "stran-root cross-wave proof reuse: generation-skipped=%d remapped=%d invalidated=%d retained=%d.\n",
         Prof.nQueueTriedSkipped, Prof.nHistoryTriedRemapped,
         Prof.nHistoryTriedInvalidated, pHistory->nSize );
@@ -4845,14 +4973,17 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         pPars->nGainMin = 0;
 
     // Run arbitrary-state combinational proof exactly once on the initial
-    // graph.  It uses all three candidate lanes, then drains every profitable
-    // proved certificate through as many conflict-free commit waves as needed.
-    // Opportunities exposed later are discovered and attributed to SEQ.
+    // graph.  COM owns a fixed q=4 frontier, ignores the SEQ proof micro-batch
+    // control, and therefore reaches selection after one proof batch.  It then
+    // drains every profitable proved certificate through as many conflict-free
+    // commit waves as needed.  Opportunities exposed later belong to SEQ.
     {
         int nBefore = Gia_ManAndNum( p );
         int nAfterFirst, nAfter, nClosureBatches = 0;
         PassPars = *pPars;
         PassPars.nRootWaves = 1;
+        PassPars.nRootConstrTop = CEC_TRAN_COMB_BUILD_Q;
+        PassPars.nRootProofBatch = 0;
         pNext = Cec_ManSequentialRootPass( p, &PassPars,
             0, 1, &ProofHistory );
         Gia_ManStop( p );
