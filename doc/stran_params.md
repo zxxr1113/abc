@@ -61,6 +61,12 @@ relation 写入 `HistoryLive`，所以下一 micro-batch 的 SEQ proof 会将它
 或其有限 iterator 提前耗尽后，才第一次运行 root-loss GWMIN selection，并执行一次
 bundle commit。最后一个 micro-batch 会自动缩小，例如已消费 97 个时只再取 3 个。
 
+同一 q horizon 内永久图和 virtual covered/used 集合均不变化，因此第一次 micro-batch
+完成完整 root/MFFC refresh 后，后续 batch 复用该结果，并只对本批新增 `Page` 做
+frontier validation；已标成 proved/tried 的累计 `Known` 不再重复扫描。commit 后 pass
+在新图上重建，旧 refresh 状态不会跨 snapshot 复用。该 fast path 只减少重复工作，
+不改变 candidate 顺序、proof obligations 或 selection/commit 结果。
+
 `-q 0 -j 5` 表示每次 proof 每 root 最多 5 个 Build obligation，但 selection/commit
 要等所有相关 iterator 耗尽。Constant/Existing 仍不计入 `q` 或 `j`，且只在第一个
 micro-batch 枚举；这是因为 commit 前 snapshot 不变，后续重复枚举只会被 Known 去重。

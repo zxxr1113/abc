@@ -17,6 +17,7 @@ grep -q 'stran-root helper batch: enabled=yes retained=0 active=0 .* obligations
 grep -q 'stran-root helper batch: enabled=yes retained=1 active=1 .* obligations=1 relation-total=2' "$micro_log"
 grep -q 'stran-root sequential relations: candidates=2 seeded=3 helper-seeds=1 proved=2 split=0 unknown=0' "$micro_log"
 grep -q 'stran-root proof micro-batch summary: proof-waves=2 proof-calls=2 build-accepted-total=2 build-accepted-max-per-root=2 .* selected-after-stop=1' "$micro_log"
+grep -q 'stran-root immutable frontier reuse: refresh-calls=1 refresh-reuses=1 page-candidates=2 known-candidate-scans-avoided=1' "$micro_log"
 grep -q 'Networks are equivalent' "$micro_log"
 
 # COM is a separate, fixed q=4 policy: it ignores the requested SEQ q/j,

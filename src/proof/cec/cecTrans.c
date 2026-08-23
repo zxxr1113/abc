@@ -3484,7 +3484,7 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
     Cec_TranRoot_t * pRoots, int nRoots, Cec_TranCandVec_t const * pCands,
     char const * pCovered, char const * pUsed, char * pMffc,
     Vec_Int_t * vMffc, Vec_Int_t * vSupport,
-    Cec_TranCandVec_t * pSeq, Cec_TranProf_t * pProf )
+    int fRefreshRoots, Cec_TranCandVec_t * pSeq, Cec_TranProf_t * pProf )
 {
     int r, i, k, iObj, Gain, fSupportFreed;
     Cec_TranCandVecClear( pSeq );
@@ -3493,8 +3493,14 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
              (pCovered[pCands->pArray[i].iTarget] ||
               pUsed[pCands->pArray[i].iTarget]) )
             pProf->nDirtyRootFreed++;
-    Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
-        pMffc, vMffc, pProf );
+    // Root potential depends only on the permanent snapshot and the virtual
+    // covered/used sets.  SEQ proof micro-batches change neither, so the first
+    // batch computes and sorts it once and later batches safely reuse it.
+    // The legacy -j0 path continues to request its historical refresh on every
+    // call so this optimization cannot perturb existing scheduling behavior.
+    if ( fRefreshRoots )
+        Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
+            pMffc, vMffc, pProf );
     for ( r = 0; r < nRoots && pRoots[r].nMffc > 0; r++ )
     {
         for ( i = 0; i < pCands->nSize; i++ )
@@ -4221,7 +4227,7 @@ static int Cec_TranPipelineSelfTest()
     ZeroGain.nStatus = CEC_TRAN_STATE_CANDIDATE;
     Cec_TranCandVecPush( &Cands, ZeroGain );
     Cec_TranRootPrepareSeqFrontier( p, &Root, 1, &Cands,
-        pCovered, pUsed, pMffc, vMffc, vSupport, &Seq, &Prof );
+        pCovered, pUsed, pMffc, vMffc, vSupport, 1, &Seq, &Prof );
     assert( Seq.nSize == 0 );
 
     DirectCand = Cec_TranCandCreateLiteral( Root.iObj, iN1,
@@ -4673,6 +4679,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int fCommitHorizonReached = 0;
     int nBuildAcceptedTotal = 0, nBuildAcceptedMax = 0;
     int nBuildHorizonRoots = 0;
+    int nFrontierRefreshes = 0, nFrontierRefreshReuses = 0;
+    long long nFrontierCandidates = 0, nKnownCandidateScansAvoided = 0;
     int iPhase = fCombOnly ? 0 : 1;
     int nCandCalls = 0, nCandSum = 0, nCandMax = 0;
     int nCandHist[10] = {0};
@@ -4806,11 +4814,25 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             Cec_TranCandVecPush( &Known, Page.pArray[i] );
             Prof.nStageKindGenerated[iPhase][Page.pArray[i].nKind]++;
         }
-        clk = Abc_Clock();
-        Cec_TranRootPrepareSeqFrontier( p, pRoots, nRoots, &Known,
-            pCovered, pUsed, pMffc, vMffc, vSupport,
-            &ProofCands, &Prof );
-        Prof.timeRootRefresh += Abc_Clock() - clk;
+        // In micro-batch mode only Page can contain fresh obligations.  Every
+        // older Known entry is already PROVED or TRIED_SEQ, and scanning it
+        // again cannot change the frontier on this immutable snapshot.  Keep
+        // the legacy Known scan byte-for-byte when -j is disabled.
+        {
+            Cec_TranCandVec_t const * pFrontier =
+                fMicroBatch ? &Page : &Known;
+            int fRefreshRoots = !fMicroBatch || nFrontierRefreshes == 0;
+            nFrontierRefreshes += fRefreshRoots;
+            nFrontierRefreshReuses += !fRefreshRoots;
+            nFrontierCandidates += pFrontier->nSize;
+            if ( fMicroBatch )
+                nKnownCandidateScansAvoided += Known.nSize - Page.nSize;
+            clk = Abc_Clock();
+            Cec_TranRootPrepareSeqFrontier( p, pRoots, nRoots, pFrontier,
+                pCovered, pUsed, pMffc, vMffc, vSupport,
+                fRefreshRoots, &ProofCands, &Prof );
+            Prof.timeRootRefresh += Abc_Clock() - clk;
+        }
         for ( i = 0; i < ProofCands.nSize; i++ )
         {
             int iKnown = Cec_TranCandVecFind( &Known,
@@ -4930,6 +4952,10 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             nBuildAcceptedTotal, nBuildAcceptedMax, nBuildHorizonRoots,
             fCommitHorizonReached ? "commit-horizon" : "no-new-candidate",
             Selected.nSize );
+    if ( fMicroBatch )
+        Abc_Print( 1, "stran-root immutable frontier reuse: refresh-calls=%d refresh-reuses=%d page-candidates=%lld known-candidate-scans-avoided=%lld.\n",
+            nFrontierRefreshes, nFrontierRefreshReuses,
+            nFrontierCandidates, nKnownCandidateScansAvoided );
     Abc_Print( 1, "stran-root cross-wave proof reuse: generation-skipped=%d remapped=%d invalidated=%d retained=%d.\n",
         Prof.nQueueTriedSkipped, Prof.nHistoryTriedRemapped,
         Prof.nHistoryTriedInvalidated, pHistory->nSize );
