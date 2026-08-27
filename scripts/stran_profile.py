@@ -43,6 +43,13 @@ ROOT_BUILD_SUPPORT_ROOT_VALID_PREFIX = (
 ROOT_BUILD_SUPPORT_ROOT_ACCEPTED_PREFIX = (
     "stran-root build-support-root-accepted profile:"
 )
+ROOT_BUILD_RESIDUAL_PREFIX = "stran-root build-residual profile:"
+ROOT_BUILD_RESIDUAL_DEPTH_PREFIX = (
+    "stran-root build-residual-depth profile:"
+)
+ROOT_BUILD_RESIDUAL_SIZE_PREFIX = (
+    "stran-root build-residual-size profile:"
+)
 
 TIME_KEYS = (
     "total-sec", "sim-sec", "care-sec", "root-discovery-sec",
@@ -167,6 +174,10 @@ ROOT_BUILD_SUPPORT_KEYS = (
     "accepted-candidates", "accepted-supports",
     "submitted-candidates", "submitted-supports",
     "refuted-candidates", "refuted-supports",
+    "refuted-bmc-sat-batch-candidates", "refuted-bmc-sat-batch-supports",
+    "refuted-ind-only-sat-batch-candidates",
+    "refuted-ind-only-sat-batch-supports",
+    "refuted-no-sat-batch-candidates", "refuted-no-sat-batch-supports",
     "unknown-candidates", "unknown-supports",
     "proved-candidates", "proved-supports",
     "submitted-no-proof-supports", "submitted-refuted-only-supports",
@@ -187,6 +198,9 @@ ROOT_BUILD_SUPPORT_DERIVED = (
     "support-submit-rate-pct", "submitted-candidate-proof-rate-pct",
     "submitted-candidate-refute-rate-pct",
     "submitted-candidate-unknown-rate-pct",
+    "refuted-candidate-bmc-sat-batch-share-pct",
+    "refuted-candidate-ind-only-sat-batch-share-pct",
+    "refuted-candidate-no-sat-batch-share-pct",
     "submitted-support-proof-rate-pct", "submitted-support-no-proof-rate-pct",
     "support-prove-rate-pct",
     "support-select-rate-pct", "proved-min-gate-share-pct",
@@ -200,6 +214,28 @@ ROOT_PHASE_BUILD_SUPPORT_FIELDS = [
     f"root_{phase}_build_support_{key.replace('-', '_')}"
     for phase in ("comb", "seq")
     for key in (*ROOT_BUILD_SUPPORT_KEYS, *ROOT_BUILD_SUPPORT_DERIVED)
+]
+ROOT_BUILD_RESIDUAL_KEYS = (
+    "sample-rate", "eligible-roots", "sampled-roots", "no-pair-roots",
+    "sampled-pairs", "static-complete-roots", "greedy-complete-roots",
+    "static-cover-size-sum", "greedy-cover-size-sum",
+    "greedy-valid-supports", "greedy-accepted-supports",
+    "greedy-submitted-supports", "greedy-proved-supports",
+    "greedy-selected-supports",
+)
+ROOT_BUILD_RESIDUAL_DERIVED = (
+    "sampled-root-rate-pct", "no-pair-root-rate-pct",
+    "static-complete-rate-pct", "greedy-complete-rate-pct",
+    "static-average-cover-size", "greedy-average-cover-size",
+)
+ROOT_BUILD_RESIDUAL_FIELDS = [
+    f"root_build_residual_{key.replace('-', '_')}"
+    for key in (*ROOT_BUILD_RESIDUAL_KEYS, *ROOT_BUILD_RESIDUAL_DERIVED)
+]
+ROOT_PHASE_BUILD_RESIDUAL_FIELDS = [
+    f"root_{phase}_build_residual_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in (*ROOT_BUILD_RESIDUAL_KEYS, *ROOT_BUILD_RESIDUAL_DERIVED)
 ]
 ROOT_BUILD_BUCKETS = {
     "stage": (("one-gate", "div-gate", "gate-gate", "greedy"),
@@ -238,6 +274,11 @@ ROOT_BUILD_BUCKETS = {
                            ("roots", "candidates", "supports")),
     "support_root_accepted": (("1", "gt1-2", "gt2-4", "gt4-8", "gt8"),
                               ("roots", "candidates", "supports")),
+    "residual_depth": (("1", "2", "4", "8", "16", "32"),
+                       ("static-covered-pairs", "greedy-covered-pairs",
+                        "total-pairs")),
+    "residual_size": (("1", "2", "3-4", "5-8", "9-16", "17-32", "33+"),
+                      ("static-complete-roots", "greedy-complete-roots")),
 }
 
 
@@ -296,6 +337,8 @@ PROFILE_FIELDS = [
     *ROOT_PHASE_BUILD_FUNNEL_FIELDS,
     *ROOT_BUILD_SUPPORT_FIELDS,
     *ROOT_PHASE_BUILD_SUPPORT_FIELDS,
+    *ROOT_BUILD_RESIDUAL_FIELDS,
+    *ROOT_PHASE_BUILD_RESIDUAL_FIELDS,
     *ROOT_BUILD_BUCKET_FIELDS,
     *ROOT_PHASE_BUILD_BUCKET_FIELDS,
     *PHASE_PROFILE_FIELDS,
@@ -515,6 +558,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_phase_build_supports: dict[str, list[dict[str, int | float]]] = {
         "comb": [], "seq": [],
     }
+    root_build_residuals: list[dict[str, int | float]] = []
+    root_phase_build_residuals: dict[str, list[dict[str, int | float]]] = {
+        "comb": [], "seq": [],
+    }
     root_build_buckets: dict[str, list[tuple[str, dict[str, int | float]]]] = {
         family: [] for family in ROOT_BUILD_BUCKETS
     }
@@ -539,6 +586,9 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_BUILD_SUPPORT_MULT_PREFIX, ROOT_BUILD_SUPPORT_STAGE_PREFIX,
             ROOT_BUILD_SUPPORT_ROOT_VALID_PREFIX,
             ROOT_BUILD_SUPPORT_ROOT_ACCEPTED_PREFIX,
+            ROOT_BUILD_RESIDUAL_PREFIX,
+            ROOT_BUILD_RESIDUAL_DEPTH_PREFIX,
+            ROOT_BUILD_RESIDUAL_SIZE_PREFIX,
         )):
             continue
         record = {key: _number(value) for key, value in _KEY_VALUE.findall(line)}
@@ -588,6 +638,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
             if phase:
                 root_phase_build_supports[phase.group(1)].append(record)
+        elif ROOT_BUILD_RESIDUAL_PREFIX in line:
+            root_build_residuals.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_build_residuals[phase.group(1)].append(record)
         else:
             family = None
             for name, prefix in (
@@ -604,6 +659,8 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                 ("support_root_valid", ROOT_BUILD_SUPPORT_ROOT_VALID_PREFIX),
                 ("support_root_accepted",
                  ROOT_BUILD_SUPPORT_ROOT_ACCEPTED_PREFIX),
+                ("residual_depth", ROOT_BUILD_RESIDUAL_DEPTH_PREFIX),
+                ("residual_size", ROOT_BUILD_RESIDUAL_SIZE_PREFIX),
             ):
                 if prefix in line:
                     family = name
@@ -734,6 +791,15 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             values["refuted-candidates"], values["submitted-candidates"])
         result[f"{field_prefix}_submitted_candidate_unknown_rate_pct"] = _ratio(
             values["unknown-candidates"], values["submitted-candidates"])
+        result[f"{field_prefix}_refuted_candidate_bmc_sat_batch_share_pct"] = _ratio(
+            values["refuted-bmc-sat-batch-candidates"],
+            values["refuted-candidates"])
+        result[f"{field_prefix}_refuted_candidate_ind_only_sat_batch_share_pct"] = _ratio(
+            values["refuted-ind-only-sat-batch-candidates"],
+            values["refuted-candidates"])
+        result[f"{field_prefix}_refuted_candidate_no_sat_batch_share_pct"] = _ratio(
+            values["refuted-no-sat-batch-candidates"],
+            values["refuted-candidates"])
         result[f"{field_prefix}_submitted_support_proof_rate_pct"] = _ratio(
             values["proved-supports"], values["submitted-supports"])
         result[f"{field_prefix}_submitted_support_no_proof_rate_pct"] = _ratio(
@@ -770,6 +836,39 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         )
 
     populate_support_fields(root_build_supports, "root_build_support")
+
+    def populate_residual_fields(
+        records: list[dict[str, int | float]], field_prefix: str,
+    ) -> None:
+        values: dict[str, Any] = {}
+        for key in ROOT_BUILD_RESIDUAL_KEYS:
+            values[key] = (
+                max_field(records, key)
+                if key == "sample-rate" else sum_field(records, key)
+            )
+            result[f"{field_prefix}_{_field_token(key)}"] = values[key]
+        result[f"{field_prefix}_sampled_root_rate_pct"] = _ratio(
+            values["sampled-roots"], values["eligible-roots"])
+        result[f"{field_prefix}_no_pair_root_rate_pct"] = _ratio(
+            values["no-pair-roots"], values["sampled-roots"])
+        pair_roots = (
+            values["sampled-roots"] - values["no-pair-roots"]
+            if all(isinstance(value, (int, float)) for value in (
+                values["sampled-roots"], values["no-pair-roots"]))
+            else NA
+        )
+        result[f"{field_prefix}_static_complete_rate_pct"] = _ratio(
+            values["static-complete-roots"], pair_roots)
+        result[f"{field_prefix}_greedy_complete_rate_pct"] = _ratio(
+            values["greedy-complete-roots"], pair_roots)
+        result[f"{field_prefix}_static_average_cover_size"] = _quotient(
+            values["static-cover-size-sum"],
+            values["static-complete-roots"])
+        result[f"{field_prefix}_greedy_average_cover_size"] = _quotient(
+            values["greedy-cover-size-sum"],
+            values["greedy-complete-roots"])
+
+    populate_residual_fields(root_build_residuals, "root_build_residual")
     for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
         for bucket in buckets:
             records = [
@@ -800,6 +899,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         populate_support_fields(
             root_phase_build_supports[phase],
             f"root_{phase}_build_support",
+        )
+        populate_residual_fields(
+            root_phase_build_residuals[phase],
+            f"root_{phase}_build_residual",
         )
         for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
             for bucket in buckets:

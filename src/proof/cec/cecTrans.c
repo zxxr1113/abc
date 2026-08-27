@@ -38,6 +38,10 @@ ABC_NAMESPACE_IMPL_START
 #define CEC_TRAN_BUILD_SUPPORT_SIZE_BINS 6
 #define CEC_TRAN_BUILD_SUPPORT_MULT_BINS 6
 #define CEC_TRAN_BUILD_SUPPORT_RATIO_BINS 5
+#define CEC_TRAN_BUILD_RESIDUAL_SAMPLE_RATE 32
+#define CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES 8
+#define CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS 6
+#define CEC_TRAN_BUILD_RESIDUAL_SIZE_BINS 7
 
 enum
 {
@@ -862,7 +866,9 @@ enum
     CEC_TRAN_SUPP_VALID = 0,
     CEC_TRAN_SUPP_ACCEPTED,
     CEC_TRAN_SUPP_SUBMITTED,
-    CEC_TRAN_SUPP_REFUTED,
+    CEC_TRAN_SUPP_REFUTED_BMC_BATCH,
+    CEC_TRAN_SUPP_REFUTED_IND_BATCH,
+    CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH,
     CEC_TRAN_SUPP_UNKNOWN,
     CEC_TRAN_SUPP_PROVED,
     CEC_TRAN_SUPP_SELECTED
@@ -2293,6 +2299,7 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     Cec_ProfCor_t CorrBefore;
     int i, RetValue = 1, nSeq = 0;
     int nSeqSplit = 0, nSeqUnknown = 0, nSeqRoots = 0;
+    int SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH;
     abctime clk, timeSeq = 0;
     memset( &Cor, 0, sizeof(Cor) );
     clk = Abc_Clock();
@@ -2369,6 +2376,17 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         clk = Abc_Clock();
         RetValue = Cec_ManLSCorrespondenceClasses( pBatch, &Cor );
         timeSeq = Abc_Clock() - clk;
+        // The correspondence profiler exposes aggregate SAT causes, not the
+        // class split caused by each individual obligation.  Keep this label
+        // explicitly batch-scoped: BMC dominates when both phases saw SAT;
+        // "ind-only" means this batch saw no reset-reachable BMC SAT.
+        if ( pPars->fProfile )
+        {
+            if ( pProf->Corr.nBmcSat > CorrBefore.nBmcSat )
+                SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_BMC_BATCH;
+            else if ( pProf->Corr.nIndSat > CorrBefore.nIndSat )
+                SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_IND_BATCH;
+        }
         // Detailed correspondence counters use nanosecond ticks.  Attribute
         // the complete base phase, inductive SAT, and resimulation separately;
         // the remaining wall time is class management and fixed-point control.
@@ -2435,7 +2453,7 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         if ( !fProved && !fCombOnly && nSeq &&
              pCands[i].nKind == CEC_TRAN_CAND_CONSTR )
             Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf, pCands + i,
-                fBatchComplete ? CEC_TRAN_SUPP_REFUTED :
+                fBatchComplete ? SuppRefuteEvent :
                     CEC_TRAN_SUPP_UNKNOWN );
         if ( fProved && Vec_StrEntry(vStage, i) == 0 )
         {
@@ -2888,6 +2906,9 @@ struct Cec_TranSuppProfEnt_t_
     int           nAccepted;
     int           nSubmitted;
     int           nRefuted;
+    int           nRefutedBmcBatch;
+    int           nRefutedIndBatch;
+    int           nRefutedNoSatBatch;
     int           nUnknown;
     int           nProved;
     int           nSelected;
@@ -2902,6 +2923,7 @@ struct Cec_TranSuppProfEnt_t_
     unsigned char StageUnknown;
     unsigned char StageProved;
     unsigned char StageSelected;
+    unsigned char fResidualGreedy;
 };
 
 struct Cec_TranSuppProf_t_
@@ -2918,6 +2940,21 @@ struct Cec_TranSuppProf_t_
     int *                   pRootValidSupps;
     int *                   pRootAcceptedCands;
     int *                   pRootAcceptedSupps;
+    int *                   pRootResidualOffset;
+    int *                   pRootResidualSize;
+    Vec_Int_t *             vResidualKeys;
+    long long               nResidualEligibleRoots;
+    long long               nResidualSampledRoots;
+    long long               nResidualNoPairRoots;
+    long long               nResidualPairs;
+    long long               nResidualStaticCovered[CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS];
+    long long               nResidualGreedyCovered[CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS];
+    long long               nResidualStaticComplete;
+    long long               nResidualGreedyComplete;
+    long long               nResidualStaticSizeSum;
+    long long               nResidualGreedySizeSum;
+    long long               nResidualStaticSize[CEC_TRAN_BUILD_RESIDUAL_SIZE_BINS];
+    long long               nResidualGreedySize[CEC_TRAN_BUILD_RESIDUAL_SIZE_BINS];
 };
 
 static word Cec_TranSuppProfHash( int iTarget, Vec_Int_t * vSupport )
@@ -2986,6 +3023,14 @@ static Cec_TranSuppProf_t * Cec_TranSuppProfStart( int nObjs )
     p->pRootValidSupps = ABC_CALLOC( int, nObjs );
     p->pRootAcceptedCands = ABC_CALLOC( int, nObjs );
     p->pRootAcceptedSupps = ABC_CALLOC( int, nObjs );
+    p->pRootResidualOffset = ABC_ALLOC( int, nObjs );
+    p->pRootResidualSize = ABC_CALLOC( int, nObjs );
+    p->vResidualKeys = Vec_IntAlloc( 256 );
+    {
+        int i;
+        for ( i = 0; i < nObjs; i++ )
+            p->pRootResidualOffset[i] = -3;
+    }
     return p;
 }
 
@@ -3001,7 +3046,20 @@ static void Cec_TranSuppProfStop( Cec_TranSuppProf_t * p )
     ABC_FREE( p->pRootValidSupps );
     ABC_FREE( p->pRootAcceptedCands );
     ABC_FREE( p->pRootAcceptedSupps );
+    ABC_FREE( p->pRootResidualOffset );
+    ABC_FREE( p->pRootResidualSize );
+    Vec_IntFree( p->vResidualKeys );
     ABC_FREE( p );
+}
+
+static int Cec_TranSuppProfIsResidualGreedy( Cec_TranSuppProf_t const * p,
+    int iTarget, Vec_Int_t * vSupport )
+{
+    int iOffset = p->pRootResidualOffset[iTarget];
+    int nSize = p->pRootResidualSize[iTarget];
+    return iOffset >= 0 && nSize == Vec_IntSize(vSupport) &&
+        !memcmp( Vec_IntArray(p->vResidualKeys) + iOffset,
+            Vec_IntArray(vSupport), sizeof(int) * (size_t)nSize );
 }
 
 static Cec_TranSuppProfEnt_t * Cec_TranSuppProfLookup( Cec_TranSuppProf_t * p,
@@ -3055,6 +3113,8 @@ static void Cec_TranSuppProfRecord( Cec_TranSuppProf_t * p, int iTarget,
     assert( Vec_IntSize(vSupport) > 0 );
     assert( nGates >= 0 && nGates < 255 );
     pEntry = Cec_TranSuppProfLookup( p, iTarget, vSupport );
+    pEntry->fResidualGreedy |=
+        Cec_TranSuppProfIsResidualGreedy( p, iTarget, vSupport );
     if ( Event == CEC_TRAN_SUPP_VALID )
     {
         p->pRootValidCands[iTarget]++;
@@ -3077,9 +3137,17 @@ static void Cec_TranSuppProfRecord( Cec_TranSuppProf_t * p, int iTarget,
         pEntry->nSubmitted++;
         pEntry->StageSubmitted |= StageBit;
     }
-    else if ( Event == CEC_TRAN_SUPP_REFUTED )
+    else if ( Event == CEC_TRAN_SUPP_REFUTED_BMC_BATCH ||
+              Event == CEC_TRAN_SUPP_REFUTED_IND_BATCH ||
+              Event == CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH )
     {
         pEntry->nRefuted++;
+        pEntry->nRefutedBmcBatch +=
+            Event == CEC_TRAN_SUPP_REFUTED_BMC_BATCH;
+        pEntry->nRefutedIndBatch +=
+            Event == CEC_TRAN_SUPP_REFUTED_IND_BATCH;
+        pEntry->nRefutedNoSatBatch +=
+            Event == CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH;
         pEntry->StageRefuted |= StageBit;
     }
     else if ( Event == CEC_TRAN_SUPP_UNKNOWN )
@@ -3134,6 +3202,12 @@ static int Cec_TranSuppProfRatioBin( int nCands, int nSupps )
         nCands <= 4 * nSupps ? 2 : nCands <= 8 * nSupps ? 3 : 4;
 }
 
+static int Cec_TranSuppProfResidualSizeBin( int nSize )
+{
+    return nSize <= 1 ? 0 : nSize == 2 ? 1 : nSize <= 4 ? 2 :
+        nSize <= 8 ? 3 : nSize <= 16 ? 4 : nSize <= 32 ? 5 : 6;
+}
+
 static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
 {
     static int const Stages[4] = { 1, 3, 4, 5 };
@@ -3145,6 +3219,10 @@ static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
         "1", "2", "3-4", "5-8", "9-16", "17+" };
     static char const * pRatio[CEC_TRAN_BUILD_SUPPORT_RATIO_BINS] = {
         "1", "gt1-2", "gt2-4", "gt4-8", "gt8" };
+    static int const ResidualDepth[CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS] = {
+        1, 2, 4, 8, 16, 32 };
+    static char const * pResidualSize[CEC_TRAN_BUILD_RESIDUAL_SIZE_BINS] = {
+        "1", "2", "3-4", "5-8", "9-16", "17-32", "33+" };
     long long Size[CEC_TRAN_BUILD_SUPPORT_SIZE_BINS][8] = {{0}};
     long long Mult[CEC_TRAN_BUILD_SUPPORT_MULT_BINS][10] = {{0}};
     long long Stage[4][7] = {{0}};
@@ -3162,6 +3240,13 @@ static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
     long long nSingle = 0, nMulti = 0, nGateExcess = 0;
     long long nProvedMin = 0, nProvedAbove = 0;
     long long nSelectedMin = 0, nSelectedAbove = 0, nSelectedBelow = 0;
+    long long nRefutedBmcCands = 0, nRefutedIndCands = 0;
+    long long nRefutedNoSatCands = 0;
+    long long nRefutedBmcSupps = 0, nRefutedIndSupps = 0;
+    long long nRefutedNoSatSupps = 0;
+    long long nResidualValid = 0, nResidualAccepted = 0;
+    long long nResidualSubmitted = 0, nResidualProved = 0;
+    long long nResidualSelected = 0;
     int nRootsValid = 0, nRootsAccepted = 0;
     int nMaxValidCands = 0, nMaxValidSupps = 0;
     int nMaxAcceptedCands = 0, nMaxAcceptedSupps = 0;
@@ -3176,6 +3261,9 @@ static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
         nAcceptedCands += pEntry->nAccepted;
         nSubmittedCands += pEntry->nSubmitted;
         nRefutedCands += pEntry->nRefuted;
+        nRefutedBmcCands += pEntry->nRefutedBmcBatch;
+        nRefutedIndCands += pEntry->nRefutedIndBatch;
+        nRefutedNoSatCands += pEntry->nRefutedNoSatBatch;
         nUnknownCands += pEntry->nUnknown;
         nProvedCands += pEntry->nProved;
         nSelectedCands += pEntry->nSelected;
@@ -3183,9 +3271,20 @@ static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
         nAcceptedSupps += pEntry->nAccepted > 0;
         nSubmittedSupps += pEntry->nSubmitted > 0;
         nRefutedSupps += pEntry->nRefuted > 0;
+        nRefutedBmcSupps += pEntry->nRefutedBmcBatch > 0;
+        nRefutedIndSupps += pEntry->nRefutedIndBatch > 0;
+        nRefutedNoSatSupps += pEntry->nRefutedNoSatBatch > 0;
         nUnknownSupps += pEntry->nUnknown > 0;
         nProvedSupps += pEntry->nProved > 0;
         nSelectedSupps += pEntry->nSelected > 0;
+        if ( pEntry->fResidualGreedy )
+        {
+            nResidualValid += pEntry->nValid > 0;
+            nResidualAccepted += pEntry->nAccepted > 0;
+            nResidualSubmitted += pEntry->nSubmitted > 0;
+            nResidualProved += pEntry->nProved > 0;
+            nResidualSelected += pEntry->nSelected > 0;
+        }
         Size[iBin][0] += pEntry->nValid > 0;
         Size[iBin][1] += pEntry->nAccepted > 0;
         Size[iBin][2] += pEntry->nAccepted;
@@ -3307,10 +3406,15 @@ static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
         if ( iPhase )
             assert( nSubmittedCands == nRefutedCands + nUnknownCands +
                 nProvedCands );
+        assert( nRefutedCands == nRefutedBmcCands + nRefutedIndCands +
+            nRefutedNoSatCands );
     }
-    Abc_Print( 1, "stran-root build-support profile: schema=7 phase=%s valid-candidates=%lld valid-supports=%lld accepted-candidates=%lld accepted-supports=%lld submitted-candidates=%lld submitted-supports=%lld refuted-candidates=%lld refuted-supports=%lld unknown-candidates=%lld unknown-supports=%lld proved-candidates=%lld proved-supports=%lld submitted-no-proof-supports=%lld submitted-refuted-only-supports=%lld submitted-unknown-only-supports=%lld submitted-mixed-failure-supports=%lld selected-candidates=%lld selected-supports=%lld selected-with-accepted-supports=%lld selected-without-accepted-supports=%lld roots-valid=%d roots-accepted=%d max-valid-candidates-root=%d max-valid-supports-root=%d max-accepted-candidates-root=%d max-accepted-supports-root=%d single-recipe-supports=%lld multi-recipe-supports=%lld accepted-gate-excess=%lld proved-min-gate-supports=%lld proved-only-above-min-supports=%lld selected-min-gate-supports=%lld selected-only-above-min-supports=%lld selected-below-accepted-min-supports=%lld\n",
+    Abc_Print( 1, "stran-root build-support profile: schema=7 phase=%s valid-candidates=%lld valid-supports=%lld accepted-candidates=%lld accepted-supports=%lld submitted-candidates=%lld submitted-supports=%lld refuted-candidates=%lld refuted-supports=%lld refuted-bmc-sat-batch-candidates=%lld refuted-bmc-sat-batch-supports=%lld refuted-ind-only-sat-batch-candidates=%lld refuted-ind-only-sat-batch-supports=%lld refuted-no-sat-batch-candidates=%lld refuted-no-sat-batch-supports=%lld unknown-candidates=%lld unknown-supports=%lld proved-candidates=%lld proved-supports=%lld submitted-no-proof-supports=%lld submitted-refuted-only-supports=%lld submitted-unknown-only-supports=%lld submitted-mixed-failure-supports=%lld selected-candidates=%lld selected-supports=%lld selected-with-accepted-supports=%lld selected-without-accepted-supports=%lld roots-valid=%d roots-accepted=%d max-valid-candidates-root=%d max-valid-supports-root=%d max-accepted-candidates-root=%d max-accepted-supports-root=%d single-recipe-supports=%lld multi-recipe-supports=%lld accepted-gate-excess=%lld proved-min-gate-supports=%lld proved-only-above-min-supports=%lld selected-min-gate-supports=%lld selected-only-above-min-supports=%lld selected-below-accepted-min-supports=%lld\n",
         pPhase, nValidCands, nValidSupps, nAcceptedCands, nAcceptedSupps,
         nSubmittedCands, nSubmittedSupps, nRefutedCands, nRefutedSupps,
+        nRefutedBmcCands, nRefutedBmcSupps,
+        nRefutedIndCands, nRefutedIndSupps,
+        nRefutedNoSatCands, nRefutedNoSatSupps,
         nUnknownCands, nUnknownSupps, nProvedCands, nProvedSupps,
         nNoProofSupps, nRefutedOnlySupps, nUnknownOnlySupps,
         nMixedFailureSupps,
@@ -3320,6 +3424,22 @@ static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
         nMaxAcceptedCands, nMaxAcceptedSupps, nSingle, nMulti,
         nGateExcess, nProvedMin, nProvedAbove, nSelectedMin, nSelectedAbove,
         nSelectedBelow );
+    Abc_Print( 1, "stran-root build-residual profile: schema=7 phase=%s sample-rate=%d eligible-roots=%lld sampled-roots=%lld no-pair-roots=%lld sampled-pairs=%lld static-complete-roots=%lld greedy-complete-roots=%lld static-cover-size-sum=%lld greedy-cover-size-sum=%lld greedy-valid-supports=%lld greedy-accepted-supports=%lld greedy-submitted-supports=%lld greedy-proved-supports=%lld greedy-selected-supports=%lld\n",
+        pPhase, CEC_TRAN_BUILD_RESIDUAL_SAMPLE_RATE,
+        p->nResidualEligibleRoots, p->nResidualSampledRoots,
+        p->nResidualNoPairRoots, p->nResidualPairs,
+        p->nResidualStaticComplete, p->nResidualGreedyComplete,
+        p->nResidualStaticSizeSum, p->nResidualGreedySizeSum,
+        nResidualValid, nResidualAccepted, nResidualSubmitted,
+        nResidualProved, nResidualSelected );
+    for ( i = 0; i < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS; i++ )
+        Abc_Print( 1, "stran-root build-residual-depth profile: schema=7 phase=%s bucket=%d static-covered-pairs=%lld greedy-covered-pairs=%lld total-pairs=%lld\n",
+            pPhase, ResidualDepth[i], p->nResidualStaticCovered[i],
+            p->nResidualGreedyCovered[i], p->nResidualPairs );
+    for ( i = 0; i < CEC_TRAN_BUILD_RESIDUAL_SIZE_BINS; i++ )
+        Abc_Print( 1, "stran-root build-residual-size profile: schema=7 phase=%s bucket=%s static-complete-roots=%lld greedy-complete-roots=%lld\n",
+            pPhase, pResidualSize[i], p->nResidualStaticSize[i],
+            p->nResidualGreedySize[i] );
     for ( i = 0; i < CEC_TRAN_BUILD_SUPPORT_SIZE_BINS; i++ )
         Abc_Print( 1, "stran-root build-support-size profile: schema=7 phase=%s bucket=%s valid-supports=%lld accepted-supports=%lld accepted-candidates=%lld submitted-supports=%lld refuted-supports=%lld unknown-supports=%lld proved-supports=%lld selected-supports=%lld\n",
             pPhase, pSize[i], Size[i][0], Size[i][1], Size[i][2],
@@ -3569,6 +3689,183 @@ static void Cec_TranSelectRankedDivPool( Vec_Int_t * vReservoir,
     for ( i = 0; i < nKeep; i++ )
         pRanks[i].iPos = i;
     Vec_IntFree( vRanked );
+}
+
+static word Cec_TranResidualMix( word Value )
+{
+    Value ^= Value >> 30;
+    Value *= ABC_CONST(0xbf58476d1ce4e5b9);
+    Value ^= Value >> 27;
+    Value *= ABC_CONST(0x94d049bb133111eb);
+    return Value ^ (Value >> 31);
+}
+
+static int Cec_TranResidualSimBit( word const * pSim, int iSample )
+{
+    return (int)((pSim[iSample >> 6] >> (iSample & 63)) & 1);
+}
+
+static void Cec_TranResidualSampleInsert( int iSample, word Score,
+    int * pSamples, word * pScores, int * pnSamples )
+{
+    int i, iWorst = 0;
+    if ( *pnSamples < CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES )
+    {
+        pSamples[*pnSamples] = iSample;
+        pScores[(*pnSamples)++] = Score;
+        return;
+    }
+    for ( i = 1; i < *pnSamples; i++ )
+        if ( pScores[i] > pScores[iWorst] ||
+             (pScores[i] == pScores[iWorst] &&
+              pSamples[i] > pSamples[iWorst]) )
+            iWorst = i;
+    if ( Score > pScores[iWorst] ||
+         (Score == pScores[iWorst] && iSample >= pSamples[iWorst]) )
+        return;
+    pSamples[iWorst] = iSample;
+    pScores[iWorst] = Score;
+}
+
+// Profiling-only counterfactual: compare the current static ranking prefix
+// against conditional greedy selection from the complete pre-truncation
+// reservoir.  At most 8 off and 8 on samples give an exact 64-bit residual
+// pair mask.  Root sampling bounds overhead without changing discovery.
+static void Cec_TranSuppProfResidualSample( Cec_TranSuppProf_t * p,
+    Cec_TranSim_t * pSim, int iTarget, Vec_Int_t * vReservoir,
+    Cec_TranDivRank_t const * pRanks, int nSupportMax )
+{
+    static int const Depth[CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS] = {
+        1, 2, 4, 8, 16, 32 };
+    int Off[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
+    int On[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
+    word OffScore[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
+    word OnScore[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
+    word * pCovers, Full, Covered, BestGainMask;
+    char * pSelected;
+    Vec_Int_t * vGreedy;
+    word * pTarget, * pDiv;
+    int nOff = 0, nOn = 0, nPairs, nReservoir, nSelect;
+    int i, k, d, iRank, iObj, iBest, nBest, nStaticSize = 0;
+    int nGreedySize = 0, iDepth;
+    if ( p == NULL || Vec_IntSize(vReservoir) == 0 )
+        return;
+    assert( iTarget > 0 && iTarget < p->nObjs );
+    if ( p->pRootResidualOffset[iTarget] != -3 )
+        return;
+    p->nResidualEligibleRoots++;
+    if ( p->nResidualSampledRoots &&
+         Cec_TranResidualMix((word)(unsigned)iTarget) %
+            CEC_TRAN_BUILD_RESIDUAL_SAMPLE_RATE )
+    {
+        p->pRootResidualOffset[iTarget] = -2;
+        return;
+    }
+    p->pRootResidualOffset[iTarget] = -1;
+    p->nResidualSampledRoots++;
+    pTarget = Cec_TranSimObj( pSim, iTarget );
+    for ( i = 0; i < 64 * pSim->nSlots; i++ )
+    {
+        word Score = Cec_TranResidualMix(
+            ((word)(unsigned)iTarget << 32) ^ (word)(unsigned)i );
+        if ( Cec_TranResidualSimBit(pTarget, i) )
+            Cec_TranResidualSampleInsert( i, Score,
+                On, OnScore, &nOn );
+        else
+            Cec_TranResidualSampleInsert( i, Score,
+                Off, OffScore, &nOff );
+    }
+    if ( nOff == 0 || nOn == 0 )
+    {
+        p->nResidualNoPairRoots++;
+        return;
+    }
+    nPairs = nOff * nOn;
+    Full = nPairs == 64 ? ~(word)0 : (((word)1 << nPairs) - 1);
+    p->nResidualPairs += nPairs;
+    nReservoir = Vec_IntSize( vReservoir );
+    nSelect = Abc_MinInt( nReservoir, Abc_MinInt(nSupportMax, 32) );
+    pCovers = ABC_CALLOC( word, nReservoir );
+    pSelected = ABC_CALLOC( char, nReservoir );
+    vGreedy = Vec_IntAlloc( nSelect );
+    for ( iRank = 0; iRank < nReservoir; iRank++ )
+    {
+        iObj = Vec_IntEntry( vReservoir, pRanks[iRank].iPos );
+        pDiv = Cec_TranSimObj( pSim, iObj );
+        for ( i = 0; i < nOff; i++ )
+            for ( k = 0; k < nOn; k++ )
+                if ( Cec_TranResidualSimBit(pDiv, Off[i]) !=
+                     Cec_TranResidualSimBit(pDiv, On[k]) )
+                    pCovers[iRank] |= (word)1 << (i * nOn + k);
+    }
+    Covered = 0;
+    iDepth = 0;
+    for ( iRank = 0; iRank < nSelect; iRank++ )
+    {
+        Covered |= pCovers[iRank];
+        while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS &&
+                Depth[iDepth] == iRank + 1 )
+            p->nResidualStaticCovered[iDepth++] +=
+                Abc_TtCountOnes( Covered );
+        if ( Covered == Full && nStaticSize == 0 )
+            nStaticSize = iRank + 1;
+    }
+    while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS )
+        p->nResidualStaticCovered[iDepth++] += Abc_TtCountOnes( Covered );
+    Covered = 0;
+    iDepth = 0;
+    for ( d = 0; d < nSelect; d++ )
+    {
+        iBest = -1;
+        nBest = 0;
+        BestGainMask = 0;
+        for ( iRank = 0; iRank < nReservoir; iRank++ )
+            if ( !pSelected[iRank] )
+            {
+                word GainMask = pCovers[iRank] & ~Covered;
+                int nGain = Abc_TtCountOnes( GainMask );
+                if ( nGain > nBest )
+                    iBest = iRank, nBest = nGain, BestGainMask = GainMask;
+            }
+        if ( iBest < 0 )
+            break;
+        pSelected[iBest] = 1;
+        Covered |= BestGainMask;
+        Vec_IntPush( vGreedy, Vec_IntEntry(vReservoir,
+            pRanks[iBest].iPos) );
+        while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS &&
+                Depth[iDepth] == d + 1 )
+            p->nResidualGreedyCovered[iDepth++] +=
+                Abc_TtCountOnes( Covered );
+        if ( Covered == Full )
+        {
+            nGreedySize = d + 1;
+            break;
+        }
+    }
+    while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS )
+        p->nResidualGreedyCovered[iDepth++] += Abc_TtCountOnes( Covered );
+    if ( nStaticSize )
+    {
+        p->nResidualStaticComplete++;
+        p->nResidualStaticSizeSum += nStaticSize;
+        p->nResidualStaticSize[
+            Cec_TranSuppProfResidualSizeBin(nStaticSize)]++;
+    }
+    if ( nGreedySize )
+    {
+        p->nResidualGreedyComplete++;
+        p->nResidualGreedySizeSum += nGreedySize;
+        p->nResidualGreedySize[
+            Cec_TranSuppProfResidualSizeBin(nGreedySize)]++;
+        Vec_IntSort( vGreedy, 0 );
+        p->pRootResidualOffset[iTarget] = Vec_IntSize(p->vResidualKeys);
+        p->pRootResidualSize[iTarget] = Vec_IntSize(vGreedy);
+        Vec_IntAppend( p->vResidualKeys, vGreedy );
+    }
+    Vec_IntFree( vGreedy );
+    ABC_FREE( pCovers );
+    ABC_FREE( pSelected );
 }
 
 // A zero-gate existing replacement does not need the resub cover engine.
@@ -4080,6 +4377,11 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     if ( Vec_IntSize(vPool) )
     {
         pRanks = Cec_TranRankDivReservoir( pSim, pRoot->iObj, vPool );
+        if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) &&
+             iWave == 0 )
+            Cec_TranSuppProfResidualSample( pProf->pBuildSuppProf, pSim,
+                pRoot->iObj, vPool, pRanks,
+                pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 32 );
         Cec_TranSelectRankedDivPool( vPool, pRanks,
             pPars->nConstrBaseMax );
     }
