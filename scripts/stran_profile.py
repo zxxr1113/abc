@@ -33,6 +33,16 @@ ROOT_BUILD_GAIN_PREFIX = "stran-root build-gain profile:"
 ROOT_BUILD_CI_PREFIX = "stran-root build-ci profile:"
 ROOT_BUILD_DIVRANK_PREFIX = "stran-root build-divrank profile:"
 ROOT_BUILD_MFFC_PREFIX = "stran-root build-mffc profile:"
+ROOT_BUILD_SUPPORT_PREFIX = "stran-root build-support profile:"
+ROOT_BUILD_SUPPORT_SIZE_PREFIX = "stran-root build-support-size profile:"
+ROOT_BUILD_SUPPORT_MULT_PREFIX = "stran-root build-support-mult profile:"
+ROOT_BUILD_SUPPORT_STAGE_PREFIX = "stran-root build-support-stage profile:"
+ROOT_BUILD_SUPPORT_ROOT_VALID_PREFIX = (
+    "stran-root build-support-root-valid profile:"
+)
+ROOT_BUILD_SUPPORT_ROOT_ACCEPTED_PREFIX = (
+    "stran-root build-support-root-accepted profile:"
+)
 
 TIME_KEYS = (
     "total-sec", "sim-sec", "care-sec", "root-discovery-sec",
@@ -152,6 +162,45 @@ ROOT_PHASE_BUILD_FUNNEL_FIELDS = [
         "reject_direct", "reject_page", "accepted",
     )
 ]
+ROOT_BUILD_SUPPORT_KEYS = (
+    "valid-candidates", "valid-supports",
+    "accepted-candidates", "accepted-supports",
+    "submitted-candidates", "submitted-supports",
+    "refuted-candidates", "refuted-supports",
+    "unknown-candidates", "unknown-supports",
+    "proved-candidates", "proved-supports",
+    "submitted-no-proof-supports", "submitted-refuted-only-supports",
+    "submitted-unknown-only-supports", "submitted-mixed-failure-supports",
+    "selected-candidates", "selected-supports",
+    "selected-with-accepted-supports", "selected-without-accepted-supports",
+    "roots-valid", "roots-accepted",
+    "max-valid-candidates-root", "max-valid-supports-root",
+    "max-accepted-candidates-root", "max-accepted-supports-root",
+    "single-recipe-supports", "multi-recipe-supports",
+    "accepted-gate-excess", "proved-min-gate-supports",
+    "proved-only-above-min-supports", "selected-min-gate-supports",
+    "selected-only-above-min-supports", "selected-below-accepted-min-supports",
+)
+ROOT_BUILD_SUPPORT_DERIVED = (
+    "valid-candidates-per-support", "accepted-candidates-per-support",
+    "support-accept-rate-pct", "candidate-submit-rate-pct",
+    "support-submit-rate-pct", "submitted-candidate-proof-rate-pct",
+    "submitted-candidate-refute-rate-pct",
+    "submitted-candidate-unknown-rate-pct",
+    "submitted-support-proof-rate-pct", "submitted-support-no-proof-rate-pct",
+    "support-prove-rate-pct",
+    "support-select-rate-pct", "proved-min-gate-share-pct",
+    "selected-min-gate-share-pct", "accepted-gate-excess-per-candidate",
+)
+ROOT_BUILD_SUPPORT_FIELDS = [
+    f"root_build_support_{key.replace('-', '_')}"
+    for key in (*ROOT_BUILD_SUPPORT_KEYS, *ROOT_BUILD_SUPPORT_DERIVED)
+]
+ROOT_PHASE_BUILD_SUPPORT_FIELDS = [
+    f"root_{phase}_build_support_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in (*ROOT_BUILD_SUPPORT_KEYS, *ROOT_BUILD_SUPPORT_DERIVED)
+]
 ROOT_BUILD_BUCKETS = {
     "stage": (("one-gate", "div-gate", "gate-gate", "greedy"),
               ("valid", "accepted", "generated", "proved", "selected",
@@ -168,6 +217,27 @@ ROOT_BUILD_BUCKETS = {
                 ("generated", "proved", "selected", "selected-and-gain")),
     "mffc": (("1", "2", "3-4", "5-8", "9-16", "17+"),
              ("calls", "next", "accepted", "time-sec")),
+    "support_size": (("1", "2", "3", "4", "5-8", "9+"),
+                     ("valid-supports", "accepted-supports",
+                      "accepted-candidates", "submitted-supports",
+                      "refuted-supports", "unknown-supports",
+                      "proved-supports",
+                      "selected-supports")),
+    "support_mult": (("1", "2", "3-4", "5-8", "9-16", "17+"),
+                     ("supports", "candidates", "submitted-supports",
+                      "refuted-supports", "unknown-supports",
+                      "proved-supports",
+                      "selected-supports", "proved-min-gate-supports",
+                      "selected-min-gate-supports", "gate-excess")),
+    "support_stage": (("one-gate", "div-gate", "gate-gate", "greedy"),
+                      ("valid-supports", "accepted-supports",
+                       "submitted-supports", "refuted-supports",
+                       "unknown-supports", "proved-supports",
+                       "selected-supports")),
+    "support_root_valid": (("1", "gt1-2", "gt2-4", "gt4-8", "gt8"),
+                           ("roots", "candidates", "supports")),
+    "support_root_accepted": (("1", "gt1-2", "gt2-4", "gt4-8", "gt8"),
+                              ("roots", "candidates", "supports")),
 }
 
 
@@ -224,6 +294,8 @@ PROFILE_FIELDS = [
     *ROOT_ITERATOR_FIELDS,
     *ROOT_BUILD_FUNNEL_FIELDS,
     *ROOT_PHASE_BUILD_FUNNEL_FIELDS,
+    *ROOT_BUILD_SUPPORT_FIELDS,
+    *ROOT_PHASE_BUILD_SUPPORT_FIELDS,
     *ROOT_BUILD_BUCKET_FIELDS,
     *ROOT_PHASE_BUILD_BUCKET_FIELDS,
     *PHASE_PROFILE_FIELDS,
@@ -243,6 +315,14 @@ def _ratio(numerator: Any, denominator: Any) -> Any:
     if not isinstance(denominator, (int, float)) or denominator == 0:
         return NA
     return round(100.0 * numerator / denominator, 6)
+
+
+def _quotient(numerator: Any, denominator: Any) -> Any:
+    if not isinstance(numerator, (int, float)):
+        return NA
+    if not isinstance(denominator, (int, float)) or denominator == 0:
+        return NA
+    return round(numerator / denominator, 6)
 
 
 def _sum_records(records: list[dict[str, int | float]], keys: tuple[str, ...]) -> dict[str, Any]:
@@ -431,6 +511,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_phase_build_funnels: dict[str, list[dict[str, int | float]]] = {
         "comb": [], "seq": [],
     }
+    root_build_supports: list[dict[str, int | float]] = []
+    root_phase_build_supports: dict[str, list[dict[str, int | float]]] = {
+        "comb": [], "seq": [],
+    }
     root_build_buckets: dict[str, list[tuple[str, dict[str, int | float]]]] = {
         family: [] for family in ROOT_BUILD_BUCKETS
     }
@@ -451,6 +535,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_BUILD_GAIN_PREFIX, ROOT_BUILD_CI_PREFIX,
             ROOT_BUILD_DIVRANK_PREFIX,
             ROOT_BUILD_MFFC_PREFIX,
+            ROOT_BUILD_SUPPORT_PREFIX, ROOT_BUILD_SUPPORT_SIZE_PREFIX,
+            ROOT_BUILD_SUPPORT_MULT_PREFIX, ROOT_BUILD_SUPPORT_STAGE_PREFIX,
+            ROOT_BUILD_SUPPORT_ROOT_VALID_PREFIX,
+            ROOT_BUILD_SUPPORT_ROOT_ACCEPTED_PREFIX,
         )):
             continue
         record = {key: _number(value) for key, value in _KEY_VALUE.findall(line)}
@@ -495,6 +583,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
             if phase:
                 root_phase_build_funnels[phase.group(1)].append(record)
+        elif ROOT_BUILD_SUPPORT_PREFIX in line:
+            root_build_supports.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_build_supports[phase.group(1)].append(record)
         else:
             family = None
             for name, prefix in (
@@ -505,6 +598,12 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                 ("ci", ROOT_BUILD_CI_PREFIX),
                 ("divrank", ROOT_BUILD_DIVRANK_PREFIX),
                 ("mffc", ROOT_BUILD_MFFC_PREFIX),
+                ("support_size", ROOT_BUILD_SUPPORT_SIZE_PREFIX),
+                ("support_mult", ROOT_BUILD_SUPPORT_MULT_PREFIX),
+                ("support_stage", ROOT_BUILD_SUPPORT_STAGE_PREFIX),
+                ("support_root_valid", ROOT_BUILD_SUPPORT_ROOT_VALID_PREFIX),
+                ("support_root_accepted",
+                 ROOT_BUILD_SUPPORT_ROOT_ACCEPTED_PREFIX),
             ):
                 if prefix in line:
                     family = name
@@ -603,6 +702,74 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             max_field(root_build_funnels, key)
             if key in funnel_max else sum_field(root_build_funnels, key)
         )
+
+    support_max = {
+        "max-valid-candidates-root", "max-valid-supports-root",
+        "max-accepted-candidates-root", "max-accepted-supports-root",
+    }
+
+    def populate_support_fields(
+        records: list[dict[str, int | float]], field_prefix: str,
+    ) -> None:
+        values: dict[str, Any] = {}
+        for key in ROOT_BUILD_SUPPORT_KEYS:
+            values[key] = (
+                max_field(records, key)
+                if key in support_max else sum_field(records, key)
+            )
+            result[f"{field_prefix}_{_field_token(key)}"] = values[key]
+        result[f"{field_prefix}_valid_candidates_per_support"] = _quotient(
+            values["valid-candidates"], values["valid-supports"])
+        result[f"{field_prefix}_accepted_candidates_per_support"] = _quotient(
+            values["accepted-candidates"], values["accepted-supports"])
+        result[f"{field_prefix}_support_accept_rate_pct"] = _ratio(
+            values["accepted-supports"], values["valid-supports"])
+        result[f"{field_prefix}_candidate_submit_rate_pct"] = _ratio(
+            values["submitted-candidates"], values["accepted-candidates"])
+        result[f"{field_prefix}_support_submit_rate_pct"] = _ratio(
+            values["submitted-supports"], values["accepted-supports"])
+        result[f"{field_prefix}_submitted_candidate_proof_rate_pct"] = _ratio(
+            values["proved-candidates"], values["submitted-candidates"])
+        result[f"{field_prefix}_submitted_candidate_refute_rate_pct"] = _ratio(
+            values["refuted-candidates"], values["submitted-candidates"])
+        result[f"{field_prefix}_submitted_candidate_unknown_rate_pct"] = _ratio(
+            values["unknown-candidates"], values["submitted-candidates"])
+        result[f"{field_prefix}_submitted_support_proof_rate_pct"] = _ratio(
+            values["proved-supports"], values["submitted-supports"])
+        result[f"{field_prefix}_submitted_support_no_proof_rate_pct"] = _ratio(
+            values["submitted-no-proof-supports"],
+            values["submitted-supports"])
+        result[f"{field_prefix}_support_prove_rate_pct"] = _ratio(
+            values["proved-supports"], values["accepted-supports"])
+        result[f"{field_prefix}_support_select_rate_pct"] = _ratio(
+            values["selected-with-accepted-supports"],
+            values["accepted-supports"])
+        proved_min = values["proved-min-gate-supports"]
+        proved_above = values["proved-only-above-min-supports"]
+        selected_min = values["selected-min-gate-supports"]
+        selected_above = values["selected-only-above-min-supports"]
+        selected_below = values["selected-below-accepted-min-supports"]
+        proved_current = (
+            proved_min + proved_above
+            if all(isinstance(value, (int, float))
+                   for value in (proved_min, proved_above)) else NA
+        )
+        selected_current = (
+            selected_min + selected_above + selected_below
+            if all(isinstance(value, (int, float))
+                   for value in (selected_min, selected_above,
+                                 selected_below)) else NA
+        )
+        result[f"{field_prefix}_proved_min_gate_share_pct"] = _ratio(
+            proved_min, proved_current)
+        result[f"{field_prefix}_selected_min_gate_share_pct"] = _ratio(
+            selected_min, selected_current)
+        result[f"{field_prefix}_accepted_gate_excess_per_candidate"] = (
+            _quotient(values["accepted-gate-excess"],
+                      values["accepted-candidates"])
+        )
+
+    populate_support_fields(root_build_supports, "root_build_support")
     for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
         for bucket in buckets:
             records = [
@@ -630,6 +797,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                 max_field(phase_funnels, key)
                 if key in funnel_max else sum_field(phase_funnels, key)
             )
+        populate_support_fields(
+            root_phase_build_supports[phase],
+            f"root_{phase}_build_support",
+        )
         for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
             for bucket in buckets:
                 records = [

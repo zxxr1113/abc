@@ -35,6 +35,9 @@ ABC_NAMESPACE_IMPL_START
 #define CEC_TRAN_BUILD_GAIN_BINS 6
 #define CEC_TRAN_BUILD_DIVRANK_BINS 6
 #define CEC_TRAN_BUILD_MFFC_BINS 6
+#define CEC_TRAN_BUILD_SUPPORT_SIZE_BINS 6
+#define CEC_TRAN_BUILD_SUPPORT_MULT_BINS 6
+#define CEC_TRAN_BUILD_SUPPORT_RATIO_BINS 5
 
 enum
 {
@@ -147,6 +150,7 @@ struct Cec_TranTargetProf_t_
     int     nCexBmcSat;
 };
 
+typedef struct Cec_TranSuppProf_t_ Cec_TranSuppProf_t;
 typedef struct Cec_TranProf_t_ Cec_TranProf_t;
 struct Cec_TranProf_t_
 {
@@ -250,6 +254,7 @@ struct Cec_TranProf_t_
     long long nRootBuildMffcNext[CEC_TRAN_BUILD_MFFC_BINS];
     long long nRootBuildMffcAccepted[CEC_TRAN_BUILD_MFFC_BINS];
     abctime   timeRootBuildMffc[CEC_TRAN_BUILD_MFFC_BINS];
+    Cec_TranSuppProf_t * pBuildSuppProf;
     int     nRootWaveDepCalls[64];
     int     nRootWaveRecipes[64];
     int     nRootWaveSubmitted[64];
@@ -852,6 +857,20 @@ struct Cec_TranCand_t_
     int      nWave;              // zero-based root CEGAR wave
 };
 
+enum
+{
+    CEC_TRAN_SUPP_VALID = 0,
+    CEC_TRAN_SUPP_ACCEPTED,
+    CEC_TRAN_SUPP_SUBMITTED,
+    CEC_TRAN_SUPP_REFUTED,
+    CEC_TRAN_SUPP_UNKNOWN,
+    CEC_TRAN_SUPP_PROVED,
+    CEC_TRAN_SUPP_SELECTED
+};
+
+static void Cec_TranSuppProfRecordCand( Cec_TranSuppProf_t * p,
+    Cec_TranCand_t const * pCand, int Event );
+
 static int Cec_TranBuildRankBin( int Rank )
 {
     return Rank <= 1 ? 0 : Rank == 2 ? 1 : Rank <= 4 ? 2 :
@@ -893,6 +912,9 @@ static void Cec_TranProfileBuildCandidate( Cec_TranProf_t * pProf,
     if ( pCand->nKind != CEC_TRAN_CAND_CONSTR )
         return;
     assert( Outcome >= 0 && Outcome < CEC_TRAN_BUILD_OUTCOMES );
+    Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf, pCand,
+        Outcome == 0 ? CEC_TRAN_SUPP_ACCEPTED :
+        Outcome == 1 ? CEC_TRAN_SUPP_PROVED : CEC_TRAN_SUPP_SELECTED );
     Stage = pCand->nResubStage;
     RankBin = Cec_TranBuildRankBin(pCand->nResubRank);
     GateBin = Cec_TranBuildGateBin(pCand->nGates);
@@ -2387,12 +2409,13 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     for ( i = 0; i < nCands; i++ )
     {
         int fProved = Vec_StrEntry(vStage, i) == 1;
+        int fBatchComplete = 0;
         if ( !fProved && nSeq )
         {
             int fSameClass = Cec_TranRootBatchPairProved( pBatch,
                 Vec_IntEntry(vPairs, 2*(nHelpers+i)),
                 Vec_IntEntry(vPairs, 2*(nHelpers+i)+1) );
-            int fBatchComplete = RetValue && Cor.fCompleted;
+            fBatchComplete = RetValue && Cor.fCompleted;
             // fConfStop can only accompany an incomplete correspondence run;
             // it is not the per-output UNKNOWN indication.  Keep the invariant
             // explicit so callers cannot accidentally reintroduce batch-wide
@@ -2409,6 +2432,11 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
                 nSeqUnknown += !fBatchComplete;
             }
         }
+        if ( !fProved && !fCombOnly && nSeq &&
+             pCands[i].nKind == CEC_TRAN_CAND_CONSTR )
+            Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf, pCands + i,
+                fBatchComplete ? CEC_TRAN_SUPP_REFUTED :
+                    CEC_TRAN_SUPP_UNKNOWN );
         if ( fProved && Vec_StrEntry(vStage, i) == 0 )
         {
             Vec_StrWriteEntry( vStage, i, 2 );
@@ -2841,6 +2869,478 @@ static void Cec_TranCandCollectSupport( Cec_TranCand_t const * pCand,
         iObj = Abc_Lit2Var( Code );
         if ( iObj && Vec_IntFind(vSupport, iObj) < 0 )
             Vec_IntPush( vSupport, iObj );
+    }
+}
+
+// Profiling-only support interning.  A support is the exact sorted set of
+// original GIA divisors used by one canonical Build recipe, paired with its
+// target.  Dense entries keep the per-support counters compact; the separate
+// open-addressed table contains only entry indices.  Full key comparison
+// against vKeys makes the unique-support counts exact rather than hash-based.
+typedef struct Cec_TranSuppProfEnt_t_ Cec_TranSuppProfEnt_t;
+struct Cec_TranSuppProfEnt_t_
+{
+    word          Hash;
+    int           iTarget;
+    int           iOffset;
+    int           nSupport;
+    int           nValid;
+    int           nAccepted;
+    int           nSubmitted;
+    int           nRefuted;
+    int           nUnknown;
+    int           nProved;
+    int           nSelected;
+    int           nAcceptedGateSum;
+    unsigned char nMinGatesAccepted;
+    unsigned char nMinGatesProved;
+    unsigned char nMinGatesSelected;
+    unsigned char StageValid;
+    unsigned char StageAccepted;
+    unsigned char StageSubmitted;
+    unsigned char StageRefuted;
+    unsigned char StageUnknown;
+    unsigned char StageProved;
+    unsigned char StageSelected;
+};
+
+struct Cec_TranSuppProf_t_
+{
+    Cec_TranSuppProfEnt_t * pEntries;
+    int *                   pBins;
+    int                     nEntries;
+    int                     nEntriesCap;
+    int                     nBins;
+    int                     nObjs;
+    Vec_Int_t *             vKeys;
+    Vec_Int_t *             vScratch;
+    int *                   pRootValidCands;
+    int *                   pRootValidSupps;
+    int *                   pRootAcceptedCands;
+    int *                   pRootAcceptedSupps;
+};
+
+static word Cec_TranSuppProfHash( int iTarget, Vec_Int_t * vSupport )
+{
+    word Hash = ABC_CONST(0xcbf29ce484222325);
+    int i, iObj;
+    Hash = (Hash ^ (word)(unsigned)iTarget) * ABC_CONST(0x100000001b3);
+    Vec_IntForEachEntry( vSupport, iObj, i )
+        Hash = (Hash ^ (word)(unsigned)iObj) * ABC_CONST(0x100000001b3);
+    Hash = (Hash ^ (word)(unsigned)Vec_IntSize(vSupport)) *
+        ABC_CONST(0x100000001b3);
+    return Hash ? Hash : 1;
+}
+
+static int Cec_TranSuppProfFindSlot( Cec_TranSuppProf_t const * p,
+    word Hash, int iTarget, Vec_Int_t * vSupport, int * pfFound )
+{
+    int iEntry, iSlot = (int)(Hash & (word)(p->nBins - 1));
+    Cec_TranSuppProfEnt_t const * pEntry;
+    while ( p->pBins[iSlot] )
+    {
+        iEntry = p->pBins[iSlot] - 1;
+        pEntry = p->pEntries + iEntry;
+        if ( pEntry->Hash == Hash && pEntry->iTarget == iTarget &&
+             pEntry->nSupport == Vec_IntSize(vSupport) &&
+             !memcmp(Vec_IntArray(p->vKeys) + pEntry->iOffset,
+                 Vec_IntArray(vSupport),
+                 sizeof(int) * (size_t)pEntry->nSupport) )
+        {
+            *pfFound = 1;
+            return iSlot;
+        }
+        iSlot = (iSlot + 1) & (p->nBins - 1);
+    }
+    *pfFound = 0;
+    return iSlot;
+}
+
+static void Cec_TranSuppProfRehash( Cec_TranSuppProf_t * p )
+{
+    int i, iSlot, nBinsNew = 2 * p->nBins;
+    int * pBinsNew = ABC_CALLOC( int, nBinsNew );
+    for ( i = 0; i < p->nEntries; i++ )
+    {
+        iSlot = (int)(p->pEntries[i].Hash & (word)(nBinsNew - 1));
+        while ( pBinsNew[iSlot] )
+            iSlot = (iSlot + 1) & (nBinsNew - 1);
+        pBinsNew[iSlot] = i + 1;
+    }
+    ABC_FREE( p->pBins );
+    p->pBins = pBinsNew;
+    p->nBins = nBinsNew;
+}
+
+static Cec_TranSuppProf_t * Cec_TranSuppProfStart( int nObjs )
+{
+    Cec_TranSuppProf_t * p = ABC_CALLOC( Cec_TranSuppProf_t, 1 );
+    p->nEntriesCap = 512;
+    p->nBins = 1024;
+    p->nObjs = nObjs;
+    p->pEntries = ABC_ALLOC( Cec_TranSuppProfEnt_t, p->nEntriesCap );
+    p->pBins = ABC_CALLOC( int, p->nBins );
+    p->vKeys = Vec_IntAlloc( 1024 );
+    p->vScratch = Vec_IntAlloc( 16 );
+    p->pRootValidCands = ABC_CALLOC( int, nObjs );
+    p->pRootValidSupps = ABC_CALLOC( int, nObjs );
+    p->pRootAcceptedCands = ABC_CALLOC( int, nObjs );
+    p->pRootAcceptedSupps = ABC_CALLOC( int, nObjs );
+    return p;
+}
+
+static void Cec_TranSuppProfStop( Cec_TranSuppProf_t * p )
+{
+    if ( p == NULL )
+        return;
+    ABC_FREE( p->pEntries );
+    ABC_FREE( p->pBins );
+    Vec_IntFree( p->vKeys );
+    Vec_IntFree( p->vScratch );
+    ABC_FREE( p->pRootValidCands );
+    ABC_FREE( p->pRootValidSupps );
+    ABC_FREE( p->pRootAcceptedCands );
+    ABC_FREE( p->pRootAcceptedSupps );
+    ABC_FREE( p );
+}
+
+static Cec_TranSuppProfEnt_t * Cec_TranSuppProfLookup( Cec_TranSuppProf_t * p,
+    int iTarget, Vec_Int_t * vSupport )
+{
+    Cec_TranSuppProfEnt_t * pEntry;
+    word Hash;
+    int i, iObj, iSlot, fFound;
+    Vec_IntSort( vSupport, 0 );
+    Hash = Cec_TranSuppProfHash( iTarget, vSupport );
+    iSlot = Cec_TranSuppProfFindSlot( p, Hash, iTarget, vSupport, &fFound );
+    if ( fFound )
+        return p->pEntries + p->pBins[iSlot] - 1;
+    if ( 10LL * (p->nEntries + 1) > 7LL * p->nBins )
+    {
+        Cec_TranSuppProfRehash( p );
+        iSlot = Cec_TranSuppProfFindSlot( p, Hash, iTarget,
+            vSupport, &fFound );
+        assert( !fFound );
+    }
+    if ( p->nEntries == p->nEntriesCap )
+    {
+        p->nEntriesCap *= 2;
+        p->pEntries = ABC_REALLOC( Cec_TranSuppProfEnt_t,
+            p->pEntries, p->nEntriesCap );
+    }
+    pEntry = p->pEntries + p->nEntries;
+    memset( pEntry, 0, sizeof(*pEntry) );
+    pEntry->Hash = Hash;
+    pEntry->iTarget = iTarget;
+    pEntry->iOffset = Vec_IntSize( p->vKeys );
+    pEntry->nSupport = Vec_IntSize( vSupport );
+    pEntry->nMinGatesAccepted = 255;
+    pEntry->nMinGatesProved = 255;
+    pEntry->nMinGatesSelected = 255;
+    Vec_IntForEachEntry( vSupport, iObj, i )
+        Vec_IntPush( p->vKeys, iObj );
+    p->pBins[iSlot] = ++p->nEntries;
+    return pEntry;
+}
+
+static void Cec_TranSuppProfRecord( Cec_TranSuppProf_t * p, int iTarget,
+    Vec_Int_t * vSupport, int nGates, int Stage, int Event )
+{
+    Cec_TranSuppProfEnt_t * pEntry;
+    unsigned char StageBit = Stage >= 0 && Stage < 8 ?
+        (unsigned char)(1 << Stage) : 0;
+    if ( p == NULL )
+        return;
+    assert( iTarget > 0 && iTarget < p->nObjs );
+    assert( Vec_IntSize(vSupport) > 0 );
+    assert( nGates >= 0 && nGates < 255 );
+    pEntry = Cec_TranSuppProfLookup( p, iTarget, vSupport );
+    if ( Event == CEC_TRAN_SUPP_VALID )
+    {
+        p->pRootValidCands[iTarget]++;
+        if ( pEntry->nValid++ == 0 )
+            p->pRootValidSupps[iTarget]++;
+        pEntry->StageValid |= StageBit;
+    }
+    else if ( Event == CEC_TRAN_SUPP_ACCEPTED )
+    {
+        p->pRootAcceptedCands[iTarget]++;
+        if ( pEntry->nAccepted++ == 0 )
+            p->pRootAcceptedSupps[iTarget]++;
+        pEntry->nAcceptedGateSum += nGates;
+        pEntry->nMinGatesAccepted = (unsigned char)Abc_MinInt(
+            pEntry->nMinGatesAccepted, nGates );
+        pEntry->StageAccepted |= StageBit;
+    }
+    else if ( Event == CEC_TRAN_SUPP_SUBMITTED )
+    {
+        pEntry->nSubmitted++;
+        pEntry->StageSubmitted |= StageBit;
+    }
+    else if ( Event == CEC_TRAN_SUPP_REFUTED )
+    {
+        pEntry->nRefuted++;
+        pEntry->StageRefuted |= StageBit;
+    }
+    else if ( Event == CEC_TRAN_SUPP_UNKNOWN )
+    {
+        pEntry->nUnknown++;
+        pEntry->StageUnknown |= StageBit;
+    }
+    else if ( Event == CEC_TRAN_SUPP_PROVED )
+    {
+        pEntry->nProved++;
+        pEntry->nMinGatesProved = (unsigned char)Abc_MinInt(
+            pEntry->nMinGatesProved, nGates );
+        pEntry->StageProved |= StageBit;
+    }
+    else
+    {
+        assert( Event == CEC_TRAN_SUPP_SELECTED );
+        pEntry->nSelected++;
+        pEntry->nMinGatesSelected = (unsigned char)Abc_MinInt(
+            pEntry->nMinGatesSelected, nGates );
+        pEntry->StageSelected |= StageBit;
+    }
+}
+
+static void Cec_TranSuppProfRecordCand( Cec_TranSuppProf_t * p,
+    Cec_TranCand_t const * pCand, int Event )
+{
+    if ( p == NULL )
+        return;
+    assert( pCand->nKind == CEC_TRAN_CAND_CONSTR );
+    Cec_TranCandCollectSupport( pCand, p->vScratch );
+    Cec_TranSuppProfRecord( p, pCand->iTarget, p->vScratch,
+        pCand->nGates, pCand->nResubStage, Event );
+}
+
+static int Cec_TranSuppProfSizeBin( int nSize )
+{
+    return nSize <= 1 ? 0 : nSize == 2 ? 1 : nSize == 3 ? 2 :
+        nSize == 4 ? 3 : nSize <= 8 ? 4 : 5;
+}
+
+static int Cec_TranSuppProfMultBin( int nCands )
+{
+    return nCands <= 1 ? 0 : nCands == 2 ? 1 : nCands <= 4 ? 2 :
+        nCands <= 8 ? 3 : nCands <= 16 ? 4 : 5;
+}
+
+static int Cec_TranSuppProfRatioBin( int nCands, int nSupps )
+{
+    assert( nCands >= nSupps && nSupps > 0 );
+    return nCands == nSupps ? 0 : nCands <= 2 * nSupps ? 1 :
+        nCands <= 4 * nSupps ? 2 : nCands <= 8 * nSupps ? 3 : 4;
+}
+
+static void Cec_TranSuppProfPrint( Cec_TranSuppProf_t const * p, int iPhase )
+{
+    static int const Stages[4] = { 1, 3, 4, 5 };
+    static char const * pStage[4] = {
+        "one-gate", "div-gate", "gate-gate", "greedy" };
+    static char const * pSize[CEC_TRAN_BUILD_SUPPORT_SIZE_BINS] = {
+        "1", "2", "3", "4", "5-8", "9+" };
+    static char const * pMult[CEC_TRAN_BUILD_SUPPORT_MULT_BINS] = {
+        "1", "2", "3-4", "5-8", "9-16", "17+" };
+    static char const * pRatio[CEC_TRAN_BUILD_SUPPORT_RATIO_BINS] = {
+        "1", "gt1-2", "gt2-4", "gt4-8", "gt8" };
+    long long Size[CEC_TRAN_BUILD_SUPPORT_SIZE_BINS][8] = {{0}};
+    long long Mult[CEC_TRAN_BUILD_SUPPORT_MULT_BINS][10] = {{0}};
+    long long Stage[4][7] = {{0}};
+    long long RootValid[CEC_TRAN_BUILD_SUPPORT_RATIO_BINS][3] = {{0}};
+    long long RootAccepted[CEC_TRAN_BUILD_SUPPORT_RATIO_BINS][3] = {{0}};
+    long long nValidCands = 0, nAcceptedCands = 0;
+    long long nSubmittedCands = 0, nRefutedCands = 0, nUnknownCands = 0;
+    long long nProvedCands = 0, nSelectedCands = 0;
+    long long nValidSupps = 0, nAcceptedSupps = 0;
+    long long nSubmittedSupps = 0, nRefutedSupps = 0, nUnknownSupps = 0;
+    long long nProvedSupps = 0, nSelectedSupps = 0;
+    long long nNoProofSupps = 0, nRefutedOnlySupps = 0;
+    long long nUnknownOnlySupps = 0, nMixedFailureSupps = 0;
+    long long nSelectedWithAccepted = 0, nSelectedWithoutAccepted = 0;
+    long long nSingle = 0, nMulti = 0, nGateExcess = 0;
+    long long nProvedMin = 0, nProvedAbove = 0;
+    long long nSelectedMin = 0, nSelectedAbove = 0, nSelectedBelow = 0;
+    int nRootsValid = 0, nRootsAccepted = 0;
+    int nMaxValidCands = 0, nMaxValidSupps = 0;
+    int nMaxAcceptedCands = 0, nMaxAcceptedSupps = 0;
+    int i, k, iBin, iRoot;
+    char const * pPhase = iPhase ? "seq" : "comb";
+    for ( i = 0; i < p->nEntries; i++ )
+    {
+        Cec_TranSuppProfEnt_t const * pEntry = p->pEntries + i;
+        long long GateExcess = 0;
+        iBin = Cec_TranSuppProfSizeBin( pEntry->nSupport );
+        nValidCands += pEntry->nValid;
+        nAcceptedCands += pEntry->nAccepted;
+        nSubmittedCands += pEntry->nSubmitted;
+        nRefutedCands += pEntry->nRefuted;
+        nUnknownCands += pEntry->nUnknown;
+        nProvedCands += pEntry->nProved;
+        nSelectedCands += pEntry->nSelected;
+        nValidSupps += pEntry->nValid > 0;
+        nAcceptedSupps += pEntry->nAccepted > 0;
+        nSubmittedSupps += pEntry->nSubmitted > 0;
+        nRefutedSupps += pEntry->nRefuted > 0;
+        nUnknownSupps += pEntry->nUnknown > 0;
+        nProvedSupps += pEntry->nProved > 0;
+        nSelectedSupps += pEntry->nSelected > 0;
+        Size[iBin][0] += pEntry->nValid > 0;
+        Size[iBin][1] += pEntry->nAccepted > 0;
+        Size[iBin][2] += pEntry->nAccepted;
+        Size[iBin][3] += pEntry->nSubmitted > 0;
+        Size[iBin][4] += pEntry->nRefuted > 0;
+        Size[iBin][5] += pEntry->nUnknown > 0;
+        Size[iBin][6] += pEntry->nProved > 0;
+        Size[iBin][7] += pEntry->nSelected > 0;
+        if ( pEntry->nSubmitted > 0 && pEntry->nProved == 0 )
+        {
+            nNoProofSupps++;
+            nRefutedOnlySupps += pEntry->nRefuted > 0 &&
+                pEntry->nUnknown == 0;
+            nUnknownOnlySupps += pEntry->nUnknown > 0 &&
+                pEntry->nRefuted == 0;
+            nMixedFailureSupps += pEntry->nRefuted > 0 &&
+                pEntry->nUnknown > 0;
+        }
+        if ( pEntry->nSelected > 0 )
+        {
+            nSelectedWithAccepted += pEntry->nAccepted > 0;
+            nSelectedWithoutAccepted += pEntry->nAccepted == 0;
+        }
+        if ( pEntry->nAccepted > 0 )
+        {
+            assert( pEntry->nMinGatesAccepted < 255 );
+            GateExcess = (long long)pEntry->nAcceptedGateSum -
+                (long long)pEntry->nMinGatesAccepted * pEntry->nAccepted;
+            assert( GateExcess >= 0 );
+            nGateExcess += GateExcess;
+            nSingle += pEntry->nAccepted == 1;
+            nMulti += pEntry->nAccepted > 1;
+            if ( pEntry->nProved > 0 )
+            {
+                nProvedMin += pEntry->nMinGatesProved ==
+                    pEntry->nMinGatesAccepted;
+                nProvedAbove += pEntry->nMinGatesProved >
+                    pEntry->nMinGatesAccepted;
+            }
+            if ( pEntry->nSelected > 0 )
+            {
+                nSelectedMin += pEntry->nMinGatesSelected ==
+                    pEntry->nMinGatesAccepted;
+                nSelectedAbove += pEntry->nMinGatesSelected >
+                    pEntry->nMinGatesAccepted;
+                nSelectedBelow += pEntry->nMinGatesSelected <
+                    pEntry->nMinGatesAccepted;
+            }
+            iBin = Cec_TranSuppProfMultBin( pEntry->nAccepted );
+            Mult[iBin][0]++;
+            Mult[iBin][1] += pEntry->nAccepted;
+            Mult[iBin][2] += pEntry->nSubmitted > 0;
+            Mult[iBin][3] += pEntry->nRefuted > 0;
+            Mult[iBin][4] += pEntry->nUnknown > 0;
+            Mult[iBin][5] += pEntry->nProved > 0;
+            Mult[iBin][6] += pEntry->nSelected > 0;
+            Mult[iBin][7] += pEntry->nProved > 0 &&
+                pEntry->nMinGatesProved == pEntry->nMinGatesAccepted;
+            Mult[iBin][8] += pEntry->nSelected > 0 &&
+                pEntry->nMinGatesSelected == pEntry->nMinGatesAccepted;
+            Mult[iBin][9] += GateExcess;
+        }
+        for ( k = 0; k < 4; k++ )
+        {
+            unsigned char Bit = (unsigned char)(1 << Stages[k]);
+            Stage[k][0] += (pEntry->StageValid & Bit) != 0;
+            Stage[k][1] += (pEntry->StageAccepted & Bit) != 0;
+            Stage[k][2] += (pEntry->StageSubmitted & Bit) != 0;
+            Stage[k][3] += (pEntry->StageRefuted & Bit) != 0;
+            Stage[k][4] += (pEntry->StageUnknown & Bit) != 0;
+            Stage[k][5] += (pEntry->StageProved & Bit) != 0;
+            Stage[k][6] += (pEntry->StageSelected & Bit) != 0;
+        }
+    }
+    for ( iRoot = 0; iRoot < p->nObjs; iRoot++ )
+    {
+        if ( p->pRootValidCands[iRoot] )
+        {
+            nRootsValid++;
+            nMaxValidCands = Abc_MaxInt( nMaxValidCands,
+                p->pRootValidCands[iRoot] );
+            nMaxValidSupps = Abc_MaxInt( nMaxValidSupps,
+                p->pRootValidSupps[iRoot] );
+            iBin = Cec_TranSuppProfRatioBin( p->pRootValidCands[iRoot],
+                p->pRootValidSupps[iRoot] );
+            RootValid[iBin][0]++;
+            RootValid[iBin][1] += p->pRootValidCands[iRoot];
+            RootValid[iBin][2] += p->pRootValidSupps[iRoot];
+        }
+        if ( p->pRootAcceptedCands[iRoot] )
+        {
+            nRootsAccepted++;
+            nMaxAcceptedCands = Abc_MaxInt( nMaxAcceptedCands,
+                p->pRootAcceptedCands[iRoot] );
+            nMaxAcceptedSupps = Abc_MaxInt( nMaxAcceptedSupps,
+                p->pRootAcceptedSupps[iRoot] );
+            iBin = Cec_TranSuppProfRatioBin(
+                p->pRootAcceptedCands[iRoot],
+                p->pRootAcceptedSupps[iRoot] );
+            RootAccepted[iBin][0]++;
+            RootAccepted[iBin][1] += p->pRootAcceptedCands[iRoot];
+            RootAccepted[iBin][2] += p->pRootAcceptedSupps[iRoot];
+        }
+    }
+    {
+        long long nRootValidCands = 0, nRootValidSupps = 0;
+        long long nRootAcceptedCands = 0, nRootAcceptedSupps = 0;
+        for ( i = 0; i < CEC_TRAN_BUILD_SUPPORT_RATIO_BINS; i++ )
+        {
+            nRootValidCands += RootValid[i][1];
+            nRootValidSupps += RootValid[i][2];
+            nRootAcceptedCands += RootAccepted[i][1];
+            nRootAcceptedSupps += RootAccepted[i][2];
+        }
+        assert( nRootValidCands == nValidCands );
+        assert( nRootValidSupps == nValidSupps );
+        assert( nRootAcceptedCands == nAcceptedCands );
+        assert( nRootAcceptedSupps == nAcceptedSupps );
+        if ( iPhase )
+            assert( nSubmittedCands == nRefutedCands + nUnknownCands +
+                nProvedCands );
+    }
+    Abc_Print( 1, "stran-root build-support profile: schema=7 phase=%s valid-candidates=%lld valid-supports=%lld accepted-candidates=%lld accepted-supports=%lld submitted-candidates=%lld submitted-supports=%lld refuted-candidates=%lld refuted-supports=%lld unknown-candidates=%lld unknown-supports=%lld proved-candidates=%lld proved-supports=%lld submitted-no-proof-supports=%lld submitted-refuted-only-supports=%lld submitted-unknown-only-supports=%lld submitted-mixed-failure-supports=%lld selected-candidates=%lld selected-supports=%lld selected-with-accepted-supports=%lld selected-without-accepted-supports=%lld roots-valid=%d roots-accepted=%d max-valid-candidates-root=%d max-valid-supports-root=%d max-accepted-candidates-root=%d max-accepted-supports-root=%d single-recipe-supports=%lld multi-recipe-supports=%lld accepted-gate-excess=%lld proved-min-gate-supports=%lld proved-only-above-min-supports=%lld selected-min-gate-supports=%lld selected-only-above-min-supports=%lld selected-below-accepted-min-supports=%lld\n",
+        pPhase, nValidCands, nValidSupps, nAcceptedCands, nAcceptedSupps,
+        nSubmittedCands, nSubmittedSupps, nRefutedCands, nRefutedSupps,
+        nUnknownCands, nUnknownSupps, nProvedCands, nProvedSupps,
+        nNoProofSupps, nRefutedOnlySupps, nUnknownOnlySupps,
+        nMixedFailureSupps,
+        nSelectedCands, nSelectedSupps,
+        nSelectedWithAccepted, nSelectedWithoutAccepted,
+        nRootsValid, nRootsAccepted, nMaxValidCands, nMaxValidSupps,
+        nMaxAcceptedCands, nMaxAcceptedSupps, nSingle, nMulti,
+        nGateExcess, nProvedMin, nProvedAbove, nSelectedMin, nSelectedAbove,
+        nSelectedBelow );
+    for ( i = 0; i < CEC_TRAN_BUILD_SUPPORT_SIZE_BINS; i++ )
+        Abc_Print( 1, "stran-root build-support-size profile: schema=7 phase=%s bucket=%s valid-supports=%lld accepted-supports=%lld accepted-candidates=%lld submitted-supports=%lld refuted-supports=%lld unknown-supports=%lld proved-supports=%lld selected-supports=%lld\n",
+            pPhase, pSize[i], Size[i][0], Size[i][1], Size[i][2],
+            Size[i][3], Size[i][4], Size[i][5], Size[i][6], Size[i][7] );
+    for ( i = 0; i < CEC_TRAN_BUILD_SUPPORT_MULT_BINS; i++ )
+        Abc_Print( 1, "stran-root build-support-mult profile: schema=7 phase=%s bucket=%s supports=%lld candidates=%lld submitted-supports=%lld refuted-supports=%lld unknown-supports=%lld proved-supports=%lld selected-supports=%lld proved-min-gate-supports=%lld selected-min-gate-supports=%lld gate-excess=%lld\n",
+            pPhase, pMult[i], Mult[i][0], Mult[i][1], Mult[i][2],
+            Mult[i][3], Mult[i][4], Mult[i][5], Mult[i][6], Mult[i][7],
+            Mult[i][8], Mult[i][9] );
+    for ( i = 0; i < 4; i++ )
+        Abc_Print( 1, "stran-root build-support-stage profile: schema=7 phase=%s bucket=%s valid-supports=%lld accepted-supports=%lld submitted-supports=%lld refuted-supports=%lld unknown-supports=%lld proved-supports=%lld selected-supports=%lld\n",
+            pPhase, pStage[i], Stage[i][0], Stage[i][1], Stage[i][2],
+            Stage[i][3], Stage[i][4], Stage[i][5], Stage[i][6] );
+    for ( i = 0; i < CEC_TRAN_BUILD_SUPPORT_RATIO_BINS; i++ )
+    {
+        Abc_Print( 1, "stran-root build-support-root-valid profile: schema=7 phase=%s bucket=%s roots=%lld candidates=%lld supports=%lld\n",
+            pPhase, pRatio[i], RootValid[i][0], RootValid[i][1],
+            RootValid[i][2] );
+        Abc_Print( 1, "stran-root build-support-root-accepted profile: schema=7 phase=%s bucket=%s roots=%lld candidates=%lld supports=%lld\n",
+            pPhase, pRatio[i], RootAccepted[i][0], RootAccepted[i][1],
+            RootAccepted[i][2] );
     }
 }
 
@@ -3490,6 +3990,9 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             vCandSupport, pCiKeys, pCiScores, pDivRanks, nCiMask,
             &Cand.nDivRankMax, &Cand.nDivRankSum );
         pProf->nRootBuildStageValid[iAttempt]++;
+        Cec_TranSuppProfRecord( pProf->pBuildSuppProf, Cand.iTarget,
+            vCandSupport, Cand.nGates, Cand.nResubStage,
+            CEC_TRAN_SUPP_VALID );
         pProf->timeRootBuildStage[iAttempt] += timePart;
         fAccepted = 0;
         if ( Cand.Gain <= 0 )
@@ -4484,6 +4987,9 @@ static int Cec_TranRootProvePortfolio( Gia_Man_t * p,
     {
         pProf->nStageKindSubmitted[iPhase][pPortfolio->pArray[i].nKind]++;
         pProf->nLaneKindSubmitted[0][pPortfolio->pArray[i].nKind]++;
+        if ( pPortfolio->pArray[i].nKind == CEC_TRAN_CAND_CONSTR )
+            Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf,
+                pPortfolio->pArray + i, CEC_TRAN_SUPP_SUBMITTED );
     }
     vStatus = Cec_TranProveRootBatch( p,
         pHelpers ? pHelpers->pArray : NULL,
@@ -4833,6 +5339,8 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         p->nRootBuildCollapsedDirect, p->nRootBuildRejectNonPositive,
         p->nRootBuildRejectKnown, p->nRootBuildRejectDirect,
         p->nRootBuildRejectPage, p->nRootBuildAccepted );
+    if ( p->pBuildSuppProf )
+        Cec_TranSuppProfPrint( p->pBuildSuppProf, iPhase );
     for ( i = 0; i < 4; i++ )
     {
         int Stage = BuildStages[i];
@@ -4956,6 +5464,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         nRoots++;
     qsort( pRoots, nRoots, sizeof(Cec_TranRoot_t), Cec_TranRootCompare );
     pCursors = ABC_CALLOC( Cec_TranRootCursor_t, Gia_ManObjNum(p) );
+    if ( pPars->fProfile )
+        Prof.pBuildSuppProf = Cec_TranSuppProfStart( Gia_ManObjNum(p) );
     clk = Abc_Clock();
     pSim = Cec_TranSimStart( p, pPars, pDb );
     Prof.timeRootSimSig += Abc_Clock() - clk;
@@ -5195,6 +5705,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     if ( pPars->fProfile )
         Cec_TranPrintRootOnlyProfile( &Prof, nAndBefore, Gia_ManAndNum(p),
             nRegBefore, Gia_ManRegNum(p), Abc_MinInt(nWaves, 64), iPhase );
+    Cec_TranSuppProfStop( Prof.pBuildSuppProf );
+    Prof.pBuildSuppProf = NULL;
     Abc_Print( 1, "stran-root summary: round=%d phase=%s roots=%d selected=%d comb-proved=%d seq-proved=%d unique-proved=%d AND=%d->%d exact-gain=%lld.\n",
         iRound + 1, fCombOnly ? "comb" : "seq", nRoots,
         Selected.nSize, Prof.nCombProved, Prof.nSeqProved,
