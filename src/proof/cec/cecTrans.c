@@ -29,6 +29,12 @@ ABC_NAMESPACE_IMPL_START
 // one modest frontier and commits it immediately instead of accumulating
 // proof micro-batches on the initial graph.
 #define CEC_TRAN_COMB_BUILD_Q 4
+#define CEC_TRAN_BUILD_OUTCOMES 3
+#define CEC_TRAN_BUILD_RANK_BINS 8
+#define CEC_TRAN_BUILD_GATE_BINS 6
+#define CEC_TRAN_BUILD_GAIN_BINS 6
+#define CEC_TRAN_BUILD_DIVRANK_BINS 6
+#define CEC_TRAN_BUILD_MFFC_BINS 6
 
 enum
 {
@@ -210,6 +216,40 @@ struct Cec_TranProf_t_
     int     nRootResubIterLive;  // roots currently bound to shared workspace
     int     nRootResubIterLiveMax;
     int     nRootResubInvalid;   // generated recipes rejected by semantic audit
+    long long nRootDivReservoirCalls;
+    long long nRootDivReservoirNodes;
+    int       nRootDivReservoirMax;
+    long long nRootDivPoolNodes;
+    int       nRootDivPoolMax;
+    int       nRootDivPoolEmpty;
+    long long nRootBuildMffcSum;
+    int       nRootBuildMffcMax;
+    long long nRootBuildMffcOneSkipped;
+    long long nRootBuildCollapsedDirect;
+    long long nRootBuildRejectNonPositive;
+    long long nRootBuildRejectKnown;
+    long long nRootBuildRejectDirect;
+    long long nRootBuildRejectPage;
+    long long nRootBuildAccepted;
+    long long nRootBuildStageValid[6];
+    long long nRootBuildStageAccepted[6];
+    abctime   timeRootBuildStage[6];
+    long long nRootBuildStageOutcome[6][CEC_TRAN_BUILD_OUTCOMES];
+    long long nRootBuildStageSelectedAndGain[6];
+    long long nRootBuildRankOutcome[CEC_TRAN_BUILD_RANK_BINS][CEC_TRAN_BUILD_OUTCOMES];
+    long long nRootBuildRankSelectedAndGain[CEC_TRAN_BUILD_RANK_BINS];
+    long long nRootBuildGateOutcome[CEC_TRAN_BUILD_GATE_BINS][CEC_TRAN_BUILD_OUTCOMES];
+    long long nRootBuildGateSelectedAndGain[CEC_TRAN_BUILD_GATE_BINS];
+    long long nRootBuildGainOutcome[CEC_TRAN_BUILD_GAIN_BINS][CEC_TRAN_BUILD_OUTCOMES];
+    long long nRootBuildGainSelectedAndGain[CEC_TRAN_BUILD_GAIN_BINS];
+    long long nRootBuildCiOutcome[2][CEC_TRAN_BUILD_OUTCOMES];
+    long long nRootBuildCiSelectedAndGain[2];
+    long long nRootBuildDivRankOutcome[CEC_TRAN_BUILD_DIVRANK_BINS][CEC_TRAN_BUILD_OUTCOMES];
+    long long nRootBuildDivRankSelectedAndGain[CEC_TRAN_BUILD_DIVRANK_BINS];
+    long long nRootBuildMffcCalls[CEC_TRAN_BUILD_MFFC_BINS];
+    long long nRootBuildMffcNext[CEC_TRAN_BUILD_MFFC_BINS];
+    long long nRootBuildMffcAccepted[CEC_TRAN_BUILD_MFFC_BINS];
+    abctime   timeRootBuildMffc[CEC_TRAN_BUILD_MFFC_BINS];
     int     nRootWaveDepCalls[64];
     int     nRootWaveRecipes[64];
     int     nRootWaveSubmitted[64];
@@ -803,10 +843,81 @@ struct Cec_TranCand_t_
     unsigned fDivRescue : 1;
     unsigned fDivGlobal : 1;
     unsigned fPrimaryFrontier : 1;
+    unsigned nResubStage : 3;    // iterator stage: 1/3/4 exact, 5 greedy
     int      nResubRank;         // 0=non-resub, otherwise raw recipe rank
     int      nCiOverlap;         // CI support overlap with root; ordering only
+    int      nDiscoveryGain;     // immutable MFFC-minus-gates score at discovery
+    int      nDivRankMax;        // worst (largest) ranked-divisor position used
+    int      nDivRankSum;        // sum of ranked-divisor positions used
     int      nWave;              // zero-based root CEGAR wave
 };
+
+static int Cec_TranBuildRankBin( int Rank )
+{
+    return Rank <= 1 ? 0 : Rank == 2 ? 1 : Rank <= 4 ? 2 :
+        Rank <= 8 ? 3 : Rank <= 16 ? 4 : Rank <= 32 ? 5 :
+        Rank <= 64 ? 6 : 7;
+}
+
+static int Cec_TranBuildGateBin( int Gates )
+{
+    return Gates <= 1 ? 0 : Gates == 2 ? 1 : Gates == 3 ? 2 :
+        Gates == 4 ? 3 : Gates <= 8 ? 4 : 5;
+}
+
+static int Cec_TranBuildGainBin( int Gain )
+{
+    return Gain <= 1 ? 0 : Gain == 2 ? 1 : Gain <= 4 ? 2 :
+        Gain <= 8 ? 3 : Gain <= 16 ? 4 : 5;
+}
+
+static int Cec_TranBuildDivRankBin( int Rank )
+{
+    return Rank <= 4 ? 0 : Rank <= 8 ? 1 : Rank <= 16 ? 2 :
+        Rank <= 32 ? 3 : Rank <= 64 ? 4 : 5;
+}
+
+static int Cec_TranBuildMffcBin( int Mffc )
+{
+    return Mffc <= 1 ? 0 : Mffc == 2 ? 1 : Mffc <= 4 ? 2 :
+        Mffc <= 8 ? 3 : Mffc <= 16 ? 4 : 5;
+}
+
+// Outcome is 0=generated, 1=proved, 2=selected.  All features below are
+// immutable discovery-time features, so the same candidate can be followed
+// through the funnel even when its exact dynamic gain changes before commit.
+static void Cec_TranProfileBuildCandidate( Cec_TranProf_t * pProf,
+    Cec_TranCand_t const * pCand, int Outcome )
+{
+    int Stage, RankBin, GateBin, GainBin, CiBin, DivRankBin;
+    if ( pCand->nKind != CEC_TRAN_CAND_CONSTR )
+        return;
+    assert( Outcome >= 0 && Outcome < CEC_TRAN_BUILD_OUTCOMES );
+    Stage = pCand->nResubStage;
+    RankBin = Cec_TranBuildRankBin(pCand->nResubRank);
+    GateBin = Cec_TranBuildGateBin(pCand->nGates);
+    GainBin = Cec_TranBuildGainBin(pCand->nDiscoveryGain);
+    CiBin = pCand->nCiOverlap > 0;
+    DivRankBin = Cec_TranBuildDivRankBin(pCand->nDivRankMax);
+    if ( Stage >= 0 && Stage < 6 )
+        pProf->nRootBuildStageOutcome[Stage][Outcome]++;
+    pProf->nRootBuildRankOutcome[RankBin][Outcome]++;
+    pProf->nRootBuildGateOutcome[GateBin][Outcome]++;
+    pProf->nRootBuildGainOutcome[GainBin][Outcome]++;
+    pProf->nRootBuildCiOutcome[CiBin][Outcome]++;
+    pProf->nRootBuildDivRankOutcome[DivRankBin][Outcome]++;
+    if ( Outcome == 2 )
+    {
+        assert( pCand->Gain > 0 );
+        if ( Stage >= 0 && Stage < 6 )
+            pProf->nRootBuildStageSelectedAndGain[Stage] += pCand->Gain;
+        pProf->nRootBuildRankSelectedAndGain[RankBin] += pCand->Gain;
+        pProf->nRootBuildGateSelectedAndGain[GateBin] += pCand->Gain;
+        pProf->nRootBuildGainSelectedAndGain[GainBin] += pCand->Gain;
+        pProf->nRootBuildCiSelectedAndGain[CiBin] += pCand->Gain;
+        pProf->nRootBuildDivRankSelectedAndGain[DivRankBin] += pCand->Gain;
+    }
+}
 
 // Candidate vectors copy scheduling metadata by value, but all copies of a
 // constructed candidate refer to one immutable, reference-counted recipe.
@@ -1346,6 +1457,14 @@ struct Cec_TranRootCursor_t_
     int fExhausted;
 };
 
+// A canonical Build has at least one gate, while acceptance requires
+// MFFC-gates > 0.  A zero-gate canonical result belongs to Constant/Existing,
+// so MFFC=1 can never yield a positive-gain Build candidate.
+static int Cec_TranRootBuildEligible( Cec_TranRoot_t const * pRoot )
+{
+    return pRoot->nMffc > 1;
+}
+
 // With proof micro-batching disabled, q retains its historical meaning: one
 // discovery wave pulls q Build candidates (or drains the iterator for q=0)
 // and a positive proof is immediately eligible for selection.  With -j, q is
@@ -1380,6 +1499,7 @@ static int Cec_TranProofMicroBatchSelfTest()
 {
     Cec_ParTran_t Pars;
     Cec_TranRootCursor_t Cursor = {{0}};
+    Cec_TranRoot_t Root = {0};
     Cec_ManTranSetDefaultParams( &Pars );
     Pars.nRootConstrTop = 100;
     assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 100 );
@@ -1397,6 +1517,10 @@ static int Cec_TranProofMicroBatchSelfTest()
     Cursor.fExhausted = 1;
     assert( Cec_TranRootBuildBudget(&Pars, &Cursor) == 0 );
     assert( Cec_TranRootBuildHorizonReached(&Pars, &Cursor) );
+    Root.nMffc = 1;
+    assert( !Cec_TranRootBuildEligible(&Root) );
+    Root.nMffc = 2;
+    assert( Cec_TranRootBuildEligible(&Root) );
     return 1;
 }
 
@@ -3155,11 +3279,13 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
     return 1;
 }
 
-static int Cec_TranCandCiOverlap( Cec_TranCand_t const * pCand,
+static int Cec_TranCandDivFeatures( Cec_TranCand_t const * pCand,
     Vec_Int_t * vSupport, int const * pCiKeys,
-    int const * pCiScores, int nCiMask )
+    int const * pCiScores, int const * pDivRanks, int nCiMask,
+    int * pRankMax, int * pRankSum )
 {
     int i, iObj, k, Overlap = 0;
+    *pRankMax = *pRankSum = 0;
     Vec_IntClear( vSupport );
     Cec_TranCandCollectSupport( pCand, vSupport );
     Vec_IntForEachEntry( vSupport, iObj, i )
@@ -3168,7 +3294,11 @@ static int Cec_TranCandCiOverlap( Cec_TranCand_t const * pCand,
         while ( pCiKeys[k] && pCiKeys[k] != iObj + 1 )
             k = (k + 1) & nCiMask;
         if ( pCiKeys[k] )
+        {
             Overlap += pCiScores[k];
+            *pRankMax = Abc_MaxInt( *pRankMax, pDivRanks[k] );
+            *pRankSum += pDivRanks[k];
+        }
     }
     return Overlap;
 }
@@ -3257,14 +3387,16 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
 {
     int i, iAttempt, fExhausted = 0, fUnlimited;
     int nCiHash = 128, nCiMask;
-    int IterStatus;
+    int IterStatus, fAccepted, iMffcBin;
+    int nNextStart;
+    long long nAcceptedStart;
     int iConstrStart = pConstr->nSize;
     int nBudget, iProfWave = Abc_MinInt(iWave, 63);
     Vec_Int_t * vCandSupport = Vec_IntAlloc( 16 );
-    int * pCiKeys, * pCiScores;
+    int * pCiKeys, * pCiScores, * pDivRanks;
     void * pIter = NULL;
     Cec_TranCand_t Cand;
-    abctime clk, clkAll, timePart;
+    abctime clk, clkAll, clkMffc, timePart;
     (void)p;
     (void)pCovered;
     (void)pUsed;
@@ -3287,12 +3419,17 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         return;
     }
     assert( pRanks != NULL );
+    iMffcBin = Cec_TranBuildMffcBin( pRoot->nMffc );
+    nNextStart = pProf->nRootResubIterNext;
+    nAcceptedStart = pProf->nRootBuildAccepted;
+    clkMffc = Abc_Clock();
     clkAll = Abc_Clock();
     while ( nCiHash < 2 * Vec_IntSize(vPool) )
         nCiHash <<= 1;
     nCiMask = nCiHash - 1;
     pCiKeys = ABC_CALLOC( int, nCiHash );
     pCiScores = ABC_CALLOC( int, nCiHash );
+    pDivRanks = ABC_CALLOC( int, nCiHash );
     for ( i = 0; i < Vec_IntSize(vPool); i++ )
     {
         int iObj = Vec_IntEntry(vPool, pRanks[i].iPos);
@@ -3302,6 +3439,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             iHash = (iHash + 1) & nCiMask;
         pCiKeys[iHash] = iObj + 1;
         pCiScores[iHash] = pRanks[i].CiOverlap;
+        pDivRanks[iHash] = i + 1;
     }
     pProf->timeRootDivPool += Abc_Clock() - clkAll;
     clk = Abc_Clock();
@@ -3330,6 +3468,8 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         {
             if ( IterStatus < 0 )
                 pProf->nRootResubInvalid++;
+            else if ( !fExhausted )
+                pProf->nRootBuildCollapsedDirect++;
             if ( fExhausted )
             {
                 pCursor->fExhausted = 1;
@@ -3339,24 +3479,38 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             continue;
         }
         Cand.nResubRank = ++pCursor->nBuildYield;
+        Cand.nResubStage = iAttempt;
         Cand.fExactTemplate = iAttempt != 5;
         Cand.fDivRescue = 0;
         Cand.fPrimaryFrontier = pCursor->nBuildYield == 1;
         Cand.nWave = iWave;
         Cand.Gain = Cand.nMffc - Cand.nGates;
-        Cand.nCiOverlap = Cec_TranCandCiOverlap( &Cand,
-            vCandSupport, pCiKeys, pCiScores, nCiMask );
-        if ( Cand.Gain > 0 &&
-             !Cec_TranCandVecContains(pKnown, &Cand) &&
-             !Cec_TranCandVecContains(pExist, &Cand) &&
-             !Cec_TranCandVecContains(pConstr, &Cand) )
+        Cand.nDiscoveryGain = Cand.Gain;
+        Cand.nCiOverlap = Cec_TranCandDivFeatures( &Cand,
+            vCandSupport, pCiKeys, pCiScores, pDivRanks, nCiMask,
+            &Cand.nDivRankMax, &Cand.nDivRankSum );
+        pProf->nRootBuildStageValid[iAttempt]++;
+        pProf->timeRootBuildStage[iAttempt] += timePart;
+        fAccepted = 0;
+        if ( Cand.Gain <= 0 )
+            pProf->nRootBuildRejectNonPositive++;
+        else if ( Cec_TranCandVecContains(pKnown, &Cand) )
+            pProf->nRootBuildRejectKnown++;
+        else if ( Cec_TranCandVecContains(pExist, &Cand) )
+            pProf->nRootBuildRejectDirect++;
+        else if ( Cec_TranCandVecContains(pConstr, &Cand) )
+            pProf->nRootBuildRejectPage++;
+        else
         {
             Cec_TranCandVecPush( pConstr, Cand );
             pCursor->nBuildAccepted++;
+            pProf->nRootBuildAccepted++;
+            pProf->nRootBuildStageAccepted[iAttempt]++;
             pProf->nRootWaveRecipes[iProfWave]++;
             pStat->nSigMatched++;
+            fAccepted = 1;
         }
-        else
+        if ( !fAccepted )
             pStat->nSigRejected++;
         Cec_TranCandRecipeRelease( &Cand );
     }
@@ -3369,8 +3523,15 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     Abc_ResubIteratorResumeStop( pIter, pCursor->State );
     assert( pProf->nRootResubIterLive > 0 );
     pProf->nRootResubIterLive--;
+    pProf->nRootBuildMffcCalls[iMffcBin]++;
+    pProf->nRootBuildMffcNext[iMffcBin] +=
+        pProf->nRootResubIterNext - nNextStart;
+    pProf->nRootBuildMffcAccepted[iMffcBin] +=
+        pProf->nRootBuildAccepted - nAcceptedStart;
+    pProf->timeRootBuildMffc[iMffcBin] += Abc_Clock() - clkMffc;
     ABC_FREE( pCiKeys );
     ABC_FREE( pCiScores );
+    ABC_FREE( pDivRanks );
     Vec_IntFree( vCandSupport );
 }
 
@@ -3397,7 +3558,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranCandVec_t Exist = {0}, Build = {0};
     Vec_Int_t * vPool;
     Cec_TranDivRank_t * pRanks = NULL;
-    int i, nReservoirMax;
+    int i, nReservoirMax, nReservoirSize;
     abctime clk = Abc_Clock(), timePart;
     Cec_TranCandVecClear( pOut );
     // The heavyweight iterator manager is local to this call.  A later
@@ -3412,11 +3573,26 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
         pPars->fUseMffcDivs,
         pCovered, pUsed, pMffc, vMffc );
     Cec_TranFilterCoveredDivPool( vPool, pCovered );
+    nReservoirSize = Vec_IntSize( vPool );
     if ( Vec_IntSize(vPool) )
     {
         pRanks = Cec_TranRankDivReservoir( pSim, pRoot->iObj, vPool );
         Cec_TranSelectRankedDivPool( vPool, pRanks,
             pPars->nConstrBaseMax );
+    }
+    if ( pPars->fUseConstr )
+    {
+        pProf->nRootDivReservoirCalls++;
+        pProf->nRootDivReservoirNodes += nReservoirSize;
+        pProf->nRootDivReservoirMax = Abc_MaxInt(
+            pProf->nRootDivReservoirMax, nReservoirSize );
+        pProf->nRootDivPoolNodes += Vec_IntSize(vPool);
+        pProf->nRootDivPoolMax = Abc_MaxInt(
+            pProf->nRootDivPoolMax, Vec_IntSize(vPool) );
+        pProf->nRootDivPoolEmpty += Vec_IntSize(vPool) == 0;
+        pProf->nRootBuildMffcSum += pRoot->nMffc;
+        pProf->nRootBuildMffcMax = Abc_MaxInt(
+            pProf->nRootBuildMffcMax, pRoot->nMffc );
     }
     timePart = Abc_Clock() - clk;
     pProf->timeRootDivPool += timePart;
@@ -3432,12 +3608,14 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     for ( i = 0; i < Exist.nSize; i++ )
         Exist.pArray[i].nWave = iWave;
     pProf->timeRootDirect += Abc_Clock() - clk;
-    if ( pPars->fUseConstr )
+    if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) )
         Cec_TranCollectRootConstructedIter( p, pSim, pPars, pRoot,
             pCursor, iWave,
             pKnown, pCovered, pUsed, pMffc, vMffc, vPool, pRanks,
             &Exist, &Build,
             pDep, pDisc, pProf );
+    else if ( pPars->fUseConstr )
+        pProf->nRootBuildMffcOneSkipped++;
     for ( i = 0; i < Exist.nSize; i++ )
         if ( !Cec_TranCandVecContains(pOut, Exist.pArray + i) )
             Cec_TranCandVecPush( pOut, Exist.pArray[i] );
@@ -4014,6 +4192,7 @@ static int Cec_TranRootConsumeProved( Gia_Man_t * p,
             pProf->nStageKindSelected[Phase][Kind]++;
             pProf->nStageKindMarginalAndGain[Phase][Kind] += Cand.Gain;
             pProf->nLaneKindSelected[Lane][Kind]++;
+            Cec_TranProfileBuildCandidate( pProf, &Cand, 2 );
             nSelected++;
         }
     assert( (nSelected == 0) == (SelectedWeight == 0) );
@@ -4330,6 +4509,7 @@ static int Cec_TranRootProvePortfolio( Gia_Man_t * p,
             CEC_TRAN_STATE_PROVED_COMB : CEC_TRAN_STATE_PROVED_SEQ;
         pProf->nStageKindProved[iPhase][Cand.nKind]++;
         pProf->nLaneKindProved[iStage - 1][Cand.nKind]++;
+        Cec_TranProfileBuildCandidate( pProf, &Cand, 1 );
         if ( Cec_TranCandVecContains(pProved, &Cand) )
             continue;
         Cec_TranCandVecPush( pProved, Cand );
@@ -4507,6 +4687,19 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
     static char const * pStage[2] = { "COMB", "SEQ" };
     static char const * pLane[2] = { "CBS", "SCORR" };
     static char const * pKind[3] = { "CONSTANT", "EXISTING", "BUILD" };
+    static int const BuildStages[4] = { 1, 3, 4, 5 };
+    static char const * pBuildStage[4] = {
+        "one-gate", "div-gate", "gate-gate", "greedy" };
+    static char const * pRankBin[CEC_TRAN_BUILD_RANK_BINS] = {
+        "1", "2", "3-4", "5-8", "9-16", "17-32", "33-64", "65+" };
+    static char const * pGateBin[CEC_TRAN_BUILD_GATE_BINS] = {
+        "1", "2", "3", "4", "5-8", "9+" };
+    static char const * pGainBin[CEC_TRAN_BUILD_GAIN_BINS] = {
+        "1", "2", "3-4", "5-8", "9-16", "17+" };
+    static char const * pDivRankBin[CEC_TRAN_BUILD_DIVRANK_BINS] = {
+        "1-4", "5-8", "9-16", "17-32", "33-64", "65+" };
+    static char const * pMffcBin[CEC_TRAN_BUILD_MFFC_BINS] = {
+        "1", "2", "3-4", "5-8", "9-16", "17+" };
     abctime Times[19] = { p->timeRootSimSig, p->timeRootRefresh,
         p->timeRootDirect, p->timeRootDivCi, p->timeRootResubInit,
         p->timeRootResubEnumCanon, p->timeRootCbsGraph,
@@ -4628,6 +4821,62 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         p->nRootResubIterDiscarded, p->nRootResubIterLiveMax,
         p->nRootResubIterLive,
         p->nRootResubInvalid );
+    Abc_Print( 1, "stran-root build-funnel profile: schema=6 reservoir-calls=%lld reservoir-nodes=%lld reservoir-max=%d pool-nodes=%lld pool-max=%d pool-empty=%d mffc-sum=%lld mffc-max=%d mffc-one-skipped=%lld iterator-next=%d semantic-invalid=%d collapsed-direct=%lld reject-nonpositive=%lld reject-known=%lld reject-direct=%lld reject-page=%lld accepted=%lld\n",
+        p->nRootDivReservoirCalls, p->nRootDivReservoirNodes,
+        p->nRootDivReservoirMax, p->nRootDivPoolNodes,
+        p->nRootDivPoolMax, p->nRootDivPoolEmpty,
+        p->nRootBuildMffcSum, p->nRootBuildMffcMax,
+        p->nRootBuildMffcOneSkipped,
+        p->nRootResubIterNext, p->nRootResubInvalid,
+        p->nRootBuildCollapsedDirect, p->nRootBuildRejectNonPositive,
+        p->nRootBuildRejectKnown, p->nRootBuildRejectDirect,
+        p->nRootBuildRejectPage, p->nRootBuildAccepted );
+    for ( i = 0; i < 4; i++ )
+    {
+        int Stage = BuildStages[i];
+        Abc_Print( 1, "stran-root build-stage profile: schema=6 bucket=%s valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
+            pBuildStage[i], p->nRootBuildStageValid[Stage],
+            p->nRootBuildStageAccepted[Stage],
+            p->nRootBuildStageOutcome[Stage][0],
+            p->nRootBuildStageOutcome[Stage][1],
+            p->nRootBuildStageOutcome[Stage][2],
+            p->nRootBuildStageSelectedAndGain[Stage],
+            Cec_TranTimeSec(p->timeRootBuildStage[Stage]) );
+    }
+    for ( i = 0; i < CEC_TRAN_BUILD_RANK_BINS; i++ )
+        Abc_Print( 1, "stran-root build-rank profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            pRankBin[i], p->nRootBuildRankOutcome[i][0],
+            p->nRootBuildRankOutcome[i][1],
+            p->nRootBuildRankOutcome[i][2],
+            p->nRootBuildRankSelectedAndGain[i] );
+    for ( i = 0; i < CEC_TRAN_BUILD_GATE_BINS; i++ )
+        Abc_Print( 1, "stran-root build-gates profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            pGateBin[i], p->nRootBuildGateOutcome[i][0],
+            p->nRootBuildGateOutcome[i][1],
+            p->nRootBuildGateOutcome[i][2],
+            p->nRootBuildGateSelectedAndGain[i] );
+    for ( i = 0; i < CEC_TRAN_BUILD_GAIN_BINS; i++ )
+        Abc_Print( 1, "stran-root build-gain profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            pGainBin[i], p->nRootBuildGainOutcome[i][0],
+            p->nRootBuildGainOutcome[i][1],
+            p->nRootBuildGainOutcome[i][2],
+            p->nRootBuildGainSelectedAndGain[i] );
+    for ( i = 0; i < 2; i++ )
+        Abc_Print( 1, "stran-root build-ci profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            i ? "positive" : "zero", p->nRootBuildCiOutcome[i][0],
+            p->nRootBuildCiOutcome[i][1], p->nRootBuildCiOutcome[i][2],
+            p->nRootBuildCiSelectedAndGain[i] );
+    for ( i = 0; i < CEC_TRAN_BUILD_DIVRANK_BINS; i++ )
+        Abc_Print( 1, "stran-root build-divrank profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            pDivRankBin[i], p->nRootBuildDivRankOutcome[i][0],
+            p->nRootBuildDivRankOutcome[i][1],
+            p->nRootBuildDivRankOutcome[i][2],
+            p->nRootBuildDivRankSelectedAndGain[i] );
+    for ( i = 0; i < CEC_TRAN_BUILD_MFFC_BINS; i++ )
+        Abc_Print( 1, "stran-root build-mffc profile: schema=6 bucket=%s calls=%lld next=%lld accepted=%lld time-sec=%.6f\n",
+            pMffcBin[i], p->nRootBuildMffcCalls[i],
+            p->nRootBuildMffcNext[i], p->nRootBuildMffcAccepted[i],
+            Cec_TranTimeSec(p->timeRootBuildMffc[i]) );
     Abc_Print( 1, "stran-root waves:" );
     for ( i = 0; i < nRootWaves; i++ )
         Abc_Print( 1, " w%d=%d/%d/%d/%d/%d", i + 1,
@@ -4813,6 +5062,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         {
             Cec_TranCandVecPush( &Known, Page.pArray[i] );
             Prof.nStageKindGenerated[iPhase][Page.pArray[i].nKind]++;
+            Cec_TranProfileBuildCandidate( &Prof, Page.pArray + i, 0 );
         }
         // In micro-batch mode only Page can contain fresh obligations.  Every
         // older Known entry is already PROVED or TRIED_SEQ, and scanning it

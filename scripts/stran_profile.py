@@ -25,6 +25,14 @@ ROOT_PAGED_PREFIX = "stran-root paged portfolio:"
 ROOT_WAVE_PREFIX = "stran-root wave portfolio:"
 ROOT_ITERATOR_PREFIX = "stran-root resub iterator:"
 ROOT_SEQ_PREFIX = "stran-root sequential relations:"
+ROOT_BUILD_FUNNEL_PREFIX = "stran-root build-funnel profile:"
+ROOT_BUILD_STAGE_PREFIX = "stran-root build-stage profile:"
+ROOT_BUILD_RANK_PREFIX = "stran-root build-rank profile:"
+ROOT_BUILD_GATES_PREFIX = "stran-root build-gates profile:"
+ROOT_BUILD_GAIN_PREFIX = "stran-root build-gain profile:"
+ROOT_BUILD_CI_PREFIX = "stran-root build-ci profile:"
+ROOT_BUILD_DIVRANK_PREFIX = "stran-root build-divrank profile:"
+ROOT_BUILD_MFFC_PREFIX = "stran-root build-mffc profile:"
 
 TIME_KEYS = (
     "total-sec", "sim-sec", "care-sec", "root-discovery-sec",
@@ -117,6 +125,46 @@ ROOT_ITERATOR_FIELDS = [
     "root_iterator_live_final", "root_iterator_invalid",
 ]
 
+ROOT_BUILD_FUNNEL_FIELDS = [
+    f"root_build_{name}"
+    for name in (
+        "reservoir_calls", "reservoir_nodes", "reservoir_max",
+        "pool_nodes", "pool_max", "pool_empty", "mffc_sum", "mffc_max",
+        "mffc_one_skipped", "iterator_next", "semantic_invalid", "collapsed_direct",
+        "reject_nonpositive", "reject_known", "reject_direct", "reject_page",
+        "accepted",
+    )
+]
+ROOT_BUILD_BUCKETS = {
+    "stage": (("one-gate", "div-gate", "gate-gate", "greedy"),
+              ("valid", "accepted", "generated", "proved", "selected",
+               "selected-and-gain", "time-sec")),
+    "rank": (("1", "2", "3-4", "5-8", "9-16", "17-32", "33-64", "65+"),
+             ("generated", "proved", "selected", "selected-and-gain")),
+    "gates": (("1", "2", "3", "4", "5-8", "9+"),
+              ("generated", "proved", "selected", "selected-and-gain")),
+    "gain": (("1", "2", "3-4", "5-8", "9-16", "17+"),
+             ("generated", "proved", "selected", "selected-and-gain")),
+    "ci": (("zero", "positive"),
+           ("generated", "proved", "selected", "selected-and-gain")),
+    "divrank": (("1-4", "5-8", "9-16", "17-32", "33-64", "65+"),
+                ("generated", "proved", "selected", "selected-and-gain")),
+    "mffc": (("1", "2", "3-4", "5-8", "9-16", "17+"),
+             ("calls", "next", "accepted", "time-sec")),
+}
+
+
+def _field_token(value: str) -> str:
+    return value.replace("-", "_").replace("+", "plus")
+
+
+ROOT_BUILD_BUCKET_FIELDS = [
+    f"root_build_{family}_{_field_token(bucket)}_{_field_token(metric)}"
+    for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items()
+    for bucket in buckets
+    for metric in metrics
+]
+
 PROFILE_FIELDS = [
     "profile_schema", "profile_time_records", "profile_seq_build_records",
     *[("profile_overhead_sec" if key == "profile-overhead-sec"
@@ -144,6 +192,8 @@ PROFILE_FIELDS = [
     *ROOT_HISTORY_FIELDS,
     *ROOT_SEQ_FIELDS,
     *ROOT_ITERATOR_FIELDS,
+    *ROOT_BUILD_FUNNEL_FIELDS,
+    *ROOT_BUILD_BUCKET_FIELDS,
     *ROOT_PROFILE_FIELDS,
 ]
 
@@ -333,6 +383,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_paged: list[dict[str, int | float]] = []
     root_iterators: list[dict[str, int | float]] = []
     root_seq: list[dict[str, int | float]] = []
+    root_build_funnels: list[dict[str, int | float]] = []
+    root_build_buckets: dict[str, list[tuple[str, dict[str, int | float]]]] = {
+        family: [] for family in ROOT_BUILD_BUCKETS
+    }
     schemas: list[int] = []
     for line in stdout.splitlines():
         if not any(prefix in line for prefix in (
@@ -341,6 +395,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_HELPER_PREFIX,
             ROOT_PAGED_PREFIX, ROOT_WAVE_PREFIX,
             ROOT_ITERATOR_PREFIX, ROOT_SEQ_PREFIX,
+            ROOT_BUILD_FUNNEL_PREFIX, ROOT_BUILD_STAGE_PREFIX,
+            ROOT_BUILD_RANK_PREFIX, ROOT_BUILD_GATES_PREFIX,
+            ROOT_BUILD_GAIN_PREFIX, ROOT_BUILD_CI_PREFIX,
+            ROOT_BUILD_DIVRANK_PREFIX,
+            ROOT_BUILD_MFFC_PREFIX,
         )):
             continue
         record = {key: _number(value) for key, value in _KEY_VALUE.findall(line)}
@@ -377,6 +436,25 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             root_iterators.append(record)
         elif ROOT_SEQ_PREFIX in line:
             root_seq.append(record)
+        elif ROOT_BUILD_FUNNEL_PREFIX in line:
+            root_build_funnels.append(record)
+        else:
+            family = None
+            for name, prefix in (
+                ("stage", ROOT_BUILD_STAGE_PREFIX),
+                ("rank", ROOT_BUILD_RANK_PREFIX),
+                ("gates", ROOT_BUILD_GATES_PREFIX),
+                ("gain", ROOT_BUILD_GAIN_PREFIX),
+                ("ci", ROOT_BUILD_CI_PREFIX),
+                ("divrank", ROOT_BUILD_DIVRANK_PREFIX),
+                ("mffc", ROOT_BUILD_MFFC_PREFIX),
+            ):
+                if prefix in line:
+                    family = name
+                    break
+            bucket = re.search(r"(?:^| )bucket=([^ ]+)(?: |$)", line)
+            if family and bucket:
+                root_build_buckets[family].append((bucket.group(1), record))
     if root_effects or root_lanes or root_summaries:
         build_records.append(
             _root_effect_to_build(root_effects, root_lanes, root_summaries)
@@ -449,6 +527,32 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         "root_iterator_live_final": sum_field(root_iterators, "live-final"),
         "root_iterator_invalid": sum_field(root_iterators, "invalid"),
     })
+
+    funnel_max = {"reservoir-max", "pool-max", "mffc-max"}
+    for key in (
+        "reservoir-calls", "reservoir-nodes", "reservoir-max",
+        "pool-nodes", "pool-max", "pool-empty", "mffc-sum", "mffc-max",
+        "mffc-one-skipped", "iterator-next", "semantic-invalid", "collapsed-direct",
+        "reject-nonpositive", "reject-known", "reject-direct", "reject-page",
+        "accepted",
+    ):
+        field = f"root_build_{_field_token(key)}"
+        result[field] = (
+            max_field(root_build_funnels, key)
+            if key in funnel_max else sum_field(root_build_funnels, key)
+        )
+    for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
+        for bucket in buckets:
+            records = [
+                record for record_bucket, record in root_build_buckets[family]
+                if record_bucket == bucket
+            ]
+            for metric in metrics:
+                field = (
+                    f"root_build_{family}_{_field_token(bucket)}_"
+                    f"{_field_token(metric)}"
+                )
+                result[field] = sum_field(records, metric)
 
     if schemas:
         result["profile_schema"] = max(schemas)

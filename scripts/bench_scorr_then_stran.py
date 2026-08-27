@@ -25,11 +25,16 @@ from __future__ import annotations
 
 import argparse
 import csv
+import datetime as dt
 import hashlib
+import json
 import os
+import platform
 import re
+import resource
 import shlex
 import shutil
+import socket
 import subprocess
 import sys
 import tempfile
@@ -90,26 +95,39 @@ for _stage in ("comb", "seq"):
     ])
 
 
-def run_abc(abc: str, command: str, timeout: int) -> Tuple[str, str, int, int]:
-    """Return stdout, stderr, return code, and wall time in milliseconds."""
+def run_abc(
+    abc: str, command: str, timeout: int
+) -> Tuple[str, str, int, int, int, int]:
+    """Return stdout/stderr/status plus wall, child-user, and child-system ms."""
     started = time.perf_counter()
+    usage_before = resource.getrusage(resource.RUSAGE_CHILDREN)
+
+    def timing() -> tuple[int, int, int]:
+        usage_after = resource.getrusage(resource.RUSAGE_CHILDREN)
+        return (
+            int((time.perf_counter() - started) * 1000),
+            int((usage_after.ru_utime - usage_before.ru_utime) * 1000),
+            int((usage_after.ru_stime - usage_before.ru_stime) * 1000),
+        )
+
     try:
         result = subprocess.run(
             [abc, "-q", command], capture_output=True, text=True, timeout=timeout
         )
-        elapsed = int((time.perf_counter() - started) * 1000)
-        return result.stdout, result.stderr, result.returncode, elapsed
+        elapsed, user_ms, system_ms = timing()
+        return (result.stdout, result.stderr, result.returncode,
+                elapsed, user_ms, system_ms)
     except subprocess.TimeoutExpired as exc:
-        elapsed = int((time.perf_counter() - started) * 1000)
+        elapsed, user_ms, system_ms = timing()
         # Python >=3.13 returns bytes from TimeoutExpired.stdout even when
         # text=True was passed to run(); decode so callers only ever see str.
         stdout = exc.stdout
         if isinstance(stdout, bytes):
             stdout = stdout.decode("utf-8", errors="replace")
-        return stdout or "", "TIMEOUT", -1, elapsed
+        return stdout or "", "TIMEOUT", -1, elapsed, user_ms, system_ms
     except FileNotFoundError as exc:
-        elapsed = int((time.perf_counter() - started) * 1000)
-        return "", str(exc), -2, elapsed
+        elapsed, user_ms, system_ms = timing()
+        return "", str(exc), -2, elapsed, user_ms, system_ms
 
 
 def aig_stats(path: Path) -> Tuple[Any, Any]:
@@ -354,13 +372,85 @@ def short_error(stdout: str, stderr: str) -> str:
     return text[:500] if text else NA
 
 
+RUN_FIELDS = [
+    "run_schema", "run_config_id", "run_started_at", "git_commit",
+    "git_dirty", "abc_sha256", "script_sha256", "profile_parser_sha256",
+    "host", "platform", "python_version", "aig_root", "timeout_s", "jobs",
+    "dsec_mode", "input_count", "input_manifest_id", "input_sha256",
+    "input_size_bytes",
+    "normalize_user_ms", "normalize_system_ms", "scorr_user_ms",
+    "scorr_system_ms", "stran_user_ms", "stran_system_ms", "dsec_user_ms",
+    "dsec_system_ms",
+]
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def git_value(repo: Path, *args: str) -> str:
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), *args], capture_output=True,
+            text=True, timeout=10, check=False,
+        )
+        return result.stdout.strip() if result.returncode == 0 else NA
+    except (OSError, subprocess.SubprocessError):
+        return NA
+
+
+def make_run_metadata(
+    abc: Path, aig_dir: Path, timeout: int, jobs: int, skip_dsec: bool,
+    scorr_args: str, stran_args: str, aigs: list[Path],
+) -> dict[str, Any]:
+    script = Path(__file__).resolve()
+    parser_path = script.with_name("stran_profile.py")
+    repo = script.parent.parent
+    commit = git_value(repo, "rev-parse", "HEAD")
+    dirty_text = git_value(repo, "status", "--porcelain", "--untracked-files=no")
+    dirty = NA if dirty_text == NA else ("yes" if dirty_text else "no")
+    manifest_rows = [
+        f"{path.relative_to(aig_dir)}\t{path.stat().st_size}\t{sha256_file(path)}"
+        for path in aigs
+    ]
+    manifest_id = hashlib.sha256("\n".join(manifest_rows).encode()).hexdigest()
+    static = {
+        "run_schema": 2,
+        "git_commit": commit,
+        "git_dirty": dirty,
+        "abc_sha256": sha256_file(abc),
+        "script_sha256": sha256_file(script),
+        "profile_parser_sha256": sha256_file(parser_path),
+        "host": socket.gethostname(),
+        "platform": platform.platform(),
+        "python_version": platform.python_version(),
+        "aig_root": str(aig_dir),
+        "timeout_s": timeout,
+        "jobs": jobs,
+        "dsec_mode": "skip" if skip_dsec else "audit",
+        "input_count": len(aigs),
+        "input_manifest_id": manifest_id,
+        "scorr_args": scorr_args,
+        "stran_args": stran_args,
+    }
+    encoded = json.dumps(static, sort_keys=True, separators=(",", ":")).encode()
+    static["run_config_id"] = hashlib.sha256(encoded).hexdigest()[:20]
+    static["run_started_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
+    return static
+
+
 def worker(
-    task: Tuple[str, str, str, str, int, str, bool, str, bool]
+    task: Tuple[str, str, str, str, int, str, bool, str, bool, dict[str, Any]]
 ) -> Dict[str, Any]:
     (aig_name, relative_name, abc, scorr_args, timeout, stran_args,
-     keep_artifacts, artifacts_root, skip_dsec) = task
+     keep_artifacts, artifacts_root, skip_dsec, run_metadata) = task
     source = Path(aig_name)
     row: Dict[str, Any] = {
+        **run_metadata,
         "file": relative_name,
         "scorr_args": scorr_args,
         "stran_args": stran_args,
@@ -374,6 +464,16 @@ def worker(
         "stran_time_ms": NA,
         "dsec_time_ms": NA,
         "total_time_ms": NA,
+        "input_sha256": NA,
+        "input_size_bytes": NA,
+        "normalize_user_ms": NA,
+        "normalize_system_ms": NA,
+        "scorr_user_ms": NA,
+        "scorr_system_ms": NA,
+        "stran_user_ms": NA,
+        "stran_system_ms": NA,
+        "dsec_user_ms": NA,
+        "dsec_system_ms": NA,
         "scorr_and": NA,
         "scorr_latches": NA,
         "stran_and": NA,
@@ -405,15 +505,19 @@ def worker(
     norm_out = norm_err = scorr_out = scorr_err = stran_out = stran_err = dsec_out = dsec_err = ""
 
     try:
+        row["input_sha256"] = sha256_file(source)
+        row["input_size_bytes"] = source.stat().st_size
         # Rewriting the source once makes all AIGER names consistent.  dsec
         # then compares this normalized baseline with the final result.
         base = work_dir / "base.aig"
         scorr = work_dir / "scorr.aig"
         final = work_dir / "final.aig"
-        norm_out, norm_err, norm_rc, norm_ms = run_abc(
+        norm_out, norm_err, norm_rc, norm_ms, norm_user, norm_system = run_abc(
             abc, f"&read {source}; &write {base}", timeout
         )
         row["normalize_time_ms"] = norm_ms
+        row["normalize_user_ms"] = norm_user
+        row["normalize_system_ms"] = norm_system
         norm_status = status_from(norm_rc, base)
         if norm_status != "PASS":
             row["error"] = f"normalize:{norm_status}: {short_error(norm_out, norm_err)}"
@@ -425,10 +529,12 @@ def worker(
         row["source_and"] = source_and
         row["source_latches"] = source_latches
 
-        scorr_out, scorr_err, scorr_rc, scorr_ms = run_abc(
+        scorr_out, scorr_err, scorr_rc, scorr_ms, scorr_user, scorr_system = run_abc(
             abc, f"&read {base}; &scorr {scorr_args}; &write {scorr}", timeout
         )
         row["scorr_time_ms"] = scorr_ms
+        row["scorr_user_ms"] = scorr_user
+        row["scorr_system_ms"] = scorr_system
         row["scorr_status"] = status_from(scorr_rc, scorr)
         if row["scorr_status"] != "PASS":
             row["error"] = f"scorr:{row['scorr_status']}: {short_error(scorr_out, scorr_err)}"
@@ -439,10 +545,12 @@ def worker(
 
         # This starts strictly from the completed &scorr output.  &stran's
         # own time includes its per-candidate sequential proof calls.
-        stran_out, stran_err, stran_rc, stran_ms = run_abc(
+        stran_out, stran_err, stran_rc, stran_ms, stran_user, stran_system = run_abc(
             abc, f"&read {scorr}; &stran {stran_args}; &write {final}", timeout
         )
         row["stran_time_ms"] = stran_ms
+        row["stran_user_ms"] = stran_user
+        row["stran_system_ms"] = stran_system
         row["stran_status"] = status_from(stran_rc, final)
         row.update(parse_stran(stran_out))
         if row["stran_status"] != "PASS":
@@ -458,10 +566,12 @@ def worker(
             row["dsec_status"] = "SKIP"
             row["dsec_time_ms"] = 0
         else:
-            dsec_out, dsec_err, dsec_rc, dsec_ms = run_abc(
+            dsec_out, dsec_err, dsec_rc, dsec_ms, dsec_user, dsec_system = run_abc(
                 abc, f"dsec {base} {final}", timeout
             )
             row["dsec_time_ms"] = dsec_ms
+            row["dsec_user_ms"] = dsec_user
+            row["dsec_system_ms"] = dsec_system
             row["dsec_status"] = (
                 "PASS" if dsec_rc == 0 and "Networks are equivalent" in dsec_out
                 else "TIMEOUT" if dsec_rc == -1
@@ -488,6 +598,7 @@ def worker(
 
 
 CSV_FIELDS = [
+    *RUN_FIELDS,
     "file", "scorr_args", "stran_args",
     "source_and", "source_latches", "scorr_status", "stran_status", "dsec_status",
     "normalize_time_ms", "scorr_time_ms", "stran_time_ms", "dsec_time_ms", "total_time_ms",
@@ -538,11 +649,14 @@ def main() -> None:
         sys.exit(f"[ERROR] {exc}")
 
     aig_dir = Path(args.aig_dir).expanduser().resolve()
-    abc = str(Path(args.abc).expanduser().resolve())
+    abc_path = Path(args.abc).expanduser().resolve()
+    abc = str(abc_path)
     output = Path(args.out).expanduser()
     output.parent.mkdir(parents=True, exist_ok=True)
     if not aig_dir.is_dir():
         sys.exit(f"[ERROR] AIG directory not found: {aig_dir}")
+    if not abc_path.is_file():
+        sys.exit(f"[ERROR] ABC binary not found: {abc_path}")
     if args.timeout < 1 or args.jobs < 1:
         sys.exit("[ERROR] --timeout and --jobs must be positive")
 
@@ -557,10 +671,21 @@ def main() -> None:
     print(f"[INFO] &scorr args: {args.scorr_args}")
     print(f"[INFO] &stran args: {stran_args}")
 
+    run_metadata = make_run_metadata(
+        abc_path, aig_dir, args.timeout, args.jobs, args.skip_dsec,
+        args.scorr_args, stran_args, aigs,
+    )
+    print(
+        f"[INFO] Run config={run_metadata['run_config_id']} "
+        f"commit={str(run_metadata['git_commit'])[:12]} "
+        f"dirty={run_metadata['git_dirty']} host={run_metadata['host']}"
+    )
+
     tasks = [
         (str(path), str(path.relative_to(aig_dir)), abc, args.scorr_args, args.timeout,
          stran_args, args.keep_artifacts,
-         str(output.parent / f"{output.stem}_artifacts"), args.skip_dsec)
+         str(output.parent / f"{output.stem}_artifacts"), args.skip_dsec,
+         run_metadata)
         for path in aigs
     ]
     rows = []
