@@ -2,11 +2,10 @@
 
 ## 1. 当前结论
 
-本轮分析使用 6 份最新的 root-mode CSV（共同 PASS case 做成对比较）。结论不是“proof 太慢”，而是 Build 的 resub 枚举/规范化太慢：
+本轮分析使用 6 份最新的 root-mode CSV（共同 PASS case 做成对比较）。优化目标严格限定为 **phase=SEQ 的 Build candidate**；COMB Build、Constant、Existing 和最终总 reduction 都不计入 heuristic 的质量收益。
 
-- 单 case 的 Build discovery / 总运行时间中位数为 67.5%–90.9%。
-- resub enumeration / Build discovery 中位数为 92.8%–96.2%。
-- `C1000,N20,B128,q50,w10` 相对 `C1000,N10,B64,q30,w8`，最终 reduction 平均只增加 0.338 个百分点，但 Build discovery 变为 4.076 倍，总时间变为 3.201 倍，并出现 61 个 timeout。
+- 旧 CSV 的 `seq_build_ordered_and_gain` 是纯 SEQ Build gain，可用于选择正/负 case；但旧 Build timing/bucket 把 COMB/SEQ phase 加总，只能说明枚举很重，不能作为 SEQ heuristic 的最终加速数字。
+- `C1000,N20,B128,q50,w10` 相对 `C1000,N10,B64,q30,w8`，SEQ Build reduction 平均只增加 0.111 个百分点；旧混合 Build discovery 变为 4.076 倍，并出现 61 个 timeout。
 - 大配置的生成→证明→选择漏斗为 `74,265,293 → 174,193 → 8,063`：proof/gen 约 0.216%，selected/gen 约 0.0109%。继续无差别扩大 B/N/q 的质量密度很低。
 - `b=1000` 相对 `b=100` 没有改善 Build：Build reduction 平均下降 0.110 个百分点，说明当前瓶颈不能靠单纯放宽 proof budget 解决。
 
@@ -14,7 +13,7 @@
 
 ## 2. 已加入的 profiling 与安全 fast path
 
-`schema=6` 将一个 Build candidate 从生成追踪到 proved、selected，并记录：
+`schema=7` 将 COMB/SEQ 分开，并把 phase=SEQ 的 Build candidate 从生成追踪到 proved、selected：
 
 - 枚举漏斗：reservoir、pool、MFFC、iterator next、semantic invalid、non-positive/known/direct/page reject、accepted。
 - iterator stage：one-gate、div-gate、gate-gate、greedy；各自 valid、accepted、耗时和最终 outcome。
@@ -33,7 +32,7 @@
 
 ## 3. 服务器需要重新采集的数据
 
-每次运行必须保留下列 provenance；runner 已自动写入 CSV：
+每次运行必须保留下列 provenance；runner 已自动写入 CSV。质量主指标是 `seq_stage_build_and_gain`，时间主指标是 `seq_profile_build_discovery_sec`；不得用 `stran_extra_and_reduction` 代替：
 
 - git commit、dirty 状态、ABC/runner/parser SHA-256；
 - config ID、完整 `&scorr`/`&stran` 参数、UTC 开始时间；
@@ -70,24 +69,21 @@ bash scripts/collect_seqbuild_cases.sh BENCH_ROOT /path/to/stran_all all
 
 ## 5. 第一轮最小实验
 
-第一轮隔离 B、q、N、K；不要同时改多个旋钮，组合配置只保留 `B32_q15`：
+第一轮只跑三个配置：ref、单独 `B=32`、单独 `q=15`。三者可以同时运行：
 
 ```bash
 cd /path/to/codex-stran-proof-microbatch
 make -j
 
 AIG_DIR=/path/to/stran_core \
-ABC_BIN=./abc \
-OUT_DIR=/path/to/results/schema6_core \
-JOBS=1 TIMEOUT=7200 SKIP_DSEC=0 \
-bash scripts/run_stran_build_profile_sweep.sh
-
-python3 scripts/analyze_stran_build_profile.py \
-  /path/to/results/schema6_core/*.csv \
-  | tee /path/to/results/schema6_core/analysis.txt
+ABC=./abc \
+OUT_DIR=/path/to/results/schema7_core \
+MAX_PARALLEL=3 JOBS_PER_RUN=20 \
+TIMEOUT=7200 SKIP_DSEC=0 \
+bash scripts/run_bench_parallel.sh
 ```
 
-`JOBS=1` 是推荐的 profiling 模式，避免并发争用扭曲 wall/CPU。若服务器成本过高，可先在 core 上运行全部 7 个配置；之后只将 `ref` 和前两名带到 `all`/全 corpus。最终候选必须开启 dsec。
+三组共用服务器时应满足 `MAX_PARALLEL × JOBS_PER_RUN <= 可用核心数`。同一组内每个 case 仍有独立 CPU time，因此 wall time 受争用时优先比较 CPU 与 iterator work。先在 core 上三路并行；之后只将 ref 和胜者带到 `all`/全 corpus。最终候选必须开启 dsec。
 
 已有 6 份旧 CSV 的 paired 汇总：
 
@@ -108,16 +104,16 @@ python3 scripts/analyze_stran_build_sweep.py \
 
 - 所有完成 case 的 dsec 必须 PASS；不得增加 assertion/crash。
 - 比较只使用共同 PASS case，同时单列 gained/lost PASS 和 timeout。
-- Build selected AND gain 的总捕获率至少 99%；任何 cutoff 都要检查每个高收益 case，而不只看全局总和。
+- phase=SEQ Build selected AND gain 的总捕获率至少 99%；任何 cutoff 都要检查每个高收益 case，而不只看全局总和。
 
 优化目标：
 
-- core 上 Build discovery wall 和 CPU 中位数至少 1.5× 加速；
+- core 上 SEQ Build discovery wall 和 CPU 中位数至少 1.5× 加速；
 - all/full corpus 上至少 1.3×；
-- case-normalized 最终 extra reduction 中位数非劣于 ref 0.02 个百分点；总 final AND gain 至少保留 99%；
+- `seq_stage_build_and_gain / seq_stage_and_before` 的中位数非劣于 ref 0.02 个百分点；SEQ Build gain 总和至少保留 99%；
 - expensive zero-Build 控制应明显减少 iterator next/time，不应把成本移到 proof lane。
 
-## 7. 下一步 heuristic（由 schema-6 数据决定）
+## 7. 下一步 heuristic（由 schema-7 的 SEQ 数据决定）
 
 按风险从低到高：
 

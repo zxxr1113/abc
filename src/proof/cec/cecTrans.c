@@ -4730,7 +4730,8 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         SumTime += Times[i];
     }
     Unprofiled = p->timeTotal > SumTime ? p->timeTotal - SumTime : 0;
-    Abc_Print( 1, "stran-root experiment-time profile: schema=5 total-sec=%.6f sim-sec=%.6f root-refresh-sec=%.6f direct-discovery-sec=%.6f divisor-discovery-sec=%.6f resub-init-sec=%.6f resub-enum-sec=%.6f cbs-graph-sec=%.6f cbs-screen-sec=%.6f cbs-solve-sec=%.6f scorr-graph-sec=%.6f scorr-bmc-sec=%.6f scorr-induction-sec=%.6f scorr-resim-sec=%.6f scorr-other-sec=%.6f selection-repair-sec=%.6f bundle-sec=%.6f cleanup-sec=%.6f exact-audit-sec=%.6f shadow-sec=%.6f unprofiled-sec=%.6f\n",
+    Abc_Print( 1, "stran-root experiment-time profile: schema=7 phase=%s total-sec=%.6f sim-sec=%.6f root-refresh-sec=%.6f direct-discovery-sec=%.6f divisor-discovery-sec=%.6f resub-init-sec=%.6f resub-enum-sec=%.6f cbs-graph-sec=%.6f cbs-screen-sec=%.6f cbs-solve-sec=%.6f scorr-graph-sec=%.6f scorr-bmc-sec=%.6f scorr-induction-sec=%.6f scorr-resim-sec=%.6f scorr-other-sec=%.6f selection-repair-sec=%.6f bundle-sec=%.6f cleanup-sec=%.6f exact-audit-sec=%.6f shadow-sec=%.6f unprofiled-sec=%.6f\n",
+        iPhase ? "seq" : "comb",
         Cec_TranTimeSec(p->timeTotal), Cec_TranTimeSec(p->timeRootSimSig),
         Cec_TranTimeSec(p->timeRootRefresh), Cec_TranTimeSec(p->timeRootDirect),
         Cec_TranTimeSec(p->timeRootDivCi), Cec_TranTimeSec(p->timeRootResubInit),
@@ -4821,7 +4822,8 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         p->nRootResubIterDiscarded, p->nRootResubIterLiveMax,
         p->nRootResubIterLive,
         p->nRootResubInvalid );
-    Abc_Print( 1, "stran-root build-funnel profile: schema=6 reservoir-calls=%lld reservoir-nodes=%lld reservoir-max=%d pool-nodes=%lld pool-max=%d pool-empty=%d mffc-sum=%lld mffc-max=%d mffc-one-skipped=%lld iterator-next=%d semantic-invalid=%d collapsed-direct=%lld reject-nonpositive=%lld reject-known=%lld reject-direct=%lld reject-page=%lld accepted=%lld\n",
+    Abc_Print( 1, "stran-root build-funnel profile: schema=7 phase=%s reservoir-calls=%lld reservoir-nodes=%lld reservoir-max=%d pool-nodes=%lld pool-max=%d pool-empty=%d mffc-sum=%lld mffc-max=%d mffc-one-skipped=%lld iterator-next=%d semantic-invalid=%d collapsed-direct=%lld reject-nonpositive=%lld reject-known=%lld reject-direct=%lld reject-page=%lld accepted=%lld\n",
+        iPhase ? "seq" : "comb",
         p->nRootDivReservoirCalls, p->nRootDivReservoirNodes,
         p->nRootDivReservoirMax, p->nRootDivPoolNodes,
         p->nRootDivPoolMax, p->nRootDivPoolEmpty,
@@ -4834,8 +4836,9 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
     for ( i = 0; i < 4; i++ )
     {
         int Stage = BuildStages[i];
-        Abc_Print( 1, "stran-root build-stage profile: schema=6 bucket=%s valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
-            pBuildStage[i], p->nRootBuildStageValid[Stage],
+        Abc_Print( 1, "stran-root build-stage profile: schema=7 phase=%s bucket=%s valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
+            iPhase ? "seq" : "comb", pBuildStage[i],
+            p->nRootBuildStageValid[Stage],
             p->nRootBuildStageAccepted[Stage],
             p->nRootBuildStageOutcome[Stage][0],
             p->nRootBuildStageOutcome[Stage][1],
@@ -4844,37 +4847,43 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
             Cec_TranTimeSec(p->timeRootBuildStage[Stage]) );
     }
     for ( i = 0; i < CEC_TRAN_BUILD_RANK_BINS; i++ )
-        Abc_Print( 1, "stran-root build-rank profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
-            pRankBin[i], p->nRootBuildRankOutcome[i][0],
+        Abc_Print( 1, "stran-root build-rank profile: schema=7 phase=%s bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            iPhase ? "seq" : "comb", pRankBin[i],
+            p->nRootBuildRankOutcome[i][0],
             p->nRootBuildRankOutcome[i][1],
             p->nRootBuildRankOutcome[i][2],
             p->nRootBuildRankSelectedAndGain[i] );
     for ( i = 0; i < CEC_TRAN_BUILD_GATE_BINS; i++ )
-        Abc_Print( 1, "stran-root build-gates profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
-            pGateBin[i], p->nRootBuildGateOutcome[i][0],
+        Abc_Print( 1, "stran-root build-gates profile: schema=7 phase=%s bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            iPhase ? "seq" : "comb", pGateBin[i],
+            p->nRootBuildGateOutcome[i][0],
             p->nRootBuildGateOutcome[i][1],
             p->nRootBuildGateOutcome[i][2],
             p->nRootBuildGateSelectedAndGain[i] );
     for ( i = 0; i < CEC_TRAN_BUILD_GAIN_BINS; i++ )
-        Abc_Print( 1, "stran-root build-gain profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
-            pGainBin[i], p->nRootBuildGainOutcome[i][0],
+        Abc_Print( 1, "stran-root build-gain profile: schema=7 phase=%s bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            iPhase ? "seq" : "comb", pGainBin[i],
+            p->nRootBuildGainOutcome[i][0],
             p->nRootBuildGainOutcome[i][1],
             p->nRootBuildGainOutcome[i][2],
             p->nRootBuildGainSelectedAndGain[i] );
     for ( i = 0; i < 2; i++ )
-        Abc_Print( 1, "stran-root build-ci profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
-            i ? "positive" : "zero", p->nRootBuildCiOutcome[i][0],
+        Abc_Print( 1, "stran-root build-ci profile: schema=7 phase=%s bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            iPhase ? "seq" : "comb", i ? "positive" : "zero",
+            p->nRootBuildCiOutcome[i][0],
             p->nRootBuildCiOutcome[i][1], p->nRootBuildCiOutcome[i][2],
             p->nRootBuildCiSelectedAndGain[i] );
     for ( i = 0; i < CEC_TRAN_BUILD_DIVRANK_BINS; i++ )
-        Abc_Print( 1, "stran-root build-divrank profile: schema=6 bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
-            pDivRankBin[i], p->nRootBuildDivRankOutcome[i][0],
+        Abc_Print( 1, "stran-root build-divrank profile: schema=7 phase=%s bucket=%s generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+            iPhase ? "seq" : "comb", pDivRankBin[i],
+            p->nRootBuildDivRankOutcome[i][0],
             p->nRootBuildDivRankOutcome[i][1],
             p->nRootBuildDivRankOutcome[i][2],
             p->nRootBuildDivRankSelectedAndGain[i] );
     for ( i = 0; i < CEC_TRAN_BUILD_MFFC_BINS; i++ )
-        Abc_Print( 1, "stran-root build-mffc profile: schema=6 bucket=%s calls=%lld next=%lld accepted=%lld time-sec=%.6f\n",
-            pMffcBin[i], p->nRootBuildMffcCalls[i],
+        Abc_Print( 1, "stran-root build-mffc profile: schema=7 phase=%s bucket=%s calls=%lld next=%lld accepted=%lld time-sec=%.6f\n",
+            iPhase ? "seq" : "comb", pMffcBin[i],
+            p->nRootBuildMffcCalls[i],
             p->nRootBuildMffcNext[i], p->nRootBuildMffcAccepted[i],
             Cec_TranTimeSec(p->timeRootBuildMffc[i]) );
     Abc_Print( 1, "stran-root waves:" );

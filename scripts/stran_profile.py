@@ -98,6 +98,12 @@ ROOT_STAGE_GAIN_FIELDS = [
     for stage in ("comb", "seq")
     for metric in ("and", "reg")
 ]
+ROOT_STAGE_SIZE_FIELDS = [
+    f"{stage}_stage_{metric}_{point}"
+    for stage in ("comb", "seq")
+    for metric in ("and", "reg")
+    for point in ("before", "after")
+]
 
 # History watermarks and materialization/proof events deliberately have
 # different names.  In particular, selected may include an old certificate
@@ -135,6 +141,17 @@ ROOT_BUILD_FUNNEL_FIELDS = [
         "accepted",
     )
 ]
+ROOT_PHASE_BUILD_FUNNEL_FIELDS = [
+    f"root_{phase}_build_{name}"
+    for phase in ("comb", "seq")
+    for name in (
+        "reservoir_calls", "reservoir_nodes", "reservoir_max",
+        "pool_nodes", "pool_max", "pool_empty", "mffc_sum", "mffc_max",
+        "mffc_one_skipped", "iterator_next", "semantic_invalid",
+        "collapsed_direct", "reject_nonpositive", "reject_known",
+        "reject_direct", "reject_page", "accepted",
+    )
+]
 ROOT_BUILD_BUCKETS = {
     "stage": (("one-gate", "div-gate", "gate-gate", "greedy"),
               ("valid", "accepted", "generated", "proved", "selected",
@@ -164,6 +181,18 @@ ROOT_BUILD_BUCKET_FIELDS = [
     for bucket in buckets
     for metric in metrics
 ]
+ROOT_PHASE_BUILD_BUCKET_FIELDS = [
+    f"root_{phase}_build_{family}_{_field_token(bucket)}_{_field_token(metric)}"
+    for phase in ("comb", "seq")
+    for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items()
+    for bucket in buckets
+    for metric in metrics
+]
+PHASE_PROFILE_FIELDS = [
+    f"{phase}_profile_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in dict.fromkeys((*TIME_KEYS, *ROOT_TIME_KEYS))
+]
 
 PROFILE_FIELDS = [
     "profile_schema", "profile_time_records", "profile_seq_build_records",
@@ -187,13 +216,17 @@ PROFILE_FIELDS = [
     "seq_build_path_upper_bound_sec", "seq_build_path_upper_bound_pct",
     "seq_build_ordered_gain_per_upper_bound_sec",
     *ROOT_STAGE_GAIN_FIELDS,
+    *ROOT_STAGE_SIZE_FIELDS,
     *ROOT_EFFECT_FIELDS,
     *ROOT_LANE_FIELDS,
     *ROOT_HISTORY_FIELDS,
     *ROOT_SEQ_FIELDS,
     *ROOT_ITERATOR_FIELDS,
     *ROOT_BUILD_FUNNEL_FIELDS,
+    *ROOT_PHASE_BUILD_FUNNEL_FIELDS,
     *ROOT_BUILD_BUCKET_FIELDS,
+    *ROOT_PHASE_BUILD_BUCKET_FIELDS,
+    *PHASE_PROFILE_FIELDS,
     *ROOT_PROFILE_FIELDS,
 ]
 
@@ -363,6 +396,14 @@ def _root_summary_stage_gains(
             continue
         stage = "comb" if phase_id == 0 else "seq"
         for metric in ("and", "reg"):
+            before_key = f"{metric}-before"
+            after_key = f"{metric}-after"
+            before_field = f"{stage}_stage_{metric}_before"
+            after_field = f"{stage}_stage_{metric}_after"
+            if before_key in record and before_field not in result:
+                result[before_field] = record[before_key]
+            if after_key in record:
+                result[after_field] = record[after_key]
             key = f"final-{metric}-gain"
             if key in record:
                 field = f"{stage}_stage_{metric}_gain"
@@ -376,6 +417,9 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     time_records: list[dict[str, int | float]] = []
     build_records: list[dict[str, int | float]] = []
     root_time_records: list[dict[str, int | float]] = []
+    root_phase_time_records: dict[str, list[dict[str, int | float]]] = {
+        "comb": [], "seq": [],
+    }
     root_effects: list[tuple[str, str, dict[str, int | float]]] = []
     root_lanes: list[tuple[str, str, dict[str, int | float]]] = []
     root_summaries: list[dict[str, int | float]] = []
@@ -384,8 +428,15 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_iterators: list[dict[str, int | float]] = []
     root_seq: list[dict[str, int | float]] = []
     root_build_funnels: list[dict[str, int | float]] = []
+    root_phase_build_funnels: dict[str, list[dict[str, int | float]]] = {
+        "comb": [], "seq": [],
+    }
     root_build_buckets: dict[str, list[tuple[str, dict[str, int | float]]]] = {
         family: [] for family in ROOT_BUILD_BUCKETS
+    }
+    root_phase_build_buckets = {
+        phase: {family: [] for family in ROOT_BUILD_BUCKETS}
+        for phase in ("comb", "seq")
     }
     schemas: list[int] = []
     for line in stdout.splitlines():
@@ -412,6 +463,9 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             build_records.append(record)
         elif ROOT_TIME_PREFIX in line:
             root_time_records.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_time_records[phase.group(1)].append(record)
             time_records.append(_root_time_to_legacy(record))
         elif ROOT_EFFECT_PREFIX in line:
             stage = re.search(r"(?:^| )stage=(comb|seq)(?: |$)", line)
@@ -438,6 +492,9 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             root_seq.append(record)
         elif ROOT_BUILD_FUNNEL_PREFIX in line:
             root_build_funnels.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_build_funnels[phase.group(1)].append(record)
         else:
             family = None
             for name, prefix in (
@@ -455,6 +512,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             bucket = re.search(r"(?:^| )bucket=([^ ]+)(?: |$)", line)
             if family and bucket:
                 root_build_buckets[family].append((bucket.group(1), record))
+                phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+                if phase:
+                    root_phase_build_buckets[phase.group(1)][family].append(
+                        (bucket.group(1), record)
+                    )
     if root_effects or root_lanes or root_summaries:
         build_records.append(
             _root_effect_to_build(root_effects, root_lanes, root_summaries)
@@ -554,6 +616,34 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                 )
                 result[field] = sum_field(records, metric)
 
+    for phase in ("comb", "seq"):
+        phase_funnels = root_phase_build_funnels[phase]
+        for key in (
+            "reservoir-calls", "reservoir-nodes", "reservoir-max",
+            "pool-nodes", "pool-max", "pool-empty", "mffc-sum", "mffc-max",
+            "mffc-one-skipped", "iterator-next", "semantic-invalid",
+            "collapsed-direct", "reject-nonpositive", "reject-known",
+            "reject-direct", "reject-page", "accepted",
+        ):
+            field = f"root_{phase}_build_{_field_token(key)}"
+            result[field] = (
+                max_field(phase_funnels, key)
+                if key in funnel_max else sum_field(phase_funnels, key)
+            )
+        for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
+            for bucket in buckets:
+                records = [
+                    record for record_bucket, record
+                    in root_phase_build_buckets[phase][family]
+                    if record_bucket == bucket
+                ]
+                for metric in metrics:
+                    field = (
+                        f"root_{phase}_build_{family}_{_field_token(bucket)}_"
+                        f"{_field_token(metric)}"
+                    )
+                    result[field] = sum_field(records, metric)
+
     if schemas:
         result["profile_schema"] = max(schemas)
     result["profile_time_records"] = len(time_records) if time_records else NA
@@ -564,6 +654,18 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         field = f"profile_{key.replace('-', '_')}"
         if field in result:
             result[field] = value
+
+    for phase in ("comb", "seq"):
+        for key, value in _sum_records(
+            root_phase_time_records[phase], ROOT_TIME_KEYS
+        ).items():
+            result[f"{phase}_profile_{key.replace('-', '_')}"] = value
+        phase_legacy_times = [
+            _root_time_to_legacy(record)
+            for record in root_phase_time_records[phase]
+        ]
+        for key, value in _sum_records(phase_legacy_times, TIME_KEYS).items():
+            result[f"{phase}_profile_{key.replace('-', '_')}"] = value
 
     times = _sum_records(time_records, TIME_KEYS)
     for key, value in times.items():

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Summarize schema-6 &stran Build-discovery funnels and outcome buckets."""
+"""Summarize phase=SEQ &stran Build-discovery funnels and outcome buckets."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def bucket_table(
 ) -> None:
     records = []
     for bucket in buckets:
-        prefix = f"root_build_{family}_{token(bucket)}"
+        prefix = f"root_seq_build_{family}_{token(bucket)}"
         generated = total(rows, f"{prefix}_generated")
         proved = total(rows, f"{prefix}_proved")
         selected = total(rows, f"{prefix}_selected")
@@ -104,7 +104,7 @@ def mffc_table(rows: list[dict[str, str]]) -> None:
         f"{'accept/next':>13} {'time s':>12}"
     )
     for bucket in ("1", "2", "3-4", "5-8", "9-16", "17+"):
-        prefix = f"root_build_mffc_{token(bucket)}"
+        prefix = f"root_seq_build_mffc_{token(bucket)}"
         calls = total(rows, f"{prefix}_calls")
         next_count = total(rows, f"{prefix}_next")
         accepted = total(rows, f"{prefix}_accepted")
@@ -119,26 +119,40 @@ def mffc_table(rows: list[dict[str, str]]) -> None:
 def report(path: Path) -> None:
     rows = load(path)
     if not rows:
-        raise SystemExit(f"[ERROR] no PASS schema-6 rows in {path}")
-    iterator_next = total(rows, "root_build_iterator_next")
-    accepted = total(rows, "root_build_accepted")
+        raise SystemExit(f"[ERROR] no PASS schema-6+ rows in {path}")
+    if not any(num(row.get("root_seq_build_iterator_next")) is not None
+               for row in rows):
+        raise SystemExit(
+            f"[ERROR] {path} has no phase-separated SEQ Build profile; "
+            "rerun with schema 7"
+        )
+    iterator_next = total(rows, "root_seq_build_iterator_next")
+    accepted = total(rows, "root_seq_build_accepted")
+    seq_build_gain = total(rows, "seq_stage_build_and_gain")
     build_shares = [
-        value for row in rows
-        if (value := num(row.get("profile_build_discovery_pct"))) is not None
+        100.0 * build_time / total_time for row in rows
+        if (total_time := num(row.get("seq_profile_total_sec")))
+        and (build_time := num(
+            row.get("seq_profile_build_discovery_sec")
+        )) is not None
     ]
-    print(f"\n{path}  (PASS schema-6 cases={len(rows)})")
+    median_share = (
+        f"{statistics.median(build_shares):.2f}%" if build_shares else "N/A"
+    )
+    print(f"\n{path}  (PASS phase-separated cases={len(rows)})")
     print("=" * 112)
     print(
-        f"iterator-next={int(iterator_next):,} accepted={int(accepted):,} "
+        f"SEQ-only iterator-next={int(iterator_next):,} "
+        f"accepted={int(accepted):,} selected-AND-gain={int(seq_build_gain):,} "
         f"accept/next={pct(accepted, iterator_next)} "
-        f"MFFC=1 skipped={int(total(rows, 'root_build_mffc_one_skipped')):,} "
-        f"median Build/runtime={statistics.median(build_shares):.2f}%"
+        f"MFFC=1 skipped={int(total(rows, 'root_seq_build_mffc_one_skipped')):,} "
+        f"median SEQ-Build/SEQ-runtime={median_share}"
     )
     for field in (
         "semantic_invalid", "collapsed_direct", "reject_nonpositive",
         "reject_known", "reject_direct", "reject_page",
     ):
-        value = total(rows, f"root_build_{field}")
+        value = total(rows, f"root_seq_build_{field}")
         print(f"  {field:<20} {int(value):>14,}  {pct(value, iterator_next):>10}")
 
     bucket_table(rows, "stage", ("one-gate", "div-gate", "gate-gate", "greedy"), True)
