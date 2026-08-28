@@ -349,6 +349,7 @@ struct Cec_ParTran_t_
     int              fUseHelpers;   // seed every valid retained proof as an induction helper
     int              fBuildOnly;    // suppress constant/existing candidates
     int              fShadow;       // whole-miter shadow audit for local proofs
+    int              fUseSolvSched; // reorder Stage-5 pivots by residual solvability
     int              fProfile;      // print phase and target-gate profiles
 };
 extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );

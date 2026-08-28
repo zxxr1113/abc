@@ -42242,7 +42242,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwjbaeMxclrgftupyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwjbaeMxclrgftupoyh")) != EOF )
     {
         switch ( c )
         {
@@ -42367,6 +42367,9 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         case 'p':
             pPars->fProfile ^= 1;
             break;
+        case 'o':
+            pPars->fUseSolvSched ^= 1;
+            break;
         default:
             goto usage;
         }
@@ -42393,7 +42396,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwjbae num] [-P root] [-Mxclrgftupyh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwjbae num] [-P root] [-Mxclrgftupoyh]\n" );
     Abc_Print( -2, "\t         performs root-only sequential Direct resubstitution\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
@@ -42423,6 +42426,7 @@ usage:
     Abc_Print( -2, "\t-u     : toggle retained-proof induction helpers [default = %s]\n", pPars->fUseHelpers? "yes": "no" );
     Abc_Print( -2, "\t-y     : toggle Build-only discovery (suppress constant/existing) [default = %s]\n", pPars->fBuildOnly? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );
+    Abc_Print( -2, "\t-o     : toggle residual-solvability Stage-5 pivot scheduling [default = %s]\n", pPars->fUseSolvSched? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;
 }

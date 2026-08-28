@@ -298,6 +298,12 @@ struct Gia_ResbMan_t_
     int         fTopCacheReady;
     int         fUseResidualCache;
     int         nResidualCacheHits[2][2];
+    int         fUseSolvSched;
+    int         fSolvScheduleReady;
+    int         fSolvScheduleProfiled;
+    int         nSolvSchedulePivots;
+    int         nSolvScheduleComplete;
+    abctime     timeSolvSchedule;
     int         fProfilePivots;
     int         fTopPivotProfileReady;
     int         nTopPivotKind;
@@ -332,6 +338,13 @@ struct Gia_ResbMan_t_
     Vec_Int_t * vTopPivotNovel;
     Vec_Int_t * vTopPivotDuplicate;
     Vec_Wrd_t * vTopPivotCovers;
+    Vec_Int_t * vSolvOrder;
+    Vec_Int_t * vSolvDepth;
+    Vec_Int_t * vSolvComplete;
+    Vec_Wrd_t * vSolvAmbiguity;
+    Vec_Wrd_t * vSolvClassMasks[2];
+    Vec_Int_t * vSolvClassCounts[2];
+    Vec_Int_t * vSolvSelected;
     Vec_Int_t * vResidualCacheBins;
     Vec_Int_t * vResidualCacheMeta;
     Vec_Int_t * vResidualCacheGates;
@@ -369,6 +382,15 @@ Gia_ResbMan_t * Gia_ResbAlloc( int nWords )
     p->vTopPivotNovel    = Vec_IntAlloc( 100 );
     p->vTopPivotDuplicate = Vec_IntAlloc( 100 );
     p->vTopPivotCovers   = Vec_WrdAlloc( 100 * nWords );
+    p->vSolvOrder        = Vec_IntAlloc( 100 );
+    p->vSolvDepth        = Vec_IntAlloc( 100 );
+    p->vSolvComplete     = Vec_IntAlloc( 100 );
+    p->vSolvAmbiguity    = Vec_WrdAlloc( 100 );
+    p->vSolvClassMasks[0] = Vec_WrdAlloc( 4 * nWords );
+    p->vSolvClassMasks[1] = Vec_WrdAlloc( 8 * nWords );
+    p->vSolvClassCounts[0] = Vec_IntAlloc( 8 );
+    p->vSolvClassCounts[1] = Vec_IntAlloc( 16 );
+    p->vSolvSelected     = Vec_IntAlloc( 100 );
     p->vResidualCacheBins = Vec_IntAlloc( 100 );
     p->vResidualCacheMeta = Vec_IntAlloc( 100 );
     p->vResidualCacheGates = Vec_IntAlloc( 100 );
@@ -396,6 +418,11 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     p->fTopCacheReady = 0;
     p->fUseResidualCache = 1;
     memset( p->nResidualCacheHits, 0, sizeof(p->nResidualCacheHits) );
+    p->fUseSolvSched = 0;
+    p->fSolvScheduleReady = 0;
+    p->fSolvScheduleProfiled = 0;
+    p->nSolvSchedulePivots = p->nSolvScheduleComplete = 0;
+    p->timeSolvSchedule = 0;
     p->fProfilePivots = 0;
     p->fTopPivotProfileReady = 0;
     p->nTopPivotKind = p->nTopPivotRank = 0;
@@ -433,6 +460,10 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     Vec_IntClear( p->vResidualCacheGates );
     Vec_WrdClear( p->vResidualCacheHashes );
     Vec_WrdClear( p->vResidualCacheMasks );
+    Vec_IntClear( p->vSolvOrder );
+    Vec_IntClear( p->vSolvDepth );
+    Vec_IntClear( p->vSolvComplete );
+    Vec_WrdClear( p->vSolvAmbiguity );
 }
 void Gia_ResbFree( Gia_ResbMan_t * p )
 {
@@ -457,6 +488,15 @@ void Gia_ResbFree( Gia_ResbMan_t * p )
     Vec_IntFree( p->vTopPivotNovel );
     Vec_IntFree( p->vTopPivotDuplicate );
     Vec_WrdFree( p->vTopPivotCovers );
+    Vec_IntFree( p->vSolvOrder );
+    Vec_IntFree( p->vSolvDepth );
+    Vec_IntFree( p->vSolvComplete );
+    Vec_WrdFree( p->vSolvAmbiguity );
+    Vec_WrdFree( p->vSolvClassMasks[0] );
+    Vec_WrdFree( p->vSolvClassMasks[1] );
+    Vec_IntFree( p->vSolvClassCounts[0] );
+    Vec_IntFree( p->vSolvClassCounts[1] );
+    Vec_IntFree( p->vSolvSelected );
     Vec_IntFree( p->vResidualCacheBins );
     Vec_IntFree( p->vResidualCacheMeta );
     Vec_IntFree( p->vResidualCacheGates );
@@ -1459,7 +1499,7 @@ void Gia_ManSortPairs( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t
 // frontier updates the same OFF/ON side.  Novelty is measured against the
 // union of all earlier (higher-ranked) masks, which exposes both exact
 // duplicates and pivots adding no new simulated distinction at all.
-static void Gia_ResbProfileTopFrontier( Gia_ResbMan_t * p, int fUseOr,
+static void Gia_ResbBuildTopFrontier( Gia_ResbMan_t * p, int fUseOr,
     int fPair )
 {
     Vec_Int_t * vPivots = fPair ? p->vUnatePairs[!fUseOr] :
@@ -1522,7 +1562,7 @@ static void Gia_ResbProfileTopChoice( Gia_ResbMan_t * p, int fUseOr,
 {
     word * pCover;
     if ( !p->fTopPivotProfileReady )
-        Gia_ResbProfileTopFrontier( p, fUseOr, fPair );
+        Gia_ResbBuildTopFrontier( p, fUseOr, fPair );
     p->nTopPivotRank = iChoice + 1;
     if ( iChoice < 0 || iChoice >= p->nTopFrontier )
     {
@@ -1536,6 +1576,212 @@ static void Gia_ResbProfileTopChoice( Gia_ResbMan_t * p, int fUseOr,
     p->nTopPivotNovel = Vec_IntEntry( p->vTopPivotNovel, iChoice );
     p->nTopPivotRemain = p->nTopPivotTotal - p->nTopPivotCover;
     p->fTopPivotDuplicate = Vec_IntEntry(p->vTopPivotDuplicate, iChoice);
+}
+
+// Estimate whether the exact residual left by one top pivot can be separated
+// by the remaining recipe leaves.  Classes are signatures of the divisors
+// selected so far.  Counting OFF/ON polarities inside each class computes the
+// exact number of still-ambiguous cross-pairs without materializing the
+// quadratic OFF x ON relation.
+static void Gia_ResbSolvScorePivot( Gia_ResbMan_t * p, int fUseOr,
+    int iPivot, int nLimit, int * pComplete, int * pDepth,
+    word * pAmbiguity )
+{
+    word * pCover = Vec_WrdEntryP(p->vTopPivotCovers,
+        iPivot * p->nWords);
+    Vec_Wrd_t * vClasses = p->vSolvClassMasks[0];
+    Vec_Wrd_t * vNext = p->vSolvClassMasks[1];
+    Vec_Int_t * vCounts = p->vSolvClassCounts[0];
+    Vec_Int_t * vCountsNext = p->vSolvClassCounts[1];
+    long long Ambiguity;
+    int nMints[2] = {0, 0};
+    int nVars = Vec_PtrSize(p->vDivs);
+    int nSelected = 0, nSelectMax = nLimit + 1;
+    int w, c, iDiv;
+    Vec_WrdClear( vClasses );
+    for ( w = 0; w < p->nWords; w++ )
+    {
+        p->pDivA[w] = p->pSets[0][w] &
+            (fUseOr == 0 ? ~pCover[w] : ~(word)0);
+        p->pDivB[w] = p->pSets[1][w] &
+            (fUseOr == 1 ? ~pCover[w] : ~(word)0);
+        nMints[0] += Abc_TtCountOnes( p->pDivA[w] );
+        nMints[1] += Abc_TtCountOnes( p->pDivB[w] );
+        Vec_WrdPush( vClasses, p->pDivA[w] | p->pDivB[w] );
+    }
+    Vec_IntClear( vCounts );
+    Vec_IntPushTwo( vCounts, nMints[0], nMints[1] );
+    Vec_IntFill( p->vSolvSelected, nVars, 0 );
+    Ambiguity = (long long)nMints[0] * nMints[1];
+    while ( Ambiguity > 0 && nSelected < nSelectMax )
+    {
+        long long BestScore = 0;
+        int iBest = -1;
+        for ( iDiv = 2; iDiv < nVars; iDiv++ )
+        {
+            word * pDiv = (word *)Vec_PtrEntry( p->vDivs, iDiv );
+            long long Score = 0;
+            if ( Vec_IntEntry(p->vSolvSelected, iDiv) )
+                continue;
+            for ( c = 0; c < Vec_WrdSize(vClasses)/p->nWords; c++ )
+            {
+                word * pClass = Vec_WrdEntryP(vClasses, c * p->nWords);
+                int Off1 = 0, On1 = 0;
+                int OffTotal = Vec_IntEntry(vCounts, 2*c);
+                int OnTotal = Vec_IntEntry(vCounts, 2*c+1);
+                for ( w = 0; w < p->nWords; w++ )
+                {
+                    word Off = pClass[w] & p->pDivA[w];
+                    word On  = pClass[w] & p->pDivB[w];
+                    Off1 += Abc_TtCountOnes( Off & pDiv[w] );
+                    On1  += Abc_TtCountOnes( On & pDiv[w] );
+                }
+                Score += (long long)(OffTotal-Off1) * On1 +
+                    (long long)Off1 * (OnTotal-On1);
+            }
+            if ( Score > BestScore )
+                BestScore = Score, iBest = iDiv;
+        }
+        if ( iBest < 0 || BestScore == 0 )
+            break;
+        Vec_IntWriteEntry( p->vSolvSelected, iBest, 1 );
+        Vec_WrdClear( vNext );
+        Vec_IntClear( vCountsNext );
+        for ( c = 0; c < Vec_WrdSize(vClasses)/p->nWords; c++ )
+        {
+            word * pDiv = (word *)Vec_PtrEntry( p->vDivs, iBest );
+            word * pClass = Vec_WrdEntryP(vClasses, c * p->nWords);
+            int fOne;
+            for ( fOne = 0; fOne < 2; fOne++ )
+            {
+                int iStart = Vec_WrdSize(vNext), nOff = 0, nOn = 0;
+                for ( w = 0; w < p->nWords; w++ )
+                {
+                    word Mask = pClass[w] &
+                        (fOne ? pDiv[w] : ~pDiv[w]);
+                    nOff += Abc_TtCountOnes( Mask & p->pDivA[w] );
+                    nOn  += Abc_TtCountOnes( Mask & p->pDivB[w] );
+                    Vec_WrdPush( vNext, Mask );
+                }
+                if ( nOff == 0 || nOn == 0 )
+                    Vec_WrdShrink( vNext, iStart );
+                else
+                    Vec_IntPushTwo( vCountsNext, nOff, nOn );
+            }
+        }
+        { Vec_Wrd_t * vTemp = vClasses; vClasses = vNext; vNext = vTemp; }
+        { Vec_Int_t * vTemp = vCounts; vCounts = vCountsNext;
+          vCountsNext = vTemp; }
+        Ambiguity -= BestScore;
+        nSelected++;
+    }
+    *pComplete = Ambiguity == 0;
+    *pDepth = *pComplete ? Abc_MaxInt(0, nSelected - 1) : nLimit + 1;
+    *pAmbiguity = (word)Ambiguity;
+}
+
+static int Gia_ResbSolvPivotIsBetter( Gia_ResbMan_t * p, int iPivot0,
+    int iPivot1 )
+{
+    int Complete0 = Vec_IntEntry(p->vSolvComplete, iPivot0);
+    int Complete1 = Vec_IntEntry(p->vSolvComplete, iPivot1);
+    int Depth0 = Vec_IntEntry(p->vSolvDepth, iPivot0);
+    int Depth1 = Vec_IntEntry(p->vSolvDepth, iPivot1);
+    word Amb0 = Vec_WrdEntry(p->vSolvAmbiguity, iPivot0);
+    word Amb1 = Vec_WrdEntry(p->vSolvAmbiguity, iPivot1);
+    int Cover0, Cover1;
+    if ( Complete0 != Complete1 )
+        return Complete0 > Complete1;
+    if ( Depth0 != Depth1 )
+        return Depth0 < Depth1;
+    if ( Amb0 != Amb1 )
+        return Amb0 < Amb1;
+    Cover0 = Abc_TtCountOnesVec( Vec_WrdEntryP(p->vTopPivotCovers,
+        iPivot0 * p->nWords), p->nWords );
+    Cover1 = Abc_TtCountOnesVec( Vec_WrdEntryP(p->vTopPivotCovers,
+        iPivot1 * p->nWords), p->nWords );
+    // All entries of one schedule have the same literal/pair top cost, so
+    // cover-per-gate reduces exactly to cover here.
+    if ( Cover0 != Cover1 )
+        return Cover0 > Cover1;
+    return iPivot0 < iPivot1;
+}
+
+// Build a permutation of the original Stage-5 frontier.  Rank one is Alan's
+// primary heuristic and remains first.  Exact-unique residual representatives
+// are scored and sorted next; exact duplicates are stable fallback entries.
+// Consequently unlimited enumeration retains every original pivot exactly
+// once, while a finite accepted-candidate budget sees easier residuals first.
+static void Gia_ResbBuildSolvSchedule( Gia_ResbMan_t * p, int fUseOr,
+    int fPair, int nLimit )
+{
+    abctime clk = Abc_Clock();
+    int i, k, iPivot, Complete, Depth;
+    word Ambiguity;
+    int fNeedScores;
+    if ( p->fSolvScheduleReady )
+        return;
+    if ( !p->fTopPivotProfileReady )
+        Gia_ResbBuildTopFrontier( p, fUseOr, fPair );
+    Vec_IntFill( p->vSolvDepth, p->nTopFrontier, nLimit + 1 );
+    Vec_IntFill( p->vSolvComplete, p->nTopFrontier, 0 );
+    Vec_WrdFill( p->vSolvAmbiguity, p->nTopFrontier, ~(word)0 );
+    Vec_IntClear( p->vSolvOrder );
+    fNeedScores = p->nTopFrontierUnique > 2;
+    if ( p->nTopFrontier > 0 )
+        Vec_IntPush( p->vSolvOrder, 0 );
+    for ( i = 1; i < p->nTopFrontier; i++ )
+    {
+        if ( Vec_IntEntry(p->vTopPivotDuplicate, i) )
+            continue;
+        if ( fNeedScores )
+        {
+            Gia_ResbSolvScorePivot( p, fUseOr, i, nLimit,
+                &Complete, &Depth, &Ambiguity );
+            Vec_IntWriteEntry( p->vSolvComplete, i, Complete );
+            Vec_IntWriteEntry( p->vSolvDepth, i, Depth );
+            Vec_WrdWriteEntry( p->vSolvAmbiguity, i, Ambiguity );
+            p->nSolvSchedulePivots++;
+            p->nSolvScheduleComplete += Complete;
+        }
+        Vec_IntPush( p->vSolvOrder, i );
+        for ( k = Vec_IntSize(p->vSolvOrder) - 1;
+              fNeedScores && k > 1; k-- )
+        {
+            int Prev = Vec_IntEntry(p->vSolvOrder, k-1);
+            int This = Vec_IntEntry(p->vSolvOrder, k);
+            if ( !Gia_ResbSolvPivotIsBetter(p, This, Prev) )
+                break;
+            Vec_IntWriteEntry( p->vSolvOrder, k-1, This );
+            Vec_IntWriteEntry( p->vSolvOrder, k, Prev );
+        }
+    }
+    for ( i = 1; i < p->nTopFrontier; i++ )
+        if ( Vec_IntEntry(p->vTopPivotDuplicate, i) )
+            Vec_IntPush( p->vSolvOrder, i );
+    assert( Vec_IntSize(p->vSolvOrder) == p->nTopFrontier );
+    Vec_IntForEachEntry( p->vSolvOrder, iPivot, i )
+    {
+        assert( iPivot >= 0 && iPivot < p->nTopFrontier );
+        for ( k = 0; k < i; k++ )
+            assert( Vec_IntEntry(p->vSolvOrder, k) != iPivot );
+    }
+    p->timeSolvSchedule = Abc_Clock() - clk;
+    p->fSolvScheduleReady = 1;
+}
+
+static int Gia_ResbSolvScheduleChoice( Gia_ResbMan_t * p, int fUseOr,
+    int fPair, int iChoice, int nLimit )
+{
+    // The primary pivot is fixed and needs no score.  Delay building the
+    // alternative order until the iterator actually asks for rank two; a q
+    // prefix that stops after the primary path therefore pays no scheduler
+    // overhead at all.
+    if ( iChoice == 0 )
+        return 0;
+    Gia_ResbBuildSolvSchedule( p, fUseOr, fPair, nLimit );
+    return iChoice >= 0 && iChoice < Vec_IntSize(p->vSolvOrder) ?
+        Vec_IntEntry(p->vSolvOrder, iChoice) : iChoice;
 }
 
 void Gia_ManSortBinate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Wec_t * vSorter )
@@ -1893,6 +2139,9 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         {
             int fUseOr  = Max1 == TopOneW[0];
             int iDiv, iCacheEntry = -1, fCacheHit = 0;
+            if ( fTop && p->fSkipTemplates && p->fUseSolvSched )
+                iChoice = Gia_ResbSolvScheduleChoice( p, fUseOr, 0,
+                    iChoice, nLimit-1 );
             if ( fTop && p->fProfilePivots )
                 Gia_ResbProfileTopChoice( p, fUseOr, 0, iChoice );
             if ( iChoice >= Vec_IntSize(p->vUnateLits[!fUseOr]) )
@@ -1935,6 +2184,9 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         {
             int fUseOr  = Max2 == TopTwoW[0];
             int iDiv, iCacheEntry = -1, fCacheHit = 0;
+            if ( fTop && p->fSkipTemplates && p->fUseSolvSched )
+                iChoice = Gia_ResbSolvScheduleChoice( p, fUseOr, 1,
+                    iChoice, nLimit-2 );
             if ( fTop && p->fProfilePivots )
                 Gia_ResbProfileTopChoice( p, fUseOr, 1, iChoice );
             if ( iChoice >= Vec_IntSize(p->vUnatePairs[!fUseOr]) )
@@ -2054,6 +2306,10 @@ enum
     GIA_RESUB_PIVOT_ATTEMPT_TOTAL,
     GIA_RESUB_PIVOT_FOUND_TOTAL,
     GIA_RESUB_PIVOT_TIME_TOTAL,
+    GIA_RESUB_PIVOT_SCHED_FRONTIERS,
+    GIA_RESUB_PIVOT_SCHED_PIVOTS,
+    GIA_RESUB_PIVOT_SCHED_COMPLETE,
+    GIA_RESUB_PIVOT_SCHED_TIME,
     GIA_RESUB_PIVOT_CURRENT_VALID,
     GIA_RESUB_PIVOT_CURRENT_KIND,
     GIA_RESUB_PIVOT_CURRENT_RANK,
@@ -2165,6 +2421,22 @@ static void Gia_ResbIterProfilePivot( Gia_ResbIter_t * pIt, int fFound,
         pProf[GIA_RESUB_PIVOT_CURRENT_DUPLICATE] =
             p->fTopPivotDuplicate;
     }
+}
+
+static void Gia_ResbIterProfileSchedule( Gia_ResbIter_t * pIt )
+{
+    Gia_ResbMan_t * p = pIt->p;
+    if ( !p->fProfilePivots || !p->fSolvScheduleReady ||
+         p->fSolvScheduleProfiled )
+        return;
+    pIt->PivotProfile[GIA_RESUB_PIVOT_SCHED_FRONTIERS]++;
+    pIt->PivotProfile[GIA_RESUB_PIVOT_SCHED_PIVOTS] +=
+        p->nSolvSchedulePivots;
+    pIt->PivotProfile[GIA_RESUB_PIVOT_SCHED_COMPLETE] +=
+        p->nSolvScheduleComplete;
+    pIt->PivotProfile[GIA_RESUB_PIVOT_SCHED_TIME] +=
+        p->timeSolvSchedule;
+    p->fSolvScheduleProfiled = 1;
 }
 
 static void Gia_ResbIterEmitOne( Gia_ResbMan_t * p, int iLit0,
@@ -2383,7 +2655,7 @@ void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs, int nWords,
 // the circuit snapshot is immutable.
 void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
     int nLimit, int nDivsMax, int fUseZero, int fUseXor,
-    int fProfilePivots, int * pCursor )
+    int fUseSolvSched, int fProfilePivots, int * pCursor )
 {
     Gia_ResbIter_t * pIt = ABC_CALLOC( Gia_ResbIter_t, 1 );
     Vec_Ptr_t Divs = { nDivs, nDivs, ppDivs };
@@ -2392,6 +2664,7 @@ void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
     pIt->p = s_pResbMan;
     Gia_ResbInit( pIt->p, &Divs, nWords, nLimit, nDivsMax, 0,
         fUseZero, fUseXor, 0, 0, 0 );
+    pIt->p->fUseSolvSched = fUseSolvSched;
     pIt->p->fProfilePivots = fProfilePivots;
     if ( pCursor[0] )
     {
@@ -2497,6 +2770,7 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
                 Res = Gia_ManResubPerform_rec( p, p->nLimit, 0, 1 );
                 Gia_ResbIterProfilePivot( pIt, Res >= 0,
                     Abc_Clock() - clkPivot );
+                Gia_ResbIterProfileSchedule( pIt );
                 if ( fFirstPivot )
                 {
                     pIt->PivotProfile[GIA_RESUB_PIVOT_FRONTIER_FIRST] = 1;
@@ -2587,8 +2861,8 @@ static word Gia_ResbIteratorRecipeFingerprint( int Attempt, int * pArray,
 }
 
 static void Gia_ResbIteratorCompareModes( void ** ppDivs, int nDivs,
-    int nLimit, int nDivsMax, int fCacheA, int fProfileA, int fCacheB,
-    int fProfileB, int Hits[2][2] )
+    int nLimit, int nDivsMax, int fCacheA, int fSchedA, int fProfileA,
+    int fCacheB, int fSchedB, int fProfileB, int Hits[2][2] )
 {
     Gia_ResbIter_t * pItA = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
         ppDivs, nDivs, 1, nLimit, nDivsMax, 0, 0 );
@@ -2601,6 +2875,8 @@ static void Gia_ResbIteratorCompareModes( void ** ppDivs, int nDivs,
     pItA->Stage = pItB->Stage = 5;
     pItA->p->fUseResidualCache = fCacheA;
     pItB->p->fUseResidualCache = fCacheB;
+    pItA->p->fUseSolvSched = fSchedA;
+    pItB->p->fUseSolvSched = fSchedB;
     pItA->p->fProfilePivots = fProfileA;
     pItB->p->fProfilePivots = fProfileB;
     do {
@@ -2634,6 +2910,106 @@ static void Gia_ResbIteratorCompareModes( void ** ppDivs, int nDivs,
     Abc_ResubIteratorStop( pItB );
 }
 
+static void Gia_ResbSolvScheduleCheckPermutation( Gia_ResbMan_t * p )
+{
+    int i, k, iPivot;
+    assert( p->fSolvScheduleReady );
+    assert( Vec_IntSize(p->vSolvOrder) == p->nTopFrontier );
+    if ( p->nTopFrontier )
+        assert( Vec_IntEntry(p->vSolvOrder, 0) == 0 );
+    Vec_IntForEachEntry( p->vSolvOrder, iPivot, i )
+    {
+        assert( iPivot >= 0 && iPivot < p->nTopFrontier );
+        for ( k = 0; k < i; k++ )
+            assert( Vec_IntEntry(p->vSolvOrder, k) != iPivot );
+    }
+}
+
+static int Gia_ResbSolvScheduleCompareUniverse( void ** ppDivs,
+    int nDivs, int nLimit, int nDivsMax )
+{
+    Gia_ResbIter_t * pBase = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
+        ppDivs, nDivs, 1, nLimit, nDivsMax, 0, 0 );
+    Gia_ResbIter_t * pSched = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
+        ppDivs, nDivs, 1, nLimit, nDivsMax, 0, 0 );
+    Vec_Wrd_t * vBase = Vec_WrdAlloc( nDivsMax );
+    Vec_Wrd_t * vSched = Vec_WrdAlloc( nDivsMax );
+    int * pArray = NULL, Attempt, Exhausted, Invalid, nArray;
+    int i, fReordered = 0, fSawDuplicate = 0;
+    pBase->Stage = pSched->Stage = 5;
+    pSched->p->fUseSolvSched = 1;
+    do {
+        nArray = Abc_ResubIteratorNext( pBase, &pArray, &Attempt,
+            &Exhausted, &Invalid );
+        assert( !Invalid );
+        if ( !Exhausted )
+            Vec_WrdPush( vBase, Gia_ResbIteratorRecipeFingerprint(
+                Attempt, pArray, nArray) );
+    } while ( !Exhausted );
+    do {
+        nArray = Abc_ResubIteratorNext( pSched, &pArray, &Attempt,
+            &Exhausted, &Invalid );
+        assert( !Invalid );
+        if ( !Exhausted )
+            Vec_WrdPush( vSched, Gia_ResbIteratorRecipeFingerprint(
+                Attempt, pArray, nArray) );
+    } while ( !Exhausted );
+    Gia_ResbSolvScheduleCheckPermutation( pSched->p );
+    for ( i = 1; i < Vec_IntSize(pSched->p->vSolvOrder); i++ )
+    {
+        int iPivot = Vec_IntEntry(pSched->p->vSolvOrder, i);
+        fReordered |= iPivot != i;
+        if ( Vec_IntEntry(pSched->p->vTopPivotDuplicate, iPivot) )
+            fSawDuplicate = 1;
+        else
+            assert( !fSawDuplicate );
+    }
+    Vec_WrdSortUnsigned( vBase );
+    Vec_WrdSortUnsigned( vSched );
+    assert( Vec_WrdEqual(vBase, vSched) );
+    Vec_WrdFree( vBase );
+    Vec_WrdFree( vSched );
+    Abc_ResubIteratorStop( pBase );
+    Abc_ResubIteratorStop( pSched );
+    return fReordered;
+}
+
+static void Gia_ResbSolvScheduleCompareResume( void ** ppDivs,
+    int nDivs, int nLimit, int nDivsMax )
+{
+    Gia_ResbIter_t * pDrain = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
+        ppDivs, nDivs, 1, nLimit, nDivsMax, 0, 0 );
+    Gia_ResbIter_t * pPage;
+    int Cursor[5] = {5, 0, 0, 1, 0};
+    int * pArrayA = NULL, * pArrayB = NULL;
+    int AttemptA, AttemptB, ExhaustedA, ExhaustedB;
+    int InvalidA, InvalidB, nArrayA, nArrayB, nRounds = 0;
+    pDrain->Stage = 5;
+    pDrain->p->fUseSolvSched = 1;
+    Abc_ResubPrepareManager( 1 );
+    do {
+        nArrayA = Abc_ResubIteratorNext( pDrain, &pArrayA, &AttemptA,
+            &ExhaustedA, &InvalidA );
+        pPage = (Gia_ResbIter_t *)Abc_ResubIteratorResumeStart(
+            ppDivs, nDivs, 1, nLimit, nDivsMax, 0, 0, 1, 0, Cursor );
+        nArrayB = Abc_ResubIteratorNext( pPage, &pArrayB, &AttemptB,
+            &ExhaustedB, &InvalidB );
+        assert( nArrayA == nArrayB && ExhaustedA == ExhaustedB );
+        assert( InvalidA == InvalidB );
+        if ( !ExhaustedA && !InvalidA )
+        {
+            assert( AttemptA == AttemptB );
+            assert( !memcmp(pArrayA, pArrayB, sizeof(int) * nArrayA) );
+        }
+        if ( pPage->p->fSolvScheduleReady )
+            Gia_ResbSolvScheduleCheckPermutation( pPage->p );
+        Abc_ResubIteratorResumeStop( pPage, Cursor );
+        assert( ++nRounds < nDivsMax + 2 );
+    } while ( !ExhaustedA );
+    Abc_ResubPrepareManager( 0 );
+    Abc_ResubIteratorStop( pDrain );
+}
+
 static void Gia_ResbResidualCacheSelfTest()
 {
     word A = ABC_CONST(0xAAAAAAAAAAAAAAAA);
@@ -2652,7 +3028,7 @@ static void Gia_ResbResidualCacheSelfTest()
     void * PairFailureDivs[8] = { PairFailure, PairFailure+1,
         PairFailure+2, PairFailure+3, PairFailure+4, PairFailure+5,
         PairFailure+6, PairFailure+7 };
-    int Hits[2][2] = {{0}};
+    int Hits[2][2] = {{0}}, SchedHits[2][2] = {{0}}, fSawReorder = 0;
     word Target, Remainder;
 
     // Literal duplicate success: A is repeated and the exact remainder is
@@ -2665,7 +3041,7 @@ static void Gia_ResbResidualCacheSelfTest()
     LitSuccess[2] = LitSuccess[3] = A;
     LitSuccess[4] = Remainder;
     Gia_ResbIteratorCompareModes( LitSuccessDivs, 5, 2, 8,
-        0, 0, 1, 0, Hits );
+        0, 0, 0, 1, 0, 0, Hits );
 
     LitFailure[0] = ~Target;
     LitFailure[1] = Target;
@@ -2673,7 +3049,7 @@ static void Gia_ResbResidualCacheSelfTest()
     LitFailure[4] = B;
     LitFailure[5] = C;
     Gia_ResbIteratorCompareModes( LitFailureDivs, 6, 2, 8,
-        0, 0, 1, 0, Hits );
+        0, 0, 0, 1, 0, 0, Hits );
 
     // Pair duplicate success: four index-distinct A&B pivots share one exact
     // residual whose small direct literal keeps pair selection ahead of the
@@ -2687,7 +3063,7 @@ static void Gia_ResbResidualCacheSelfTest()
     PairSuccess[4] = PairSuccess[5] = B;
     PairSuccess[6] = Remainder;
     Gia_ResbIteratorCompareModes( PairSuccessDivs, 7, 3, 12,
-        0, 0, 1, 0, Hits );
+        0, 0, 0, 1, 0, 0, Hits );
 
     Target = (A & B) | (C & D);
     PairFailure[0] = ~Target;
@@ -2697,7 +3073,7 @@ static void Gia_ResbResidualCacheSelfTest()
     PairFailure[6] = C;
     PairFailure[7] = D;
     Gia_ResbIteratorCompareModes( PairFailureDivs, 8, 3, 12,
-        0, 0, 1, 0, Hits );
+        0, 0, 0, 1, 0, 0, Hits );
 
     assert( Hits[0][0] > 0 && Hits[0][1] > 0 );
     assert( Hits[1][0] > 0 && Hits[1][1] > 0 );
@@ -2705,9 +3081,39 @@ static void Gia_ResbResidualCacheSelfTest()
     // Profiling may inspect the same exact frontier masks, but it must not
     // gate the production cache or change the yielded recipe sequence.
     Gia_ResbIteratorCompareModes( LitSuccessDivs, 5, 2, 8,
-        1, 0, 1, 1, NULL );
+        1, 0, 0, 1, 0, 1, NULL );
     Gia_ResbIteratorCompareModes( PairSuccessDivs, 7, 3, 12,
-        1, 0, 1, 1, NULL );
+        1, 0, 0, 1, 0, 1, NULL );
+
+    // Scheduling is production behavior independent of profiling.  Its full
+    // Stage-5 drain is a permutation of the baseline recipe multiset, and the
+    // same five-scalar cursor reconstructs that permutation page by page.
+    fSawReorder |= Gia_ResbSolvScheduleCompareUniverse(
+        LitSuccessDivs, 5, 2, 8 );
+    fSawReorder |= Gia_ResbSolvScheduleCompareUniverse(
+        LitFailureDivs, 6, 2, 8 );
+    fSawReorder |= Gia_ResbSolvScheduleCompareUniverse(
+        PairSuccessDivs, 7, 3, 12 );
+    fSawReorder |= Gia_ResbSolvScheduleCompareUniverse(
+        PairFailureDivs, 8, 3, 12 );
+    assert( fSawReorder );
+    Gia_ResbSolvScheduleCompareResume( LitSuccessDivs, 5, 2, 8 );
+    Gia_ResbSolvScheduleCompareResume( PairSuccessDivs, 7, 3, 12 );
+
+    Gia_ResbIteratorCompareModes( LitSuccessDivs, 5, 2, 8,
+        0, 1, 0, 1, 1, 0, SchedHits );
+    Gia_ResbIteratorCompareModes( LitFailureDivs, 6, 2, 8,
+        0, 1, 0, 1, 1, 0, SchedHits );
+    Gia_ResbIteratorCompareModes( PairSuccessDivs, 7, 3, 12,
+        0, 1, 0, 1, 1, 0, SchedHits );
+    Gia_ResbIteratorCompareModes( PairFailureDivs, 8, 3, 12,
+        0, 1, 0, 1, 1, 0, SchedHits );
+    assert( SchedHits[0][0] > 0 && SchedHits[0][1] > 0 );
+    assert( SchedHits[1][0] > 0 && SchedHits[1][1] > 0 );
+    Gia_ResbIteratorCompareModes( LitSuccessDivs, 5, 2, 8,
+        1, 1, 0, 1, 1, 1, NULL );
+    Gia_ResbIteratorCompareModes( PairSuccessDivs, 7, 3, 12,
+        1, 1, 0, 1, 1, 1, NULL );
 }
 
 // Focused invariant checks for the root-only iterator.  These truth tables
@@ -2849,7 +3255,7 @@ int Abc_ResubIteratorSelfTest()
             nArray = Abc_ResubIteratorNext( pIt, &pArray, &Attempt,
                 &Exhausted, &Invalid );
             pItShared = Abc_ResubIteratorResumeStart( RandDivs, 6, 1,
-                3, 4, 0, 0, 0, Cursor );
+                3, 4, 0, 0, 0, 0, Cursor );
             assert( Vec_IntSize(((Gia_ResbIter_t *)pItShared)->p->
                 vResidualCacheMeta) == 0 );
             nArrayShared = Abc_ResubIteratorNext( pItShared,

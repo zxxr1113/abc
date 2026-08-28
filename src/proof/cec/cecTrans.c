@@ -60,6 +60,10 @@ enum
     CEC_TRAN_PIVOT_ATTEMPT_TOTAL,
     CEC_TRAN_PIVOT_FOUND_TOTAL,
     CEC_TRAN_PIVOT_TIME_TOTAL,
+    CEC_TRAN_PIVOT_SCHED_FRONTIERS,
+    CEC_TRAN_PIVOT_SCHED_PIVOTS,
+    CEC_TRAN_PIVOT_SCHED_COMPLETE,
+    CEC_TRAN_PIVOT_SCHED_TIME,
     CEC_TRAN_PIVOT_CURRENT_VALID,
     CEC_TRAN_PIVOT_CURRENT_KIND,
     CEC_TRAN_PIVOT_CURRENT_RANK,
@@ -117,7 +121,7 @@ enum
 extern void Abc_ResubPrepareManager( int nWords );
 extern void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor,
-    int fProfilePivots, int * pCursor );
+    int fUseSolvSched, int fProfilePivots, int * pCursor );
 extern int Abc_ResubIteratorNext( void * pIter, int ** ppArray,
     int * pnAttempt, int * pfExhausted, int * pfInvalid );
 extern int Abc_ResubIteratorReadPivotProfile( void * pIter,
@@ -336,6 +340,10 @@ struct Cec_TranProf_t_
     long long nRootGreedyPivotAttempts;
     long long nRootGreedyPivotFound;
     abctime   timeRootGreedyPivot;
+    long long nRootGreedySchedFrontiers;
+    long long nRootGreedySchedPivots;
+    long long nRootGreedySchedComplete;
+    abctime   timeRootGreedySched;
     Cec_TranPivotBucketProf_t GreedyPivotRank[CEC_TRAN_PIVOT_RANK_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotNovel[CEC_TRAN_PIVOT_RATIO_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotCover[CEC_TRAN_PIVOT_RATIO_BINS];
@@ -1033,6 +1041,14 @@ static void Cec_TranProfilePivotAttempts( Cec_TranProf_t * pProf,
     pProf->nRootGreedyPivotFound += pInfo[CEC_TRAN_PIVOT_FOUND_TOTAL];
     pProf->timeRootGreedyPivot +=
         (abctime)pInfo[CEC_TRAN_PIVOT_TIME_TOTAL];
+    pProf->nRootGreedySchedFrontiers +=
+        pInfo[CEC_TRAN_PIVOT_SCHED_FRONTIERS];
+    pProf->nRootGreedySchedPivots +=
+        pInfo[CEC_TRAN_PIVOT_SCHED_PIVOTS];
+    pProf->nRootGreedySchedComplete +=
+        pInfo[CEC_TRAN_PIVOT_SCHED_COMPLETE];
+    pProf->timeRootGreedySched +=
+        (abctime)pInfo[CEC_TRAN_PIVOT_SCHED_TIME];
     for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
     {
         pProf->GreedyPivotRank[i].nAttempts +=
@@ -4250,7 +4266,7 @@ static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
         Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc ) : 0;
     return Abc_ResubIteratorResumeStart( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit, Vec_IntSize(vPool),
-        0, 0, pPars->fProfile, pCursor );
+        0, 0, pPars->fUseSolvSched, pPars->fProfile, pCursor );
 }
 
 static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
@@ -5944,14 +5960,17 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
             p->nRootBuildMffcCalls[i],
             p->nRootBuildMffcNext[i], p->nRootBuildMffcAccepted[i],
             Cec_TranTimeSec(p->timeRootBuildMffc[i]) );
-    Abc_Print( 1, "stran-root build-greedy-frontier profile: schema=7 phase=%s roots=%lld pivots=%lld unique-states=%lld duplicate-states=%lld zero-novel=%lld cover-sum=%lld novel-sum=%lld frontier-max=%d attempts=%lld found=%lld time-sec=%.6f\n",
+    Abc_Print( 1, "stran-root build-greedy-frontier profile: schema=7 phase=%s roots=%lld pivots=%lld unique-states=%lld duplicate-states=%lld zero-novel=%lld cover-sum=%lld novel-sum=%lld frontier-max=%d attempts=%lld found=%lld time-sec=%.6f schedule-frontiers=%lld schedule-scored-pivots=%lld schedule-complete=%lld schedule-time-sec=%.6f\n",
         iPhase ? "seq" : "comb", p->nRootGreedyFrontierRoots,
         p->nRootGreedyFrontierPivots, p->nRootGreedyFrontierUnique,
         p->nRootGreedyFrontierPivots - p->nRootGreedyFrontierUnique,
         p->nRootGreedyFrontierZeroNovel, p->nRootGreedyFrontierCoverSum,
         p->nRootGreedyFrontierNovelSum, p->nRootGreedyFrontierMax,
         p->nRootGreedyPivotAttempts, p->nRootGreedyPivotFound,
-        Cec_TranTimeSec(p->timeRootGreedyPivot) );
+        Cec_TranTimeSec(p->timeRootGreedyPivot),
+        p->nRootGreedySchedFrontiers, p->nRootGreedySchedPivots,
+        p->nRootGreedySchedComplete,
+        Cec_TranTimeSec(p->timeRootGreedySched) );
     for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
         Abc_Print( 1, "stran-root build-greedy-pivot-rank profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
             iPhase ? "seq" : "comb", pRankBin[i],
@@ -6092,8 +6111,9 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Abc_ResubPrepareManager( pSim->nSlots );
     Cec_TranDepScratchStart( &Dep, pSim->nSlots,
         pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
-    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
+    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates pivot-order=%s selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
+        pPars->fUseSolvSched ? "residual-solvability" : "original",
         fMicroBatch ? "deferred-q-horizon-root-loss-gwmin" :
             "commit-wave-root-loss-gwmin",
         pPars->fBuildOnly ? "build-only" : "constant/existing/build",
