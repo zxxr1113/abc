@@ -42,6 +42,61 @@ ABC_NAMESPACE_IMPL_START
 #define CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES 8
 #define CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS 6
 #define CEC_TRAN_BUILD_RESIDUAL_SIZE_BINS 7
+#define CEC_TRAN_PIVOT_RANK_BINS 8
+#define CEC_TRAN_PIVOT_RATIO_BINS 5
+#define CEC_TRAN_PIVOT_KIND_BINS 2
+
+// Shared fixed-layout payload returned by giaResub.c.  Counts cover every
+// greedy pivot consumed inside one Next(), including pivots whose recursive
+// remainder failed and therefore never became a candidate.
+enum
+{
+    CEC_TRAN_PIVOT_FRONTIER_FIRST = 0,
+    CEC_TRAN_PIVOT_FRONTIER_SIZE,
+    CEC_TRAN_PIVOT_FRONTIER_UNIQUE,
+    CEC_TRAN_PIVOT_FRONTIER_ZERO_NOVEL,
+    CEC_TRAN_PIVOT_FRONTIER_COVER_SUM,
+    CEC_TRAN_PIVOT_FRONTIER_NOVEL_SUM,
+    CEC_TRAN_PIVOT_ATTEMPT_TOTAL,
+    CEC_TRAN_PIVOT_FOUND_TOTAL,
+    CEC_TRAN_PIVOT_TIME_TOTAL,
+    CEC_TRAN_PIVOT_CURRENT_VALID,
+    CEC_TRAN_PIVOT_CURRENT_KIND,
+    CEC_TRAN_PIVOT_CURRENT_RANK,
+    CEC_TRAN_PIVOT_CURRENT_COVER,
+    CEC_TRAN_PIVOT_CURRENT_TOTAL,
+    CEC_TRAN_PIVOT_CURRENT_NOVEL,
+    CEC_TRAN_PIVOT_CURRENT_REMAIN,
+    CEC_TRAN_PIVOT_CURRENT_DUPLICATE,
+    CEC_TRAN_PIVOT_RANK_ATTEMPTS,
+    CEC_TRAN_PIVOT_RANK_FOUND = CEC_TRAN_PIVOT_RANK_ATTEMPTS +
+        CEC_TRAN_PIVOT_RANK_BINS,
+    CEC_TRAN_PIVOT_RANK_TIME = CEC_TRAN_PIVOT_RANK_FOUND +
+        CEC_TRAN_PIVOT_RANK_BINS,
+    CEC_TRAN_PIVOT_NOVEL_ATTEMPTS = CEC_TRAN_PIVOT_RANK_TIME +
+        CEC_TRAN_PIVOT_RANK_BINS,
+    CEC_TRAN_PIVOT_NOVEL_FOUND = CEC_TRAN_PIVOT_NOVEL_ATTEMPTS +
+        CEC_TRAN_PIVOT_RATIO_BINS,
+    CEC_TRAN_PIVOT_NOVEL_TIME = CEC_TRAN_PIVOT_NOVEL_FOUND +
+        CEC_TRAN_PIVOT_RATIO_BINS,
+    CEC_TRAN_PIVOT_COVER_ATTEMPTS = CEC_TRAN_PIVOT_NOVEL_TIME +
+        CEC_TRAN_PIVOT_RATIO_BINS,
+    CEC_TRAN_PIVOT_COVER_FOUND = CEC_TRAN_PIVOT_COVER_ATTEMPTS +
+        CEC_TRAN_PIVOT_RATIO_BINS,
+    CEC_TRAN_PIVOT_COVER_TIME = CEC_TRAN_PIVOT_COVER_FOUND +
+        CEC_TRAN_PIVOT_RATIO_BINS,
+    CEC_TRAN_PIVOT_KIND_ATTEMPTS = CEC_TRAN_PIVOT_COVER_TIME +
+        CEC_TRAN_PIVOT_RATIO_BINS,
+    CEC_TRAN_PIVOT_KIND_FOUND = CEC_TRAN_PIVOT_KIND_ATTEMPTS +
+        CEC_TRAN_PIVOT_KIND_BINS,
+    CEC_TRAN_PIVOT_KIND_TIME = CEC_TRAN_PIVOT_KIND_FOUND +
+        CEC_TRAN_PIVOT_KIND_BINS,
+    CEC_TRAN_PIVOT_STATE_ATTEMPTS = CEC_TRAN_PIVOT_KIND_TIME +
+        CEC_TRAN_PIVOT_KIND_BINS,
+    CEC_TRAN_PIVOT_STATE_FOUND = CEC_TRAN_PIVOT_STATE_ATTEMPTS + 2,
+    CEC_TRAN_PIVOT_STATE_TIME = CEC_TRAN_PIVOT_STATE_FOUND + 2,
+    CEC_TRAN_PIVOT_PROFILE_SIZE = CEC_TRAN_PIVOT_STATE_TIME + 2
+};
 
 enum
 {
@@ -62,9 +117,11 @@ enum
 extern void Abc_ResubPrepareManager( int nWords );
 extern void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor,
-    int * pCursor );
+    int fProfilePivots, int * pCursor );
 extern int Abc_ResubIteratorNext( void * pIter, int ** ppArray,
     int * pnAttempt, int * pfExhausted, int * pfInvalid );
+extern int Abc_ResubIteratorReadPivotProfile( void * pIter,
+    long long * pProfile );
 extern void Abc_ResubIteratorResumeStop( void * pIter, int * pCursor );
 extern int Abc_ResubIteratorSelfTest();
 
@@ -156,6 +213,17 @@ struct Cec_TranTargetProf_t_
 
 typedef struct Cec_TranSuppProf_t_ Cec_TranSuppProf_t;
 typedef struct Cec_TranProf_t_ Cec_TranProf_t;
+typedef struct Cec_TranPivotBucketProf_t_ Cec_TranPivotBucketProf_t;
+struct Cec_TranPivotBucketProf_t_
+{
+    long long nAttempts;
+    long long nFound;
+    long long nValid;
+    long long nAccepted;
+    long long nOutcome[CEC_TRAN_BUILD_OUTCOMES];
+    long long nSelectedAndGain;
+    abctime   Time;
+};
 struct Cec_TranProf_t_
 {
     abctime timeTotal;
@@ -258,6 +326,21 @@ struct Cec_TranProf_t_
     long long nRootBuildMffcNext[CEC_TRAN_BUILD_MFFC_BINS];
     long long nRootBuildMffcAccepted[CEC_TRAN_BUILD_MFFC_BINS];
     abctime   timeRootBuildMffc[CEC_TRAN_BUILD_MFFC_BINS];
+    long long nRootGreedyFrontierRoots;
+    long long nRootGreedyFrontierPivots;
+    long long nRootGreedyFrontierUnique;
+    long long nRootGreedyFrontierZeroNovel;
+    long long nRootGreedyFrontierCoverSum;
+    long long nRootGreedyFrontierNovelSum;
+    int       nRootGreedyFrontierMax;
+    long long nRootGreedyPivotAttempts;
+    long long nRootGreedyPivotFound;
+    abctime   timeRootGreedyPivot;
+    Cec_TranPivotBucketProf_t GreedyPivotRank[CEC_TRAN_PIVOT_RANK_BINS];
+    Cec_TranPivotBucketProf_t GreedyPivotNovel[CEC_TRAN_PIVOT_RATIO_BINS];
+    Cec_TranPivotBucketProf_t GreedyPivotCover[CEC_TRAN_PIVOT_RATIO_BINS];
+    Cec_TranPivotBucketProf_t GreedyPivotKind[CEC_TRAN_PIVOT_KIND_BINS];
+    Cec_TranPivotBucketProf_t GreedyPivotState[2];
     Cec_TranSuppProf_t * pBuildSuppProf;
     int     nRootWaveDepCalls[64];
     int     nRootWaveRecipes[64];
@@ -859,6 +942,13 @@ struct Cec_TranCand_t_
     int      nDivRankMax;        // worst (largest) ranked-divisor position used
     int      nDivRankSum;        // sum of ranked-divisor positions used
     int      nWave;              // zero-based root CEGAR wave
+    int      nGreedyPivotKind;   // 1=literal, 2=derived pair
+    int      nGreedyPivotRank;   // rank within the chosen top-level frontier
+    int      nGreedyPivotCover;  // simulated minterms removed by this pivot
+    int      nGreedyPivotTotal;  // simulated minterms before this pivot
+    int      nGreedyPivotNovel;  // cover not seen in earlier pivot masks
+    int      nGreedyPivotRemain; // simulated minterms left for recursion
+    int      fGreedyPivotDuplicate;// exact residual state seen at earlier rank
 };
 
 enum
@@ -908,6 +998,128 @@ static int Cec_TranBuildMffcBin( int Mffc )
         Mffc <= 8 ? 3 : Mffc <= 16 ? 4 : 5;
 }
 
+static int Cec_TranPivotRatioBin( int Value, int Total )
+{
+    if ( Value <= 0 || Total <= 0 )
+        return 0;
+    return 100 * Value <= 25 * Total ? 1 :
+        100 * Value <= 50 * Total ? 2 :
+        100 * Value <= 75 * Total ? 3 : 4;
+}
+
+static void Cec_TranProfilePivotAttempts( Cec_TranProf_t * pProf,
+    long long const * pInfo )
+{
+    int i;
+    if ( pInfo[CEC_TRAN_PIVOT_FRONTIER_FIRST] )
+    {
+        pProf->nRootGreedyFrontierRoots++;
+        pProf->nRootGreedyFrontierPivots +=
+            pInfo[CEC_TRAN_PIVOT_FRONTIER_SIZE];
+        pProf->nRootGreedyFrontierUnique +=
+            pInfo[CEC_TRAN_PIVOT_FRONTIER_UNIQUE];
+        pProf->nRootGreedyFrontierZeroNovel +=
+            pInfo[CEC_TRAN_PIVOT_FRONTIER_ZERO_NOVEL];
+        pProf->nRootGreedyFrontierCoverSum +=
+            pInfo[CEC_TRAN_PIVOT_FRONTIER_COVER_SUM];
+        pProf->nRootGreedyFrontierNovelSum +=
+            pInfo[CEC_TRAN_PIVOT_FRONTIER_NOVEL_SUM];
+        pProf->nRootGreedyFrontierMax = Abc_MaxInt(
+            pProf->nRootGreedyFrontierMax,
+            (int)pInfo[CEC_TRAN_PIVOT_FRONTIER_SIZE] );
+    }
+    pProf->nRootGreedyPivotAttempts +=
+        pInfo[CEC_TRAN_PIVOT_ATTEMPT_TOTAL];
+    pProf->nRootGreedyPivotFound += pInfo[CEC_TRAN_PIVOT_FOUND_TOTAL];
+    pProf->timeRootGreedyPivot +=
+        (abctime)pInfo[CEC_TRAN_PIVOT_TIME_TOTAL];
+    for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
+    {
+        pProf->GreedyPivotRank[i].nAttempts +=
+            pInfo[CEC_TRAN_PIVOT_RANK_ATTEMPTS + i];
+        pProf->GreedyPivotRank[i].nFound +=
+            pInfo[CEC_TRAN_PIVOT_RANK_FOUND + i];
+        pProf->GreedyPivotRank[i].Time +=
+            (abctime)pInfo[CEC_TRAN_PIVOT_RANK_TIME + i];
+    }
+    for ( i = 0; i < CEC_TRAN_PIVOT_RATIO_BINS; i++ )
+    {
+        pProf->GreedyPivotNovel[i].nAttempts +=
+            pInfo[CEC_TRAN_PIVOT_NOVEL_ATTEMPTS + i];
+        pProf->GreedyPivotNovel[i].nFound +=
+            pInfo[CEC_TRAN_PIVOT_NOVEL_FOUND + i];
+        pProf->GreedyPivotNovel[i].Time +=
+            (abctime)pInfo[CEC_TRAN_PIVOT_NOVEL_TIME + i];
+        pProf->GreedyPivotCover[i].nAttempts +=
+            pInfo[CEC_TRAN_PIVOT_COVER_ATTEMPTS + i];
+        pProf->GreedyPivotCover[i].nFound +=
+            pInfo[CEC_TRAN_PIVOT_COVER_FOUND + i];
+        pProf->GreedyPivotCover[i].Time +=
+            (abctime)pInfo[CEC_TRAN_PIVOT_COVER_TIME + i];
+    }
+    for ( i = 0; i < CEC_TRAN_PIVOT_KIND_BINS; i++ )
+    {
+        pProf->GreedyPivotKind[i].nAttempts +=
+            pInfo[CEC_TRAN_PIVOT_KIND_ATTEMPTS + i];
+        pProf->GreedyPivotKind[i].nFound +=
+            pInfo[CEC_TRAN_PIVOT_KIND_FOUND + i];
+        pProf->GreedyPivotKind[i].Time +=
+            (abctime)pInfo[CEC_TRAN_PIVOT_KIND_TIME + i];
+        pProf->GreedyPivotState[i].nAttempts +=
+            pInfo[CEC_TRAN_PIVOT_STATE_ATTEMPTS + i];
+        pProf->GreedyPivotState[i].nFound +=
+            pInfo[CEC_TRAN_PIVOT_STATE_FOUND + i];
+        pProf->GreedyPivotState[i].Time +=
+            (abctime)pInfo[CEC_TRAN_PIVOT_STATE_TIME + i];
+    }
+}
+
+// Event -2 is a semantically valid recipe, -1 is an accepted unique positive-
+// gain candidate, and 0/1/2 follow generated/proved/selected through proof.
+static void Cec_TranProfilePivotCandidate( Cec_TranProf_t * pProf,
+    Cec_TranCand_t const * pCand, int Event )
+{
+    Cec_TranPivotBucketProf_t * pBuckets[4];
+    int i, RankBin, NovelBin, CoverBin, KindBin, StateBin;
+    if ( pCand->nResubStage != 5 || pCand->nGreedyPivotKind == 0 )
+        return;
+    RankBin = Cec_TranBuildRankBin( pCand->nGreedyPivotRank );
+    NovelBin = Cec_TranPivotRatioBin( pCand->nGreedyPivotNovel,
+        pCand->nGreedyPivotCover );
+    CoverBin = Cec_TranPivotRatioBin( pCand->nGreedyPivotCover,
+        pCand->nGreedyPivotTotal );
+    KindBin = pCand->nGreedyPivotKind - 1;
+    StateBin = pCand->fGreedyPivotDuplicate != 0;
+    assert( KindBin >= 0 && KindBin < CEC_TRAN_PIVOT_KIND_BINS );
+    pBuckets[0] = pProf->GreedyPivotRank + RankBin;
+    pBuckets[1] = pProf->GreedyPivotNovel + NovelBin;
+    pBuckets[2] = pProf->GreedyPivotCover + CoverBin;
+    pBuckets[3] = pProf->GreedyPivotKind + KindBin;
+    for ( i = 0; i < 4; i++ )
+        if ( Event == -2 )
+            pBuckets[i]->nValid++;
+        else if ( Event == -1 )
+            pBuckets[i]->nAccepted++;
+        else
+        {
+            assert( Event >= 0 && Event < CEC_TRAN_BUILD_OUTCOMES );
+            pBuckets[i]->nOutcome[Event]++;
+            if ( Event == 2 )
+                pBuckets[i]->nSelectedAndGain += pCand->Gain;
+        }
+    if ( Event == -2 )
+        pProf->GreedyPivotState[StateBin].nValid++;
+    else if ( Event == -1 )
+        pProf->GreedyPivotState[StateBin].nAccepted++;
+    else
+    {
+        pProf->GreedyPivotState[StateBin].nOutcome[Event]++;
+        if ( Event == 2 )
+            pProf->GreedyPivotState[StateBin].nSelectedAndGain +=
+                pCand->Gain;
+    }
+}
+
 // Outcome is 0=generated, 1=proved, 2=selected.  All features below are
 // immutable discovery-time features, so the same candidate can be followed
 // through the funnel even when its exact dynamic gain changes before commit.
@@ -934,6 +1146,7 @@ static void Cec_TranProfileBuildCandidate( Cec_TranProf_t * pProf,
     pProf->nRootBuildGainOutcome[GainBin][Outcome]++;
     pProf->nRootBuildCiOutcome[CiBin][Outcome]++;
     pProf->nRootBuildDivRankOutcome[DivRankBin][Outcome]++;
+    Cec_TranProfilePivotCandidate( pProf, pCand, Outcome );
     if ( Outcome == 2 )
     {
         assert( pCand->Gain > 0 );
@@ -4037,13 +4250,14 @@ static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
         Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc ) : 0;
     return Abc_ResubIteratorResumeStart( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit, Vec_IntSize(vPool),
-        0, 0, pCursor );
+        0, 0, pPars->fProfile, pCursor );
 }
 
 static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
     Cec_TranRoot_t const * pRoot, Vec_Int_t * vPool, word * pCare,
     Cec_TranDepScratch_t * pScratch, void * pIter,
-    Cec_TranCand_t * pCand, int * pAttempt, int * pfExhausted )
+    Cec_TranCand_t * pCand, int * pAttempt, int * pfExhausted,
+    long long * pPivotInfo )
 {
     Vec_Int_t Recipe = {0};
     // Each route has its own iterator and therefore its own divisor-number
@@ -4059,6 +4273,9 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
     memset( pCand, 0, sizeof(*pCand) );
     nArray = Abc_ResubIteratorNext( pIter, &pArray, pAttempt,
         pfExhausted, &fInvalid );
+    if ( pPivotInfo )
+        assert( Abc_ResubIteratorReadPivotProfile(pIter, pPivotInfo) ==
+            CEC_TRAN_PIVOT_PROFILE_SIZE );
     if ( *pfExhausted )
         return 0;
     if ( fInvalid )
@@ -4072,6 +4289,24 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
     {
         Cec_TranCandRecipeRelease( pCand );
         return 0;
+    }
+    if ( pPivotInfo && *pAttempt == 5 &&
+         pPivotInfo[CEC_TRAN_PIVOT_CURRENT_VALID] )
+    {
+        pCand->nGreedyPivotKind =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_KIND];
+        pCand->nGreedyPivotRank =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_RANK];
+        pCand->nGreedyPivotCover =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_COVER];
+        pCand->nGreedyPivotTotal =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_TOTAL];
+        pCand->nGreedyPivotNovel =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_NOVEL];
+        pCand->nGreedyPivotRemain =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_REMAIN];
+        pCand->fGreedyPivotDuplicate =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_DUPLICATE];
     }
     return 1;
 }
@@ -4191,6 +4426,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     int nBudget, iProfWave = Abc_MinInt(iWave, 63);
     Vec_Int_t * vCandSupport = Vec_IntAlloc( 16 );
     int * pCiKeys, * pCiScores, * pDivRanks;
+    long long PivotInfo[CEC_TRAN_PIVOT_PROFILE_SIZE];
     void * pIter = NULL;
     Cec_TranCand_t Cand;
     abctime clk, clkAll, clkMffc, timePart;
@@ -4257,8 +4493,11 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         iAttempt = 0;
         pProf->nRootResubIterNext++;
         IterStatus = Cec_TranDependencyIteratorNext(pSim, pRoot,
-            vPool, NULL, pDep, pIter, &Cand, &iAttempt, &fExhausted);
+            vPool, NULL, pDep, pIter, &Cand, &iAttempt, &fExhausted,
+            pPars->fProfile ? PivotInfo : NULL);
         timePart = Abc_Clock() - clk;
+        if ( pPars->fProfile )
+            Cec_TranProfilePivotAttempts( pProf, PivotInfo );
         pProf->timeRootDepSearch += timePart;
         pProf->timeRootWaveConstruct[iProfWave] += timePart;
         if ( IterStatus <= 0 )
@@ -4287,6 +4526,8 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             vCandSupport, pCiKeys, pCiScores, pDivRanks, nCiMask,
             &Cand.nDivRankMax, &Cand.nDivRankSum );
         pProf->nRootBuildStageValid[iAttempt]++;
+        if ( pPars->fProfile )
+            Cec_TranProfilePivotCandidate( pProf, &Cand, -2 );
         Cec_TranSuppProfRecord( pProf->pBuildSuppProf, Cand.iTarget,
             vCandSupport, Cand.nGates, Cand.nResubStage,
             CEC_TRAN_SUPP_VALID );
@@ -4306,6 +4547,8 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             pCursor->nBuildAccepted++;
             pProf->nRootBuildAccepted++;
             pProf->nRootBuildStageAccepted[iAttempt]++;
+            if ( pPars->fProfile )
+                Cec_TranProfilePivotCandidate( pProf, &Cand, -1 );
             pProf->nRootWaveRecipes[iProfWave]++;
             pStat->nSigMatched++;
             fAccepted = 1;
@@ -5508,6 +5751,11 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         "1-4", "5-8", "9-16", "17-32", "33-64", "65+" };
     static char const * pMffcBin[CEC_TRAN_BUILD_MFFC_BINS] = {
         "1", "2", "3-4", "5-8", "9-16", "17+" };
+    static char const * pPivotRatioBin[CEC_TRAN_PIVOT_RATIO_BINS] = {
+        "zero", "1-25", "26-50", "51-75", "76-100" };
+    static char const * pPivotKind[CEC_TRAN_PIVOT_KIND_BINS] = {
+        "literal", "pair" };
+    static char const * pPivotState[2] = { "unique", "duplicate" };
     abctime Times[19] = { p->timeRootSimSig, p->timeRootRefresh,
         p->timeRootDirect, p->timeRootDivCi, p->timeRootResubInit,
         p->timeRootResubEnumCanon, p->timeRootCbsGraph,
@@ -5696,6 +5944,76 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
             p->nRootBuildMffcCalls[i],
             p->nRootBuildMffcNext[i], p->nRootBuildMffcAccepted[i],
             Cec_TranTimeSec(p->timeRootBuildMffc[i]) );
+    Abc_Print( 1, "stran-root build-greedy-frontier profile: schema=7 phase=%s roots=%lld pivots=%lld unique-states=%lld duplicate-states=%lld zero-novel=%lld cover-sum=%lld novel-sum=%lld frontier-max=%d attempts=%lld found=%lld time-sec=%.6f\n",
+        iPhase ? "seq" : "comb", p->nRootGreedyFrontierRoots,
+        p->nRootGreedyFrontierPivots, p->nRootGreedyFrontierUnique,
+        p->nRootGreedyFrontierPivots - p->nRootGreedyFrontierUnique,
+        p->nRootGreedyFrontierZeroNovel, p->nRootGreedyFrontierCoverSum,
+        p->nRootGreedyFrontierNovelSum, p->nRootGreedyFrontierMax,
+        p->nRootGreedyPivotAttempts, p->nRootGreedyPivotFound,
+        Cec_TranTimeSec(p->timeRootGreedyPivot) );
+    for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
+        Abc_Print( 1, "stran-root build-greedy-pivot-rank profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
+            iPhase ? "seq" : "comb", pRankBin[i],
+            p->GreedyPivotRank[i].nAttempts,
+            p->GreedyPivotRank[i].nFound,
+            p->GreedyPivotRank[i].nValid,
+            p->GreedyPivotRank[i].nAccepted,
+            p->GreedyPivotRank[i].nOutcome[0],
+            p->GreedyPivotRank[i].nOutcome[1],
+            p->GreedyPivotRank[i].nOutcome[2],
+            p->GreedyPivotRank[i].nSelectedAndGain,
+            Cec_TranTimeSec(p->GreedyPivotRank[i].Time) );
+    for ( i = 0; i < CEC_TRAN_PIVOT_RATIO_BINS; i++ )
+    {
+        Abc_Print( 1, "stran-root build-greedy-pivot-novelty profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
+            iPhase ? "seq" : "comb", pPivotRatioBin[i],
+            p->GreedyPivotNovel[i].nAttempts,
+            p->GreedyPivotNovel[i].nFound,
+            p->GreedyPivotNovel[i].nValid,
+            p->GreedyPivotNovel[i].nAccepted,
+            p->GreedyPivotNovel[i].nOutcome[0],
+            p->GreedyPivotNovel[i].nOutcome[1],
+            p->GreedyPivotNovel[i].nOutcome[2],
+            p->GreedyPivotNovel[i].nSelectedAndGain,
+            Cec_TranTimeSec(p->GreedyPivotNovel[i].Time) );
+        Abc_Print( 1, "stran-root build-greedy-pivot-coverage profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
+            iPhase ? "seq" : "comb", pPivotRatioBin[i],
+            p->GreedyPivotCover[i].nAttempts,
+            p->GreedyPivotCover[i].nFound,
+            p->GreedyPivotCover[i].nValid,
+            p->GreedyPivotCover[i].nAccepted,
+            p->GreedyPivotCover[i].nOutcome[0],
+            p->GreedyPivotCover[i].nOutcome[1],
+            p->GreedyPivotCover[i].nOutcome[2],
+            p->GreedyPivotCover[i].nSelectedAndGain,
+            Cec_TranTimeSec(p->GreedyPivotCover[i].Time) );
+    }
+    for ( i = 0; i < CEC_TRAN_PIVOT_KIND_BINS; i++ )
+    {
+        Abc_Print( 1, "stran-root build-greedy-pivot-kind profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
+            iPhase ? "seq" : "comb", pPivotKind[i],
+            p->GreedyPivotKind[i].nAttempts,
+            p->GreedyPivotKind[i].nFound,
+            p->GreedyPivotKind[i].nValid,
+            p->GreedyPivotKind[i].nAccepted,
+            p->GreedyPivotKind[i].nOutcome[0],
+            p->GreedyPivotKind[i].nOutcome[1],
+            p->GreedyPivotKind[i].nOutcome[2],
+            p->GreedyPivotKind[i].nSelectedAndGain,
+            Cec_TranTimeSec(p->GreedyPivotKind[i].Time) );
+        Abc_Print( 1, "stran-root build-greedy-pivot-state profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
+            iPhase ? "seq" : "comb", pPivotState[i],
+            p->GreedyPivotState[i].nAttempts,
+            p->GreedyPivotState[i].nFound,
+            p->GreedyPivotState[i].nValid,
+            p->GreedyPivotState[i].nAccepted,
+            p->GreedyPivotState[i].nOutcome[0],
+            p->GreedyPivotState[i].nOutcome[1],
+            p->GreedyPivotState[i].nOutcome[2],
+            p->GreedyPivotState[i].nSelectedAndGain,
+            Cec_TranTimeSec(p->GreedyPivotState[i].Time) );
+    }
     Abc_Print( 1, "stran-root waves:" );
     for ( i = 0; i < nRootWaves; i++ )
         Abc_Print( 1, " w%d=%d/%d/%d/%d/%d", i + 1,

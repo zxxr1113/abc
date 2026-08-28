@@ -296,6 +296,20 @@ struct Gia_ResbMan_t_
     int         fChoiceSelected;
     int         fSkipTemplates;
     int         fTopCacheReady;
+    int         fProfilePivots;
+    int         fTopPivotProfileReady;
+    int         nTopPivotKind;
+    int         nTopPivotRank;
+    int         nTopPivotCover;
+    int         nTopPivotTotal;
+    int         nTopPivotNovel;
+    int         nTopPivotRemain;
+    int         fTopPivotDuplicate;
+    int         nTopFrontier;
+    int         nTopFrontierUnique;
+    int         nTopFrontierZeroNovel;
+    int         nTopFrontierCoverSum;
+    int         nTopFrontierNovelSum;
     int         fUseZero;
     int         fUseXor;
     int         fDebug;
@@ -313,6 +327,9 @@ struct Gia_ResbMan_t_
     Vec_Int_t * vTopUnateLitsW[2];
     Vec_Int_t * vTopUnatePairs[2];
     Vec_Int_t * vTopUnatePairsW[2];
+    Vec_Int_t * vTopPivotNovel;
+    Vec_Int_t * vTopPivotDuplicate;
+    Vec_Wrd_t * vTopPivotCovers;
     Vec_Wec_t * vSorter;
     word *      pSets[2];
     word *      pDivA;
@@ -342,6 +359,9 @@ Gia_ResbMan_t * Gia_ResbAlloc( int nWords )
     p->vTopUnatePairs[1] = Vec_IntAlloc( 100 );
     p->vTopUnatePairsW[0] = Vec_IntAlloc( 100 );
     p->vTopUnatePairsW[1] = Vec_IntAlloc( 100 );
+    p->vTopPivotNovel    = Vec_IntAlloc( 100 );
+    p->vTopPivotDuplicate = Vec_IntAlloc( 100 );
+    p->vTopPivotCovers   = Vec_WrdAlloc( 100 * nWords );
     p->vSorter          = Vec_WecAlloc( nWords*64 );
     p->vBinateVars      = Vec_IntAlloc( 100 );
     p->vGates           = Vec_IntAlloc( 100 );
@@ -362,6 +382,15 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     p->fChoiceSelected = 0;
     p->fSkipTemplates = 0;
     p->fTopCacheReady = 0;
+    p->fProfilePivots = 0;
+    p->fTopPivotProfileReady = 0;
+    p->nTopPivotKind = p->nTopPivotRank = 0;
+    p->nTopPivotCover = p->nTopPivotTotal = 0;
+    p->nTopPivotNovel = p->nTopPivotRemain = 0;
+    p->fTopPivotDuplicate = 0;
+    p->nTopFrontier = p->nTopFrontierUnique = 0;
+    p->nTopFrontierZeroNovel = 0;
+    p->nTopFrontierCoverSum = p->nTopFrontierNovelSum = 0;
     p->fUseZero     = fUseZero;
     p->fUseXor      = fUseXor;
     p->fDebug       = fDebug;
@@ -404,6 +433,9 @@ void Gia_ResbFree( Gia_ResbMan_t * p )
     Vec_IntFree( p->vTopUnatePairs[1] );
     Vec_IntFree( p->vTopUnatePairsW[0] );
     Vec_IntFree( p->vTopUnatePairsW[1] );
+    Vec_IntFree( p->vTopPivotNovel );
+    Vec_IntFree( p->vTopPivotDuplicate );
+    Vec_WrdFree( p->vTopPivotCovers );
     Vec_IntFree( p->vBinateVars      );
     Vec_IntFree( p->vGates           );
     Vec_WrdFree( p->vSims            );
@@ -1249,6 +1281,90 @@ void Gia_ManSortPairs( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t
         Gia_ManSortPairsInt( pSets[n], pSets[!n], vDivs, nWords, vUnateLits[n], vUnateLitsW[n], vSorter );
 }
 
+// Build exact top-level cover masks once for the ordered greedy frontier.
+// Equal masks produce equal residual states because every pivot in this
+// frontier updates the same OFF/ON side.  Novelty is measured against the
+// union of all earlier (higher-ranked) masks, which exposes both exact
+// duplicates and pivots adding no new simulated distinction at all.
+static void Gia_ResbProfileTopFrontier( Gia_ResbMan_t * p, int fUseOr,
+    int fPair )
+{
+    Vec_Int_t * vPivots = fPair ? p->vUnatePairs[!fUseOr] :
+        p->vUnateLits[!fUseOr];
+    int i, k, w, iPivot, nFrontier = Abc_MinInt(Vec_IntSize(vPivots),
+        p->nDivsMax);
+    Vec_IntClear( p->vTopPivotNovel );
+    Vec_IntClear( p->vTopPivotDuplicate );
+    Vec_WrdFill( p->vTopPivotCovers, nFrontier * p->nWords, 0 );
+    Abc_TtClear( p->pDivB, p->nWords );
+    p->nTopFrontier = nFrontier;
+    p->nTopFrontierUnique = 0;
+    p->nTopFrontierZeroNovel = 0;
+    p->nTopFrontierCoverSum = 0;
+    p->nTopFrontierNovelSum = 0;
+    for ( i = 0; i < nFrontier; i++ )
+    {
+        word * pSignal, * pCover = Vec_WrdEntryP(p->vTopPivotCovers,
+            i * p->nWords);
+        int fDuplicate = 0, Cover, Novel = 0;
+        iPivot = Vec_IntEntry( vPivots, i );
+        if ( fPair )
+        {
+            Gia_ManDeriveDivPair( iPivot, p->vDivs, p->nWords, p->pDivA );
+            pSignal = p->pDivA;
+        }
+        else
+            pSignal = (word *)Vec_PtrEntry(p->vDivs,
+                Abc_Lit2Var(iPivot));
+        for ( w = 0; w < p->nWords; w++ )
+        {
+            pCover[w] = p->pSets[fUseOr][w] &
+                (Abc_LitIsCompl(iPivot) ? ~pSignal[w] : pSignal[w]);
+            Novel += Abc_TtCountOnes(pCover[w] & ~p->pDivB[w]);
+        }
+        Cover = Abc_TtCountOnesVec( pCover, p->nWords );
+        for ( k = 0; k < i; k++ )
+            if ( !memcmp(pCover, Vec_WrdEntryP(p->vTopPivotCovers,
+                    k * p->nWords), sizeof(word) * p->nWords) )
+            {
+                fDuplicate = 1;
+                break;
+            }
+        for ( w = 0; w < p->nWords; w++ )
+            p->pDivB[w] |= pCover[w];
+        Vec_IntPush( p->vTopPivotNovel, Novel );
+        Vec_IntPush( p->vTopPivotDuplicate, fDuplicate );
+        p->nTopFrontierUnique += !fDuplicate;
+        p->nTopFrontierZeroNovel += Novel == 0;
+        p->nTopFrontierCoverSum += Cover;
+        p->nTopFrontierNovelSum += Novel;
+    }
+    p->nTopPivotKind = fPair ? 2 : 1;
+    p->nTopPivotTotal = Abc_TtCountOnesVec(p->pSets[fUseOr], p->nWords);
+    p->fTopPivotProfileReady = 1;
+}
+
+static void Gia_ResbProfileTopChoice( Gia_ResbMan_t * p, int fUseOr,
+    int fPair, int iChoice )
+{
+    word * pCover;
+    if ( !p->fTopPivotProfileReady )
+        Gia_ResbProfileTopFrontier( p, fUseOr, fPair );
+    p->nTopPivotRank = iChoice + 1;
+    if ( iChoice < 0 || iChoice >= p->nTopFrontier )
+    {
+        p->nTopPivotCover = p->nTopPivotNovel = 0;
+        p->nTopPivotRemain = p->nTopPivotTotal;
+        p->fTopPivotDuplicate = 0;
+        return;
+    }
+    pCover = Vec_WrdEntryP(p->vTopPivotCovers, iChoice * p->nWords);
+    p->nTopPivotCover = Abc_TtCountOnesVec( pCover, p->nWords );
+    p->nTopPivotNovel = Vec_IntEntry( p->vTopPivotNovel, iChoice );
+    p->nTopPivotRemain = p->nTopPivotTotal - p->nTopPivotCover;
+    p->fTopPivotDuplicate = Vec_IntEntry(p->vTopPivotDuplicate, iChoice);
+}
+
 void Gia_ManSortBinate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Wec_t * vSorter )
 {
     Vec_Int_t * vLevel;
@@ -1604,6 +1720,8 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         {
             int fUseOr  = Max1 == TopOneW[0];
             int iDiv;
+            if ( fTop && p->fProfilePivots )
+                Gia_ResbProfileTopChoice( p, fUseOr, 0, iChoice );
             if ( iChoice >= Vec_IntSize(p->vUnateLits[!fUseOr]) )
                 return -1;
             iDiv         = Vec_IntEntry( p->vUnateLits[!fUseOr], iChoice );
@@ -1634,6 +1752,8 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         {
             int fUseOr  = Max2 == TopTwoW[0];
             int iDiv;
+            if ( fTop && p->fProfilePivots )
+                Gia_ResbProfileTopChoice( p, fUseOr, 1, iChoice );
             if ( iChoice >= Vec_IntSize(p->vUnatePairs[!fUseOr]) )
                 return -1;
             iDiv         = Vec_IntEntry( p->vUnatePairs[!fUseOr], iChoice );
@@ -1727,6 +1847,57 @@ void Abc_ResubPrepareManager( int nWords );
 // templates keep nested-loop cursors, while greedy diversity advances one
 // pivot at a time.  Thus Next(q) never asks the legacy iChoice engine to skip
 // the first q-1 answers again.
+#define GIA_RESUB_PIVOT_RANK_BINS 8
+#define GIA_RESUB_PIVOT_RATIO_BINS 5
+#define GIA_RESUB_PIVOT_KIND_BINS 2
+enum
+{
+    GIA_RESUB_PIVOT_FRONTIER_FIRST = 0,
+    GIA_RESUB_PIVOT_FRONTIER_SIZE,
+    GIA_RESUB_PIVOT_FRONTIER_UNIQUE,
+    GIA_RESUB_PIVOT_FRONTIER_ZERO_NOVEL,
+    GIA_RESUB_PIVOT_FRONTIER_COVER_SUM,
+    GIA_RESUB_PIVOT_FRONTIER_NOVEL_SUM,
+    GIA_RESUB_PIVOT_ATTEMPT_TOTAL,
+    GIA_RESUB_PIVOT_FOUND_TOTAL,
+    GIA_RESUB_PIVOT_TIME_TOTAL,
+    GIA_RESUB_PIVOT_CURRENT_VALID,
+    GIA_RESUB_PIVOT_CURRENT_KIND,
+    GIA_RESUB_PIVOT_CURRENT_RANK,
+    GIA_RESUB_PIVOT_CURRENT_COVER,
+    GIA_RESUB_PIVOT_CURRENT_TOTAL,
+    GIA_RESUB_PIVOT_CURRENT_NOVEL,
+    GIA_RESUB_PIVOT_CURRENT_REMAIN,
+    GIA_RESUB_PIVOT_CURRENT_DUPLICATE,
+    GIA_RESUB_PIVOT_RANK_ATTEMPTS,
+    GIA_RESUB_PIVOT_RANK_FOUND = GIA_RESUB_PIVOT_RANK_ATTEMPTS +
+        GIA_RESUB_PIVOT_RANK_BINS,
+    GIA_RESUB_PIVOT_RANK_TIME = GIA_RESUB_PIVOT_RANK_FOUND +
+        GIA_RESUB_PIVOT_RANK_BINS,
+    GIA_RESUB_PIVOT_NOVEL_ATTEMPTS = GIA_RESUB_PIVOT_RANK_TIME +
+        GIA_RESUB_PIVOT_RANK_BINS,
+    GIA_RESUB_PIVOT_NOVEL_FOUND = GIA_RESUB_PIVOT_NOVEL_ATTEMPTS +
+        GIA_RESUB_PIVOT_RATIO_BINS,
+    GIA_RESUB_PIVOT_NOVEL_TIME = GIA_RESUB_PIVOT_NOVEL_FOUND +
+        GIA_RESUB_PIVOT_RATIO_BINS,
+    GIA_RESUB_PIVOT_COVER_ATTEMPTS = GIA_RESUB_PIVOT_NOVEL_TIME +
+        GIA_RESUB_PIVOT_RATIO_BINS,
+    GIA_RESUB_PIVOT_COVER_FOUND = GIA_RESUB_PIVOT_COVER_ATTEMPTS +
+        GIA_RESUB_PIVOT_RATIO_BINS,
+    GIA_RESUB_PIVOT_COVER_TIME = GIA_RESUB_PIVOT_COVER_FOUND +
+        GIA_RESUB_PIVOT_RATIO_BINS,
+    GIA_RESUB_PIVOT_KIND_ATTEMPTS = GIA_RESUB_PIVOT_COVER_TIME +
+        GIA_RESUB_PIVOT_RATIO_BINS,
+    GIA_RESUB_PIVOT_KIND_FOUND = GIA_RESUB_PIVOT_KIND_ATTEMPTS +
+        GIA_RESUB_PIVOT_KIND_BINS,
+    GIA_RESUB_PIVOT_KIND_TIME = GIA_RESUB_PIVOT_KIND_FOUND +
+        GIA_RESUB_PIVOT_KIND_BINS,
+    GIA_RESUB_PIVOT_STATE_ATTEMPTS = GIA_RESUB_PIVOT_KIND_TIME +
+        GIA_RESUB_PIVOT_KIND_BINS,
+    GIA_RESUB_PIVOT_STATE_FOUND = GIA_RESUB_PIVOT_STATE_ATTEMPTS + 2,
+    GIA_RESUB_PIVOT_STATE_TIME = GIA_RESUB_PIVOT_STATE_FOUND + 2,
+    GIA_RESUB_PIVOT_PROFILE_SIZE = GIA_RESUB_PIVOT_STATE_TIME + 2
+};
 typedef struct Gia_ResbIter_t_ Gia_ResbIter_t;
 struct Gia_ResbIter_t_
 {
@@ -1736,7 +1907,72 @@ struct Gia_ResbIter_t_
     int iGreedy;
     int nTotal[2];
     int fPreparedPairs;
+    long long PivotProfile[GIA_RESUB_PIVOT_PROFILE_SIZE];
 };
+
+static int Gia_ResbPivotRankBin( int Rank )
+{
+    return Rank <= 1 ? 0 : Rank == 2 ? 1 : Rank <= 4 ? 2 :
+        Rank <= 8 ? 3 : Rank <= 16 ? 4 : Rank <= 32 ? 5 :
+        Rank <= 64 ? 6 : 7;
+}
+
+static int Gia_ResbPivotRatioBin( int Value, int Total )
+{
+    if ( Value <= 0 || Total <= 0 )
+        return 0;
+    return 100 * Value <= 25 * Total ? 1 :
+        100 * Value <= 50 * Total ? 2 :
+        100 * Value <= 75 * Total ? 3 : 4;
+}
+
+static void Gia_ResbIterProfilePivot( Gia_ResbIter_t * pIt, int fFound,
+    abctime Time )
+{
+    Gia_ResbMan_t * p = pIt->p;
+    long long * pProf = pIt->PivotProfile;
+    int RankBin, NovelBin, CoverBin, KindBin, StateBin;
+    if ( !p->fProfilePivots || !p->fChoiceSelected )
+        return;
+    RankBin = Gia_ResbPivotRankBin( p->nTopPivotRank );
+    NovelBin = Gia_ResbPivotRatioBin( p->nTopPivotNovel,
+        p->nTopPivotCover );
+    CoverBin = Gia_ResbPivotRatioBin( p->nTopPivotCover,
+        p->nTopPivotTotal );
+    KindBin = p->nTopPivotKind - 1;
+    StateBin = p->fTopPivotDuplicate != 0;
+    assert( KindBin >= 0 && KindBin < GIA_RESUB_PIVOT_KIND_BINS );
+    pProf[GIA_RESUB_PIVOT_ATTEMPT_TOTAL]++;
+    pProf[GIA_RESUB_PIVOT_FOUND_TOTAL] += fFound;
+    pProf[GIA_RESUB_PIVOT_TIME_TOTAL] += Time;
+    pProf[GIA_RESUB_PIVOT_RANK_ATTEMPTS + RankBin]++;
+    pProf[GIA_RESUB_PIVOT_RANK_FOUND + RankBin] += fFound;
+    pProf[GIA_RESUB_PIVOT_RANK_TIME + RankBin] += Time;
+    pProf[GIA_RESUB_PIVOT_NOVEL_ATTEMPTS + NovelBin]++;
+    pProf[GIA_RESUB_PIVOT_NOVEL_FOUND + NovelBin] += fFound;
+    pProf[GIA_RESUB_PIVOT_NOVEL_TIME + NovelBin] += Time;
+    pProf[GIA_RESUB_PIVOT_COVER_ATTEMPTS + CoverBin]++;
+    pProf[GIA_RESUB_PIVOT_COVER_FOUND + CoverBin] += fFound;
+    pProf[GIA_RESUB_PIVOT_COVER_TIME + CoverBin] += Time;
+    pProf[GIA_RESUB_PIVOT_KIND_ATTEMPTS + KindBin]++;
+    pProf[GIA_RESUB_PIVOT_KIND_FOUND + KindBin] += fFound;
+    pProf[GIA_RESUB_PIVOT_KIND_TIME + KindBin] += Time;
+    pProf[GIA_RESUB_PIVOT_STATE_ATTEMPTS + StateBin]++;
+    pProf[GIA_RESUB_PIVOT_STATE_FOUND + StateBin] += fFound;
+    pProf[GIA_RESUB_PIVOT_STATE_TIME + StateBin] += Time;
+    if ( fFound )
+    {
+        pProf[GIA_RESUB_PIVOT_CURRENT_VALID] = 1;
+        pProf[GIA_RESUB_PIVOT_CURRENT_KIND] = p->nTopPivotKind;
+        pProf[GIA_RESUB_PIVOT_CURRENT_RANK] = p->nTopPivotRank;
+        pProf[GIA_RESUB_PIVOT_CURRENT_COVER] = p->nTopPivotCover;
+        pProf[GIA_RESUB_PIVOT_CURRENT_TOTAL] = p->nTopPivotTotal;
+        pProf[GIA_RESUB_PIVOT_CURRENT_NOVEL] = p->nTopPivotNovel;
+        pProf[GIA_RESUB_PIVOT_CURRENT_REMAIN] = p->nTopPivotRemain;
+        pProf[GIA_RESUB_PIVOT_CURRENT_DUPLICATE] =
+            p->fTopPivotDuplicate;
+    }
+}
 
 static void Gia_ResbIterEmitOne( Gia_ResbMan_t * p, int iLit0,
     int iLit1, int fCompl )
@@ -1953,7 +2189,8 @@ void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs, int nWords,
 // deterministic because callers present the same ordered divisor set while
 // the circuit snapshot is immutable.
 void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
-    int nLimit, int nDivsMax, int fUseZero, int fUseXor, int * pCursor )
+    int nLimit, int nDivsMax, int fUseZero, int fUseXor,
+    int fProfilePivots, int * pCursor )
 {
     Gia_ResbIter_t * pIt = ABC_CALLOC( Gia_ResbIter_t, 1 );
     Vec_Ptr_t Divs = { nDivs, nDivs, ppDivs };
@@ -1962,6 +2199,7 @@ void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
     pIt->p = s_pResbMan;
     Gia_ResbInit( pIt->p, &Divs, nWords, nLimit, nDivsMax, 0,
         fUseZero, fUseXor, 0, 0, 0 );
+    pIt->p->fProfilePivots = fProfilePivots;
     if ( pCursor[0] )
     {
         pIt->Stage = pCursor[0];
@@ -2004,6 +2242,7 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
     Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
     Gia_ResbMan_t * p = pIt->p;
     int Res, fFound;
+    memset( pIt->PivotProfile, 0, sizeof(pIt->PivotProfile) );
     *pfExhausted = 0;
     *pfInvalid = 0;
     while ( 1 )
@@ -2032,6 +2271,8 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
         }
         else if ( pIt->Stage == 5 )
         {
+            abctime clkPivot;
+            int fFirstPivot;
             // The ranked greedy pivot frontier is B-wide.  This is a finite
             // universe invariant, not a time/q cutoff, and guarantees that a
             // future scratch-state regression cannot make Next() nonterminating.
@@ -2053,10 +2294,36 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
             Vec_IntClear( p->vUnatePairs[1] );
             Vec_IntClear( p->vUnatePairsW[0] );
             Vec_IntClear( p->vUnatePairsW[1] );
+            fFirstPivot = pIt->iGreedy == 0;
             p->iChoice = pIt->iGreedy++;
             p->fChoiceSelected = 0;
             p->fSkipTemplates = 1;
-            Res = Gia_ManResubPerform_rec( p, p->nLimit, 0, 1 );
+            if ( p->fProfilePivots )
+            {
+                clkPivot = Abc_Clock();
+                Res = Gia_ManResubPerform_rec( p, p->nLimit, 0, 1 );
+                Gia_ResbIterProfilePivot( pIt, Res >= 0,
+                    Abc_Clock() - clkPivot );
+                if ( fFirstPivot )
+                {
+                    pIt->PivotProfile[GIA_RESUB_PIVOT_FRONTIER_FIRST] = 1;
+                    if ( p->fTopPivotProfileReady )
+                    {
+                        pIt->PivotProfile[GIA_RESUB_PIVOT_FRONTIER_SIZE] =
+                            p->nTopFrontier;
+                        pIt->PivotProfile[GIA_RESUB_PIVOT_FRONTIER_UNIQUE] =
+                            p->nTopFrontierUnique;
+                        pIt->PivotProfile[GIA_RESUB_PIVOT_FRONTIER_ZERO_NOVEL] =
+                            p->nTopFrontierZeroNovel;
+                        pIt->PivotProfile[GIA_RESUB_PIVOT_FRONTIER_COVER_SUM] =
+                            p->nTopFrontierCoverSum;
+                        pIt->PivotProfile[GIA_RESUB_PIVOT_FRONTIER_NOVEL_SUM] =
+                            p->nTopFrontierNovelSum;
+                    }
+                }
+            }
+            else
+                Res = Gia_ManResubPerform_rec( p, p->nLimit, 0, 1 );
             if ( Res >= 0 )
                 Vec_IntPush( p->vGates, Res );
             if ( Res >= 0 )
@@ -2088,6 +2355,16 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
     if ( pnAttempt )
         *pnAttempt = pIt->Stage;
     return Vec_IntSize( p->vGates );
+}
+
+// Return profiling for all greedy pivots consumed by the most recent Next().
+// One Next() may skip several failed pivots internally before yielding a
+// recipe, so reporting only the yielded pivot would hide the expensive tail.
+int Abc_ResubIteratorReadPivotProfile( void * pVoid, long long * pProfile )
+{
+    Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
+    memcpy( pProfile, pIt->PivotProfile, sizeof(pIt->PivotProfile) );
+    return GIA_RESUB_PIVOT_PROFILE_SIZE;
 }
 
 void Abc_ResubIteratorStop( void * pVoid )
@@ -2237,7 +2514,7 @@ int Abc_ResubIteratorSelfTest()
             nArray = Abc_ResubIteratorNext( pIt, &pArray, &Attempt,
                 &Exhausted, &Invalid );
             pItShared = Abc_ResubIteratorResumeStart( RandDivs, 6, 1,
-                3, 4, 0, 0, Cursor );
+                3, 4, 0, 0, 0, Cursor );
             nArrayShared = Abc_ResubIteratorNext( pItShared,
                 &pArrayShared, &AttemptShared, &ExhaustedShared,
                 &InvalidShared );

@@ -50,6 +50,24 @@ ROOT_BUILD_RESIDUAL_DEPTH_PREFIX = (
 ROOT_BUILD_RESIDUAL_SIZE_PREFIX = (
     "stran-root build-residual-size profile:"
 )
+ROOT_BUILD_GREEDY_FRONTIER_PREFIX = (
+    "stran-root build-greedy-frontier profile:"
+)
+ROOT_BUILD_GREEDY_PIVOT_RANK_PREFIX = (
+    "stran-root build-greedy-pivot-rank profile:"
+)
+ROOT_BUILD_GREEDY_PIVOT_NOVELTY_PREFIX = (
+    "stran-root build-greedy-pivot-novelty profile:"
+)
+ROOT_BUILD_GREEDY_PIVOT_COVERAGE_PREFIX = (
+    "stran-root build-greedy-pivot-coverage profile:"
+)
+ROOT_BUILD_GREEDY_PIVOT_KIND_PREFIX = (
+    "stran-root build-greedy-pivot-kind profile:"
+)
+ROOT_BUILD_GREEDY_PIVOT_STATE_PREFIX = (
+    "stran-root build-greedy-pivot-state profile:"
+)
 
 TIME_KEYS = (
     "total-sec", "sim-sec", "care-sec", "root-discovery-sec",
@@ -237,6 +255,32 @@ ROOT_PHASE_BUILD_RESIDUAL_FIELDS = [
     for phase in ("comb", "seq")
     for key in (*ROOT_BUILD_RESIDUAL_KEYS, *ROOT_BUILD_RESIDUAL_DERIVED)
 ]
+ROOT_BUILD_GREEDY_FRONTIER_KEYS = (
+    "roots", "pivots", "unique-states", "duplicate-states", "zero-novel",
+    "cover-sum", "novel-sum", "frontier-max", "attempts", "found",
+    "time-sec",
+)
+ROOT_BUILD_GREEDY_FRONTIER_DERIVED = (
+    "average-frontier-size", "unique-state-rate-pct",
+    "duplicate-state-rate-pct", "zero-novel-rate-pct",
+    "novel-cover-share-pct", "attempted-frontier-share-pct",
+    "pivot-found-rate-pct", "time-per-attempt-sec",
+)
+ROOT_BUILD_GREEDY_FRONTIER_FIELDS = [
+    f"root_build_greedy_frontier_{key.replace('-', '_')}"
+    for key in (
+        *ROOT_BUILD_GREEDY_FRONTIER_KEYS,
+        *ROOT_BUILD_GREEDY_FRONTIER_DERIVED,
+    )
+]
+ROOT_PHASE_BUILD_GREEDY_FRONTIER_FIELDS = [
+    f"root_{phase}_build_greedy_frontier_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in (
+        *ROOT_BUILD_GREEDY_FRONTIER_KEYS,
+        *ROOT_BUILD_GREEDY_FRONTIER_DERIVED,
+    )
+]
 ROOT_BUILD_BUCKETS = {
     "stage": (("one-gate", "div-gate", "gate-gate", "greedy"),
               ("valid", "accepted", "generated", "proved", "selected",
@@ -279,6 +323,31 @@ ROOT_BUILD_BUCKETS = {
                         "total-pairs")),
     "residual_size": (("1", "2", "3-4", "5-8", "9-16", "17-32", "33+"),
                       ("static-complete-roots", "greedy-complete-roots")),
+    "greedy_pivot_rank": (
+        ("1", "2", "3-4", "5-8", "9-16", "17-32", "33-64", "65+"),
+        ("attempts", "found", "valid", "accepted", "generated", "proved",
+         "selected", "selected-and-gain", "time-sec"),
+    ),
+    "greedy_pivot_novelty": (
+        ("zero", "1-25", "26-50", "51-75", "76-100"),
+        ("attempts", "found", "valid", "accepted", "generated", "proved",
+         "selected", "selected-and-gain", "time-sec"),
+    ),
+    "greedy_pivot_coverage": (
+        ("zero", "1-25", "26-50", "51-75", "76-100"),
+        ("attempts", "found", "valid", "accepted", "generated", "proved",
+         "selected", "selected-and-gain", "time-sec"),
+    ),
+    "greedy_pivot_kind": (
+        ("literal", "pair"),
+        ("attempts", "found", "valid", "accepted", "generated", "proved",
+         "selected", "selected-and-gain", "time-sec"),
+    ),
+    "greedy_pivot_state": (
+        ("unique", "duplicate"),
+        ("attempts", "found", "valid", "accepted", "generated", "proved",
+         "selected", "selected-and-gain", "time-sec"),
+    ),
 }
 
 
@@ -339,6 +408,8 @@ PROFILE_FIELDS = [
     *ROOT_PHASE_BUILD_SUPPORT_FIELDS,
     *ROOT_BUILD_RESIDUAL_FIELDS,
     *ROOT_PHASE_BUILD_RESIDUAL_FIELDS,
+    *ROOT_BUILD_GREEDY_FRONTIER_FIELDS,
+    *ROOT_PHASE_BUILD_GREEDY_FRONTIER_FIELDS,
     *ROOT_BUILD_BUCKET_FIELDS,
     *ROOT_PHASE_BUILD_BUCKET_FIELDS,
     *PHASE_PROFILE_FIELDS,
@@ -562,6 +633,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_phase_build_residuals: dict[str, list[dict[str, int | float]]] = {
         "comb": [], "seq": [],
     }
+    root_build_greedy_frontiers: list[dict[str, int | float]] = []
+    root_phase_build_greedy_frontiers: dict[
+        str, list[dict[str, int | float]]
+    ] = {"comb": [], "seq": []}
     root_build_buckets: dict[str, list[tuple[str, dict[str, int | float]]]] = {
         family: [] for family in ROOT_BUILD_BUCKETS
     }
@@ -589,6 +664,12 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_BUILD_RESIDUAL_PREFIX,
             ROOT_BUILD_RESIDUAL_DEPTH_PREFIX,
             ROOT_BUILD_RESIDUAL_SIZE_PREFIX,
+            ROOT_BUILD_GREEDY_FRONTIER_PREFIX,
+            ROOT_BUILD_GREEDY_PIVOT_RANK_PREFIX,
+            ROOT_BUILD_GREEDY_PIVOT_NOVELTY_PREFIX,
+            ROOT_BUILD_GREEDY_PIVOT_COVERAGE_PREFIX,
+            ROOT_BUILD_GREEDY_PIVOT_KIND_PREFIX,
+            ROOT_BUILD_GREEDY_PIVOT_STATE_PREFIX,
         )):
             continue
         record = {key: _number(value) for key, value in _KEY_VALUE.findall(line)}
@@ -643,6 +724,13 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
             if phase:
                 root_phase_build_residuals[phase.group(1)].append(record)
+        elif ROOT_BUILD_GREEDY_FRONTIER_PREFIX in line:
+            root_build_greedy_frontiers.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_build_greedy_frontiers[phase.group(1)].append(
+                    record
+                )
         else:
             family = None
             for name, prefix in (
@@ -661,6 +749,16 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                  ROOT_BUILD_SUPPORT_ROOT_ACCEPTED_PREFIX),
                 ("residual_depth", ROOT_BUILD_RESIDUAL_DEPTH_PREFIX),
                 ("residual_size", ROOT_BUILD_RESIDUAL_SIZE_PREFIX),
+                ("greedy_pivot_rank",
+                 ROOT_BUILD_GREEDY_PIVOT_RANK_PREFIX),
+                ("greedy_pivot_novelty",
+                 ROOT_BUILD_GREEDY_PIVOT_NOVELTY_PREFIX),
+                ("greedy_pivot_coverage",
+                 ROOT_BUILD_GREEDY_PIVOT_COVERAGE_PREFIX),
+                ("greedy_pivot_kind",
+                 ROOT_BUILD_GREEDY_PIVOT_KIND_PREFIX),
+                ("greedy_pivot_state",
+                 ROOT_BUILD_GREEDY_PIVOT_STATE_PREFIX),
             ):
                 if prefix in line:
                     family = name
@@ -869,6 +967,38 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             values["greedy-complete-roots"])
 
     populate_residual_fields(root_build_residuals, "root_build_residual")
+
+    def populate_greedy_frontier_fields(
+        records: list[dict[str, int | float]], field_prefix: str,
+    ) -> None:
+        values: dict[str, Any] = {}
+        for key in ROOT_BUILD_GREEDY_FRONTIER_KEYS:
+            values[key] = (
+                max_field(records, key)
+                if key == "frontier-max" else sum_field(records, key)
+            )
+            result[f"{field_prefix}_{_field_token(key)}"] = values[key]
+        result[f"{field_prefix}_average_frontier_size"] = _quotient(
+            values["pivots"], values["roots"])
+        result[f"{field_prefix}_unique_state_rate_pct"] = _ratio(
+            values["unique-states"], values["pivots"])
+        result[f"{field_prefix}_duplicate_state_rate_pct"] = _ratio(
+            values["duplicate-states"], values["pivots"])
+        result[f"{field_prefix}_zero_novel_rate_pct"] = _ratio(
+            values["zero-novel"], values["pivots"])
+        result[f"{field_prefix}_novel_cover_share_pct"] = _ratio(
+            values["novel-sum"], values["cover-sum"])
+        result[f"{field_prefix}_attempted_frontier_share_pct"] = _ratio(
+            values["attempts"], values["pivots"])
+        result[f"{field_prefix}_pivot_found_rate_pct"] = _ratio(
+            values["found"], values["attempts"])
+        result[f"{field_prefix}_time_per_attempt_sec"] = _quotient(
+            values["time-sec"], values["attempts"])
+
+    populate_greedy_frontier_fields(
+        root_build_greedy_frontiers,
+        "root_build_greedy_frontier",
+    )
     for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
         for bucket in buckets:
             records = [
@@ -903,6 +1033,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         populate_residual_fields(
             root_phase_build_residuals[phase],
             f"root_{phase}_build_residual",
+        )
+        populate_greedy_frontier_fields(
+            root_phase_build_greedy_frontiers[phase],
+            f"root_{phase}_build_greedy_frontier",
         )
         for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
             for bucket in buckets:
