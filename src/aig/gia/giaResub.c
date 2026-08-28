@@ -296,6 +296,8 @@ struct Gia_ResbMan_t_
     int         fChoiceSelected;
     int         fSkipTemplates;
     int         fTopCacheReady;
+    int         fUseResidualCache;
+    int         nResidualCacheHits[2][2];
     int         fProfilePivots;
     int         fTopPivotProfileReady;
     int         nTopPivotKind;
@@ -330,6 +332,11 @@ struct Gia_ResbMan_t_
     Vec_Int_t * vTopPivotNovel;
     Vec_Int_t * vTopPivotDuplicate;
     Vec_Wrd_t * vTopPivotCovers;
+    Vec_Int_t * vResidualCacheBins;
+    Vec_Int_t * vResidualCacheMeta;
+    Vec_Int_t * vResidualCacheGates;
+    Vec_Wrd_t * vResidualCacheHashes;
+    Vec_Wrd_t * vResidualCacheMasks;
     Vec_Wec_t * vSorter;
     word *      pSets[2];
     word *      pDivA;
@@ -362,6 +369,11 @@ Gia_ResbMan_t * Gia_ResbAlloc( int nWords )
     p->vTopPivotNovel    = Vec_IntAlloc( 100 );
     p->vTopPivotDuplicate = Vec_IntAlloc( 100 );
     p->vTopPivotCovers   = Vec_WrdAlloc( 100 * nWords );
+    p->vResidualCacheBins = Vec_IntAlloc( 100 );
+    p->vResidualCacheMeta = Vec_IntAlloc( 100 );
+    p->vResidualCacheGates = Vec_IntAlloc( 100 );
+    p->vResidualCacheHashes = Vec_WrdAlloc( 100 );
+    p->vResidualCacheMasks = Vec_WrdAlloc( 200 * nWords );
     p->vSorter          = Vec_WecAlloc( nWords*64 );
     p->vBinateVars      = Vec_IntAlloc( 100 );
     p->vGates           = Vec_IntAlloc( 100 );
@@ -382,6 +394,8 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     p->fChoiceSelected = 0;
     p->fSkipTemplates = 0;
     p->fTopCacheReady = 0;
+    p->fUseResidualCache = 1;
+    memset( p->nResidualCacheHits, 0, sizeof(p->nResidualCacheHits) );
     p->fProfilePivots = 0;
     p->fTopPivotProfileReady = 0;
     p->nTopPivotKind = p->nTopPivotRank = 0;
@@ -412,6 +426,13 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     Vec_IntClear( p->vUnatePairsW[0]  );
     Vec_IntClear( p->vUnatePairsW[1]  );
     Vec_IntClear( p->vBinateVars      );
+    // Exact remainder states are local to one root binding.  In particular,
+    // the pass-owned manager must not carry them across ResumeStart() roots.
+    Vec_IntClear( p->vResidualCacheBins );
+    Vec_IntClear( p->vResidualCacheMeta );
+    Vec_IntClear( p->vResidualCacheGates );
+    Vec_WrdClear( p->vResidualCacheHashes );
+    Vec_WrdClear( p->vResidualCacheMasks );
 }
 void Gia_ResbFree( Gia_ResbMan_t * p )
 {
@@ -436,6 +457,11 @@ void Gia_ResbFree( Gia_ResbMan_t * p )
     Vec_IntFree( p->vTopPivotNovel );
     Vec_IntFree( p->vTopPivotDuplicate );
     Vec_WrdFree( p->vTopPivotCovers );
+    Vec_IntFree( p->vResidualCacheBins );
+    Vec_IntFree( p->vResidualCacheMeta );
+    Vec_IntFree( p->vResidualCacheGates );
+    Vec_WrdFree( p->vResidualCacheHashes );
+    Vec_WrdFree( p->vResidualCacheMasks );
     Vec_IntFree( p->vBinateVars      );
     Vec_IntFree( p->vGates           );
     Vec_WrdFree( p->vSims            );
@@ -479,6 +505,153 @@ static void Gia_ResbLoadTopSummary( Gia_ResbMan_t * p )
         Gia_ResbCopyIntVec( p->vUnatePairs[n], p->vTopUnatePairs[n] );
         Gia_ResbCopyIntVec( p->vUnatePairsW[n], p->vTopUnatePairsW[n] );
     }
+}
+
+enum
+{
+    GIA_RESUB_RESIDUAL_KIND = 0,
+    GIA_RESUB_RESIDUAL_USE_OR,
+    GIA_RESUB_RESIDUAL_LIMIT,
+    GIA_RESUB_RESIDUAL_RESULT,
+    GIA_RESUB_RESIDUAL_GATE_START,
+    GIA_RESUB_RESIDUAL_GATE_SIZE,
+    GIA_RESUB_RESIDUAL_META_SIZE
+};
+
+// Cache only the deterministic primary remainder below one Stage-5 pivot.
+// The exact OFF/ON masks are compared after hashing, so hash collisions cannot
+// merge candidates.  The current literal/pair pivot is intentionally absent
+// from the value and is reattached by the caller on every successful hit.
+static word Gia_ResbResidualCacheHash( Gia_ResbMan_t * p, int PivotKind,
+    int fUseOr, int nLimit )
+{
+    word Hash = ABC_CONST(1469598103934665603);
+    int i, n;
+    Hash ^= (word)PivotKind;
+    Hash *= ABC_CONST(1099511628211);
+    Hash ^= (word)fUseOr;
+    Hash *= ABC_CONST(1099511628211);
+    Hash ^= (word)nLimit;
+    Hash *= ABC_CONST(1099511628211);
+    for ( n = 0; n < 2; n++ )
+        for ( i = 0; i < p->nWords; i++ )
+        {
+            Hash ^= p->pSets[n][i];
+            Hash *= ABC_CONST(1099511628211);
+        }
+    return Hash;
+}
+
+static void Gia_ResbResidualCacheRehash( Gia_ResbMan_t * p, int nBins )
+{
+    int Entry, Slot, Mask = nBins - 1;
+    word Hash;
+    assert( nBins >= 2 && !(nBins & Mask) );
+    Vec_IntFill( p->vResidualCacheBins, nBins, 0 );
+    Vec_WrdForEachEntry( p->vResidualCacheHashes, Hash, Entry )
+    {
+        Slot = (int)Hash & Mask;
+        while ( Vec_IntEntry(p->vResidualCacheBins, Slot) )
+            Slot = (Slot + 1) & Mask;
+        Vec_IntWriteEntry( p->vResidualCacheBins, Slot, Entry + 1 );
+    }
+}
+
+static int Gia_ResbResidualCacheKeyEqual( Gia_ResbMan_t * p, int Entry,
+    int PivotKind, int fUseOr, int nLimit )
+{
+    int iMeta = Entry * GIA_RESUB_RESIDUAL_META_SIZE;
+    word * pMasks = Vec_WrdEntryP( p->vResidualCacheMasks,
+        Entry * 2 * p->nWords );
+    return Vec_IntEntry(p->vResidualCacheMeta,
+               iMeta + GIA_RESUB_RESIDUAL_KIND) == PivotKind &&
+           Vec_IntEntry(p->vResidualCacheMeta,
+               iMeta + GIA_RESUB_RESIDUAL_USE_OR) == fUseOr &&
+           Vec_IntEntry(p->vResidualCacheMeta,
+               iMeta + GIA_RESUB_RESIDUAL_LIMIT) == nLimit &&
+           !memcmp( pMasks, p->pSets[0], sizeof(word) * p->nWords ) &&
+           !memcmp( pMasks + p->nWords, p->pSets[1],
+               sizeof(word) * p->nWords );
+}
+
+static int Gia_ResbResidualCacheFindOrAdd( Gia_ResbMan_t * p,
+    int PivotKind, int fUseOr, int nLimit, int * pfFound )
+{
+    word Hash = Gia_ResbResidualCacheHash( p, PivotKind, fUseOr, nLimit );
+    int nEntries = Vec_WrdSize(p->vResidualCacheHashes);
+    int nBins = Vec_IntSize(p->vResidualCacheBins);
+    int Entry, Slot, Mask;
+    if ( nBins == 0 )
+        Gia_ResbResidualCacheRehash( p, 16 );
+    else if ( 2 * (nEntries + 1) >= nBins )
+        Gia_ResbResidualCacheRehash( p, 2 * nBins );
+    nBins = Vec_IntSize(p->vResidualCacheBins);
+    Mask = nBins - 1;
+    Slot = (int)Hash & Mask;
+    while ( (Entry = Vec_IntEntry(p->vResidualCacheBins, Slot) - 1) >= 0 )
+    {
+        if ( Vec_WrdEntry(p->vResidualCacheHashes, Entry) == Hash &&
+             Gia_ResbResidualCacheKeyEqual(p, Entry, PivotKind, fUseOr,
+                 nLimit) )
+        {
+            *pfFound = 1;
+            return Entry;
+        }
+        Slot = (Slot + 1) & Mask;
+    }
+    Entry = nEntries;
+    Vec_WrdPush( p->vResidualCacheHashes, Hash );
+    Vec_WrdPushArray( p->vResidualCacheMasks, p->pSets[0], p->nWords );
+    Vec_WrdPushArray( p->vResidualCacheMasks, p->pSets[1], p->nWords );
+    Vec_IntPush( p->vResidualCacheMeta, PivotKind );
+    Vec_IntPush( p->vResidualCacheMeta, fUseOr );
+    Vec_IntPush( p->vResidualCacheMeta, nLimit );
+    Vec_IntPush( p->vResidualCacheMeta, -2 );
+    Vec_IntPush( p->vResidualCacheMeta, 0 );
+    Vec_IntPush( p->vResidualCacheMeta, 0 );
+    Vec_IntWriteEntry( p->vResidualCacheBins, Slot, Entry + 1 );
+    *pfFound = 0;
+    return Entry;
+}
+
+static void Gia_ResbResidualCacheStore( Gia_ResbMan_t * p, int Entry,
+    int iResLit )
+{
+    int iMeta = Entry * GIA_RESUB_RESIDUAL_META_SIZE;
+    int GateStart = Vec_IntSize(p->vResidualCacheGates);
+    int GateSize = iResLit >= 0 ? Vec_IntSize(p->vGates) : 0;
+    assert( Vec_IntEntry(p->vResidualCacheMeta,
+        iMeta + GIA_RESUB_RESIDUAL_RESULT) == -2 );
+    assert( !(GateSize & 1) );
+    if ( GateSize )
+        Vec_IntPushArray( p->vResidualCacheGates, Vec_IntArray(p->vGates),
+            GateSize );
+    Vec_IntWriteEntry( p->vResidualCacheMeta,
+        iMeta + GIA_RESUB_RESIDUAL_RESULT, iResLit );
+    Vec_IntWriteEntry( p->vResidualCacheMeta,
+        iMeta + GIA_RESUB_RESIDUAL_GATE_START, GateStart );
+    Vec_IntWriteEntry( p->vResidualCacheMeta,
+        iMeta + GIA_RESUB_RESIDUAL_GATE_SIZE, GateSize );
+}
+
+static int Gia_ResbResidualCacheLoad( Gia_ResbMan_t * p, int Entry,
+    int PivotKind )
+{
+    int iMeta = Entry * GIA_RESUB_RESIDUAL_META_SIZE;
+    int iResLit = Vec_IntEntry(p->vResidualCacheMeta,
+        iMeta + GIA_RESUB_RESIDUAL_RESULT);
+    int GateStart = Vec_IntEntry(p->vResidualCacheMeta,
+        iMeta + GIA_RESUB_RESIDUAL_GATE_START);
+    int GateSize = Vec_IntEntry(p->vResidualCacheMeta,
+        iMeta + GIA_RESUB_RESIDUAL_GATE_SIZE);
+    assert( PivotKind == 1 || PivotKind == 2 );
+    assert( iResLit != -2 );
+    Vec_IntClear( p->vGates );
+    if ( iResLit >= 0 && GateSize )
+        Vec_IntPushArray( p->vGates,
+            Vec_IntArray(p->vResidualCacheGates) + GateStart, GateSize );
+    p->nResidualCacheHits[PivotKind-1][iResLit >= 0]++;
+    return iResLit;
 }
 
 /**Function*************************************************************
@@ -1719,7 +1892,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         if ( nLimit >= 2 && (Max1 == TopOneW[0] || Max1 == TopOneW[1]) )
         {
             int fUseOr  = Max1 == TopOneW[0];
-            int iDiv;
+            int iDiv, iCacheEntry = -1, fCacheHit = 0;
             if ( fTop && p->fProfilePivots )
                 Gia_ResbProfileTopChoice( p, fUseOr, 0, iChoice );
             if ( iChoice >= Vec_IntSize(p->vUnateLits[!fUseOr]) )
@@ -1732,7 +1905,17 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], pDiv, p->nWords, !fComp );
             if ( p->fVerbose )
                 printf( "\n" ); 
-            iResLit = Gia_ManResubPerform_rec( p, nLimit-1, Depth, 0 );
+            if ( fTop && p->fSkipTemplates && p->fUseResidualCache )
+                iCacheEntry = Gia_ResbResidualCacheFindOrAdd( p, 1,
+                    fUseOr, nLimit-1, &fCacheHit );
+            if ( fCacheHit )
+                iResLit = Gia_ResbResidualCacheLoad( p, iCacheEntry, 1 );
+            else
+            {
+                iResLit = Gia_ManResubPerform_rec( p, nLimit-1, Depth, 0 );
+                if ( iCacheEntry >= 0 )
+                    Gia_ResbResidualCacheStore( p, iCacheEntry, iResLit );
+            }
             if ( iResLit >= 0 ) 
             {
                 int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -1751,7 +1934,7 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
         if ( nLimit >= 3 && (Max2 == TopTwoW[0] || Max2 == TopTwoW[1]) )
         {
             int fUseOr  = Max2 == TopTwoW[0];
-            int iDiv;
+            int iDiv, iCacheEntry = -1, fCacheHit = 0;
             if ( fTop && p->fProfilePivots )
                 Gia_ResbProfileTopChoice( p, fUseOr, 1, iChoice );
             if ( iChoice >= Vec_IntSize(p->vUnatePairs[!fUseOr]) )
@@ -1764,7 +1947,17 @@ int Gia_ManResubPerform_rec( Gia_ResbMan_t * p, int nLimit, int Depth, int fTop 
             Abc_TtAndSharp( p->pSets[fUseOr], p->pSets[fUseOr], p->pDivA, p->nWords, !fComp );
             if ( p->fVerbose )
                 printf( "\n" ); 
-            iResLit = Gia_ManResubPerform_rec( p, nLimit-2, Depth, 0 );
+            if ( fTop && p->fSkipTemplates && p->fUseResidualCache )
+                iCacheEntry = Gia_ResbResidualCacheFindOrAdd( p, 2,
+                    fUseOr, nLimit-2, &fCacheHit );
+            if ( fCacheHit )
+                iResLit = Gia_ResbResidualCacheLoad( p, iCacheEntry, 2 );
+            else
+            {
+                iResLit = Gia_ManResubPerform_rec( p, nLimit-2, Depth, 0 );
+                if ( iCacheEntry >= 0 )
+                    Gia_ResbResidualCacheStore( p, iCacheEntry, iResLit );
+            }
             if ( iResLit >= 0 ) 
             {
                 int iNode = nVars + Vec_IntSize(p->vGates)/2;
@@ -2376,6 +2569,147 @@ void Abc_ResubIteratorStop( void * pVoid )
     ABC_FREE( pIt );
 }
 
+static word Gia_ResbIteratorRecipeFingerprint( int Attempt, int * pArray,
+    int nArray )
+{
+    word Hash = ABC_CONST(1469598103934665603);
+    int i;
+    Hash ^= (word)Attempt;
+    Hash *= ABC_CONST(1099511628211);
+    Hash ^= (word)nArray;
+    Hash *= ABC_CONST(1099511628211);
+    for ( i = 0; i < nArray; i++ )
+    {
+        Hash ^= (word)(unsigned)pArray[i];
+        Hash *= ABC_CONST(1099511628211);
+    }
+    return Hash;
+}
+
+static void Gia_ResbIteratorCompareModes( void ** ppDivs, int nDivs,
+    int nLimit, int nDivsMax, int fCacheA, int fProfileA, int fCacheB,
+    int fProfileB, int Hits[2][2] )
+{
+    Gia_ResbIter_t * pItA = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
+        ppDivs, nDivs, 1, nLimit, nDivsMax, 0, 0 );
+    Gia_ResbIter_t * pItB = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
+        ppDivs, nDivs, 1, nLimit, nDivsMax, 0, 0 );
+    int * pArrayA = NULL, * pArrayB = NULL;
+    int AttemptA = 0, AttemptB = 0, ExhaustedA, ExhaustedB;
+    int InvalidA, InvalidB, nArrayA, nArrayB, nRounds = 0;
+    int i, k;
+    pItA->Stage = pItB->Stage = 5;
+    pItA->p->fUseResidualCache = fCacheA;
+    pItB->p->fUseResidualCache = fCacheB;
+    pItA->p->fProfilePivots = fProfileA;
+    pItB->p->fProfilePivots = fProfileB;
+    do {
+        word FingerprintA = 0, FingerprintB = 0;
+        nArrayA = Abc_ResubIteratorNext( pItA, &pArrayA, &AttemptA,
+            &ExhaustedA, &InvalidA );
+        if ( !ExhaustedA && !InvalidA )
+            FingerprintA = Gia_ResbIteratorRecipeFingerprint( AttemptA,
+                pArrayA, nArrayA );
+        nArrayB = Abc_ResubIteratorNext( pItB, &pArrayB, &AttemptB,
+            &ExhaustedB, &InvalidB );
+        if ( !ExhaustedB && !InvalidB )
+            FingerprintB = Gia_ResbIteratorRecipeFingerprint( AttemptB,
+                pArrayB, nArrayB );
+        assert( nArrayA == nArrayB );
+        assert( ExhaustedA == ExhaustedB );
+        assert( InvalidA == InvalidB );
+        if ( !ExhaustedA && !InvalidA )
+        {
+            assert( AttemptA == AttemptB && AttemptA == 5 );
+            assert( FingerprintA == FingerprintB );
+            assert( !memcmp(pArrayA, pArrayB, sizeof(int) * nArrayA) );
+        }
+        assert( ++nRounds < nDivsMax + 2 );
+    } while ( !ExhaustedA );
+    if ( Hits )
+        for ( i = 0; i < 2; i++ )
+            for ( k = 0; k < 2; k++ )
+                Hits[i][k] += pItB->p->nResidualCacheHits[i][k];
+    Abc_ResubIteratorStop( pItA );
+    Abc_ResubIteratorStop( pItB );
+}
+
+static void Gia_ResbResidualCacheSelfTest()
+{
+    word A = ABC_CONST(0xAAAAAAAAAAAAAAAA);
+    word B = ABC_CONST(0xCCCCCCCCCCCCCCCC);
+    word C = ABC_CONST(0xF0F0F0F0F0F0F0F0);
+    word D = ABC_CONST(0xFF00FF00FF00FF00);
+    word E = ABC_CONST(0xFFFF0000FFFF0000);
+    word LitSuccess[5], LitFailure[6], PairSuccess[7], PairFailure[8];
+    void * LitSuccessDivs[5] = { LitSuccess, LitSuccess+1,
+        LitSuccess+2, LitSuccess+3, LitSuccess+4 };
+    void * LitFailureDivs[6] = { LitFailure, LitFailure+1,
+        LitFailure+2, LitFailure+3, LitFailure+4, LitFailure+5 };
+    void * PairSuccessDivs[7] = { PairSuccess, PairSuccess+1,
+        PairSuccess+2, PairSuccess+3, PairSuccess+4, PairSuccess+5,
+        PairSuccess+6 };
+    void * PairFailureDivs[8] = { PairFailure, PairFailure+1,
+        PairFailure+2, PairFailure+3, PairFailure+4, PairFailure+5,
+        PairFailure+6, PairFailure+7 };
+    int Hits[2][2] = {{0}};
+    word Target, Remainder;
+
+    // Literal duplicate success: A is repeated and the exact remainder is
+    // available as one divisor.  The same frontier without that divisor is a
+    // duplicate failure at the same remaining gate limit.
+    Remainder = B & C;
+    Target = A | Remainder;
+    LitSuccess[0] = ~Target;
+    LitSuccess[1] = Target;
+    LitSuccess[2] = LitSuccess[3] = A;
+    LitSuccess[4] = Remainder;
+    Gia_ResbIteratorCompareModes( LitSuccessDivs, 5, 2, 8,
+        0, 0, 1, 0, Hits );
+
+    LitFailure[0] = ~Target;
+    LitFailure[1] = Target;
+    LitFailure[2] = LitFailure[3] = A;
+    LitFailure[4] = B;
+    LitFailure[5] = C;
+    Gia_ResbIteratorCompareModes( LitFailureDivs, 6, 2, 8,
+        0, 0, 1, 0, Hits );
+
+    // Pair duplicate success: four index-distinct A&B pivots share one exact
+    // residual whose small direct literal keeps pair selection ahead of the
+    // literal frontier.  Removing that direct residual produces pair misses
+    // that deterministically fail with one recursive gate remaining.
+    Remainder = C & D & E;
+    Target = (A & B) | Remainder;
+    PairSuccess[0] = ~Target;
+    PairSuccess[1] = Target;
+    PairSuccess[2] = PairSuccess[3] = A;
+    PairSuccess[4] = PairSuccess[5] = B;
+    PairSuccess[6] = Remainder;
+    Gia_ResbIteratorCompareModes( PairSuccessDivs, 7, 3, 12,
+        0, 0, 1, 0, Hits );
+
+    Target = (A & B) | (C & D);
+    PairFailure[0] = ~Target;
+    PairFailure[1] = Target;
+    PairFailure[2] = PairFailure[3] = A;
+    PairFailure[4] = PairFailure[5] = B;
+    PairFailure[6] = C;
+    PairFailure[7] = D;
+    Gia_ResbIteratorCompareModes( PairFailureDivs, 8, 3, 12,
+        0, 0, 1, 0, Hits );
+
+    assert( Hits[0][0] > 0 && Hits[0][1] > 0 );
+    assert( Hits[1][0] > 0 && Hits[1][1] > 0 );
+
+    // Profiling may inspect the same exact frontier masks, but it must not
+    // gate the production cache or change the yielded recipe sequence.
+    Gia_ResbIteratorCompareModes( LitSuccessDivs, 5, 2, 8,
+        1, 0, 1, 1, NULL );
+    Gia_ResbIteratorCompareModes( PairSuccessDivs, 7, 3, 12,
+        1, 0, 1, 1, NULL );
+}
+
 // Focused invariant checks for the root-only iterator.  These truth tables
 // encode the polarity example T=1101,d=1000 and a finite two-divisor cover.
 // The helper is intentionally exported only to the in-repository regression
@@ -2401,6 +2735,7 @@ int Abc_ResubIteratorSelfTest()
     U.pArray = ABC_ALLOC( int, 8 );
     N.pArray = ABC_ALLOC( int, 8 );
     P.pArray = ABC_ALLOC( int, 8 );
+    Gia_ResbResidualCacheSelfTest();
     Gia_ManFindOneUnateInt( &Off, &On, &V, 1, &U, &N );
     fSawD = Vec_IntFind( &U, Abc_Var2Lit(2, 0) ) >= 0;
     fSawNotD = Vec_IntFind( &U, Abc_Var2Lit(2, 1) ) >= 0;
@@ -2515,6 +2850,8 @@ int Abc_ResubIteratorSelfTest()
                 &Exhausted, &Invalid );
             pItShared = Abc_ResubIteratorResumeStart( RandDivs, 6, 1,
                 3, 4, 0, 0, 0, Cursor );
+            assert( Vec_IntSize(((Gia_ResbIter_t *)pItShared)->p->
+                vResidualCacheMeta) == 0 );
             nArrayShared = Abc_ResubIteratorNext( pItShared,
                 &pArrayShared, &AttemptShared, &ExhaustedShared,
                 &InvalidShared );
