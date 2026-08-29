@@ -64,6 +64,30 @@ enum
     CEC_TRAN_PIVOT_SCHED_PIVOTS,
     CEC_TRAN_PIVOT_SCHED_COMPLETE,
     CEC_TRAN_PIVOT_SCHED_TIME,
+    CEC_TRAN_CACHE_LOOKUPS,
+    CEC_TRAN_CACHE_HITS,
+    CEC_TRAN_CACHE_MISSES,
+    CEC_TRAN_CACHE_SAME_PAGE_HITS,
+    CEC_TRAN_CACHE_CROSS_PAGE_HITS,
+    CEC_TRAN_CACHE_FAIL_HITS,
+    CEC_TRAN_CACHE_SUCCESS_HITS,
+    CEC_TRAN_CACHE_SAVED_TIME,
+    CEC_TRAN_CACHE_LOOKUP_TIME,
+    CEC_TRAN_CACHE_PAYLOAD_BYTES,
+    CEC_TRAN_REC_CALLS,
+    CEC_TRAN_REC_UNIQUE,
+    CEC_TRAN_REC_DUPLICATE,
+    CEC_TRAN_REC_SAME_PAGE,
+    CEC_TRAN_REC_CROSS_PAGE,
+    CEC_TRAN_REC_FAIL_HITS,
+    CEC_TRAN_REC_SUCCESS_DUPLICATE,
+    CEC_TRAN_REC_PAYLOAD_BYTES,
+    CEC_TRAN_REC_SAVED_TIME,
+    CEC_TRAN_REC_LOOKUP_TIME,
+    CEC_TRAN_REC_DUP_DEPTH_0,
+    CEC_TRAN_REC_DUP_DEPTH_1,
+    CEC_TRAN_REC_DUP_DEPTH_2,
+    CEC_TRAN_REC_DUP_DEPTH_3PLUS,
     CEC_TRAN_PIVOT_CURRENT_VALID,
     CEC_TRAN_PIVOT_CURRENT_KIND,
     CEC_TRAN_PIVOT_CURRENT_RANK,
@@ -121,7 +145,9 @@ enum
 extern void Abc_ResubPrepareManager( int nWords );
 extern void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor,
-    int fUseSolvSched, int fProfilePivots, int * pCursor );
+    int fUseSolvSched, int fProfilePivots, int * pCursor,
+    void ** ppRootCache );
+extern void Abc_ResubRootCacheStop( void * pRootCache );
 extern int Abc_ResubIteratorNext( void * pIter, int ** ppArray,
     int * pnAttempt, int * pfExhausted, int * pfInvalid );
 extern int Abc_ResubIteratorReadPivotProfile( void * pIter,
@@ -344,6 +370,27 @@ struct Cec_TranProf_t_
     long long nRootGreedySchedPivots;
     long long nRootGreedySchedComplete;
     abctime   timeRootGreedySched;
+    long long nRootResidualCacheLookups;
+    long long nRootResidualCacheHits;
+    long long nRootResidualCacheMisses;
+    long long nRootResidualCacheSamePageHits;
+    long long nRootResidualCacheCrossPageHits;
+    long long nRootResidualCacheFailHits;
+    long long nRootResidualCacheSuccessHits;
+    long long nRootResidualCachePayloadBytes;
+    abctime   timeRootResidualCacheSaved;
+    abctime   timeRootResidualCacheLookup;
+    long long nRootResidualRecCalls;
+    long long nRootResidualRecUnique;
+    long long nRootResidualRecDuplicate;
+    long long nRootResidualRecSamePage;
+    long long nRootResidualRecCrossPage;
+    long long nRootResidualRecFailHits;
+    long long nRootResidualRecSuccessDuplicate;
+    long long nRootResidualRecPayloadBytes;
+    long long nRootResidualRecDuplicateDepth[4];
+    abctime   timeRootResidualRecSaved;
+    abctime   timeRootResidualRecLookup;
     Cec_TranPivotBucketProf_t GreedyPivotRank[CEC_TRAN_PIVOT_RANK_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotNovel[CEC_TRAN_PIVOT_RATIO_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotCover[CEC_TRAN_PIVOT_RATIO_BINS];
@@ -1049,6 +1096,44 @@ static void Cec_TranProfilePivotAttempts( Cec_TranProf_t * pProf,
         pInfo[CEC_TRAN_PIVOT_SCHED_COMPLETE];
     pProf->timeRootGreedySched +=
         (abctime)pInfo[CEC_TRAN_PIVOT_SCHED_TIME];
+    pProf->nRootResidualCacheLookups += pInfo[CEC_TRAN_CACHE_LOOKUPS];
+    pProf->nRootResidualCacheHits += pInfo[CEC_TRAN_CACHE_HITS];
+    pProf->nRootResidualCacheMisses += pInfo[CEC_TRAN_CACHE_MISSES];
+    pProf->nRootResidualCacheSamePageHits +=
+        pInfo[CEC_TRAN_CACHE_SAME_PAGE_HITS];
+    pProf->nRootResidualCacheCrossPageHits +=
+        pInfo[CEC_TRAN_CACHE_CROSS_PAGE_HITS];
+    pProf->nRootResidualCacheFailHits += pInfo[CEC_TRAN_CACHE_FAIL_HITS];
+    pProf->nRootResidualCacheSuccessHits +=
+        pInfo[CEC_TRAN_CACHE_SUCCESS_HITS];
+    pProf->timeRootResidualCacheSaved +=
+        (abctime)pInfo[CEC_TRAN_CACHE_SAVED_TIME];
+    pProf->timeRootResidualCacheLookup +=
+        (abctime)pInfo[CEC_TRAN_CACHE_LOOKUP_TIME];
+    pProf->nRootResidualCachePayloadBytes +=
+        pInfo[CEC_TRAN_CACHE_PAYLOAD_BYTES];
+    pProf->nRootResidualRecCalls += pInfo[CEC_TRAN_REC_CALLS];
+    pProf->nRootResidualRecUnique += pInfo[CEC_TRAN_REC_UNIQUE];
+    pProf->nRootResidualRecDuplicate += pInfo[CEC_TRAN_REC_DUPLICATE];
+    pProf->nRootResidualRecSamePage += pInfo[CEC_TRAN_REC_SAME_PAGE];
+    pProf->nRootResidualRecCrossPage += pInfo[CEC_TRAN_REC_CROSS_PAGE];
+    pProf->nRootResidualRecFailHits += pInfo[CEC_TRAN_REC_FAIL_HITS];
+    pProf->nRootResidualRecSuccessDuplicate +=
+        pInfo[CEC_TRAN_REC_SUCCESS_DUPLICATE];
+    pProf->nRootResidualRecPayloadBytes +=
+        pInfo[CEC_TRAN_REC_PAYLOAD_BYTES];
+    pProf->timeRootResidualRecSaved +=
+        (abctime)pInfo[CEC_TRAN_REC_SAVED_TIME];
+    pProf->timeRootResidualRecLookup +=
+        (abctime)pInfo[CEC_TRAN_REC_LOOKUP_TIME];
+    pProf->nRootResidualRecDuplicateDepth[0] +=
+        pInfo[CEC_TRAN_REC_DUP_DEPTH_0];
+    pProf->nRootResidualRecDuplicateDepth[1] +=
+        pInfo[CEC_TRAN_REC_DUP_DEPTH_1];
+    pProf->nRootResidualRecDuplicateDepth[2] +=
+        pInfo[CEC_TRAN_REC_DUP_DEPTH_2];
+    pProf->nRootResidualRecDuplicateDepth[3] +=
+        pInfo[CEC_TRAN_REC_DUP_DEPTH_3PLUS];
     for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
     {
         pProf->GreedyPivotRank[i].nAttempts +=
@@ -1708,11 +1793,20 @@ typedef struct Cec_TranRootCursor_t_ Cec_TranRootCursor_t;
 struct Cec_TranRootCursor_t_
 {
     int State[5];               // Gia resub Stage/n/i/k/iGreedy
+    void * pBuildCache;         // root-local exact residual memo across pages
     int nBuildYield;
     int nBuildAccepted;         // unique positive-gain Build candidates emitted on this snapshot
     int nPages;
     int fExhausted;
 };
+
+static void Cec_TranRootCursorCacheStop( Cec_TranRootCursor_t * pCursor )
+{
+    if ( pCursor->pBuildCache == NULL )
+        return;
+    Abc_ResubRootCacheStop( pCursor->pBuildCache );
+    pCursor->pBuildCache = NULL;
+}
 
 // A canonical Build has at least one gate, while acceptance requires
 // MFFC-gates > 0.  A zero-gate canonical result belongs to Constant/Existing,
@@ -4243,7 +4337,7 @@ static int Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
 static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
     Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
     Vec_Int_t * vPool, word * pCare, Cec_TranDepScratch_t * pScratch,
-    int * pCursor )
+    int * pCursor, void ** ppRootCache )
 {
     Vec_Ptr_t * vDivs = pScratch->vDivs;
     word Target, Care;
@@ -4266,7 +4360,8 @@ static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
         Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc ) : 0;
     return Abc_ResubIteratorResumeStart( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit, Vec_IntSize(vPool),
-        0, 0, pPars->fUseSolvSched, pPars->fProfile, pCursor );
+        0, 0, pPars->fUseSolvSched, pPars->fProfile, pCursor,
+        ppRootCache );
 }
 
 static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
@@ -4493,7 +4588,8 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     pProf->timeRootDivPool += Abc_Clock() - clkAll;
     clk = Abc_Clock();
     pIter = Cec_TranDependencyIteratorStart( pSim,
-        pPars, pRoot, vPool, NULL, pDep, pCursor->State );
+        pPars, pRoot, vPool, NULL, pDep, pCursor->State,
+        &pCursor->pBuildCache );
     pCursor->nPages++;
     timePart = Abc_Clock() - clk;
     pProf->timeRootDepInit += timePart;
@@ -4580,6 +4676,10 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         pStat->nSigRejected++;
     Cec_TranDiscFinishRoot( pStat, 0, pConstr->nSize - iConstrStart );
     Abc_ResubIteratorResumeStop( pIter, pCursor->State );
+    if ( pCursor->fExhausted ||
+         (pPars->nRootProofBatch > 0 &&
+          Cec_TranRootBuildHorizonReached(pPars, pCursor)) )
+        Cec_TranRootCursorCacheStop( pCursor );
     assert( pProf->nRootResubIterLive > 0 );
     pProf->nRootResubIterLive--;
     pProf->nRootBuildMffcCalls[iMffcBin]++;
@@ -5960,7 +6060,7 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
             p->nRootBuildMffcCalls[i],
             p->nRootBuildMffcNext[i], p->nRootBuildMffcAccepted[i],
             Cec_TranTimeSec(p->timeRootBuildMffc[i]) );
-    Abc_Print( 1, "stran-root build-greedy-frontier profile: schema=7 phase=%s roots=%lld pivots=%lld unique-states=%lld duplicate-states=%lld zero-novel=%lld cover-sum=%lld novel-sum=%lld frontier-max=%d attempts=%lld found=%lld time-sec=%.6f schedule-frontiers=%lld schedule-scored-pivots=%lld schedule-complete=%lld schedule-time-sec=%.6f\n",
+    Abc_Print( 1, "stran-root build-greedy-frontier profile: schema=7 phase=%s roots=%lld pivots=%lld unique-states=%lld duplicate-states=%lld zero-novel=%lld cover-sum=%lld novel-sum=%lld frontier-max=%d attempts=%lld found=%lld time-sec=%.6f schedule-frontiers=%lld schedule-scored-pivots=%lld schedule-complete=%lld schedule-time-sec=%.6f cache-lookups=%lld cache-hits=%lld cache-misses=%lld cache-same-page-hits=%lld cache-cross-page-hits=%lld cache-fail-hits=%lld cache-success-hits=%lld cache-saved-sec=%.6f cache-lookup-sec=%.6f cache-payload-bytes=%lld recursive-calls=%lld recursive-unique=%lld recursive-duplicates=%lld recursive-same-page=%lld recursive-cross-page=%lld recursive-fail-hits=%lld recursive-success-duplicates=%lld recursive-payload-bytes=%lld recursive-saved-sec=%.6f recursive-lookup-sec=%.6f recursive-dup-depth-0=%lld recursive-dup-depth-1=%lld recursive-dup-depth-2=%lld recursive-dup-depth-3plus=%lld\n",
         iPhase ? "seq" : "comb", p->nRootGreedyFrontierRoots,
         p->nRootGreedyFrontierPivots, p->nRootGreedyFrontierUnique,
         p->nRootGreedyFrontierPivots - p->nRootGreedyFrontierUnique,
@@ -5970,7 +6070,27 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         Cec_TranTimeSec(p->timeRootGreedyPivot),
         p->nRootGreedySchedFrontiers, p->nRootGreedySchedPivots,
         p->nRootGreedySchedComplete,
-        Cec_TranTimeSec(p->timeRootGreedySched) );
+        Cec_TranTimeSec(p->timeRootGreedySched),
+        p->nRootResidualCacheLookups, p->nRootResidualCacheHits,
+        p->nRootResidualCacheMisses,
+        p->nRootResidualCacheSamePageHits,
+        p->nRootResidualCacheCrossPageHits,
+        p->nRootResidualCacheFailHits,
+        p->nRootResidualCacheSuccessHits,
+        Cec_TranTimeSec(p->timeRootResidualCacheSaved),
+        Cec_TranTimeSec(p->timeRootResidualCacheLookup),
+        p->nRootResidualCachePayloadBytes,
+        p->nRootResidualRecCalls, p->nRootResidualRecUnique,
+        p->nRootResidualRecDuplicate, p->nRootResidualRecSamePage,
+        p->nRootResidualRecCrossPage, p->nRootResidualRecFailHits,
+        p->nRootResidualRecSuccessDuplicate,
+        p->nRootResidualRecPayloadBytes,
+        Cec_TranTimeSec(p->timeRootResidualRecSaved),
+        Cec_TranTimeSec(p->timeRootResidualRecLookup),
+        p->nRootResidualRecDuplicateDepth[0],
+        p->nRootResidualRecDuplicateDepth[1],
+        p->nRootResidualRecDuplicateDepth[2],
+        p->nRootResidualRecDuplicateDepth[3] );
     for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
         Abc_Print( 1, "stran-root build-greedy-pivot-rank profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
             iPhase ? "seq" : "comb", pRankBin[i],
@@ -6326,6 +6446,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
 
     // All proof and discovery data refer to the one immutable snapshot.  Tear
     // them down before the sole bundle duplication stops that snapshot.
+    for ( i = 0; i < Gia_ManObjNum(p); i++ )
+        Cec_TranRootCursorCacheStop( pCursors + i );
     Cec_TranDepScratchStop( &Dep );
     Abc_ResubPrepareManager( 0 );
     Cec_TranSimStop( pSim );

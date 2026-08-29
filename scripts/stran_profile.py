@@ -258,13 +258,28 @@ ROOT_PHASE_BUILD_RESIDUAL_FIELDS = [
 ROOT_BUILD_GREEDY_FRONTIER_KEYS = (
     "roots", "pivots", "unique-states", "duplicate-states", "zero-novel",
     "cover-sum", "novel-sum", "frontier-max", "attempts", "found",
-    "time-sec",
+    "time-sec", "schedule-frontiers", "schedule-scored-pivots",
+    "schedule-complete", "schedule-time-sec",
+    "cache-lookups", "cache-hits", "cache-misses",
+    "cache-same-page-hits", "cache-cross-page-hits",
+    "cache-fail-hits", "cache-success-hits", "cache-saved-sec",
+    "cache-lookup-sec", "cache-payload-bytes", "recursive-calls",
+    "recursive-unique", "recursive-duplicates", "recursive-same-page",
+    "recursive-cross-page", "recursive-fail-hits",
+    "recursive-success-duplicates", "recursive-payload-bytes",
+    "recursive-saved-sec", "recursive-lookup-sec", "recursive-dup-depth-0",
+    "recursive-dup-depth-1", "recursive-dup-depth-2",
+    "recursive-dup-depth-3plus",
 )
 ROOT_BUILD_GREEDY_FRONTIER_DERIVED = (
     "average-frontier-size", "unique-state-rate-pct",
     "duplicate-state-rate-pct", "zero-novel-rate-pct",
     "novel-cover-share-pct", "attempted-frontier-share-pct",
     "pivot-found-rate-pct", "time-per-attempt-sec",
+    "cache-hit-rate-pct", "cache-cross-page-hit-share-pct",
+    "cache-fail-hit-share-pct", "cache-saved-over-lookup",
+    "recursive-duplicate-rate-pct", "recursive-fail-hit-rate-pct",
+    "recursive-cross-page-share-pct", "recursive-saved-over-lookup",
 )
 ROOT_BUILD_GREEDY_FRONTIER_FIELDS = [
     f"root_build_greedy_frontier_{key.replace('-', '_')}"
@@ -994,6 +1009,22 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             values["found"], values["attempts"])
         result[f"{field_prefix}_time_per_attempt_sec"] = _quotient(
             values["time-sec"], values["attempts"])
+        result[f"{field_prefix}_cache_hit_rate_pct"] = _ratio(
+            values["cache-hits"], values["cache-lookups"])
+        result[f"{field_prefix}_cache_cross_page_hit_share_pct"] = _ratio(
+            values["cache-cross-page-hits"], values["cache-hits"])
+        result[f"{field_prefix}_cache_fail_hit_share_pct"] = _ratio(
+            values["cache-fail-hits"], values["cache-hits"])
+        result[f"{field_prefix}_cache_saved_over_lookup"] = _quotient(
+            values["cache-saved-sec"], values["cache-lookup-sec"])
+        result[f"{field_prefix}_recursive_duplicate_rate_pct"] = _ratio(
+            values["recursive-duplicates"], values["recursive-calls"])
+        result[f"{field_prefix}_recursive_fail_hit_rate_pct"] = _ratio(
+            values["recursive-fail-hits"], values["recursive-duplicates"])
+        result[f"{field_prefix}_recursive_cross_page_share_pct"] = _ratio(
+            values["recursive-cross-page"], values["recursive-duplicates"])
+        result[f"{field_prefix}_recursive_saved_over_lookup"] = _quotient(
+            values["recursive-saved-sec"], values["recursive-lookup-sec"])
 
     populate_greedy_frontier_fields(
         root_build_greedy_frontiers,
