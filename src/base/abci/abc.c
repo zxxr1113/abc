@@ -42242,7 +42242,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBPZqwjbaeMxclrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBVPZqwjbaeMxclrgftupoyh")) != EOF )
     {
         switch ( c )
         {
@@ -42290,6 +42290,12 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nConstrBaseMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nConstrBaseMax < 0 ) goto usage;
+            break;
+        case 'V':
+            if ( globalUtilOptind >= argc ) goto usage;
+            c = atoi(argv[globalUtilOptind++]);
+            if ( c != 0 && c != 1 && c != 2 && c != 4 ) goto usage;
+            pPars->nStage5Paths = c;
             break;
         case 'M':
             pPars->fUseMffcDivs ^= 1;
@@ -42396,7 +42402,7 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSNGQWKBZqwjbae num] [-P root] [-Mxclrgftupoyh]\n" );
+    Abc_Print( -2, "usage: &stran [-FCSNGQWKBVZqwjbae num] [-P root] [-Mxclrgftupoyh]\n" );
     Abc_Print( -2, "\t         performs root-only sequential Direct resubstitution\n" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
@@ -42407,6 +42413,7 @@ usage:
     Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : ranked physical nodes passed to Build (0 = complete allowed TFI) [default = %d]\n", pPars->nConstrBaseMax );
+    Abc_Print( -2, "\t-V num : experimental Stage-5 total paths per rank-1..8 top pivot (0/1/2/4; 0/1 = baseline) [default = %d]\n", pPars->nStage5Paths );
     Abc_Print( -2, "\t-q num : SEQ Build candidates per root/wave, or pre-commit horizon with -j (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-j num : SEQ Build candidates per root/proof batch; batch 1 also includes all Direct candidates (0 = legacy immediate commit) [default = %d]\n", pPars->nRootProofBatch );
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );

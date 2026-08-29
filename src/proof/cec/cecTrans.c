@@ -45,6 +45,10 @@ ABC_NAMESPACE_IMPL_START
 #define CEC_TRAN_PIVOT_RANK_BINS 8
 #define CEC_TRAN_PIVOT_RATIO_BINS 5
 #define CEC_TRAN_PIVOT_KIND_BINS 2
+#define CEC_TRAN_MULTIPATH_RANK_BINS 9
+#define CEC_TRAN_MULTIPATH_PATH_BINS 4
+#define CEC_TRAN_MULTIPATH_CELLS \
+    (CEC_TRAN_MULTIPATH_RANK_BINS * CEC_TRAN_MULTIPATH_PATH_BINS)
 
 // Shared fixed-layout payload returned by giaResub.c.  Counts cover every
 // greedy pivot consumed inside one Next(), including pivots whose recursive
@@ -88,6 +92,29 @@ enum
     CEC_TRAN_REC_DUP_DEPTH_1,
     CEC_TRAN_REC_DUP_DEPTH_2,
     CEC_TRAN_REC_DUP_DEPTH_3PLUS,
+    CEC_TRAN_MULTIPATH_CACHE_ENTRIES,
+    CEC_TRAN_MULTIPATH_CACHE_LOOKUPS,
+    CEC_TRAN_MULTIPATH_CACHE_HITS,
+    CEC_TRAN_MULTIPATH_CACHE_FAIL_HITS,
+    CEC_TRAN_MULTIPATH_CACHE_SUCCESS_HITS,
+    CEC_TRAN_MULTIPATH_CACHE_PAYLOAD_BYTES,
+    CEC_TRAN_MULTIPATH_ATTEMPTS,
+    CEC_TRAN_MULTIPATH_FOUND = CEC_TRAN_MULTIPATH_ATTEMPTS +
+        CEC_TRAN_MULTIPATH_CELLS,
+    CEC_TRAN_MULTIPATH_TIME = CEC_TRAN_MULTIPATH_FOUND +
+        CEC_TRAN_MULTIPATH_CELLS,
+    CEC_TRAN_MULTIPATH_SECOND_COVER = CEC_TRAN_MULTIPATH_TIME +
+        CEC_TRAN_MULTIPATH_CELLS,
+    CEC_TRAN_MULTIPATH_DIVERSITY_NEW =
+        CEC_TRAN_MULTIPATH_SECOND_COVER + CEC_TRAN_MULTIPATH_CELLS,
+    CEC_TRAN_MULTIPATH_DIVERSITY_SYM =
+        CEC_TRAN_MULTIPATH_DIVERSITY_NEW + CEC_TRAN_MULTIPATH_CELLS,
+    CEC_TRAN_PIVOT_CURRENT_PATH = CEC_TRAN_MULTIPATH_DIVERSITY_SYM +
+        CEC_TRAN_MULTIPATH_CELLS,
+    CEC_TRAN_PIVOT_CURRENT_SECOND_RANK,
+    CEC_TRAN_PIVOT_CURRENT_SECOND_COVER,
+    CEC_TRAN_PIVOT_CURRENT_DIVERSITY_NEW,
+    CEC_TRAN_PIVOT_CURRENT_DIVERSITY_SYM,
     CEC_TRAN_PIVOT_CURRENT_VALID,
     CEC_TRAN_PIVOT_CURRENT_KIND,
     CEC_TRAN_PIVOT_CURRENT_RANK,
@@ -145,7 +172,7 @@ enum
 extern void Abc_ResubPrepareManager( int nWords );
 extern void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor,
-    int fUseSolvSched, int fProfilePivots, int * pCursor,
+    int fUseSolvSched, int nStage5Paths, int fProfilePivots, int * pCursor,
     void ** ppRootCache );
 extern void Abc_ResubRootCacheStop( void * pRootCache );
 extern int Abc_ResubIteratorNext( void * pIter, int ** ppArray,
@@ -186,6 +213,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nRootWaves  = 8;
     p->nRootConstrTop = 1;
     p->nRootProofBatch = 0;
+    p->nStage5Paths = 0;
     // Use the same per-obligation conflict budget for the combinational CBS
     // certificate lane and the sequential scorr oracle by default.  The two
     // budgets remain independently configurable through -b and -C.
@@ -250,8 +278,14 @@ struct Cec_TranPivotBucketProf_t_
     long long nFound;
     long long nValid;
     long long nAccepted;
+    long long nValidGain;
+    long long nAcceptedGain;
     long long nOutcome[CEC_TRAN_BUILD_OUTCOMES];
+    long long nOutcomeGain[CEC_TRAN_BUILD_OUTCOMES];
     long long nSelectedAndGain;
+    long long nSecondCover;
+    long long nDiversityNew;
+    long long nDiversitySym;
     abctime   Time;
 };
 struct Cec_TranProf_t_
@@ -391,11 +425,22 @@ struct Cec_TranProf_t_
     long long nRootResidualRecDuplicateDepth[4];
     abctime   timeRootResidualRecSaved;
     abctime   timeRootResidualRecLookup;
+    long long nRootMultiPathCacheEntries;
+    long long nRootMultiPathCacheLookups;
+    long long nRootMultiPathCacheHits;
+    long long nRootMultiPathCacheFailHits;
+    long long nRootMultiPathCacheSuccessHits;
+    long long nRootMultiPathCachePayloadBytes;
+    long long nRootMultiPathFingerprintDuplicates;
+    long long nRootMultiPathAccepted;
+    long long nRootMultiPathQSlots;
     Cec_TranPivotBucketProf_t GreedyPivotRank[CEC_TRAN_PIVOT_RANK_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotNovel[CEC_TRAN_PIVOT_RATIO_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotCover[CEC_TRAN_PIVOT_RATIO_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotKind[CEC_TRAN_PIVOT_KIND_BINS];
     Cec_TranPivotBucketProf_t GreedyPivotState[2];
+    Cec_TranPivotBucketProf_t MultiPath[CEC_TRAN_MULTIPATH_RANK_BINS]
+        [CEC_TRAN_MULTIPATH_PATH_BINS];
     Cec_TranSuppProf_t * pBuildSuppProf;
     int     nRootWaveDepCalls[64];
     int     nRootWaveRecipes[64];
@@ -1004,6 +1049,11 @@ struct Cec_TranCand_t_
     int      nGreedyPivotNovel;  // cover not seen in earlier pivot masks
     int      nGreedyPivotRemain; // simulated minterms left for recursion
     int      fGreedyPivotDuplicate;// exact residual state seen at earlier rank
+    int      nGreedyPathIndex;   // 1=primary; 2..4=experimental depth-2 path
+    int      nGreedySecondRank;  // original coverage rank of second-layer pivot
+    int      nGreedySecondCover; // exact second-layer coverage size
+    int      nGreedyDiversityNew;// coverage outside the earlier-path union
+    int      nGreedyDiversitySym;// min symmetric difference to earlier paths
 };
 
 enum
@@ -1134,6 +1184,33 @@ static void Cec_TranProfilePivotAttempts( Cec_TranProf_t * pProf,
         pInfo[CEC_TRAN_REC_DUP_DEPTH_2];
     pProf->nRootResidualRecDuplicateDepth[3] +=
         pInfo[CEC_TRAN_REC_DUP_DEPTH_3PLUS];
+    pProf->nRootMultiPathCacheEntries +=
+        pInfo[CEC_TRAN_MULTIPATH_CACHE_ENTRIES];
+    pProf->nRootMultiPathCacheLookups +=
+        pInfo[CEC_TRAN_MULTIPATH_CACHE_LOOKUPS];
+    pProf->nRootMultiPathCacheHits +=
+        pInfo[CEC_TRAN_MULTIPATH_CACHE_HITS];
+    pProf->nRootMultiPathCacheFailHits +=
+        pInfo[CEC_TRAN_MULTIPATH_CACHE_FAIL_HITS];
+    pProf->nRootMultiPathCacheSuccessHits +=
+        pInfo[CEC_TRAN_MULTIPATH_CACHE_SUCCESS_HITS];
+    pProf->nRootMultiPathCachePayloadBytes +=
+        pInfo[CEC_TRAN_MULTIPATH_CACHE_PAYLOAD_BYTES];
+    for ( i = 0; i < CEC_TRAN_MULTIPATH_CELLS; i++ )
+    {
+        Cec_TranPivotBucketProf_t * pBucket =
+            &pProf->MultiPath[i / CEC_TRAN_MULTIPATH_PATH_BINS]
+                [i % CEC_TRAN_MULTIPATH_PATH_BINS];
+        pBucket->nAttempts += pInfo[CEC_TRAN_MULTIPATH_ATTEMPTS + i];
+        pBucket->nFound += pInfo[CEC_TRAN_MULTIPATH_FOUND + i];
+        pBucket->Time += (abctime)pInfo[CEC_TRAN_MULTIPATH_TIME + i];
+        pBucket->nSecondCover +=
+            pInfo[CEC_TRAN_MULTIPATH_SECOND_COVER + i];
+        pBucket->nDiversityNew +=
+            pInfo[CEC_TRAN_MULTIPATH_DIVERSITY_NEW + i];
+        pBucket->nDiversitySym +=
+            pInfo[CEC_TRAN_MULTIPATH_DIVERSITY_SYM + i];
+    }
     for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
     {
         pProf->GreedyPivotRank[i].nAttempts +=
@@ -1180,8 +1257,9 @@ static void Cec_TranProfilePivotAttempts( Cec_TranProf_t * pProf,
 static void Cec_TranProfilePivotCandidate( Cec_TranProf_t * pProf,
     Cec_TranCand_t const * pCand, int Event )
 {
-    Cec_TranPivotBucketProf_t * pBuckets[4];
+    Cec_TranPivotBucketProf_t * pBuckets[5];
     int i, RankBin, NovelBin, CoverBin, KindBin, StateBin;
+    int MultiRank, MultiPath;
     if ( pCand->nResubStage != 5 || pCand->nGreedyPivotKind == 0 )
         return;
     RankBin = Cec_TranBuildRankBin( pCand->nGreedyPivotRank );
@@ -1191,20 +1269,31 @@ static void Cec_TranProfilePivotCandidate( Cec_TranProf_t * pProf,
         pCand->nGreedyPivotTotal );
     KindBin = pCand->nGreedyPivotKind - 1;
     StateBin = pCand->fGreedyPivotDuplicate != 0;
+    MultiRank = pCand->nGreedyPivotRank <= 8 ?
+        pCand->nGreedyPivotRank - 1 : 8;
+    MultiPath = Abc_MinInt(Abc_MaxInt(pCand->nGreedyPathIndex, 1), 4) - 1;
     assert( KindBin >= 0 && KindBin < CEC_TRAN_PIVOT_KIND_BINS );
     pBuckets[0] = pProf->GreedyPivotRank + RankBin;
     pBuckets[1] = pProf->GreedyPivotNovel + NovelBin;
     pBuckets[2] = pProf->GreedyPivotCover + CoverBin;
     pBuckets[3] = pProf->GreedyPivotKind + KindBin;
-    for ( i = 0; i < 4; i++ )
+    pBuckets[4] = &pProf->MultiPath[MultiRank][MultiPath];
+    for ( i = 0; i < 5; i++ )
         if ( Event == -2 )
+        {
             pBuckets[i]->nValid++;
+            pBuckets[i]->nValidGain += pCand->nDiscoveryGain;
+        }
         else if ( Event == -1 )
+        {
             pBuckets[i]->nAccepted++;
+            pBuckets[i]->nAcceptedGain += pCand->nDiscoveryGain;
+        }
         else
         {
             assert( Event >= 0 && Event < CEC_TRAN_BUILD_OUTCOMES );
             pBuckets[i]->nOutcome[Event]++;
+            pBuckets[i]->nOutcomeGain[Event] += pCand->nDiscoveryGain;
             if ( Event == 2 )
                 pBuckets[i]->nSelectedAndGain += pCand->Gain;
         }
@@ -1792,7 +1881,7 @@ struct Cec_TranRoot_t_
 typedef struct Cec_TranRootCursor_t_ Cec_TranRootCursor_t;
 struct Cec_TranRootCursor_t_
 {
-    int State[5];               // Gia resub Stage/n/i/k/iGreedy
+    int State[6];               // Stage/n/i/k/Stage-5 slot + classified frontier
     void * pBuildCache;         // root-local exact residual memo across pages
     int nBuildYield;
     int nBuildAccepted;         // unique positive-gain Build candidates emitted on this snapshot
@@ -4360,7 +4449,8 @@ static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
         Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc ) : 0;
     return Abc_ResubIteratorResumeStart( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit, Vec_IntSize(vPool),
-        0, 0, pPars->fUseSolvSched, pPars->fProfile, pCursor,
+        0, 0, pPars->fUseSolvSched, pPars->nStage5Paths,
+        pPars->fProfile, pCursor,
         ppRootCache );
 }
 
@@ -4418,6 +4508,16 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
             (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_REMAIN];
         pCand->fGreedyPivotDuplicate =
             (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_DUPLICATE];
+        pCand->nGreedyPathIndex =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_PATH];
+        pCand->nGreedySecondRank =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_SECOND_RANK];
+        pCand->nGreedySecondCover =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_SECOND_COVER];
+        pCand->nGreedyDiversityNew =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_DIVERSITY_NEW];
+        pCand->nGreedyDiversitySym =
+            (int)pPivotInfo[CEC_TRAN_PIVOT_CURRENT_DIVERSITY_SYM];
     }
     return 1;
 }
@@ -4515,8 +4615,10 @@ static void Cec_TranCollectRootDirectTfi( Gia_Man_t * p,
 
 // Root-only constructed discovery uses one paper-style TFI divisor pool.  A
 // lightweight local iterator yields candidates in gate-count/template/coverage
-// order; q bounds the per-root frontier.  Only its five scalar cursors survive
-// this call; all heavyweight resub scratch is shared by the pass.
+// order; q bounds the per-root frontier.  Six scalar cursors survive this
+// call: the historical first four, a Stage-5 rank/flattened-slot cursor, and
+// the classified Stage-5 frontier length; all heavyweight resub scratch is
+// shared by the pass.
 static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     Cec_TranSim_t * pSim, Cec_ParTran_t * pPars,
     Cec_TranRoot_t * pRoot, Cec_TranRootCursor_t * pCursor, int iWave,
@@ -4531,6 +4633,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     int i, iAttempt, fExhausted = 0, fUnlimited;
     int nCiHash = 128, nCiMask;
     int IterStatus, fAccepted, iMffcBin;
+    int fKnownDuplicate, fExistDuplicate, fPageDuplicate;
     int nNextStart;
     long long nAcceptedStart;
     int iConstrStart = pConstr->nSize;
@@ -4645,13 +4748,19 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
             CEC_TRAN_SUPP_VALID );
         pProf->timeRootBuildStage[iAttempt] += timePart;
         fAccepted = 0;
+        fKnownDuplicate = Cec_TranCandVecContains(pKnown, &Cand);
+        fExistDuplicate = Cec_TranCandVecContains(pExist, &Cand);
+        fPageDuplicate = Cec_TranCandVecContains(pConstr, &Cand);
+        if ( pPars->fProfile && Cand.nGreedyPathIndex > 1 &&
+             (fKnownDuplicate || fExistDuplicate || fPageDuplicate) )
+            pProf->nRootMultiPathFingerprintDuplicates++;
         if ( Cand.Gain <= 0 )
             pProf->nRootBuildRejectNonPositive++;
-        else if ( Cec_TranCandVecContains(pKnown, &Cand) )
+        else if ( fKnownDuplicate )
             pProf->nRootBuildRejectKnown++;
-        else if ( Cec_TranCandVecContains(pExist, &Cand) )
+        else if ( fExistDuplicate )
             pProf->nRootBuildRejectDirect++;
-        else if ( Cec_TranCandVecContains(pConstr, &Cand) )
+        else if ( fPageDuplicate )
             pProf->nRootBuildRejectPage++;
         else
         {
@@ -4663,6 +4772,14 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
                 Cec_TranProfilePivotCandidate( pProf, &Cand, -1 );
             pProf->nRootWaveRecipes[iProfWave]++;
             pStat->nSigMatched++;
+            if ( pPars->fProfile && Cand.nGreedyPathIndex > 1 )
+            {
+                pProf->nRootMultiPathAccepted++;
+                // q=0 is an unlimited cumulative horizon even when -j
+                // paginates proof work; do not mislabel those j slots as q.
+                pProf->nRootMultiPathQSlots +=
+                    pPars->nRootConstrTop > 0;
+            }
             fAccepted = 1;
         }
         if ( !fAccepted )
@@ -5872,6 +5989,8 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
     static char const * pPivotKind[CEC_TRAN_PIVOT_KIND_BINS] = {
         "literal", "pair" };
     static char const * pPivotState[2] = { "unique", "duplicate" };
+    static char const * pMultiRank[CEC_TRAN_MULTIPATH_RANK_BINS] = {
+        "1", "2", "3", "4", "5", "6", "7", "8", "9+" };
     abctime Times[19] = { p->timeRootSimSig, p->timeRootRefresh,
         p->timeRootDirect, p->timeRootDivCi, p->timeRootResubInit,
         p->timeRootResubEnumCanon, p->timeRootCbsGraph,
@@ -6091,6 +6210,17 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         p->nRootResidualRecDuplicateDepth[1],
         p->nRootResidualRecDuplicateDepth[2],
         p->nRootResidualRecDuplicateDepth[3] );
+    Abc_Print( 1, "stran-root build-greedy-multipath-summary profile: schema=7 phase=%s cache-entries=%lld cache-lookups=%lld cache-hits=%lld cache-fail-hits=%lld cache-success-hits=%lld cache-payload-bytes=%lld duplicate-candidate-fingerprints=%lld extra-accepted=%lld extra-q-slots=%lld\n",
+        iPhase ? "seq" : "comb",
+        p->nRootMultiPathCacheEntries,
+        p->nRootMultiPathCacheLookups,
+        p->nRootMultiPathCacheHits,
+        p->nRootMultiPathCacheFailHits,
+        p->nRootMultiPathCacheSuccessHits,
+        p->nRootMultiPathCachePayloadBytes,
+        p->nRootMultiPathFingerprintDuplicates,
+        p->nRootMultiPathAccepted,
+        p->nRootMultiPathQSlots );
     for ( i = 0; i < CEC_TRAN_PIVOT_RANK_BINS; i++ )
         Abc_Print( 1, "stran-root build-greedy-pivot-rank profile: schema=7 phase=%s bucket=%s attempts=%lld found=%lld valid=%lld accepted=%lld generated=%lld proved=%lld selected=%lld selected-and-gain=%lld time-sec=%.6f\n",
             iPhase ? "seq" : "comb", pRankBin[i],
@@ -6153,6 +6283,22 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
             p->GreedyPivotState[i].nSelectedAndGain,
             Cec_TranTimeSec(p->GreedyPivotState[i].Time) );
     }
+    for ( i = 0; i < CEC_TRAN_MULTIPATH_RANK_BINS; i++ )
+        for ( k = 0; k < CEC_TRAN_MULTIPATH_PATH_BINS; k++ )
+        {
+            Cec_TranPivotBucketProf_t * pBucket = &p->MultiPath[i][k];
+            Abc_Print( 1, "stran-root build-greedy-path profile: schema=7 phase=%s top-rank=%s path-index=%d attempts=%lld found=%lld valid=%lld valid-gain=%lld accepted=%lld accepted-gain=%lld generated=%lld generated-gain=%lld proved=%lld proved-gain=%lld selected=%lld selected-gain=%lld selected-and-gain=%lld second-cover-sum=%lld diversity-new-sum=%lld diversity-sym-sum=%lld time-sec=%.6f\n",
+                iPhase ? "seq" : "comb", pMultiRank[i], k + 1,
+                pBucket->nAttempts, pBucket->nFound,
+                pBucket->nValid, pBucket->nValidGain,
+                pBucket->nAccepted, pBucket->nAcceptedGain,
+                pBucket->nOutcome[0], pBucket->nOutcomeGain[0],
+                pBucket->nOutcome[1], pBucket->nOutcomeGain[1],
+                pBucket->nOutcome[2], pBucket->nOutcomeGain[2],
+                pBucket->nSelectedAndGain,
+                pBucket->nSecondCover, pBucket->nDiversityNew,
+                pBucket->nDiversitySym, Cec_TranTimeSec(pBucket->Time) );
+        }
     Abc_Print( 1, "stran-root waves:" );
     for ( i = 0; i < nRootWaves; i++ )
         Abc_Print( 1, " w%d=%d/%d/%d/%d/%d", i + 1,
@@ -6231,9 +6377,10 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Abc_ResubPrepareManager( pSim->nSlots );
     Cec_TranDepScratchStart( &Dep, pSim->nSlots,
         pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
-    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates pivot-order=%s selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
+    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates pivot-order=%s stage5-paths=%d stage5-path-order=eligible-primary/diagonal-extra/fallback-primary selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
         pPars->fUseSolvSched ? "residual-solvability" : "original",
+        pPars->nStage5Paths <= 1 ? 1 : pPars->nStage5Paths,
         fMicroBatch ? "deferred-q-horizon-root-loss-gwmin" :
             "commit-wave-root-loss-gwmin",
         pPars->fBuildOnly ? "build-only" : "constant/existing/build",

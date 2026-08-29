@@ -35,11 +35,46 @@ Build iterator。Constant/Existing 不计入 q。
 | `-K n` | `8` | Build divisor 的 TFI 深度；`0` 表示完整 TFI。 |
 | `-B n` | `16` | 排序后传入 Build iterator 的物理 divisor 数；`0` 表示完整合法 TFI。 |
 | `-N n` | `20` | 单个 dependency recipe 的最大 AIG gate 数。 |
+| `-V n` | `0` | 实验性 Stage-5 depth-2 path 数；仅接受 `0/1/2/4`，其中 `0/1` 都是 baseline。 |
 | `-M` | 开 | 切换是否允许 exact-MFFC 内部节点进入 Build divisor pool。 |
 | `-y` | 关 | Build-only 调试模式；关闭 Constant/Existing。 |
 | `-l` | 开 | 切换 global topologically-earlier Existing 搜索。 |
 
 `-t` 作为历史拼写继续被接受，但不改变行为：all-current-candidate 始终开启。
+
+### Stage-5 multi-path（实验、默认关闭）
+
+`-V 2` 或 `-V 4` 只扩展原始 Stage-5 top-pivot rank 1..8。每个 top pivot
+的 path 1 保持原 primary remainder；path 2..4 只在 remainder 的第一层选择一次
+不同 pivot，之后恢复原 deterministic primary greedy recursion，不进行逐层分叉。
+Stage 1/3/4、所有原 top pivot 的 primary path，以及 rank 9+ 的行为都保留。
+
+Stage-5 的有限前缀顺序为：先依次尝试 eligible rank 1..8 的 path 1，再按
+path index 对这些 rank 做 diagonal round-robin，最后继续 rank 9+ 的原 primary
+paths。第二层 path diversity 使用 exact coverage masks，按下面的稳定字典序选择：
+
+```text
+max ( |C \ union(S)|, min(D in S)|C xor D|, |C|, -original_coverage_rank )
+```
+
+其中 `S` 是该 residual 已选的第二层 coverage masks。完全相同的 mask 不会作为
+另一个 variant；exact duplicate top residual 可以复用 remainder cache，但当前 top
+pivot 总会重新接回 candidate。
+
+cursor 在 `-V 0/1` 下保持原五个标量的历史含义；`-V 2/4` 时第五个标量按上述
+顺序解释为 deterministic flattened slot，第六个标量只保存已分类的 Stage-5
+frontier 长度，以便 shared-manager rebind 和分页恢复同一条序列。
+
+建议服务器实验保持 `-o` 关闭，逐项比较 `-V 1/-V 2/-V 4`，并分别与
+`-B`、`-q`、`-j`、`-w` 交叉。例如：
+
+```bash
+./abc -q 'read_aiger design.aig; &get; &stran -P root -p -V 1 -B 16 -q 20 -j 5 -w 8'
+./abc -q 'read_aiger design.aig; &get; &stran -P root -p -V 2 -B 16 -q 20 -j 5 -w 8'
+./abc -q 'read_aiger design.aig; &get; &stran -P root -p -V 4 -B 16 -q 20 -j 5 -w 8'
+```
+
+不要把 `-o` 加入这组 A/B；它是独立的 top-pivot 重排实验。
 
 ### Proof micro-batch（opt-in）
 
