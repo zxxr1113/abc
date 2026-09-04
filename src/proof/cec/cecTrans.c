@@ -305,6 +305,7 @@ struct Cec_TranProf_t_
     abctime timeRootDivCi;
     abctime timeRootResubInit;
     abctime timeRootResubEnumCanon;
+    abctime timeRootTeach;
     abctime timeRootCbsGraph;
     abctime timeRootCbsScreen;
     abctime timeRootCbsSolve;
@@ -371,6 +372,12 @@ struct Cec_TranProf_t_
     long long nRootBuildRejectDirect;
     long long nRootBuildRejectPage;
     long long nRootBuildAccepted;
+    long long nRootTeachCalls;
+    long long nRootTeachSelections;
+    long long nRootTeachWithCex;
+    long long nRootTeachCexSelected;
+    long long nRootTeachHypotheses;
+    long long nRootTeachHypCovered;
     long long nRootBuildStageValid[6];
     long long nRootBuildStageAccepted[6];
     abctime   timeRootBuildStage[6];
@@ -496,19 +503,23 @@ struct Cec_TranSim_t_
     word *          pState;         // current values of the ROs
 };
 
-// The pattern database owns concrete bounded counterexamples discovered while
-// rejecting transactions.  It deliberately stores only PI/state traces, not
-// object values: after a committed structural edit the next simulation batch
-// evaluates the same traces on the new snapshot.  This makes the bank valid
-// across transactions without retaining stale node IDs.
+// The stran2 pattern database owns the reset-reachable CEX traces collected by
+// its preliminary default scorr.  The bank is frozen before transduction: CEX
+// is used only to teach short candidate-building signatures, never as a
+// post-build filter and never as cross-wave feedback in this first version.
 typedef struct Cec_TranPatDb_t_ Cec_TranPatDb_t;
 struct Cec_TranPatDb_t_
 {
     Vec_Ptr_t *      vCexes;
-    Vec_Int_t *      vBatchEnds;    // sealed append-only CEX signature blocks
+    Vec_Int_t *      vBatchEnds;    // groups of at most 64 packed CEX traces
     int              nPis;
     int              nRegs;
     int              nMax;
+    int              nFramesMax;
+    int              nSeen;
+    int              nDup;
+    int              nIgnoredInd;
+    int              nTooLong;
 };
 
 static Cec_TranPatDb_t * Cec_TranPatDbStart( Gia_Man_t * p, int nMax )
@@ -533,20 +544,133 @@ static void Cec_TranPatDbStop( Cec_TranPatDb_t * pDb )
     ABC_FREE( pDb );
 }
 
-// Returns 1 only when a new trace was retained.  Product-machine and
-// sequential-COI miters can have a different register count, but they retain
-// the source PI order.  Their reset-reachable CEX is projected back to the
-// source interface by preserving the PI sequence and restoring the source
-// reset state.  This lets output-only product proofs refine Direct signatures
-// without forcing the proof miter to retain unrelated registers.
-static int Cec_TranPatDbNumSealed( Cec_TranPatDb_t * pDb )
+static int Cec_TranPatDbCexEqual( Abc_Cex_t * p0, Abc_Cex_t * p1 )
 {
-    return Vec_IntSize(pDb->vBatchEnds) ? Vec_IntEntryLast(pDb->vBatchEnds) : 0;
+    return p0->nRegs == p1->nRegs && p0->nPis == p1->nPis &&
+        p0->iFrame == p1->iFrame && p0->nBits == p1->nBits &&
+        !memcmp( p0->pData, p1->pData,
+            sizeof(unsigned) * Abc_BitWordNum(p0->nBits) );
 }
 
-// Seal pending CEXes into immutable blocks of at most 64 traces.  A sealed
-// block always gets its own simulation word and is never overwritten later;
-// consequently every refresh only adds signature constraints.
+static int Cec_TranPatDbAppend( Cec_TranPatDb_t * pDb, Abc_Cex_t * pCex )
+{
+    Abc_Cex_t * pOld;
+    int i;
+    Vec_PtrForEachEntry( Abc_Cex_t *, pDb->vCexes, pOld, i )
+        if ( Cec_TranPatDbCexEqual(pOld, pCex) )
+        {
+            pDb->nDup++;
+            Abc_CexFree( pCex );
+            return 0;
+        }
+    if ( Vec_PtrSize(pDb->vCexes) >= pDb->nMax )
+    {
+        Abc_CexFree( pCex );
+        return 0;
+    }
+    Vec_PtrPush( pDb->vCexes, pCex );
+    return 1;
+}
+
+// Observe scorr's already packed simulation lanes.  Several compatible SAT
+// cubes may share one lane; retaining the dense lane preserves that compression
+// and avoids solving or simulating again during candidate construction.
+static void Cec_TranPatDbObserveScorr( void * pData, Gia_Man_t * pAig,
+    Vec_Ptr_t * vSimInfo, Vec_Int_t * vOutBits, int nFrames,
+    int fInduction )
+{
+    Cec_TranPatDb_t * pDb = (Cec_TranPatDb_t *)pData;
+    Abc_Cex_t * pCex;
+    unsigned * pInfo;
+    char * pUsed;
+    int i, r, f, iPi, Out, iBit;
+    int nRegs = Gia_ManRegNum(pAig);
+    int nPis = Gia_ManPiNum(pAig);
+    int nBits = 32 * Vec_PtrReadWordsSimInfo(vSimInfo);
+    if ( fInduction )
+    {
+        pDb->nIgnoredInd += Vec_IntSize(vOutBits) / 2;
+        return;
+    }
+    if ( pDb->nFramesMax && nFrames > pDb->nFramesMax )
+    {
+        pDb->nTooLong += Vec_IntSize(vOutBits) / 2;
+        return;
+    }
+    if ( nPis != pDb->nPis || nRegs != pDb->nRegs )
+        return;
+    pUsed = ABC_CALLOC( char, nBits );
+    for ( i = 0; i + 1 < Vec_IntSize(vOutBits); i += 2 )
+    {
+        Out = Vec_IntEntry( vOutBits, i );
+        iBit = Vec_IntEntry( vOutBits, i + 1 );
+        if ( iBit < 0 || iBit >= nBits || pUsed[iBit] )
+            continue;
+        pUsed[iBit] = 1;
+        pDb->nSeen++;
+        pCex = Abc_CexAlloc( nRegs, nPis, nFrames );
+        pCex->iPo = Out;
+        pCex->iFrame = nFrames - 1;
+        for ( r = 0; r < nRegs; r++ )
+        {
+            pInfo = (unsigned *)Vec_PtrEntry( vSimInfo, r );
+            if ( Abc_InfoHasBit(pInfo, iBit) )
+                Abc_InfoSetBit( pCex->pData, r );
+        }
+        for ( f = 0; f < nFrames; f++ )
+            for ( iPi = 0; iPi < nPis; iPi++ )
+            {
+                pInfo = (unsigned *)Vec_PtrEntry( vSimInfo,
+                    nRegs + f * nPis + iPi );
+                if ( Abc_InfoHasBit(pInfo, iBit) )
+                    Abc_InfoSetBit( pCex->pData,
+                        nRegs + f * nPis + iPi );
+            }
+        Cec_TranPatDbAppend( pDb, pCex );
+    }
+    ABC_FREE( pUsed );
+}
+
+static void Cec_TranPatDbSeal( Cec_TranPatDb_t * pDb )
+{
+    int i, nCexes = Vec_PtrSize(pDb->vCexes);
+    Vec_IntClear( pDb->vBatchEnds );
+    for ( i = 64; i < nCexes; i += 64 )
+        Vec_IntPush( pDb->vBatchEnds, i );
+    if ( nCexes )
+        Vec_IntPush( pDb->vBatchEnds, nCexes );
+}
+
+static void Cec_TranPatDbRemapRegs( Cec_TranPatDb_t * pDb,
+    int nRegsNew, Vec_Int_t * vNewToOld )
+{
+    Abc_Cex_t * pOld, * pNew;
+    int i, r, f, iPi, iOld;
+    assert( vNewToOld == NULL || Vec_IntSize(vNewToOld) == nRegsNew );
+    Vec_PtrForEachEntry( Abc_Cex_t *, pDb->vCexes, pOld, i )
+    {
+        pNew = Abc_CexAlloc( nRegsNew, pOld->nPis, pOld->iFrame + 1 );
+        pNew->iPo = pOld->iPo;
+        pNew->iFrame = pOld->iFrame;
+        for ( r = 0; r < nRegsNew; r++ )
+        {
+            iOld = vNewToOld ? Vec_IntEntry(vNewToOld, r) : r;
+            assert( iOld >= 0 && iOld < pOld->nRegs );
+            if ( Abc_InfoHasBit(pOld->pData, iOld) )
+                Abc_InfoSetBit( pNew->pData, r );
+        }
+        for ( f = 0; f <= pOld->iFrame; f++ )
+            for ( iPi = 0; iPi < pOld->nPis; iPi++ )
+                if ( Abc_InfoHasBit(pOld->pData,
+                        pOld->nRegs + f * pOld->nPis + iPi) )
+                    Abc_InfoSetBit( pNew->pData,
+                        nRegsNew + f * pOld->nPis + iPi );
+        Abc_CexFree( pOld );
+        Vec_PtrWriteEntry( pDb->vCexes, i, pNew );
+    }
+    pDb->nRegs = nRegsNew;
+}
+
 static inline word Cec_TranSetLane( word Value, int iLane, int fValue )
 {
     word Mask = ((word)1) << iLane;
@@ -610,23 +734,17 @@ static Cec_TranSim_t * Cec_TranSimStart( Gia_Man_t * pGia, Cec_ParTran_t * pPars
     Cec_TranPatDb_t * pDb )
 {
     Cec_TranSim_t * p;
-    Abc_Cex_t * pCex;
     Gia_Obj_t * pObj, * pObjRi, * pObjRo;
-    int f, w, i, iSlot, iFan0, iFan1, nSealed;
+    int f, w, i, iSlot, iFan0, iFan1;
     word v0, v1;
     p = ABC_CALLOC( Cec_TranSim_t, 1 );
     p->pGia = pGia;
     p->nBaseWords = pPars->nSimWords;
     p->nWords = p->nBaseWords + Vec_IntSize(pDb->vBatchEnds);
     p->nFrames = pPars->nSimFrames;
-    // Never truncate a learned witness just because the random-signature
-    // horizon was configured smaller than the CEX-recovery horizon.
-    nSealed = Cec_TranPatDbNumSealed( pDb );
-    for ( i = 0; i < nSealed; i++ )
-    {
-        pCex = (Abc_Cex_t *)Vec_PtrEntry( pDb->vCexes, i );
-        p->nFrames = Abc_MaxInt( p->nFrames, pCex->iFrame + 1 );
-    }
+    // The source simulation is deliberately capped by -W.  A long witness is
+    // not allowed to inflate Build's horizon; only CEX terminal states already
+    // represented inside this fixed window are eligible teaching samples.
     p->nSlots = p->nWords * p->nFrames;
     p->pSims = ABC_CALLOC( word, (size_t)Gia_ManObjNum(pGia) * p->nSlots );
     p->pState = ABC_CALLOC( word, (size_t)Gia_ManRegNum(pGia) * p->nWords );
@@ -669,9 +787,271 @@ static Cec_TranSim_t * Cec_TranSimStart( Gia_Man_t * pGia, Cec_ParTran_t * pPars
 
 static void Cec_TranSimStop( Cec_TranSim_t * p )
 {
+    if ( p == NULL )
+        return;
     ABC_FREE( p->pSims );
     ABC_FREE( p->pState );
     ABC_FREE( p );
+}
+
+// Allocate the short signature consumed by Build.  The conservative first
+// version uses at most eight 64-bit words (clipped by the configured source
+// size), never the full default source horizon of Q*W words.
+static Cec_TranSim_t * Cec_TranSimStartTeaching( Gia_Man_t * pGia,
+    int nSlots )
+{
+    Cec_TranSim_t * p = ABC_CALLOC( Cec_TranSim_t, 1 );
+    p->pGia = pGia;
+    p->nBaseWords = p->nWords = p->nSlots = nSlots;
+    p->nFrames = 1;
+    p->pSims = ABC_CALLOC( word, (size_t)Gia_ManObjNum(pGia) * nSlots );
+    return p;
+}
+
+static int Cec_TranTeachSlotNum( Cec_ParTran_t * pPars )
+{
+    int nSlots = 8;
+    return Abc_MinInt( nSlots, pPars->nSimWords * pPars->nSimFrames );
+}
+
+static inline int Cec_TranTeachSampleValue( Cec_TranSim_t * pSim,
+    int iObj, int iSample )
+{
+    return (int)((Cec_TranSimObj(pSim, iObj)[iSample >> 6] >>
+        (iSample & 63)) & 1);
+}
+
+static inline void Cec_TranTeachCoverAdd( word * pCover, int * piHyp,
+    int Value, int Target )
+{
+    int iHyp = (*piHyp)++;
+    if ( Value != Target )
+        pCover[iHyp >> 6] |= ((word)1) << (iHyp & 63);
+}
+
+// Greedily choose up to sixteen scorr traces that jointly refute the largest
+// number of cheap wrong explanations of this root: constants, both literal
+// phases, and two-input AND/OR/XOR functions (with both output phases) over
+// the first eight structural divisors.  This is a root-local teaching-set
+// objective, not scorr's global equivalence-class splitting objective.
+static int Cec_TranTeachSelectCex( Cec_TranSim_t * pSource,
+    Cec_TranPatDb_t * pDb, int iTarget, Vec_Int_t * vPool,
+    int * pSelected, int * pnHypotheses, int * pnCovered )
+{
+    enum { CEC_TRAN_TEACH_DIV_MAX = 8, CEC_TRAN_TEACH_CEX_MAX = 16 };
+    int nDivs = Abc_MinInt( CEC_TRAN_TEACH_DIV_MAX, Vec_IntSize(vPool) );
+    int nPairs = nDivs * (nDivs - 1) / 2;
+    int nHyps = 2 + 2 * nDivs + 6 * nPairs;
+    int nHypWords = (nHyps + 63) / 64;
+    int nCexes = Vec_PtrSize(pDb->vCexes);
+    word * pCover = ABC_CALLOC( word, (size_t)nCexes * nHypWords );
+    word * pDone = ABC_CALLOC( word, nHypWords );
+    word * pAll = ABC_CALLOC( word, nHypWords );
+    Abc_Cex_t * pCex;
+    int c, i, k, d0, d1, iHyp, Target, Value, Best, BestScore;
+    int nSelected = 0, nCovered = 0, nDistinguishable = 0;
+    for ( c = 0; c < nCexes; c++ )
+    {
+        word * pRow = pCover + (size_t)c * nHypWords;
+        int DivValues[CEC_TRAN_TEACH_DIV_MAX];
+        int iSample;
+        pCex = (Abc_Cex_t *)Vec_PtrEntry( pDb->vCexes, c );
+        if ( pCex->iFrame < 0 || pCex->iFrame >= pSource->nFrames )
+            continue;
+        iSample = 64 * (pCex->iFrame * pSource->nWords +
+            pSource->nBaseWords + (c >> 6)) + (c & 63);
+        Target = Cec_TranTeachSampleValue( pSource, iTarget, iSample );
+        for ( i = 0; i < nDivs; i++ )
+            DivValues[i] = Cec_TranTeachSampleValue( pSource,
+                Vec_IntEntry(vPool, i), iSample );
+        iHyp = 0;
+        Cec_TranTeachCoverAdd( pRow, &iHyp, 0, Target );
+        Cec_TranTeachCoverAdd( pRow, &iHyp, 1, Target );
+        for ( i = 0; i < nDivs; i++ )
+        {
+            Cec_TranTeachCoverAdd( pRow, &iHyp, DivValues[i], Target );
+            Cec_TranTeachCoverAdd( pRow, &iHyp, !DivValues[i], Target );
+        }
+        for ( d0 = 0; d0 < nDivs; d0++ )
+            for ( d1 = d0 + 1; d1 < nDivs; d1++ )
+            {
+                Value = DivValues[d0] & DivValues[d1];
+                Cec_TranTeachCoverAdd( pRow, &iHyp, Value, Target );
+                Cec_TranTeachCoverAdd( pRow, &iHyp, !Value, Target );
+                Value = DivValues[d0] | DivValues[d1];
+                Cec_TranTeachCoverAdd( pRow, &iHyp, Value, Target );
+                Cec_TranTeachCoverAdd( pRow, &iHyp, !Value, Target );
+                Value = DivValues[d0] ^ DivValues[d1];
+                Cec_TranTeachCoverAdd( pRow, &iHyp, Value, Target );
+                Cec_TranTeachCoverAdd( pRow, &iHyp, !Value, Target );
+            }
+        assert( iHyp == nHyps );
+        for ( k = 0; k < nHypWords; k++ )
+            pAll[k] |= pRow[k];
+    }
+    for ( i = 0; i < CEC_TRAN_TEACH_CEX_MAX; i++ )
+    {
+        Best = -1;
+        BestScore = 0;
+        for ( c = 0; c < nCexes; c++ )
+        {
+            word * pRow = pCover + (size_t)c * nHypWords;
+            int Score = 0;
+            for ( k = 0; k < nHypWords; k++ )
+                Score += Abc_TtCountOnes( pRow[k] & ~pDone[k] );
+            if ( Score > BestScore )
+                BestScore = Score, Best = c;
+        }
+        if ( Best < 0 )
+            break;
+        pSelected[nSelected++] = Best;
+        for ( k = 0; k < nHypWords; k++ )
+            pDone[k] |= pCover[(size_t)Best * nHypWords + k];
+    }
+    for ( k = 0; k < nHypWords; k++ )
+        nCovered += Abc_TtCountOnes( pDone[k] ),
+        nDistinguishable += Abc_TtCountOnes( pAll[k] );
+    *pnHypotheses = nDistinguishable;
+    *pnCovered = nCovered;
+    ABC_FREE( pCover );
+    ABC_FREE( pDone );
+    ABC_FREE( pAll );
+    return nSelected;
+}
+
+static unsigned Cec_TranTeachMix( unsigned x )
+{
+    x ^= x >> 16;
+    x *= 0x7feb352du;
+    x ^= x >> 15;
+    x *= 0x846ca68bu;
+    return x ^ (x >> 16);
+}
+
+static int Cec_TranTeachGcd( int a, int b )
+{
+    while ( b )
+    {
+        int t = a % b;
+        a = b;
+        b = t;
+    }
+    return a;
+}
+
+typedef struct Cec_TranTeachCache_t_ Cec_TranTeachCache_t;
+struct Cec_TranTeachCache_t_
+{
+    int              nSamples;
+    int              nObjs;
+    int *            pObjs;
+    word *           pSims;
+};
+
+static void Cec_TranTeachCacheStop( Cec_TranTeachCache_t * pCache )
+{
+    if ( pCache == NULL )
+        return;
+    ABC_FREE( pCache->pObjs );
+    ABC_FREE( pCache->pSims );
+    ABC_FREE( pCache );
+}
+
+// Gather arbitrary columns from the once-computed source simulation into a
+// short root-local signature.  Selected CEX occupy dedicated lanes and the
+// remaining capacity uses a deterministic, duplicate-free subset of the
+// reset-reachable random corpus.  No graph simulation is performed here.  The
+// packed result is cached as well as the column list, so later proof waves only
+// copy words instead of repeating bit-column extraction.
+static void Cec_TranTeachBuildSignature( Cec_TranSim_t * pSource,
+    Cec_TranSim_t * pBuild, Cec_TranPatDb_t * pDb, int iTarget,
+    Vec_Int_t * vPool, Cec_TranTeachCache_t ** ppCache,
+    Cec_TranProf_t * pProf )
+{
+    int CexIds[16];
+    Cec_TranTeachCache_t * pCache = *ppCache;
+    int * Samples;
+    int nHypotheses = 0, nCovered = 0;
+    int nSelected, nRandom;
+    int nBuildSamples = 64 * pBuild->nSlots;
+    int nRandomSamples = 64 * pSource->nBaseWords * pSource->nFrames;
+    int i, k, s, iObj, iFlat, iUnit, iFrame, iWord, iStep;
+    abctime clk = Abc_Clock();
+    word Value;
+    if ( pCache == NULL )
+    {
+        pCache = *ppCache = ABC_CALLOC( Cec_TranTeachCache_t, 1 );
+        pCache->nSamples = nBuildSamples;
+        pCache->nObjs = 1 + Vec_IntSize(vPool);
+        pCache->pObjs = ABC_ALLOC( int, pCache->nObjs );
+        pCache->pSims = ABC_ALLOC( word,
+            (size_t)pCache->nObjs * pBuild->nSlots );
+        Samples = ABC_ALLOC( int, nBuildSamples );
+        nSelected = Cec_TranTeachSelectCex( pSource, pDb, iTarget,
+            vPool, CexIds, &nHypotheses, &nCovered );
+        nRandom = nBuildSamples - nSelected;
+        assert( nRandomSamples >= nBuildSamples );
+        iFlat = (int)(Cec_TranTeachMix((unsigned)iTarget) %
+            nRandomSamples);
+        iStep = 1 + (int)(Cec_TranTeachMix((unsigned)iTarget ^
+            0xa511e9b3u) % (nRandomSamples - 1));
+        while ( Cec_TranTeachGcd(iStep, nRandomSamples) != 1 )
+            iStep = iStep == nRandomSamples - 1 ? 1 : iStep + 1;
+        for ( i = 0; i < nRandom; i++ )
+        {
+            iUnit = iFlat >> 6;
+            iFrame = iUnit / pSource->nBaseWords;
+            iWord = iUnit % pSource->nBaseWords;
+            Samples[i] = 64 * (iFrame * pSource->nWords + iWord) +
+                (iFlat & 63);
+            iFlat = (int)(((long long)iFlat + iStep) % nRandomSamples);
+        }
+        for ( i = 0; i < nSelected; i++ )
+        {
+            Abc_Cex_t * pCex = (Abc_Cex_t *)Vec_PtrEntry(
+                pDb->vCexes, CexIds[i] );
+            Samples[nRandom + i] = 64 * (pCex->iFrame * pSource->nWords +
+                pSource->nBaseWords + (CexIds[i] >> 6)) +
+                (CexIds[i] & 63);
+        }
+        pProf->nRootTeachSelections++;
+        pProf->nRootTeachWithCex += nSelected > 0;
+        pProf->nRootTeachCexSelected += nSelected;
+        pProf->nRootTeachHypotheses += nHypotheses;
+        pProf->nRootTeachHypCovered += nCovered;
+        pCache->pObjs[0] = iTarget;
+        Vec_IntForEachEntry( vPool, iObj, i )
+            pCache->pObjs[i + 1] = iObj;
+        for ( i = 0; i < pCache->nObjs; i++ )
+        {
+            iObj = pCache->pObjs[i];
+            for ( s = 0; s < pBuild->nSlots; s++ )
+            {
+                Value = 0;
+                for ( k = 0; k < 64; k++ )
+                    if ( Cec_TranTeachSampleValue(pSource, iObj,
+                            Samples[64 * s + k]) )
+                        Value |= ((word)1) << k;
+                pCache->pSims[(size_t)i * pBuild->nSlots + s] = Value;
+            }
+        }
+        ABC_FREE( Samples );
+    }
+    assert( pCache->nSamples == nBuildSamples );
+    assert( pCache->nObjs == 1 + Vec_IntSize(vPool) );
+    assert( pCache->pObjs[0] == iTarget );
+    for ( i = 0; i < pCache->nObjs; i++ )
+    {
+        iObj = i ? Vec_IntEntry(vPool, i - 1) : iTarget;
+        assert( pCache->pObjs[i] == iObj );
+        memcpy( Cec_TranSimObj(pBuild, iObj),
+            pCache->pSims + (size_t)i * pBuild->nSlots,
+            sizeof(word) * pBuild->nSlots );
+    }
+    memset( Cec_TranSimObj(pBuild, 0), 0,
+        sizeof(word) * pBuild->nSlots );
+    pProf->nRootTeachCalls++;
+    pProf->timeRootTeach += Abc_Clock() - clk;
 }
 
 // Independent PI/RO simulation used only by the all-state combination lane.
@@ -1883,6 +2263,7 @@ struct Cec_TranRootCursor_t_
 {
     int State[6];               // Stage/n/i/k/Stage-5 slot + classified frontier
     void * pBuildCache;         // root-local exact residual memo across pages
+    Cec_TranTeachCache_t * pTeachCache; // frozen columns/signature across waves
     int nBuildYield;
     int nBuildAccepted;         // unique positive-gain Build candidates emitted on this snapshot
     int nPages;
@@ -4823,6 +5204,7 @@ static int Cec_TranCandRootHeuristicCompare( const void * p0, const void * p1 )
 }
 
 static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
+    Cec_TranSim_t * pSource, Cec_TranPatDb_t * pDb, int fTeaching,
     Cec_ParTran_t * pPars, Cec_TranRoot_t * pRoot,
     Cec_TranRootCursor_t * pCursor, int iWave,
     Cec_TranCandVec_t const * pKnown, char const * pSolved,
@@ -4852,14 +5234,23 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     nReservoirSize = Vec_IntSize( vPool );
     if ( Vec_IntSize(vPool) )
     {
-        pRanks = Cec_TranRankDivReservoir( pSim, pRoot->iObj, vPool );
+        pRanks = Cec_TranRankDivReservoir(
+            fTeaching ? pSource : pSim, pRoot->iObj, vPool );
+        Cec_TranSelectRankedDivPool( vPool, pRanks,
+            pPars->nConstrBaseMax );
+    }
+    // Teaching must see the actual ranked Build pool, not an arbitrary BFS
+    // prefix that may be discarded immediately afterwards.
+    if ( fTeaching )
+        Cec_TranTeachBuildSignature( pSource, pSim, pDb,
+            pRoot->iObj, vPool, &pCursor->pTeachCache, pProf );
+    if ( Vec_IntSize(vPool) )
+    {
         if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) &&
              iWave == 0 )
             Cec_TranSuppProfResidualSample( pProf->pBuildSuppProf, pSim,
                 pRoot->iObj, vPool, pRanks,
                 pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 32 );
-        Cec_TranSelectRankedDivPool( vPool, pRanks,
-            pPars->nConstrBaseMax );
     }
     if ( pPars->fUseConstr )
     {
@@ -4884,7 +5275,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     // behavior, including the harmless Known-filtered rescan on later waves.
     if ( !pPars->fBuildOnly &&
          (pPars->nRootProofBatch == 0 || iWave == 0) )
-        Cec_TranCollectRootDirectTfi( p, pSim, pPars, pRoot, vPool,
+        Cec_TranCollectRootDirectTfi( p, pSource, pPars, pRoot, vPool,
             pKnown, &Exist, pDisc, pProf );
     for ( i = 0; i < Exist.nSize; i++ )
         Exist.pArray[i].nWave = iWave;
@@ -6323,7 +6714,8 @@ static inline int Cec_TranRootCandBucket( int sz )
 
 static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Cec_ParTran_t * pPars, int iRound, int fCombOnly,
-    Cec_TranCandVec_t * pHistory )
+    Cec_TranCandVec_t * pHistory, Cec_TranPatDb_t * pSharedDb,
+    int fTeaching )
 {
     Cec_TranProf_t Prof = {0};
     Cec_TranDiscStat_t Disc = {0};
@@ -6333,7 +6725,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Cec_TranCandVec_t HistoryLive = {0}, Active = {0}, Carry = {0};
     Cec_TranRoot_t * pRoots;
     Cec_TranRootCursor_t * pCursors;
-    Cec_TranSim_t * pSim;
+    Cec_TranSim_t * pSim, * pSource;
     Cec_TranPatDb_t * pDb;
     Cec_TranDepScratch_t Dep;
     Gia_Man_t * p = Gia_ManDup( pGia );
@@ -6355,9 +6747,10 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int iPhase = fCombOnly ? 0 : 1;
     int nCandCalls = 0, nCandSum = 0, nCandMax = 0;
     int nCandHist[10] = {0};
+    int fOwnDb = pSharedDb == NULL;
     int nAndBefore = Gia_ManAndNum( p ), nRegBefore = Gia_ManRegNum( p );
     abctime clkTotal = Abc_Clock(), clk;
-    pDb = Cec_TranPatDbStart( p, 0 );
+    pDb = fOwnDb ? Cec_TranPatDbStart( p, 0 ) : pSharedDb;
     Gia_ManCreateRefs( p );
     Gia_ManForEachAnd( p, pObj, i )
         nRoots++;
@@ -6372,11 +6765,17 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     if ( pPars->fProfile )
         Prof.pBuildSuppProf = Cec_TranSuppProfStart( Gia_ManObjNum(p) );
     clk = Abc_Clock();
-    pSim = Cec_TranSimStart( p, pPars, pDb );
+    pSource = Cec_TranSimStart( p, pPars, pDb );
+    pSim = fTeaching ? Cec_TranSimStartTeaching( p,
+        Cec_TranTeachSlotNum(pPars) ) : pSource;
     Prof.timeRootSimSig += Abc_Clock() - clk;
     Abc_ResubPrepareManager( pSim->nSlots );
     Cec_TranDepScratchStart( &Dep, pSim->nSlots,
         pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 64, 1 );
+    if ( fTeaching )
+        Abc_Print( 1, "stran2 teaching signature: source-words=%d random-words=%d frames=%d source-slots=%d build-slots=%d reachable-cex=%d.\n",
+            pSource->nWords, pSource->nBaseWords, pSource->nFrames,
+            pSource->nSlots, pSim->nSlots, Vec_PtrSize(pDb->vCexes) );
     Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates pivot-order=%s stage5-paths=%d stage5-path-order=eligible-primary/diagonal-extra/fallback-primary selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
         pPars->fUseSolvSched ? "residual-solvability" : "original",
@@ -6402,8 +6801,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Cec_TranCand_t Cand = pHistory->pArray[i];
         int Gain;
         if ( !Cec_TranProofHistoryTopoValid(p, &Cand) ||
-             !Cec_TranRecipeStructurallyValid(pSim, &Cand) ||
-             !Cec_TranRecipeMatchesRoot(pSim, &Cand, NULL) )
+             !Cec_TranRecipeStructurallyValid(pSource, &Cand) ||
+             !Cec_TranRecipeMatchesRoot(pSource, &Cand, NULL) )
         {
             Prof.nHistoryTriedInvalidated++;
             continue;
@@ -6462,7 +6861,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
                 nHorizonRoots++;
                 continue;
             }
-            Cec_TranRootDiscoverOne( p, pSim, pPars, pRoots + r,
+            Cec_TranRootDiscoverOne( p, pSim, pSource, pDb, fTeaching,
+                pPars, pRoots + r,
                 pCursors + pRoots[r].iObj, iWave, &Known, pSolved,
                 pCovered, pUsed, pMffc, vMffc, &Dep, &Disc, &Prof,
                 &RootCands );
@@ -6594,13 +6994,19 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     // All proof and discovery data refer to the one immutable snapshot.  Tear
     // them down before the sole bundle duplication stops that snapshot.
     for ( i = 0; i < Gia_ManObjNum(p); i++ )
+    {
         Cec_TranRootCursorCacheStop( pCursors + i );
+        Cec_TranTeachCacheStop( pCursors[i].pTeachCache );
+    }
     Cec_TranDepScratchStop( &Dep );
     Abc_ResubPrepareManager( 0 );
-    Cec_TranSimStop( pSim );
-    Cec_TranPatDbStop( pDb );
+    if ( fTeaching )
+        Cec_TranSimStop( pSim );
+    Cec_TranSimStop( pSource );
+    if ( fOwnDb )
+        Cec_TranPatDbStop( pDb );
     pSim = NULL;
-    pDb = NULL;
+    pSource = NULL;
     p = Cec_TranCommitSelectedRootOnly( p, &Selected, pPars, &Prof,
         &Carry, pHistory );
     Prof.nHelperInvalidated = Prof.nHistoryTriedInvalidated;
@@ -6639,6 +7045,12 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Abc_Print( 1, "stran-root cross-wave proof reuse: generation-skipped=%d remapped=%d invalidated=%d retained=%d.\n",
         Prof.nQueueTriedSkipped, Prof.nHistoryTriedRemapped,
         Prof.nHistoryTriedInvalidated, pHistory->nSize );
+    if ( fTeaching )
+        Abc_Print( 1, "stran2 teaching summary: root-signatures=%lld selector-calls=%lld roots-with-cex=%lld selected-cex=%lld distinguishable-proxies=%lld covered-proxies=%lld selection-and-gather=%.6f sec.\n",
+            Prof.nRootTeachCalls, Prof.nRootTeachSelections,
+            Prof.nRootTeachWithCex,
+            Prof.nRootTeachCexSelected, Prof.nRootTeachHypotheses,
+            Prof.nRootTeachHypCovered, Cec_TranTimeSec(Prof.timeRootTeach) );
     Abc_Print( 1, "stran-root per-root candidates: discover-calls=%d total=%d max=%d avg=%.2f hist(0,1,2,3,4,5-8,9-16,17-32,33-64,65+)=%d,%d,%d,%d,%d,%d,%d,%d,%d,%d.\n",
         nCandCalls, nCandSum, nCandMax,
         nCandCalls ? (float)nCandSum / nCandCalls : 0.0f,
@@ -6666,7 +7078,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     return p;
 }
 
-Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPars )
+static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
+    Cec_ParTran_t * pPars, Cec_TranPatDb_t * pDb, int fTeaching )
 {
     Cec_ParTran_t PassPars;
     Cec_TranCandVec_t ProofHistory = {0};
@@ -6691,7 +7104,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         PassPars.nRootConstrTop = CEC_TRAN_COMB_BUILD_Q;
         PassPars.nRootProofBatch = 0;
         pNext = Cec_ManSequentialRootPass( p, &PassPars,
-            0, 1, &ProofHistory );
+            0, 1, &ProofHistory, pDb, fTeaching );
         Gia_ManStop( p );
         p = pNext;
         nAfterFirst = Gia_ManAndNum( p );
@@ -6717,7 +7130,7 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         PassPars = *pPars;
         PassPars.nRootWaves = 1;
         pNext = Cec_ManSequentialRootPass( p, &PassPars,
-            iRound, 0, &ProofHistory );
+            iRound, 0, &ProofHistory, pDb, fTeaching );
         Gia_ManStop( p );
         p = pNext;
         nAfterFirst = Gia_ManAndNum( p );
@@ -6738,6 +7151,52 @@ Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia, Cec_ParTran_t * pPa
         nAndInitial - Gia_ManAndNum(p) );
     Cec_TranCandVecStop( &ProofHistory );
     return p;
+}
+
+Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia,
+    Cec_ParTran_t * pPars )
+{
+    return Cec_ManSequentialTransductionInt( pGia, pPars, NULL, 0 );
+}
+
+// Run the same no-option scorr prepass used by "&scorr", retain only its
+// reset-reachable packed CEX lanes, project them through register reduction,
+// and freeze the resulting corpus for root-local teaching signatures.
+Gia_Man_t * Cec_ManSequentialTransduction2( Gia_Man_t * pGia,
+    Cec_ParTran_t * pPars )
+{
+    Cec_ParCor_t Cor;
+    Cec_TranPatDb_t * pDb;
+    Gia_Man_t * pScorr, * pNew;
+    int nCexMax = Abc_MinInt( 256,
+        Abc_MaxInt(64, 64 * pPars->nSimWords) );
+    pDb = Cec_TranPatDbStart( pGia, nCexMax );
+    pDb->nFramesMax = pPars->nSimFrames;
+    Cec_ManCorSetDefaultParams( &Cor );
+    Cor.nProcs = 1;
+    Cor.pCexFunc = Cec_TranPatDbObserveScorr;
+    Cor.pCexData = pDb;
+    Cor.fCollectRegMap = 1;
+    Abc_Print( 1, "stran2: running default scorr; reachable-CEX capacity=%d.\n",
+        nCexMax );
+    pScorr = Cec_ManLSCorrespondence( pGia, &Cor );
+    Cec_TranPatDbRemapRegs( pDb, Gia_ManRegNum(pScorr), Cor.vRegMap );
+    Vec_IntFreeP( &Cor.vRegMap );
+    Cec_TranPatDbSeal( pDb );
+    Abc_Print( 1, "stran2 CEX corpus: retained=%d/%d packed-lanes-seen=%d duplicates=%d ignored-induction=%d too-long=%d words=%d.\n",
+        Vec_PtrSize(pDb->vCexes), pDb->nMax, pDb->nSeen, pDb->nDup,
+        pDb->nIgnoredInd, pDb->nTooLong,
+        Vec_IntSize(pDb->vBatchEnds) );
+    if ( Gia_ManRegNum(pScorr) == 0 )
+    {
+        Cec_TranPatDbStop( pDb );
+        return pScorr;
+    }
+    pNew = Cec_ManSequentialTransductionInt( pScorr, pPars, pDb,
+        Vec_PtrSize(pDb->vCexes) > 0 );
+    Gia_ManStop( pScorr );
+    Cec_TranPatDbStop( pDb );
+    return pNew;
 }
 
 ABC_NAMESPACE_IMPL_END

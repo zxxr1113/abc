@@ -1021,7 +1021,9 @@ static int Cec_ManCexStoreClassify( Vec_Int_t * vCexStore, int * pnReal, int * p
   SeeAlso     []
 
 ***********************************************************************/
-int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore, int nFrames, Cec_SeedSim_t * pSeed, Vec_Int_t * vOutputs )
+int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim,
+    Vec_Int_t * vCexStore, int nFrames, Cec_SeedSim_t * pSeed,
+    Vec_Int_t * vOutputs, Cec_ParCor_t * pCorPars, int fInduction )
 {
     Vec_Int_t * vPairs = NULL;
     Vec_Int_t * vOutBits = NULL;
@@ -1054,6 +1056,8 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
     Cec_ScorrProfEventRefine = Cec_ScorrProfEventRollback = 0;
     Cec_ScorrProfEventInit = 0;
     Cec_ScorrProfEventCone = 0;
+    if ( pSeed || (pCorPars && pCorPars->pCexFunc) )
+        vOutBits = Vec_IntAlloc( 1000 );
     if ( pSeed )
         Cec_SeedSimBeginCall( pSeed );  // reset per-call local/full/maxdirty counters
 //    pSim->pPars->nWords  = 63;
@@ -1066,7 +1070,6 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         // so rounds that fall back to full resim never pay for it.
         pSeed->fUseCone = 0;
         vSimInfo = pSeed->vSimInfo;
-        vOutBits = Vec_IntAlloc( 1000 );
     }
     else
     {
@@ -1146,11 +1149,20 @@ int Cec_ManResimulateCounterExamples( Cec_ManSim_t * pSim, Vec_Int_t * vCexStore
         {
             abctime tR = Cec_ScorrProfOn ? Abc_ClockHr() : 0;
             Cec_ManStartSimInfo( vSimInfo, Gia_ManRegNum(pSim->pAig) );
-            iStart = Cec_ManLoadCounterExamples( vSimInfo, vCexStore, iStart );
+            if ( pCorPars && pCorPars->pCexFunc )
+                iStart = Cec_ManLoadCounterExamplesMapped( vSimInfo,
+                    vCexStore, iStart, vOutBits );
+            else
+                iStart = Cec_ManLoadCounterExamples( vSimInfo,
+                    vCexStore, iStart );
             Gia_ManCorrPerformRemapping( vPairs, vSimInfo );
             if ( Cec_ScorrProfOn )
                 Cec_ScorrProfSimRemap += Abc_ClockHr() - tR;
         }
+        if ( !pSeed && pCorPars && pCorPars->pCexFunc &&
+             Vec_IntSize(vOutBits) )
+            pCorPars->pCexFunc( pCorPars->pCexData, pSim->pAig,
+                vSimInfo, vOutBits, nFrames, fInduction );
         // The local path returned above.  Reaching here means standard full
         // resimulation, either without -I or as an incremental fallback.
         if ( pSeed )
@@ -1713,7 +1725,9 @@ void Cec_ManLSCorrespondenceBmc( Gia_Man_t * pAig, Cec_ParCor_t * pPars, int nPr
                 // persistent simulation background over-refines classes and can
                 // significantly hurt gate QoR.  The main correspondence loop
                 // below still uses -I for its ordinary refinement batches.
-                RetValue = Cec_ManResimulateCounterExamples( pSim, vCexStore, nBmcResimFrames, NULL, vOutputs );
+                RetValue = Cec_ManResimulateCounterExamples( pSim,
+                    vCexStore, nBmcResimFrames, NULL, vOutputs,
+                    pPars, 0 );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
                 Prof.nIncrSrc = Cec_ScorrProfIncrSrc; Prof.nIncrFull = Cec_ScorrProfIncrFull;
@@ -2338,7 +2352,7 @@ int Cec_ManLSCorrespondenceClasses( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
                 tH = Abc_ClockHr();
                 RetValue = Cec_ManResimulateCounterExamples( pSim,
                     vCexStore, pPars->nFrames + 1 + nAddFrames,
-                    pSeedSim, vOutputs );
+                    pSeedSim, vOutputs, pPars, 1 );
                 Prof.tSim = Abc_ClockHr() - tH;
                 Prof.nSimCalls = 1;
                 Prof.tSimRemap = Cec_ScorrProfSimRemap; Prof.tSimRun = Cec_ScorrProfSimRun;
@@ -2675,10 +2689,11 @@ Gia_Man_t * Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 {  
     Gia_Man_t * pNew, * pTemp;
     unsigned * pInitState;
-    int RetValue;
+    int RetValue, i;
     abctime clkProfReduce;
     ABC_FREE( pAig->pReprs );
     ABC_FREE( pAig->pNexts );
+    assert( !pPars->fCollectRegMap || pPars->vRegMap == NULL );
     if ( pPars->nPrefix == 0 )
     {
         RetValue = Cec_ManLSCorrespondenceClasses( pAig, pPars );
@@ -2686,6 +2701,12 @@ Gia_Man_t * Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
         {
             clkProfReduce = pPars->pProfile ? Abc_ClockHr() : 0;
             pNew = Gia_ManDup( pAig );
+            if ( pPars->fCollectRegMap )
+            {
+                pPars->vRegMap = Vec_IntAlloc( Gia_ManRegNum(pAig) );
+                for ( i = 0; i < Gia_ManRegNum(pAig); i++ )
+                    Vec_IntPush( pPars->vRegMap, i );
+            }
             if ( pPars->pProfile )
                 pPars->pProfile->timeReduce += Abc_ClockHr() - clkProfReduce;
             return pNew;
@@ -2723,6 +2744,13 @@ Gia_Man_t * Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
     if ( pPars->fMakeChoices )
     {
         pNew = Gia_ManEquivToChoices( pAig, 1 );
+        if ( pPars->fCollectRegMap )
+        {
+            assert( Gia_ManRegNum(pNew) == Gia_ManRegNum(pAig) );
+            pPars->vRegMap = Vec_IntAlloc( Gia_ManRegNum(pAig) );
+            for ( i = 0; i < Gia_ManRegNum(pAig); i++ )
+                Vec_IntPush( pPars->vRegMap, i );
+        }
 //        Gia_ManHasChoices_very_old( pNew );
     }
     else
@@ -2730,6 +2758,23 @@ Gia_Man_t * Cec_ManLSCorrespondence( Gia_Man_t * pAig, Cec_ParCor_t * pPars )
 //        Gia_ManEquivImprove( pAig );
         pNew = Gia_ManCorrReduce( pAig );
         pNew = Gia_ManSeqCleanup( pTemp = pNew );
+        if ( pPars->fCollectRegMap )
+        {
+            Gia_Obj_t * pRoOld, * pRoNew;
+            int iNew;
+            pPars->vRegMap = Vec_IntStartFull( Gia_ManRegNum(pNew) );
+            Gia_ManForEachRo( pTemp, pRoOld, i )
+            {
+                if ( !~pRoOld->Value )
+                    continue;
+                pRoNew = Gia_ManObj( pNew, Abc_Lit2Var(pRoOld->Value) );
+                assert( Gia_ObjIsRo(pNew, pRoNew) );
+                iNew = Gia_ObjCioId(pRoNew) - Gia_ManPiNum(pNew);
+                Vec_IntWriteEntry( pPars->vRegMap, iNew, i );
+            }
+            Vec_IntForEachEntry( pPars->vRegMap, iNew, i )
+                assert( iNew >= 0 && iNew < Gia_ManRegNum(pTemp) );
+        }
         Gia_ManStop( pTemp );
         //Gia_AigerWrite( pNew, "reduced.aig", 0, 0, 0 );
     }

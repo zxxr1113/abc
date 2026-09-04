@@ -185,6 +185,9 @@ struct Cec_ProfCor_t_
 };
 
 // sequential register correspodence parameters
+typedef void (*Cec_CexBatchFunc_t)( void * pData, Gia_Man_t * pAig,
+    Vec_Ptr_t * vSimInfo, Vec_Int_t * vOutBits, int nFrames,
+    int fInduction );
 typedef struct Cec_ParCor_t_ Cec_ParCor_t;
 struct Cec_ParCor_t_
 {
@@ -229,6 +232,10 @@ struct Cec_ParCor_t_
     int              fVeryVerbose;  // verbose stats
     int              fVerbose;      // verbose stats
     Cec_ProfCor_t *  pProfile;      // optional aggregate phase profiling
+    Cec_CexBatchFunc_t pCexFunc;    // optional packed BMC/induction CEX observer
+    void *           pCexData;      // user data for the CEX observer
+    int              fCollectRegMap;// derive reduced-RO -> input-RO mapping
+    Vec_Int_t *      vRegMap;       // output mapping (owned by the caller)
     // callback
     void *           pData;
     void *           pFunc;
@@ -355,6 +362,7 @@ struct Cec_ParTran_t_
 };
 extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );
 extern Gia_Man_t *   Cec_ManSequentialTransduction( Gia_Man_t * pAig, Cec_ParTran_t * pPars );
+extern Gia_Man_t *   Cec_ManSequentialTransduction2( Gia_Man_t * pAig, Cec_ParTran_t * pPars );
 /*=== cecCore.c ==========================================================*/
 extern void          Cec_ManSatSetDefaultParams( Cec_ParSat_t * p );
 extern void          Cec_ManSimSetDefaultParams( Cec_ParSim_t * p );

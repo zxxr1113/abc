@@ -497,6 +497,7 @@ static int Abc_CommandAbc9Scorr              ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9Scorr2             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sodc               ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Stran              ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9Stran2             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9StranResubTest     ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Choice             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sat                ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -1352,6 +1353,7 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr2",       Abc_CommandAbc9Scorr2,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sodc",         Abc_CommandAbc9Sodc,         0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&stran",        Abc_CommandAbc9Stran,        0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&stran2",       Abc_CommandAbc9Stran2,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&stran_resub_test", Abc_CommandAbc9StranResubTest, 0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&choice",       Abc_CommandAbc9Choice,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sat",          Abc_CommandAbc9Sat,          0 );
@@ -42235,7 +42237,8 @@ static int Abc_CommandAbc9StranResubTest( Abc_Frame_t * pAbc,
     return 0;
 }
 
-int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
+static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
+    int argc, char ** argv, int fStran2 )
 {
     Cec_ParTran_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
@@ -42384,33 +42387,42 @@ int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc, int argc, char ** argv )
         pPars->nGainMin = 0;
     if ( pAbc->pGia == NULL )
     {
-        Abc_Print( -1, "&stran: There is no AIG.\n" );
+        Abc_Print( -1, "&stran%s: There is no AIG.\n", fStran2 ? "2" : "" );
         return 1;
     }
     if ( Gia_ManRegNum(pAbc->pGia) == 0 )
     {
-        Abc_Print( 1, "&stran: The network is combinational; root-only sequential transduction is a no-op.\n" );
+        Abc_Print( 1, "&stran%s: The network is combinational; root-only sequential transduction is a no-op.\n", fStran2 ? "2" : "" );
         return 0;
     }
     if ( Gia_ManBoxNum(pAbc->pGia) )
     {
-        Abc_Print( -1, "&stran: Boxes are not supported.\n" );
+        Abc_Print( -1, "&stran%s: Boxes are not supported.\n", fStran2 ? "2" : "" );
         return 1;
     }
-    pTemp = Cec_ManSequentialTransduction( pAbc->pGia, pPars );
+    pTemp = fStran2 ?
+        Cec_ManSequentialTransduction2( pAbc->pGia, pPars ) :
+        Cec_ManSequentialTransduction( pAbc->pGia, pPars );
     Abc_FrameUpdateGia( pAbc, pTemp );
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran [-FCSNGQWKBVZqwjbae num] [-P root] [-Mxclrgftupoyh]\n" );
-    Abc_Print( -2, "\t         performs root-only sequential Direct resubstitution\n" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBVZqwjbae num] [-P root] [-Mxclrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
+        fStran2 ? "default scorr plus root-local CEX-teaching " : "" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..100) [default = %d]\n", pPars->nDepNodesMax );
     Abc_Print( -2, "\t-G num : deprecated local-gain compatibility value; scheduler ignores it [default = %d]\n", pPars->nGainMin );
-    Abc_Print( -2, "\t-Q num : 64-bit words per random simulation frame [default = %d]\n", pPars->nSimWords );
-    Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n", pPars->nSimFrames );
+    Abc_Print( -2, "\t-Q num : 64-bit words per %srandom simulation frame [default = %d]\n",
+        fStran2 ? "source " : "", pPars->nSimWords );
+    if ( fStran2 )
+        Abc_Print( -2, "\t-W num : source simulation frames and CEX horizon; Build uses 1-8 words [default = %d]\n",
+            pPars->nSimFrames );
+    else
+        Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n",
+            pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : ranked physical nodes passed to Build (0 = complete allowed TFI) [default = %d]\n", pPars->nConstrBaseMax );
     Abc_Print( -2, "\t-V num : experimental Stage-5 total paths per rank-1..8 top pivot (0/1/2/4; 0/1 = baseline) [default = %d]\n", pPars->nStage5Paths );
@@ -42436,6 +42448,18 @@ usage:
     Abc_Print( -2, "\t-o     : toggle residual-solvability Stage-5 pivot scheduling [default = %s]\n", pPars->fUseSolvSched? "yes": "no" );
     Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;
+}
+
+static int Abc_CommandAbc9Stran( Abc_Frame_t * pAbc,
+    int argc, char ** argv )
+{
+    return Abc_CommandAbc9StranInt( pAbc, argc, argv, 0 );
+}
+
+static int Abc_CommandAbc9Stran2( Abc_Frame_t * pAbc,
+    int argc, char ** argv )
+{
+    return Abc_CommandAbc9StranInt( pAbc, argc, argv, 1 );
 }
 
 /**Function*************************************************************
