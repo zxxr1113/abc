@@ -2546,10 +2546,22 @@ static int Gia_ManResubPerform_rec_int( Gia_ResbMan_t * p, int nLimit,
         return -1;
     if ( !fUseTopCache )
     {
+        // Recursive greedy calls share one manager, but their pair
+        // classification is a function of the current residual OFF/ON masks.
+        // Do not retain pairs produced for an earlier residual: besides being
+        // invalid for this state, that made a repeated exact-cache key depend
+        // on traversal history (the first solve could succeed and the second
+        // fail).  Rebuild the pair scratch from this residual only.
+        if ( p->fSkipTemplates )
+        {
+            Vec_IntClear( p->vUnatePairs[0] );
+            Vec_IntClear( p->vUnatePairs[1] );
+            Vec_IntClear( p->vUnatePairsW[0] );
+            Vec_IntClear( p->vUnatePairsW[1] );
+        }
         Gia_ManFindUnatePairs( p->pSets, p->vDivs, p->nWords,
             p->vBinateVars, p->vUnatePairs, p->fVerbose );
-        // Recursive greedy calls accumulate pair scratch within one recipe.
-        // Canonicalize that relation before ranking and keep the same B-wide
+        // Canonicalize the relation before ranking and keep the same B-wide
         // frontier as root discovery.
         if ( p->fSkipTemplates )
         {
