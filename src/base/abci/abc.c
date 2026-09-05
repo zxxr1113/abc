@@ -42409,7 +42409,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
 usage:
     Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBVZqwjbae num] [-P root] [-Mxclrgftupoyh]\n", fStran2 ? "2" : "" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
-        fStran2 ? "default scorr plus root-local CEX-teaching " : "" );
+        fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
     Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
