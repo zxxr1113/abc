@@ -6,7 +6,10 @@ one-gate residual base case, followed by complete comparison experiments.
 Use `/mnt/home/zhaoxiran/abc-stran2-review-fixes` on
 `codex/stran2-review-fixes` for edits/builds; the continuation-path and
 read-only-first-turn restrictions below are historical and superseded here.
-Do not edit or rebuild any other worktree. Use isolated scripts under
+The newly created detached `/mnt/home/zhaoxiran/abc-stran2-review-before`
+is the closure-only baseline; its unchanged source may be built for the
+paired experiment. Do not edit or rebuild any pre-existing worktree.
+Use isolated scripts under
 `/mnt/home/zhaoxiran/script2/stran2_review_fixes` for this experiment.
 
 Read `/mnt/home/zhaoxiran/AGENTS.md` completely, then read
