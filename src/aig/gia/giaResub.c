@@ -1696,7 +1696,9 @@ int Gia_ManFindDivGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWord
     Vec_IntForEachEntryTwo( vUnateLits, vUnateLitsW, iDiv0, Cover0, i )
     {
         word * pDiv0 = (word *)Vec_PtrEntry(vDivs, Abc_Lit2Var(iDiv0));
-        if ( 2*Cover0 < nTotal )
+        // The literal and pair frontiers have independent coverage orders.
+        if ( Vec_IntSize(vUnatePairsW) == 0 ||
+             Cover0 + Vec_IntEntry(vUnatePairsW, 0) < nTotal )
             break;
         Vec_IntForEachEntryTwo( vUnatePairs, vUnatePairsW, iDiv1, Cover1, k )
         {
@@ -2498,7 +2500,8 @@ static int Gia_ManResubPerform_rec_int( Gia_ResbMan_t * p, int nLimit,
     if ( !fUseTopCache )
         Gia_ManSortUnates( p->pSets, p->vDivs, p->nWords,
             p->vUnateLits, p->vUnateLitsW, p->vSorter );
-    iResLit = p->fSkipTemplates ? -1 :
+    // Do not bypass a pending alternate pivot when closing a residual leaf.
+    iResLit = p->fSkipTemplates && (fTop || nLimit != 1 || !fAllowZero) ? -1 :
         Gia_ManFindTwoUnate( p->pSets, p->vDivs, p->nWords,
             p->vUnateLits, p->vUnateLitsW, p->fVerbose, &p->iChoice );
     if ( iResLit >= 0 ) // and
@@ -3238,7 +3241,8 @@ static int Gia_ResbIterNextDivGate( Gia_ResbIter_t * pIt )
         {
             iDiv0 = Vec_IntEntry( p->vUnateLits[pIt->n], pIt->i );
             Cover0 = Vec_IntEntry( p->vUnateLitsW[pIt->n], pIt->i );
-            if ( 2 * Cover0 < nTotal )
+            if ( Vec_IntSize(p->vUnatePairsW[pIt->n]) == 0 ||
+                 Cover0 + Vec_IntEntry(p->vUnatePairsW[pIt->n], 0) < nTotal )
                 break;
             for ( ; pIt->k < Vec_IntSize(p->vUnatePairs[pIt->n]);
                   pIt->k++ )
@@ -4150,6 +4154,52 @@ static void Gia_ResbResidualCacheSelfTest()
 // command; production discovery uses the same Next implementation with a
 // pass-owned manager and a resumable cursor whose first five integers retain
 // their historical meanings.
+static void Gia_ResbIteratorTightBudgetSelfTest()
+{
+    word Data[5];
+    void * Divs[5];
+    Gia_ResbIter_t * pIt;
+    int t, bit, j, a, b, c, f, nArray, * pArray;
+    int Attempt, Exhausted, Invalid, nFound, nRounds;
+    for ( j = 0; j < 5; j++ )
+        Divs[j] = Data + j;
+    for ( t = 0; t < 2; t++ )
+    {
+        memset( Data, 0, sizeof(Data) );
+        for ( bit = 0; bit < 64; bit++ )
+        {
+            int Row = bit & 7;
+            a = t ? Row & 1 : Row == 3;
+            b = t ? (Row >> 1) & 1 : Row == 1 || Row >= 4;
+            c = t ? (Row >> 2) & 1 : Row == 2 || Row >= 4;
+            f = t ? a && b && c : a || (b && c);
+            Data[f] |= (word)1 << bit;
+            Data[2] |= (word)a << bit;
+            Data[3] |= (word)b << bit;
+            Data[4] |= (word)c << bit;
+        }
+        pIt = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
+            Divs, 5, 1, 2, 3, 0, 0 );
+        nFound = nRounds = 0;
+        do {
+            nArray = Abc_ResubIteratorNext( pIt, &pArray,
+                &Attempt, &Exhausted, &Invalid );
+            assert( !Invalid && ++nRounds < 128 );
+            if ( nArray )
+            {
+                assert( nArray / 2 == 2 &&
+                    Gia_ManResubVerify(pIt->p, NULL) );
+                nFound += Attempt == (t ? 5 : 3);
+            }
+        } while ( !Exhausted );
+        assert( nFound > 0 );
+        Abc_ResubIteratorStop( pIt );
+        Gia_ResbIteratorCompareModes( Divs, 5, 2, 3,
+            0, 0, 0, 1, 0, 1, 1, NULL );
+        Gia_ResbIteratorCompareResume( Divs, 5, 2, 3, 0, 1 );
+    }
+}
+
 int Abc_ResubIteratorSelfTest()
 {
     word Off = 0x2, On = 0xD, D = 0x8, E = 0x5;
@@ -4166,6 +4216,7 @@ int Abc_ResubIteratorSelfTest()
     int nNext = 0, nInvalid = 0;
     int t, j, nRounds;
     unsigned Rand = 0x51A7E123;
+    Gia_ResbIteratorTightBudgetSelfTest();
     U.nCap = N.nCap = P.nCap = 8;
     U.pArray = ABC_ALLOC( int, 8 );
     N.pArray = ABC_ALLOC( int, 8 );
