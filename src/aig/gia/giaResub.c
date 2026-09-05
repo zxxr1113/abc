@@ -4014,9 +4014,8 @@ static void Gia_ResbResidualCacheSelfTest()
     word Target, Remainder;
 
     Gia_ResbMultiPathScheduleSelfTest();
-    // Literal duplicate success: A is repeated and the exact remainder is
-    // available as one divisor.  The same frontier without that divisor is a
-    // duplicate failure at the same remaining gate limit.
+    // Duplicate pivots share a literal success or an XOR residual which
+    // genuinely cannot fit in one AND gate (a B&C residual now can).
     Remainder = B & C;
     Target = A | Remainder;
     LitSuccess[0] = ~Target;
@@ -4028,6 +4027,7 @@ static void Gia_ResbResidualCacheSelfTest()
     nVariants += Gia_ResbMultiPathCompareBaseline(
         LitSuccessDivs, 5, 2, 8 );
 
+    Target = A | (B ^ C);
     LitFailure[0] = ~Target;
     LitFailure[1] = Target;
     LitFailure[2] = LitFailure[3] = A;
@@ -4040,8 +4040,8 @@ static void Gia_ResbResidualCacheSelfTest()
 
     // Pair duplicate success: four index-distinct A&B pivots share one exact
     // residual whose small direct literal keeps pair selection ahead of the
-    // literal frontier.  Removing that direct residual produces pair misses
-    // that deterministically fail with one recursive gate remaining.
+    // literal frontier.  An XOR remainder produces genuine pair misses with
+    // one recursive gate remaining, unlike the now-supported C&D leaf.
     Remainder = C & D & E;
     Target = (A & B) | Remainder;
     PairSuccess[0] = ~Target;
@@ -4054,7 +4054,7 @@ static void Gia_ResbResidualCacheSelfTest()
     nVariants += Gia_ResbMultiPathCompareBaseline(
         PairSuccessDivs, 7, 3, 12 );
 
-    Target = (A & B) | (C & D);
+    Target = (A & B) | (C ^ D);
     PairFailure[0] = ~Target;
     PairFailure[1] = Target;
     PairFailure[2] = PairFailure[3] = A;
