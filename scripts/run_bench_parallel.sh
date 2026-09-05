@@ -1,111 +1,87 @@
 #!/usr/bin/env bash
-# Run three phase=SEQ Build configurations over the full benchmark directory.
-#
-# Example for a 64-core server:
-#   AIG_DIR=/path/to/all/aigs ABC=/path/to/abc \
-#   MAX_PARALLEL=3 JOBS_PER_RUN=20 ./scripts/run_bench_parallel.sh
+# Run the current paired matrix; raw CSVs go to the invoking directory.
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BENCH_SCRIPT="$SCRIPT_DIR/bench_scorr_then_stran.py"
-
-AIG_DIR="${AIG_DIR:-$HOME/benchmark/all_test/all/bitlevel}"
+SCRIPT_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+AIG_DIR="${AIG_DIR:-$HOME/benchmark/stran_seq_build_quick_v7/non_timeout_20260904/bitlevel}"
 ABC="${ABC:-$HOME/abc/abc}"
-OUT_DIR="${OUT_DIR:-seqbuild_full_$(date -u +%Y%m%dT%H%M%SZ)}"
-TIMEOUT="${TIMEOUT:-12800}"
-MAX_PARALLEL="${MAX_PARALLEL:-3}"
-JOBS_PER_RUN="${JOBS_PER_RUN:-20}"
+TIMEOUT="${TIMEOUT:-1800}"
+LIMIT="${LIMIT:-}"
+MAX_PARALLEL="${MAX_PARALLEL:-2}"
+JOBS_PER_EXPERIMENT="${JOBS_PER_EXPERIMENT:-32}"
+SCORR_ARGS="${SCORR_ARGS-}"
+STRAN_ARGS="${STRAN_ARGS:--Q 4 -W 8 -q 10 -j 5 -w 8 -C 1000 -b 100 -V 0 -E 5 -p}"
 SKIP_DSEC="${SKIP_DSEC:-1}"
-SCORR_ARGS="${SCORR_ARGS:--F 1 -C 100}"
+DRY_RUN="${DRY_RUN:-0}"
 
-# Reference plus two one-variable discovery reductions.
-EXPERIMENTS=(
-    "-P root -F 1 -C 1000 -b 100 -N 10 -B 64 -K 5 -q 30 -j 5 -w 8 -r -p"
-    "seqbuild_ref_N10_B64_q30"
-    "-P root -F 1 -C 1000 -b 100 -N 10 -B 32 -K 5 -q 30 -j 5 -w 8 -r -p"
-    "seqbuild_B32"
-    "-P root -F 1 -C 1000 -b 100 -N 10 -B 64 -K 5 -q 15 -j 5 -w 8 -r -p"
-    "seqbuild_q15"
-)
+EXPERIMENT_FLOWS=(scorr-stran stran2)
+EXPERIMENT_TAGS=(current_stran current_stran2)
 
-run_one() {
-    local stran_args="$1"
-    local tag="$2"
-    local csv_out="$OUT_DIR/stran_${tag}.csv"
-    local log_out="$OUT_DIR/stran_${tag}.log"
-    local command=(
-        python3 "$BENCH_SCRIPT"
-        --aig-dir "$AIG_DIR"
-        --abc "$ABC"
-        --timeout "$TIMEOUT"
-        --out "$csv_out"
-        --jobs "$JOBS_PER_RUN"
-        --scorr-args "$SCORR_ARGS"
-        --stran-args "$stran_args"
-    )
-    [[ "$SKIP_DSEC" == "1" ]] && command+=(--skip-dsec)
-
-    echo "[launch] $tag -> $csv_out"
-    "${command[@]}" > >(tee "$log_out") 2>&1
-    echo "[done] $tag"
-}
-
-main() {
-    if [[ ! -f "$BENCH_SCRIPT" || ! -f "$SCRIPT_DIR/stran_profile.py" ]]; then
-        echo "ERROR: benchmark runner or profile parser is missing" >&2
-        exit 2
-    fi
-    if [[ ! -d "$AIG_DIR" || ! -x "$ABC" ]]; then
-        echo "ERROR: invalid AIG_DIR or ABC: $AIG_DIR / $ABC" >&2
-        exit 2
-    fi
-    if (( MAX_PARALLEL < 1 || MAX_PARALLEL > 3 || JOBS_PER_RUN < 1 )); then
-        echo "ERROR: MAX_PARALLEL must be 1..3 and JOBS_PER_RUN must be positive" >&2
-        exit 2
-    fi
-    if [[ "$SKIP_DSEC" != "0" && "$SKIP_DSEC" != "1" ]]; then
-        echo "ERROR: SKIP_DSEC must be 0 or 1" >&2
-        exit 2
-    fi
-
-    mkdir -p "$OUT_DIR"
-    export PYTHONPATH="$SCRIPT_DIR${PYTHONPATH:+:$PYTHONPATH}"
-
-    local total=$(( ${#EXPERIMENTS[@]} / 2 ))
-    local idx=0 failures=0 batch_end pid
-
-    echo "==== phase=SEQ Build full sweep ===="
-    echo "configs=$total max_parallel=$MAX_PARALLEL jobs_per_run=$JOBS_PER_RUN"
-    echo "aig_dir=$AIG_DIR"
-    echo "abc=$ABC"
-    echo "out_dir=$OUT_DIR"
-    echo "timeout=${TIMEOUT}s skip_dsec=$SKIP_DSEC"
-
-    while (( idx < total )); do
-        local pids=()
-        batch_end=$((idx + MAX_PARALLEL))
-        (( batch_end > total )) && batch_end=$total
-        while (( idx < batch_end )); do
-            local args="${EXPERIMENTS[$((idx * 2))]}"
-            local tag="${EXPERIMENTS[$((idx * 2 + 1))]}"
-            run_one "$args" "$tag" &
-            pids+=("$!")
-            idx=$((idx + 1))
-        done
-        for pid in "${pids[@]}"; do
-            if ! wait "$pid"; then
-                failures=$((failures + 1))
-            fi
-        done
-    done
-
-    if (( failures > 0 )); then
-        echo "ERROR: $failures configuration(s) failed; inspect $OUT_DIR/*.log" >&2
+if [[ -n "${EXPERIMENT_SET:-}" && "$EXPERIMENT_SET" != current ]]; then
+    echo "ERROR: historical EXPERIMENT_SET was archived; current matrix has two flows" >&2
+    exit 1
+fi
+if [[ -n "$LIMIT" && ! "$LIMIT" =~ ^[1-9][0-9]*$ ]]; then
+    echo "ERROR: LIMIT must be a positive integer" >&2
+    exit 1
+fi
+if [[ "$DRY_RUN" != 0 && "$DRY_RUN" != 1 ]]; then
+    echo "ERROR: DRY_RUN must be 0 or 1" >&2
+    exit 1
+fi
+for value in "$MAX_PARALLEL" "$JOBS_PER_EXPERIMENT" "$TIMEOUT"; do
+    if [[ ! "$value" =~ ^[1-9][0-9]*$ ]]; then
+        echo "ERROR: parallelism, jobs and timeout must be positive integers" >&2
         exit 1
     fi
+done
+if (( MAX_PARALLEL > 200 || JOBS_PER_EXPERIMENT > 200 || MAX_PARALLEL * JOBS_PER_EXPERIMENT > 200 )); then
+    echo "ERROR: worker budget exceeds 200" >&2
+    exit 1
+fi
+if [[ "$SKIP_DSEC" != 0 && "$SKIP_DSEC" != 1 ]]; then
+    echo "ERROR: SKIP_DSEC must be 0 or 1" >&2
+    exit 1
+fi
+if [[ ! -x "$ABC" || ! -d "$AIG_DIR" ]]; then
+    echo "ERROR: ABC executable or AIG_DIR is missing" >&2
+    exit 1
+fi
+for tag in "${EXPERIMENT_TAGS[@]}"; do
+    if [[ -e "stran_${tag}.csv" || -e "stran_${tag}.csv.tmp" ]]; then
+        echo "ERROR: refusing to overwrite stran_${tag}.csv" >&2
+        exit 1
+    fi
+done
 
-    echo "==== all done ===="
-    ls -lh "$OUT_DIR"/stran_*.csv
+run_one() {
+    local flow="$1" tag="$2"
+    local command=(python3 "$SCRIPT_DIR/bench_scorr_then_stran.py"
+        --aig-dir "$AIG_DIR" --abc "$ABC" --timeout "$TIMEOUT"
+        --out "stran_${tag}.csv" --jobs "$JOBS_PER_EXPERIMENT"
+        --scorr-args "$SCORR_ARGS" --stran-args "$STRAN_ARGS" --flow "$flow")
+    [[ -z "$LIMIT" ]] || command+=(--limit "$LIMIT")
+    [[ "$SKIP_DSEC" == 0 ]] || command+=(--skip-dsec)
+    printf '[launch] '
+    printf '%q ' "${command[@]}"
+    printf '\n'
+    [[ "$DRY_RUN" == 1 ]] || "${command[@]}"
 }
 
-main "$@"
+printf 'Workers: at most %s x %s; TMPDIR=%s\n' "$MAX_PARALLEL" "$JOBS_PER_EXPERIMENT" "${TMPDIR:-/tmp}"
+pids=()
+failed=0
+for idx in "${!EXPERIMENT_FLOWS[@]}"; do
+    run_one "${EXPERIMENT_FLOWS[$idx]}" "${EXPERIMENT_TAGS[$idx]}" &
+    pids+=("$!")
+    if (( ${#pids[@]} == MAX_PARALLEL )); then
+        for pid in "${pids[@]}"; do
+            wait "$pid" || failed=1
+        done
+        pids=()
+    fi
+done
+for pid in "${pids[@]}"; do
+    wait "$pid" || failed=1
+done
+exit "$failed"

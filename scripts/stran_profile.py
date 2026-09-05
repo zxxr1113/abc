@@ -17,13 +17,17 @@ NA = "N/A"
 TIME_PREFIX = "Sequential direct experiment-time profile:"
 BUILD_PREFIX = "Sequential direct seq-build experiment profile:"
 ROOT_TIME_PREFIX = "stran-root experiment-time profile:"
+ROOT_PREPROCESS_DETAIL_PREFIX = "stran-root preprocessing-detail profile:"
+ROOT_PAGE_REUSE_DETAIL_PREFIX = "stran-root page-reuse-detail profile:"
 ROOT_EFFECT_PREFIX = "stran-root experiment-effect profile:"
 ROOT_LANE_PREFIX = "stran-root experiment-proof-lane profile:"
 ROOT_SUMMARY_PREFIX = "stran-root experiment-summary profile:"
+ROOT_COMMIT_PREFIX = "stran-root experiment-commit profile:"
 ROOT_HELPER_PREFIX = "stran-root helper history:"
 ROOT_PAGED_PREFIX = "stran-root paged portfolio:"
 ROOT_WAVE_PREFIX = "stran-root wave portfolio:"
 ROOT_ITERATOR_PREFIX = "stran-root resub iterator:"
+ROOT_BUILD_HORIZON_PREFIX = "stran-root build-horizon profile:"
 ROOT_SEQ_PREFIX = "stran-root sequential relations:"
 ROOT_BUILD_FUNNEL_PREFIX = "stran-root build-funnel profile:"
 ROOT_BUILD_STAGE_PREFIX = "stran-root build-stage profile:"
@@ -68,6 +72,18 @@ ROOT_BUILD_GREEDY_PIVOT_KIND_PREFIX = (
 ROOT_BUILD_GREEDY_PIVOT_STATE_PREFIX = (
     "stran-root build-greedy-pivot-state profile:"
 )
+ROOT_BUILD_GREEDY_MULTIPATH_SUMMARY_PREFIX = (
+    "stran-root build-greedy-multipath-summary profile:"
+)
+ROOT_BUILD_GREEDY_PATH_PREFIX = (
+    "stran-root build-greedy-path profile:"
+)
+STRAN2_CEX_PREFIX = "stran2 CEX corpus:"
+STRAN2_PLACEMENT_PREFIX = "stran2 CEX placement:"
+STRAN2_SIGNATURE_PREFIX = "stran2 CEX trace signature:"
+STRAN2_SIGNATURE_LEGACY_PREFIX = "stran2 teaching signature:"
+STRAN2_TEACHING_PREFIX = "stran2 root-batch summary:"
+STRAN2_TEACHING_LEGACY_PREFIX = "stran2 teaching summary:"
 
 TIME_KEYS = (
     "total-sec", "sim-sec", "care-sec", "root-discovery-sec",
@@ -100,6 +116,47 @@ ROOT_TIME_KEYS = (
     "bundle-sec", "cleanup-sec", "exact-audit-sec", "shadow-sec",
     "unprofiled-sec",
 )
+
+ROOT_PREPROCESS_DETAIL_KEYS = (
+    "exp-ci-hit", "exp-ci-miss", "exp-score-sec", "exp-ci-sec",
+    "exp-obs-roots", "exp-obs-conflict", "exp-full-roots", "exp-full-conflict",
+    "exp-obs-total", "exp-obs-unique", "exp-pruned", "exp-obs-sec",
+    "exp-zero-build-sec", "exp-positive-build-sec", "exp-zero-rank-sec",
+    "exp-positive-rank-sec",
+    "div-collect-sec", "div-rank-sec", "div-select-sec", "div-hash-sec",
+    "frontier-dead-sec", "root-potential-sec", "frontier-loop-sec",
+    "frontier-support-sec", "frontier-gain-sec", "frontier-sort-sec",
+    "frontier-pair-scans", "frontier-matched",
+)
+
+ROOT_PREPROCESS_DETAIL_FIELDS = [
+    f"root_preprocess_{key.replace('-', '_')}"
+    for key in ROOT_PREPROCESS_DETAIL_KEYS
+]
+ROOT_PHASE_PREPROCESS_DETAIL_FIELDS = [
+    f"root_{phase}_preprocess_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in ROOT_PREPROCESS_DETAIL_KEYS
+]
+
+ROOT_PAGE_REUSE_DETAIL_KEYS = (
+    "rank-mffc-one-first-sec", "rank-mffc-one-cont-sec",
+    "rank-eligible-first-sec", "rank-eligible-cont-sec",
+    "rank-mffc-one-first-calls", "rank-mffc-one-cont-calls",
+    "rank-eligible-first-calls", "rank-eligible-cont-calls",
+    "frontier-loop-first-sec", "frontier-loop-cont-sec",
+    "frontier-pair-scans-first", "frontier-pair-scans-cont",
+    "mffc-one-page-skips",
+)
+ROOT_PAGE_REUSE_DETAIL_FIELDS = [
+    f"root_page_reuse_{key.replace('-', '_')}"
+    for key in ROOT_PAGE_REUSE_DETAIL_KEYS
+]
+ROOT_PHASE_PAGE_REUSE_DETAIL_FIELDS = [
+    f"root_{phase}_page_reuse_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in ROOT_PAGE_REUSE_DETAIL_KEYS
+]
 
 ROOT_PROFILE_FIELDS = [
     f"profile_{key.replace('-', '_')}"
@@ -164,6 +221,22 @@ ROOT_ITERATOR_FIELDS = [
     "root_iterator_exhausted", "root_iterator_q_page_stops",
     "root_iterator_snapshot_discarded", "root_iterator_live_max",
     "root_iterator_live_final", "root_iterator_invalid",
+]
+ROOT_BUILD_HORIZON_FIELDS = [
+    "root_build_horizon_records", "root_build_horizon_q_limit_max",
+    "root_build_horizon_eligible_roots",
+    "root_build_horizon_q_slot_capacity",
+    "root_build_horizon_q_slots_used",
+    "root_build_horizon_at_q_roots",
+    "root_build_horizon_exhausted_before_q_roots",
+    "root_build_horizon_unfinished_below_q_roots",
+    "root_build_horizon_zero_accepted_roots",
+    "root_build_horizon_accepted_total",
+    "root_build_horizon_accepted_max_per_root",
+    "root_build_horizon_q_slot_utilization_pct",
+    "root_build_horizon_at_q_rate_pct",
+    "root_build_horizon_exhausted_before_q_rate_pct",
+    "root_build_horizon_zero_accepted_rate_pct",
 ]
 
 ROOT_BUILD_FUNNEL_FIELDS = [
@@ -296,6 +369,57 @@ ROOT_PHASE_BUILD_GREEDY_FRONTIER_FIELDS = [
         *ROOT_BUILD_GREEDY_FRONTIER_DERIVED,
     )
 ]
+ROOT_BUILD_GREEDY_MULTIPATH_KEYS = (
+    "cache-entries", "cache-lookups", "cache-hits", "cache-fail-hits",
+    "cache-success-hits", "cache-payload-bytes",
+    "duplicate-candidate-fingerprints", "extra-accepted", "extra-q-slots",
+)
+ROOT_BUILD_GREEDY_MULTIPATH_DERIVED = (
+    "cache-hit-rate-pct", "cache-fail-hit-share-pct",
+    "duplicate-per-extra-accepted", "extra-q-slot-rate-pct",
+)
+ROOT_BUILD_GREEDY_MULTIPATH_FIELDS = [
+    f"root_build_greedy_multipath_{key.replace('-', '_')}"
+    for key in (
+        *ROOT_BUILD_GREEDY_MULTIPATH_KEYS,
+        *ROOT_BUILD_GREEDY_MULTIPATH_DERIVED,
+    )
+]
+ROOT_PHASE_BUILD_GREEDY_MULTIPATH_FIELDS = [
+    f"root_{phase}_build_greedy_multipath_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in (
+        *ROOT_BUILD_GREEDY_MULTIPATH_KEYS,
+        *ROOT_BUILD_GREEDY_MULTIPATH_DERIVED,
+    )
+]
+ROOT_BUILD_GREEDY_PATH_RANKS = (
+    "1", "2", "3", "4", "5", "6", "7", "8", "9+",
+)
+ROOT_BUILD_GREEDY_PATH_INDICES = (1, 2, 3, 4)
+ROOT_BUILD_GREEDY_PATH_METRICS = (
+    "attempts", "found", "valid", "valid-gain", "accepted",
+    "accepted-gain", "generated", "generated-gain", "proved",
+    "proved-gain", "selected", "selected-gain", "selected-and-gain",
+    "second-cover-sum", "diversity-new-sum", "diversity-sym-sum",
+    "time-sec",
+)
+ROOT_BUILD_GREEDY_PATH_FIELDS = [
+    f"root_build_greedy_path_rank_{rank.replace('-', '_').replace('+', 'plus')}_"
+    f"path_{path}_{metric.replace('-', '_').replace('+', 'plus')}"
+    for rank in ROOT_BUILD_GREEDY_PATH_RANKS
+    for path in ROOT_BUILD_GREEDY_PATH_INDICES
+    for metric in ROOT_BUILD_GREEDY_PATH_METRICS
+]
+ROOT_PHASE_BUILD_GREEDY_PATH_FIELDS = [
+    f"root_{phase}_build_greedy_path_rank_"
+    f"{rank.replace('-', '_').replace('+', 'plus')}_path_{path}_"
+    f"{metric.replace('-', '_').replace('+', 'plus')}"
+    for phase in ("comb", "seq")
+    for rank in ROOT_BUILD_GREEDY_PATH_RANKS
+    for path in ROOT_BUILD_GREEDY_PATH_INDICES
+    for metric in ROOT_BUILD_GREEDY_PATH_METRICS
+]
 ROOT_BUILD_BUCKETS = {
     "stage": (("one-gate", "div-gate", "gate-gate", "greedy"),
               ("valid", "accepted", "generated", "proved", "selected",
@@ -389,8 +513,39 @@ PHASE_PROFILE_FIELDS = [
     for key in dict.fromkeys((*TIME_KEYS, *ROOT_TIME_KEYS))
 ]
 
+STRAN2_PROFILE_FIELDS = [
+    "stran2_cex_records", "stran2_cex_retained", "stran2_cex_capacity",
+    "stran2_cex_packed_lanes_seen", "stran2_cex_duplicates",
+    "stran2_cex_ignored_induction", "stran2_cex_too_long",
+    "stran2_cex_words", "stran2_placement_records",
+    "stran2_placement_direct_records",
+    "stran2_placement_root_batch_records", "stran2_trace_budget_max",
+    "stran2_random_fill_max", "stran2_overflow_max",
+    "stran2_signature_records",
+    "stran2_signature_source_words_max",
+    "stran2_signature_random_words_max",
+    "stran2_signature_build_words_max",
+    "stran2_signature_frames_max", "stran2_signature_source_slots_max",
+    "stran2_signature_build_slots_max",
+    "stran2_signature_reachable_cex_max",
+    "stran2_signature_cex_capacity_max", "stran2_teaching_records",
+    "stran2_teaching_root_signatures", "stran2_teaching_selector_calls",
+    "stran2_teaching_roots_with_cex", "stran2_teaching_selected_cex",
+    "stran2_teaching_distinguishable_proxies",
+    "stran2_teaching_covered_proxies",
+    "stran2_teaching_selection_and_gather_sec",
+    "stran2_teaching_selection_pct_of_profile",
+]
+
 PROFILE_FIELDS = [
     "profile_schema", "profile_time_records", "profile_seq_build_records",
+    "profile_closure_records", "profile_closure_sec", "profile_closure_and_gain",
+    "profile_closure_selected", "profile_accounting_complete",
+    *[f"{phase}_commit_{kind}_{metric}"
+      for phase in ("comb", "seq")
+      for kind in ("constant", "existing", "build")
+      for metric in ("selected", "and_gain", "reg_gain")],
+    *[f"{phase}_commit_cleanup_extra_and_gain" for phase in ("comb", "seq")],
     *[("profile_overhead_sec" if key == "profile-overhead-sec"
        else f"profile_{key.replace('-', '_')}") for key in TIME_KEYS],
     *[key.replace("-", "_")
@@ -417,6 +572,7 @@ PROFILE_FIELDS = [
     *ROOT_HISTORY_FIELDS,
     *ROOT_SEQ_FIELDS,
     *ROOT_ITERATOR_FIELDS,
+    *ROOT_BUILD_HORIZON_FIELDS,
     *ROOT_BUILD_FUNNEL_FIELDS,
     *ROOT_PHASE_BUILD_FUNNEL_FIELDS,
     *ROOT_BUILD_SUPPORT_FIELDS,
@@ -425,10 +581,19 @@ PROFILE_FIELDS = [
     *ROOT_PHASE_BUILD_RESIDUAL_FIELDS,
     *ROOT_BUILD_GREEDY_FRONTIER_FIELDS,
     *ROOT_PHASE_BUILD_GREEDY_FRONTIER_FIELDS,
+    *ROOT_BUILD_GREEDY_MULTIPATH_FIELDS,
+    *ROOT_PHASE_BUILD_GREEDY_MULTIPATH_FIELDS,
+    *ROOT_BUILD_GREEDY_PATH_FIELDS,
+    *ROOT_PHASE_BUILD_GREEDY_PATH_FIELDS,
     *ROOT_BUILD_BUCKET_FIELDS,
     *ROOT_PHASE_BUILD_BUCKET_FIELDS,
+    *ROOT_PREPROCESS_DETAIL_FIELDS,
+    *ROOT_PHASE_PREPROCESS_DETAIL_FIELDS,
+    *ROOT_PAGE_REUSE_DETAIL_FIELDS,
+    *ROOT_PHASE_PAGE_REUSE_DETAIL_FIELDS,
     *PHASE_PROFILE_FIELDS,
     *ROOT_PROFILE_FIELDS,
+    *STRAN2_PROFILE_FIELDS,
 ]
 
 _KEY_VALUE = re.compile(r"([a-z][a-z0-9-]*)=(-?\d+(?:\.\d+)?)")
@@ -629,12 +794,24 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_phase_time_records: dict[str, list[dict[str, int | float]]] = {
         "comb": [], "seq": [],
     }
+    root_preprocess_detail_records: list[dict[str, int | float]] = []
+    root_phase_preprocess_detail_records: dict[
+        str, list[dict[str, int | float]]
+    ] = {"comb": [], "seq": []}
+    root_page_reuse_detail_records: list[dict[str, int | float]] = []
+    root_phase_page_reuse_detail_records: dict[
+        str, list[dict[str, int | float]]
+    ] = {"comb": [], "seq": []}
     root_effects: list[tuple[str, str, dict[str, int | float]]] = []
     root_lanes: list[tuple[str, str, dict[str, int | float]]] = []
     root_summaries: list[dict[str, int | float]] = []
+    root_commits: list[tuple[str, str, dict[str, int | float]]] = []
+    closure_times: list[dict[str, int | float]] = []
+    closure_summaries: list[dict[str, int | float]] = []
     root_helpers: list[dict[str, int | float]] = []
     root_paged: list[dict[str, int | float]] = []
     root_iterators: list[dict[str, int | float]] = []
+    root_build_horizons: list[dict[str, int | float]] = []
     root_seq: list[dict[str, int | float]] = []
     root_build_funnels: list[dict[str, int | float]] = []
     root_phase_build_funnels: dict[str, list[dict[str, int | float]]] = {
@@ -652,6 +829,16 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_phase_build_greedy_frontiers: dict[
         str, list[dict[str, int | float]]
     ] = {"comb": [], "seq": []}
+    root_build_greedy_multipath: list[dict[str, int | float]] = []
+    root_phase_build_greedy_multipath: dict[
+        str, list[dict[str, int | float]]
+    ] = {"comb": [], "seq": []}
+    root_build_greedy_paths: list[
+        tuple[str, int, dict[str, int | float]]
+    ] = []
+    root_phase_build_greedy_paths: dict[
+        str, list[tuple[str, int, dict[str, int | float]]]
+    ] = {"comb": [], "seq": []}
     root_build_buckets: dict[str, list[tuple[str, dict[str, int | float]]]] = {
         family: [] for family in ROOT_BUILD_BUCKETS
     }
@@ -659,14 +846,20 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         phase: {family: [] for family in ROOT_BUILD_BUCKETS}
         for phase in ("comb", "seq")
     }
+    stran2_cex_records: list[dict[str, int | float]] = []
+    stran2_placement_records: list[dict[str, int | float]] = []
+    stran2_signature_records: list[dict[str, int | float]] = []
+    stran2_teaching_records: list[dict[str, int | float]] = []
     schemas: list[int] = []
     for line in stdout.splitlines():
         if not any(prefix in line for prefix in (
             TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX,
-            ROOT_EFFECT_PREFIX, ROOT_LANE_PREFIX, ROOT_SUMMARY_PREFIX,
+            ROOT_PREPROCESS_DETAIL_PREFIX,
+            ROOT_PAGE_REUSE_DETAIL_PREFIX,
+            ROOT_EFFECT_PREFIX, ROOT_LANE_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_COMMIT_PREFIX,
             ROOT_HELPER_PREFIX,
             ROOT_PAGED_PREFIX, ROOT_WAVE_PREFIX,
-            ROOT_ITERATOR_PREFIX, ROOT_SEQ_PREFIX,
+            ROOT_ITERATOR_PREFIX, ROOT_BUILD_HORIZON_PREFIX, ROOT_SEQ_PREFIX,
             ROOT_BUILD_FUNNEL_PREFIX, ROOT_BUILD_STAGE_PREFIX,
             ROOT_BUILD_RANK_PREFIX, ROOT_BUILD_GATES_PREFIX,
             ROOT_BUILD_GAIN_PREFIX, ROOT_BUILD_CI_PREFIX,
@@ -685,22 +878,64 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_BUILD_GREEDY_PIVOT_COVERAGE_PREFIX,
             ROOT_BUILD_GREEDY_PIVOT_KIND_PREFIX,
             ROOT_BUILD_GREEDY_PIVOT_STATE_PREFIX,
+            ROOT_BUILD_GREEDY_MULTIPATH_SUMMARY_PREFIX,
+            ROOT_BUILD_GREEDY_PATH_PREFIX,
+            STRAN2_CEX_PREFIX, STRAN2_PLACEMENT_PREFIX,
+            STRAN2_SIGNATURE_PREFIX, STRAN2_SIGNATURE_LEGACY_PREFIX,
+            STRAN2_TEACHING_PREFIX, STRAN2_TEACHING_LEGACY_PREFIX,
         )):
             continue
         record = {key: _number(value) for key, value in _KEY_VALUE.findall(line)}
         schema = record.pop("schema", None)
         if isinstance(schema, int):
             schemas.append(schema)
-        if TIME_PREFIX in line:
+        if STRAN2_CEX_PREFIX in line:
+            retained = re.search(r"(?:^| )retained=(\d+)/(\d+)(?: |$)", line)
+            if retained:
+                record["retained"] = int(retained.group(1))
+                record["capacity"] = int(retained.group(2))
+            stran2_cex_records.append(record)
+        elif STRAN2_PLACEMENT_PREFIX in line:
+            record["mode-root-batch"] = int("mode=root-batch" in line)
+            record["mode-direct"] = int("mode=direct" in line)
+            stran2_placement_records.append(record)
+        elif (STRAN2_SIGNATURE_PREFIX in line or
+              STRAN2_SIGNATURE_LEGACY_PREFIX in line):
+            stran2_signature_records.append(record)
+        elif (STRAN2_TEACHING_PREFIX in line or
+              STRAN2_TEACHING_LEGACY_PREFIX in line):
+            stran2_teaching_records.append(record)
+        elif TIME_PREFIX in line:
             time_records.append(record)
         elif BUILD_PREFIX in line:
             build_records.append(record)
         elif ROOT_TIME_PREFIX in line:
             root_time_records.append(record)
+            if "scope=closure " in line:
+                closure_times.append(record)
             phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
             if phase:
                 root_phase_time_records[phase.group(1)].append(record)
             time_records.append(_root_time_to_legacy(record))
+        elif ROOT_PREPROCESS_DETAIL_PREFIX in line:
+            root_preprocess_detail_records.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_preprocess_detail_records[
+                    phase.group(1)
+                ].append(record)
+        elif ROOT_PAGE_REUSE_DETAIL_PREFIX in line:
+            root_page_reuse_detail_records.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_page_reuse_detail_records[
+                    phase.group(1)
+                ].append(record)
+        elif ROOT_COMMIT_PREFIX in line:
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            kind = re.search(r"(?:^| )kind=(constant|existing|build)(?: |$)", line)
+            if phase and kind:
+                root_commits.append((phase.group(1), kind.group(1), record))
         elif ROOT_EFFECT_PREFIX in line:
             stage = re.search(r"(?:^| )stage=(comb|seq)(?: |$)", line)
             kind = re.search(r"(?:^| )kind=(constant|existing|build)(?: |$)", line)
@@ -716,12 +951,16 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             if phase:
                 record["phase-id"] = 0 if phase.group(1) == "comb" else 1
             root_summaries.append(record)
+            if "scope=closure " in line:
+                closure_summaries.append(record)
         elif ROOT_HELPER_PREFIX in line:
             root_helpers.append(record)
         elif ROOT_PAGED_PREFIX in line or ROOT_WAVE_PREFIX in line:
             root_paged.append(record)
         elif ROOT_ITERATOR_PREFIX in line:
             root_iterators.append(record)
+        elif ROOT_BUILD_HORIZON_PREFIX in line:
+            root_build_horizons.append(record)
         elif ROOT_SEQ_PREFIX in line:
             root_seq.append(record)
         elif ROOT_BUILD_FUNNEL_PREFIX in line:
@@ -746,6 +985,24 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                 root_phase_build_greedy_frontiers[phase.group(1)].append(
                     record
                 )
+        elif ROOT_BUILD_GREEDY_MULTIPATH_SUMMARY_PREFIX in line:
+            root_build_greedy_multipath.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_build_greedy_multipath[phase.group(1)].append(
+                    record
+                )
+        elif ROOT_BUILD_GREEDY_PATH_PREFIX in line:
+            rank = re.search(r"(?:^| )top-rank=([^ ]+)(?: |$)", line)
+            path = record.get("path-index")
+            if rank and isinstance(path, int):
+                path_record = (rank.group(1), path, record)
+                root_build_greedy_paths.append(path_record)
+                phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+                if phase:
+                    root_phase_build_greedy_paths[phase.group(1)].append(
+                        path_record
+                    )
         else:
             family = None
             for name, prefix in (
@@ -812,6 +1069,69 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         return sum(values) if values else NA
 
     result.update({
+        "stran2_cex_records": (
+            len(stran2_cex_records) if stran2_cex_records else NA),
+        "stran2_cex_retained": sum_field(stran2_cex_records, "retained"),
+        "stran2_cex_capacity": max_field(stran2_cex_records, "capacity"),
+        "stran2_cex_packed_lanes_seen": sum_field(
+            stran2_cex_records, "packed-lanes-seen"),
+        "stran2_cex_duplicates": sum_field(stran2_cex_records, "duplicates"),
+        "stran2_cex_ignored_induction": sum_field(
+            stran2_cex_records, "ignored-induction"),
+        "stran2_cex_too_long": sum_field(stran2_cex_records, "too-long"),
+        "stran2_cex_words": max_field(stran2_cex_records, "words"),
+        "stran2_placement_records": (
+            len(stran2_placement_records) if stran2_placement_records else NA),
+        "stran2_placement_direct_records": sum_field(
+            stran2_placement_records, "mode-direct"),
+        "stran2_placement_root_batch_records": sum_field(
+            stran2_placement_records, "mode-root-batch"),
+        "stran2_trace_budget_max": max_field(
+            stran2_placement_records, "trace-budget"),
+        "stran2_random_fill_max": max_field(
+            stran2_placement_records, "random-fill"),
+        "stran2_overflow_max": max_field(
+            stran2_placement_records, "overflow"),
+        "stran2_signature_records": (
+            len(stran2_signature_records) if stran2_signature_records else NA),
+        "stran2_signature_source_words_max": max_field(
+            stran2_signature_records, "source-words"),
+        "stran2_signature_random_words_max": max_field(
+            stran2_signature_records, "random-words"),
+        "stran2_signature_build_words_max": max_field(
+            stran2_signature_records, "build-words"),
+        "stran2_signature_frames_max": max_field(
+            stran2_signature_records, "frames"),
+        "stran2_signature_source_slots_max": max_field(
+            stran2_signature_records, "source-slots"),
+        "stran2_signature_build_slots_max": max_field(
+            stran2_signature_records, "build-slots"),
+        "stran2_signature_reachable_cex_max": max_field(
+            stran2_signature_records, "reachable-cex"),
+        "stran2_signature_cex_capacity_max": max_field(
+            stran2_signature_records, "cex-capacity"),
+        "stran2_teaching_records": (
+            len(stran2_teaching_records) if stran2_teaching_records else NA),
+        "stran2_teaching_root_signatures": sum_field(
+            stran2_teaching_records, "root-signatures"),
+        "stran2_teaching_selector_calls": sum_field(
+            stran2_teaching_records, "selector-calls"),
+        "stran2_teaching_roots_with_cex": sum_field(
+            stran2_teaching_records, "roots-with-cex"),
+        "stran2_teaching_selected_cex": sum_field(
+            stran2_teaching_records, "selected-cex-traces")
+            if any("selected-cex-traces" in record
+                   for record in stran2_teaching_records)
+            else sum_field(stran2_teaching_records, "selected-cex"),
+        "stran2_teaching_distinguishable_proxies": sum_field(
+            stran2_teaching_records, "distinguishable-proxies"),
+        "stran2_teaching_covered_proxies": sum_field(
+            stran2_teaching_records, "covered-proxies"),
+        "stran2_teaching_selection_and_gather_sec": sum_field(
+            stran2_teaching_records, "selection-and-gather"),
+    })
+
+    result.update({
         "root_helper_retained_max": max_field(root_helpers, "retained"),
         "root_helper_injected_events": sum_alias(
             root_helpers, "injected-events", "active-events"),
@@ -857,6 +1177,40 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         "root_iterator_live_max": max_field(root_iterators, "live-max"),
         "root_iterator_live_final": sum_field(root_iterators, "live-final"),
         "root_iterator_invalid": sum_field(root_iterators, "invalid"),
+    })
+
+    horizon_eligible = sum_field(root_build_horizons, "eligible-roots")
+    horizon_capacity = sum_field(root_build_horizons, "q-slot-capacity")
+    horizon_used = sum_field(root_build_horizons, "q-slots-used")
+    horizon_at_q = sum_field(root_build_horizons, "at-q-roots")
+    horizon_exhausted = sum_field(
+        root_build_horizons, "exhausted-before-q-roots")
+    horizon_zero = sum_field(root_build_horizons, "zero-accepted-roots")
+    result.update({
+        "root_build_horizon_records": (
+            len(root_build_horizons) if root_build_horizons else NA),
+        "root_build_horizon_q_limit_max": max_field(
+            root_build_horizons, "q-limit"),
+        "root_build_horizon_eligible_roots": horizon_eligible,
+        "root_build_horizon_q_slot_capacity": horizon_capacity,
+        "root_build_horizon_q_slots_used": horizon_used,
+        "root_build_horizon_at_q_roots": horizon_at_q,
+        "root_build_horizon_exhausted_before_q_roots": horizon_exhausted,
+        "root_build_horizon_unfinished_below_q_roots": sum_field(
+            root_build_horizons, "unfinished-below-q-roots"),
+        "root_build_horizon_zero_accepted_roots": horizon_zero,
+        "root_build_horizon_accepted_total": sum_field(
+            root_build_horizons, "accepted-total"),
+        "root_build_horizon_accepted_max_per_root": max_field(
+            root_build_horizons, "accepted-max-per-root"),
+        "root_build_horizon_q_slot_utilization_pct": _ratio(
+            horizon_used, horizon_capacity),
+        "root_build_horizon_at_q_rate_pct": _ratio(
+            horizon_at_q, horizon_eligible),
+        "root_build_horizon_exhausted_before_q_rate_pct": _ratio(
+            horizon_exhausted, horizon_eligible),
+        "root_build_horizon_zero_accepted_rate_pct": _ratio(
+            horizon_zero, horizon_eligible),
     })
 
     funnel_max = {"reservoir-max", "pool-max", "mffc-max"}
@@ -1030,6 +1384,52 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         root_build_greedy_frontiers,
         "root_build_greedy_frontier",
     )
+
+    def populate_greedy_multipath_fields(
+        records: list[dict[str, int | float]], field_prefix: str,
+    ) -> None:
+        values = {
+            key: sum_field(records, key)
+            for key in ROOT_BUILD_GREEDY_MULTIPATH_KEYS
+        }
+        for key, value in values.items():
+            result[f"{field_prefix}_{_field_token(key)}"] = value
+        result[f"{field_prefix}_cache_hit_rate_pct"] = _ratio(
+            values["cache-hits"], values["cache-lookups"])
+        result[f"{field_prefix}_cache_fail_hit_share_pct"] = _ratio(
+            values["cache-fail-hits"], values["cache-hits"])
+        result[f"{field_prefix}_duplicate_per_extra_accepted"] = _quotient(
+            values["duplicate-candidate-fingerprints"],
+            values["extra-accepted"])
+        result[f"{field_prefix}_extra_q_slot_rate_pct"] = _ratio(
+            values["extra-q-slots"], values["extra-accepted"])
+
+    def populate_greedy_path_fields(
+        records: list[tuple[str, int, dict[str, int | float]]],
+        field_prefix: str,
+    ) -> None:
+        for rank in ROOT_BUILD_GREEDY_PATH_RANKS:
+            for path in ROOT_BUILD_GREEDY_PATH_INDICES:
+                cell_records = [
+                    record
+                    for record_rank, record_path, record in records
+                    if record_rank == rank and record_path == path
+                ]
+                for metric in ROOT_BUILD_GREEDY_PATH_METRICS:
+                    field = (
+                        f"{field_prefix}_rank_{_field_token(rank)}_"
+                        f"path_{path}_{_field_token(metric)}"
+                    )
+                    result[field] = sum_field(cell_records, metric)
+
+    populate_greedy_multipath_fields(
+        root_build_greedy_multipath,
+        "root_build_greedy_multipath",
+    )
+    populate_greedy_path_fields(
+        root_build_greedy_paths,
+        "root_build_greedy_path",
+    )
     for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
         for bucket in buckets:
             records = [
@@ -1069,6 +1469,14 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             root_phase_build_greedy_frontiers[phase],
             f"root_{phase}_build_greedy_frontier",
         )
+        populate_greedy_multipath_fields(
+            root_phase_build_greedy_multipath[phase],
+            f"root_{phase}_build_greedy_multipath",
+        )
+        populate_greedy_path_fields(
+            root_phase_build_greedy_paths[phase],
+            f"root_{phase}_build_greedy_path",
+        )
         for family, (buckets, metrics) in ROOT_BUILD_BUCKETS.items():
             for bucket in buckets:
                 records = [
@@ -1093,6 +1501,34 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         field = f"profile_{key.replace('-', '_')}"
         if field in result:
             result[field] = value
+
+    for key, value in _sum_records(
+        root_preprocess_detail_records, ROOT_PREPROCESS_DETAIL_KEYS
+    ).items():
+        result[f"root_preprocess_{key.replace('-', '_')}"] = value
+
+    for phase in ("comb", "seq"):
+        for key, value in _sum_records(
+            root_phase_preprocess_detail_records[phase],
+            ROOT_PREPROCESS_DETAIL_KEYS,
+        ).items():
+            result[
+                f"root_{phase}_preprocess_{key.replace('-', '_')}"
+            ] = value
+
+    for key, value in _sum_records(
+        root_page_reuse_detail_records, ROOT_PAGE_REUSE_DETAIL_KEYS
+    ).items():
+        result[f"root_page_reuse_{key.replace('-', '_')}"] = value
+
+    for phase in ("comb", "seq"):
+        for key, value in _sum_records(
+            root_phase_page_reuse_detail_records[phase],
+            ROOT_PAGE_REUSE_DETAIL_KEYS,
+        ).items():
+            result[
+                f"root_{phase}_page_reuse_{key.replace('-', '_')}"
+            ] = value
 
     for phase in ("comb", "seq"):
         for key, value in _sum_records(
@@ -1124,7 +1560,44 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         )
         result[field] = value
 
+    if root_commits:
+        # Schema 8 accounts for each disjoint commit once, including closure.
+        # The original stage matrix continues to describe proof origin.
+        result["profile_closure_records"] = len(closure_times)
+        result["profile_closure_sec"] = sum(r["total-sec"] for r in closure_times)
+        result["profile_closure_and_gain"] = sum(r["final-and-gain"] for r in closure_summaries)
+        result["profile_closure_selected"] = sum(r["selected-roots"] for r in closure_summaries)
+        if (len(root_commits) != 3 * len(root_summaries)
+                or len(root_time_records) != len(root_summaries)
+                or len(closure_times) != len(closure_summaries)):
+            raise ValueError("Incomplete commit-kind profiling records")
+        previous_after = None
+        for record in root_summaries:
+            before, after = record["and-before"], record["and-after"]
+            if (previous_after is not None and before != previous_after) or before - after != record["final-and-gain"]:
+                raise ValueError("Nonconserving commit profile boundaries")
+            previous_after = after
+        for phase in ("comb", "seq"):
+            marginal = 0
+            for kind in ("constant", "existing", "build"):
+                records = [r for p, k, r in root_commits if p == phase and k == kind]
+                for metric, key in (("selected", "selected"), ("and_gain", "marginal-and"), ("reg_gain", "marginal-reg")):
+                    result[f"{phase}_commit_{kind}_{metric}"] = sum(r[key] for r in records)
+                marginal += result[f"{phase}_commit_{kind}_and_gain"]
+            phase_summaries = [r for r in root_summaries if r.get("phase-id") == (phase == "seq")]
+            exact = sum(r["final-and-gain"] for r in phase_summaries)
+            selected = sum(result[f"{phase}_commit_{k}_selected"] for k in ("constant", "existing", "build"))
+            if marginal > exact or selected != sum(r["selected-roots"] for r in phase_summaries):
+                raise ValueError("Nonconserving commit-kind attribution")
+            result[f"{phase}_commit_cleanup_extra_and_gain"] = exact - marginal
+        for metric in ("and", "reg"):
+            result[f"seq_build_ordered_{metric}_gain"] = result[f"seq_commit_build_{metric}_gain"]
+            result[f"seq_total_{metric}_gain"] = result[f"seq_stage_{metric}_gain"]
+        result["profile_accounting_complete"] = 1
+
     total = result["profile_total_sec"]
+    result["stran2_teaching_selection_pct_of_profile"] = _ratio(
+        result["stran2_teaching_selection_and_gather_sec"], total)
     for field in (
         "build_discovery", "seq_proof_shared", "selection", "stage_eval",
         "contribution_eval", "commit", "decision", "overhead", "unprofiled",
@@ -1163,3 +1636,13 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             result["seq_build_ordered_gain_per_upper_bound_sec"] = round(
                 gain / upper, 6)
     return result
+
+
+def validate_profile_accounting(result: dict[str, Any], final_and: int) -> None:
+    """Check the profiled commit chain against the independently written AIG."""
+    if result.get("profile_accounting_complete") != 1:
+        return
+    before = result["comb_stage_and_before"]
+    gain = result["comb_stage_and_gain"] + result["seq_stage_and_gain"]
+    if before - final_and != gain or result["seq_stage_and_after"] != final_and:
+        raise ValueError("Final AIG disagrees with complete commit profile")

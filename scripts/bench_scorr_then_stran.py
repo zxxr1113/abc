@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-"""Compare &scorr with the extra optimization found by &stran.
+"""Profile either &scorr -> &stran or the integrated &stran2 flow.
 
-For every input AIG, the worker performs exactly this pipeline:
+By default, every worker performs exactly this pipeline:
 
     normalized input -> &scorr -> scorr.aig -> &stran -> final.aig -> dsec
+
+With ``--flow stran2`` it instead performs:
+
+    normalized input -> &stran2 (integrated default scorr) -> final.aig -> dsec
 
 &stran does not run a standalone global &scorr pass.  It uses scorr's
 sequential correspondence engine only as the formal oracle for each proposed
@@ -43,7 +47,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
-from stran_profile import PROFILE_FIELDS, parse_experiment_profile
+from stran_profile import PROFILE_FIELDS, parse_experiment_profile, validate_profile_accounting
 
 
 # Edit these defaults, or override them with --scorr-args / --stran-args.
@@ -373,7 +377,7 @@ def short_error(stdout: str, stderr: str) -> str:
 
 
 RUN_FIELDS = [
-    "run_schema", "run_config_id", "run_started_at", "git_commit",
+    "run_schema", "run_config_id", "run_started_at", "flow", "git_commit",
     "git_dirty", "abc_sha256", "script_sha256", "profile_parser_sha256",
     "host", "platform", "python_version", "aig_root", "timeout_s", "jobs",
     "dsec_mode", "input_count", "input_manifest_id", "input_sha256",
@@ -405,11 +409,13 @@ def git_value(repo: Path, *args: str) -> str:
 
 def make_run_metadata(
     abc: Path, aig_dir: Path, timeout: int, jobs: int, skip_dsec: bool,
-    scorr_args: str, stran_args: str, aigs: list[Path],
+    flow: str, scorr_args: str, stran_args: str, aigs: list[Path],
 ) -> dict[str, Any]:
     script = Path(__file__).resolve()
     parser_path = script.with_name("stran_profile.py")
-    repo = script.parent.parent
+    # script2 is a sibling of the ABC checkout, so derive Git provenance from
+    # the selected binary rather than from this script's parent directory.
+    repo = abc.parent
     commit = git_value(repo, "rev-parse", "HEAD")
     dirty_text = git_value(repo, "status", "--porcelain", "--untracked-files=no")
     dirty = NA if dirty_text == NA else ("yes" if dirty_text else "no")
@@ -419,7 +425,8 @@ def make_run_metadata(
     ]
     manifest_id = hashlib.sha256("\n".join(manifest_rows).encode()).hexdigest()
     static = {
-        "run_schema": 2,
+        "run_schema": 3,
+        "flow": flow,
         "git_commit": commit,
         "git_dirty": dirty,
         "abc_sha256": sha256_file(abc),
@@ -444,9 +451,10 @@ def make_run_metadata(
 
 
 def worker(
-    task: Tuple[str, str, str, str, int, str, bool, str, bool, dict[str, Any]]
+    task: Tuple[str, str, str, str, str, int, str, bool, str, bool,
+                dict[str, Any]]
 ) -> Dict[str, Any]:
-    (aig_name, relative_name, abc, scorr_args, timeout, stran_args,
+    (aig_name, relative_name, abc, flow, scorr_args, timeout, stran_args,
      keep_artifacts, artifacts_root, skip_dsec, run_metadata) = task
     source = Path(aig_name)
     row: Dict[str, Any] = {
@@ -463,6 +471,7 @@ def worker(
         "scorr_time_ms": NA,
         "stran_time_ms": NA,
         "dsec_time_ms": NA,
+        "pipeline_time_ms": NA,
         "total_time_ms": NA,
         "input_sha256": NA,
         "input_size_bytes": NA,
@@ -474,6 +483,8 @@ def worker(
         "stran_system_ms": NA,
         "dsec_user_ms": NA,
         "dsec_system_ms": NA,
+        "pipeline_user_ms": NA,
+        "pipeline_system_ms": NA,
         "scorr_and": NA,
         "scorr_latches": NA,
         "stran_and": NA,
@@ -529,34 +540,87 @@ def worker(
         row["source_and"] = source_and
         row["source_latches"] = source_latches
 
-        scorr_out, scorr_err, scorr_rc, scorr_ms, scorr_user, scorr_system = run_abc(
-            abc, f"&read {base}; &scorr {scorr_args}; &write {scorr}", timeout
-        )
-        row["scorr_time_ms"] = scorr_ms
-        row["scorr_user_ms"] = scorr_user
-        row["scorr_system_ms"] = scorr_system
-        row["scorr_status"] = status_from(scorr_rc, scorr)
-        if row["scorr_status"] != "PASS":
-            row["error"] = f"scorr:{row['scorr_status']}: {short_error(scorr_out, scorr_err)}"
-            return row
-        row["scorr_and"], row["scorr_latches"] = aig_stats(scorr)
-        row["scorr_and_reduction"] = subtract(source_and, row["scorr_and"])
-        row["scorr_latch_reduction"] = subtract(source_latches, row["scorr_latches"])
+        if flow == "scorr-stran":
+            scorr_out, scorr_err, scorr_rc, scorr_ms, scorr_user, scorr_system = run_abc(
+                abc, f"&read {base}; &scorr {scorr_args}; &write {scorr}", timeout
+            )
+            row["scorr_time_ms"] = scorr_ms
+            row["scorr_user_ms"] = scorr_user
+            row["scorr_system_ms"] = scorr_system
+            row["scorr_status"] = status_from(scorr_rc, scorr)
+            row["pipeline_time_ms"] = scorr_ms
+            row["pipeline_user_ms"] = scorr_user
+            row["pipeline_system_ms"] = scorr_system
+            if row["scorr_status"] != "PASS":
+                row["error"] = (
+                    f"scorr:{row['scorr_status']}: "
+                    f"{short_error(scorr_out, scorr_err)}"
+                )
+                return row
+            row["scorr_and"], row["scorr_latches"] = aig_stats(scorr)
+            row["scorr_and_reduction"] = subtract(source_and, row["scorr_and"])
+            row["scorr_latch_reduction"] = subtract(
+                source_latches, row["scorr_latches"])
+            # This starts strictly from the completed &scorr output.  &stran's
+            # own time includes its per-candidate sequential proof calls.
+            stran_command = f"&read {scorr}; &stran {stran_args}; &write {final}"
+        elif flow == "stran2":
+            # &stran2 owns its default scorr prepass.  Keep the integrated
+            # command intact so pipeline wall/user/system time is directly
+            # comparable with the sum of the two baseline commands.
+            row["scorr_status"] = "PASS"
+            row["scorr_time_ms"] = 0
+            row["scorr_user_ms"] = 0
+            row["scorr_system_ms"] = 0
+            stran_command = f"&read {base}; &stran2 {stran_args}; &write {final}"
+        else:
+            raise ValueError(f"unsupported flow: {flow}")
 
-        # This starts strictly from the completed &scorr output.  &stran's
-        # own time includes its per-candidate sequential proof calls.
         stran_out, stran_err, stran_rc, stran_ms, stran_user, stran_system = run_abc(
-            abc, f"&read {scorr}; &stran {stran_args}; &write {final}", timeout
+            abc, stran_command, timeout
         )
         row["stran_time_ms"] = stran_ms
         row["stran_user_ms"] = stran_user
         row["stran_system_ms"] = stran_system
+        row["pipeline_time_ms"] = (
+            row["pipeline_time_ms"] + stran_ms
+            if isinstance(row["pipeline_time_ms"], int) else stran_ms
+        )
+        row["pipeline_user_ms"] = (
+            row["pipeline_user_ms"] + stran_user
+            if isinstance(row["pipeline_user_ms"], int) else stran_user
+        )
+        row["pipeline_system_ms"] = (
+            row["pipeline_system_ms"] + stran_system
+            if isinstance(row["pipeline_system_ms"], int) else stran_system
+        )
         row["stran_status"] = status_from(stran_rc, final)
-        row.update(parse_stran(stran_out))
+        try:
+            row.update(parse_stran(stran_out))
+        except ValueError as error:
+            row["stran_status"] = "PROFILE_ERROR"
+            row["error"] = f"profile: {error}"
+            return row
         if row["stran_status"] != "PASS":
             row["error"] = f"stran:{row['stran_status']}: {short_error(stran_out, stran_err)}"
             return row
         row["stran_and"], row["stran_latches"] = aig_stats(final)
+        try:
+            validate_profile_accounting(row, row["stran_and"])
+        except ValueError as error:
+            row["stran_status"] = "PROFILE_ERROR"
+            row["error"] = f"profile: {error}"
+            return row
+        if flow == "stran2":
+            # The first profiled root snapshot begins immediately after the
+            # integrated default scorr prepass, so it supplies the same size
+            # boundary represented by scorr.aig in the baseline flow.
+            row["scorr_and"] = row.get("stage_and_before", NA)
+            row["scorr_latches"] = row.get("stage_reg_before", NA)
+            row["scorr_and_reduction"] = subtract(
+                source_and, row["scorr_and"])
+            row["scorr_latch_reduction"] = subtract(
+                source_latches, row["scorr_latches"])
         row["stran_extra_and_reduction"] = subtract(row["scorr_and"], row["stran_and"])
         row["stran_extra_latch_reduction"] = subtract(row["scorr_latches"], row["stran_latches"])
         row["total_and_reduction"] = subtract(source_and, row["stran_and"])
@@ -601,7 +665,9 @@ CSV_FIELDS = [
     *RUN_FIELDS,
     "file", "scorr_args", "stran_args",
     "source_and", "source_latches", "scorr_status", "stran_status", "dsec_status",
-    "normalize_time_ms", "scorr_time_ms", "stran_time_ms", "dsec_time_ms", "total_time_ms",
+    "normalize_time_ms", "scorr_time_ms", "stran_time_ms", "pipeline_time_ms",
+    "dsec_time_ms", "total_time_ms",
+    "pipeline_user_ms", "pipeline_system_ms",
     "scorr_and", "scorr_latches", "stran_and", "stran_latches",
     "scorr_and_reduction", "scorr_latch_reduction",
     "stran_extra_and_reduction", "stran_extra_latch_reduction",
@@ -625,7 +691,8 @@ def write_csv_atomic(output: Path, rows: list[Dict[str, Any]]) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark &scorr followed by &stran.")
+    parser = argparse.ArgumentParser(
+        description="Benchmark &scorr -> &stran or integrated &stran2.")
     parser.add_argument("--aig-dir", default=DEFAULT_AIG_DIR)
     parser.add_argument("--abc", default=DEFAULT_ABC)
     parser.add_argument("--timeout", type=int, default=DEFAULT_TIMEOUT,
@@ -635,6 +702,10 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--scorr-args", default=DEFAULT_SCORR_ARGS)
     parser.add_argument("--stran-args", default=DEFAULT_STRAN_ARGS)
+    parser.add_argument(
+        "--flow", choices=("scorr-stran", "stran2"), default="scorr-stran",
+        help="pipeline to execute and profile",
+    )
     parser.add_argument("--keep-artifacts", action="store_true",
                         help="keep AIGs and logs next to the CSV, including failed cases")
     parser.add_argument(
@@ -666,14 +737,19 @@ def main() -> None:
     if not aigs:
         sys.exit(f"[ERROR] No .aig files under {aig_dir}")
 
-    print(f"[INFO] Pipeline: normalized input -> &scorr -> &stran -> dsec")
+    pipeline = (
+        "normalized input -> &scorr -> &stran -> dsec"
+        if args.flow == "scorr-stran"
+        else "normalized input -> &stran2 (integrated default scorr) -> dsec"
+    )
+    print(f"[INFO] Pipeline: {pipeline}")
     print(f"[INFO] Files={len(aigs)} jobs={args.jobs} timeout={args.timeout}s")
     print(f"[INFO] &scorr args: {args.scorr_args}")
     print(f"[INFO] &stran args: {stran_args}")
 
     run_metadata = make_run_metadata(
         abc_path, aig_dir, args.timeout, args.jobs, args.skip_dsec,
-        args.scorr_args, stran_args, aigs,
+        args.flow, args.scorr_args, stran_args, aigs,
     )
     print(
         f"[INFO] Run config={run_metadata['run_config_id']} "
@@ -682,7 +758,8 @@ def main() -> None:
     )
 
     tasks = [
-        (str(path), str(path.relative_to(aig_dir)), abc, args.scorr_args, args.timeout,
+        (str(path), str(path.relative_to(aig_dir)), abc, args.flow,
+         args.scorr_args, args.timeout,
          stran_args, args.keep_artifacts,
          str(output.parent / f"{output.stem}_artifacts"), args.skip_dsec,
          run_metadata)
