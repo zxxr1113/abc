@@ -42415,10 +42415,10 @@ usage:
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..100) [default = %d]\n", pPars->nDepNodesMax );
     Abc_Print( -2, "\t-G num : deprecated local-gain compatibility value; scheduler ignores it [default = %d]\n", pPars->nGainMin );
-    Abc_Print( -2, "\t-Q num : 64-bit words per %srandom simulation frame [default = %d]\n",
-        fStran2 ? "source " : "", pPars->nSimWords );
+    Abc_Print( -2, "\t-Q num : 64-bit trace words per %ssimulation frame [default = %d]\n",
+        fStran2 ? "CEX-first " : "random ", pPars->nSimWords );
     if ( fStran2 )
-        Abc_Print( -2, "\t-W num : source simulation frames and CEX horizon; Build uses 1-8 words [default = %d]\n",
+        Abc_Print( -2, "\t-W num : CEX/random trace frames and CEX horizon [default = %d]\n",
             pPars->nSimFrames );
     else
         Abc_Print( -2, "\t-W num : reset-reachable random simulation frames [default = %d]\n",
