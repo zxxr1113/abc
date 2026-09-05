@@ -42245,10 +42245,15 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBVPZqwjbaeMxclrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBVPZEqwjbaeMxclrgftupoyh")) != EOF )
     {
         switch ( c )
         {
+        case 'E':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nExplore = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nExplore < 0 || pPars->nExplore > 15 ) goto usage;
+            break;
         case 'F':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nFrames = atoi(argv[globalUtilOptind++]);
@@ -42407,7 +42412,8 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBVZqwjbae num] [-P root] [-Mxclrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBVZEqwjbae num] [-P root] [-Mxclrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );

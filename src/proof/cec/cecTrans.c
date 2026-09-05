@@ -187,6 +187,7 @@ static int Cec_TranMffcSelfTest();
 static int Cec_TranPipelineSelfTest();
 static int Cec_TranCommitWaveSelfTest();
 static int Cec_TranProofMicroBatchSelfTest();
+static int Cec_TranObservationSelfTest();
 static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
     int nDepthMax, int nNodesMax, int fUseMffcDivs,
     char const * pCovered, char const * pUsed,
@@ -195,7 +196,8 @@ int Cec_TranRootSelfTest()
 {
     return Abc_ResubIteratorSelfTest() && Cec_TranCanonicalizeSelfTest() &&
         Cec_TranMffcSelfTest() && Cec_TranPipelineSelfTest() &&
-        Cec_TranCommitWaveSelfTest() && Cec_TranProofMicroBatchSelfTest();
+        Cec_TranCommitWaveSelfTest() && Cec_TranProofMicroBatchSelfTest() &&
+        Cec_TranObservationSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -290,6 +292,12 @@ struct Cec_TranPivotBucketProf_t_
 };
 struct Cec_TranProf_t_
 {
+    long long nExpCiHit, nExpCiMiss, nExpObsRoots, nExpObsConflict;
+    long long nExpFullRoots, nExpFullConflict, nExpObsTotal, nExpObsUnique;
+    long long nExpPruned;
+    abctime timeExpObs, timeExpRankScore, timeExpRankCi;
+    abctime timeExpZeroBuild, timeExpPositiveBuild;
+    abctime timeExpZeroRank, timeExpPositiveRank;
     abctime timeTotal;
     abctime timeGain;
     abctime timeShadow;
@@ -532,6 +540,10 @@ struct Cec_TranSim_t_
     int             nSlots;
     word *          pSims;          // [object ID][frame * nWords + word]
     word *          pState;         // current values of the ROs
+    int *           pCiCounts;      // support size + 1, immutable snapshot only
+    word *          pObsKeys;
+    unsigned char * pObsLabels;
+    int             nObsCap;
 };
 
 // The stran2 pattern database owns the reset-reachable CEX traces collected by
@@ -826,6 +838,9 @@ static void Cec_TranSimStop( Cec_TranSim_t * p )
         return;
     ABC_FREE( p->pSims );
     ABC_FREE( p->pState );
+    ABC_FREE( p->pCiCounts );
+    ABC_FREE( p->pObsKeys );
+    ABC_FREE( p->pObsLabels );
     ABC_FREE( p );
 }
 
@@ -2280,6 +2295,8 @@ struct Cec_TranRootCursor_t_
     int nBuildAccepted;         // unique positive-gain Build candidates emitted on this snapshot
     int nPages;
     int fExhausted;
+    int fExpConflict;
+    abctime timeExpBuild, timeExpRank;
 };
 
 static void Cec_TranRootCursorCacheStop( Cec_TranRootCursor_t * pCursor )
@@ -4476,10 +4493,11 @@ static int Cec_TranDivRankCompare( const void * p1, const void * p2 )
 }
 
 static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
-    int iTarget, Vec_Int_t * vReservoir )
+    int iTarget, Vec_Int_t * vReservoir, Cec_ParTran_t * pPars,
+    Cec_TranProf_t * pProf )
 {
     Gia_Man_t * p = pSim->pGia;
-    Cec_TranDivRank_t * pRanks = ABC_ALLOC( Cec_TranDivRank_t,
+    Cec_TranDivRank_t * pRanks = ABC_CALLOC( Cec_TranDivRank_t,
         Vec_IntSize(vReservoir) );
     word * pTarget = Cec_TranSimObj( pSim, iTarget );
     word * pDiv;
@@ -4487,7 +4505,8 @@ static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
     Vec_Int_t * vRootSupp = Vec_IntAlloc( 32 );
     Vec_Int_t * vDivSupp = Vec_IntAlloc( 32 );
     int i, k, s, iObj, RootNode = iTarget;
-    Gia_ManCollectCis( p, &RootNode, 1, vRootSupp );
+    int nRank = Vec_IntSize(vReservoir), nKeep = nRank;
+    abctime clk = Abc_Clock();
     Vec_IntForEachEntry( vReservoir, iObj, i )
     {
         pDiv = Cec_TranSimObj( pSim, iObj );
@@ -4500,13 +4519,56 @@ static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
             nOn1  += Abc_TtCountOnes(  pTarget[s] &  pDiv[s] );
         }
         pRanks[i].Score = nOff0 * nOn1 + nOff1 * nOn0;
-        Vec_IntClear( vDivSupp );
-        Gia_ManCollectCis( p, &iObj, 1, vDivSupp );
-        pRanks[i].CiOverlap = 0;
-        Vec_IntForEachEntry( vDivSupp, iObj, k )
-            pRanks[i].CiOverlap += Vec_IntFind(vRootSupp, iObj) >= 0;
         pRanks[i].iPos = i;
     }
+    pProf->timeExpRankScore += Abc_Clock() - clk;
+    clk = Abc_Clock();
+    if ( pPars->nExplore & 1 )
+    {
+        if ( pSim->pCiCounts == NULL )
+            pSim->pCiCounts = ABC_CALLOC( int, Gia_ManObjNum(p) );
+        qsort( pRanks, nRank, sizeof(Cec_TranDivRank_t), Cec_TranDivRankCompare );
+        if ( pPars->nConstrBaseMax && nKeep > pPars->nConstrBaseMax )
+        {
+            nKeep = pPars->nConstrBaseMax;
+            while ( nKeep < nRank && pRanks[nKeep].Score == pRanks[nKeep-1].Score )
+                nKeep++;
+        }
+    }
+    if ( !(pPars->nExplore & 1) || (pPars->nExplore & 8) )
+        Gia_ManCollectCis( p, &RootNode, 1, vRootSupp );
+    for ( i = 0; i < nKeep; i++ )
+    {
+        iObj = Vec_IntEntry( vReservoir, pRanks[i].iPos );
+        if ( (pPars->nExplore & 1) && pSim->pCiCounts[iObj] )
+        {
+            pRanks[i].CiOverlap = pSim->pCiCounts[iObj] - 1;
+            pProf->nExpCiHit++;
+            if ( !(pPars->nExplore & 8) )
+                continue;
+        }
+        else
+            pProf->nExpCiMiss++;
+        Vec_IntClear( vDivSupp );
+        Gia_ManCollectCis( p, &iObj, 1, vDivSupp );
+        if ( pPars->nExplore & 1 )
+        {
+            // Every reservoir entry comes from this root's combinational TFI,
+            // so its CI support is a subset of the root's CI support.
+            pRanks[i].CiOverlap = Vec_IntSize( vDivSupp );
+            pSim->pCiCounts[iObj] = pRanks[i].CiOverlap + 1;
+            if ( pPars->nExplore & 8 )
+                Vec_IntForEachEntry( vDivSupp, iObj, k )
+                    assert( Vec_IntFind(vRootSupp, iObj) >= 0 );
+        }
+        else
+        {
+            pRanks[i].CiOverlap = 0;
+            Vec_IntForEachEntry( vDivSupp, iObj, k )
+                pRanks[i].CiOverlap += Vec_IntFind(vRootSupp, iObj) >= 0;
+        }
+    }
+    pProf->timeExpRankCi += Abc_Clock() - clk;
     qsort( pRanks, Vec_IntSize(vReservoir),
         sizeof(Cec_TranDivRank_t), Cec_TranDivRankCompare );
     Vec_IntFree( vRootSupp );
@@ -4544,6 +4606,89 @@ static word Cec_TranResidualMix( word Value )
     Value ^= Value >> 27;
     Value *= ABC_CONST(0x94d049bb133111eb);
     return Value ^ (Value >> 31);
+}
+
+// Exact projection of shared observations, not a hash-only certificate.
+// More than 64 divisors is unmeasured (never interpreted as conflict-free).
+static int Cec_TranObservationConflict( Cec_TranSim_t * pSim, int iTarget,
+    Vec_Int_t * vPool, int * pnUnique )
+{
+    word Rows[64], Value, Key;
+    int i, b, s, iObj, h, Label, fConflict = 0;
+    int nCap = 1, nDivs = Vec_IntSize(vPool);
+    *pnUnique = 0;
+    if ( nDivs > 64 )
+        return -1;
+    while ( nCap < 128 * pSim->nSlots )
+        nCap <<= 1;
+    if ( pSim->nObsCap < nCap )
+    {
+        ABC_FREE( pSim->pObsKeys );
+        ABC_FREE( pSim->pObsLabels );
+        pSim->pObsKeys = ABC_ALLOC( word, nCap );
+        pSim->pObsLabels = ABC_ALLOC( unsigned char, nCap );
+        pSim->nObsCap = nCap;
+    }
+    memset( pSim->pObsLabels, 0, nCap );
+    for ( s = 0; s < pSim->nSlots; s++ )
+    {
+        memset( Rows, 0, sizeof(Rows) );
+        Vec_IntForEachEntry( vPool, iObj, i )
+        {
+            Value = Cec_TranSimObj(pSim, iObj)[s];
+            for ( b = 0; b < 64; b++ )
+                Rows[b] |= ((Value >> b) & 1) << i;
+        }
+        Value = Cec_TranSimObj(pSim, iTarget)[s];
+        for ( b = 0; b < 64; b++ )
+        {
+            Key = Rows[b];
+            Label = 1 << ((Value >> b) & 1);
+            h = (int)(Cec_TranResidualMix(Key) & (nCap - 1));
+            while ( pSim->pObsLabels[h] && pSim->pObsKeys[h] != Key )
+                h = (h + 1) & (nCap - 1);
+            if ( !(pSim->pObsLabels[h] & Label) )
+                (*pnUnique)++;
+            if ( pSim->pObsLabels[h] && !(pSim->pObsLabels[h] & Label) )
+                fConflict = 1;
+            pSim->pObsKeys[h] = Key;
+            pSim->pObsLabels[h] |= Label;
+        }
+    }
+    return fConflict;
+}
+
+static int Cec_TranObservationSelfTest()
+{
+    Cec_TranSim_t Sim = {0};
+    Vec_Int_t * vPool = Vec_IntAlloc( 65 );
+    word Sims[65] = {0};
+    int nUnique, i;
+    Sim.nSlots = 1;
+    Sim.pSims = Sims;
+    Sims[0] = ABC_CONST(0x6666666666666666);
+    Sims[1] = ABC_CONST(0xaaaaaaaaaaaaaaaa);
+    Sims[2] = ABC_CONST(0xcccccccccccccccc);
+    Vec_IntPush( vPool, 1 );
+    assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == 1 );
+    assert( nUnique == 4 );
+    Vec_IntPush( vPool, 2 );
+    assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == 0 );
+    assert( nUnique == 4 );
+    // The 64th divisor must participate in the exact key too.
+    Vec_IntClear( vPool );
+    for ( i = 1; i <= 64; i++ )
+        Vec_IntPush( vPool, i );
+    Sims[1] = Sims[2] = 0;
+    Sims[64] = Sims[0];
+    assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == 0 );
+    assert( nUnique == 2 );
+    Vec_IntPush( vPool, 1 );
+    assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == -1 );
+    ABC_FREE( Sim.pObsKeys );
+    ABC_FREE( Sim.pObsLabels );
+    Vec_IntFree( vPool );
+    return 1;
 }
 
 static int Cec_TranResidualSimBit( word const * pSim, int iSample )
@@ -5241,6 +5386,9 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     pProf->nRootBuildMffcAccepted[iMffcBin] +=
         pProf->nRootBuildAccepted - nAcceptedStart;
     pProf->timeRootBuildMffc[iMffcBin] += Abc_Clock() - clkMffc;
+    pCursor->timeExpBuild += Abc_Clock() - clkMffc;
+    if ( pCursor->fExpConflict )
+        assert( pCursor->nBuildAccepted == 0 );
     ABC_FREE( pCiKeys );
     ABC_FREE( pCiScores );
     ABC_FREE( pDivRanks );
@@ -5272,6 +5420,10 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Vec_Int_t * vPool;
     Cec_TranDivRank_t * pRanks = NULL;
     int i, nReservoirMax, nReservoirSize;
+    int fObsSample = (pPars->nExplore & 2) && iWave == 0 &&
+        Cec_TranRootBuildEligible(pRoot) &&
+        Cec_TranResidualMix((word)pRoot->iObj) % 16 == 0;
+    int nUnique, fConflict;
     abctime clk, clkAll = Abc_Clock(), timePart;
     Cec_TranCandVecClear( pOut );
     // The heavyweight iterator manager is local to this call.  A later
@@ -5289,12 +5441,25 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranFilterCoveredDivPool( vPool, pCovered );
     pProf->timeRootDivCollect += Abc_Clock() - clk;
     nReservoirSize = Vec_IntSize( vPool );
+    if ( fObsSample )
+    {
+        clk = Abc_Clock();
+        fConflict = Cec_TranObservationConflict( pSource, pRoot->iObj,
+            vPool, &nUnique );
+        if ( fConflict >= 0 )
+        {
+            pProf->nExpFullRoots++;
+            pProf->nExpFullConflict += fConflict;
+        }
+        pProf->timeExpObs += Abc_Clock() - clk;
+    }
     if ( Vec_IntSize(vPool) )
     {
         clk = Abc_Clock();
         pRanks = Cec_TranRankDivReservoir(
-            fRootBatch ? pSource : pSim, pRoot->iObj, vPool );
+            fRootBatch ? pSource : pSim, pRoot->iObj, vPool, pPars, pProf );
         timePart = Abc_Clock() - clk;
+        pCursor->timeExpRank += timePart;
         pProf->timeRootDivRank += timePart;
         if ( Cec_TranRootBuildEligible(pRoot) )
         {
@@ -5329,6 +5494,27 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     if ( fRootBatch )
         Cec_TranTeachBuildSignature( pSource, pSim, pDb,
             pRoot->iObj, vPool, &pCursor->pTeachCache, pProf );
+    if ( fObsSample || ((pPars->nExplore & 4) && iWave == 0 &&
+            Cec_TranRootBuildEligible(pRoot)) )
+    {
+        clk = Abc_Clock();
+        fConflict = Cec_TranObservationConflict( pSim, pRoot->iObj,
+            vPool, &nUnique );
+        if ( fConflict >= 0 )
+        {
+            pProf->nExpObsRoots++;
+            pProf->nExpObsConflict += fConflict;
+            pProf->nExpObsTotal += 64 * pSim->nSlots;
+            pProf->nExpObsUnique += nUnique;
+            pCursor->fExpConflict = fConflict;
+            if ( fConflict && (pPars->nExplore & 4) )
+            {
+                pCursor->fExhausted = 1;
+                pProf->nExpPruned++;
+            }
+        }
+        pProf->timeExpObs += Abc_Clock() - clk;
+    }
     if ( Vec_IntSize(vPool) )
     {
         if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) &&
@@ -6560,6 +6746,14 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
     int SumLaneSelected = 0, SumLaneProved[2] = {0};
     abctime SumTime = 0, Unprofiled;
     long long SumMarginal = 0;
+    Abc_Print( 1, "stran-root preprocessing-detail profile: schema=2 phase=%s exp-ci-hit=%lld exp-ci-miss=%lld exp-score-sec=%.6f exp-ci-sec=%.6f exp-obs-roots=%lld exp-obs-conflict=%lld exp-full-roots=%lld exp-full-conflict=%lld exp-obs-total=%lld exp-obs-unique=%lld exp-pruned=%lld exp-obs-sec=%.6f exp-zero-build-sec=%.6f exp-positive-build-sec=%.6f exp-zero-rank-sec=%.6f exp-positive-rank-sec=%.6f\n",
+        iPhase ? "seq" : "comb", p->nExpCiHit, p->nExpCiMiss,
+        Cec_TranTimeSec(p->timeExpRankScore), Cec_TranTimeSec(p->timeExpRankCi),
+        p->nExpObsRoots, p->nExpObsConflict, p->nExpFullRoots, p->nExpFullConflict,
+        p->nExpObsTotal, p->nExpObsUnique, p->nExpPruned,
+        Cec_TranTimeSec(p->timeExpObs), Cec_TranTimeSec(p->timeExpZeroBuild),
+        Cec_TranTimeSec(p->timeExpPositiveBuild), Cec_TranTimeSec(p->timeExpZeroRank),
+        Cec_TranTimeSec(p->timeExpPositiveRank) );
     Abc_Print( 1, "stran-root time profile: total=%.6f sec.\n",
         Cec_TranTimeSec(p->timeTotal) );
     for ( i = 0; i < 19; i++ )
@@ -7183,6 +7377,16 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
                      Cec_TranRootBuildEligible(pRoots + r) )
                 {
                     nBuildEligibleRoots++;
+                    if ( pCursor->nBuildAccepted == 0 )
+                    {
+                        Prof.timeExpZeroBuild += pCursor->timeExpBuild;
+                        Prof.timeExpZeroRank += pCursor->timeExpRank;
+                    }
+                    else
+                    {
+                        Prof.timeExpPositiveBuild += pCursor->timeExpBuild;
+                        Prof.timeExpPositiveRank += pCursor->timeExpRank;
+                    }
                     nBuildZeroAcceptedRoots +=
                         pCursor->nBuildAccepted == 0;
                     if ( pPars->nRootConstrTop > 0 &&
