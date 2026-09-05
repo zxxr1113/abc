@@ -328,6 +328,8 @@ struct Cec_TranProf_t_
     long long nRootFrontPairScansFirst;
     long long nRootFrontPairScansCont;
     long long nRootFrontMatched;
+    int nRootFrontCalls;
+    long long nRootPageMffcOneSkipped;
     abctime timeRootDirect;
     abctime timeRootDivCi;
     abctime timeRootResubInit;
@@ -2326,6 +2328,22 @@ static int Cec_TranRootBuildHorizonReached( Cec_ParTran_t const * pPars,
          pCursor->nBuildAccepted >= pPars->nRootConstrTop);
 }
 
+// Direct is discovered only on page zero.  Later immutable proof pages have
+// nothing left to discover for a root with no positive-gain Build universe.
+// Keep this separate from iterator exhaustion: no iterator was run here.
+static int Cec_TranRootDiscoveryFinished( Cec_ParTran_t const * pPars,
+    Cec_TranRoot_t const * pRoot, Cec_TranRootCursor_t const * pCursor,
+    int iPage )
+{
+    if ( pPars->nRootProofBatch <= 0 )
+        return 0;
+    if ( iPage > 0 &&
+         (!pPars->fUseConstr || !Cec_TranRootBuildEligible(pRoot)) )
+        return 1;
+    return pPars->fUseConstr &&
+        Cec_TranRootBuildHorizonReached(pPars, pCursor);
+}
+
 static int Cec_TranProofMicroBatchSelfTest()
 {
     Cec_ParTran_t Pars;
@@ -2352,6 +2370,19 @@ static int Cec_TranProofMicroBatchSelfTest()
     assert( !Cec_TranRootBuildEligible(&Root) );
     Root.nMffc = 2;
     assert( Cec_TranRootBuildEligible(&Root) );
+    Cursor.fExhausted = 0;
+    Root.nMffc = 1;
+    Pars.fUseConstr = 1;
+    // q=0 still terminates these roots after Direct's first page.
+    assert( !Cec_TranRootDiscoveryFinished(&Pars, &Root, &Cursor, 0) );
+    assert( Cec_TranRootDiscoveryFinished(&Pars, &Root, &Cursor, 1) );
+    Root.nMffc = 2;
+    assert( !Cec_TranRootDiscoveryFinished(&Pars, &Root, &Cursor, 1) );
+    Pars.nRootConstrTop = 10;
+    Cursor.nBuildAccepted = 10;
+    assert( Cec_TranRootDiscoveryFinished(&Pars, &Root, &Cursor, 1) );
+    Pars.nRootProofBatch = 0;
+    assert( !Cec_TranRootDiscoveryFinished(&Pars, &Root, &Cursor, 1) );
     return 1;
 }
 
@@ -3614,7 +3645,8 @@ static int Cec_TranMffcSelfTest()
     Vec_Int_t * vBoundary = Vec_IntAlloc( 1 );
     Vec_Int_t * vPool;
     char * pMark, * pCovered, * pUsed;
-    int iA, iB, iC, iX, iU, iV, iRoot, nStatic;
+    int iA, iB, iC, iX, iU, iV, iRoot, nStatic, i;
+    Gia_Obj_t * pObj;
     iA = Gia_ManAppendCi( p );
     iB = Gia_ManAppendCi( p );
     iC = Gia_ManAppendCi( p );
@@ -3634,6 +3666,17 @@ static int Cec_TranMffcSelfTest()
     Cec_TranMarkDynamicMffc( p, Abc_Lit2Var(iRoot), NULL, NULL, NULL,
         pMark, vMarked );
     assert( nStatic == 4 && Vec_IntSize(vMarked) == nStatic );
+
+    // Pass initialization already computes the potential of the immutable
+    // snapshot.  Empty virtual-selection sets must give exactly those values,
+    // including reconvergence and roots inside another root's MFFC.
+    Gia_ManForEachAnd( p, pObj, i )
+    {
+        nStatic = Gia_NodeMffcSize( p, pObj );
+        Cec_TranMarkDynamicMffc( p, i, pCovered, pUsed, NULL,
+            pMark, vMarked );
+        assert( Vec_IntSize(vMarked) == nStatic );
+    }
 
     // Candidate support is a hard boundary and therefore keeps X alive.
     Vec_IntPush( vBoundary, Abc_Lit2Var(iX) );
@@ -5379,6 +5422,8 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
     int fRefreshRoots, Cec_TranCandVec_t * pSeq, Cec_TranProf_t * pProf )
 {
     int r, i, k, iObj, Gain, fSupportFreed;
+    int fFirstFrontier = pProf->nRootFrontCalls++ == 0;
+    Vec_Int_t * vHeads, * vNext;
     abctime clk, clkLoop;
     Cec_TranCandVecClear( pSeq );
     clk = Abc_Clock();
@@ -5388,11 +5433,8 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
               pUsed[pCands->pArray[i].iTarget]) )
             pProf->nDirtyRootFreed++;
     pProf->timeRootFrontDead += Abc_Clock() - clk;
-    // Root potential depends only on the permanent snapshot and the virtual
-    // covered/used sets.  SEQ proof micro-batches change neither, so the first
-    // batch computes and sorts it once and later batches safely reuse it.
-    // The legacy -j0 path continues to request its historical refresh on every
-    // call so this optimization cannot perturb existing scheduling behavior.
+    // Generic callers may supply changed virtual-selection sets.  The main
+    // pass reuses its initial MFFCs because discovery never changes those sets.
     if ( fRefreshRoots )
     {
         clk = Abc_Clock();
@@ -5401,19 +5443,33 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
         pProf->timeRootPotentialRefresh += Abc_Clock() - clk;
     }
     clkLoop = Abc_Clock();
+    vHeads = Vec_IntStartFull( Gia_ManObjNum(p) );
+    vNext = Vec_IntStartFull( pCands->nSize );
+    // Prepend in reverse Page order.  Visiting roots in the old root order
+    // and each list in Page order preserves the exact pre-sort sequence,
+    // including comparator ties, without the root x candidate scan.
+    for ( i = pCands->nSize - 1; i >= 0; i-- )
+    {
+        Cec_TranCand_t const * pCand = pCands->pArray + i;
+        if ( pCand->nStatus != CEC_TRAN_STATE_CANDIDATE )
+            continue;
+        assert( pCand->iTarget >= 0 && pCand->iTarget < Gia_ManObjNum(p) );
+        Vec_IntWriteEntry( vNext, i, Vec_IntEntry(vHeads, pCand->iTarget) );
+        Vec_IntWriteEntry( vHeads, pCand->iTarget, i );
+    }
     for ( r = 0; r < nRoots && pRoots[r].nMffc > 0; r++ )
     {
-        pProf->nRootFrontPairScans += pCands->nSize;
-        if ( fRefreshRoots )
-            pProf->nRootFrontPairScansFirst += pCands->nSize;
-        else
-            pProf->nRootFrontPairScansCont += pCands->nSize;
-        for ( i = 0; i < pCands->nSize; i++ )
+        for ( i = Vec_IntEntry(vHeads, pRoots[r].iObj); i >= 0;
+              i = Vec_IntEntry(vNext, i) )
         {
             Cec_TranCand_t Cand = pCands->pArray[i];
-            if ( Cand.iTarget != pRoots[r].iObj ||
-                 Cand.nStatus != CEC_TRAN_STATE_CANDIDATE )
-                continue;
+            assert( Cand.iTarget == pRoots[r].iObj &&
+                Cand.nStatus == CEC_TRAN_STATE_CANDIDATE );
+            pProf->nRootFrontPairScans++;
+            if ( fFirstFrontier )
+                pProf->nRootFrontPairScansFirst++;
+            else
+                pProf->nRootFrontPairScansCont++;
             pProf->nRootFrontMatched++;
             if ( pCovered[Cand.iTarget] || pUsed[Cand.iTarget] )
             {
@@ -5447,9 +5503,11 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
             Cec_TranCandVecPush( pSeq, Cand );
         }
     }
+    Vec_IntFree( vHeads );
+    Vec_IntFree( vNext );
     clk = Abc_Clock() - clkLoop;
     pProf->timeRootFrontLoop += clk;
-    if ( fRefreshRoots )
+    if ( fFirstFrontier )
         pProf->timeRootFrontLoopFirst += clk;
     else
         pProf->timeRootFrontLoopCont += clk;
@@ -6151,6 +6209,36 @@ static int Cec_TranPipelineSelfTest()
         pCovered, pUsed, pMffc, vMffc, vSupport, 1, &Seq, &Prof );
     assert( Seq.nSize == 0 );
 
+    // Interleaved targets and a tried candidate exercise target indexing.
+    // Reusing initialized potentials must produce the same sorted frontier
+    // as a full dynamic refresh, while retaining zero-gain rejection above.
+    {
+        Cec_TranRoot_t Roots[2] = { Root, { Abc_Lit2Var(iN1), 1 } };
+        Cec_TranCandVec_t Indexed = {0}, Refreshed = {0}, Mixed = {0};
+        Cec_TranCand_t Cand = Cec_TranCandCreateLiteral(
+            Abc_Lit2Var(iN1), 0, 1, CEC_TRAN_CAND_CONST, 1 );
+        Cand.nStatus = CEC_TRAN_STATE_CANDIDATE;
+        Cec_TranCandVecPush( &Mixed, Cand );
+        Cand.iTarget = Root.iObj;
+        Cand.nStatus = CEC_TRAN_STATE_TRIED_SEQ;
+        Cec_TranCandVecPush( &Mixed, Cand );
+        Cand.nStatus = CEC_TRAN_STATE_CANDIDATE;
+        Cec_TranCandVecPush( &Mixed, Cand );
+        Cec_TranCandVecPush( &Mixed, ZeroGain );
+        Cec_TranRootPrepareSeqFrontier( p, Roots, 2, &Mixed,
+            pCovered, pUsed, pMffc, vMffc, vSupport, 0, &Indexed, &Prof );
+        Cec_TranRootPrepareSeqFrontier( p, Roots, 2, &Mixed,
+            pCovered, pUsed, pMffc, vMffc, vSupport, 1, &Refreshed, &Prof );
+        assert( Indexed.nSize == 2 && Refreshed.nSize == 2 );
+        assert( Indexed.pArray[0].iTarget == Root.iObj &&
+            Indexed.pArray[1].iTarget == Abc_Lit2Var(iN1) );
+        assert( !memcmp(Indexed.pArray, Refreshed.pArray,
+            2 * sizeof(Cec_TranCand_t)) );
+        Cec_TranCandVecStop( &Indexed );
+        Cec_TranCandVecStop( &Refreshed );
+        Cec_TranCandVecStop( &Mixed );
+    }
+
     DirectCand = Cec_TranCandCreateLiteral( Root.iObj, iN1,
         Root.nMffc, CEC_TRAN_CAND_EXIST, 1 );
     DirectCand.nProofStage = 2;
@@ -6508,7 +6596,7 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         Cec_TranTimeSec(p->timeRootFrontGain),
         Cec_TranTimeSec(p->timeRootFrontSort),
         p->nRootFrontPairScans, p->nRootFrontMatched );
-    Abc_Print( 1, "stran-root page-reuse-detail profile: schema=1 phase=%s rank-mffc-one-first-sec=%.6f rank-mffc-one-cont-sec=%.6f rank-eligible-first-sec=%.6f rank-eligible-cont-sec=%.6f rank-mffc-one-first-calls=%lld rank-mffc-one-cont-calls=%lld rank-eligible-first-calls=%lld rank-eligible-cont-calls=%lld frontier-loop-first-sec=%.6f frontier-loop-cont-sec=%.6f frontier-pair-scans-first=%lld frontier-pair-scans-cont=%lld\n",
+    Abc_Print( 1, "stran-root page-reuse-detail profile: schema=2 phase=%s rank-mffc-one-first-sec=%.6f rank-mffc-one-cont-sec=%.6f rank-eligible-first-sec=%.6f rank-eligible-cont-sec=%.6f rank-mffc-one-first-calls=%lld rank-mffc-one-cont-calls=%lld rank-eligible-first-calls=%lld rank-eligible-cont-calls=%lld frontier-loop-first-sec=%.6f frontier-loop-cont-sec=%.6f frontier-pair-scans-first=%lld frontier-pair-scans-cont=%lld mffc-one-page-skips=%lld\n",
         iPhase ? "seq" : "comb",
         Cec_TranTimeSec(p->timeRootDivRankMffcOneFirst),
         Cec_TranTimeSec(p->timeRootDivRankMffcOneCont),
@@ -6520,7 +6608,8 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         p->nRootDivRankEligibleContCalls,
         Cec_TranTimeSec(p->timeRootFrontLoopFirst),
         Cec_TranTimeSec(p->timeRootFrontLoopCont),
-        p->nRootFrontPairScansFirst, p->nRootFrontPairScansCont );
+        p->nRootFrontPairScansFirst, p->nRootFrontPairScansCont,
+        p->nRootPageMffcOneSkipped );
     Abc_Print( 1, "stran-root effect matrix: proof-origin-phase kind generated submitted proved selected marginal-AND marginal-Reg\n" );
     for ( s = 0; s < 2; s++ )
     for ( k = 0; k < 3; k++ )
@@ -6937,7 +7026,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Prof.timeRootPostSelect += Abc_Clock() - clk;
     }
 
-    // Every wave visits every live root.  Each root owns its heavyweight
+    // Each page visits roots that still have discovery work.  A root owns its
+    // heavyweight
     // iterator manager only for Cec_TranRootDiscoverOne(); a later no-commit
     // wave restores the root's scalar cursor onto the shared manager.
     // The all-root union is still submitted without any global truncation.
@@ -6955,11 +7045,13 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             if ( pRoots[r].nMffc <= 0 )
                 continue;
             nLiveRoots++;
-            if ( fMicroBatch && pPars->fUseConstr &&
-                 Cec_TranRootBuildHorizonReached(pPars,
-                    pCursors + pRoots[r].iObj) )
+            if ( Cec_TranRootDiscoveryFinished(pPars, pRoots + r,
+                    pCursors + pRoots[r].iObj, iWave) )
             {
                 nHorizonRoots++;
+                if ( iWave > 0 && pPars->fUseConstr &&
+                     !Cec_TranRootBuildEligible(pRoots + r) )
+                    Prof.nRootPageMffcOneSkipped++;
                 continue;
             }
             Cec_TranRootDiscoverOne( p, pSim, pSource, pDb, fRootBatch,
@@ -6998,7 +7090,11 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         {
             Cec_TranCandVec_t const * pFrontier =
                 fMicroBatch ? &Page : &Known;
-            int fRefreshRoots = !fMicroBatch || nFrontierRefreshes == 0;
+            // MFFCs and root order were computed at pass initialization.
+            // Before selection the graph, covered and used sets never change.
+            // A successful selection exits discovery, including in -j0 mode;
+            // a new committed graph gets fresh initialization in the next pass.
+            int fRefreshRoots = 0;
             nFrontierRefreshes += fRefreshRoots;
             nFrontierRefreshReuses += !fRefreshRoots;
             nFrontierCandidates += pFrontier->nSize;
