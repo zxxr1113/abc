@@ -296,11 +296,38 @@ struct Cec_TranProf_t_
     abctime timeCombSolve;
     abctime timeFreeCexSim;
     abctime timeRootDivPool;
+    // Diagnostic sub-buckets nested inside timeRootDivPool.  They are not
+    // added to the top-level time total because that would double count.
+    abctime timeRootDivCollect;
+    abctime timeRootDivRank;
+    abctime timeRootDivRankMffcOneFirst;
+    abctime timeRootDivRankMffcOneCont;
+    abctime timeRootDivRankEligibleFirst;
+    abctime timeRootDivRankEligibleCont;
+    long long nRootDivRankMffcOneFirstCalls;
+    long long nRootDivRankMffcOneContCalls;
+    long long nRootDivRankEligibleFirstCalls;
+    long long nRootDivRankEligibleContCalls;
+    abctime timeRootDivSelect;
+    abctime timeRootDivHash;
     abctime timeRootDepInit;
     abctime timeRootDepSearch;
     // Root-only redesign: the following top-level buckets are disjoint.
     abctime timeRootSimSig;
     abctime timeRootRefresh;
+    // Diagnostic sub-buckets nested inside timeRootRefresh.
+    abctime timeRootFrontDead;
+    abctime timeRootPotentialRefresh;
+    abctime timeRootFrontLoop;
+    abctime timeRootFrontLoopFirst;
+    abctime timeRootFrontLoopCont;
+    abctime timeRootFrontSupport;
+    abctime timeRootFrontGain;
+    abctime timeRootFrontSort;
+    long long nRootFrontPairScans;
+    long long nRootFrontPairScansFirst;
+    long long nRootFrontPairScansCont;
+    long long nRootFrontMatched;
     abctime timeRootDirect;
     abctime timeRootDivCi;
     abctime timeRootResubInit;
@@ -5052,7 +5079,9 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         pCiScores[iHash] = pRanks[i].CiOverlap;
         pDivRanks[iHash] = i + 1;
     }
-    pProf->timeRootDivPool += Abc_Clock() - clkAll;
+    timePart = Abc_Clock() - clkAll;
+    pProf->timeRootDivPool += timePart;
+    pProf->timeRootDivHash += timePart;
     clk = Abc_Clock();
     pIter = Cec_TranDependencyIteratorStart( pSim,
         pPars, pRoot, vPool, NULL, pDep, pCursor->State,
@@ -5200,7 +5229,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Vec_Int_t * vPool;
     Cec_TranDivRank_t * pRanks = NULL;
     int i, nReservoirMax, nReservoirSize;
-    abctime clk = Abc_Clock(), timePart;
+    abctime clk, clkAll = Abc_Clock(), timePart;
     Cec_TranCandVecClear( pOut );
     // The heavyweight iterator manager is local to this call.  A later
     // no-commit wave restores only this root's scalar cursor onto the shared
@@ -5209,18 +5238,48 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     nReservoirMax = pPars->nConstrBaseMax ?
         Abc_MaxInt(4 * pPars->nConstrBaseMax,
             pPars->nConstrBaseMax + 32) : 0;
+    clk = Abc_Clock();
     vPool = Cec_TranCollectDivPool( p, pRoot->iObj,
         pPars->nConstrMax, nReservoirMax,
         pPars->fUseMffcDivs,
         pCovered, pUsed, pMffc, vMffc );
     Cec_TranFilterCoveredDivPool( vPool, pCovered );
+    pProf->timeRootDivCollect += Abc_Clock() - clk;
     nReservoirSize = Vec_IntSize( vPool );
     if ( Vec_IntSize(vPool) )
     {
+        clk = Abc_Clock();
         pRanks = Cec_TranRankDivReservoir(
             fRootBatch ? pSource : pSim, pRoot->iObj, vPool );
+        timePart = Abc_Clock() - clk;
+        pProf->timeRootDivRank += timePart;
+        if ( Cec_TranRootBuildEligible(pRoot) )
+        {
+            if ( iWave == 0 )
+            {
+                pProf->timeRootDivRankEligibleFirst += timePart;
+                pProf->nRootDivRankEligibleFirstCalls++;
+            }
+            else
+            {
+                pProf->timeRootDivRankEligibleCont += timePart;
+                pProf->nRootDivRankEligibleContCalls++;
+            }
+        }
+        else if ( iWave == 0 )
+        {
+            pProf->timeRootDivRankMffcOneFirst += timePart;
+            pProf->nRootDivRankMffcOneFirstCalls++;
+        }
+        else
+        {
+            pProf->timeRootDivRankMffcOneCont += timePart;
+            pProf->nRootDivRankMffcOneContCalls++;
+        }
+        clk = Abc_Clock();
         Cec_TranSelectRankedDivPool( vPool, pRanks,
             pPars->nConstrBaseMax );
+        pProf->timeRootDivSelect += Abc_Clock() - clk;
     }
     // Teaching must see the actual ranked Build pool, not an arbitrary BFS
     // prefix that may be discarded immediately afterwards.
@@ -5249,7 +5308,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
         pProf->nRootBuildMffcMax = Abc_MaxInt(
             pProf->nRootBuildMffcMax, pRoot->nMffc );
     }
-    timePart = Abc_Clock() - clk;
+    timePart = Abc_Clock() - clkAll;
     pProf->timeRootDivPool += timePart;
     clk = Abc_Clock();
     // Under SEQ proof micro-batching Direct belongs only to the first batch.
@@ -5320,44 +5379,62 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
     int fRefreshRoots, Cec_TranCandVec_t * pSeq, Cec_TranProf_t * pProf )
 {
     int r, i, k, iObj, Gain, fSupportFreed;
+    abctime clk, clkLoop;
     Cec_TranCandVecClear( pSeq );
+    clk = Abc_Clock();
     for ( i = 0; i < pCands->nSize; i++ )
         if ( pCands->pArray[i].nStatus == CEC_TRAN_STATE_CANDIDATE &&
              (pCovered[pCands->pArray[i].iTarget] ||
               pUsed[pCands->pArray[i].iTarget]) )
             pProf->nDirtyRootFreed++;
+    pProf->timeRootFrontDead += Abc_Clock() - clk;
     // Root potential depends only on the permanent snapshot and the virtual
     // covered/used sets.  SEQ proof micro-batches change neither, so the first
     // batch computes and sorts it once and later batches safely reuse it.
     // The legacy -j0 path continues to request its historical refresh on every
     // call so this optimization cannot perturb existing scheduling behavior.
     if ( fRefreshRoots )
+    {
+        clk = Abc_Clock();
         Cec_TranRootRefreshPotential( p, pRoots, nRoots, pCovered, pUsed,
             pMffc, vMffc, pProf );
+        pProf->timeRootPotentialRefresh += Abc_Clock() - clk;
+    }
+    clkLoop = Abc_Clock();
     for ( r = 0; r < nRoots && pRoots[r].nMffc > 0; r++ )
     {
+        pProf->nRootFrontPairScans += pCands->nSize;
+        if ( fRefreshRoots )
+            pProf->nRootFrontPairScansFirst += pCands->nSize;
+        else
+            pProf->nRootFrontPairScansCont += pCands->nSize;
         for ( i = 0; i < pCands->nSize; i++ )
         {
             Cec_TranCand_t Cand = pCands->pArray[i];
             if ( Cand.iTarget != pRoots[r].iObj ||
                  Cand.nStatus != CEC_TRAN_STATE_CANDIDATE )
                 continue;
+            pProf->nRootFrontMatched++;
             if ( pCovered[Cand.iTarget] || pUsed[Cand.iTarget] )
             {
                 pProf->nDirtyRootFreed++;
                 continue;
             }
+            clk = Abc_Clock();
             Cec_TranCandCollectSupport( &Cand, vSupport );
             fSupportFreed = 0;
             Vec_IntForEachEntry( vSupport, iObj, k )
                 fSupportFreed |= pCovered[iObj] != 0;
+            pProf->timeRootFrontSupport += Abc_Clock() - clk;
             if ( fSupportFreed )
             {
                 pProf->nDirtySupportFreed++;
                 continue;
             }
+            clk = Abc_Clock();
             Gain = Cec_TranCandDynamicGain( p, &Cand, pCovered, pUsed,
                 pMffc, vMffc, vSupport );
+            pProf->timeRootFrontGain += Abc_Clock() - clk;
             if ( Gain <= 0 )
             {
                 pProf->nDirtyMffcChanged++;
@@ -5370,9 +5447,19 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
             Cec_TranCandVecPush( pSeq, Cand );
         }
     }
+    clk = Abc_Clock() - clkLoop;
+    pProf->timeRootFrontLoop += clk;
+    if ( fRefreshRoots )
+        pProf->timeRootFrontLoopFirst += clk;
+    else
+        pProf->timeRootFrontLoopCont += clk;
     if ( pSeq->nSize > 1 )
+    {
+        clk = Abc_Clock();
         qsort( pSeq->pArray, pSeq->nSize, sizeof(Cec_TranCand_t),
             Cec_TranCandRootHeuristicCompare );
+        pProf->timeRootFrontSort += Abc_Clock() - clk;
+    }
 }
 
 // The conflict graph is stored by object incidence instead of materializing
@@ -6408,6 +6495,32 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         Cec_TranTimeSec(p->timeRootBundleDup), Cec_TranTimeSec(p->timeRootCleanup),
         Cec_TranTimeSec(p->timeRootExactAudit), Cec_TranTimeSec(p->timeShadow),
         Cec_TranTimeSec(Unprofiled) );
+    Abc_Print( 1, "stran-root preprocessing-detail profile: schema=1 phase=%s div-collect-sec=%.6f div-rank-sec=%.6f div-select-sec=%.6f div-hash-sec=%.6f frontier-dead-sec=%.6f root-potential-sec=%.6f frontier-loop-sec=%.6f frontier-support-sec=%.6f frontier-gain-sec=%.6f frontier-sort-sec=%.6f frontier-pair-scans=%lld frontier-matched=%lld\n",
+        iPhase ? "seq" : "comb",
+        Cec_TranTimeSec(p->timeRootDivCollect),
+        Cec_TranTimeSec(p->timeRootDivRank),
+        Cec_TranTimeSec(p->timeRootDivSelect),
+        Cec_TranTimeSec(p->timeRootDivHash),
+        Cec_TranTimeSec(p->timeRootFrontDead),
+        Cec_TranTimeSec(p->timeRootPotentialRefresh),
+        Cec_TranTimeSec(p->timeRootFrontLoop),
+        Cec_TranTimeSec(p->timeRootFrontSupport),
+        Cec_TranTimeSec(p->timeRootFrontGain),
+        Cec_TranTimeSec(p->timeRootFrontSort),
+        p->nRootFrontPairScans, p->nRootFrontMatched );
+    Abc_Print( 1, "stran-root page-reuse-detail profile: schema=1 phase=%s rank-mffc-one-first-sec=%.6f rank-mffc-one-cont-sec=%.6f rank-eligible-first-sec=%.6f rank-eligible-cont-sec=%.6f rank-mffc-one-first-calls=%lld rank-mffc-one-cont-calls=%lld rank-eligible-first-calls=%lld rank-eligible-cont-calls=%lld frontier-loop-first-sec=%.6f frontier-loop-cont-sec=%.6f frontier-pair-scans-first=%lld frontier-pair-scans-cont=%lld\n",
+        iPhase ? "seq" : "comb",
+        Cec_TranTimeSec(p->timeRootDivRankMffcOneFirst),
+        Cec_TranTimeSec(p->timeRootDivRankMffcOneCont),
+        Cec_TranTimeSec(p->timeRootDivRankEligibleFirst),
+        Cec_TranTimeSec(p->timeRootDivRankEligibleCont),
+        p->nRootDivRankMffcOneFirstCalls,
+        p->nRootDivRankMffcOneContCalls,
+        p->nRootDivRankEligibleFirstCalls,
+        p->nRootDivRankEligibleContCalls,
+        Cec_TranTimeSec(p->timeRootFrontLoopFirst),
+        Cec_TranTimeSec(p->timeRootFrontLoopCont),
+        p->nRootFrontPairScansFirst, p->nRootFrontPairScansCont );
     Abc_Print( 1, "stran-root effect matrix: proof-origin-phase kind generated submitted proved selected marginal-AND marginal-Reg\n" );
     for ( s = 0; s < 2; s++ )
     for ( k = 0; k < 3; k++ )
