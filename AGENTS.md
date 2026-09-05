@@ -1,4 +1,13 @@
-# Isolated &stran2 continuation workspace
+# Isolated &stran2 review-fix workspace
+
+This worktree is owned by the review task. The user authorized fixes for
+closure profiling, asymmetric Stage-3 coverage pruning, and the Stage-5
+one-gate residual base case, followed by complete comparison experiments.
+Use `/mnt/home/zhaoxiran/abc-stran2-review-fixes` on
+`codex/stran2-review-fixes` for edits/builds; the continuation-path and
+read-only-first-turn restrictions below are historical and superseded here.
+Do not edit or rebuild any other worktree. Use isolated scripts under
+`/mnt/home/zhaoxiran/script2/stran2_review_fixes` for this experiment.
 
 Read `/mnt/home/zhaoxiran/AGENTS.md` completely, then read
 `/mnt/home/zhaoxiran/script2/WORKSPACE_INDEX.md` and

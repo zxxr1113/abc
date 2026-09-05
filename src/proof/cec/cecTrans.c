@@ -6602,6 +6602,10 @@ static Gia_Man_t * Cec_TranCommitSelectedRootOnly( Gia_Man_t * p,
     return pClean;
 }
 
+static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
+    int nAndBefore, int nAndAfter, int nRegBefore, int nRegAfter,
+    int nRootWaves, int iPhase, int fClosure );
+
 // Drain the proved pool to a commit fixed point without rediscovering or
 // re-proving candidates.  Each iteration is one commit wave: validate every
 // deferred certificate on the current graph, evaluate frozen DAG-aware gain,
@@ -6616,6 +6620,7 @@ static Gia_Man_t * Cec_TranDrainProvedCommits( Gia_Man_t * p,
     assert( iPhase == 0 || iPhase == 1 );
     while ( pHistory->nSize )
     {
+        abctime clkTotal = Abc_Clock(), clk;
         Cec_TranProf_t Prof = {0};
         Cec_TranCandVec_t HistoryLive = {0}, Proved = {0};
         Cec_TranCandVec_t Selected = {0}, Carry = {0};
@@ -6629,13 +6634,17 @@ static Gia_Man_t * Cec_TranDrainProvedCommits( Gia_Man_t * p,
         char * pCovered = ABC_CALLOC( char, Gia_ManObjNum(p) );
         char * pUsed = ABC_CALLOC( char, Gia_ManObjNum(p) );
         int i, nSelected = 0, nBefore = Gia_ManAndNum( p );
+        int nRegBefore = Gia_ManRegNum( p );
 
         // The simulation is only a structural/signature guard for certificates
         // remapped through cleanup.  This loop performs no candidate discovery
         // and makes no proof calls.
+        clk = Abc_Clock();
         pDb = Cec_TranPatDbStart( p, 0 );
         Gia_ManCreateRefs( p );
         pSim = Cec_TranSimStart( p, pPars, pDb );
+        Prof.timeRootSimSig += Abc_Clock() - clk;
+        clk = Abc_Clock();
         for ( i = 0; i < pHistory->nSize; i++ )
         {
             Cec_TranCand_t Cand = pHistory->pArray[i];
@@ -6653,10 +6662,13 @@ static Gia_Man_t * Cec_TranDrainProvedCommits( Gia_Man_t * p,
             if ( !Cec_TranCandVecContains(&Proved, &Cand) )
                 Cec_TranCandVecPush( &Proved, Cand );
         }
+        Prof.timeRootRefresh += Abc_Clock() - clk;
+        clk = Abc_Clock();
         if ( Proved.nSize )
             nSelected = Cec_TranRootConsumeProved( p, &Proved,
                 pCovered, pUsed, pSolved, pMffc, vMffc, vSupport,
                 &Selected, &Prof );
+        Prof.timeRootPostSelect += Abc_Clock() - clk;
         for ( i = 0; i < HistoryLive.nSize; i++ )
             if ( !Cec_TranCandVecContains(&Selected,
                     HistoryLive.pArray + i) )
@@ -6689,6 +6701,11 @@ static Gia_Man_t * Cec_TranDrainProvedCommits( Gia_Man_t * p,
         ABC_FREE( pSolved );
         ABC_FREE( pCovered );
         ABC_FREE( pUsed );
+        Prof.timeTotal = Abc_Clock() - clkTotal;
+        if ( pPars->fProfile )
+            Cec_TranPrintRootOnlyProfile( &Prof, nBefore,
+                Gia_ManAndNum(p), nRegBefore, Gia_ManRegNum(p),
+                0, iPhase, 1 );
         if ( !nSelected )
             break;
     }
@@ -6701,7 +6718,7 @@ static Gia_Man_t * Cec_TranDrainProvedCommits( Gia_Man_t * p,
 
 static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
     int nAndBefore, int nAndAfter, int nRegBefore, int nRegAfter,
-    int nRootWaves, int iPhase )
+    int nRootWaves, int iPhase, int fClosure )
 {
     static char const * pStage[2] = { "COMB", "SEQ" };
     static char const * pLane[2] = { "CBS", "SCORR" };
@@ -6764,8 +6781,8 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
         SumTime += Times[i];
     }
     Unprofiled = p->timeTotal > SumTime ? p->timeTotal - SumTime : 0;
-    Abc_Print( 1, "stran-root experiment-time profile: schema=7 phase=%s total-sec=%.6f sim-sec=%.6f root-refresh-sec=%.6f direct-discovery-sec=%.6f divisor-discovery-sec=%.6f resub-init-sec=%.6f resub-enum-sec=%.6f cbs-graph-sec=%.6f cbs-screen-sec=%.6f cbs-solve-sec=%.6f scorr-graph-sec=%.6f scorr-bmc-sec=%.6f scorr-induction-sec=%.6f scorr-resim-sec=%.6f scorr-other-sec=%.6f selection-repair-sec=%.6f bundle-sec=%.6f cleanup-sec=%.6f exact-audit-sec=%.6f shadow-sec=%.6f unprofiled-sec=%.6f\n",
-        iPhase ? "seq" : "comb",
+    Abc_Print( 1, "stran-root experiment-time profile: schema=8 phase=%s scope=%s total-sec=%.6f sim-sec=%.6f root-refresh-sec=%.6f direct-discovery-sec=%.6f divisor-discovery-sec=%.6f resub-init-sec=%.6f resub-enum-sec=%.6f cbs-graph-sec=%.6f cbs-screen-sec=%.6f cbs-solve-sec=%.6f scorr-graph-sec=%.6f scorr-bmc-sec=%.6f scorr-induction-sec=%.6f scorr-resim-sec=%.6f scorr-other-sec=%.6f selection-repair-sec=%.6f bundle-sec=%.6f cleanup-sec=%.6f exact-audit-sec=%.6f shadow-sec=%.6f unprofiled-sec=%.6f\n",
+        iPhase ? "seq" : "comb", fClosure ? "closure" : "discovery",
         Cec_TranTimeSec(p->timeTotal), Cec_TranTimeSec(p->timeRootSimSig),
         Cec_TranTimeSec(p->timeRootRefresh), Cec_TranTimeSec(p->timeRootDirect),
         Cec_TranTimeSec(p->timeRootDivCi), Cec_TranTimeSec(p->timeRootResubInit),
@@ -6858,9 +6875,19 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
     assert( p->nRootResubIterLiveMax <= 1 );
     Abc_Print( 1, "stran-root effect totals: selected-roots=%d marginal-AND=%lld cleanup-exact-AND=%lld AND=%d->%d.\n",
         SumSelected, SumMarginal, p->nRootBundleAndGain, nAndBefore, nAndAfter );
-    Abc_Print( 1, "stran-root experiment-summary profile: schema=5 phase=%s selected-roots=%d marginal-and=%lld final-and-gain=%lld final-reg-gain=%lld and-before=%d and-after=%d reg-before=%d reg-after=%d\n",
-        iPhase ? "seq" : "comb", SumSelected, SumMarginal, p->nRootBundleAndGain,
+    Abc_Print( 1, "stran-root experiment-summary profile: schema=8 phase=%s scope=%s selected-roots=%d marginal-and=%lld final-and-gain=%lld final-reg-gain=%lld and-before=%d and-after=%d reg-before=%d reg-after=%d\n",
+        iPhase ? "seq" : "comb", fClosure ? "closure" : "discovery",
+        SumSelected, SumMarginal, p->nRootBundleAndGain,
         p->nRootBundleRegGain, nAndBefore, nAndAfter, nRegBefore, nRegAfter );
+    // Preserve the proof-origin matrix above and separately attribute every
+    // selected certificate to the phase in which it was actually committed.
+    for ( k = 0; k < 3; k++ )
+        Abc_Print( 1, "stran-root experiment-commit profile: schema=8 phase=%s kind=%s selected=%d marginal-and=%lld marginal-reg=%lld\n",
+            iPhase ? "seq" : "comb", k == CEC_TRAN_CAND_CONST ? "constant" :
+            k == CEC_TRAN_CAND_EXIST ? "existing" : "build",
+            p->nStageKindSelected[0][k] + p->nStageKindSelected[1][k],
+            p->nStageKindMarginalAndGain[0][k] + p->nStageKindMarginalAndGain[1][k],
+            p->nStageKindMarginalRegGain[0][k] + p->nStageKindMarginalRegGain[1][k] );
     Abc_Print( 1, "stran-root sequential relations: candidates=%d seeded=%d helper-seeds=%d proved=%d split=%d unknown=%d roots=%d class-max=%d class-avg=%.2f fixed-point-rounds=%d.\n",
         p->nSeqCands, p->nSeqSeeded, p->nSeqSeeded - p->nSeqCands,
         p->nSeqProved, p->nSeqSplit, p->nSeqUnknown,
@@ -7435,7 +7462,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Prof.timeTotal = Abc_Clock() - clkTotal;
     if ( pPars->fProfile )
         Cec_TranPrintRootOnlyProfile( &Prof, nAndBefore, Gia_ManAndNum(p),
-            nRegBefore, Gia_ManRegNum(p), Abc_MinInt(nWaves, 64), iPhase );
+            nRegBefore, Gia_ManRegNum(p), Abc_MinInt(nWaves, 64), iPhase, 0 );
     Cec_TranSuppProfStop( Prof.pBuildSuppProf );
     Prof.pBuildSuppProf = NULL;
     Abc_Print( 1, "stran-root summary: round=%d phase=%s roots=%d selected=%d comb-proved=%d seq-proved=%d unique-proved=%d AND=%d->%d exact-gain=%lld.\n",
