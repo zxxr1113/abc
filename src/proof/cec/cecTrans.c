@@ -6725,6 +6725,9 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int fCommitHorizonReached = 0;
     int nBuildAcceptedTotal = 0, nBuildAcceptedMax = 0;
     int nBuildHorizonRoots = 0;
+    int nBuildEligibleRoots = 0, nBuildAtQRoots = 0;
+    int nBuildExhaustedBeforeQRoots = 0, nBuildUnfinishedBelowQRoots = 0;
+    int nBuildZeroAcceptedRoots = 0;
     int nFrontierRefreshes = 0, nFrontierRefreshReuses = 0;
     long long nFrontierCandidates = 0, nKnownCandidateScansAvoided = 0;
     int iPhase = fCombOnly ? 0 : 1;
@@ -6967,6 +6970,21 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
                     pCursor->nBuildAccepted );
                 nBuildHorizonRoots += pPars->fUseConstr &&
                     Cec_TranRootBuildHorizonReached(pPars, pCursor);
+                if ( pPars->fUseConstr &&
+                     Cec_TranRootBuildEligible(pRoots + r) )
+                {
+                    nBuildEligibleRoots++;
+                    nBuildZeroAcceptedRoots +=
+                        pCursor->nBuildAccepted == 0;
+                    if ( pPars->nRootConstrTop > 0 &&
+                         pCursor->nBuildAccepted >=
+                            pPars->nRootConstrTop )
+                        nBuildAtQRoots++;
+                    else if ( pCursor->fExhausted )
+                        nBuildExhaustedBeforeQRoots++;
+                    else
+                        nBuildUnfinishedBelowQRoots++;
+                }
             }
 
     // Keep every still-live old certificate and every newly proved relation
@@ -7023,6 +7041,15 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             nBuildAcceptedTotal, nBuildAcceptedMax, nBuildHorizonRoots,
             fCommitHorizonReached ? "commit-horizon" : "no-new-candidate",
             Selected.nSize );
+    if ( fMicroBatch && pPars->fProfile )
+        Abc_Print( 1, "stran-root build-horizon profile: schema=1 phase=%s q-limit=%d eligible-roots=%d q-slot-capacity=%lld q-slots-used=%d at-q-roots=%d exhausted-before-q-roots=%d unfinished-below-q-roots=%d zero-accepted-roots=%d accepted-total=%d accepted-max-per-root=%d.\n",
+            fCombOnly ? "comb" : "seq", pPars->nRootConstrTop,
+            nBuildEligibleRoots,
+            (long long)pPars->nRootConstrTop * nBuildEligibleRoots,
+            nBuildAcceptedTotal, nBuildAtQRoots,
+            nBuildExhaustedBeforeQRoots, nBuildUnfinishedBelowQRoots,
+            nBuildZeroAcceptedRoots, nBuildAcceptedTotal,
+            nBuildAcceptedMax );
     if ( fMicroBatch )
         Abc_Print( 1, "stran-root immutable frontier reuse: refresh-calls=%d refresh-reuses=%d page-candidates=%lld known-candidate-scans-avoided=%lld.\n",
             nFrontierRefreshes, nFrontierRefreshReuses,
