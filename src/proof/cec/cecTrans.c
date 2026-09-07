@@ -4554,7 +4554,12 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
                     Vec_IntPush( vNext, iFan );
             }
         }
-        if ( fFull )
+        // The ranked divisor reservoir and the structural TFI membership have
+        // different purposes.  Once the reservoir is full, TFI-only mode can
+        // stop as before.  Complete-fanin TFO mode must keep walking to the
+        // requested depth so a fanout is not rejected merely because one of
+        // its fanins appeared after the reservoir budget was exhausted.
+        if ( fFull && !nTfoMode )
             break;
         ABC_SWAP( Vec_Int_t, *vFront, *vNext );
     }
@@ -4630,7 +4635,7 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
 
 static int Cec_TranTfoClosureSelfTest()
 {
-    Gia_Man_t * p = Gia_ManStart( 16 );
+    Gia_Man_t * p = Gia_ManStart( 24 );
     Vec_Int_t * vMffc = Vec_IntAlloc( 16 );
     Vec_Int_t * vTfo = Vec_IntAlloc( 8 );
     Vec_Int_t * vPool;
@@ -4638,8 +4643,10 @@ static int Cec_TranTfoClosureSelfTest()
     int iA = Gia_ManAppendCi( p );
     int iB = Gia_ManAppendCi( p );
     int iC = Gia_ManAppendCi( p );
+    int iD = Gia_ManAppendCi( p );
     int iE = Gia_ManAppendCi( p );
-    int iT0 = Gia_ManAppendAnd( p, iA, iC );
+    int iDeep = Gia_ManAppendAnd( p, iA, iD );
+    int iT0 = Gia_ManAppendAnd( p, iDeep, iC );
     int iT1 = Gia_ManAppendAnd( p, iB, iC );
     int iSide = Gia_ManAppendAnd( p, iA, iB );
     int iNext = Gia_ManAppendAnd( p, iSide, iC );
@@ -4658,6 +4665,14 @@ static int Cec_TranTfoClosureSelfTest()
     assert( Vec_IntFind(vTfo, Abc_Lit2Var(iNext)) < 0 );
     assert( Vec_IntFind(vTfo, Abc_Lit2Var(iPartial)) < 0 );
     assert( Vec_IntFind(vTfo, Abc_Lit2Var(iRoot)) < 0 );
+    Vec_IntFree( vPool );
+
+    // A one-node legal reservoir fills before the deeper A fanin is visited.
+    // TFO membership must nevertheless use the complete unlimited-depth TFI,
+    // so the complete-fanin side node remains visible.
+    vPool = Cec_TranCollectDivPool( p, Abc_Lit2Var(iRoot), 0, 1, 0,
+        NULL, NULL, pMark, vMffc, 1, 8, vTfo, &Stats );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iSide)) >= 0 );
     Vec_IntFree( vPool );
 
     vPool = Cec_TranCollectDivPool( p, Abc_Lit2Var(iRoot), 0, 0, 0,
@@ -6361,6 +6376,108 @@ static long long Cec_TranConflictGraphGwmin(
     return Weight;
 }
 
+// Audit the frozen-cost independent set with the exact operation used by the
+// real commit: one topological bundle duplication followed by cleanup.  The
+// structural conflict graph normally makes the individual gains additive,
+// but structural hashing can expose an alias which is not represented by an
+// object-incidence edge.  Keep the safety property explicit instead of
+// weakening the commit assertion.
+static int Cec_TranSelectedExactGain( Gia_Man_t * p,
+    Cec_TranCandVec_t const * pVertices, char const * pChosen )
+{
+    Gia_Man_t * pDup, * pClean;
+    Vec_Int_t * vSelected = Vec_IntAlloc( 64 );
+    int i, Gain;
+    for ( i = 0; i < pVertices->nSize; i++ )
+        if ( pChosen[i] )
+            Vec_IntPush( vSelected, i );
+    if ( Vec_IntSize(vSelected) == 0 )
+    {
+        Vec_IntFree( vSelected );
+        return 0;
+    }
+    pDup = Cec_TranDupRootBundle( p, pVertices->pArray, vSelected );
+    pClean = Cec_TranCleanupKeepRegs( pDup, NULL );
+    Gain = Cec_TranGain( p, pClean );
+    Gia_ManStop( pDup );
+    Gia_ManStop( pClean );
+    Vec_IntFree( vSelected );
+    return Gain;
+}
+
+// A rare non-additive bundle is repaired by one global, deterministic rule:
+// visit the chosen candidates by decreasing frozen gain (then MFFC, target,
+// and stable vertex index), and retain exactly the candidates whose measured
+// bundle marginal is positive.  Replacing the estimate by that exact marginal
+// makes the accounting telescope to the final cleanup gain.  This is a
+// structural safety fallback, not a circuit-specific quality policy.
+static long long Cec_TranRepairSelectedExact( Gia_Man_t * p,
+    Cec_TranCandVec_t * pVertices, char * pChosen,
+    long long Predicted )
+{
+    char * pOriginal = ABC_ALLOC( char, pVertices->nSize );
+    char * pDone = ABC_CALLOC( char, pVertices->nSize );
+    int * pFrozenGain = ABC_ALLOC( int, pVertices->nSize );
+    int i, k, iBest, nOriginal = 0, nKept = 0;
+    int Exact, Audited, Current = 0;
+    abctime clk = Abc_Clock();
+    memcpy( pOriginal, pChosen, pVertices->nSize );
+    for ( i = 0; i < pVertices->nSize; i++ )
+        pFrozenGain[i] = pVertices->pArray[i].Gain,
+        nOriginal += pOriginal[i] != 0;
+    Exact = Cec_TranSelectedExactGain( p, pVertices, pChosen );
+    Audited = Exact;
+    if ( Exact > 0 && Exact >= Predicted )
+    {
+        ABC_FREE( pOriginal );
+        ABC_FREE( pDone );
+        ABC_FREE( pFrozenGain );
+        return Predicted;
+    }
+
+    memset( pChosen, 0, pVertices->nSize );
+    for ( k = 0; k < nOriginal; k++ )
+    {
+        int Trial;
+        iBest = -1;
+        for ( i = 0; i < pVertices->nSize; i++ )
+            if ( pOriginal[i] && !pDone[i] &&
+                 (iBest < 0 || pFrozenGain[i] > pFrozenGain[iBest] ||
+                  (pFrozenGain[i] == pFrozenGain[iBest] &&
+                   (pVertices->pArray[i].nMffc >
+                        pVertices->pArray[iBest].nMffc ||
+                    (pVertices->pArray[i].nMffc ==
+                         pVertices->pArray[iBest].nMffc &&
+                     (pVertices->pArray[i].iTarget >
+                          pVertices->pArray[iBest].iTarget ||
+                      (pVertices->pArray[i].iTarget ==
+                           pVertices->pArray[iBest].iTarget && i < iBest)))))) )
+                iBest = i;
+        assert( iBest >= 0 );
+        pDone[iBest] = 1;
+        pChosen[iBest] = 1;
+        Trial = Cec_TranSelectedExactGain( p, pVertices, pChosen );
+        if ( Trial <= Current )
+        {
+            pChosen[iBest] = 0;
+            continue;
+        }
+        pVertices->pArray[iBest].Gain = Trial - Current;
+        Current = Trial;
+        nKept++;
+    }
+    assert( nKept > 0 && Current > 0 );
+    Exact = Cec_TranSelectedExactGain( p, pVertices, pChosen );
+    assert( Exact == Current );
+    Abc_Print( 1, "stran-root exact bundle repair: predicted=%lld exact=%d original=%d kept=%d repaired-gain=%d audit-sec=%.6f policy=positive-exact-marginal.\n",
+        Predicted, Audited, nOriginal, nKept, Current,
+        Cec_TranTimeSec(Abc_Clock() - clk) );
+    ABC_FREE( pOriginal );
+    ABC_FREE( pDone );
+    ABC_FREE( pFrozenGain );
+    return Current;
+}
+
 static int Cec_TranRootConsumeProved( Gia_Man_t * p,
     Cec_TranCandVec_t * pProved, char * pCovered, char * pUsed,
     char * pSolved, char * pMffc, Vec_Int_t * vMffc, Vec_Int_t * vSupport,
@@ -6430,6 +6547,9 @@ static int Cec_TranRootConsumeProved( Gia_Man_t * p,
     SelectedWeight = Vertices.nSize ?
         Cec_TranConflictGraphGwmin( &Graph, &Vertices,
             pChosen, &nEdges, &FirstGain ) : 0;
+    if ( SelectedWeight )
+        SelectedWeight = Cec_TranRepairSelectedExact( p, &Vertices,
+            pChosen, SelectedWeight );
 
     // Apply the independent-set decision as metadata only.  No selected
     // candidate is re-evaluated on a partially modified graph in this wave.
@@ -6444,6 +6564,7 @@ static int Cec_TranRootConsumeProved( Gia_Man_t * p,
             Cand.nStatus = CEC_TRAN_STATE_SELECTED;
             Cec_TranCandVecPush( pSelected, Cand );
             iProved = Vec_IntEntry( vProvedIds, i );
+            pProved->pArray[iProved].Gain = Cand.Gain;
             pProved->pArray[iProved].nStatus = CEC_TRAN_STATE_SELECTED;
             for ( k = Vec_IntEntry(Graph.vMffcBeg, i);
                   k < Vec_IntEntry(Graph.vMffcBeg, i + 1); k++ )
