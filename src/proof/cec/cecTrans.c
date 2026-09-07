@@ -188,16 +188,49 @@ static int Cec_TranPipelineSelfTest();
 static int Cec_TranCommitWaveSelfTest();
 static int Cec_TranProofMicroBatchSelfTest();
 static int Cec_TranObservationSelfTest();
+static int Cec_TranTfoClosureSelfTest();
+typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
+struct Cec_TranTfoStats_t_
+{
+    long long nSeeds;
+    long long nScanned;
+    long long nEdges;
+    long long nAdded;
+    int       fLimit;
+    abctime   Time;
+};
 static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
     int nDepthMax, int nNodesMax, int fUseMffcDivs,
     char const * pCovered, char const * pUsed,
-    char * pMffc, Vec_Int_t * vMffc );
+    char * pMffc, Vec_Int_t * vMffc, int nTfoMode, int nTfoMax,
+    Vec_Int_t * vTfo, Cec_TranTfoStats_t * pTfoStats );
 int Cec_TranRootSelfTest()
 {
     return Abc_ResubIteratorSelfTest() && Cec_TranCanonicalizeSelfTest() &&
         Cec_TranMffcSelfTest() && Cec_TranPipelineSelfTest() &&
         Cec_TranCommitWaveSelfTest() && Cec_TranProofMicroBatchSelfTest() &&
-        Cec_TranObservationSelfTest();
+        Cec_TranObservationSelfTest() && Cec_TranTfoClosureSelfTest();
+}
+
+// Private experiment controls.  Mode 0 preserves the tested TFI-only path,
+// mode 1 adds the direct complete-fanin fanout shell, and mode 2 computes its
+// forward fixed point.  A zero maximum selects the root's existing reservoir
+// cap (or 256 when the TFI reservoir is unlimited).
+static int Cec_TranReadEnvInt( char const * pName, int Default, int Max )
+{
+    char const * pValue = getenv( pName );
+    char * pEnd = NULL;
+    long Value;
+    if ( pValue == NULL || *pValue == '\0' )
+        return Default;
+    Value = strtol( pValue, &pEnd, 10 );
+    if ( pEnd == pValue || *pEnd != '\0' || Value < 0 || Value > Max )
+    {
+        Abc_Print( -1, "Ignoring invalid %s=%s (expected 0..%d).\n",
+            pName, pValue, Max );
+        return Default;
+    }
+    return (int)Value;
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -345,6 +378,15 @@ struct Cec_TranProf_t_
     long long nRootDivRankEligibleContCalls;
     abctime timeRootDivSelect;
     abctime timeRootDivHash;
+    abctime timeRootDivTfo;
+    long long nRootTfoCalls;
+    long long nRootTfoSeeds;
+    long long nRootTfoScanned;
+    long long nRootTfoEdges;
+    long long nRootTfoAdded;
+    long long nRootTfoSelected;
+    long long nRootTfoLimitHits;
+    int       nRootTfoAddedMax;
     abctime timeRootDepInit;
     abctime timeRootDepSearch;
     // Root-only redesign: the following top-level buckets are disjoint.
@@ -3763,11 +3805,11 @@ static int Cec_TranMffcSelfTest()
     // lightweight ref==1 routing mask leaves it visible.  The A/B switch must
     // include X only when exact-MFFC internal divisors are enabled.
     vPool = Cec_TranCollectDivPool( p, Abc_Lit2Var(iRoot), 0, 0, 1,
-        NULL, NULL, pMark, vMarked );
+        NULL, NULL, pMark, vMarked, 0, 0, NULL, NULL );
     assert( Vec_IntFind(vPool, Abc_Lit2Var(iX)) >= 0 );
     Vec_IntFree( vPool );
     vPool = Cec_TranCollectDivPool( p, Abc_Lit2Var(iRoot), 0, 0, 0,
-        NULL, NULL, pMark, vMarked );
+        NULL, NULL, pMark, vMarked, 0, 0, NULL, NULL );
     assert( Vec_IntFind(vPool, Abc_Lit2Var(iX)) < 0 );
     Vec_IntFree( vPool );
 
@@ -4454,13 +4496,23 @@ static int Cec_TranCandFrozenGainWithRefs( Gia_Man_t * p,
 // PI and RO objects are legal CIs, and all retained nodes precede the target.
 static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
     int nDepthMax, int nNodesMax, int fUseMffcDivs, char const * pCovered,
-    char const * pUsed, char * pMffc, Vec_Int_t * vMffc )
+    char const * pUsed, char * pMffc, Vec_Int_t * vMffc,
+    int nTfoMode, int nTfoMax, Vec_Int_t * vTfo,
+    Cec_TranTfoStats_t * pTfoStats )
 {
     Vec_Int_t * vPool = Vec_IntAlloc( nNodesMax ? nNodesMax : 64 );
     Vec_Int_t * vFront = Vec_IntAlloc( 32 );
     Vec_Int_t * vNext = Vec_IntAlloc( 32 );
+    Vec_Int_t * vSeeds = nTfoMode ? Vec_IntAlloc( 64 ) : NULL;
     Gia_Obj_t * pObj, * pFan;
     int d, i, k, iObj, iFan, fFull = 0;
+    abctime clkTfo = 0;
+    assert( nTfoMode >= 0 && nTfoMode <= 2 );
+    assert( !nTfoMode || (p->vFanoutNums && p->vFanout && vTfo) );
+    if ( vTfo )
+        Vec_IntClear( vTfo );
+    if ( pTfoStats )
+        memset( pTfoStats, 0, sizeof(*pTfoStats) );
     Cec_TranMffcScratchClear( pMffc, vMffc );
     if ( fUseMffcDivs )
         Cec_TranMarkDivExclusion_rec( p, iTarget, iTarget, pCovered, pUsed,
@@ -4489,6 +4541,8 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
                 if ( Gia_ObjIsTravIdCurrentId(p, iFan) )
                     continue;
                 Gia_ObjSetTravIdCurrentId( p, iFan );
+                if ( vSeeds )
+                    Vec_IntPush( vSeeds, iFan );
                 pFan = Gia_ManObj( p, iFan );
                 if ( iFan != 0 && iFan < iTarget && Gia_ObjIsCand(pFan) &&
                      !pMffc[iFan] && !fFull )
@@ -4504,9 +4558,123 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
             break;
         ABC_SWAP( Vec_Int_t, *vFront, *vNext );
     }
+    // Expand only through fanouts whose two physical AIG fanins are already
+    // members of the root-local structural window.  The target and every true
+    // target fanout are topologically later and are excluded by iFan<iTarget.
+    // In shell mode, additions do not become membership witnesses.  In fixed-
+    // point mode they are marked and queued, so a later complete-fanin fanout
+    // can become a divisor too.  Legal-candidate filtering stays separate
+    // from structural membership: MFFC nodes may justify completeness without
+    // themselves entering the divisor reservoir.
+    if ( nTfoMode )
+    {
+        int nSeedSize = Vec_IntSize( vSeeds );
+        int nTfoLimit = nTfoMax ? nTfoMax :
+            (nNodesMax ? nNodesMax : 256);
+        clkTfo = Abc_Clock();
+        for ( i = 0; i < (nTfoMode == 2 ? Vec_IntSize(vSeeds) : nSeedSize); i++ )
+        {
+            int f;
+            iObj = Vec_IntEntry( vSeeds, i );
+            if ( pTfoStats )
+                pTfoStats->nScanned++;
+            Gia_ObjForEachFanoutStaticId( p, iObj, iFan, f )
+            {
+                int iFan0, iFan1;
+                if ( pTfoStats )
+                    pTfoStats->nEdges++;
+                if ( iFan >= iTarget ||
+                     !Gia_ObjIsAndNotBuf(Gia_ManObj(p, iFan)) ||
+                     Gia_ObjIsTravIdCurrentId(p, iFan) )
+                    continue;
+                pFan = Gia_ManObj( p, iFan );
+                iFan0 = Gia_ObjFaninId0p( p, pFan );
+                iFan1 = Gia_ObjFaninId1p( p, pFan );
+                if ( !Gia_ObjIsTravIdCurrentId(p, iFan0) ||
+                     !Gia_ObjIsTravIdCurrentId(p, iFan1) )
+                    continue;
+                // Shell additions are deliberately not marked, so suppress
+                // the second encounter through the other fanin explicitly.
+                if ( nTfoMode == 1 && Vec_IntFind(vTfo, iFan) >= 0 )
+                    continue;
+                Vec_IntPush( vTfo, iFan );
+                if ( nTfoMode == 2 )
+                {
+                    Gia_ObjSetTravIdCurrentId( p, iFan );
+                    Vec_IntPush( vSeeds, iFan );
+                }
+                if ( pTfoStats )
+                    pTfoStats->nAdded++;
+                if ( Vec_IntSize(vTfo) >= nTfoLimit )
+                {
+                    if ( pTfoStats )
+                        pTfoStats->fLimit = 1;
+                    break;
+                }
+            }
+            if ( Vec_IntSize(vTfo) >= nTfoLimit )
+                break;
+        }
+        Vec_IntAppend( vPool, vTfo );
+        if ( pTfoStats )
+        {
+            pTfoStats->nSeeds = nSeedSize;
+            pTfoStats->Time = Abc_Clock() - clkTfo;
+        }
+    }
+    Vec_IntFreeP( &vSeeds );
     Vec_IntFree( vFront );
     Vec_IntFree( vNext );
     return vPool;
+}
+
+static int Cec_TranTfoClosureSelfTest()
+{
+    Gia_Man_t * p = Gia_ManStart( 16 );
+    Vec_Int_t * vMffc = Vec_IntAlloc( 16 );
+    Vec_Int_t * vTfo = Vec_IntAlloc( 8 );
+    Vec_Int_t * vPool;
+    Cec_TranTfoStats_t Stats = {0};
+    int iA = Gia_ManAppendCi( p );
+    int iB = Gia_ManAppendCi( p );
+    int iC = Gia_ManAppendCi( p );
+    int iE = Gia_ManAppendCi( p );
+    int iT0 = Gia_ManAppendAnd( p, iA, iC );
+    int iT1 = Gia_ManAppendAnd( p, iB, iC );
+    int iSide = Gia_ManAppendAnd( p, iA, iB );
+    int iNext = Gia_ManAppendAnd( p, iSide, iC );
+    int iPartial = Gia_ManAppendAnd( p, iA, iE );
+    int iRoot = Gia_ManAppendAnd( p, iT0, iT1 );
+    char * pMark;
+    Gia_ManAppendCo( p, iRoot );
+    Gia_ManSetRegNum( p, 0 );
+    Gia_ManCreateRefs( p );
+    Gia_ManStaticFanoutStart( p );
+    pMark = ABC_CALLOC( char, Gia_ManObjNum(p) );
+
+    vPool = Cec_TranCollectDivPool( p, Abc_Lit2Var(iRoot), 0, 0, 0,
+        NULL, NULL, pMark, vMffc, 1, 8, vTfo, &Stats );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iSide)) >= 0 );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iNext)) < 0 );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iPartial)) < 0 );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iRoot)) < 0 );
+    Vec_IntFree( vPool );
+
+    vPool = Cec_TranCollectDivPool( p, Abc_Lit2Var(iRoot), 0, 0, 0,
+        NULL, NULL, pMark, vMffc, 2, 8, vTfo, &Stats );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iSide)) >= 0 );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iNext)) >= 0 );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iPartial)) < 0 );
+    assert( Vec_IntFind(vTfo, Abc_Lit2Var(iRoot)) < 0 );
+    Vec_IntFree( vPool );
+
+    Gia_ManStaticFanoutStop( p );
+    ABC_FREE( pMark );
+    Vec_IntFree( vMffc );
+    Vec_IntFree( vTfo );
+    ABC_FREE( p->pRefs );
+    Gia_ManStop( p );
+    return 1;
 }
 
 // Rank a physical divisor by the number of opposite-label simulation pairs
@@ -5507,7 +5675,7 @@ static int Cec_TranCandRootHeuristicCompare( const void * p0, const void * p1 )
 static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranSim_t * pSource, Cec_TranPatDb_t * pDb, int fRootBatch,
     Cec_ParTran_t * pPars, Cec_TranRoot_t * pRoot,
-    Cec_TranRootCursor_t * pCursor, int iWave,
+    Cec_TranRootCursor_t * pCursor, int iWave, int nTfoMode, int nTfoMax,
     Cec_TranCandVec_t const * pKnown, char const * pSolved,
     char const * pCovered, char const * pUsed,
     char * pMffc, Vec_Int_t * vMffc, Cec_TranDepScratch_t * pDep,
@@ -5515,7 +5683,8 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranCandVec_t * pOut )
 {
     Cec_TranCandVec_t Exist = {0}, Build = {0};
-    Vec_Int_t * vPool;
+    Vec_Int_t * vPool, * vTfo = nTfoMode ? Vec_IntAlloc( 32 ) : NULL;
+    Cec_TranTfoStats_t TfoStats = {0};
     Cec_TranDivRank_t * pRanks = NULL;
     int i, nReservoirMax, nReservoirSize;
     int fObsSample = (pPars->nExplore & 2) && iWave == 0 &&
@@ -5535,9 +5704,22 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     vPool = Cec_TranCollectDivPool( p, pRoot->iObj,
         pPars->nConstrMax, nReservoirMax,
         pPars->fUseMffcDivs,
-        pCovered, pUsed, pMffc, vMffc );
+        pCovered, pUsed, pMffc, vMffc, nTfoMode, nTfoMax,
+        vTfo, &TfoStats );
     Cec_TranFilterCoveredDivPool( vPool, pCovered );
     pProf->timeRootDivCollect += Abc_Clock() - clk;
+    if ( nTfoMode )
+    {
+        pProf->nRootTfoCalls++;
+        pProf->nRootTfoSeeds += TfoStats.nSeeds;
+        pProf->nRootTfoScanned += TfoStats.nScanned;
+        pProf->nRootTfoEdges += TfoStats.nEdges;
+        pProf->nRootTfoAdded += TfoStats.nAdded;
+        pProf->nRootTfoLimitHits += TfoStats.fLimit;
+        pProf->nRootTfoAddedMax = Abc_MaxInt( pProf->nRootTfoAddedMax,
+            (int)TfoStats.nAdded );
+        pProf->timeRootDivTfo += TfoStats.Time;
+    }
     nReservoirSize = Vec_IntSize( vPool );
     if ( fObsSample )
     {
@@ -5586,6 +5768,9 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
         Cec_TranSelectRankedDivPool( vPool, pRanks,
             pPars->nConstrBaseMax );
         pProf->timeRootDivSelect += Abc_Clock() - clk;
+        if ( nTfoMode )
+            Vec_IntForEachEntry( vPool, nUnique, i )
+                pProf->nRootTfoSelected += Vec_IntFind(vTfo, nUnique) >= 0;
     }
     // Teaching must see the actual ranked Build pool, not an arbitrary BFS
     // prefix that may be discarded immediately afterwards.
@@ -5670,6 +5855,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranCandVecStop( &Build );
     ABC_FREE( pRanks );
     Vec_IntFree( vPool );
+    Vec_IntFreeP( &vTfo );
 }
 
 static int Cec_TranRootRefreshPotential( Gia_Man_t * p,
@@ -7298,12 +7484,16 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int iPhase = fCombOnly ? 0 : 1;
     int nCandCalls = 0, nCandSum = 0, nCandMax = 0;
     int nCandHist[10] = {0};
+    int nTfoMode = Cec_TranReadEnvInt( "ABC_STRAN2_TFO_MODE", 0, 2 );
+    int nTfoMax = Cec_TranReadEnvInt( "ABC_STRAN2_TFO_MAX", 0, 1000000 );
     int fOwnDb = pSharedDb == NULL;
     int nAndBefore = Gia_ManAndNum( p ), nRegBefore = Gia_ManRegNum( p );
     abctime clkTotal = Abc_Clock(), clk;
     Prof.DiagPhase = iPhase;
     pDb = fOwnDb ? Cec_TranPatDbStart( p, 0 ) : pSharedDb;
     Gia_ManCreateRefs( p );
+    if ( nTfoMode )
+        Gia_ManStaticFanoutStart( p );
     Gia_ManForEachAnd( p, pObj, i )
         nRoots++;
     pRoots = ABC_ALLOC( Cec_TranRoot_t, nRoots );
@@ -7330,7 +7520,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             pSim->nWords, pSource->nFrames, pSource->nSlots,
             pSim->nSlots, Vec_PtrSize(pDb->vCexes),
             64 * pPars->nSimWords );
-    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates pivot-order=%s stage5-paths=%d stage5-path-order=eligible-primary/diagonal-extra/fallback-primary selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=ranked-TFI-only existing=TFI-pool mffc-divisors=%s.\n",
+    Abc_Print( 1, "stran-root: round=%d phase=%s snapshot=immutable scheduler=serial-root-iterator/all-candidates pivot-order=%s stage5-paths=%d stage5-path-order=eligible-primary/diagonal-extra/fallback-primary selection=%s candidates=%s q-build-per-root=%d proof-build-batch-per-root=%d helpers=%s divisor-route=%s existing=%s mffc-divisors=%s.\n",
         iRound + 1, fCombOnly ? "comb" : "seq",
         pPars->fUseSolvSched ? "residual-solvability" : "original",
         pPars->nStage5Paths <= 1 ? 1 : pPars->nStage5Paths,
@@ -7339,7 +7529,15 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         pPars->fBuildOnly ? "build-only" : "constant/existing/build",
         pPars->nRootConstrTop, pPars->nRootProofBatch,
         pPars->fUseHelpers ? "on" : "off",
+        nTfoMode == 2 ? "ranked-TFI+complete-fanin-TFO-closure" :
+        nTfoMode == 1 ? "ranked-TFI+complete-fanin-TFO-shell" :
+            "ranked-TFI-only",
+        nTfoMode ? "TFI+complete-fanin-TFO-pool" : "TFI-pool",
         pPars->fUseMffcDivs ? "on" : "off" );
+    if ( nTfoMode )
+        Abc_Print( 1, "stran-root TFO experiment: mode=%s added-cap=%s%d membership=TFI-before-rank topology=fanin-id<root.\n",
+            nTfoMode == 2 ? "closure" : "shell",
+            nTfoMax ? "" : "auto/", nTfoMax );
     if ( fMicroBatch )
         Abc_Print( 1, "stran-root proof micro-batching: enabled=yes build-per-root-per-proof=%d commit-build-horizon-per-root=%d horizon-zero=%s commit-policy=deferred-until-horizon.\n",
             pPars->nRootProofBatch, pPars->nRootConstrTop,
@@ -7420,7 +7618,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             }
             Cec_TranRootDiscoverOne( p, pSim, pSource, pDb, fRootBatch,
                 pPars, pRoots + r,
-                pCursors + pRoots[r].iObj, iWave, &Known, pSolved,
+                pCursors + pRoots[r].iObj, iWave, nTfoMode, nTfoMax,
+                &Known, pSolved,
                 pCovered, pUsed, pMffc, vMffc, &Dep, &Disc, &Prof,
                 &RootCands );
             nGot = RootCands.nSize;
@@ -7625,6 +7824,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Cec_TranPatDbStop( pDb );
     pSim = NULL;
     pSource = NULL;
+    if ( nTfoMode )
+        Gia_ManStaticFanoutStop( p );
     p = Cec_TranCommitSelectedRootOnly( p, &Selected, pPars, &Prof,
         &Carry, pHistory );
     Prof.nHelperInvalidated = Prof.nHistoryTriedInvalidated;
@@ -7638,6 +7839,13 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     if ( pPars->fProfile )
         Cec_TranPrintRootOnlyProfile( &Prof, nAndBefore, Gia_ManAndNum(p),
             nRegBefore, Gia_ManRegNum(p), Abc_MinInt(nWaves, 64), iPhase, 0 );
+    if ( nTfoMode )
+        Abc_Print( 1, "stran-root TFO profile: schema=1 phase=%s mode=%s cap=%d calls=%lld seeds=%lld scanned=%lld fanout-edges=%lld added=%lld selected-pool=%lld limit-hits=%lld max-added=%d closure-sec=%.6f.\n",
+            fCombOnly ? "comb" : "seq", nTfoMode == 2 ? "closure" : "shell",
+            nTfoMax, Prof.nRootTfoCalls, Prof.nRootTfoSeeds,
+            Prof.nRootTfoScanned, Prof.nRootTfoEdges, Prof.nRootTfoAdded,
+            Prof.nRootTfoSelected, Prof.nRootTfoLimitHits,
+            Prof.nRootTfoAddedMax, Cec_TranTimeSec(Prof.timeRootDivTfo) );
     Cec_TranSuppProfStop( Prof.pBuildSuppProf );
     Prof.pBuildSuppProf = NULL;
     Abc_Print( 1, "stran-root summary: round=%d phase=%s roots=%d selected=%d comb-proved=%d seq-proved=%d unique-proved=%d AND=%d->%d exact-gain=%lld.\n",
