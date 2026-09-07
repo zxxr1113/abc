@@ -351,6 +351,7 @@ struct Cec_ParTran_t_
     int              nHardConfTotal;// whole-miter shadow-audit conflict cap
     int              fUseExisting;  // enable exact earlier-literal candidates
     int              fUseMffcDivs;  // allow exact-MFFC internal nodes in the root divisor pool
+    int              fUseTfoDivs;   // add one-hop complete-fanin TFO divisors from the structural TFI
     int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fRootExhaustive;// deprecated -r compatibility bit

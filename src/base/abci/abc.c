@@ -42245,7 +42245,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBVPZEqwjbaeMxclrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBVPZEqwjbaeMdxclrgftupoyh")) != EOF )
     {
         switch ( c )
         {
@@ -42307,6 +42307,9 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             break;
         case 'M':
             pPars->fUseMffcDivs ^= 1;
+            break;
+        case 'd':
+            pPars->fUseTfoDivs ^= 1;
             break;
         case 'P':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42412,7 +42415,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBVZEqwjbae num] [-P root] [-Mxclrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBVZEqwjbae num] [-P root] [-Mdxclrgftupoyh]\n", fStran2 ? "2" : "" );
     Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
@@ -42435,6 +42438,7 @@ usage:
     Abc_Print( -2, "\t-q num : SEQ Build candidates per root/wave, or pre-commit horizon with -j (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-j num : SEQ Build candidates per root/proof batch; batch 1 also includes all Direct candidates (0 = legacy immediate commit) [default = %d]\n", pPars->nRootProofBatch );
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
+    Abc_Print( -2, "\t-d     : toggle one-hop complete-fanin TFO divisors (cap=B) [default = %s]\n", pPars->fUseTfoDivs? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-w num : SEQ candidate-generation/proof epochs; each drains commit waves to fixed point (0 = global fixed point) [default = %d]\n", pPars->nRootWaves );
