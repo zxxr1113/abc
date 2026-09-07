@@ -290,8 +290,35 @@ struct Cec_TranPivotBucketProf_t_
     long long nDiversitySym;
     abctime   Time;
 };
+// Diagnostic-only snapshot accounting.  None of these fields participates in
+// generation, candidate identity, proof, or commit decisions.
+typedef struct Cec_TranDiagBucket_t_ {
+    long long Roots, Started, Exhausted, Next, Raw, Valid, Positive;
+    long long Nonpositive, Duplicate, Collapsed, Invalid, Accepted, Pivots;
+    abctime EnumTime, BuildTime;
+} Cec_TranDiagBucket_t;
+typedef struct Cec_TranDiagGate_t_ {
+    long long Count, Accepted, Nonpositive, Boundary, Rescued;
+    abctime Time;
+} Cec_TranDiagGate_t;
+static int Cec_TranDiagGateBin( int n )
+{
+    return n <= 4 ? n : n <= 8 ? 5 : n <= 16 ? 6 : 7;
+}
+typedef struct Cec_TranDiagMffc_t_ {
+    long long Calls, Next, Accepted;
+    long long Outcome[2][3], SelectedGain[2];
+    abctime EnumTime, BuildTime;
+} Cec_TranDiagMffc_t;
 struct Cec_TranProf_t_
 {
+    int DiagPhase;
+    Cec_TranDiagMffc_t DiagMffc[8];
+    int DiagRootAvailable;
+    Cec_TranDiagBucket_t DiagRoots[8];
+    Cec_TranDiagGate_t DiagGates[8][8], DiagReject[6][8];
+    abctime DiagIteratorTime, DiagDecodeTime, DiagExhaustTime;
+
     long long nExpCiHit, nExpCiMiss, nExpObsRoots, nExpObsConflict;
     long long nExpFullRoots, nExpFullConflict, nExpObsTotal, nExpObsUnique;
     long long nExpPruned;
@@ -1445,6 +1472,8 @@ struct Cec_TranCand_t_
     unsigned nResubStage : 3;    // iterator stage: 1/3/4 exact, 5 greedy
     int      nResubRank;         // 0=non-resub, otherwise raw recipe rank
     int      nCiOverlap;         // CI support overlap with root; ordering only
+    int      nDiagDiscoveryMffc; // immutable diagnostic origin, never a search key
+    int      nDiagDiscoveryPhase;
     int      nDiscoveryGain;     // immutable MFFC-minus-gates score at discovery
     int      nDivRankMax;        // worst (largest) ranked-divisor position used
     int      nDivRankSum;        // sum of ranked-divisor positions used
@@ -1724,6 +1753,17 @@ static void Cec_TranProfileBuildCandidate( Cec_TranProf_t * pProf,
     Cec_TranCand_t const * pCand, int Outcome )
 {
     int Stage, RankBin, GateBin, GainBin, CiBin, DivRankBin;
+    // A remapped Build may become a literal. Attribute its original search
+    // cost and later committed gain before filtering on its current kind.
+    if ( pCand->nDiagDiscoveryMffc > 0 )
+    {
+        Cec_TranDiagMffc_t * d = &pProf->DiagMffc[
+            Cec_TranDiagGateBin(pCand->nDiagDiscoveryMffc)];
+        assert( Outcome >= 0 && Outcome < 3 );
+        d->Outcome[pCand->nDiagDiscoveryPhase][Outcome]++;
+        if ( Outcome == 2 )
+            d->SelectedGain[pCand->nDiagDiscoveryPhase] += pCand->Gain;
+    }
     if ( pCand->nKind != CEC_TRAN_CAND_CONSTR )
         return;
     assert( Outcome >= 0 && Outcome < CEC_TRAN_BUILD_OUTCOMES );
@@ -2291,6 +2331,9 @@ struct Cec_TranRootCursor_t_
     int State[6];               // Stage/n/i/k/Stage-5 slot + classified frontier
     void * pBuildCache;         // root-local exact residual memo across pages
     Cec_TranTeachCache_t * pTeachCache; // frozen columns/signature across waves
+    int nDiagRaw, nDiagNext, nDiagPositive, nDiagCollapsed, nDiagInvalid;
+    long long nDiagPivots;
+    abctime timeDiagEnum;
     int nBuildYield;
     int nBuildAccepted;         // unique positive-gain Build candidates emitted on this snapshot
     int nPages;
@@ -5022,10 +5065,11 @@ static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
     Vec_PtrPushTwo( vDivs, pScratch->pOff, pScratch->pOn );
     Vec_IntForEachEntry( vPool, iObj, i )
         Vec_PtrPush( vDivs, Cec_TranSimObj(pSim, iObj) );
-    // Simulation-guided resubstitution uses N* = min(|MFFC|, N): searching
-    // beyond the removable cone cannot improve the root replacement budget.
+    // A profitable Build must use strictly fewer gates than the removable
+    // cone.  Keep the iterator inside that positive-gain budget instead of
+    // constructing recipes that will be rejected with Gain == 0.
     nLimit = pPars->fUseConstr ?
-        Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc ) : 0;
+        Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc - 1 ) : 0;
     return Abc_ResubIteratorResumeStart( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit, Vec_IntSize(vPool),
         0, 0, pPars->fUseSolvSched, pPars->nStage5Paths,
@@ -5037,8 +5081,9 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
     Cec_TranRoot_t const * pRoot, Vec_Int_t * vPool, word * pCare,
     Cec_TranDepScratch_t * pScratch, void * pIter,
     Cec_TranCand_t * pCand, int * pAttempt, int * pfExhausted,
-    long long * pPivotInfo )
+    long long * pPivotInfo, int * pRawGates, abctime * pIterTime )
 {
+    abctime clkDiag = pPivotInfo ? Abc_Clock() : 0;
     Vec_Int_t Recipe = {0};
     // Each route has its own iterator and therefore its own divisor-number
     // space.  pScratch->vDivs is only construction scratch and is overwritten
@@ -5053,6 +5098,9 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
     memset( pCand, 0, sizeof(*pCand) );
     nArray = Abc_ResubIteratorNext( pIter, &pArray, pAttempt,
         pfExhausted, &fInvalid );
+    *pRawGates = -1;
+    if ( pPivotInfo )
+        *pIterTime = Abc_Clock() - clkDiag;
     if ( pPivotInfo )
         assert( Abc_ResubIteratorReadPivotProfile(pIter, pPivotInfo) ==
             CEC_TRAN_PIVOT_PROFILE_SIZE );
@@ -5060,6 +5108,7 @@ static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,
         return 0;
     if ( fInvalid )
         return -1;
+    *pRawGates = nArray / 2;
     Recipe.nSize = Recipe.nCap = nArray;
     Recipe.pArray = pArray;
     if ( !Cec_TranCandFromDependency(pSim, pRoot, vPool, pCare, 1,
@@ -5211,7 +5260,9 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
 {
     int i, iAttempt, fExhausted = 0, fUnlimited;
     int nCiHash = 128, nCiMask;
-    int IterStatus, fAccepted, iMffcBin;
+    int IterStatus, fAccepted, iMffcBin, RawGates;
+    abctime IterTime = 0, EnumTimeStart;
+    Cec_TranDiagGate_t * pDiagGate = NULL;
     int fKnownDuplicate, fExistDuplicate, fPageDuplicate;
     int nNextStart;
     long long nAcceptedStart;
@@ -5246,6 +5297,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     }
     assert( pRanks != NULL );
     iMffcBin = Cec_TranBuildMffcBin( pRoot->nMffc );
+    EnumTimeStart = pProf->timeRootDepSearch;
     nNextStart = pProf->nRootResubIterNext;
     nAcceptedStart = pProf->nRootBuildAccepted;
     clkMffc = Abc_Clock();
@@ -5290,10 +5342,32 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         pProf->nRootResubIterNext++;
         IterStatus = Cec_TranDependencyIteratorNext(pSim, pRoot,
             vPool, NULL, pDep, pIter, &Cand, &iAttempt, &fExhausted,
-            pPars->fProfile ? PivotInfo : NULL);
+            pPars->fProfile ? PivotInfo : NULL, &RawGates, &IterTime);
         timePart = Abc_Clock() - clk;
         if ( pPars->fProfile )
+        {
             Cec_TranProfilePivotAttempts( pProf, PivotInfo );
+            pCursor->nDiagNext++;
+            pCursor->nDiagRaw += RawGates >= 0;
+            pCursor->nDiagInvalid += IterStatus < 0;
+            pCursor->nDiagCollapsed += IterStatus == 0 && !fExhausted;
+            pCursor->nDiagPivots += PivotInfo[CEC_TRAN_PIVOT_ATTEMPT_TOTAL];
+            pCursor->timeDiagEnum += timePart;
+            pProf->DiagIteratorTime += IterTime;
+            pProf->DiagDecodeTime += timePart - IterTime;
+            if ( fExhausted ) pProf->DiagExhaustTime += IterTime;
+            pDiagGate = NULL;
+            if ( RawGates >= 0 && IterStatus >= 0 )
+            {
+                pDiagGate = &pProf->DiagGates[Cec_TranDiagGateBin(RawGates)]
+                    [Cec_TranDiagGateBin(Cand.nGates)];
+                pDiagGate->Count++;
+                pDiagGate->Time += timePart;
+                pDiagGate->Boundary += RawGates == pRoot->nMffc;
+                pDiagGate->Rescued += RawGates == pRoot->nMffc &&
+                    Cand.nGates < pRoot->nMffc;
+            }
+        }
         pProf->timeRootDepSearch += timePart;
         pProf->timeRootWaveConstruct[iProfWave] += timePart;
         if ( IterStatus <= 0 )
@@ -5317,7 +5391,21 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         Cand.fPrimaryFrontier = pCursor->nBuildYield == 1;
         Cand.nWave = iWave;
         Cand.Gain = Cand.nMffc - Cand.nGates;
+        Cand.nDiagDiscoveryMffc = pRoot->nMffc;
+        Cand.nDiagDiscoveryPhase = pProf->DiagPhase;
         Cand.nDiscoveryGain = Cand.Gain;
+        if ( pPars->fProfile )
+        {
+            pCursor->nDiagPositive += Cand.Gain > 0;
+            if ( Cand.Gain <= 0 )
+            {
+                Cec_TranDiagGate_t * pReject =
+                    &pProf->DiagReject[iAttempt][Cec_TranDiagGateBin(pRoot->nMffc)];
+                pReject->Count++;
+                pReject->Time += timePart;
+                if ( pDiagGate ) pDiagGate->Nonpositive++;
+            }
+        }
         Cand.nCiOverlap = Cec_TranCandDivFeatures( &Cand,
             vCandSupport, pCiKeys, pCiScores, pDivRanks, nCiMask,
             &Cand.nDivRankMax, &Cand.nDivRankSum );
@@ -5347,6 +5435,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         {
             Cec_TranCandVecPush( pConstr, Cand );
             pCursor->nBuildAccepted++;
+            if ( pPars->fProfile && pDiagGate ) pDiagGate->Accepted++;
             pProf->nRootBuildAccepted++;
             pProf->nRootBuildStageAccepted[iAttempt]++;
             if ( pPars->fProfile )
@@ -5387,6 +5476,15 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         pProf->nRootBuildAccepted - nAcceptedStart;
     pProf->timeRootBuildMffc[iMffcBin] += Abc_Clock() - clkMffc;
     pCursor->timeExpBuild += Abc_Clock() - clkMffc;
+    if ( pPars->fProfile )
+    {
+        Cec_TranDiagMffc_t * d = &pProf->DiagMffc[Cec_TranDiagGateBin(pRoot->nMffc)];
+        d->Calls++;
+        d->Next += pProf->nRootResubIterNext - nNextStart;
+        d->Accepted += pProf->nRootBuildAccepted - nAcceptedStart;
+        d->EnumTime += pProf->timeRootDepSearch - EnumTimeStart;
+        d->BuildTime += Abc_Clock() - clkMffc;
+    }
     if ( pCursor->fExpConflict )
         assert( pCursor->nBuildAccepted == 0 );
     ABC_FREE( pCiKeys );
@@ -6763,6 +6861,50 @@ static void Cec_TranPrintRootOnlyProfile( Cec_TranProf_t * p,
     int SumLaneSelected = 0, SumLaneProved[2] = {0};
     abctime SumTime = 0, Unprofiled;
     long long SumMarginal = 0;
+    // phase is the current discovery/proof/commit phase; bucket encodes
+    // immutable discovery phase and MFFC, surviving all closure remaps.
+    for ( i = 0; i < 8; i++ )
+    {
+        Cec_TranDiagMffc_t const * d = &p->DiagMffc[i];
+        if ( !fClosure )
+            Abc_Print( 1, "stran-root diagnosis profile: schema=10 phase=%s family=mffc-work bucket=%d calls=%lld next=%lld accepted=%lld enum-sec=%.6f build-sec=%.6f\n",
+                iPhase ? "seq" : "comb", i, d->Calls, d->Next, d->Accepted,
+                Cec_TranTimeSec(d->EnumTime), Cec_TranTimeSec(d->BuildTime) );
+        for ( k = 0; k < 2; k++ )
+            Abc_Print( 1, "stran-root diagnosis profile: schema=10 phase=%s family=mffc-origin bucket=%d generated=%lld proved=%lld selected=%lld selected-and-gain=%lld\n",
+                iPhase ? "seq" : "comb", 8*k+i,
+                d->Outcome[k][0], d->Outcome[k][1], d->Outcome[k][2], d->SelectedGain[k] );
+    }
+    if ( !fClosure )
+    {
+        for ( i = 0; p->DiagRootAvailable && i < 8; i++ )
+        {
+            Cec_TranDiagBucket_t const * d = &p->DiagRoots[i];
+            Abc_Print( 1, "stran-root diagnosis profile: schema=9 phase=%s family=root bucket=%d roots=%lld started=%lld exhausted=%lld next=%lld raw=%lld valid=%lld positive=%lld nonpositive=%lld duplicate=%lld collapsed=%lld invalid=%lld accepted=%lld pivots=%lld enum-sec=%.6f build-sec=%.6f\n",
+                iPhase ? "seq" : "comb", i, d->Roots, d->Started,
+                d->Exhausted, d->Next, d->Raw, d->Valid, d->Positive,
+                d->Nonpositive, d->Duplicate, d->Collapsed, d->Invalid,
+                d->Accepted, d->Pivots, Cec_TranTimeSec(d->EnumTime),
+                Cec_TranTimeSec(d->BuildTime) );
+        }
+        for ( i = 0; i < 8; i++ )
+            for ( k = 0; k < 8; k++ )
+            {
+                Cec_TranDiagGate_t const * d = &p->DiagGates[i][k];
+                Abc_Print( 1, "stran-root diagnosis profile: schema=9 phase=%s family=gate bucket=%d count=%lld accepted=%lld nonpositive=%lld boundary=%lld rescued=%lld next-sec=%.6f\n",
+                    iPhase ? "seq" : "comb", 8*i+k, d->Count, d->Accepted,
+                    d->Nonpositive, d->Boundary, d->Rescued, Cec_TranTimeSec(d->Time) );
+            }
+        for ( i = 1; i <= 5; i++ )
+            if ( i != 2 )
+                for ( k = 0; k < 8; k++ )
+                    Abc_Print( 1, "stran-root diagnosis profile: schema=9 phase=%s family=reject bucket=%d count=%lld next-sec=%.6f\n",
+                        iPhase ? "seq" : "comb", 8*i+k,
+                        p->DiagReject[i][k].Count, Cec_TranTimeSec(p->DiagReject[i][k].Time) );
+        Abc_Print( 1, "stran-root diagnosis profile: schema=9 phase=%s family=time bucket=0 iterator-sec=%.6f decode-sec=%.6f exhausted-iterator-sec=%.6f\n",
+            iPhase ? "seq" : "comb", Cec_TranTimeSec(p->DiagIteratorTime),
+            Cec_TranTimeSec(p->DiagDecodeTime), Cec_TranTimeSec(p->DiagExhaustTime) );
+    }
     Abc_Print( 1, "stran-root preprocessing-detail profile: schema=2 phase=%s exp-ci-hit=%lld exp-ci-miss=%lld exp-score-sec=%.6f exp-ci-sec=%.6f exp-obs-roots=%lld exp-obs-conflict=%lld exp-full-roots=%lld exp-full-conflict=%lld exp-obs-total=%lld exp-obs-unique=%lld exp-pruned=%lld exp-obs-sec=%.6f exp-zero-build-sec=%.6f exp-positive-build-sec=%.6f exp-zero-rank-sec=%.6f exp-positive-rank-sec=%.6f\n",
         iPhase ? "seq" : "comb", p->nExpCiHit, p->nExpCiMiss,
         Cec_TranTimeSec(p->timeExpRankScore), Cec_TranTimeSec(p->timeExpRankCi),
@@ -7159,6 +7301,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int fOwnDb = pSharedDb == NULL;
     int nAndBefore = Gia_ManAndNum( p ), nRegBefore = Gia_ManRegNum( p );
     abctime clkTotal = Abc_Clock(), clk;
+    Prof.DiagPhase = iPhase;
     pDb = fOwnDb ? Cec_TranPatDbStart( p, 0 ) : pSharedDb;
     Gia_ManCreateRefs( p );
     Gia_ManForEachAnd( p, pObj, i )
@@ -7389,6 +7532,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Prof.nRootHistorySelected +=
             Cec_TranCandVecContains(pHistory, Selected.pArray + i);
 
+    Prof.DiagRootAvailable = fMicroBatch;
     if ( fMicroBatch )
         for ( r = 0; r < nRoots; r++ )
             if ( pRoots[r].nMffc > 0 )
@@ -7404,6 +7548,37 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
                      Cec_TranRootBuildEligible(pRoots + r) )
                 {
                     nBuildEligibleRoots++;
+                    if ( pPars->fProfile )
+                    {
+                        // Raw includes canonical direct results; Valid is the
+                        // historical nonzero-gate yield. Keep not-started
+                        // separate from an iterator that searched unsuccessfully.
+                        int c = pCursor->nBuildAccepted > 0 ?
+                            (pPars->nRootConstrTop > 0 &&
+                             pCursor->nBuildAccepted >= pPars->nRootConstrTop ? 7 : 6) :
+                            pCursor->fExpConflict && (pPars->nExplore & 4) ? 0 :
+                            !pCursor->nPages ? 1 :
+                            !pCursor->nDiagRaw ? 2 :
+                            !pCursor->nDiagPositive ? 3 :
+                            pCursor->nBuildYield == pCursor->nDiagPositive &&
+                            !pCursor->nDiagCollapsed && !pCursor->nDiagInvalid ? 4 : 5;
+                        Cec_TranDiagBucket_t * d = &Prof.DiagRoots[c];
+                        d->Roots++;
+                        d->Started += pCursor->nPages > 0;
+                        d->Exhausted += pCursor->fExhausted && pCursor->nPages > 0;
+                        d->Next += pCursor->nDiagNext;
+                        d->Raw += pCursor->nDiagRaw;
+                        d->Valid += pCursor->nBuildYield;
+                        d->Positive += pCursor->nDiagPositive;
+                        d->Nonpositive += pCursor->nBuildYield - pCursor->nDiagPositive;
+                        d->Duplicate += pCursor->nDiagPositive - pCursor->nBuildAccepted;
+                        d->Collapsed += pCursor->nDiagCollapsed;
+                        d->Invalid += pCursor->nDiagInvalid;
+                        d->Accepted += pCursor->nBuildAccepted;
+                        d->Pivots += pCursor->nDiagPivots;
+                        d->EnumTime += pCursor->timeDiagEnum;
+                        d->BuildTime += pCursor->timeExpBuild;
+                    }
                     if ( pCursor->nBuildAccepted == 0 )
                     {
                         Prof.timeExpZeroBuild += pCursor->timeExpBuild;

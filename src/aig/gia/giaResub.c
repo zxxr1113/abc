@@ -1766,27 +1766,54 @@ int Gia_ManFindGateGate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int
     return -1;
 }
 
+// Preserve stable descending coverage order while visiting/clearing only
+// occupied buckets. The extra bitmap word includes score 64*nWords.
+static void Gia_ResbSortFinish( Vec_Wec_t * vSorter, word * pUsed,
+    int nUsedWords, Vec_Int_t * vItems, Vec_Int_t * vWeights )
+{
+    int w, k, i, Item;
+    Vec_IntClear( vItems );
+    if ( vWeights ) Vec_IntClear( vWeights );
+    for ( w = nUsedWords - 1; w >= 0; w-- )
+        while ( pUsed[w] )
+        {
+            int Bit = Abc_Tt6LastBit( pUsed[w] );
+            Vec_Int_t * vLevel;
+            pUsed[w] ^= (word)1 << Bit;
+            k = 64*w + Bit;
+            vLevel = Vec_WecEntry( vSorter, k );
+            Vec_IntForEachEntry( vLevel, Item, i )
+            {
+                Vec_IntPush( vItems, Item );
+                if ( vWeights ) Vec_IntPush( vWeights, k );
+            }
+            Vec_IntClear( vLevel );
+        }
+    // All nonempty levels were cleared; preserve Vec_WecClear's empty state
+    // without scanning the remaining empty levels again.
+    vSorter->nSize = 0;
+}
+static inline void Gia_ResbSortPush( Vec_Wec_t * vSorter, word * pUsed,
+    int Score, int Item )
+{
+    Vec_WecPush( vSorter, Score, Item );
+    pUsed[Score >> 6] |= (word)1 << (Score & 63);
+}
+
 void Gia_ManSortUnatesInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits, Vec_Int_t * vUnateLitsW, Vec_Wec_t * vSorter )
 {
-    int i, k, iLit;
-    Vec_Int_t * vLevel;
+    int i, iLit;
+    word Used[65], * pUsed = nWords < 65 ? Used : ABC_ALLOC(word, nWords+1);
+    memset( pUsed, 0, sizeof(word) * (nWords+1) );
     Vec_WecInit( vSorter, nWords*64 );
     Vec_IntForEachEntry( vUnateLits, iLit, i )
     {
         word * pDiv = (word *)Vec_PtrEntry(vDivs, Abc_Lit2Var(iLit));
         //assert( !Abc_TtIntersectOne( pOff, 0, pDiv, Abc_LitIsCompl(iLit), nWords ) );
-        Vec_WecPush( vSorter, Abc_TtCountOnesVecMask(pDiv, pOn, nWords, Abc_LitIsCompl(iLit)), iLit );
+        Gia_ResbSortPush( vSorter, pUsed, Abc_TtCountOnesVecMask(pDiv, pOn, nWords, Abc_LitIsCompl(iLit)), iLit );
     }
-    Vec_IntClear( vUnateLits );
-    Vec_IntClear( vUnateLitsW );
-    Vec_WecForEachLevelReverse( vSorter, vLevel, k )
-        Vec_IntForEachEntry( vLevel, iLit, i )
-        {
-            Vec_IntPush( vUnateLits, iLit );
-            Vec_IntPush( vUnateLitsW, k );
-        }
-    //Vec_IntPrint( Vec_WecEntry(vSorter, 0) );
-    Vec_WecClear( vSorter );
+    Gia_ResbSortFinish( vSorter, pUsed, nWords+1, vUnateLits, vUnateLitsW );
+    if ( pUsed != Used ) ABC_FREE( pUsed );
 }
 void Gia_ManSortUnates( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vUnateLitsW[2], Vec_Wec_t * vSorter )
 {
@@ -1797,8 +1824,9 @@ void Gia_ManSortUnates( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_
 
 void Gia_ManSortPairsInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnatePairs, Vec_Int_t * vUnatePairsW, Vec_Wec_t * vSorter )
 {
-    int i, k, iPair;
-    Vec_Int_t * vLevel;
+    int i, iPair;
+    word Used[65], * pUsed = nWords < 65 ? Used : ABC_ALLOC(word, nWords+1);
+    memset( pUsed, 0, sizeof(word) * (nWords+1) );
     Vec_WecInit( vSorter, nWords*64 );
     Vec_IntForEachEntry( vUnatePairs, iPair, i )
     {
@@ -1811,26 +1839,18 @@ void Gia_ManSortPairsInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords
         {
             assert( !fComp );
             //assert( !Abc_TtIntersectTwo( pOff, 0, pDiv0, Abc_LitIsCompl(iLit0), pDiv1, Abc_LitIsCompl(iLit1), nWords ) );
-            Vec_WecPush( vSorter, Abc_TtCountOnesVecMask2(pDiv0, pDiv1, Abc_LitIsCompl(iLit0), Abc_LitIsCompl(iLit1), pOn, nWords), iPair );
+            Gia_ResbSortPush( vSorter, pUsed, Abc_TtCountOnesVecMask2(pDiv0, pDiv1, Abc_LitIsCompl(iLit0), Abc_LitIsCompl(iLit1), pOn, nWords), iPair );
         }
         else
         {
             assert( !Abc_LitIsCompl(iLit0) );
             assert( !Abc_LitIsCompl(iLit1) );
             //assert( !Abc_TtIntersectXor( pOff, 0, pDiv0, pDiv1, fComp, nWords ) );
-            Vec_WecPush( vSorter, Abc_TtCountOnesVecXorMask(pDiv0, pDiv1, fComp, pOn, nWords), iPair );
+            Gia_ResbSortPush( vSorter, pUsed, Abc_TtCountOnesVecXorMask(pDiv0, pDiv1, fComp, pOn, nWords), iPair );
         }
     }
-    Vec_IntClear( vUnatePairs );
-    Vec_IntClear( vUnatePairsW );
-    Vec_WecForEachLevelReverse( vSorter, vLevel, k )
-        Vec_IntForEachEntry( vLevel, iPair, i )
-        {
-            Vec_IntPush( vUnatePairs, iPair );
-            Vec_IntPush( vUnatePairsW, k );
-        }
-    //Vec_IntPrint( Vec_WecEntry(vSorter, 0) );
-    Vec_WecClear( vSorter );
+    Gia_ResbSortFinish( vSorter, pUsed, nWords+1, vUnatePairs, vUnatePairsW );
+    if ( pUsed != Used ) ABC_FREE( pUsed );
 
 }
 void Gia_ManSortPairs( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vUnateLitsW[2], Vec_Wec_t * vSorter )
@@ -2241,14 +2261,15 @@ static int Gia_ResbSolvScheduleChoice( Gia_ResbMan_t * p, int fUseOr,
 
 void Gia_ManSortBinate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Wec_t * vSorter )
 {
-    Vec_Int_t * vLevel;
     int nMints[2] = { Abc_TtCountOnesVec(pSets[0], nWords), Abc_TtCountOnesVec(pSets[1], nWords) };
     word * pBig = nMints[0] > nMints[1] ? pSets[0] : pSets[1];
     word * pSmo = nMints[0] > nMints[1] ? pSets[1] : pSets[0];
     int Big = Abc_MaxInt( nMints[0], nMints[1] );
     int Smo = Abc_MinInt( nMints[0], nMints[1] );
-    int i, k, iDiv, Gain;
+    int i, iDiv, Gain;
+    word Used[65], * pUsed = nWords < 65 ? Used : ABC_ALLOC(word, nWords+1);
 
+    memset( pUsed, 0, sizeof(word) * (nWords+1) );
     Vec_WecInit( vSorter, nWords*64 );
     Vec_IntForEachEntry( vBinateVars, iDiv, i )
     {
@@ -2261,14 +2282,11 @@ void Gia_ManSortBinate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_
         }
         assert( nInter[0] >= Big/2 );
         Gain = Abc_MaxInt( 0, nInter[0] - Big/2 + Smo/2 - nInter[1] );
-        Vec_WecPush( vSorter, Gain, iDiv );
+        Gia_ResbSortPush( vSorter, pUsed, Gain, iDiv );
     }
 
-    Vec_IntClear( vBinateVars );
-    Vec_WecForEachLevelReverse( vSorter, vLevel, k )
-        Vec_IntForEachEntry( vLevel, iDiv, i )
-            Vec_IntPush( vBinateVars, iDiv );
-    Vec_WecClear( vSorter );
+    Gia_ResbSortFinish( vSorter, pUsed, nWords+1, vBinateVars, NULL );
+    if ( pUsed != Used ) ABC_FREE( pUsed );
 
     if ( Vec_IntSize(vBinateVars) > 2000 )
         Vec_IntShrink( vBinateVars, 2000 );
@@ -2969,6 +2987,7 @@ struct Gia_ResbIter_t_
     int n, i, k;
     int iGreedy;
     int nTotal[2];
+    int fPreparedUnates;
     int fPreparedPairs;
     long long PivotProfile[GIA_RESUB_PIVOT_PROFILE_SIZE];
     long long CacheProfileLast[GIA_RESUB_REC_DUP_DEPTH_3PLUS -
@@ -3148,11 +3167,11 @@ static void Gia_ResbIterEmitOne( Gia_ResbMan_t * p, int iLit0,
     Vec_IntPush( p->vGates, Abc_Var2Lit(iNode, fCompl) );
 }
 
-static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
+static void Gia_ResbIterPrepareUnates( Gia_ResbIter_t * pIt )
 {
     Gia_ResbMan_t * p = pIt->p;
     int n;
-    if ( pIt->fPreparedPairs )
+    if ( pIt->fPreparedUnates )
         return;
     for ( n = 0; n < 2; n++ )
     {
@@ -3162,6 +3181,16 @@ static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
     }
     Gia_ManSortUnates( p->pSets, p->vDivs, p->nWords,
         p->vUnateLits, p->vUnateLitsW, p->vSorter );
+    pIt->fPreparedUnates = 1;
+}
+
+static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
+{
+    Gia_ResbMan_t * p = pIt->p;
+    int n;
+    if ( pIt->fPreparedPairs )
+        return;
+    Gia_ResbIterPrepareUnates( pIt );
     Vec_IntTwoFindCommon( p->vNotUnateVars[0], p->vNotUnateVars[1],
         p->vBinateVars );
     if ( Vec_IntSize(p->vBinateVars) > p->nDivsMax )
@@ -3191,7 +3220,9 @@ static int Gia_ResbIterNextOneGate( Gia_ResbIter_t * pIt )
 {
     Gia_ResbMan_t * p = pIt->p;
     int nTotal, iDiv0, iDiv1, Cover0, Cover1;
-    Gia_ResbIterPreparePairs( pIt );
+    // One-gate enumeration needs only literal coverage. Defer quadratic
+    // binate-pair work until a later template stage actually consumes it.
+    Gia_ResbIterPrepareUnates( pIt );
     for ( ; pIt->n < 2; pIt->n++, pIt->i = 0, pIt->k = 1 )
     {
         nTotal = pIt->nTotal[pIt->n];
@@ -3233,6 +3264,7 @@ static int Gia_ResbIterNextDivGate( Gia_ResbIter_t * pIt )
 {
     Gia_ResbMan_t * p = pIt->p;
     int nTotal, iDiv0, iPair, Cover0, Cover1;
+    Gia_ResbIterPreparePairs( pIt );
     for ( ; pIt->n < 2; pIt->n++, pIt->i = pIt->k = 0 )
     {
         nTotal = pIt->nTotal[pIt->n];
@@ -3282,6 +3314,7 @@ static int Gia_ResbIterNextGateGate( Gia_ResbIter_t * pIt )
 {
     Gia_ResbMan_t * p = pIt->p;
     int nTotal, iPair0, iPair1, Cover0, Cover1;
+    Gia_ResbIterPreparePairs( pIt );
     for ( ; pIt->n < 2; pIt->n++, pIt->i = 0, pIt->k = 1 )
     {
         nTotal = pIt->nTotal[pIt->n];
