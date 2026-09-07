@@ -42245,7 +42245,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBVPZEqwjbaeMdxclrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTVPZEqwjbaeMdxclrgftupoyh")) != EOF )
     {
         switch ( c )
         {
@@ -42298,6 +42298,11 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nConstrBaseMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nConstrBaseMax < 0 ) goto usage;
+            break;
+        case 'T':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nKitCoreMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nKitCoreMax < 0 || pPars->nKitCoreMax > 8 ) goto usage;
             break;
         case 'V':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42415,7 +42420,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBVZEqwjbae num] [-P root] [-Mdxclrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTVZEqwjbae num] [-P root] [-Mdxclrgftupoyh]\n", fStran2 ? "2" : "" );
     Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
@@ -42434,6 +42439,7 @@ usage:
             pPars->nSimFrames );
     Abc_Print( -2, "\t-K num : local divisor TFI depth (0 = complete TFI) [default = %d]\n", pPars->nConstrMax );
     Abc_Print( -2, "\t-B num : ranked physical nodes passed to Build (0 = complete allowed TFI) [default = %d]\n", pPars->nConstrBaseMax );
+    Abc_Print( -2, "\t-T num : experimental exact-observation Kit core size (0 = disabled, max 8) [default = %d]\n", pPars->nKitCoreMax );
     Abc_Print( -2, "\t-V num : experimental Stage-5 total paths per rank-1..8 top pivot (0/1/2/4; 0/1 = baseline) [default = %d]\n", pPars->nStage5Paths );
     Abc_Print( -2, "\t-q num : SEQ Build candidates per root/wave, or pre-commit horizon with -j (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-j num : SEQ Build candidates per root/proof batch; batch 1 also includes all Direct candidates (0 = legacy immediate commit) [default = %d]\n", pPars->nRootProofBatch );

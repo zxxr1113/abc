@@ -336,6 +336,7 @@ struct Cec_ParTran_t_
     int              nStepsMax;     // scorr induction refinement limit
     int              nConstrMax;    // TFI depth used to collect local divisors (0 = complete TFI)
     int              nConstrBaseMax;// physical nodes in the local divisor pool (0 = all)
+    int              nKitCoreMax;   // exact-observation separator size for an additional Kit candidate
     int              nDepNodesMax;  // maximum AIG nodes in a dependency recipe (1..100)
     int              nGainMin;      // deprecated -G compatibility value; not a proof/helper gate
     int              nSimWords;     // 64-bit words per reachable simulation frame
