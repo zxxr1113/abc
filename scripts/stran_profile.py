@@ -28,6 +28,8 @@ ROOT_PAGED_PREFIX = "stran-root paged portfolio:"
 ROOT_WAVE_PREFIX = "stran-root wave portfolio:"
 ROOT_ITERATOR_PREFIX = "stran-root resub iterator:"
 ROOT_BUILD_HORIZON_PREFIX = "stran-root build-horizon profile:"
+ROOT_KIT_PREFIX = "stran-root Kit portfolio profile:"
+ROOT_BDC_PREFIX = "stran-root BDC portfolio profile:"
 ROOT_SEQ_PREFIX = "stran-root sequential relations:"
 ROOT_BUILD_FUNNEL_PREFIX = "stran-root build-funnel profile:"
 ROOT_BUILD_STAGE_PREFIX = "stran-root build-stage profile:"
@@ -237,6 +239,27 @@ ROOT_BUILD_HORIZON_FIELDS = [
     "root_build_horizon_at_q_rate_pct",
     "root_build_horizon_exhausted_before_q_rate_pct",
     "root_build_horizon_zero_accepted_rate_pct",
+]
+
+ROOT_KIT_KEYS = (
+    "core-max", "calls", "separated", "synthesized", "accepted",
+    "generated", "submitted", "proved", "selected", "selected-and-gain",
+)
+ROOT_KIT_FIELDS = [
+    f"root_kit_{key.replace('-', '_')}" for key in ROOT_KIT_KEYS
+]
+ROOT_PHASE_KIT_FIELDS = [
+    f"root_{phase}_kit_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in ROOT_KIT_KEYS
+]
+ROOT_BDC_FIELDS = [
+    f"root_bdc_{key.replace('-', '_')}" for key in ROOT_KIT_KEYS
+]
+ROOT_PHASE_BDC_FIELDS = [
+    f"root_{phase}_bdc_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in ROOT_KIT_KEYS
 ]
 
 ROOT_BUILD_FUNNEL_FIELDS = [
@@ -573,6 +596,10 @@ PROFILE_FIELDS = [
     *ROOT_SEQ_FIELDS,
     *ROOT_ITERATOR_FIELDS,
     *ROOT_BUILD_HORIZON_FIELDS,
+    *ROOT_KIT_FIELDS,
+    *ROOT_PHASE_KIT_FIELDS,
+    *ROOT_BDC_FIELDS,
+    *ROOT_PHASE_BDC_FIELDS,
     *ROOT_BUILD_FUNNEL_FIELDS,
     *ROOT_PHASE_BUILD_FUNNEL_FIELDS,
     *ROOT_BUILD_SUPPORT_FIELDS,
@@ -812,6 +839,14 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_paged: list[dict[str, int | float]] = []
     root_iterators: list[dict[str, int | float]] = []
     root_build_horizons: list[dict[str, int | float]] = []
+    root_kit_records: list[dict[str, int | float]] = []
+    root_phase_kit_records: dict[str, list[dict[str, int | float]]] = {
+        "comb": [], "seq": [],
+    }
+    root_bdc_records: list[dict[str, int | float]] = []
+    root_phase_bdc_records: dict[str, list[dict[str, int | float]]] = {
+        "comb": [], "seq": [],
+    }
     root_seq: list[dict[str, int | float]] = []
     root_build_funnels: list[dict[str, int | float]] = []
     root_phase_build_funnels: dict[str, list[dict[str, int | float]]] = {
@@ -859,7 +894,9 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_EFFECT_PREFIX, ROOT_LANE_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_COMMIT_PREFIX,
             ROOT_HELPER_PREFIX,
             ROOT_PAGED_PREFIX, ROOT_WAVE_PREFIX,
-            ROOT_ITERATOR_PREFIX, ROOT_BUILD_HORIZON_PREFIX, ROOT_SEQ_PREFIX,
+            ROOT_ITERATOR_PREFIX, ROOT_BUILD_HORIZON_PREFIX, ROOT_KIT_PREFIX,
+            ROOT_BDC_PREFIX,
+            ROOT_SEQ_PREFIX,
             ROOT_BUILD_FUNNEL_PREFIX, ROOT_BUILD_STAGE_PREFIX,
             ROOT_BUILD_RANK_PREFIX, ROOT_BUILD_GATES_PREFIX,
             ROOT_BUILD_GAIN_PREFIX, ROOT_BUILD_CI_PREFIX,
@@ -961,6 +998,16 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             root_iterators.append(record)
         elif ROOT_BUILD_HORIZON_PREFIX in line:
             root_build_horizons.append(record)
+        elif ROOT_KIT_PREFIX in line:
+            root_kit_records.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_kit_records[phase.group(1)].append(record)
+        elif ROOT_BDC_PREFIX in line:
+            root_bdc_records.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_bdc_records[phase.group(1)].append(record)
         elif ROOT_SEQ_PREFIX in line:
             root_seq.append(record)
         elif ROOT_BUILD_FUNNEL_PREFIX in line:
@@ -1212,6 +1259,19 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         "root_build_horizon_zero_accepted_rate_pct": _ratio(
             horizon_zero, horizon_eligible),
     })
+
+    for key in ROOT_KIT_KEYS:
+        aggregate = max_field if key == "core-max" else sum_field
+        result[f"root_kit_{_field_token(key)}"] = aggregate(
+            root_kit_records, key)
+        for phase in ("comb", "seq"):
+            result[f"root_{phase}_kit_{_field_token(key)}"] = aggregate(
+                root_phase_kit_records[phase], key)
+        result[f"root_bdc_{_field_token(key)}"] = aggregate(
+            root_bdc_records, key)
+        for phase in ("comb", "seq"):
+            result[f"root_{phase}_bdc_{_field_token(key)}"] = aggregate(
+                root_phase_bdc_records[phase], key)
 
     funnel_max = {"reservoir-max", "pool-max", "mffc-max"}
     for key in (

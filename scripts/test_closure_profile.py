@@ -49,6 +49,33 @@ class ClosureProfileTest(unittest.TestCase):
         self.assertEqual(result["seq_stage_and_gain"], 1)
         self.assertEqual(result["profile_accounting_complete"], "N/A")
 
+    def test_kit_portfolio_is_aggregated_by_phase(self):
+        lines = [
+            "stran-root Kit portfolio profile: schema=2 phase=comb core-max=8 calls=0 separated=0 synthesized=0 accepted=0 generated=0 submitted=0 proved=0 selected=0 selected-and-gain=0.",
+            "stran-root Kit portfolio profile: schema=2 phase=seq core-max=8 calls=10 separated=8 synthesized=6 accepted=4 generated=4 submitted=3 proved=2 selected=1 selected-and-gain=5.",
+            "stran-root Kit portfolio profile: schema=2 phase=seq core-max=10 calls=7 separated=6 synthesized=5 accepted=3 generated=3 submitted=3 proved=2 selected=2 selected-and-gain=9.",
+        ]
+        result = parse_experiment_profile("\n".join(lines))
+        self.assertEqual(result["root_kit_core_max"], 10)
+        self.assertEqual(result["root_kit_calls"], 17)
+        self.assertEqual(result["root_seq_kit_accepted"], 7)
+        self.assertEqual(result["root_seq_kit_proved"], 4)
+        self.assertEqual(result["root_seq_kit_selected"], 3)
+        self.assertEqual(result["root_seq_kit_selected_and_gain"], 14)
+        self.assertEqual(result["root_comb_kit_calls"], 0)
+
+    def test_bdc_portfolio_is_aggregated_by_phase(self):
+        lines = [
+            "stran-root BDC portfolio profile: schema=1 phase=comb core-max=8 calls=0 separated=0 synthesized=0 accepted=0 generated=0 submitted=0 proved=0 selected=0 selected-and-gain=0.",
+            "stran-root BDC portfolio profile: schema=1 phase=seq core-max=8 calls=9 separated=7 synthesized=4 accepted=3 generated=3 submitted=3 proved=2 selected=1 selected-and-gain=6.",
+        ]
+        result = parse_experiment_profile("\n".join(lines))
+        self.assertEqual(result["root_bdc_calls"], 9)
+        self.assertEqual(result["root_seq_bdc_accepted"], 3)
+        self.assertEqual(result["root_seq_bdc_proved"], 2)
+        self.assertEqual(result["root_seq_bdc_selected_and_gain"], 6)
+        self.assertEqual(result["root_comb_bdc_calls"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

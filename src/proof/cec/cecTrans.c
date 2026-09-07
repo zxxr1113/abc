@@ -18,6 +18,7 @@
 
 #include "cecInt.h"
 #include "aig/gia/giaAig.h"
+#include "bool/bdc/bdc.h"
 #include "bool/kit/kit.h"
 #include "misc/util/utilTruth.h"
 #include "sat/bmc/bmc.h"
@@ -223,6 +224,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nConstrMax  = 8;
     p->nConstrBaseMax = 16;
     p->nKitCoreMax = 0;
+    p->fBdcPortfolio = 0;
     p->nDepNodesMax = 20;
     p->nGainMin    = 1;
     p->nSimWords   = 4;
@@ -372,6 +374,16 @@ struct Cec_TranProf_t_
     long long nRootKitCoreSeparated;
     long long nRootKitSynthesized;
     long long nRootKitAccepted;
+    long long nRootKitSubmitted;
+    long long nRootKitOutcome[3];
+    long long nRootKitSelectedGain;
+    long long nRootBdcCoreCalls;
+    long long nRootBdcCoreSeparated;
+    long long nRootBdcSynthesized;
+    long long nRootBdcAccepted;
+    long long nRootBdcSubmitted;
+    long long nRootBdcOutcome[3];
+    long long nRootBdcSelectedGain;
     long long nRootTfoLimitHits;
     int       nRootTfoAddedMax;
     abctime timeRootDepInit;
@@ -1498,6 +1510,8 @@ struct Cec_TranCand_t_
     unsigned fDivRescue : 1;
     unsigned fDivGlobal : 1;
     unsigned fPrimaryFrontier : 1;
+    unsigned fKitPortfolio : 1;
+    unsigned fBdcPortfolio : 1;
     unsigned nResubStage : 3;    // iterator stage: 1/3/4 exact, 5 greedy
     int      nResubRank;         // 0=non-resub, otherwise raw recipe rank
     int      nCiOverlap;         // CI support overlap with root; ordering only
@@ -1792,6 +1806,18 @@ static void Cec_TranProfileBuildCandidate( Cec_TranProf_t * pProf,
         d->Outcome[pCand->nDiagDiscoveryPhase][Outcome]++;
         if ( Outcome == 2 )
             d->SelectedGain[pCand->nDiagDiscoveryPhase] += pCand->Gain;
+    }
+    if ( pCand->fKitPortfolio )
+    {
+        pProf->nRootKitOutcome[Outcome]++;
+        if ( Outcome == 2 )
+            pProf->nRootKitSelectedGain += pCand->Gain;
+    }
+    if ( pCand->fBdcPortfolio )
+    {
+        pProf->nRootBdcOutcome[Outcome]++;
+        if ( Outcome == 2 )
+            pProf->nRootBdcSelectedGain += pCand->Gain;
     }
     if ( pCand->nKind != CEC_TRAN_CAND_CONSTR )
         return;
@@ -5168,33 +5194,55 @@ static int Cec_TranKitEdgeToRecipeCode( Kit_Edge_t Edge,
     return Cec_TranRecipeGateCode( Edge.Node - nLeaves, Edge.fCompl );
 }
 
-// Add one care-aware Kit factorization as an extra portfolio member.  Native
-// Build runs first and keeps its complete q budget; this candidate never
+// BDC's resub vector uses literals 0/1 for constants, variables 2..n+1 for
+// the selected core, and subsequent variables for newly created AND gates.
+static int Cec_TranBdcLitToRecipeCode( int Lit, Vec_Int_t * vPool,
+    Vec_Int_t * vCoreRanks, int nLeaves )
+{
+    int iVar = Abc_Lit2Var( Lit );
+    if ( iVar < 2 )
+        return Lit;
+    if ( iVar < nLeaves + 2 )
+        return Abc_Var2Lit( Vec_IntEntry(vPool,
+            Vec_IntEntry(vCoreRanks, iVar - 2)), Abc_LitIsCompl(Lit) );
+    return Cec_TranRecipeGateCode( iVar - (nLeaves + 2),
+        Abc_LitIsCompl(Lit) );
+}
+
+// Add one care-aware Kit or BDC factorization as an extra portfolio member.
+// Native Build runs first and keeps its complete q budget; this candidate never
 // displaces a baseline construction slot.  The projected ISF is accepted only
 // when the selected core is an exact separator of every current observation,
 // the exported graph fits the unchanged positive-gain bound, and independent
 // full-observation recipe simulation succeeds.  Formal proof and commit are
 // unchanged downstream.
-static void Cec_TranCollectRootKitCandidate( Cec_TranSim_t * pSim,
+static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
     Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
     Vec_Int_t * vPool, Cec_TranDivRank_t const * pRanks,
     Cec_TranCandVec_t const * pKnown, Cec_TranCandVec_t const * pExist,
-    Cec_TranCandVec_t * pBuild, Cec_TranProf_t * pProf )
+    Cec_TranCandVec_t * pBuild, Cec_TranProf_t * pProf, int fBdc )
 {
-    unsigned Off[8] = {0}, On[8] = {0};
+    unsigned Off[8] = {0}, On[8] = {0}, Care[8] = {0};
     unsigned char Labels[256] = {0};
     Vec_Int_t * vCoreRanks = Vec_IntAlloc( pPars->nKitCoreMax );
     Vec_Int_t * vMemory = NULL;
+    Vec_Int_t * vBdc = NULL;
     Kit_Graph_t * pGraph = NULL;
     Cec_TranCand_t Cand;
     word * pTarget;
     int nCore, nGates, nLimit, nBits, i, s, Value, Label, Code;
-    pProf->nRootKitCoreCalls++;
+    if ( fBdc )
+        pProf->nRootBdcCoreCalls++;
+    else
+        pProf->nRootKitCoreCalls++;
     nCore = Cec_TranSelectExactObservedCore( pSim, pRoot->iObj, vPool,
         pPars->nKitCoreMax, vCoreRanks );
-    if ( nCore <= 0 )
+    if ( nCore <= 0 || (fBdc && nCore < 2) )
         goto cleanup;
-    pProf->nRootKitCoreSeparated++;
+    if ( fBdc )
+        pProf->nRootBdcCoreSeparated++;
+    else
+        pProf->nRootKitCoreSeparated++;
     pTarget = Cec_TranSimObj( pSim, pRoot->iObj );
     for ( s = 0; s < 64 * pSim->nSlots; s++ )
     {
@@ -5215,13 +5263,26 @@ static void Cec_TranCollectRootKitCandidate( Cec_TranSim_t * pSim,
         else if ( Label == 2 )
             On[Value >> 5] |= 1u << (Value & 31);
     }
-    vMemory = Vec_IntAlloc( 0 );
-    pGraph = Kit_TruthToGraph2( Off, On, nCore, vMemory );
-    if ( pGraph == NULL || Kit_GraphIsConst(pGraph) ||
-         Kit_GraphIsVar(pGraph) )
-        goto cleanup;
-    assert( pGraph->nLeaves == nCore );
-    nGates = Kit_GraphNodeNum( pGraph );
+    if ( fBdc )
+    {
+        for ( i = 0; i < 8; i++ )
+            Care[i] = Off[i] | On[i];
+        vBdc = Bdc_ManBidecResub( (word *)On, (word *)Care, nCore );
+        if ( vBdc == NULL || Vec_IntSize(vBdc) < 3 ||
+             !(Vec_IntSize(vBdc) & 1) )
+            goto cleanup;
+        nGates = (Vec_IntSize(vBdc) - 1) / 2;
+    }
+    else
+    {
+        vMemory = Vec_IntAlloc( 0 );
+        pGraph = Kit_TruthToGraph2( Off, On, nCore, vMemory );
+        if ( pGraph == NULL || Kit_GraphIsConst(pGraph) ||
+             Kit_GraphIsVar(pGraph) )
+            goto cleanup;
+        assert( pGraph->nLeaves == nCore );
+        nGates = Kit_GraphNodeNum( pGraph );
+    }
     nLimit = Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc - 1 );
     if ( nGates <= 0 || nGates > nLimit ||
          nGates > CEC_TRAN_RECIPE_NODES_MAX )
@@ -5232,18 +5293,31 @@ static void Cec_TranCollectRootKitCandidate( Cec_TranSim_t * pSim,
     Cand.nMffc = pRoot->nMffc;
     Cand.nGates = nGates;
     Cand.Recipe = Cec_TranRecipeAlloc( 2 * nGates );
-    for ( i = 0; i < nGates; i++ )
+    if ( fBdc )
     {
-        Kit_Node_t const * pNode = pGraph->pNodes + nCore + i;
-        Cand.Recipe[2*i] = Cec_TranKitEdgeToRecipeCode( pNode->eEdge0,
-            vPool, vCoreRanks, nCore );
-        Cand.Recipe[2*i+1] = Cec_TranKitEdgeToRecipeCode( pNode->eEdge1,
+        for ( i = 0; i < 2 * nGates; i++ )
+            Cand.Recipe[i] = Cec_TranBdcLitToRecipeCode(
+                Vec_IntEntry(vBdc, i), vPool, vCoreRanks, nCore );
+        Cand.iOut = Cec_TranBdcLitToRecipeCode(
+            Vec_IntEntryLast(vBdc), vPool, vCoreRanks, nCore );
+    }
+    else
+    {
+        for ( i = 0; i < nGates; i++ )
+        {
+            Kit_Node_t const * pNode = pGraph->pNodes + nCore + i;
+            Cand.Recipe[2*i] = Cec_TranKitEdgeToRecipeCode( pNode->eEdge0,
+                vPool, vCoreRanks, nCore );
+            Cand.Recipe[2*i+1] = Cec_TranKitEdgeToRecipeCode( pNode->eEdge1,
+                vPool, vCoreRanks, nCore );
+        }
+        Cand.iOut = Cec_TranKitEdgeToRecipeCode( pGraph->eRoot,
             vPool, vCoreRanks, nCore );
     }
-    Cand.iOut = Cec_TranKitEdgeToRecipeCode( pGraph->eRoot,
-        vPool, vCoreRanks, nCore );
     Cand.nKind = CEC_TRAN_CAND_CONSTR;
     Cand.fStrict = 1;
+    Cand.fKitPortfolio = !fBdc;
+    Cand.fBdcPortfolio = fBdc;
     Cand.fExactTemplate = 0;
     Cand.nResubStage = 2;
     Cand.nResubRank = 0x3fffffff;
@@ -5259,7 +5333,10 @@ static void Cec_TranCollectRootKitCandidate( Cec_TranSim_t * pSim,
     }
     Cand.Gain = Cand.nMffc - Cand.nGates;
     Cand.nDiscoveryGain = Cand.Gain;
-    pProf->nRootKitSynthesized++;
+    if ( fBdc )
+        pProf->nRootBdcSynthesized++;
+    else
+        pProf->nRootKitSynthesized++;
     for ( i = 0; i < nCore; i++ )
     {
         int iRank = Vec_IntEntry( vCoreRanks, i );
@@ -5285,12 +5362,16 @@ static void Cec_TranCollectRootKitCandidate( Cec_TranSim_t * pSim,
          !Cec_TranCandVecContains(pBuild, &Cand) )
     {
         Cec_TranCandVecPush( pBuild, Cand );
-        pProf->nRootKitAccepted++;
+        if ( fBdc )
+            pProf->nRootBdcAccepted++;
+        else
+            pProf->nRootKitAccepted++;
     }
     Cec_TranCandRecipeRelease( &Cand );
 cleanup:
     if ( pGraph )
         Kit_GraphFree( pGraph );
+    Vec_IntFreeP( &vBdc );
     Vec_IntFreeP( &vMemory );
     Vec_IntFree( vCoreRanks );
 }
@@ -6071,8 +6152,13 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     if ( pProf->DiagPhase && pPars->nKitCoreMax > 0 && iWave == 0 &&
          pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) &&
          Vec_IntSize(vPool) > 0 )
-        Cec_TranCollectRootKitCandidate( pSim, pPars, pRoot, vPool,
-            pRanks, pKnown, &Exist, &Build, pProf );
+    {
+        Cec_TranCollectRootIsfCandidate( pSim, pPars, pRoot, vPool,
+            pRanks, pKnown, &Exist, &Build, pProf, 0 );
+        if ( pPars->fBdcPortfolio )
+            Cec_TranCollectRootIsfCandidate( pSim, pPars, pRoot, vPool,
+                pRanks, pKnown, &Exist, &Build, pProf, 1 );
+    }
     for ( i = 0; i < Exist.nSize; i++ )
         if ( !Cec_TranCandVecContains(pOut, Exist.pArray + i) )
             Cec_TranCandVecPush( pOut, Exist.pArray[i] );
@@ -7124,6 +7210,10 @@ static int Cec_TranRootProvePortfolio( Gia_Man_t * p,
         if ( pPortfolio->pArray[i].nKind == CEC_TRAN_CAND_CONSTR )
             Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf,
                 pPortfolio->pArray + i, CEC_TRAN_SUPP_SUBMITTED );
+        if ( pPortfolio->pArray[i].fKitPortfolio )
+            pProf->nRootKitSubmitted++;
+        if ( pPortfolio->pArray[i].fBdcPortfolio )
+            pProf->nRootBdcSubmitted++;
     }
     vStatus = Cec_TranProveRootBatch( p,
         pHelpers ? pHelpers->pArray : NULL,
@@ -8186,10 +8276,21 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             Prof.nRootTfoSelected, Prof.nRootTfoLimitHits,
             Prof.nRootTfoAddedMax, Cec_TranTimeSec(Prof.timeRootDivTfo) );
     if ( pPars->nKitCoreMax )
-        Abc_Print( 1, "stran-root Kit portfolio profile: schema=1 phase=%s core-max=%d calls=%lld separated=%lld synthesized=%lld accepted=%lld.\n",
+        Abc_Print( 1, "stran-root Kit portfolio profile: schema=2 phase=%s core-max=%d calls=%lld separated=%lld synthesized=%lld accepted=%lld generated=%lld submitted=%lld proved=%lld selected=%lld selected-and-gain=%lld.\n",
             fCombOnly ? "comb" : "seq", pPars->nKitCoreMax,
             Prof.nRootKitCoreCalls, Prof.nRootKitCoreSeparated,
-            Prof.nRootKitSynthesized, Prof.nRootKitAccepted );
+            Prof.nRootKitSynthesized, Prof.nRootKitAccepted,
+            Prof.nRootKitOutcome[0], Prof.nRootKitSubmitted,
+            Prof.nRootKitOutcome[1], Prof.nRootKitOutcome[2],
+            Prof.nRootKitSelectedGain );
+    if ( pPars->fBdcPortfolio )
+        Abc_Print( 1, "stran-root BDC portfolio profile: schema=1 phase=%s core-max=%d calls=%lld separated=%lld synthesized=%lld accepted=%lld generated=%lld submitted=%lld proved=%lld selected=%lld selected-and-gain=%lld.\n",
+            fCombOnly ? "comb" : "seq", pPars->nKitCoreMax,
+            Prof.nRootBdcCoreCalls, Prof.nRootBdcCoreSeparated,
+            Prof.nRootBdcSynthesized, Prof.nRootBdcAccepted,
+            Prof.nRootBdcOutcome[0], Prof.nRootBdcSubmitted,
+            Prof.nRootBdcOutcome[1], Prof.nRootBdcOutcome[2],
+            Prof.nRootBdcSelectedGain );
     Cec_TranSuppProfStop( Prof.pBuildSuppProf );
     Prof.pBuildSuppProf = NULL;
     Abc_Print( 1, "stran-root summary: round=%d phase=%s roots=%d selected=%d comb-proved=%d seq-proved=%d unique-proved=%d AND=%d->%d exact-gain=%lld.\n",
