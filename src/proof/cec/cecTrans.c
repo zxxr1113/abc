@@ -370,6 +370,10 @@ struct Cec_TranProf_t_
     long long nRootTfoEdges;
     long long nRootTfoAdded;
     long long nRootTfoSelected;
+    long long nRootTfoCoreRescueCalls;
+    long long nRootTfoCoreRescueExact;
+    long long nRootTfoCoreRescueRoots;
+    long long nRootTfoCoreRescueNodes;
     long long nRootKitCoreCalls;
     long long nRootKitCoreSeparated;
     long long nRootKitSynthesized;
@@ -4804,13 +4808,63 @@ static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
 // Ranking must choose the actual iterator input, not merely annotate an
 // already-truncated BFS prefix.  Rewrite the reservoir in rank order and only
 // then shrink it to B.  B=0 intentionally keeps the complete allowed TFI.
-static void Cec_TranSelectRankedDivPool( Vec_Int_t * vReservoir,
-    Cec_TranDivRank_t * pRanks, int nPoolMax )
+static int Cec_TranSelectRankedDivPool( Vec_Int_t * vReservoir,
+    Cec_TranDivRank_t * pRanks, int nPoolMax, Vec_Int_t * vPinned )
 {
-    Vec_Int_t * vRanked = Vec_IntAlloc( Vec_IntSize(vReservoir) );
+    Vec_Int_t * vRanked;
     int i, nKeep = nPoolMax ?
         Abc_MinInt(nPoolMax, Vec_IntSize(vReservoir)) :
         Vec_IntSize(vReservoir);
+    int nRescued = 0;
+    // Normally the globally ranked prefix is the final Build pool.  A
+    // root-local exact core may pin a few complementary nodes which would
+    // otherwise fall below B.  Preserve the global order among all retained
+    // nodes and keep the final pool size unchanged.
+    if ( vPinned && nPoolMax && Vec_IntSize(vPinned) <= nKeep )
+    {
+        Cec_TranDivRank_t * pKept = ABC_ALLOC( Cec_TranDivRank_t, nKeep );
+        char * pChosen = ABC_CALLOC( char, Vec_IntSize(vReservoir) );
+        int k, iObj, iPos, nChosen = 0;
+        Vec_IntForEachEntry( vPinned, iObj, i )
+        {
+            iPos = Vec_IntFind( vReservoir, iObj );
+            if ( iPos < 0 || pChosen[iPos] )
+                continue;
+            pChosen[iPos] = 1;
+            nChosen++;
+            for ( k = 0; k < nKeep; k++ )
+                if ( pRanks[k].iPos == iPos )
+                    break;
+            nRescued += k == nKeep;
+        }
+        if ( nRescued )
+        {
+            for ( i = 0; i < Vec_IntSize(vReservoir) && nChosen < nKeep; i++ )
+                if ( !pChosen[pRanks[i].iPos] )
+                    pChosen[pRanks[i].iPos] = 1, nChosen++;
+            vRanked = Vec_IntAlloc( nKeep );
+            for ( i = k = 0; i < Vec_IntSize(vReservoir); i++ )
+                if ( pChosen[pRanks[i].iPos] )
+                {
+                    Vec_IntPush( vRanked, Vec_IntEntry(vReservoir,
+                        pRanks[i].iPos) );
+                    pKept[k] = pRanks[i];
+                    pKept[k].iPos = k;
+                    k++;
+                }
+            assert( k == nKeep );
+            Vec_IntClear( vReservoir );
+            Vec_IntAppend( vReservoir, vRanked );
+            memcpy( pRanks, pKept, sizeof(Cec_TranDivRank_t) * nKeep );
+            Vec_IntFree( vRanked );
+            ABC_FREE( pChosen );
+            ABC_FREE( pKept );
+            return nRescued;
+        }
+        ABC_FREE( pChosen );
+        ABC_FREE( pKept );
+    }
+    vRanked = Vec_IntAlloc( Vec_IntSize(vReservoir) );
     for ( i = 0; i < nKeep; i++ )
         Vec_IntPush( vRanked, Vec_IntEntry(vReservoir, pRanks[i].iPos) );
     Vec_IntClear( vReservoir );
@@ -4822,6 +4876,7 @@ static void Cec_TranSelectRankedDivPool( Vec_Int_t * vReservoir,
     for ( i = 0; i < nKeep; i++ )
         pRanks[i].iPos = i;
     Vec_IntFree( vRanked );
+    return 0;
 }
 
 static word Cec_TranResidualMix( word Value )
@@ -5220,7 +5275,8 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
     Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
     Vec_Int_t * vPool, Cec_TranDivRank_t const * pRanks,
     Cec_TranCandVec_t const * pKnown, Cec_TranCandVec_t const * pExist,
-    Cec_TranCandVec_t * pBuild, Cec_TranProf_t * pProf, int fBdc )
+    Cec_TranCandVec_t * pBuild, Cec_TranProf_t * pProf,
+    Vec_Int_t * vForcedCoreRanks, int fBdc )
 {
     unsigned Off[8] = {0}, On[8] = {0}, Care[8] = {0};
     unsigned char Labels[256] = {0};
@@ -5235,8 +5291,14 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
         pProf->nRootBdcCoreCalls++;
     else
         pProf->nRootKitCoreCalls++;
-    nCore = Cec_TranSelectExactObservedCore( pSim, pRoot->iObj, vPool,
-        pPars->nKitCoreMax, vCoreRanks );
+    if ( vForcedCoreRanks )
+    {
+        Vec_IntAppend( vCoreRanks, vForcedCoreRanks );
+        nCore = Vec_IntSize( vCoreRanks );
+    }
+    else
+        nCore = Cec_TranSelectExactObservedCore( pSim, pRoot->iObj, vPool,
+            pPars->nKitCoreMax, vCoreRanks );
     if ( nCore <= 0 || (fBdc && nCore < 2) )
         goto cleanup;
     if ( fBdc )
@@ -5991,6 +6053,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
 {
     Cec_TranCandVec_t Exist = {0}, Build = {0};
     Vec_Int_t * vPool, * vTfo = fUseTfoDivs ? Vec_IntAlloc( 32 ) : NULL;
+    Vec_Int_t * vForcedCoreRanks = NULL;
     Cec_TranTfoStats_t TfoStats = {0};
     Cec_TranDivRank_t * pRanks = NULL;
     int i, nReservoirMax, nReservoirSize;
@@ -6072,8 +6135,60 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
             pProf->nRootDivRankMffcOneContCalls++;
         }
         clk = Abc_Clock();
-        Cec_TranSelectRankedDivPool( vPool, pRanks,
-            pPars->nConstrBaseMax );
+        // The independent score ranks each divisor in isolation.  Before
+        // truncating to B, give rejected complete-fanin TFOs one conditional
+        // chance: search top-B plus all legal TFOs for an exact observed core.
+        // Only a complete core can replace ranked nodes, so this does not
+        // reserve a blind TFO quota or expand any downstream budget.
+        if ( fUseTfoDivs && iWave == 0 && pPars->nKitCoreMax > 0 &&
+             Cec_TranRootBuildEligible(pRoot) && pPars->nConstrBaseMax > 0 )
+        {
+            Vec_Int_t * vCorePool = Vec_IntAlloc(
+                pPars->nConstrBaseMax + Vec_IntSize(vTfo) );
+            Vec_Int_t * vCoreRanks = Vec_IntAlloc( pPars->nKitCoreMax );
+            Vec_Int_t * vPinned = Vec_IntAlloc( pPars->nKitCoreMax );
+            int k, iObj, nCore, nTop = Abc_MinInt(pPars->nConstrBaseMax,
+                Vec_IntSize(vPool));
+            pProf->nRootTfoCoreRescueCalls++;
+            for ( i = 0; i < nTop; i++ )
+                Vec_IntPush( vCorePool,
+                    Vec_IntEntry(vPool, pRanks[i].iPos) );
+            Vec_IntForEachEntry( vTfo, iObj, i )
+                if ( Vec_IntFind(vPool, iObj) >= 0 &&
+                     Vec_IntFind(vCorePool, iObj) < 0 )
+                    Vec_IntPush( vCorePool, iObj );
+            nCore = Cec_TranSelectExactObservedCore( pSim, pRoot->iObj,
+                vCorePool, pPars->nKitCoreMax, vCoreRanks );
+            if ( nCore > 0 )
+            {
+                pProf->nRootTfoCoreRescueExact++;
+                Vec_IntForEachEntry( vCoreRanks, k, i )
+                    Vec_IntPush( vPinned, Vec_IntEntry(vCorePool, k) );
+                k = Cec_TranSelectRankedDivPool( vPool, pRanks,
+                    pPars->nConstrBaseMax, vPinned );
+                if ( k )
+                {
+                    pProf->nRootTfoCoreRescueRoots++;
+                    pProf->nRootTfoCoreRescueNodes += k;
+                    vForcedCoreRanks = Vec_IntAlloc( nCore );
+                    Vec_IntForEachEntry( vPinned, iObj, i )
+                    {
+                        k = Vec_IntFind( vPool, iObj );
+                        assert( k >= 0 );
+                        Vec_IntPush( vForcedCoreRanks, k );
+                    }
+                }
+            }
+            if ( nCore <= 0 )
+                Cec_TranSelectRankedDivPool( vPool, pRanks,
+                    pPars->nConstrBaseMax, NULL );
+            Vec_IntFree( vPinned );
+            Vec_IntFree( vCoreRanks );
+            Vec_IntFree( vCorePool );
+        }
+        else
+            Cec_TranSelectRankedDivPool( vPool, pRanks,
+                pPars->nConstrBaseMax, NULL );
         pProf->timeRootDivSelect += Abc_Clock() - clk;
         if ( fUseTfoDivs )
             Vec_IntForEachEntry( vPool, nUnique, i )
@@ -6154,10 +6269,12 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
          Vec_IntSize(vPool) > 0 )
     {
         Cec_TranCollectRootIsfCandidate( pSim, pPars, pRoot, vPool,
-            pRanks, pKnown, &Exist, &Build, pProf, 0 );
+            pRanks, pKnown, &Exist, &Build, pProf,
+            vForcedCoreRanks, 0 );
         if ( pPars->fBdcPortfolio )
             Cec_TranCollectRootIsfCandidate( pSim, pPars, pRoot, vPool,
-                pRanks, pKnown, &Exist, &Build, pProf, 1 );
+                pRanks, pKnown, &Exist, &Build, pProf,
+                vForcedCoreRanks, 1 );
     }
     for ( i = 0; i < Exist.nSize; i++ )
         if ( !Cec_TranCandVecContains(pOut, Exist.pArray + i) )
@@ -6171,6 +6288,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranCandVecStop( &Exist );
     Cec_TranCandVecStop( &Build );
     ABC_FREE( pRanks );
+    Vec_IntFreeP( &vForcedCoreRanks );
     Vec_IntFree( vPool );
     Vec_IntFreeP( &vTfo );
 }
@@ -7035,10 +7153,13 @@ static int Cec_TranPipelineSelfTest()
     Cec_TranCandVec_t Seq = {0}, Carry = {0}, History = {0}, Active = {0};
     Cec_TranCand_t DirectCand, ZeroGain;
     Cec_TranDivRank_t Ranks[3] = {{30, 0, 2}, {20, 0, 0}, {10, 0, 1}};
+    Cec_TranDivRank_t PinnedRanks[3] = {
+        {30, 0, 2}, {20, 0, 0}, {10, 0, 1}};
     Gia_Man_t * p = Gia_ManStart( 16 ), * pBatch;
     Cec_TranPatDb_t * pDb;
     Cec_TranSim_t * pSim;
     Vec_Int_t * vPool = Vec_IntAlloc( 3 );
+    Vec_Int_t * vPinned = Vec_IntAlloc( 1 );
     Vec_Int_t * vMffc = Vec_IntAlloc( 8 );
     Vec_Int_t * vSupport = Vec_IntAlloc( 8 );
     Vec_Int_t * vPairs, * vCombPairs, * vQueries, * vMap;
@@ -7047,9 +7168,19 @@ static int Cec_TranPipelineSelfTest()
     Vec_IntPush( vPool, 11 );
     Vec_IntPush( vPool, 22 );
     Vec_IntPush( vPool, 33 );
-    Cec_TranSelectRankedDivPool( vPool, Ranks, 2 );
+    Cec_TranSelectRankedDivPool( vPool, Ranks, 2, NULL );
     assert( Vec_IntSize(vPool) == 2 &&
         Vec_IntEntry(vPool, 0) == 33 && Vec_IntEntry(vPool, 1) == 11 );
+    Vec_IntClear( vPool );
+    Vec_IntPush( vPool, 11 );
+    Vec_IntPush( vPool, 22 );
+    Vec_IntPush( vPool, 33 );
+    Vec_IntPush( vPinned, 22 );
+    assert( Cec_TranSelectRankedDivPool(vPool, PinnedRanks, 2,
+        vPinned) == 1 );
+    assert( Vec_IntSize(vPool) == 2 &&
+        Vec_IntEntry(vPool, 0) == 33 && Vec_IntEntry(vPool, 1) == 22 &&
+        PinnedRanks[0].iPos == 0 && PinnedRanks[1].iPos == 1 );
     Vec_IntClear( vPool );
 
     iX = Gia_ManAppendCi( p );
@@ -7179,6 +7310,7 @@ static int Cec_TranPipelineSelfTest()
     Vec_IntFree( vPool );
     Vec_IntFree( vMffc );
     Vec_IntFree( vSupport );
+    Vec_IntFree( vPinned );
     ABC_FREE( pMffc );
     ABC_FREE( pCovered );
     ABC_FREE( pUsed );
@@ -8272,12 +8404,18 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Cec_TranPrintRootOnlyProfile( &Prof, nAndBefore, Gia_ManAndNum(p),
             nRegBefore, Gia_ManRegNum(p), Abc_MinInt(nWaves, 64), iPhase, 0 );
     if ( fUseTfoDivs )
+    {
         Abc_Print( 1, "stran-root TFO profile: schema=1 phase=%s mode=shell cap=%d calls=%lld seeds=%lld scanned=%lld fanout-edges=%lld added=%lld selected-pool=%lld limit-hits=%lld max-added=%d closure-sec=%.6f.\n",
             fCombOnly ? "comb" : "seq",
             nTfoMax, Prof.nRootTfoCalls, Prof.nRootTfoSeeds,
             Prof.nRootTfoScanned, Prof.nRootTfoEdges, Prof.nRootTfoAdded,
             Prof.nRootTfoSelected, Prof.nRootTfoLimitHits,
             Prof.nRootTfoAddedMax, Cec_TranTimeSec(Prof.timeRootDivTfo) );
+        Abc_Print( 1, "stran-root TFO core-rescue profile: schema=1 phase=%s calls=%lld exact=%lld rescued-roots=%lld rescued-nodes=%lld.\n",
+            fCombOnly ? "comb" : "seq", Prof.nRootTfoCoreRescueCalls,
+            Prof.nRootTfoCoreRescueExact, Prof.nRootTfoCoreRescueRoots,
+            Prof.nRootTfoCoreRescueNodes );
+    }
     if ( pPars->nKitCoreMax )
         Abc_Print( 1, "stran-root Kit portfolio profile: schema=2 phase=%s core-max=%d calls=%lld separated=%lld synthesized=%lld accepted=%lld generated=%lld submitted=%lld proved=%lld selected=%lld selected-and-gain=%lld.\n",
             fCombOnly ? "comb" : "seq", pPars->nKitCoreMax,
