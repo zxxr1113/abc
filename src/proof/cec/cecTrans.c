@@ -625,6 +625,7 @@ struct Cec_TranSim_t_
     word *          pObsKeys;
     unsigned char * pObsLabels;
     int             nObsCap;
+    int             nObsKeyWords;
 };
 
 // The stran2 pattern database owns the reset-reachable CEX traces collected by
@@ -4946,52 +4947,66 @@ static word Cec_TranResidualMix( word Value )
 }
 
 // Exact projection of shared observations, not a hash-only certificate.
-// More than 64 divisors is unmeasured (never interpreted as conflict-free).
+// Keys use as many words as the physical divisor pool requires; the hash only
+// chooses a probe position and every collision is resolved by full comparison.
 static int Cec_TranObservationConflict( Cec_TranSim_t * pSim, int iTarget,
     Vec_Int_t * vPool, int * pnUnique )
 {
-    word Rows[64], Value, Key;
-    int i, b, s, iObj, h, Label, fConflict = 0;
+    word * pRows;
+    word Value, Hash;
+    int i, k, b, s, iObj, h, Label, fConflict = 0;
     int nCap = 1, nDivs = Vec_IntSize(vPool);
+    int nKeyWords = Abc_MaxInt( 1, (nDivs + 63) >> 6 );
     *pnUnique = 0;
-    if ( nDivs > 64 )
-        return -1;
     while ( nCap < 128 * pSim->nSlots )
         nCap <<= 1;
-    if ( pSim->nObsCap < nCap )
+    if ( pSim->nObsCap < nCap || pSim->nObsKeyWords < nKeyWords )
     {
+        pSim->nObsCap = Abc_MaxInt( pSim->nObsCap, nCap );
+        pSim->nObsKeyWords = Abc_MaxInt(
+            pSim->nObsKeyWords, nKeyWords );
         ABC_FREE( pSim->pObsKeys );
         ABC_FREE( pSim->pObsLabels );
-        pSim->pObsKeys = ABC_ALLOC( word, nCap );
-        pSim->pObsLabels = ABC_ALLOC( unsigned char, nCap );
-        pSim->nObsCap = nCap;
+        pSim->pObsKeys = ABC_ALLOC( word,
+            (size_t)pSim->nObsCap * pSim->nObsKeyWords );
+        pSim->pObsLabels = ABC_ALLOC( unsigned char, pSim->nObsCap );
     }
     memset( pSim->pObsLabels, 0, nCap );
+    pRows = ABC_CALLOC( word, 64 * nKeyWords );
     for ( s = 0; s < pSim->nSlots; s++ )
     {
-        memset( Rows, 0, sizeof(Rows) );
+        memset( pRows, 0, sizeof(word) * 64 * nKeyWords );
         Vec_IntForEachEntry( vPool, iObj, i )
         {
             Value = Cec_TranSimObj(pSim, iObj)[s];
             for ( b = 0; b < 64; b++ )
-                Rows[b] |= ((Value >> b) & 1) << i;
+                pRows[b*nKeyWords + (i >> 6)] |=
+                    ((Value >> b) & 1) << (i & 63);
         }
         Value = Cec_TranSimObj(pSim, iTarget)[s];
         for ( b = 0; b < 64; b++ )
         {
-            Key = Rows[b];
+            word * pKey = pRows + b*nKeyWords;
             Label = 1 << ((Value >> b) & 1);
-            h = (int)(Cec_TranResidualMix(Key) & (nCap - 1));
-            while ( pSim->pObsLabels[h] && pSim->pObsKeys[h] != Key )
+            Hash = Cec_TranResidualMix( pKey[0] );
+            for ( k = 1; k < nKeyWords; k++ )
+                Hash = Cec_TranResidualMix(Hash ^
+                    Cec_TranResidualMix(pKey[k] + (word)k));
+            h = (int)(Hash & (nCap - 1));
+            while ( pSim->pObsLabels[h] &&
+                    memcmp(pSim->pObsKeys + h*pSim->nObsKeyWords,
+                        pKey, sizeof(word) * nKeyWords) )
                 h = (h + 1) & (nCap - 1);
             if ( !(pSim->pObsLabels[h] & Label) )
                 (*pnUnique)++;
             if ( pSim->pObsLabels[h] && !(pSim->pObsLabels[h] & Label) )
                 fConflict = 1;
-            pSim->pObsKeys[h] = Key;
+            memcpy( pSim->pObsKeys + h*pSim->nObsKeyWords,
+                pKey, sizeof(word) * nKeyWords );
             pSim->pObsLabels[h] |= Label;
         }
     }
+    ABC_FREE( pRows );
     return fConflict;
 }
 
@@ -4999,7 +5014,7 @@ static int Cec_TranObservationSelfTest()
 {
     Cec_TranSim_t Sim = {0};
     Vec_Int_t * vPool = Vec_IntAlloc( 65 );
-    word Sims[65] = {0};
+    word Sims[66] = {0};
     int nUnique, i;
     Sim.nSlots = 1;
     Sim.pSims = Sims;
@@ -5020,8 +5035,15 @@ static int Cec_TranObservationSelfTest()
     Sims[64] = Sims[0];
     assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == 0 );
     assert( nUnique == 2 );
-    Vec_IntPush( vPool, 1 );
-    assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == -1 );
+    // The 65th divisor lives in the second exact-key word.
+    Sims[64] = 0;
+    Vec_IntPush( vPool, 65 );
+    Sims[65] = Sims[0];
+    assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == 0 );
+    assert( nUnique == 2 );
+    Sims[65] = 0;
+    assert( Cec_TranObservationConflict(&Sim, 0, vPool, &nUnique) == 1 );
+    assert( nUnique == 2 );
     ABC_FREE( Sim.pObsKeys );
     ABC_FREE( Sim.pObsLabels );
     Vec_IntFree( vPool );
