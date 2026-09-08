@@ -186,6 +186,7 @@ extern int Abc_ResubIteratorSelfTest();
 
 static int Cec_TranCanonicalizeSelfTest();
 static int Cec_TranMffcSelfTest();
+static int Cec_TranFrontierGainSelfTest();
 static int Cec_TranPipelineSelfTest();
 static int Cec_TranCommitWaveSelfTest();
 static int Cec_TranProofMicroBatchSelfTest();
@@ -210,7 +211,8 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
 int Cec_TranRootSelfTest()
 {
     return Abc_ResubIteratorSelfTest() && Cec_TranCanonicalizeSelfTest() &&
-        Cec_TranMffcSelfTest() && Cec_TranPipelineSelfTest() &&
+        Cec_TranMffcSelfTest() && Cec_TranFrontierGainSelfTest() &&
+        Cec_TranPipelineSelfTest() &&
         Cec_TranCommitWaveSelfTest() && Cec_TranProofMicroBatchSelfTest() &&
         Cec_TranObservationSelfTest() && Cec_TranExactCoreSelfTest() &&
         Cec_TranCompleteFaninTfoSelfTest();
@@ -3743,16 +3745,14 @@ static void Cec_TranMarkDynamicMffcWithRefs( Gia_Man_t * p, int iRoot,
     assert( nDeref == nRef && nDeref == Vec_IntSize(vMarked) );
 }
 
-static void Cec_TranMarkDynamicMffc( Gia_Man_t * p, int iRoot,
-    char const * pCovered, char const * pUsed,
-    Vec_Int_t const * vBoundary, char * pMark, Vec_Int_t * vMarked )
+// Private reference snapshot.  Callers may reuse it while the graph and
+// covered set are unchanged: each paired MFFC traversal restores its refs.
+static int * Cec_TranMffcRefsStart( Gia_Man_t * p, char const * pCovered )
 {
     Gia_Obj_t * pObj;
     int * pRefs;
     int i, iFan;
     assert( p->pRefs != NULL );
-    assert( Gia_ObjIsAnd(Gia_ManObj(p, iRoot)) );
-    Cec_TranMffcScratchClear( pMark, vMarked );
     pRefs = ABC_ALLOC( int, Gia_ManObjNum(p) );
     memcpy( pRefs, p->pRefs, sizeof(int) * Gia_ManObjNum(p) );
     // Covered objects have already been removed by earlier virtual choices.
@@ -3771,6 +3771,14 @@ static void Cec_TranMarkDynamicMffc( Gia_Man_t * p, int iRoot,
                 pRefs[iFan]--;
             }
     }
+    return pRefs;
+}
+
+static void Cec_TranMarkDynamicMffc( Gia_Man_t * p, int iRoot,
+    char const * pCovered, char const * pUsed,
+    Vec_Int_t const * vBoundary, char * pMark, Vec_Int_t * vMarked )
+{
+    int * pRefs = Cec_TranMffcRefsStart( p, pCovered );
     Cec_TranMarkDynamicMffcWithRefs( p, iRoot, pCovered, pUsed,
         vBoundary, pRefs, pMark, vMarked );
     ABC_FREE( pRefs );
@@ -4478,9 +4486,9 @@ static void Cec_TranMarkDivExclusion_rec( Gia_Man_t * p, int iObj, int iRoot,
             pMark, vMarked );
 }
 
-static int Cec_TranCandDynamicGain( Gia_Man_t * p,
+static int Cec_TranCandDynamicGainWithRefs( Gia_Man_t * p,
     Cec_TranCand_t const * pCand, char const * pCovered,
-    char const * pUsed, char * pMffc, Vec_Int_t * vMffc,
+    char const * pUsed, int * pRefs, char * pMffc, Vec_Int_t * vMffc,
     Vec_Int_t * vSupport )
 {
     int i, iObj;
@@ -4493,12 +4501,25 @@ static int Cec_TranCandDynamicGain( Gia_Man_t * p,
     // The current recipe creates references to its support too.  Treat that
     // support as a boundary while computing this candidate's kill-set; this
     // is what makes an earlier equivalent inside the static MFFC legal.
-    Cec_TranMarkDynamicMffc( p, pCand->iTarget, pCovered, pUsed,
-        vSupport, pMffc, vMffc );
+    if ( pRefs )
+        Cec_TranMarkDynamicMffcWithRefs( p, pCand->iTarget, pCovered,
+            pUsed, vSupport, pRefs, pMffc, vMffc );
+    else
+        Cec_TranMarkDynamicMffc( p, pCand->iTarget, pCovered, pUsed,
+            vSupport, pMffc, vMffc );
     Vec_IntForEachEntry( vSupport, iObj, i )
         if ( pMffc[iObj] )
             return -1;
     return Vec_IntSize(vMffc) - pCand->nGates;
+}
+
+static int Cec_TranCandDynamicGain( Gia_Man_t * p,
+    Cec_TranCand_t const * pCand, char const * pCovered,
+    char const * pUsed, char * pMffc, Vec_Int_t * vMffc,
+    Vec_Int_t * vSupport )
+{
+    return Cec_TranCandDynamicGainWithRefs( p, pCand, pCovered, pUsed,
+        NULL, pMffc, vMffc, vSupport );
 }
 
 static int Cec_TranCandFrozenGainWithRefs( Gia_Man_t * p,
@@ -6627,6 +6648,7 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
 {
     int r, i, k, iObj, Gain, fSupportFreed;
     int fFirstFrontier = pProf->nRootFrontCalls++ == 0;
+    int * pRefs = NULL;
     Vec_Int_t * vHeads, * vNext;
     abctime clk, clkLoop;
     Cec_TranCandVecClear( pSeq );
@@ -6692,8 +6714,14 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
                 continue;
             }
             clk = Abc_Clock();
-            Gain = Cec_TranCandDynamicGain( p, &Cand, pCovered, pUsed,
-                pMffc, vMffc, vSupport );
+            // Every candidate has its own support boundary, but the graph
+            // and virtual-selection sets are fixed for this entire Page.
+            // Prepare global refs only on the first gain evaluation; local
+            // dereference/reference traversals restore them for the next one.
+            if ( pRefs == NULL )
+                pRefs = Cec_TranMffcRefsStart( p, pCovered );
+            Gain = Cec_TranCandDynamicGainWithRefs( p, &Cand, pCovered,
+                pUsed, pRefs, pMffc, vMffc, vSupport );
             pProf->timeRootFrontGain += Abc_Clock() - clk;
             if ( Gain <= 0 )
             {
@@ -6707,6 +6735,7 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
             Cec_TranCandVecPush( pSeq, Cand );
         }
     }
+    ABC_FREE( pRefs );
     Vec_IntFree( vHeads );
     Vec_IntFree( vNext );
     clk = Abc_Clock() - clkLoop;
@@ -6722,6 +6751,147 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
             Cec_TranCandRootHeuristicCompare );
         pProf->timeRootFrontSort += Abc_Clock() - clk;
     }
+}
+
+// Exercise reuse across different roots/supports and Page boundaries, including
+// generic callers whose covered/used sets change between Pages.  The legacy
+// per-candidate scratch path is the oracle for gains, kill-sets and ordering.
+static int Cec_TranFrontierGainSelfTest()
+{
+    Gia_Man_t * p = Gia_ManStart( 16 );
+    Cec_TranCandVec_t Page = {0}, Seq = {0}, Expected = {0};
+    Cec_TranRoot_t Roots[4];
+    Cec_TranCand_t Cand;
+    Cec_TranProf_t * pProf = ABC_CALLOC( Cec_TranProf_t, 1 );
+    Vec_Int_t * vMffc = Vec_IntAlloc( 8 );
+    Vec_Int_t * vOracle = Vec_IntAlloc( 8 );
+    Vec_Int_t * vSupport = Vec_IntAlloc( 8 );
+    char * pMark, * pOracle, * pCovered, * pUsed;
+    int * pRefs, * pSaved, * pOriginal;
+    int A, B, C, X, U, V, Root, nObjs, Bytes;
+    int State, Target, Out, Gates, i, r, Gain, OracleGain;
+    A = Gia_ManAppendCi( p );
+    B = Gia_ManAppendCi( p );
+    C = Gia_ManAppendCi( p );
+    X = Gia_ManAppendAnd( p, A, B );
+    U = Gia_ManAppendAnd( p, X, C );
+    V = Gia_ManAppendAnd( p, X, Abc_LitNot(C) );
+    Root = Gia_ManAppendAnd( p, U, V );
+    Gia_ManAppendCo( p, Root );
+    Gia_ManCreateRefs( p );
+    nObjs = Gia_ManObjNum(p);
+    Bytes = sizeof(int) * nObjs;
+    pMark = ABC_CALLOC( char, nObjs );
+    pOracle = ABC_CALLOC( char, nObjs );
+    pCovered = ABC_CALLOC( char, nObjs );
+    pUsed = ABC_CALLOC( char, nObjs );
+    pSaved = ABC_ALLOC( int, nObjs );
+    pOriginal = ABC_ALLOC( int, nObjs );
+    memcpy( pOriginal, p->pRefs, Bytes );
+
+    for ( State = 0; State < 4; State++ )
+    {
+        pCovered[Abc_Lit2Var(U)] = (State & 1) != 0;
+        pUsed[Abc_Lit2Var(X)] = (State & 2) != 0;
+        pRefs = Cec_TranMffcRefsStart( p, pCovered );
+        memcpy( pSaved, pRefs, Bytes );
+        Cec_TranCandVecClear( &Page );
+        for ( Target = Abc_Lit2Var(X); Target <= Abc_Lit2Var(Root); Target++ )
+            for ( Out = 0; Out <= Abc_Lit2Var(Root); Out++ )
+                for ( Gates = 0; Gates < 2; Gates++ )
+                {
+                    memset( &Cand, 0, sizeof(Cand) );
+                    Cand.iTarget = Target;
+                    Cand.nGates = Gates;
+                    Cand.nKind = Gates ? CEC_TRAN_CAND_CONSTR :
+                        Out ? CEC_TRAN_CAND_EXIST : CEC_TRAN_CAND_CONST;
+                    Cand.iOut = Gates ? Cec_TranRecipeGateCode(0, 0) :
+                        Abc_Var2Lit(Out, 0);
+                    if ( Gates )
+                    {
+                        Cand.Recipe = Cec_TranRecipeAlloc( 2 );
+                        Cand.Recipe[0] = Abc_Var2Lit(Out, 0);
+                        Cand.Recipe[1] = C;
+                    }
+                    Gain = Cec_TranCandDynamicGainWithRefs( p, &Cand,
+                        pCovered, pUsed, pRefs, pMark, vMffc, vSupport );
+                    OracleGain = Cec_TranCandDynamicGain( p, &Cand,
+                        pCovered, pUsed, pOracle, vOracle, vSupport );
+                    assert( Gain == OracleGain );
+                    assert( Vec_IntSize(vMffc) == Vec_IntSize(vOracle) );
+                    assert( !memcmp(pMark, pOracle, nObjs) );
+                    assert( !memcmp(pRefs, pSaved, Bytes) );
+                    assert( !memcmp(p->pRefs, pOriginal, Bytes) );
+                    if ( State == 0 && Target == Abc_Lit2Var(Root) && !Gates )
+                    {
+                        if ( Out == 0 ) assert( Gain == 4 );
+                        if ( Out == Abc_Lit2Var(X) ) assert( Gain == 3 );
+                        if ( Out == Target ) assert( Gain == -1 );
+                    }
+                    // Include already-tried candidates in the Page to check
+                    // frontier filtering as well as live candidate ordering.
+                    if ( Out == 0 && Gates )
+                        Cand.nStatus = CEC_TRAN_STATE_TRIED_SEQ;
+                    Cec_TranCandVecPush( &Page, Cand );
+                    Cec_TranCandRecipeRelease( &Cand );
+                }
+        ABC_FREE( pRefs );
+        memset( Roots, 0, sizeof(Roots) );
+        for ( r = 0; r < 4; r++ )
+            Roots[r].iObj = Abc_Lit2Var(X) + r;
+        Cec_TranRootRefreshPotential( p, Roots, 4, pCovered, pUsed,
+            pOracle, vOracle, NULL );
+        Cec_TranCandVecClear( &Expected );
+        for ( r = 0; r < 4 && Roots[r].nMffc > 0; r++ )
+            for ( i = 0; i < Page.nSize; i++ )
+            {
+                Cand = Page.pArray[i];
+                if ( Cand.iTarget != Roots[r].iObj ||
+                     Cand.nStatus != CEC_TRAN_STATE_CANDIDATE )
+                    continue;
+                Cand.Gain = Cec_TranCandDynamicGain( p, &Cand,
+                    pCovered, pUsed, pOracle, vOracle, vSupport );
+                if ( Cand.Gain <= 0 )
+                    continue;
+                Cand.nMffc = Roots[r].nMffc;
+                Cec_TranCandVecPush( &Expected, Cand );
+            }
+        qsort( Expected.pArray, Expected.nSize, sizeof(Cec_TranCand_t),
+            Cec_TranCandRootHeuristicCompare );
+        // A second Page must start with fresh scratch, including when generic
+        // root refresh is requested after virtual-selection changes.
+        for ( i = 0; i < 2; i++ )
+        {
+            Cec_TranRootPrepareSeqFrontier( p, Roots, 4, &Page, pCovered,
+                pUsed, pMark, vMffc, vSupport, i, &Seq, pProf );
+            assert( Seq.nSize == Expected.nSize );
+            assert( !memcmp(Seq.pArray, Expected.pArray,
+                sizeof(Cec_TranCand_t) * Seq.nSize) );
+            assert( !memcmp(p->pRefs, pOriginal, Bytes) );
+        }
+        // Clear both independent mark workspaces before the next oracle run.
+        Cec_TranMffcScratchClear( pMark, vMffc );
+        Cec_TranMffcScratchClear( pOracle, vOracle );
+    }
+    Cec_TranCandVecClear( &Page );
+    Cec_TranRootPrepareSeqFrontier( p, Roots, 4, &Page, pCovered,
+        pUsed, pMark, vMffc, vSupport, 0, &Seq, pProf );
+    assert( Seq.nSize == 0 );
+    ABC_FREE( pMark );
+    ABC_FREE( pOracle );
+    ABC_FREE( pCovered );
+    ABC_FREE( pUsed );
+    ABC_FREE( pSaved );
+    ABC_FREE( pOriginal );
+    ABC_FREE( pProf );
+    Vec_IntFree( vMffc );
+    Vec_IntFree( vOracle );
+    Vec_IntFree( vSupport );
+    Cec_TranCandVecStop( &Page );
+    Cec_TranCandVecStop( &Seq );
+    Cec_TranCandVecStop( &Expected );
+    Gia_ManStop( p );
+    return 1;
 }
 
 // The conflict graph is stored by object incidence instead of materializing
