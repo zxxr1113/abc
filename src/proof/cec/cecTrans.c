@@ -239,6 +239,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nRootProofBatch = 0;
     p->nStage5Paths = 0;
     p->nOdcProofMax = 64;
+    p->nOdcFanoutRounds = 0;
     // Use the same per-obligation conflict budget for the combinational CBS
     // certificate lane and the sequential scorr oracle by default.  The two
     // budgets remain independently configurable through -b and -C.
@@ -9301,7 +9302,8 @@ static void Cec_TranPrintOdcFanoutCommitProfile( int iRound, int nBefore,
 {
     double Total = Cec_TranTimeSec(TimeTotal), Proof = Cec_TranTimeSec(TimeProof);
     int Gain = nBefore - nAfter;
-    Abc_Print( 1, "stran-root ODC fanout commit: schema=1 round=%d proof=frozen-fanout-correspondence selected=%d AND=%d->%d gain=%d.\n",
+    if ( nSelected )
+        Abc_Print( 1, "stran-root ODC fanout commit: schema=1 round=%d proof=frozen-fanout-correspondence selected=%d AND=%d->%d gain=%d.\n",
         iRound + 1, nSelected, nBefore, nAfter, Gain );
     Abc_Print( 1, "stran-root experiment-time profile: schema=8 phase=seq scope=odc total-sec=%.6f sim-sec=0 root-refresh-sec=0 direct-discovery-sec=0 divisor-discovery-sec=0 resub-init-sec=0 resub-enum-sec=0 cbs-graph-sec=0 cbs-screen-sec=0 cbs-solve-sec=0 scorr-graph-sec=0 scorr-bmc-sec=0 scorr-induction-sec=0 scorr-resim-sec=0 scorr-other-sec=%.6f selection-repair-sec=0 bundle-sec=0 cleanup-sec=0 exact-audit-sec=0 shadow-sec=0 unprofiled-sec=%.6f\n",
         Total, Proof, Total > Proof ? Total - Proof : 0.0 );
@@ -9340,7 +9342,10 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     OdcPars.fBuildOnly = 1;
     OdcPars.nRootProofBatch = 0;
     OdcPars.nExplore &= ~6;
-    for ( iRound = 0; ; iRound++ )
+    // A uniform round cap bounds repeated rediscovery, independently of the
+    // frontier size.  It changes only -J and never admits an unproved edit.
+    for ( iRound = 0; !OdcPars.fOdcFanout || !OdcPars.nOdcFanoutRounds ||
+          iRound < OdcPars.nOdcFanoutRounds; iRound++ )
     {
         Cec_TranProf_t Prof = {0};
         Cec_TranDiscStat_t Disc = {0};
@@ -9505,6 +9510,10 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         if ( !fCommitted )
         {
             ABC_FREE( p->pRefs );
+            if ( OdcPars.fOdcFanout )
+                Cec_TranPrintOdcFanoutCommitProfile( iRound, nBefore,
+                    Gia_ManAndNum(p), Gia_ManRegNum(p), 0,
+                    Abc_Clock() - TimeRound, TimeProof );
             Abc_Print( 1, "stran-root ODC %s round: schema=1 round=%d generated=%d positive=%d attempted=%d result=no-commit limit-hit=%s.\n",
                 OdcPars.fOdcFanout ? "fanout" : "serial", iRound + 1, nGeneratedRound, nPositiveRound, nTried,
                 OdcPars.nOdcProofMax && nTried >= OdcPars.nOdcProofMax ?
@@ -9524,8 +9533,9 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
             Abc_Clock() - TimeRound, TimeProof );
     }
     if ( OdcPars.fOdcFanout )
-        Abc_Print( 1, "stran-root ODC fanout summary: schema=1 care=%s generated=%lld positive=%lld attempted=%lld obligations=%lld proved-candidates=%lld selected=%lld batches=%lld gain=%lld AND=%d->%d proof-sec=%.6f total-sec=%.6f.\n",
-            fUseCare ? "first-level" : "full-control",
+        Abc_Print( 1, "stran-root ODC fanout summary: schema=1 care=%s round-cap=%d round-cap-hit=%s generated=%lld positive=%lld attempted=%lld obligations=%lld proved-candidates=%lld selected=%lld batches=%lld gain=%lld AND=%d->%d proof-sec=%.6f total-sec=%.6f.\n",
+            fUseCare ? "first-level" : "full-control", OdcPars.nOdcFanoutRounds,
+            OdcPars.nOdcFanoutRounds && iRound == OdcPars.nOdcFanoutRounds ? "yes" : "no",
             nGenerated, nPositive, nAttempts, nObligations, nProved, nCommits,
             nBatches, nGain, nInitial, Gia_ManAndNum(p),
             Cec_TranTimeSec(TimeProofAll), Cec_TranTimeSec(Abc_Clock() - TimeAll) );
