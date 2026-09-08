@@ -42450,7 +42450,7 @@ usage:
     Abc_Print( -2, "\t-q num : SEQ Build candidates per root/wave, or pre-commit horizon with -j (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-j num : SEQ Build candidates per root/proof batch; batch 1 also includes all Direct candidates (0 = legacy immediate commit) [default = %d]\n", pPars->nRootProofBatch );
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
-    Abc_Print( -2, "\t-d     : toggle one-hop complete-fanin TFO divisors (cap=B) [default = %s]\n", pPars->fUseTfoDivs? "yes": "no" );
+    Abc_Print( -2, "\t-d     : toggle SEQ-only one-hop complete-fanin TFO divisors (cap=B) [default = %s]\n", pPars->fUseTfoDivs? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-w num : SEQ candidate-generation/proof epochs; each drains commit waves to fixed point (0 = global fixed point) [default = %d]\n", pPars->nRootWaves );

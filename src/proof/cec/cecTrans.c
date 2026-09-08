@@ -7911,7 +7911,10 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int iPhase = fCombOnly ? 0 : 1;
     int nCandCalls = 0, nCandSum = 0, nCandMax = 0;
     int nCandHist[10] = {0};
-    int fUseTfoDivs = pPars->fUseTfoDivs;
+    // Keep the arbitrary-state COMB pass on its TFI-only baseline.  The
+    // complete-fanin shell is a SEQ-only divisor experiment, alongside the
+    // Kit/BDC portfolio, so COMB cannot consume or reclassify its gains.
+    int fUseTfoDivs = pPars->fUseTfoDivs && !fCombOnly;
     int nTfoMax = pPars->nConstrBaseMax;
     int fOwnDb = pSharedDb == NULL;
     int nAndBefore = Gia_ManAndNum( p ), nRegBefore = Gia_ManRegNum( p );
