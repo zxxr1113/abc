@@ -194,6 +194,7 @@ static int Cec_TranExactCoreSelfTest();
 static int Cec_TranCompleteFaninTfoSelfTest();
 static int Cec_TranFirstLevelCareSelfTest();
 static int Cec_TranOdcFanoutSelfTest();
+static int Cec_TranOdcDirectSelfTest();
 typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
 struct Cec_TranTfoStats_t_
 {
@@ -217,7 +218,8 @@ int Cec_TranRootSelfTest()
         Cec_TranObservationSelfTest() &&
         Cec_TranExactCoreSelfTest() &&
         Cec_TranCompleteFaninTfoSelfTest() &&
-        Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcFanoutSelfTest();
+        Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcFanoutSelfTest() &&
+        Cec_TranOdcDirectSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -6066,6 +6068,35 @@ static void Cec_TranCollectRootDirectTfi( Gia_Man_t * p,
     Cec_TranDiscFinishRoot( pStat, 0, pExist->nSize - iStart );
 }
 
+// MFFC=1 cannot pay for a newly constructed AND.  The experimental ODC
+// Direct lane checks only constants and the two immediate fanins here: this
+// exposes fanin redundancy without ranking a divisor reservoir or entering
+// any Build iterator.  Larger roots keep the unchanged ranked B/q portfolio.
+static void Cec_TranOdcDirectMffcOne( Gia_Man_t * p,
+    Cec_TranSim_t * pSource, Cec_ParTran_t * pPars,
+    Cec_TranRoot_t const * pRoot, int fUseCare,
+    Cec_TranCandVec_t const * pKnown, Cec_TranCandVec_t * pOut,
+    Cec_TranDiscStat_t * pDisc, Cec_TranProf_t * pProf )
+{
+    Gia_Obj_t * pRootObj = Gia_ManObj(p, pRoot->iObj);
+    Vec_Int_t * vPool = Vec_IntAlloc(2);
+    word * pCare = fUseCare ?
+        Cec_TranFirstLevelCare(pSource, pRoot->iObj, NULL) : NULL;
+    int iObj = Gia_ObjFaninId0p(p, pRootObj);
+    assert(pRoot->nMffc == 1);
+    Cec_TranCandVecClear(pOut);
+    if ( iObj ) Vec_IntPushUnique(vPool, iObj);
+    if ( !Gia_ObjIsBuf(pRootObj) )
+    {
+        iObj = Gia_ObjFaninId1p(p, pRootObj);
+        if ( iObj ) Vec_IntPushUnique(vPool, iObj);
+    }
+    Cec_TranCollectRootDirectTfi(p, pSource, pPars, pRoot, vPool,
+        pCare, !fUseCare, pKnown, pOut, pDisc, pProf);
+    ABC_FREE(pCare);
+    Vec_IntFree(vPool);
+}
+
 // Root-only constructed discovery uses one paper-style TFI divisor pool.  A
 // lightweight local iterator yields candidates in gate-count/template/coverage
 // order; q bounds the per-root frontier.  Six scalar cursors survive this
@@ -9077,6 +9108,46 @@ static int Cec_TranOdcFanoutPoolAdd( Gia_Man_t * p,
     return 1;
 }
 
+// Every subset of the composable selected set is safe.  Attribute exact AND
+// reduction in Constant -> Existing -> Build order on that SAME set, without
+// reselection or changing the commit.  In particular, new Direct reductions
+// and their cleanup effects are never reported as Ordered Seq Build gain.
+static void Cec_TranOdcKindGains( Gia_Man_t * p,
+    Cec_TranCandVec_t const * pSelected, Gia_Man_t * pFinal,
+    int * pKindSelected, int * pKindGain )
+{
+    Vec_Int_t * vSubset = Vec_IntAlloc(pSelected->nSize);
+    int i, k, nPrev = Gia_ManAndNum(p), nNext;
+    memset(pKindSelected, 0, sizeof(int) * 3);
+    memset(pKindGain, 0, sizeof(int) * 3);
+    for ( i = 0; i < pSelected->nSize; i++ )
+        pKindSelected[pSelected->pArray[i].nKind]++;
+    for ( k = 0; k < 3; k++ )
+    {
+        for ( i = 0; i < pSelected->nSize; i++ )
+            if ( pSelected->pArray[i].nKind == k )
+                Vec_IntPush(vSubset, i);
+        if ( !pKindSelected[k] )
+            continue;
+        if ( Vec_IntSize(vSubset) == pSelected->nSize )
+            nNext = Gia_ManAndNum(pFinal);
+        else
+        {
+            Gia_Man_t * pDup = Cec_TranDupRootBundle(p, pSelected->pArray, vSubset);
+            Gia_Man_t * pClean = Cec_TranCleanupKeepRegs(pDup, NULL);
+            nNext = Gia_ManAndNum(pClean);
+            assert(Gia_ManRegNum(pClean) == Gia_ManRegNum(p));
+            Gia_ManStop(pClean);
+            Gia_ManStop(pDup);
+        }
+        pKindGain[k] = nPrev - nNext;
+        nPrev = nNext;
+    }
+    assert(pKindGain[0] + pKindGain[1] + pKindGain[2] ==
+        Gia_ManAndNum(p) - Gia_ManAndNum(pFinal));
+    Vec_IntFree(vSubset);
+}
+
 // Composition proof: fix a state reachable in frozen N and the current PIs.
 // Topological induction preserves every nonselected source node.  A selected
 // root evaluates h on earlier nonselected external reads, hence to its frozen
@@ -9090,7 +9161,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     Cec_TranCandVec_t * pFrontier, Cec_ParTran_t * pPars,
     Cec_TranProf_t * pProf, int iRound, int * pnTried, int * pnSelected,
     long long * pnObligations, long long * pnProved, long long * pnBatches,
-    abctime * pTimeProof )
+    abctime * pTimeProof, int * pKindSelected, int * pKindGain )
 {
     Cec_TranCandVec_t Obligations = {0}, SafePool = {0}, Selected = {0};
     Vec_Int_t * vBeg = Vec_IntAlloc( pFrontier->nSize + 1 );
@@ -9105,6 +9176,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     char * pMffc = ABC_CALLOC( char, Gia_ManObjNum(p) );
     Gia_Man_t * pDup, * pClean = NULL;
     int i, k, nProved = 0, nFull = 0, nConflicts = 0, nProofs = 0;
+    int KindSubmitted[3] = {0}, KindProved[3] = {0};
     int nLimit = pPars->nOdcProofMax ?
         Abc_MinInt(pFrontier->nSize, pPars->nOdcProofMax) : pFrontier->nSize;
     abctime clk = Abc_Clock();
@@ -9112,6 +9184,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     Vec_IntPush( vBeg, 0 );
     for ( i = 0; i < nLimit; i++ )
     {
+        KindSubmitted[pFrontier->pArray[i].nKind]++;
         nFull += Cec_TranOdcFanoutObligations( p, pFrontier->pArray + i,
             pPars->fOdcStrict, &Obligations );
         Vec_IntPush( vBeg, Obligations.nSize );
@@ -9135,6 +9208,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
         if ( !fProved )
             continue;
         nProved++;
+        KindProved[Cand.nKind]++;
         if ( !Cec_TranOdcFanoutPoolAdd(p, &Cand, pTargets, pReads, vSupport) )
         {
             nConflicts++;
@@ -9145,7 +9219,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
         Cand.nStatus = CEC_TRAN_STATE_PROVED_SEQ;
         Cand.nProofStage = Cand.nProofLane = 2;
         Cand.nProofPhase = 1;
-        Cand.nProofKind = CEC_TRAN_CAND_CONSTR;
+        Cand.nProofKind = Cand.nKind;
         Cec_TranCandVecPush( &SafePool, Cand );
     }
     Gia_ManStaticFanoutStop( p );
@@ -9164,8 +9238,14 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
         pClean = Cec_TranCleanupKeepRegs( pDup, NULL );
         assert( Gia_ManRegNum(pClean) == Gia_ManRegNum(p) );
         assert( Cec_TranGain(p, pClean) > 0 );
+        Cec_TranOdcKindGains(p, &Selected, pClean, pKindSelected, pKindGain);
         Gia_ManStop( pDup );
     }
+    if ( pPars->nExplore & 512 )
+        for ( k = 0; k < 3; k++ )
+            Abc_Print(1, "stran-root ODC kind profile: schema=1 round=%d kind=%s submitted=%d proved=%d selected=%d ordered-and-gain=%d.\n",
+                iRound + 1, k == 0 ? "constant" : k == 1 ? "existing" : "build",
+                KindSubmitted[k], KindProved[k], pKindSelected[k], pKindGain[k]);
     Abc_Print( 1, "stran-root ODC fanout round: schema=1 round=%d candidates=%d obligations=%d full-care=%d proved-obligations=%d proved-candidates=%d composition-conflicts=%d selected=%d proof-batches=%d comb-unknown=%lld seq-incomplete=%d bmc-unknown=%lld ind-unknown=%lld proof-sec=%.6f.\n",
         iRound + 1, nLimit, Obligations.nSize, nFull, nProofs, nProved,
         nConflicts, *pnSelected, Obligations.nSize != 0,
@@ -9297,8 +9377,105 @@ static int Cec_TranOdcFanoutSelfTest()
     return 1;
 }
 
+static int Cec_TranOdcDirectSelfTest()
+{
+    Cec_ParTran_t Pars;
+    Cec_TranProf_t Prof = {0};
+    Cec_TranDiscStat_t Disc = {0};
+    Cec_TranRoot_t Root = {0};
+    Cec_TranCandVec_t Known = {0}, Direct = {0}, Obs = {0}, Selected = {0};
+    Cec_TranCand_t Cand;
+    Cec_TranPatDb_t * pDb;
+    Cec_TranSim_t * pSim;
+    Gia_Man_t * p, * pDup, * pClean;
+    Vec_Int_t * vStatus, * vSelected = Vec_IntAlloc(3);
+    Vec_Str_t * vStage;
+    int a, b, q, r, g, i, c, e, u;
+    int Counts[3], Gains[3];
+    Cec_ManTranSetDefaultParams(&Pars);
+    Pars.nBTLimit = 1000;
+    for ( i = 0; i < 2; i++ )
+    {
+        p = Gia_ManStart(16);
+        a = Gia_ManAppendCi(p); b = Gia_ManAppendCi(p); q = Gia_ManAppendCi(p);
+        r = Gia_ManAppendAnd(p, i ? Abc_LitNot(a) : a, b);
+        g = Gia_ManAppendAnd(p, i ? Abc_LitNot(r) : r,
+            i ? Abc_LitNot(b) : a);
+        Gia_ManAppendCo(p, g); Gia_ManAppendCo(p, 0); Gia_ManSetRegNum(p, 1);
+        Gia_ManCreateRefs(p); Gia_ManStaticFanoutStart(p);
+        Root.iObj = Abc_Lit2Var(r); Root.nMffc = Gia_NodeMffcSize(p, Gia_ManObj(p, Root.iObj));
+        assert(Root.nMffc == 1);
+        pDb = Cec_TranPatDbStart(p, 0); pSim = Cec_TranSimStart(p, &Pars, pDb);
+        Cec_TranOdcDirectMffcOne(p, pSim, &Pars, &Root, 1, &Known, &Direct, &Disc, &Prof);
+        Cand = Cec_TranCandCreateLiteral(Root.iObj, b, 1, CEC_TRAN_CAND_EXIST, 0);
+        assert(Cec_TranCandVecContains(&Direct, &Cand));
+        if ( i )
+        {
+            Cand = Cec_TranCandCreateLiteral(Root.iObj, 0, 1, CEC_TRAN_CAND_CONST, 0);
+            assert(Cec_TranCandVecContains(&Direct, &Cand));
+        }
+        assert(Prof.nRootResubIterInit == 0);
+        for ( c = 0; c < Direct.nSize; c++ )
+        {
+            assert(Direct.pArray[c].nGates == 0);
+            Cec_TranOdcFanoutObligations(p, Direct.pArray + c, 0, &Obs);
+        }
+        vStatus = Cec_TranProveRootBatch(p, NULL, 0, Obs.pArray, Obs.nSize,
+            &Pars, &Prof, 0, &vStage);
+        for ( c = 0; c < Obs.nSize; c++ ) assert(Vec_IntEntry(vStatus, c));
+        Vec_IntFree(vStatus); Vec_StrFree(vStage);
+        Cec_TranOdcDirectMffcOne(p, pSim, &Pars, &Root, 0, &Known, &Direct, &Disc, &Prof);
+        Cand = Cec_TranCandCreateLiteral(Root.iObj, b, 1, CEC_TRAN_CAND_EXIST, 1);
+        assert(!Cec_TranCandVecContains(&Direct, &Cand));
+        if ( i )
+        {
+            Cand = Cec_TranCandCreateLiteral(Root.iObj, 0, 1, CEC_TRAN_CAND_CONST, 1);
+            assert(!Cec_TranCandVecContains(&Direct, &Cand));
+        }
+        Cec_TranCandVecClear(&Direct); Cec_TranCandVecClear(&Obs);
+        Cec_TranSimStop(pSim); Cec_TranPatDbStop(pDb); Gia_ManStop(p);
+    }
+    // Four original ANDs become one: Constant, Existing and Build each
+    // contribute exactly one AND in ordered, same-selected-set attribution.
+    p = Gia_ManStart(32);
+    a = Gia_ManAppendCi(p); b = Gia_ManAppendCi(p); g = Gia_ManAppendCi(p); q = Gia_ManAppendCi(p);
+    c = Gia_ManAppendAnd(p, q, a); e = Gia_ManAppendAnd(p, Abc_LitNot(q), b);
+    u = Gia_ManAppendAnd(p, Abc_LitNot(q), a); r = Gia_ManAppendAnd(p, u, g);
+    Gia_ManAppendCo(p, c); Gia_ManAppendCo(p, e); Gia_ManAppendCo(p, r);
+    Gia_ManAppendCo(p, 0); Gia_ManSetRegNum(p, 1);
+    Cand = Cec_TranCandCreateLiteral(Abc_Lit2Var(c), 0, 1, CEC_TRAN_CAND_CONST, 0);
+    Cec_TranCandVecPush(&Selected, Cand); Cec_TranCandVecPush(&Direct, Cand);
+    Cand = Cec_TranCandCreateLiteral(Abc_Lit2Var(e), b, 1, CEC_TRAN_CAND_EXIST, 0);
+    Cec_TranCandVecPush(&Selected, Cand); Cec_TranCandVecPush(&Direct, Cand);
+    Cand = Cec_TranCandCreateLiteral(Abc_Lit2Var(r), 0, 2, CEC_TRAN_CAND_CONSTR, 0);
+    Cand.nGates = 1; Cand.Recipe = Cec_TranRecipeAlloc(2);
+    Cand.Recipe[0] = a; Cand.Recipe[1] = g; Cand.iOut = Cec_TranRecipeGateCode(0, 0);
+    Cec_TranCandVecPush(&Selected, Cand); Cec_TranCandRecipeRelease(&Cand);
+    Vec_IntPush(vSelected, 0); Vec_IntPush(vSelected, 1); Vec_IntPush(vSelected, 2);
+    pDup = Cec_TranDupRootBundle(p, Selected.pArray, vSelected);
+    pClean = Cec_TranCleanupKeepRegs(pDup, NULL);
+    assert(Gia_ManAndNum(p) == 4 && Gia_ManAndNum(pClean) == 1);
+    assert(Cec_TranProveWhole(p, pDup, &Pars, &Prof));
+    Cec_TranOdcKindGains(p, &Selected, pClean, Counts, Gains);
+    for ( i = 0; i < 3; i++ ) assert(Counts[i] == 1 && Gains[i] == 1);
+    Gia_ManStop(pDup); Gia_ManStop(pClean);
+    Vec_IntPop(vSelected);
+    pDup = Cec_TranDupRootBundle(p, Direct.pArray, vSelected);
+    pClean = Cec_TranCleanupKeepRegs(pDup, NULL);
+    Cec_TranOdcKindGains(p, &Direct, pClean, Counts, Gains);
+    assert(Counts[0] == 1 && Counts[1] == 1 && Counts[2] == 0);
+    assert(Gains[0] == 1 && Gains[1] == 1 && Gains[2] == 0);
+    Gia_ManStop(pDup); Gia_ManStop(pClean); Gia_ManStop(p);
+    Vec_IntFree(vSelected);
+    Cec_TranCandVecStop(&Known); Cec_TranCandVecStop(&Direct);
+    Cec_TranCandVecStop(&Obs); Cec_TranCandVecStop(&Selected);
+    Abc_Print(1, "stran ODC MFFC1 Direct/care-only/polarity/ordered-kind attribution self-test: PASS\n");
+    return 1;
+}
+
 static void Cec_TranPrintOdcFanoutCommitProfile( int iRound, int nBefore,
-    int nAfter, int nRegs, int nSelected, abctime TimeTotal, abctime TimeProof )
+    int nAfter, int nRegs, int nSelected, int const * pKindSelected,
+    int const * pKindGain, abctime TimeTotal, abctime TimeProof )
 {
     double Total = Cec_TranTimeSec(TimeTotal), Proof = Cec_TranTimeSec(TimeProof);
     int Gain = nBefore - nAfter;
@@ -9309,9 +9486,15 @@ static void Cec_TranPrintOdcFanoutCommitProfile( int iRound, int nBefore,
         Total, Proof, Total > Proof ? Total - Proof : 0.0 );
     Abc_Print( 1, "stran-root experiment-summary profile: schema=8 phase=seq scope=odc selected-roots=%d marginal-and=%d final-and-gain=%d final-reg-gain=0 and-before=%d and-after=%d reg-before=%d reg-after=%d\n",
         nSelected, Gain, Gain, nBefore, nAfter, nRegs, nRegs );
-    Abc_Print( 1, "stran-root experiment-commit profile: schema=8 phase=seq kind=constant selected=0 marginal-and=0 marginal-reg=0\n" );
-    Abc_Print( 1, "stran-root experiment-commit profile: schema=8 phase=seq kind=existing selected=0 marginal-and=0 marginal-reg=0\n" );
-    Abc_Print( 1, "stran-root experiment-commit profile: schema=8 phase=seq kind=build selected=%d marginal-and=%d marginal-reg=0\n", nSelected, Gain );
+    {
+        int k;
+        assert(pKindSelected[0] + pKindSelected[1] + pKindSelected[2] == nSelected);
+        assert(pKindGain[0] + pKindGain[1] + pKindGain[2] == Gain);
+        for ( k = 0; k < 3; k++ )
+            Abc_Print(1, "stran-root experiment-commit profile: schema=8 phase=seq kind=%s selected=%d marginal-and=%d marginal-reg=0\n",
+                k == 0 ? "constant" : k == 1 ? "existing" : "build",
+                pKindSelected[k], pKindGain[k]);
+    }
 }
 
 // Quality-first ODC reference implementation.  Strict COMB/SEQ processing has
@@ -9332,6 +9515,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     long long nObligations = 0, nProved = 0, nBatches = 0;
     int nInitial = Gia_ManAndNum( p );
     int fUseCare = !OdcPars.fOdcStrict;
+    int fOdcDirect = OdcPars.fOdcFanout && (OdcPars.nExplore & 512);
     int iRound;
     abctime TimeAll = Abc_Clock(), TimeProofAll = 0;
 
@@ -9339,7 +9523,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     // One page retrieves the same q-prefix without changing the strict proof
     // micro-batch policy.  Pool-conflict pruning is a strict-function test and
     // is therefore disabled only inside this care-aware phase.
-    OdcPars.fBuildOnly = 1;
+    OdcPars.fBuildOnly = !fOdcDirect;
     OdcPars.nRootProofBatch = 0;
     OdcPars.nExplore &= ~6;
     // A uniform round cap bounds repeated rediscovery, independently of the
@@ -9371,6 +9555,8 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         int nRoots = 0, r, i, nTfoMax = OdcPars.nConstrBaseMax;
         int nBefore = Gia_ManAndNum( p ), nTried = 0, nSelected = 0;
         int nGeneratedRound = 0, nPositiveRound = 0;
+        int KindSelected[3] = {0}, KindGain[3] = {0};
+        int nMffcOneRoots = 0, nMffcOneCandidates = 0;
         abctime TimeRound = Abc_Clock(), TimeProof = 0;
 
         // This is a post-strict sequential phase.  Preserve the latest SEQ
@@ -9399,9 +9585,16 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
             OdcPars.nConstrBaseMax ? OdcPars.nConstrBaseMax : 64, 1 );
         for ( r = 0; r < nRoots; r++ )
         {
-            if ( pRoots[r].nMffc <= 1 )
+            if ( pRoots[r].nMffc <= 0 || (!fOdcDirect && pRoots[r].nMffc <= 1) )
                 continue;
-            Cec_TranRootDiscoverOne( p, pSim, pSource, pDb, fRootBatch,
+            if ( pRoots[r].nMffc == 1 )
+            {
+                Cec_TranOdcDirectMffcOne( p, pSource, &OdcPars, pRoots + r,
+                    fUseCare, &Known, &RootCands, &Disc, &Prof );
+                nMffcOneRoots++;
+                nMffcOneCandidates += RootCands.nSize;
+            }
+            else Cec_TranRootDiscoverOne( p, pSim, pSource, pDb, fRootBatch,
                 &OdcPars, pRoots + r, pCursors + pRoots[r].iObj, 0,
                 OdcPars.fUseTfoDivs, nTfoMax, fUseCare, &Known, pSolved,
                 pCovered, pUsed, pMffc, vMffc, &Dep, &Disc, &Prof,
@@ -9411,6 +9604,15 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 Cec_TranCandVecPush( &Known, RootCands.pArray[i] );
                 Cec_TranCandVecPush( &Candidates, RootCands.pArray[i] );
             }
+        }
+        if ( fOdcDirect )
+        {
+            int KindGenerated[3] = {0};
+            for ( i = 0; i < Candidates.nSize; i++ )
+                KindGenerated[Candidates.pArray[i].nKind]++;
+            Abc_Print(1, "stran-root ODC direct discovery: schema=1 round=%d mffc-one-roots=%d mffc-one-generated=%d constant-generated=%d existing-generated=%d build-generated=%d.\n",
+                iRound + 1, nMffcOneRoots, nMffcOneCandidates,
+                KindGenerated[0], KindGenerated[1], KindGenerated[2]);
         }
         Cec_TranRootPrepareSeqFrontier( p, pRoots, nRoots, &Candidates,
             pCovered, pUsed, pMffc, vMffc, vSupport, 0, &Frontier, &Prof );
@@ -9447,7 +9649,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         {
             pClean = Cec_TranOdcFanoutRound( p, &Frontier, &OdcPars, &Prof,
                 iRound, &nTried, &nSelected, &nObligations, &nProved,
-                &nBatches, &TimeProof );
+                &nBatches, &TimeProof, KindSelected, KindGain );
             fCommitted = pClean != NULL;
             nAttempts += nTried;
             if ( fCommitted )
@@ -9512,7 +9714,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
             ABC_FREE( p->pRefs );
             if ( OdcPars.fOdcFanout )
                 Cec_TranPrintOdcFanoutCommitProfile( iRound, nBefore,
-                    Gia_ManAndNum(p), Gia_ManRegNum(p), 0,
+                    Gia_ManAndNum(p), Gia_ManRegNum(p), 0, KindSelected, KindGain,
                     Abc_Clock() - TimeRound, TimeProof );
             Abc_Print( 1, "stran-root ODC %s round: schema=1 round=%d generated=%d positive=%d attempted=%d result=no-commit limit-hit=%s.\n",
                 OdcPars.fOdcFanout ? "fanout" : "serial", iRound + 1, nGeneratedRound, nPositiveRound, nTried,
@@ -9526,7 +9728,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         p = pClean;
         if ( OdcPars.fOdcFanout )
             Cec_TranPrintOdcFanoutCommitProfile( iRound, nBefore,
-                Gia_ManAndNum(p), Gia_ManRegNum(p), nSelected,
+                Gia_ManAndNum(p), Gia_ManRegNum(p), nSelected, KindSelected, KindGain,
                 Abc_Clock() - TimeRound, TimeProof );
         else Cec_TranPrintOdcCommitProfile( iRound, nBefore, Gia_ManAndNum(p),
             Gia_ManRegNum(p), fCommittedSampleStrict, fUseCare,

@@ -46,6 +46,24 @@ class ClosureProfileTest(unittest.TestCase):
         self.assertEqual(result["profile_total_sec"], 7)
         validate_profile_accounting(result, 8)
 
+    def test_odc_direct_does_not_become_ordered_build(self):
+        rows = self.rows + commit("seq", "odc", 14, 11, (1, 1, 0), (1, 2, 0))
+        result = parse_experiment_profile("\n".join(rows))
+        self.assertEqual(result["seq_build_ordered_and_gain"], 3)
+        self.assertEqual(result["seq_commit_constant_and_gain"], 1)
+        self.assertEqual(result["seq_commit_existing_and_gain"], 3)
+        self.assertEqual(result["seq_stage_and_gain"], 8)
+        validate_profile_accounting(result, 11)
+
+    def test_odc_mixed_ordered_kind_attribution(self):
+        rows = self.rows + commit("seq", "odc", 14, 8, (2, 1, 3), (2, 1, 3))
+        result = parse_experiment_profile("\n".join(rows))
+        self.assertEqual(result["seq_build_ordered_and_gain"], 6)
+        self.assertEqual(result["seq_commit_constant_and_gain"], 2)
+        self.assertEqual(result["seq_commit_existing_and_gain"], 2)
+        self.assertEqual(result["seq_stage_and_gain"], 11)
+        validate_profile_accounting(result, 8)
+
     def test_missing_commit_kind_is_rejected(self):
         with self.assertRaises(ValueError):
             parse_experiment_profile("\n".join(self.rows[:-1]))
