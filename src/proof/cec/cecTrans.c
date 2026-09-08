@@ -9177,6 +9177,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     Gia_Man_t * pDup, * pClean = NULL;
     int i, k, nProved = 0, nFull = 0, nConflicts = 0, nProofs = 0;
     int KindSubmitted[3] = {0}, KindProved[3] = {0};
+    int fCombBoundaryOnly = (pPars->nExplore & 4096) != 0;
     int nLimit = pPars->nOdcProofMax ?
         Abc_MinInt(pFrontier->nSize, pPars->nOdcProofMax) : pFrontier->nSize;
     abctime clk = Abc_Clock();
@@ -9192,7 +9193,8 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     if ( Obligations.nSize )
     {
         vStatus = Cec_TranProveRootBatch( p, NULL, 0,
-            Obligations.pArray, Obligations.nSize, pPars, pProf, 0, &vStage );
+            Obligations.pArray, Obligations.nSize, pPars, pProf,
+            fCombBoundaryOnly, &vStage );
         (*pnBatches)++;
     }
     *pTimeProof = Abc_Clock() - clk;
@@ -9216,8 +9218,9 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
         }
         // This status is consumed ONLY by structural selection below.  It is
         // not a strict r=h certificate and never enters strict proof history.
-        Cand.nStatus = CEC_TRAN_STATE_PROVED_SEQ;
-        Cand.nProofStage = Cand.nProofLane = 2;
+        Cand.nStatus = fCombBoundaryOnly ? CEC_TRAN_STATE_PROVED_COMB :
+            CEC_TRAN_STATE_PROVED_SEQ;
+        Cand.nProofStage = Cand.nProofLane = fCombBoundaryOnly ? 1 : 2;
         Cand.nProofPhase = 1;
         Cand.nProofKind = Cand.nKind;
         Cec_TranCandVecPush( &SafePool, Cand );
@@ -9241,6 +9244,9 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
         Cec_TranOdcKindGains(p, &Selected, pClean, pKindSelected, pKindGain);
         Gia_ManStop( pDup );
     }
+    if ( fCombBoundaryOnly )
+        Abc_Print(1, "stran-root ODC boundary engine: schema=1 mode=comb-only candidates=%d proved=%d selected=%d.\n",
+            nLimit, nProved, *pnSelected);
     if ( pPars->nExplore & 512 )
         for ( k = 0; k < 3; k++ )
             Abc_Print(1, "stran-root ODC kind profile: schema=1 round=%d kind=%s submitted=%d proved=%d selected=%d ordered-and-gain=%d.\n",
@@ -9469,6 +9475,39 @@ static int Cec_TranOdcDirectSelfTest()
     Vec_IntFree(vSelected);
     Cec_TranCandVecStop(&Known); Cec_TranCandVecStop(&Direct);
     Cec_TranCandVecStop(&Obs); Cec_TranCandVecStop(&Selected);
+    // q starts and stays zero.  This edit needs a reachable-state proof:
+    // arbitrary q=1,a=1,b=1 observes the replacement at the output.  The
+    // opt-in all-state boundary lane must decline it, while scorr can prove
+    // it.  CBS acceptance is therefore never inferred from sampled care.
+    {
+        Cec_TranCandVec_t Cands = {0};
+        Cec_TranProf_t CheckProf = {0};
+        Gia_Man_t * pSeq, * pComb;
+        long long nObs = 0, nPass = 0, nBatch = 0;
+        int nTried, nSelected, Kinds[3] = {0}, KindGain[3] = {0};
+        abctime TimeProof;
+        p = Gia_ManStart(16);
+        a = Gia_ManAppendCi(p); b = Gia_ManAppendCi(p); q = Gia_ManAppendCi(p);
+        r = Gia_ManAppendAnd(p, a, q);
+        g = Gia_ManAppendAnd(p, r, b);
+        Gia_ManAppendCo(p, g); Gia_ManAppendCo(p, 0);
+        Gia_ManSetRegNum(p, 1); Gia_ManCreateRefs(p);
+        Cand = Cec_TranCandCreateLiteral(Abc_Lit2Var(r), 0, 1,
+            CEC_TRAN_CAND_CONST, 0);
+        Cec_TranCandVecPush(&Cands, Cand);
+        Pars.nExplore |= 4096;
+        pComb = Cec_TranOdcFanoutRound(p, &Cands, &Pars, &CheckProf, 0,
+            &nTried, &nSelected, &nObs, &nPass, &nBatch, &TimeProof,
+            Kinds, KindGain);
+        assert(!pComb && nSelected == 0 && nPass == 0);
+        Pars.nExplore &= ~4096;
+        pSeq = Cec_TranOdcFanoutRound(p, &Cands, &Pars, &CheckProf, 0,
+            &nTried, &nSelected, &nObs, &nPass, &nBatch, &TimeProof,
+            Kinds, KindGain);
+        assert(pSeq && nSelected == 1 && nPass == 1);
+        assert(Cec_TranProveWhole(p, pSeq, &Pars, &CheckProf));
+        Gia_ManStop(pSeq); Gia_ManStop(p); Cec_TranCandVecStop(&Cands);
+    }
     Abc_Print(1, "stran ODC MFFC1 Direct/care-only/polarity/ordered-kind attribution self-test: PASS\n");
     return 1;
 }
