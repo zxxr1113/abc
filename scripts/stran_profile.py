@@ -30,6 +30,7 @@ ROOT_ITERATOR_PREFIX = "stran-root resub iterator:"
 ROOT_BUILD_HORIZON_PREFIX = "stran-root build-horizon profile:"
 ROOT_KIT_PREFIX = "stran-root Kit portfolio profile:"
 ROOT_BDC_PREFIX = "stran-root BDC portfolio profile:"
+ROOT_ISF_TIME_PREFIX = "stran-root ISF time profile:"
 ROOT_SEQ_PREFIX = "stran-root sequential relations:"
 ROOT_BUILD_FUNNEL_PREFIX = "stran-root build-funnel profile:"
 ROOT_BUILD_STAGE_PREFIX = "stran-root build-stage profile:"
@@ -112,12 +113,26 @@ BUILD_KEYS = (
 ROOT_TIME_KEYS = (
     "total-sec", "sim-sec", "root-refresh-sec", "direct-discovery-sec",
     "divisor-discovery-sec", "resub-init-sec", "resub-enum-sec",
+    "isf-portfolio-sec",
     "cbs-graph-sec", "cbs-screen-sec", "cbs-solve-sec",
     "scorr-graph-sec", "scorr-bmc-sec", "scorr-induction-sec",
     "scorr-resim-sec", "scorr-other-sec", "selection-repair-sec",
     "bundle-sec", "cleanup-sec", "exact-audit-sec", "shadow-sec",
     "unprofiled-sec",
 )
+
+ROOT_ISF_TIME_KEYS = (
+    "portfolio-sec", "rescue-core-sec", "regular-core-sec",
+    "projection-sec", "kit-synthesis-sec", "bdc-synthesis-sec",
+)
+ROOT_ISF_TIME_FIELDS = [
+    f"root_isf_{key.replace('-', '_')}" for key in ROOT_ISF_TIME_KEYS
+]
+ROOT_PHASE_ISF_TIME_FIELDS = [
+    f"root_{phase}_isf_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in ROOT_ISF_TIME_KEYS
+]
 
 ROOT_PREPROCESS_DETAIL_KEYS = (
     "exp-ci-hit", "exp-ci-miss", "exp-score-sec", "exp-ci-sec",
@@ -600,6 +615,8 @@ PROFILE_FIELDS = [
     *ROOT_PHASE_KIT_FIELDS,
     *ROOT_BDC_FIELDS,
     *ROOT_PHASE_BDC_FIELDS,
+    *ROOT_ISF_TIME_FIELDS,
+    *ROOT_PHASE_ISF_TIME_FIELDS,
     *ROOT_BUILD_FUNNEL_FIELDS,
     *ROOT_PHASE_BUILD_FUNNEL_FIELDS,
     *ROOT_BUILD_SUPPORT_FIELDS,
@@ -661,7 +678,7 @@ def _sum_values(record: dict[str, int | float], *keys: str) -> int | float:
 def _root_time_to_legacy(record: dict[str, int | float]) -> dict[str, int | float]:
     """Map schema-3 root-only buckets onto the long-lived CSV rollups."""
     build = _sum_values(record, "divisor-discovery-sec", "resub-init-sec",
-                        "resub-enum-sec")
+                        "resub-enum-sec", "isf-portfolio-sec")
     commit = _sum_values(record, "bundle-sec", "cleanup-sec", "exact-audit-sec")
     selection = record.get("selection-repair-sec", 0)
     return {
@@ -847,6 +864,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_phase_bdc_records: dict[str, list[dict[str, int | float]]] = {
         "comb": [], "seq": [],
     }
+    root_isf_time_records: list[dict[str, int | float]] = []
+    root_phase_isf_time_records: dict[str, list[dict[str, int | float]]] = {
+        "comb": [], "seq": [],
+    }
     root_seq: list[dict[str, int | float]] = []
     root_build_funnels: list[dict[str, int | float]] = []
     root_phase_build_funnels: dict[str, list[dict[str, int | float]]] = {
@@ -895,7 +916,7 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_HELPER_PREFIX,
             ROOT_PAGED_PREFIX, ROOT_WAVE_PREFIX,
             ROOT_ITERATOR_PREFIX, ROOT_BUILD_HORIZON_PREFIX, ROOT_KIT_PREFIX,
-            ROOT_BDC_PREFIX,
+            ROOT_BDC_PREFIX, ROOT_ISF_TIME_PREFIX,
             ROOT_SEQ_PREFIX,
             ROOT_BUILD_FUNNEL_PREFIX, ROOT_BUILD_STAGE_PREFIX,
             ROOT_BUILD_RANK_PREFIX, ROOT_BUILD_GATES_PREFIX,
@@ -1008,6 +1029,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
             if phase:
                 root_phase_bdc_records[phase.group(1)].append(record)
+        elif ROOT_ISF_TIME_PREFIX in line:
+            root_isf_time_records.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_isf_time_records[phase.group(1)].append(record)
         elif ROOT_SEQ_PREFIX in line:
             root_seq.append(record)
         elif ROOT_BUILD_FUNNEL_PREFIX in line:
@@ -1272,6 +1298,13 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         for phase in ("comb", "seq"):
             result[f"root_{phase}_bdc_{_field_token(key)}"] = aggregate(
                 root_phase_bdc_records[phase], key)
+
+    for key in ROOT_ISF_TIME_KEYS:
+        result[f"root_isf_{_field_token(key)}"] = sum_field(
+            root_isf_time_records, key)
+        for phase in ("comb", "seq"):
+            result[f"root_{phase}_isf_{_field_token(key)}"] = sum_field(
+                root_phase_isf_time_records[phase], key)
 
     funnel_max = {"reservoir-max", "pool-max", "mffc-max"}
     for key in (

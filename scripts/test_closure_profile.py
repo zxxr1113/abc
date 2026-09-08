@@ -76,6 +76,22 @@ class ClosureProfileTest(unittest.TestCase):
         self.assertEqual(result["root_seq_bdc_selected_and_gain"], 6)
         self.assertEqual(result["root_comb_bdc_calls"], 0)
 
+    def test_isf_time_is_disjoint_and_aggregated_by_phase(self):
+        lines = [
+            "stran-root experiment-time profile: schema=9 phase=seq scope=discovery total-sec=10 divisor-discovery-sec=2 resub-init-sec=1 resub-enum-sec=3 isf-portfolio-sec=3 unprofiled-sec=1.",
+            "stran-root ISF time profile: schema=1 phase=seq portfolio-sec=2 rescue-core-sec=0.5 regular-core-sec=0.4 projection-sec=0.3 kit-synthesis-sec=0.2 bdc-synthesis-sec=0.1.",
+            "stran-root ISF time profile: schema=1 phase=seq portfolio-sec=1 rescue-core-sec=0.2 regular-core-sec=0.1 projection-sec=0.1 kit-synthesis-sec=0.1 bdc-synthesis-sec=0.1.",
+        ]
+        result = parse_experiment_profile("\n".join(lines))
+        self.assertEqual(result["profile_isf_portfolio_sec"], 3)
+        self.assertEqual(result["profile_build_discovery_sec"], 9)
+        self.assertAlmostEqual(result["root_isf_portfolio_sec"], 3)
+        self.assertAlmostEqual(result["root_seq_isf_rescue_core_sec"], 0.7)
+        self.assertAlmostEqual(result["root_seq_isf_regular_core_sec"], 0.5)
+        self.assertAlmostEqual(result["root_seq_isf_projection_sec"], 0.4)
+        self.assertAlmostEqual(result["root_seq_isf_kit_synthesis_sec"], 0.3)
+        self.assertAlmostEqual(result["root_seq_isf_bdc_synthesis_sec"], 0.2)
+
 
 if __name__ == "__main__":
     unittest.main()
