@@ -92,6 +92,21 @@ class ClosureProfileTest(unittest.TestCase):
         self.assertAlmostEqual(result["root_seq_isf_kit_synthesis_sec"], 0.3)
         self.assertAlmostEqual(result["root_seq_isf_bdc_synthesis_sec"], 0.2)
 
+    def test_tfo_core_value_profile_is_aggregated_by_phase(self):
+        lines = [
+            "stran-root TFO core-rescue profile: schema=3 phase=comb calls=0 skipped-no-extra=4 exact=0 rescued-roots=0 rescued-nodes=0 value-trials=0 value-exact=0 value-changed=0 value-unlocked=0 value-sec=0.000000.",
+            "stran-root TFO core-rescue profile: schema=3 phase=seq calls=10 skipped-no-extra=3 exact=8 rescued-roots=4 rescued-nodes=6 value-trials=7 value-exact=3 value-changed=2 value-unlocked=1 value-sec=0.125000.",
+            "stran-root TFO core-rescue profile: schema=3 phase=seq calls=6 skipped-no-extra=2 exact=5 rescued-roots=3 rescued-nodes=4 value-trials=4 value-exact=2 value-changed=1 value-unlocked=0 value-sec=0.075000.",
+        ]
+        result = parse_experiment_profile("\n".join(lines))
+        self.assertEqual(result["root_tfo_core_calls"], 16)
+        self.assertEqual(result["root_seq_tfo_core_rescued_nodes"], 10)
+        self.assertEqual(result["root_seq_tfo_core_value_trials"], 11)
+        self.assertEqual(result["root_seq_tfo_core_value_changed"], 3)
+        self.assertEqual(result["root_seq_tfo_core_value_unlocked"], 1)
+        self.assertAlmostEqual(result["root_seq_tfo_core_value_sec"], 0.2)
+        self.assertEqual(result["root_comb_tfo_core_skipped_no_extra"], 4)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -42252,7 +42252,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
         case 'E':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nExplore = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nExplore < 0 || pPars->nExplore > 15 ) goto usage;
+            if ( pPars->nExplore < 0 || pPars->nExplore > 31 ) goto usage;
             break;
         case 'F':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42426,7 +42426,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
 
 usage:
     Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVZEqwjbae num] [-P root] [-Mdxclrgftupoyh]\n", fStran2 ? "2" : "" );
-    Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow [default = 0]\n" );
+    Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow, 16=construction-guided TFO rescue [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );

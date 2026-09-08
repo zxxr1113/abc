@@ -30,6 +30,7 @@ ROOT_ITERATOR_PREFIX = "stran-root resub iterator:"
 ROOT_BUILD_HORIZON_PREFIX = "stran-root build-horizon profile:"
 ROOT_KIT_PREFIX = "stran-root Kit portfolio profile:"
 ROOT_BDC_PREFIX = "stran-root BDC portfolio profile:"
+ROOT_TFO_CORE_PREFIX = "stran-root TFO core-rescue profile:"
 ROOT_ISF_TIME_PREFIX = "stran-root ISF time profile:"
 ROOT_SEQ_PREFIX = "stran-root sequential relations:"
 ROOT_BUILD_FUNNEL_PREFIX = "stran-root build-funnel profile:"
@@ -275,6 +276,20 @@ ROOT_PHASE_BDC_FIELDS = [
     f"root_{phase}_bdc_{key.replace('-', '_')}"
     for phase in ("comb", "seq")
     for key in ROOT_KIT_KEYS
+]
+
+ROOT_TFO_CORE_KEYS = (
+    "calls", "skipped-no-extra", "exact", "rescued-roots",
+    "rescued-nodes", "value-trials", "value-exact", "value-changed",
+    "value-unlocked", "value-sec",
+)
+ROOT_TFO_CORE_FIELDS = [
+    f"root_tfo_core_{key.replace('-', '_')}" for key in ROOT_TFO_CORE_KEYS
+]
+ROOT_PHASE_TFO_CORE_FIELDS = [
+    f"root_{phase}_tfo_core_{key.replace('-', '_')}"
+    for phase in ("comb", "seq")
+    for key in ROOT_TFO_CORE_KEYS
 ]
 
 ROOT_BUILD_FUNNEL_FIELDS = [
@@ -615,6 +630,8 @@ PROFILE_FIELDS = [
     *ROOT_PHASE_KIT_FIELDS,
     *ROOT_BDC_FIELDS,
     *ROOT_PHASE_BDC_FIELDS,
+    *ROOT_TFO_CORE_FIELDS,
+    *ROOT_PHASE_TFO_CORE_FIELDS,
     *ROOT_ISF_TIME_FIELDS,
     *ROOT_PHASE_ISF_TIME_FIELDS,
     *ROOT_BUILD_FUNNEL_FIELDS,
@@ -864,6 +881,10 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     root_phase_bdc_records: dict[str, list[dict[str, int | float]]] = {
         "comb": [], "seq": [],
     }
+    root_tfo_core_records: list[dict[str, int | float]] = []
+    root_phase_tfo_core_records: dict[
+        str, list[dict[str, int | float]]
+    ] = {"comb": [], "seq": []}
     root_isf_time_records: list[dict[str, int | float]] = []
     root_phase_isf_time_records: dict[str, list[dict[str, int | float]]] = {
         "comb": [], "seq": [],
@@ -916,7 +937,7 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_HELPER_PREFIX,
             ROOT_PAGED_PREFIX, ROOT_WAVE_PREFIX,
             ROOT_ITERATOR_PREFIX, ROOT_BUILD_HORIZON_PREFIX, ROOT_KIT_PREFIX,
-            ROOT_BDC_PREFIX, ROOT_ISF_TIME_PREFIX,
+            ROOT_BDC_PREFIX, ROOT_TFO_CORE_PREFIX, ROOT_ISF_TIME_PREFIX,
             ROOT_SEQ_PREFIX,
             ROOT_BUILD_FUNNEL_PREFIX, ROOT_BUILD_STAGE_PREFIX,
             ROOT_BUILD_RANK_PREFIX, ROOT_BUILD_GATES_PREFIX,
@@ -1029,6 +1050,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
             if phase:
                 root_phase_bdc_records[phase.group(1)].append(record)
+        elif ROOT_TFO_CORE_PREFIX in line:
+            root_tfo_core_records.append(record)
+            phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
+            if phase:
+                root_phase_tfo_core_records[phase.group(1)].append(record)
         elif ROOT_ISF_TIME_PREFIX in line:
             root_isf_time_records.append(record)
             phase = re.search(r"(?:^| )phase=(comb|seq)(?: |$)", line)
@@ -1298,6 +1324,13 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         for phase in ("comb", "seq"):
             result[f"root_{phase}_bdc_{_field_token(key)}"] = aggregate(
                 root_phase_bdc_records[phase], key)
+
+    for key in ROOT_TFO_CORE_KEYS:
+        result[f"root_tfo_core_{_field_token(key)}"] = sum_field(
+            root_tfo_core_records, key)
+        for phase in ("comb", "seq"):
+            result[f"root_{phase}_tfo_core_{_field_token(key)}"] = sum_field(
+                root_phase_tfo_core_records[phase], key)
 
     for key in ROOT_ISF_TIME_KEYS:
         result[f"root_isf_{_field_token(key)}"] = sum_field(
