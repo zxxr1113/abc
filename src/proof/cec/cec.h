@@ -357,6 +357,7 @@ struct Cec_ParTran_t_
     int              fUseTfoDivs;   // add one-hop complete-fanin TFO divisors in the SEQ phase
     int              fUseOdc;       // run serial first-level ODC Build after the strict fixed point
     int              fOdcStrict;    // use full care in the serial phase (matched experiment control)
+    int              fOdcFanout;    // opt-in frozen fanout-boundary proof and conservative bundle commit
     int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fRootExhaustive;// deprecated -r compatibility bit

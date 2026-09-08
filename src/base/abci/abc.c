@@ -42245,7 +42245,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVOPZEqwjbaeMdxckilrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVOPZEqwjbaeMJdxckilrgftupoyh")) != EOF )
     {
         switch ( c )
         {
@@ -42328,6 +42328,9 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             break;
         case 'k':
             pPars->fUseOdc ^= 1;
+            break;
+        case 'J':
+            pPars->fOdcFanout ^= 1;
             break;
         case 'i':
             pPars->fOdcStrict ^= 1;
@@ -42436,7 +42439,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVOZEqwjbae num] [-P root] [-Mdxckilrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVOZEqwjbae num] [-P root] [-MJdxckilrgftupoyh]\n", fStran2 ? "2" : "" );
     Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow, 16=construction-guided TFO rescue [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
@@ -42464,6 +42467,7 @@ usage:
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
     Abc_Print( -2, "\t-d     : toggle SEQ-only one-hop complete-fanin TFO divisors (cap=B) [default = %s]\n", pPars->fUseTfoDivs? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle serial first-level ODC Build after strict fixed point [default = %s]\n", pPars->fUseOdc? "yes": "no" );
+    Abc_Print( -2, "\t-J     : use frozen fanout-boundary batch proof/commit in -k phase; -O caps candidates [default = %s]\n", pPars->fOdcFanout? "yes": "no" );
     Abc_Print( -2, "\t-i     : use strict full care in the serial phase (matched control) [default = %s]\n", pPars->fOdcStrict? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );

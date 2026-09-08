@@ -193,6 +193,7 @@ static int Cec_TranObservationSelfTest();
 static int Cec_TranExactCoreSelfTest();
 static int Cec_TranCompleteFaninTfoSelfTest();
 static int Cec_TranFirstLevelCareSelfTest();
+static int Cec_TranOdcFanoutSelfTest();
 typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
 struct Cec_TranTfoStats_t_
 {
@@ -216,7 +217,7 @@ int Cec_TranRootSelfTest()
         Cec_TranObservationSelfTest() &&
         Cec_TranExactCoreSelfTest() &&
         Cec_TranCompleteFaninTfoSelfTest() &&
-        Cec_TranFirstLevelCareSelfTest();
+        Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcFanoutSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -250,6 +251,7 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseTfoDivs = 0;
     p->fUseOdc = 0;
     p->fOdcStrict = 0;
+    p->fOdcFanout = 0;
     p->fUseConstr  = 1;
     p->fUseCbsMultiLit = 1;
     // A round owns one immutable proof snapshot.  Every successful COMB/SEQ
@@ -8976,6 +8978,340 @@ static void Cec_TranPrintOdcCommitProfile( int iRound, int nBefore,
         Gain );
 }
 
+// Auxiliary endpoints belong only to the proof graph.  For ordinary fanouts
+// of r, prove the actual source gate g = lit(r)&s equal to lit(h)&s.  Seeding
+// r=h would incorrectly assume the very equality which ODC relaxes.  The
+// original transition relation is retained by Cec_TranBuildRootBatch, so the
+// returned class equalities have both reset base and inductive closure.
+// Unsupported incidence, direct PO/RI and full-care control use strict r=h.
+static int Cec_TranOdcFanoutObligations( Gia_Man_t * p,
+    Cec_TranCand_t const * pCand, int fFullCare,
+    Cec_TranCandVec_t * pObligations )
+{
+    Gia_Obj_t * pFan;
+    int f, iFan, iFan0, iFan1, nBefore = pObligations->nSize;
+    int fFull = fFullCare || pCand->nGates == CEC_TRAN_RECIPE_NODES_MAX;
+    assert( p->vFanoutNums && p->vFanout );
+    Gia_ObjForEachFanoutStaticId( p, pCand->iTarget, iFan, f )
+    {
+        pFan = Gia_ManObj( p, iFan );
+        if ( !Gia_ObjIsAnd(pFan) || Gia_ObjIsXor(pFan) ||
+             Gia_ObjIsBuf(pFan) || Gia_ObjIsMux(p, pFan) )
+        {
+            fFull = 1;
+            break;
+        }
+        iFan0 = Gia_ObjFaninId0p( p, pFan );
+        iFan1 = Gia_ObjFaninId1p( p, pFan );
+        if ( (iFan0 == pCand->iTarget) == (iFan1 == pCand->iTarget) )
+        {
+            fFull = 1;
+            break;
+        }
+    }
+    if ( fFull )
+        Cec_TranCandVecPush( pObligations, *pCand );
+    else Gia_ObjForEachFanoutStaticId( p, pCand->iTarget, iFan, f )
+    {
+        Cec_TranCand_t Obl = *pCand;
+        int iSide, fCompl;
+        pFan = Gia_ManObj( p, iFan );
+        iFan0 = Gia_ObjFaninId0p( p, pFan );
+        iSide = iFan0 == pCand->iTarget ?
+            Gia_ObjFaninLit1p(p, pFan) : Gia_ObjFaninLit0p(p, pFan);
+        fCompl = iFan0 == pCand->iTarget ?
+            Gia_ObjFaninC0(pFan) : Gia_ObjFaninC1(pFan);
+        Obl.iTarget = iFan;
+        Obl.nGates++;
+        Obl.Recipe = Cec_TranRecipeAlloc( 2 * Obl.nGates );
+        if ( pCand->nGates )
+            memcpy( Obl.Recipe, pCand->Recipe,
+                sizeof(int) * 2 * pCand->nGates );
+        Obl.Recipe[2 * pCand->nGates] = fCompl ?
+            Cec_TranRecipeNotCode(pCand->iOut) : pCand->iOut;
+        Obl.Recipe[2 * pCand->nGates + 1] = iSide;
+        Obl.iOut = Cec_TranRecipeGateCode( pCand->nGates, 0 );
+        Obl.fStrict = 1;
+        Cec_TranCandVecPush( pObligations, Obl );
+        Cec_TranCandRecipeRelease( &Obl );
+    }
+    // A dangling root needs no ODC obligation; conservatively require strict
+    // equality anyway, avoiding a vacuous candidate-PASS implementation path.
+    if ( pObligations->nSize == nBefore )
+        Cec_TranCandVecPush( pObligations, *pCand );
+    return fFull;
+}
+
+// Conditions are hereditary: every subset of this pool is safe.  Existing
+// MFFC/support conflict selection may therefore choose any subset afterward.
+// Recipe external reads cannot be selected roots (in either insertion order),
+// and no source AND can have two selected roots as fanins.  This is stronger
+// than necessary for candidates proved in full care, deliberately so.
+static int Cec_TranOdcFanoutPoolAdd( Gia_Man_t * p,
+    Cec_TranCand_t const * pCand, char * pTargets, char * pReads,
+    Vec_Int_t * vSupport )
+{
+    Gia_Obj_t * pFan;
+    int f, i, iObj, iFan, iFan0, iFan1;
+    if ( pTargets[pCand->iTarget] || pReads[pCand->iTarget] ||
+         !Cec_TranProofHistoryTopoValid(p, pCand) )
+        return 0;
+    Cec_TranCandCollectSupport( pCand, vSupport );
+    Vec_IntForEachEntry( vSupport, iObj, i )
+        if ( pTargets[iObj] || iObj == pCand->iTarget )
+            return 0;
+    Gia_ObjForEachFanoutStaticId( p, pCand->iTarget, iFan, f )
+    {
+        pFan = Gia_ManObj( p, iFan );
+        if ( !Gia_ObjIsAnd(pFan) || Gia_ObjIsBuf(pFan) )
+            continue;
+        iFan0 = Gia_ObjFaninId0p( p, pFan );
+        iFan1 = Gia_ObjFaninId1p( p, pFan );
+        if ( pTargets[iFan0] || pTargets[iFan1] )
+            return 0;
+    }
+    pTargets[pCand->iTarget] = 1;
+    Vec_IntForEachEntry( vSupport, iObj, i )
+        pReads[iObj] = 1;
+    return 1;
+}
+
+// Composition proof: fix a state reachable in frozen N and the current PIs.
+// Topological induction preserves every nonselected source node.  A selected
+// root evaluates h on earlier nonselected external reads, hence to its frozen
+// h value.  A nonselected AND has either zero changed inputs or one selected
+// root; the latter case is exactly its discharged fanout obligation.  Special
+// gates and COs can read selected roots only with strict equality proved.
+// Preserved RIs and the unchanged register interface then preserve reachability
+// frame by frame.  Helpers may participate in correspondence closure without
+// being physical edits.  Never carry these ODC certificates across a commit.
+static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
+    Cec_TranCandVec_t * pFrontier, Cec_ParTran_t * pPars,
+    Cec_TranProf_t * pProf, int iRound, int * pnTried, int * pnSelected,
+    long long * pnObligations, long long * pnProved, long long * pnBatches,
+    abctime * pTimeProof )
+{
+    Cec_TranCandVec_t Obligations = {0}, SafePool = {0}, Selected = {0};
+    Vec_Int_t * vBeg = Vec_IntAlloc( pFrontier->nSize + 1 );
+    Vec_Int_t * vStatus = NULL, * vSupport = Vec_IntAlloc( 32 );
+    Vec_Int_t * vMffc = Vec_IntAlloc( 128 ), * vSelected = Vec_IntAlloc( 16 );
+    Vec_Str_t * vStage = NULL;
+    char * pTargets = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pReads = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pCovered = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pUsed = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pSolved = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    char * pMffc = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    Gia_Man_t * pDup, * pClean = NULL;
+    int i, k, nProved = 0, nFull = 0, nConflicts = 0, nProofs = 0;
+    int nLimit = pPars->nOdcProofMax ?
+        Abc_MinInt(pFrontier->nSize, pPars->nOdcProofMax) : pFrontier->nSize;
+    abctime clk = Abc_Clock();
+    Gia_ManStaticFanoutStart( p );
+    Vec_IntPush( vBeg, 0 );
+    for ( i = 0; i < nLimit; i++ )
+    {
+        nFull += Cec_TranOdcFanoutObligations( p, pFrontier->pArray + i,
+            pPars->fOdcStrict, &Obligations );
+        Vec_IntPush( vBeg, Obligations.nSize );
+    }
+    if ( Obligations.nSize )
+    {
+        vStatus = Cec_TranProveRootBatch( p, NULL, 0,
+            Obligations.pArray, Obligations.nSize, pPars, pProf, 0, &vStage );
+        (*pnBatches)++;
+    }
+    *pTimeProof = Abc_Clock() - clk;
+    for ( i = 0; i < nLimit; i++ )
+    {
+        Cec_TranCand_t Cand = pFrontier->pArray[i];
+        int fProved = 1;
+        for ( k = Vec_IntEntry(vBeg, i); k < Vec_IntEntry(vBeg, i+1); k++ )
+        {
+            fProved &= Vec_IntEntry( vStatus, k );
+            nProofs += Vec_IntEntry( vStatus, k );
+        }
+        if ( !fProved )
+            continue;
+        nProved++;
+        if ( !Cec_TranOdcFanoutPoolAdd(p, &Cand, pTargets, pReads, vSupport) )
+        {
+            nConflicts++;
+            continue;
+        }
+        // This status is consumed ONLY by structural selection below.  It is
+        // not a strict r=h certificate and never enters strict proof history.
+        Cand.nStatus = CEC_TRAN_STATE_PROVED_SEQ;
+        Cand.nProofStage = Cand.nProofLane = 2;
+        Cand.nProofPhase = 1;
+        Cand.nProofKind = CEC_TRAN_CAND_CONSTR;
+        Cec_TranCandVecPush( &SafePool, Cand );
+    }
+    Gia_ManStaticFanoutStop( p );
+    *pnTried = nLimit;
+    *pnObligations += Obligations.nSize;
+    *pnProved += nProved;
+    if ( SafePool.nSize )
+        Cec_TranRootConsumeProved( p, &SafePool, pCovered, pUsed, pSolved,
+            pMffc, vMffc, vSupport, &Selected, pProf );
+    *pnSelected = Selected.nSize;
+    if ( Selected.nSize )
+    {
+        for ( i = 0; i < Selected.nSize; i++ )
+            Vec_IntPush( vSelected, i );
+        pDup = Cec_TranDupRootBundle( p, Selected.pArray, vSelected );
+        pClean = Cec_TranCleanupKeepRegs( pDup, NULL );
+        assert( Gia_ManRegNum(pClean) == Gia_ManRegNum(p) );
+        assert( Cec_TranGain(p, pClean) > 0 );
+        Gia_ManStop( pDup );
+    }
+    Abc_Print( 1, "stran-root ODC fanout round: schema=1 round=%d candidates=%d obligations=%d full-care=%d proved-obligations=%d proved-candidates=%d composition-conflicts=%d selected=%d proof-batches=%d comb-unknown=%lld seq-incomplete=%d bmc-unknown=%lld ind-unknown=%lld proof-sec=%.6f.\n",
+        iRound + 1, nLimit, Obligations.nSize, nFull, nProofs, nProved,
+        nConflicts, *pnSelected, Obligations.nSize != 0,
+        (long long)pProf->nCombUnknown, pProf->nSeqUnknown,
+        (long long)pProf->Corr.nBmcUnknown, (long long)pProf->Corr.nIndUnknown,
+        Cec_TranTimeSec(*pTimeProof) );
+    Cec_TranCandVecStop( &Obligations );
+    Cec_TranCandVecStop( &SafePool );
+    Cec_TranCandVecStop( &Selected );
+    Vec_IntFree( vBeg );
+    Vec_IntFreeP( &vStatus );
+    Vec_StrFreeP( &vStage );
+    Vec_IntFree( vSupport );
+    Vec_IntFree( vMffc );
+    Vec_IntFree( vSelected );
+    ABC_FREE( pTargets );
+    ABC_FREE( pReads );
+    ABC_FREE( pCovered );
+    ABC_FREE( pUsed );
+    ABC_FREE( pSolved );
+    ABC_FREE( pMffc );
+    return pClean;
+}
+
+static int Cec_TranOdcFanoutSelfTest()
+{
+    Cec_ParTran_t Pars;
+    Cec_TranProf_t Prof = {0};
+    Cec_TranCand_t A, B, Pair[2];
+    Cec_TranCandVec_t Obs = {0};
+    Gia_Man_t * p = Gia_ManStart(32), * pDup;
+    Vec_Int_t * vStatus, * vSupport = Vec_IntAlloc(4), * vSelected = Vec_IntAlloc(2);
+    Vec_Str_t * vStage;
+    char * pTargets, * pReads;
+    int x, y, q, r, t, g, nObjs;
+    Cec_ManTranSetDefaultParams( &Pars );
+    Pars.nBTLimit = 1000;
+    x = Gia_ManAppendCi(p); y = Gia_ManAppendCi(p); q = Gia_ManAppendCi(p);
+    r = Gia_ManAppendAnd(p, x, q);
+    t = Gia_ManAppendAnd(p, y, q);
+    g = Gia_ManAppendAnd(p, r, t);
+    Gia_ManAppendCo(p, g); Gia_ManAppendCo(p, 0); Gia_ManSetRegNum(p, 1);
+    Gia_ManStaticFanoutStart(p);
+    pTargets = ABC_CALLOC(char, Gia_ManObjNum(p));
+    pReads = ABC_CALLOC(char, Gia_ManObjNum(p));
+    A = Cec_TranCandCreateLiteral(Abc_Lit2Var(r), x, 1, CEC_TRAN_CAND_EXIST, 1);
+    B = Cec_TranCandCreateLiteral(Abc_Lit2Var(t), y, 1, CEC_TRAN_CAND_EXIST, 1);
+    Cec_TranOdcFanoutObligations(p, &A, 0, &Obs);
+    Cec_TranOdcFanoutObligations(p, &B, 0, &Obs);
+    assert(Obs.nSize == 2 && Obs.pArray[0].iTarget == Abc_Lit2Var(g) &&
+        Obs.pArray[1].iTarget == Abc_Lit2Var(g));
+    nObjs = Gia_ManObjNum(p);
+    vStatus = Cec_TranProveRootBatch(p, NULL, 0, Obs.pArray, Obs.nSize,
+        &Pars, &Prof, 0, &vStage);
+    assert(Vec_IntEntry(vStatus, 0) && Vec_IntEntry(vStatus, 1));
+    assert(Gia_ManObjNum(p) == nObjs);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    // Both individual gate equalities are true, while their physical union
+    // gives x&y from the original constant-zero output.  Forbid both orders.
+    assert(Cec_TranOdcFanoutPoolAdd(p, &A, pTargets, pReads, vSupport));
+    assert(!Cec_TranOdcFanoutPoolAdd(p, &B, pTargets, pReads, vSupport));
+    memset(pTargets, 0, Gia_ManObjNum(p)); memset(pReads, 0, Gia_ManObjNum(p));
+    assert(Cec_TranOdcFanoutPoolAdd(p, &B, pTargets, pReads, vSupport));
+    assert(!Cec_TranOdcFanoutPoolAdd(p, &A, pTargets, pReads, vSupport));
+    // A real target edit is distinct from the fanout proof endpoint.
+    Vec_IntPush(vSelected, 0);
+    pDup = Cec_TranDupRootBundle(p, &A, vSelected);
+    assert(Cec_TranProveWhole(p, pDup, &Pars, &Prof));
+    Gia_ManStop(pDup);
+    Pair[0] = A; Pair[1] = B;
+    Vec_IntPush(vSelected, 1);
+    pDup = Cec_TranDupRootBundle(p, Pair, vSelected);
+    assert(!Cec_TranProveWhole(p, pDup, &Pars, &Prof));
+    Gia_ManStop(pDup); Vec_IntPop(vSelected);
+    // The false root equality must not have been assumed by the batch.
+    vStatus = Cec_TranProveRootBatch(p, NULL, 0, &A, 1,
+        &Pars, &Prof, 0, &vStage);
+    assert(!Vec_IntEntry(vStatus, 0));
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    Cec_TranCandVecStop(&Obs);
+    Gia_ManStaticFanoutStop(p);
+    ABC_FREE(pTargets); ABC_FREE(pReads); Gia_ManStop(p);
+
+    // Separate outputs remove the cofanin conflict: rejection now depends on
+    // the recipe-read rule, including when its reader is inserted first.
+    p = Gia_ManStart(32);
+    x = Gia_ManAppendCi(p); y = Gia_ManAppendCi(p); q = Gia_ManAppendCi(p);
+    r = Gia_ManAppendAnd(p, x, q); t = Gia_ManAppendAnd(p, y, q);
+    g = Gia_ManAppendAnd(p, Abc_LitNot(r), Abc_LitNot(y));
+    Gia_ManAppendCo(p, g); Gia_ManAppendCo(p, t); Gia_ManAppendCo(p, 0);
+    Gia_ManSetRegNum(p, 1); Gia_ManStaticFanoutStart(p);
+    pTargets = ABC_CALLOC(char, Gia_ManObjNum(p));
+    pReads = ABC_CALLOC(char, Gia_ManObjNum(p));
+    A = Cec_TranCandCreateLiteral(Abc_Lit2Var(r), 0, 1, CEC_TRAN_CAND_CONST, 1);
+    B = Cec_TranCandCreateLiteral(Abc_Lit2Var(t), r, 1, CEC_TRAN_CAND_EXIST, 1);
+    assert(Cec_TranOdcFanoutPoolAdd(p, &A, pTargets, pReads, vSupport));
+    assert(!Cec_TranOdcFanoutPoolAdd(p, &B, pTargets, pReads, vSupport));
+    memset(pTargets, 0, Gia_ManObjNum(p)); memset(pReads, 0, Gia_ManObjNum(p));
+    assert(Cec_TranOdcFanoutPoolAdd(p, &B, pTargets, pReads, vSupport));
+    assert(!Cec_TranOdcFanoutPoolAdd(p, &A, pTargets, pReads, vSupport));
+    // Complemented root and side literal are copied exactly, and the virtual
+    // endpoint remains a helper in the original register transition relation.
+    assert(!Cec_TranOdcFanoutObligations(p, &A, 0, &Obs));
+    assert(Obs.nSize == 1 && Obs.pArray[0].iTarget == Abc_Lit2Var(g));
+    assert(Obs.pArray[0].Recipe[0] == 1 && Obs.pArray[0].Recipe[1] == Abc_LitNot(y));
+    assert(Cec_TranOdcFanoutObligations(p, &B, 0, &Obs));
+    assert(Obs.nSize == 2 && Obs.pArray[1].iTarget == Abc_Lit2Var(t));
+    vStatus = Cec_TranProveRootBatch(p, NULL, 0, Obs.pArray, Obs.nSize,
+        &Pars, &Prof, 0, &vStage);
+    assert(Vec_IntEntry(vStatus, 0) && Vec_IntEntry(vStatus, 1));
+    assert(Vec_StrEntry(vStage, 0) == 2); // reachable, not arbitrary-state
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    // A reset base which has not reached inductive closure is UNKNOWN, even
+    // if the seeded relation survives BMC.  It must not authorize a commit.
+    Pars.nStepsMax = 0;
+    vStatus = Cec_TranProveRootBatch(p, NULL, 0, Obs.pArray, 1,
+        &Pars, &Prof, 0, &vStage);
+    assert(!Vec_IntEntry(vStatus, 0) && Vec_StrEntry(vStage, 0) == 0);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    Pars.nStepsMax = -1;
+    pDup = Cec_TranDupRootBundle(p, &A, vSelected);
+    assert(Cec_TranProveWhole(p, pDup, &Pars, &Prof));
+    Gia_ManStop(pDup);
+    Cec_TranCandVecStop(&Obs);
+    Gia_ManStaticFanoutStop(p);
+    ABC_FREE(pTargets); ABC_FREE(pReads); Gia_ManStop(p);
+    Vec_IntFree(vSupport); Vec_IntFree(vSelected);
+    Abc_Print(1, "stran ODC fanout proof/composition/polarity/helper-endpoint self-test: PASS\n");
+    return 1;
+}
+
+static void Cec_TranPrintOdcFanoutCommitProfile( int iRound, int nBefore,
+    int nAfter, int nRegs, int nSelected, abctime TimeTotal, abctime TimeProof )
+{
+    double Total = Cec_TranTimeSec(TimeTotal), Proof = Cec_TranTimeSec(TimeProof);
+    int Gain = nBefore - nAfter;
+    Abc_Print( 1, "stran-root ODC fanout commit: schema=1 round=%d proof=frozen-fanout-correspondence selected=%d AND=%d->%d gain=%d.\n",
+        iRound + 1, nSelected, nBefore, nAfter, Gain );
+    Abc_Print( 1, "stran-root experiment-time profile: schema=8 phase=seq scope=odc total-sec=%.6f sim-sec=0 root-refresh-sec=0 direct-discovery-sec=0 divisor-discovery-sec=0 resub-init-sec=0 resub-enum-sec=0 cbs-graph-sec=0 cbs-screen-sec=0 cbs-solve-sec=0 scorr-graph-sec=0 scorr-bmc-sec=0 scorr-induction-sec=0 scorr-resim-sec=0 scorr-other-sec=%.6f selection-repair-sec=0 bundle-sec=0 cleanup-sec=0 exact-audit-sec=0 shadow-sec=0 unprofiled-sec=%.6f\n",
+        Total, Proof, Total > Proof ? Total - Proof : 0.0 );
+    Abc_Print( 1, "stran-root experiment-summary profile: schema=8 phase=seq scope=odc selected-roots=%d marginal-and=%d final-and-gain=%d final-reg-gain=0 and-before=%d and-after=%d reg-before=%d reg-after=%d\n",
+        nSelected, Gain, Gain, nBefore, nAfter, nRegs, nRegs );
+    Abc_Print( 1, "stran-root experiment-commit profile: schema=8 phase=seq kind=constant selected=0 marginal-and=0 marginal-reg=0\n" );
+    Abc_Print( 1, "stran-root experiment-commit profile: schema=8 phase=seq kind=existing selected=0 marginal-and=0 marginal-reg=0\n" );
+    Abc_Print( 1, "stran-root experiment-commit profile: schema=8 phase=seq kind=build selected=%d marginal-and=%d marginal-reg=0\n", nSelected, Gain );
+}
+
 // Quality-first ODC reference implementation.  Strict COMB/SEQ processing has
 // already reached its configured fixed point before this routine is called.
 // On each current snapshot, Build is reconstructed using the immediate-fanout
@@ -8991,6 +9327,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     long long nGenerated = 0, nPositive = 0, nSampleStrict = 0;
     long long nAttempts = 0, nRejected = 0, nCommits = 0;
     long long nGain = 0, nLimitHits = 0;
+    long long nObligations = 0, nProved = 0, nBatches = 0;
     int nInitial = Gia_ManAndNum( p );
     int fUseCare = !OdcPars.fOdcStrict;
     int iRound;
@@ -9027,7 +9364,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         int fOwnDb = pSharedDb == NULL;
         int fRootBatch, fCommitted = 0, fCommittedSampleStrict = 0;
         int nRoots = 0, r, i, nTfoMax = OdcPars.nConstrBaseMax;
-        int nBefore = Gia_ManAndNum( p ), nTried = 0;
+        int nBefore = Gia_ManAndNum( p ), nTried = 0, nSelected = 0;
         int nGeneratedRound = 0, nPositiveRound = 0;
         abctime TimeRound = Abc_Clock(), TimeProof = 0;
 
@@ -9101,6 +9438,17 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         if ( fOwnDb )
             Cec_TranPatDbStop( pDb );
 
+        if ( OdcPars.fOdcFanout )
+        {
+            pClean = Cec_TranOdcFanoutRound( p, &Frontier, &OdcPars, &Prof,
+                iRound, &nTried, &nSelected, &nObligations, &nProved,
+                &nBatches, &TimeProof );
+            fCommitted = pClean != NULL;
+            nAttempts += nTried;
+            if ( fCommitted )
+                nGain += Cec_TranGain(p, pClean), nCommits += nSelected;
+        }
+        else
         for ( i = 0; i < Frontier.nSize &&
               (!OdcPars.nOdcProofMax || nTried < OdcPars.nOdcProofMax); i++ )
         {
@@ -9157,20 +9505,31 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         if ( !fCommitted )
         {
             ABC_FREE( p->pRefs );
-            Abc_Print( 1, "stran-root ODC serial round: schema=1 round=%d generated=%d positive=%d attempted=%d result=no-commit limit-hit=%s.\n",
-                iRound + 1, nGeneratedRound, nPositiveRound, nTried,
+            Abc_Print( 1, "stran-root ODC %s round: schema=1 round=%d generated=%d positive=%d attempted=%d result=no-commit limit-hit=%s.\n",
+                OdcPars.fOdcFanout ? "fanout" : "serial", iRound + 1, nGeneratedRound, nPositiveRound, nTried,
                 OdcPars.nOdcProofMax && nTried >= OdcPars.nOdcProofMax ?
                     "yes" : "no" );
             break;
         }
-        Gia_ManStop( pDup );
+        if ( pDup )
+            Gia_ManStop( pDup );
         Gia_ManStop( p );
         p = pClean;
-        Cec_TranPrintOdcCommitProfile( iRound, nBefore, Gia_ManAndNum(p),
+        if ( OdcPars.fOdcFanout )
+            Cec_TranPrintOdcFanoutCommitProfile( iRound, nBefore,
+                Gia_ManAndNum(p), Gia_ManRegNum(p), nSelected,
+                Abc_Clock() - TimeRound, TimeProof );
+        else Cec_TranPrintOdcCommitProfile( iRound, nBefore, Gia_ManAndNum(p),
             Gia_ManRegNum(p), fCommittedSampleStrict, fUseCare,
             Abc_Clock() - TimeRound, TimeProof );
     }
-    Abc_Print( 1, "stran-root ODC serial summary: schema=1 policy=single-current-machine-reprove care=%s generated=%lld positive=%lld sampled-strict-compatible=%lld attempted=%lld rejected-or-unknown=%lld commits=%lld gain=%lld proof-limit-hits=%lld AND=%d->%d proof-sec=%.6f total-sec=%.6f.\n",
+    if ( OdcPars.fOdcFanout )
+        Abc_Print( 1, "stran-root ODC fanout summary: schema=1 care=%s generated=%lld positive=%lld attempted=%lld obligations=%lld proved-candidates=%lld selected=%lld batches=%lld gain=%lld AND=%d->%d proof-sec=%.6f total-sec=%.6f.\n",
+            fUseCare ? "first-level" : "full-control",
+            nGenerated, nPositive, nAttempts, nObligations, nProved, nCommits,
+            nBatches, nGain, nInitial, Gia_ManAndNum(p),
+            Cec_TranTimeSec(TimeProofAll), Cec_TranTimeSec(Abc_Clock() - TimeAll) );
+    else Abc_Print( 1, "stran-root ODC serial summary: schema=1 policy=single-current-machine-reprove care=%s generated=%lld positive=%lld sampled-strict-compatible=%lld attempted=%lld rejected-or-unknown=%lld commits=%lld gain=%lld proof-limit-hits=%lld AND=%d->%d proof-sec=%.6f total-sec=%.6f.\n",
         fUseCare ? "first-level-immediate-fanout" : "full-control",
         nGenerated, nPositive, nSampleStrict, nAttempts, nRejected,
         nCommits, nGain, nLimitHits, nInitial, Gia_ManAndNum(p),

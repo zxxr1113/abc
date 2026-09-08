@@ -36,6 +36,14 @@ class ClosureProfileTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_profile_accounting(result, 13)
 
+    def test_odc_bundle_is_ordered_build_once(self):
+        rows = self.rows + commit("seq", "odc", 14, 8, (0, 0, 3), (0, 0, 6))
+        result = parse_experiment_profile("\n".join(rows))
+        self.assertEqual(result["seq_build_ordered_and_gain"], 9)
+        self.assertEqual(result["seq_commit_build_selected"], 5)
+        self.assertEqual(result["seq_stage_and_gain"], 11)
+        validate_profile_accounting(result, 8)
+
     def test_missing_commit_kind_is_rejected(self):
         with self.assertRaises(ValueError):
             parse_experiment_profile("\n".join(self.rows[:-1]))
