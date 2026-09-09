@@ -192,6 +192,7 @@ static int Cec_TranProofMicroBatchSelfTest();
 static int Cec_TranObservationSelfTest();
 static int Cec_TranExactCoreSelfTest();
 static int Cec_TranCompleteFaninTfoSelfTest();
+static int Cec_TranWindowSelfTest();
 static int Cec_TranFirstLevelCareSelfTest();
 static int Cec_TranOdcRootCareSelfTest();
 static int Cec_TranOdcFanoutSelfTest();
@@ -221,7 +222,7 @@ int Cec_TranRootSelfTest()
         Cec_TranExactCoreSelfTest() && Cec_TranCareIsfSelfTest() &&
         Cec_TranCompleteFaninTfoSelfTest() &&
         Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcRootCareSelfTest() &&
-        Cec_TranOdcFanoutSelfTest() &&
+        Cec_TranOdcFanoutSelfTest() && Cec_TranWindowSelfTest() &&
         Cec_TranOdcDirectSelfTest();
 }
 
@@ -542,6 +543,8 @@ struct Cec_TranProf_t_
     long long nRootGreedyFrontierCoverSum;
     long long nRootGreedyFrontierNovelSum;
     int       nRootGreedyFrontierMax;
+    long long nOdcWindowRoots, nOdcWindowNodes, nOdcWindowEnds;
+    long long nOdcWindowOverflow, nOdcWindowCareBits, nOdcWindowBits;
     long long nOdcCoreVariants, nOdcCarePoolChanged;
     long long nRootGreedyPivotAttempts;
     long long nRootGreedyPivotFound;
@@ -997,6 +1000,101 @@ static word * Cec_TranFirstLevelCare( Cec_TranSim_t * pSim, int iTarget,
         for ( s = 0; s < pSim->nSlots; s++ )
             *pnCareBits += Abc_TtCountOnes( pCare[s] );
     }
+    return pCare;
+}
+
+// Spatial TFO windows terminate at depth, every PO/RI and unsupported gate.
+// vNodes includes the root; every edge leaving this region starts in vEnds.
+// At the recipe encoding capacity, preserve the current node as an exit;
+// never drop an outgoing path or silently truncate the proof boundary.
+static int Cec_TranWindowDepth( Cec_ParTran_t * pPars )
+{
+    int d = (pPars->nExplore >> 28) & 3;
+    return 1 << d;
+}
+static void Cec_TranWindowCollect( Gia_Man_t * p, int iRoot, int Depth,
+    int MaxAnds, Vec_Int_t * vNodes, Vec_Int_t * vEnds, int * pOverflow )
+{
+    Vec_Int_t * vDepth = Vec_IntAlloc(16);
+    int i, j, n, d, f, fan;
+    Gia_Obj_t * pFan;
+    Vec_IntClear(vNodes); Vec_IntClear(vEnds);
+    Vec_IntPush(vNodes, iRoot); Vec_IntPush(vDepth, 0);
+    *pOverflow = MaxAnds < 0;
+    for ( i = 0; i < Vec_IntSize(vNodes); i++ )
+    {
+        n = Vec_IntEntry(vNodes, i); d = Vec_IntEntry(vDepth, i);
+        if ( d == Depth ) { Vec_IntPushUnique(vEnds, n); continue; }
+        Gia_ObjForEachFanoutStaticId(p, n, fan, f)
+        {
+            pFan = Gia_ManObj(p, fan);
+            if ( !Gia_ObjIsAnd(pFan) || Gia_ObjIsXor(pFan) ||
+                 Gia_ObjIsBuf(pFan) || Gia_ObjIsMux(p, pFan) )
+            { Vec_IntPushUnique(vEnds, n); continue; }
+            j = Vec_IntFind(vNodes, fan);
+            if ( j >= 0 ) continue;
+            if ( Vec_IntSize(vNodes) - 1 >= MaxAnds )
+            { *pOverflow = 1; Vec_IntPushUnique(vEnds,n); continue; }
+            Vec_IntPush(vNodes, fan); Vec_IntPush(vDepth, d+1);
+        }
+    }
+    if ( Vec_IntSize(vEnds) == 0 )
+    {
+        Vec_IntClear(vNodes); Vec_IntPush(vNodes, iRoot);
+        Vec_IntClear(vEnds); Vec_IntPush(vEnds, iRoot);
+    }
+    Vec_IntSort(vNodes, 0); Vec_IntSort(vEnds, 0);
+    assert(Vec_IntEntry(vNodes, 0) == iRoot);
+    Vec_IntFree(vDepth);
+}
+static word * Cec_TranWindowCare( Cec_TranSim_t * pSim, int iRoot,
+    Cec_ParTran_t * pPars, Cec_TranProf_t * pProf )
+{
+    Gia_Man_t * p = pSim->pGia;
+    Vec_Int_t * vNodes = Vec_IntAlloc(32), * vEnds = Vec_IntAlloc(16);
+    int overflow, i, n, k0, k1, s, a, b;
+    word * pValues, * pCare = ABC_CALLOC(word, pSim->nSlots);
+    Cec_TranWindowCollect(p, iRoot, Cec_TranWindowDepth(pPars),
+        100 - pPars->nDepNodesMax, vNodes, vEnds, &overflow);
+    pValues = ABC_ALLOC(word, Vec_IntSize(vNodes) * pSim->nSlots);
+    Vec_IntForEachEntry(vNodes, n, i)
+    {
+        Gia_Obj_t * pObj = Gia_ManObj(p, n);
+        if ( n == iRoot )
+        {
+            for ( s = 0; s < pSim->nSlots; s++ )
+                pValues[i*pSim->nSlots+s] = ~Cec_TranSimObj(pSim,n)[s];
+            continue;
+        }
+        a = Gia_ObjFaninLit0p(p,pObj); b = Gia_ObjFaninLit1p(p,pObj);
+        k0 = Vec_IntFind(vNodes, Abc_Lit2Var(a));
+        k1 = Vec_IntFind(vNodes, Abc_Lit2Var(b));
+        assert(k0 < i && k1 < i);
+        for ( s = 0; s < pSim->nSlots; s++ )
+        {
+            word x = k0 < 0 ? Cec_TranSimObj(pSim,Abc_Lit2Var(a))[s] : pValues[k0*pSim->nSlots+s];
+            word y = k1 < 0 ? Cec_TranSimObj(pSim,Abc_Lit2Var(b))[s] : pValues[k1*pSim->nSlots+s];
+            pValues[i*pSim->nSlots+s] = (x ^ (Abc_LitIsCompl(a) ? ~(word)0 : 0)) &
+                (y ^ (Abc_LitIsCompl(b) ? ~(word)0 : 0));
+        }
+    }
+    Vec_IntForEachEntry(vEnds, n, i)
+    {
+        int k = Vec_IntFind(vNodes,n); assert(k >= 0);
+        for ( s = 0; s < pSim->nSlots; s++ )
+            pCare[s] |= pValues[k*pSim->nSlots+s] ^ Cec_TranSimObj(pSim,n)[s];
+    }
+    if ( pProf )
+    {
+        pProf->nOdcWindowRoots++;
+        pProf->nOdcWindowNodes += Vec_IntSize(vNodes);
+        pProf->nOdcWindowEnds += Vec_IntSize(vEnds);
+        pProf->nOdcWindowOverflow += overflow;
+        pProf->nOdcWindowBits += 64 * pSim->nSlots;
+        for ( s = 0; s < pSim->nSlots; s++ )
+            pProf->nOdcWindowCareBits += Abc_TtCountOnes(pCare[s]);
+    }
+    ABC_FREE(pValues); Vec_IntFree(vNodes); Vec_IntFree(vEnds);
     return pCare;
 }
 
@@ -6643,7 +6741,9 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     }
     nReservoirSize = Vec_IntSize( vPool );
     if ( fOdc )
-        pCareSource = Cec_TranFirstLevelCare( pSource, pRoot->iObj, NULL );
+        pCareSource = (pPars->nExplore & 134217728) ?
+            Cec_TranWindowCare(pSource,pRoot->iObj,pPars,pProf) :
+            Cec_TranFirstLevelCare(pSource,pRoot->iObj,NULL);
     if ( fObsSample )
     {
         clk = Abc_Clock();
@@ -9376,6 +9476,85 @@ static int Cec_TranOdcFanoutObligations( Gia_Man_t * p,
     return fFull;
 }
 
+// Reconstruct the entire affected cone with the candidate substituted once.
+// Reconvergent paths share the same changed node, rather than treating an
+// affected side input as an independent frozen value. Prove all exits.
+static int Cec_TranWindowObligations( Gia_Man_t * p,
+    Cec_TranCand_t const * pCand, Cec_ParTran_t * pPars,
+    Cec_TranCandVec_t * pObligations )
+{
+    Vec_Int_t * vNodes = Vec_IntAlloc(32), * vEnds = Vec_IntAlloc(16);
+    int overflow, i, n, k, j, a, work[2*CEC_TRAN_RECIPE_NODES_MAX];
+    int codes[CEC_TRAN_RECIPE_NODES_MAX+1], ng = pCand->nGates;
+    Cec_TranWindowCollect(p,pCand->iTarget,Cec_TranWindowDepth(pPars),
+        CEC_TRAN_RECIPE_NODES_MAX - pPars->nDepNodesMax,vNodes,vEnds,&overflow);
+    if ( pPars->fOdcStrict || (pPars->nExplore & 16384) ||
+         ng + Vec_IntSize(vNodes)-1 > CEC_TRAN_RECIPE_NODES_MAX )
+    {
+        Cec_TranCandVecPush(pObligations,*pCand);
+        Vec_IntFree(vNodes); Vec_IntFree(vEnds); return 1;
+    }
+    if ( ng ) memcpy(work,pCand->Recipe,2*ng*sizeof(int));
+    codes[0] = pCand->iOut;
+    for ( i = 1; i < Vec_IntSize(vNodes); i++ )
+    {
+        Gia_Obj_t * pObj = Gia_ManObj(p,Vec_IntEntry(vNodes,i));
+        for ( j = 0; j < 2; j++ )
+        {
+            a = j ? Gia_ObjFaninLit1p(p,pObj) : Gia_ObjFaninLit0p(p,pObj);
+            k = Vec_IntFind(vNodes,Abc_Lit2Var(a)); assert(k < i);
+            work[2*ng+j] = k < 0 ? a : Abc_LitIsCompl(a) ?
+                Cec_TranRecipeNotCode(codes[k]) : codes[k];
+        }
+        codes[i] = Cec_TranRecipeGateCode(ng++,0);
+    }
+    Vec_IntForEachEntry(vEnds,n,i)
+    {
+        Cec_TranCand_t Obl = *pCand;
+        Obl.iTarget = n; Obl.nGates = ng; Obl.fStrict = 1;
+        Obl.iOut = codes[Vec_IntFind(vNodes,n)];
+        Obl.Recipe = ng ? Cec_TranRecipeAlloc(2*ng) : NULL;
+        if ( ng ) memcpy(Obl.Recipe,work,2*ng*sizeof(int));
+        Cec_TranCandVecPush(pObligations,Obl);
+        Cec_TranCandRecipeRelease(&Obl);
+    }
+    overflow = Vec_IntFind(vEnds,pCand->iTarget) >= 0;
+    Vec_IntFree(vNodes); Vec_IntFree(vEnds); return overflow;
+}
+// Conservative composability: regions cannot overlap, and no region may
+// modify another region's frozen side inputs or candidate support. This
+// makes every subset safe. The depth-one control uses the same rule.
+static int Cec_TranWindowPoolAdd( Gia_Man_t * p, Cec_TranCand_t const * pCand,
+    Cec_ParTran_t * pPars, char * pTargets, char * pReads, Vec_Int_t * vSupport )
+{
+    Vec_Int_t * vNodes = Vec_IntAlloc(32), * vEnds = Vec_IntAlloc(16);
+    int overflow, n, i, j, a, pass = 0;
+    if ( !Cec_TranProofHistoryTopoValid(p,pCand) ) goto done;
+    Cec_TranWindowCollect(p,pCand->iTarget,Cec_TranWindowDepth(pPars),
+        CEC_TRAN_RECIPE_NODES_MAX - pPars->nDepNodesMax,vNodes,vEnds,&overflow);
+    Cec_TranCandCollectSupport(pCand,vSupport);
+    // Candidate support must be earlier than its root (checked above), so
+    // it cannot name any node in its own forward window.
+    for ( i = 1; i < Vec_IntSize(vNodes); i++ )
+    {
+        Gia_Obj_t * pObj = Gia_ManObj(p,Vec_IntEntry(vNodes,i));
+        for ( j = 0; j < 2; j++ )
+        {
+            a = j ? Gia_ObjFaninId1p(p,pObj) : Gia_ObjFaninId0p(p,pObj);
+            if ( Vec_IntFind(vNodes,a) < 0 ) Vec_IntPushUnique(vSupport,a);
+        }
+    }
+    Vec_IntForEachEntry(vNodes,n,i)
+        if ( pTargets[n] || pReads[n] ) goto done;
+    Vec_IntForEachEntry(vSupport,n,i)
+        if ( pTargets[n] ) goto done;
+    Vec_IntForEachEntry(vNodes,n,i) pTargets[n] = 1;
+    Vec_IntForEachEntry(vSupport,n,i) pReads[n] = 1;
+    pass = 1;
+done:
+    Vec_IntFree(vNodes); Vec_IntFree(vEnds); return pass;
+}
+
 // Conditions are hereditary: every subset of this pool is safe.  Existing
 // MFFC/support conflict selection may therefore choose any subset afterward.
 // Recipe external reads cannot be selected roots (in either insertion order),
@@ -9488,8 +9667,10 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     for ( i = 0; i < nLimit; i++ )
     {
         KindSubmitted[pFrontier->pArray[i].nKind]++;
-        nFull += Cec_TranOdcFanoutObligations( p, pFrontier->pArray + i,
-            pPars->fOdcStrict || (pPars->nExplore & 16384), &Obligations );
+        nFull += (pPars->nExplore & 134217728) ?
+            Cec_TranWindowObligations(p,pFrontier->pArray+i,pPars,&Obligations) :
+            Cec_TranOdcFanoutObligations( p, pFrontier->pArray + i,
+                pPars->fOdcStrict || (pPars->nExplore & 16384), &Obligations );
         Vec_IntPush( vBeg, Obligations.nSize );
     }
     if ( Obligations.nSize )
@@ -9513,7 +9694,9 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
             continue;
         nProved++;
         KindProved[Cand.nKind]++;
-        if ( !Cec_TranOdcFanoutPoolAdd(p, &Cand, pTargets, pReads, vSupport) )
+        if ( !( (pPars->nExplore & 134217728) ?
+            Cec_TranWindowPoolAdd(p,&Cand,pPars,pTargets,pReads,vSupport) :
+            Cec_TranOdcFanoutPoolAdd(p,&Cand,pTargets,pReads,vSupport) ) )
         {
             nConflicts++;
             continue;
@@ -9576,6 +9759,71 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     ABC_FREE( pSolved );
     ABC_FREE( pMffc );
     return pClean;
+}
+
+static int Cec_TranWindowSelfTest()
+{
+    Cec_ParTran_t Pars;
+    Cec_TranProf_t Prof = {0};
+    Cec_TranPatDb_t * pDb;
+    Cec_TranSim_t * pSim;
+    Cec_TranCand_t Cand = {0};
+    Cec_TranCandVec_t Obs = {0};
+    Gia_Man_t * p = Gia_ManStart(32);
+    Vec_Int_t * vStatus, * vSupport = Vec_IntAlloc(8);
+    Vec_Str_t * vStage = NULL;
+    int x = Gia_ManAppendCi(p), y = Gia_ManAppendCi(p), z = Gia_ManAppendCi(p);
+    int r = Gia_ManAppendAnd(p,x,y);
+    int a = Gia_ManAppendAnd(p,r,z), b = Gia_ManAppendAnd(p,Abc_LitNot(r),z);
+    int out = Gia_ManAppendAnd(p,Abc_LitNot(a),Abc_LitNot(b));
+    word * c1, * c2;
+    char * targets, * reads;
+    Gia_ManAppendCo(p,out);
+    Cec_ManTranSetDefaultParams(&Pars); Pars.nSimWords = Pars.nSimFrames = 1;
+    Pars.nDepNodesMax = 20; Pars.nFrames = 1; Pars.nBTLimit = 1000;
+    Pars.nExplore = 134217728;
+    pDb = Cec_TranPatDbStart(p,0); pSim = Cec_TranSimStart(p,&Pars,pDb);
+    // Eight exhaustive assignments repeated through one packed word.
+    Cec_TranSimObj(pSim,Abc_Lit2Var(x))[0] = 0xAAAAAAAAAAAAAAAAull;
+    Cec_TranSimObj(pSim,Abc_Lit2Var(y))[0] = 0xCCCCCCCCCCCCCCCCull;
+    Cec_TranSimObj(pSim,Abc_Lit2Var(z))[0] = 0xF0F0F0F0F0F0F0F0ull;
+    Cec_TranSimObj(pSim,Abc_Lit2Var(r))[0] = 0x8888888888888888ull;
+    Cec_TranSimObj(pSim,Abc_Lit2Var(a))[0] = 0x8080808080808080ull;
+    Cec_TranSimObj(pSim,Abc_Lit2Var(b))[0] = 0x7070707070707070ull;
+    Cec_TranSimObj(pSim,Abc_Lit2Var(out))[0] = 0x0F0F0F0F0F0F0F0Full;
+    Gia_ManStaticFanoutStart(p);
+    c1 = Cec_TranWindowCare(pSim,Abc_Lit2Var(r),&Pars,NULL);
+    assert(c1[0] == Cec_TranSimObj(pSim,Abc_Lit2Var(z))[0]);
+    Pars.nExplore |= 268435456;
+    c2 = Cec_TranWindowCare(pSim,Abc_Lit2Var(r),&Pars,NULL);
+    assert(c2[0] == 0); ABC_FREE(c1); ABC_FREE(c2);
+    Cand.iTarget = Abc_Lit2Var(r); Cand.nKind = 2; Cand.nGates = 1;
+    Cand.Recipe = Cec_TranRecipeAlloc(2); Cand.Recipe[0]=x; Cand.Recipe[1]=z;
+    Cand.iOut = Cec_TranRecipeGateCode(0,0);
+    Cec_TranWindowObligations(p,&Cand,&Pars,&Obs);
+    assert(Obs.nSize == 1 && Obs.pArray[0].iTarget == Abc_Lit2Var(out));
+    vStatus = Cec_TranProveRootBatch(p,NULL,0,Obs.pArray,Obs.nSize,&Pars,&Prof,1,&vStage);
+    assert(Vec_IntEntry(vStatus,0)); Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    Cec_TranCandVecClear(&Obs);
+    targets = ABC_CALLOC(char,Gia_ManObjNum(p)); reads=ABC_CALLOC(char,Gia_ManObjNum(p));
+    assert(Cec_TranWindowPoolAdd(p,&Cand,&Pars,targets,reads,vSupport));
+    assert(!Cec_TranWindowPoolAdd(p,&Cand,&Pars,targets,reads,vSupport));
+    ABC_FREE(targets); ABC_FREE(reads);
+    Gia_ManStaticFanoutStop(p); Cec_TranSimStop(pSim); Cec_TranPatDbStop(pDb);
+    // Adding an observable direct root exit must restore full care and reject
+    // this candidate, even though the reconvergent output alone is unchanged.
+    Gia_ManAppendCo(p,r);
+    pDb=Cec_TranPatDbStart(p,0); pSim=Cec_TranSimStart(p,&Pars,pDb);
+    Gia_ManStaticFanoutStart(p);
+    c2=Cec_TranWindowCare(pSim,Abc_Lit2Var(r),&Pars,NULL); assert(c2[0]==~(word)0); ABC_FREE(c2);
+    Cec_TranWindowObligations(p,&Cand,&Pars,&Obs);
+    vStatus=Cec_TranProveRootBatch(p,NULL,0,Obs.pArray,Obs.nSize,&Pars,&Prof,1,&vStage);
+    { int i, pass=1; for(i=0;i<Obs.nSize;i++) pass &= Vec_IntEntry(vStatus,i); assert(!pass); }
+    Vec_IntFree(vStatus); Vec_StrFree(vStage); Cec_TranCandVecStop(&Obs);
+    Cec_TranCandRecipeRelease(&Cand); Vec_IntFree(vSupport);
+    Gia_ManStaticFanoutStop(p); Cec_TranSimStop(pSim); Cec_TranPatDbStop(pDb); Gia_ManStop(p);
+    Abc_Print(1,"stran spatial-window exhaustive care/reconvergence/CO/composition/proof self-test: PASS\n");
+    return 1;
 }
 
 static int Cec_TranOdcFanoutSelfTest()
@@ -9879,6 +10127,9 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         OdcPars.nFrames, OdcPars.nBTLimit, OdcPars.nRootConstrTop,
         OdcPars.nConstrBaseMax, OdcPars.nDepNodesMax, OdcPars.nConstrMax,
         !!(OdcPars.nExplore & 8192), !!(OdcPars.nExplore & 16384));
+    if ( OdcPars.nExplore & 134217728 )
+        Abc_Print(1,"stran-root ODC spatial window config: depth=%d max-extra-ands=%d F=%d C=%d.\n",
+            Cec_TranWindowDepth(&OdcPars),100-OdcPars.nDepNodesMax,OdcPars.nFrames,OdcPars.nBTLimit);
     if ( OdcPars.nExplore & 16777216 ) OdcPars.nStage5Paths = 4;
     OdcPars.nRootProofBatch = 0;
     OdcPars.nExplore &= ~6;
@@ -9988,6 +10239,10 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
             Prof.nRootResubIterCapped, Prof.nRootGreedyPivotAttempts,
             (long long)Prof.nRootBuildAccepted, Candidates.nSize, Frontier.nSize,
             Prof.nOdcCoreVariants, Prof.nOdcCarePoolChanged );
+        if ( OdcPars.nExplore & 134217728 )
+            Abc_Print(1,"stran-root ODC window discovery: round=%d roots=%lld nodes=%lld exits=%lld capacity-cuts=%lld care-bits=%lld total-bits=%lld.\n",
+                iRound+1,Prof.nOdcWindowRoots,Prof.nOdcWindowNodes,Prof.nOdcWindowEnds,
+                Prof.nOdcWindowOverflow,Prof.nOdcWindowCareBits,Prof.nOdcWindowBits);
         nGenerated += Candidates.nSize;
         nPositive += Frontier.nSize;
         nGeneratedRound = Candidates.nSize;
