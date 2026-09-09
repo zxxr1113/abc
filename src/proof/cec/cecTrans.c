@@ -196,6 +196,7 @@ static int Cec_TranFirstLevelCareSelfTest();
 static int Cec_TranOdcRootCareSelfTest();
 static int Cec_TranOdcFanoutSelfTest();
 static int Cec_TranOdcDirectSelfTest();
+static int Cec_TranCareIsfSelfTest();
 typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
 struct Cec_TranTfoStats_t_
 {
@@ -217,7 +218,7 @@ int Cec_TranRootSelfTest()
         Cec_TranMffcSelfTest() && Cec_TranPipelineSelfTest() &&
         Cec_TranCommitWaveSelfTest() && Cec_TranProofMicroBatchSelfTest() &&
         Cec_TranObservationSelfTest() &&
-        Cec_TranExactCoreSelfTest() &&
+        Cec_TranExactCoreSelfTest() && Cec_TranCareIsfSelfTest() &&
         Cec_TranCompleteFaninTfoSelfTest() &&
         Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcRootCareSelfTest() &&
         Cec_TranOdcFanoutSelfTest() &&
@@ -5485,9 +5486,9 @@ static void Cec_TranSuppProfResidualSample( Cec_TranSuppProf_t * p,
 // unresolved groups, retaining observation multiplicity and mixed-rank ties.
 // A nonnegative return is an exact separator size; -1 means the bound was
 // exhausted.  This remains a simulation feature, not a proof.
-static int Cec_TranSelectExactObservedCoreExcept( Cec_TranSim_t * pSim,
+static int Cec_TranSelectCareObservedCoreExcept( Cec_TranSim_t * pSim,
     int iTarget, Vec_Int_t * vPool, int nCoreMax, Vec_Int_t * vCoreRanks,
-    int iForbiddenRank )
+    int iForbiddenRank, word const * pCare )
 {
     int Totals[256][2] = {{0}}, NextTotals[256][2] = {{0}};
     int nSlots = pSim->nSlots, nDivs = Vec_IntSize(vPool);
@@ -5501,8 +5502,8 @@ static int Cec_TranSelectExactObservedCoreExcept( Cec_TranSim_t * pSim,
     Vec_IntClear( vCoreRanks );
     for ( s = 0; s < nSlots; s++ )
     {
-        pCurrent[s] = ~pTarget[s];
-        pCurrent[nSlots + s] = pTarget[s];
+        pCurrent[s] = ~pTarget[s] & (pCare ? pCare[s] : ~(word)0);
+        pCurrent[nSlots + s] = pTarget[s] & (pCare ? pCare[s] : ~(word)0);
         Totals[0][0] += Abc_TtCountOnes( pCurrent[s] );
         Totals[0][1] += Abc_TtCountOnes( pCurrent[nSlots + s] );
     }
@@ -5580,6 +5581,14 @@ static int Cec_TranSelectExactObservedCoreExcept( Cec_TranSim_t * pSim,
     return nGroups ? -1 : nCore;
 }
 
+static int Cec_TranSelectExactObservedCoreExcept( Cec_TranSim_t * pSim,
+    int iTarget, Vec_Int_t * vPool, int nCoreMax, Vec_Int_t * vCoreRanks,
+    int iForbiddenRank )
+{
+    return Cec_TranSelectCareObservedCoreExcept(pSim, iTarget, vPool,
+        nCoreMax, vCoreRanks, iForbiddenRank, NULL);
+}
+
 static int Cec_TranSelectExactObservedCore( Cec_TranSim_t * pSim,
     int iTarget, Vec_Int_t * vPool, int nCoreMax, Vec_Int_t * vCoreRanks )
 {
@@ -5641,9 +5650,10 @@ static int Cec_TranBdcLitToRecipeCode( int Lit, Vec_Int_t * vPool,
 // Project the current observations onto one exact core.  Kit and BDC consume
 // the same deterministic core and the same projected ISF, so compute it once
 // per root instead of repeating both operations for each portfolio member.
-static void Cec_TranProjectRootIsfRaw( Cec_TranSim_t * pSim,
+static void Cec_TranProjectRootIsfCareRaw( Cec_TranSim_t * pSim,
     Cec_TranRoot_t const * pRoot, Vec_Int_t * vPool,
-    Vec_Int_t * vCoreRanks, int nCore, unsigned * pOff, unsigned * pOn )
+    Vec_Int_t * vCoreRanks, int nCore, unsigned * pOff, unsigned * pOn,
+    word const * pCare )
 {
     unsigned char Labels[256] = {0};
     word * pTarget = Cec_TranSimObj( pSim, pRoot->iObj );
@@ -5651,6 +5661,8 @@ static void Cec_TranProjectRootIsfRaw( Cec_TranSim_t * pSim,
     assert( nCore > 0 && nCore <= 8 );
     for ( s = 0; s < 64 * pSim->nSlots; s++ )
     {
+        if ( pCare && !Cec_TranResidualSimBit((word *)pCare, s) )
+            continue;
         Value = 0;
         for ( i = 0; i < nCore; i++ )
             Value |= Cec_TranResidualSimBit(Cec_TranSimObj(pSim,
@@ -5668,6 +5680,67 @@ static void Cec_TranProjectRootIsfRaw( Cec_TranSim_t * pSim,
         else if ( Label == 2 )
             pOn[Value >> 5] |= 1u << (Value & 31);
     }
+}
+
+static void Cec_TranProjectRootIsfRaw( Cec_TranSim_t * pSim,
+    Cec_TranRoot_t const * pRoot, Vec_Int_t * vPool,
+    Vec_Int_t * vCoreRanks, int nCore, unsigned * pOff, unsigned * pOn )
+{
+    Cec_TranProjectRootIsfCareRaw(pSim, pRoot, vPool, vCoreRanks,
+        nCore, pOff, pOn, NULL);
+}
+
+static int Cec_TranCareIsfSelfTest()
+{
+    Cec_TranSim_t Sim = {0};
+    Cec_TranRoot_t Root = {0};
+    Vec_Int_t * vPool = Vec_IntAlloc(2), * vCore = Vec_IntAlloc(2);
+    word Sims[3] = {0}, Care;
+    unsigned Off[8] = {0}, On[8] = {0};
+    int a;
+    Sim.nSlots = 1; Sim.pSims = Sims; Root.iObj = 0;
+    Sims[1] = ABC_CONST(0xaaaaaaaaaaaaaaaa);
+    Sims[2] = ABC_CONST(0xcccccccccccccccc);
+    Sims[0] = Sims[1] ^ Sims[2];
+    Vec_IntPush(vPool, 1); Vec_IntPush(vPool, 2);
+    assert(Cec_TranSelectExactObservedCore(&Sim, 0, vPool, 1, vCore) == -1);
+    Care = ~Sims[2];
+    assert(Cec_TranSelectCareObservedCoreExcept(&Sim, 0, vPool, 1,
+        vCore, -1, &Care) == 1);
+    assert(Vec_IntEntry(vCore, 0) == 0);
+    Cec_TranProjectRootIsfCareRaw(&Sim, &Root, vPool, vCore, 1, Off, On, &Care);
+    assert(Off[0] == 0x55555555u && On[0] == 0xaaaaaaaau);
+    Care = ~(word)0;
+    assert(Cec_TranSelectCareObservedCoreExcept(&Sim, 0, vPool, 1,
+        vCore, -1, &Care) == -1);
+    // Exhaust every care mask of this complete two-input truth table.
+    for ( a = 0; a < 16; a++ )
+    {
+        int i, nCore;
+        Care = 0;
+        for ( i = 0; i < 64; i++ )
+            if ( a & (1 << (i % 4)) ) Care |= (word)1 << i;
+        nCore = Cec_TranSelectCareObservedCoreExcept(&Sim, 0, vPool, 2,
+            vCore, -1, &Care);
+        assert(nCore >= 0);
+        if ( nCore > 0 )
+        {
+            memset(Off, 0, sizeof(Off)); memset(On, 0, sizeof(On));
+            Cec_TranProjectRootIsfCareRaw(&Sim, &Root, vPool, vCore,
+                nCore, Off, On, &Care);
+            assert(!(Off[0] & On[0]));
+            for ( i = 0; i < 64; i++ ) if ( (Care >> i) & 1 )
+            {
+                int j, v = 0;
+                for ( j = 0; j < nCore; j++ )
+                    v |= ((Sims[Vec_IntEntry(vPool, Vec_IntEntry(vCore, j))] >> i) & 1) << j;
+                assert(((Sims[0] >> i) & 1) ? ((On[0] >> v) & 1) : ((Off[0] >> v) & 1));
+            }
+        }
+    }
+    Vec_IntFree(vCore); Vec_IntFree(vPool);
+    Abc_Print(1, "stran care-aware ISF/core mask regression: PASS\n");
+    return 1;
 }
 
 static void Cec_TranProjectRootIsf( Cec_TranSim_t * pSim,
@@ -5745,7 +5818,7 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
     Cec_TranCandVec_t const * pKnown, Cec_TranCandVec_t const * pExist,
     Cec_TranCandVec_t * pBuild, Cec_TranProf_t * pProf,
     Vec_Int_t * vCoreRanks, int nCore, unsigned const * pOff,
-    unsigned const * pOn, int fBdc )
+    unsigned const * pOn, int fBdc, word * pCare )
 {
     unsigned Off[8] = {0}, On[8] = {0}, Care[8] = {0};
     Vec_Int_t * vMemory = NULL;
@@ -5823,7 +5896,7 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
             vPool, vCoreRanks, nCore );
     }
     Cand.nKind = CEC_TRAN_CAND_CONSTR;
-    Cand.fStrict = 1;
+    Cand.fStrict = pCare == NULL;
     Cand.fKitPortfolio = !fBdc;
     Cand.fBdcPortfolio = fBdc;
     Cand.fExactTemplate = 0;
@@ -5834,7 +5907,7 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
     Cec_TranCandCanonicalizeRecipe( &Cand );
     if ( Cand.nGates <= 0 || Cand.nGates > nLimit ||
          !Cec_TranRecipeStructurallyValid(pSim, &Cand) ||
-         !Cec_TranRecipeMatchesRoot(pSim, &Cand, NULL) )
+         !Cec_TranRecipeMatchesRoot(pSim, &Cand, pCare) )
     {
         Cec_TranCandRecipeRelease( &Cand );
         goto cleanup;
@@ -6869,11 +6942,33 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
                 vIsfCoreRanks, nCore, Off, On, pProf );
         Cec_TranCollectRootIsfCandidate( pSim, pPars, pRoot, vPool,
             pRanks, pKnown, &Exist, &Build, pProf,
-            vIsfCoreRanks, nCore, Off, On, 0 );
+            vIsfCoreRanks, nCore, Off, On, 0, NULL );
         if ( pPars->fBdcPortfolio )
             Cec_TranCollectRootIsfCandidate( pSim, pPars, pRoot, vPool,
                 pRanks, pKnown, &Exist, &Build, pProf,
-                vIsfCoreRanks, nCore, Off, On, 1 );
+                vIsfCoreRanks, nCore, Off, On, 1, NULL );
+        // Add a genuinely care-aware core/ISF portfolio without removing
+        // the strict incumbent. All recipes still require the normal proof.
+        if ( pCareBuild && (pPars->nExplore & 8192) )
+        {
+            Vec_Int_t * vCareCore = Vec_IntAlloc(pPars->nKitCoreMax);
+            unsigned CareOff[8] = {0}, CareOn[8] = {0};
+            int nCareCore = Cec_TranSelectCareObservedCoreExcept(pSim,
+                pRoot->iObj, vPool, pPars->nKitCoreMax, vCareCore, -1, pCareBuild);
+            if ( nCareCore > 0 )
+            {
+                Cec_TranProjectRootIsfCareRaw(pSim, pRoot, vPool,
+                    vCareCore, nCareCore, CareOff, CareOn, pCareBuild);
+                Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot, vPool,
+                    pRanks, pKnown, &Exist, &Build, pProf, vCareCore,
+                    nCareCore, CareOff, CareOn, 0, pCareBuild);
+                if ( pPars->fBdcPortfolio )
+                    Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot, vPool,
+                        pRanks, pKnown, &Exist, &Build, pProf, vCareCore,
+                        nCareCore, CareOff, CareOn, 1, pCareBuild);
+            }
+            Vec_IntFree(vCareCore);
+        }
         if ( vIsfCoreRanks != vForcedCoreRanks )
             Vec_IntFree( vIsfCoreRanks );
         pProf->timeRootIsf += Abc_Clock() - clk;
@@ -9351,7 +9446,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     {
         KindSubmitted[pFrontier->pArray[i].nKind]++;
         nFull += Cec_TranOdcFanoutObligations( p, pFrontier->pArray + i,
-            pPars->fOdcStrict, &Obligations );
+            pPars->fOdcStrict || (pPars->nExplore & 16384), &Obligations );
         Vec_IntPush( vBeg, Obligations.nSize );
     }
     if ( Obligations.nSize )
