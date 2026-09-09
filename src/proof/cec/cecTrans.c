@@ -9938,6 +9938,11 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 pSource, Frontier.pArray + i, NULL );
             nSampleStrict += pSampleStrict[i];
         }
+        Abc_Print( 1, "stran-root ODC enumeration: round=%d roots=%d iter-init=%d iter-next=%d iter-exhausted=%d iter-capped=%d pivot-attempts=%lld accepted=%lld generated=%d positive=%d.\n",
+            iRound + 1, nRoots, Prof.nRootResubIterInit,
+            Prof.nRootResubIterNext, Prof.nRootResubIterExhausted,
+            Prof.nRootResubIterCapped, Prof.nRootGreedyPivotAttempts,
+            (long long)Prof.nRootBuildAccepted, Candidates.nSize, Frontier.nSize );
         nGenerated += Candidates.nSize;
         nPositive += Frontier.nSize;
         nGeneratedRound = Candidates.nSize;
@@ -10161,12 +10166,16 @@ Gia_Man_t * Cec_ManSequentialTransduction2( Gia_Man_t * pGia,
     pDb = Cec_TranPatDbStart( pGia, nCexMax );
     pDb->nFramesMax = pPars->nSimFrames;
     Cec_ManCorSetDefaultParams( &Cor );
+    // Fixed-proof experiment: match the standalone &scorr -F 1 -C 1000.
+    Cor.nFrames = 1;
+    Cor.nBTLimit = 1000;
     Cor.nProcs = 1;
     Cor.pCexFunc = Cec_TranPatDbObserveScorr;
     Cor.pCexData = pDb;
     Cor.fCollectRegMap = 1;
     Abc_Print( 1, "stran2: running default scorr; reachable-CEX capacity=%d.\n",
         nCexMax );
+    Abc_Print( 1, "stran2 initial scorr config: F=%d C=%d.\n", Cor.nFrames, Cor.nBTLimit );
     pScorr = Cec_ManLSCorrespondence( pGia, &Cor );
     Cec_TranPatDbRemapRegs( pDb, Gia_ManRegNum(pScorr), Cor.vRegMap );
     Vec_IntFreeP( &Cor.vRegMap );
