@@ -542,6 +542,7 @@ struct Cec_TranProf_t_
     long long nRootGreedyFrontierCoverSum;
     long long nRootGreedyFrontierNovelSum;
     int       nRootGreedyFrontierMax;
+    long long nOdcCoreVariants, nOdcCarePoolChanged;
     long long nRootGreedyPivotAttempts;
     long long nRootGreedyPivotFound;
     abctime   timeRootGreedyPivot;
@@ -6693,7 +6694,24 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
         // chance: search top-B plus all legal TFOs for an exact observed core.
         // Only a complete core can replace ranked nodes, so this does not
         // reserve a blind TFO quota or expand any downstream budget.
-        if ( fUseTfoDivs && iWave == 0 && pPars->nKitCoreMax > 0 &&
+        if ( fOdc && (pPars->nExplore & 33554432) &&
+             pPars->nKitCoreMax > 0 && Cec_TranRootBuildEligible(pRoot) &&
+             pPars->nConstrBaseMax > 0 )
+        {
+            Vec_Int_t * vCore = Vec_IntAlloc(pPars->nKitCoreMax);
+            Vec_Int_t * vPinned = Vec_IntAlloc(pPars->nKitCoreMax);
+            int nCore = Cec_TranSelectCareObservedCoreExcept(pSource,
+                pRoot->iObj, vPool, pPars->nKitCoreMax, vCore, -1, pCareSource);
+            int j, k;
+            if ( nCore > 0 )
+                Vec_IntForEachEntry(vCore, k, j)
+                    Vec_IntPush(vPinned, Vec_IntEntry(vPool, k));
+            pProf->nOdcCarePoolChanged += Cec_TranSelectRankedDivPool(
+                vPool, pRanks, pPars->nConstrBaseMax, vPinned) != 0;
+            Vec_IntFree(vCore);
+            Vec_IntFree(vPinned);
+        }
+        else if ( fUseTfoDivs && iWave == 0 && pPars->nKitCoreMax > 0 &&
              Cec_TranRootBuildEligible(pRoot) && pPars->nConstrBaseMax > 0 )
         {
             Vec_Int_t * vCorePool = Vec_IntAlloc(
@@ -6966,6 +6984,31 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
                     Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot, vPool,
                         pRanks, pKnown, &Exist, &Build, pProf, vCareCore,
                         nCareCore, CareOff, CareOn, 1, pCareBuild);
+            }
+            if ( nCareCore > 0 && (pPars->nExplore & 67108864) )
+            {
+                int j, excluded;
+                Vec_IntForEachEntry(vCareCore, excluded, j)
+                {
+                    Vec_Int_t * vAlt = Vec_IntAlloc(pPars->nKitCoreMax);
+                    unsigned AltOff[8] = {0}, AltOn[8] = {0};
+                    int nAlt = Cec_TranSelectCareObservedCoreExcept(pSim,
+                        pRoot->iObj, vPool, pPars->nKitCoreMax, vAlt, excluded, pCareBuild);
+                    if ( nAlt > 0 )
+                    {
+                        pProf->nOdcCoreVariants++;
+                        Cec_TranProjectRootIsfCareRaw(pSim, pRoot, vPool,
+                            vAlt, nAlt, AltOff, AltOn, pCareBuild);
+                        Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot,
+                            vPool, pRanks, pKnown, &Exist, &Build, pProf,
+                            vAlt, nAlt, AltOff, AltOn, 0, pCareBuild);
+                        if ( pPars->fBdcPortfolio )
+                            Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot,
+                                vPool, pRanks, pKnown, &Exist, &Build, pProf,
+                                vAlt, nAlt, AltOff, AltOn, 1, pCareBuild);
+                    }
+                    Vec_IntFree(vAlt);
+                }
             }
             Vec_IntFree(vCareCore);
         }
@@ -9836,6 +9879,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         OdcPars.nFrames, OdcPars.nBTLimit, OdcPars.nRootConstrTop,
         OdcPars.nConstrBaseMax, OdcPars.nDepNodesMax, OdcPars.nConstrMax,
         !!(OdcPars.nExplore & 8192), !!(OdcPars.nExplore & 16384));
+    if ( OdcPars.nExplore & 16777216 ) OdcPars.nStage5Paths = 4;
     OdcPars.nRootProofBatch = 0;
     OdcPars.nExplore &= ~6;
     // A uniform round cap bounds repeated rediscovery, independently of the
@@ -9938,11 +9982,12 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 pSource, Frontier.pArray + i, NULL );
             nSampleStrict += pSampleStrict[i];
         }
-        Abc_Print( 1, "stran-root ODC enumeration: round=%d roots=%d iter-init=%d iter-next=%d iter-exhausted=%d iter-capped=%d pivot-attempts=%lld accepted=%lld generated=%d positive=%d.\n",
+        Abc_Print( 1, "stran-root ODC enumeration: round=%d roots=%d iter-init=%d iter-next=%d iter-exhausted=%d iter-capped=%d pivot-attempts=%lld accepted=%lld generated=%d positive=%d core-variants=%lld care-pool-changed=%lld.\n",
             iRound + 1, nRoots, Prof.nRootResubIterInit,
             Prof.nRootResubIterNext, Prof.nRootResubIterExhausted,
             Prof.nRootResubIterCapped, Prof.nRootGreedyPivotAttempts,
-            (long long)Prof.nRootBuildAccepted, Candidates.nSize, Frontier.nSize );
+            (long long)Prof.nRootBuildAccepted, Candidates.nSize, Frontier.nSize,
+            Prof.nOdcCoreVariants, Prof.nOdcCarePoolChanged );
         nGenerated += Candidates.nSize;
         nPositive += Frontier.nSize;
         nGeneratedRound = Candidates.nSize;
