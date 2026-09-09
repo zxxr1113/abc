@@ -9826,8 +9826,15 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     if ( OdcPars.nExplore & 32768 ) OdcPars.nBTLimit = 10000;
     if ( OdcPars.nExplore & 65536 ) OdcPars.nFrames = 2;
     if ( OdcPars.nExplore & 131072 ) OdcPars.nRootConstrTop = 80;
-    Abc_Print(1, "stran-root ODC quality config: F=%d C=%d q=%d care-kit=%d strict-root=%d.\n",
+    if ( OdcPars.nExplore & 262144 ) OdcPars.nFrames = 4;
+    if ( OdcPars.nExplore & 524288 ) OdcPars.nRootConstrTop = 320;
+    if ( OdcPars.nExplore & 1048576 ) OdcPars.nDepNodesMax = 40;
+    if ( OdcPars.nExplore & 2097152 ) OdcPars.nConstrMax = 0;
+    if ( OdcPars.nExplore & 4194304 ) OdcPars.nConstrBaseMax = 64;
+    if ( OdcPars.nExplore & 8388608 ) OdcPars.nConstrBaseMax = 128;
+    Abc_Print(1, "stran-root ODC quality config: F=%d C=%d q=%d B=%d N=%d K=%d care-kit=%d strict-root=%d.\n",
         OdcPars.nFrames, OdcPars.nBTLimit, OdcPars.nRootConstrTop,
+        OdcPars.nConstrBaseMax, OdcPars.nDepNodesMax, OdcPars.nConstrMax,
         !!(OdcPars.nExplore & 8192), !!(OdcPars.nExplore & 16384));
     OdcPars.nRootProofBatch = 0;
     OdcPars.nExplore &= ~6;
