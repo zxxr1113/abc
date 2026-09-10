@@ -8,6 +8,16 @@ static Cec_TranSim_t * s_CexPacked;
 static int * s_CexWeights;
 static long long s_CexRawRows, s_CexUniqueRows, s_CexTables, s_CexPoolConflict;
 static abctime s_CexPackTime, s_CexSelectTime, s_CexConstructTime;
+// Same bit transpose as Extra_Transpose64 (extraUtilMisc.c), with reversed
+// input/output indices below to preserve natural lane and divisor numbering.
+static void Cec_TranCexTranspose(word a[64])
+{
+    int j,k; word t,m=ABC_CONST(0x00000000ffffffff);
+    for(j=32;j;j>>=1,m^=m<<j)
+        for(k=0;k<64;k=(k+j+1)&~j) {
+            t=(a[k]^(a[k+j]>>j))&m; a[k]^=t; a[k+j]^=t<<j;
+        }
+}
 static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
     Cec_TranSim_t * b, word const * cb, int target, Vec_Int_t * pool)
 {
@@ -15,21 +25,41 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
     int maxRows=64*(a->nSlots+(b?b->nSlots:0)), cap=1, n=0;
     int side,s,i,j,obj,keyRow,lab,slot;
     int * hash, * labels;
-    word * keys, * key, * care;
+    word * keys, * key, * care, * rows;
+    int fast=getenv("ABC_CEX_PACK_FAST")!=NULL;
     abctime clk=Abc_Clock();
     s_CexThisConflict=0;
     while(cap<2*maxRows) cap*=2;
     hash=ABC_CALLOC(int,cap); labels=ABC_ALLOC(int,maxRows);
     keys=ABC_CALLOC(word,(size_t)maxRows*nKey); key=ABC_ALLOC(word,nKey);
     ABC_FREE(s_CexWeights); s_CexWeights=ABC_CALLOC(int,maxRows);
+    rows=fast?ABC_ALLOC(word,(size_t)maxRows*nKey):NULL;
     for(side=0;side<(b?2:1);++side) {
         Cec_TranSim_t * sim=side?b:a; word const * mask=side?cb:ca;
+        if(fast) {
+            int block,wordSlot,lane,d;
+            for(wordSlot=0;wordSlot<sim->nSlots;++wordSlot)
+                for(block=0;block<nKey;++block) {
+                    word matrix[64]={0};
+                    for(d=0;d<64 && 64*block+d<nDiv;++d)
+                        matrix[63-d]=Cec_TranSimObj(sim,Vec_IntEntry(pool,64*block+d))[wordSlot];
+                    Cec_TranCexTranspose(matrix);
+                    for(lane=0;lane<64;++lane)
+                        rows[(size_t)(64*wordSlot+lane)*nKey+block]=matrix[63-lane];
+                }
+        }
         for(s=0;s<64*sim->nSlots;++s) {
             word h=ABC_CONST(0x9e3779b97f4a7c15);
             if(mask && !((mask[s>>6]>>(s&63))&1)) continue;
-            memset(key,0,nKey*sizeof(word));
-            Vec_IntForEachEntry(pool,obj,i)
-                key[i>>6] |= (word)Cec_TranTeachSampleValue(sim,obj,s)<<(i&63);
+            if(fast) memcpy(key,rows+(size_t)s*nKey,nKey*sizeof(word));
+            else {
+                memset(key,0,nKey*sizeof(word));
+                Vec_IntForEachEntry(pool,obj,i)
+                    key[i>>6] |= (word)Cec_TranTeachSampleValue(sim,obj,s)<<(i&63);
+            }
+            if(fast && getenv("ABC_CEX_PACK_AUDIT"))
+                Vec_IntForEachEntry(pool,obj,i)
+                    assert(((key[i>>6]>>(i&63))&1)==Cec_TranTeachSampleValue(sim,obj,s));
             lab=Cec_TranTeachSampleValue(sim,target,s);
             for(i=0;i<nKey;++i) h=Cec_TranResidualMix(h^key[i]);
             { int other=Cec_TranResidualMix(h^(1-lab))&(cap-1);
@@ -80,7 +110,7 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
             Abc_Print(1,"\n");
         }
     }
-    ABC_FREE(hash); ABC_FREE(labels); ABC_FREE(keys); ABC_FREE(key);
+    ABC_FREE(hash); ABC_FREE(labels); ABC_FREE(keys); ABC_FREE(key); ABC_FREE(rows);
     s_CexPackTime+=Abc_Clock()-clk;
     return care;
 }

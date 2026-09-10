@@ -7050,21 +7050,33 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
         Cec_TranRootCursor_t NarrowCursor={0}, * pNativeCursor=pCursor;
         word * pNativeCare=fGuide?pGuideCare:pCareBuild, * pNarrowCare=NULL;
         abctime cn=Abc_Clock();
-        if(fGuide && s_CexCompress==5) {
+        if(fGuide && s_CexCompress>=5) {
             Vec_Int_t * core=Vec_IntAlloc(8);
             int nc=Cec_TranSelectCareObservedCoreExcept(pGuideSim,pRoot->iObj,vPool,pPars->nKitCoreMax,core,-1,pGuideCare);
             if(nc>0) {
-                int j,k;
+                int j,k,primarySize=nc;
+                Vec_Int_t * members=Vec_IntDup(core);
+                if(s_CexCompress==6) {
+                    for(j=0;j<primarySize;++j) {
+                        Vec_Int_t * alt=Vec_IntAlloc(8);
+                        int h,d,na=Cec_TranSelectCareObservedCoreExcept(pGuideSim,pRoot->iObj,vPool,pPars->nKitCoreMax,alt,Vec_IntEntry(core,j),pGuideCare);
+                        if(na>0) Vec_IntForEachEntry(alt,d,h) Vec_IntPushUnique(members,d);
+                        Vec_IntFree(alt);
+                    }
+                    Vec_IntSort(members,0);
+                }
+                nc=Vec_IntSize(members);
                 vNarrow=Vec_IntAlloc(nc); pNarrowRanks=ABC_ALLOC(Cec_TranDivRank_t,nc);
-                Vec_IntForEachEntry(core,k,j) {
+                Vec_IntForEachEntry(members,k,j) {
                     Vec_IntPush(vNarrow,Vec_IntEntry(vPool,k));
                     pNarrowRanks[j]=pRanks[k]; pNarrowRanks[j].iPos=j;
                 }
-                pNarrow=Cec_TranSimStartRootBatch(p,4,1);
+                Vec_IntFree(members);
+                pNarrow=Cec_TranSimStartRootBatch(p,s_CexCompress==5?4:pGuideSim->nSlots,1);
                 s_CexPacked=pNarrow; s_CexNarrowing=1;
                 pNarrowCare=Cec_TranCexCompact(pGuideSim,pGuideCare,NULL,NULL,pRoot->iObj,vNarrow);
                 s_CexNarrowing=0; s_CexPacked=pGuideSim;
-                assert(!s_CexThisConflict && pNarrow->nSlots<=4);
+                assert(!s_CexThisConflict && (s_CexCompress!=5 || pNarrow->nSlots<=4));
                 pNativeSim=pNarrow; pNativeCare=pNarrowCare;
                 vNativePool=vNarrow; pNativeRanks=pNarrowRanks;
                 pNativeCursor=&NarrowCursor;
@@ -10288,7 +10300,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         s_CexRoots=s_CexTriggered=s_CexPoints=s_CexAdded=0; s_CexTime=0;
         s_CexCoreConflicts=s_CexRefinedLabels=0;
         s_CexCompress=getenv("ABC_CEX_COMPRESS")?atoi(getenv("ABC_CEX_COMPRESS")):0;
-        assert(s_CexCompress>=0 && s_CexCompress<=5);
+        assert(s_CexCompress>=0 && s_CexCompress<=6);
         s_CexRawRows=s_CexUniqueRows=s_CexTables=s_CexPoolConflict=0;
         s_CexNarrowing=0; s_CexNarrowRoots=s_CexNarrowDivsBefore=s_CexNarrowDivsAfter=0;
         s_CexPackTime=s_CexSelectTime=s_CexConstructTime=s_CexNativeTime=s_CexDiscoveryTime=0;
@@ -10383,7 +10395,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         if(s_CexMode) {
             Abc_Print(1,"cex-summary round=%d mode=%d roots=%lld triggered=%lld points=%lld added=%lld seconds=%.6f\n",s_CexRound,s_CexMode,s_CexRoots,s_CexTriggered,s_CexPoints,s_CexAdded,Cec_TranTimeSec(s_CexTime));
             if(s_CexProjectAll) Abc_Print(1,"cex-isf-refine round=%d conflicting-cores=%lld refined-labels=%lld\n",s_CexRound,s_CexCoreConflicts,s_CexRefinedLabels);
-            if(s_CexCompress==5) Abc_Print(1,"cex-core-guide round=%d roots=%lld divs-before=%lld divs-after=%lld\n",s_CexRound,s_CexNarrowRoots,s_CexNarrowDivsBefore,s_CexNarrowDivsAfter);
+            if(s_CexCompress>=5) Abc_Print(1,"cex-core-guide round=%d roots=%lld divs-before=%lld divs-after=%lld\n",s_CexRound,s_CexNarrowRoots,s_CexNarrowDivsBefore,s_CexNarrowDivsAfter);
             if(s_CexCompress) {
                 Abc_Print(1,"cex-compression round=%d mode=%d tables=%lld raw=%lld unique=%lld pool-conflict=%lld pack-sec=%.6f select-sec=%.6f construct-sec=%.6f\n",s_CexRound,s_CexCompress,s_CexTables,s_CexRawRows,s_CexUniqueRows,s_CexPoolConflict,Cec_TranTimeSec(s_CexPackTime),Cec_TranTimeSec(s_CexSelectTime),Cec_TranTimeSec(s_CexConstructTime));
                 Cec_TranSimStop(s_CexPacked); s_CexPacked=NULL;
