@@ -1,5 +1,61 @@
 # &stran2: Current Goal And Results
 
+## Approved development baseline: TFO + complete-information ODC (2026-09-10)
+
+The user selected the **6.7111623876%** fast35 Ordered Seq Build/source
+configuration as the next production development baseline and asked to pause
+further algorithm exploration for technical discussion. This entry supersedes
+the historical sections below when they describe an older "current" baseline.
+
+The selected source is `bed995558b0a44d4dc6455a2056bce8ea658c447`, merged into
+`codex/stran2` while retaining its `9be377928` frontier reference-scratch repair.
+TFO is already part of this selected source. The integration includes its ODC
+window/boundary proof and batch-commit dependencies, complete reachable
+observation quotient before native core/Build search, and exact bidirectional
+bit transposition. It stops before the subsequent core-reuse, witness,
+minimum-support SAT, and local-realization-value experimental commits.
+
+The reproducible baseline entry is
+[`scripts/run_stran2_quality.sh`](/mnt/home/zhaoxiran/abc/scripts/run_stran2_quality.sh).
+Run it from a fresh result directory, setting `ABC`, `AIG_DIR`, and an existing
+`TMPDIR` as needed. It calls the common paired runner with fixed algorithm
+settings; `TIMEOUT`, `LIMIT`, worker counts, `SKIP_DSEC`, and `KEEP_ARTIFACTS`
+remain runner controls. The generic runner and bare ABC command defaults are
+not the baseline preset.
+
+- Strict prefix: B16/q20, Q4/W8, Kit/BDC, F1/C1000, TFO enabled.
+- Additional ODC: B128/q320/L16, spatial D4, existing alternate care cores,
+  full divisor pool, CBS plus sequential boundary proof, no extra ODC Direct.
+- `ABC_CEX_MODE=2 ABC_CEX_COMPRESS=4 ABC_CEX_PACK_FAST=2`, projection toggle 0.
+  Long Q1/W256 observations are simulated once per immutable snapshot; rows
+  are merged only on equal target and complete pool values under care.
+- "Complete information" means the complete supplied observation matrix,
+  not exhaustive reachable-state coverage. Observations guide construction;
+  formal candidate/bundle proof requirements remain in force.
+
+Frozen reference and fresh merged full fast35 result: both flows 35/35 execution/parser PASS,
+Build/source mean 6.7111623876%, total SEQ/source mean 7.2547975419%, final
+AND sum 18,697, latches 1,776. This is a fixed-seed selected fast corpus,
+not a full58/quick268 or statistical generalization result.
+
+Merge validation is complete; the result and exact source/binary
+identities are recorded under
+[`integration/`](/mnt/home/zhaoxiran/script2/evidence/cex_reconstruction/20260910/integration).
+The source builds with assertions enabled; `&stran_resub_test` and all 11
+committed-parser tests pass. All 70 final graphs (excluding symbols/comments),
+per-case quality fields, and per-round ODC counts match the frozen reference.
+The committed parser also reproduces the quality/accounting fields of all
+70 logs independently of unrelated working-tree parser additions. There were
+no execution, timeout, assertion, or profile failures in the full matrix.
+Eight selective final-network DSEC checks pass: b03/b04 focused and b05/des_area
+full results, each in both flows, after consistent positional port naming.
+The full matrix explicitly skips DSEC; these are selective formal audits.
+Complete raw CSVs are in
+[`20260910_cex_quality_mainline/`](/mnt/home/zhaoxiran/script2/experiment_reports/20260910_cex_quality_mainline).
+Existing unrelated working-tree edits are preserved.
+Build command on this host: `make -j16 ABC_READLINE_LIBRARIES=-l:libreadline.so.8`
+(the installed readline library has a versioned filename).
+
 Updated 2026-09-05. One development tree: `/mnt/home/zhaoxiran/abc`,
 branch `codex/stran2`. Goal: preserve high-quality total SEQ and ordered
 Seq Build reduction while reducing runtime. First unresolved task: the

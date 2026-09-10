@@ -42245,14 +42245,14 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVPZEqwjbaeMdxclrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVLOPZEqwjbaeMJdxckilrgftupoyh")) != EOF )
     {
         switch ( c )
         {
         case 'E':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nExplore = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nExplore < 0 || pPars->nExplore > 31 ) goto usage;
+            if ( pPars->nExplore < 0 || (pPars->nExplore & ~(31 | 512 | 4096 | 8192 | 16384 | 32768 | 65536 | 131072 | 262144 | 524288 | 1048576 | 2097152 | 4194304 | 8388608 | 16777216 | 33554432 | 67108864 | 134217728 | 268435456 | 536870912)) ) goto usage;
             break;
         case 'F':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42315,11 +42315,30 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             if ( c != 0 && c != 1 && c != 2 && c != 4 ) goto usage;
             pPars->nStage5Paths = c;
             break;
+        case 'O':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nOdcProofMax = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nOdcProofMax < 0 ) goto usage;
+            break;
         case 'M':
             pPars->fUseMffcDivs ^= 1;
             break;
         case 'd':
             pPars->fUseTfoDivs ^= 1;
+            break;
+        case 'k':
+            pPars->fUseOdc ^= 1;
+            break;
+        case 'L':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nOdcFanoutRounds = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nOdcFanoutRounds < 0 ) goto usage;
+            break;
+        case 'J':
+            pPars->fOdcFanout ^= 1;
+            break;
+        case 'i':
+            pPars->fOdcStrict ^= 1;
             break;
         case 'P':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42425,8 +42444,8 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVZEqwjbae num] [-P root] [-Mdxclrgftupoyh]\n", fStran2 ? "2" : "" );
-    Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow, 16=construction-guided TFO rescue [default = 0]\n" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVLOZEqwjbae num] [-P root] [-MJdxckilrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow, 16=construction-guided TFO rescue, 512=ODC Direct/MFFC1 in -k -J, 4096=ODC combinational-boundary proof only in -k -J, 8192=care-aware Kit/BDC additions, 16384=strict root acceptance with care generation, 32768=ODC C10000, 65536=ODC F2, 131072=ODC q80, 262144=ODC F4, 524288=ODC q320, 1048576=ODC N40, 2097152=ODC K0, 4194304=ODC B64, 8388608=ODC B128 [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
     Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
@@ -42447,10 +42466,15 @@ usage:
     Abc_Print( -2, "\t-T num : exact-observation Kit core size (0 = disabled, max 8) [default = %d]\n", pPars->nKitCoreMax );
     Abc_Print( -2, "\t-D num : experimental BDC candidate on the selected core (0/1) [default = %d]\n", pPars->fBdcPortfolio );
     Abc_Print( -2, "\t-V num : experimental Stage-5 total paths per rank-1..8 top pivot (0/1/2/4; 0/1 = baseline) [default = %d]\n", pPars->nStage5Paths );
+    Abc_Print( -2, "\t-O num : whole-machine ODC proof attempts per serial snapshot (0 = all) [default = %d]\n", pPars->nOdcProofMax );
     Abc_Print( -2, "\t-q num : SEQ Build candidates per root/wave, or pre-commit horizon with -j (0 = drain iterator) [default = %d]\n", pPars->nRootConstrTop );
     Abc_Print( -2, "\t-j num : SEQ Build candidates per root/proof batch; batch 1 also includes all Direct candidates (0 = legacy immediate commit) [default = %d]\n", pPars->nRootProofBatch );
     Abc_Print( -2, "\t-M     : toggle exact-MFFC internal nodes in the divisor pool [default = %s]\n", pPars->fUseMffcDivs? "yes": "no" );
     Abc_Print( -2, "\t-d     : toggle SEQ-only one-hop complete-fanin TFO divisors (cap=B) [default = %s]\n", pPars->fUseTfoDivs? "yes": "no" );
+    Abc_Print( -2, "\t-k     : toggle serial first-level ODC Build after strict fixed point [default = %s]\n", pPars->fUseOdc? "yes": "no" );
+    Abc_Print( -2, "\t-L num : -J discovery/commit round cap (0 = fixed point) [default = %d]\n", pPars->nOdcFanoutRounds );
+    Abc_Print( -2, "\t-J     : use frozen fanout-boundary batch proof/commit in -k phase; -O caps candidates [default = %s]\n", pPars->fOdcFanout? "yes": "no" );
+    Abc_Print( -2, "\t-i     : use strict full care in the serial phase (matched control) [default = %s]\n", pPars->fOdcStrict? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-w num : SEQ candidate-generation/proof epochs; each drains commit waves to fixed point (0 = global fixed point) [default = %d]\n", pPars->nRootWaves );

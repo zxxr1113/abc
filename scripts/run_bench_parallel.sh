@@ -12,6 +12,7 @@ JOBS_PER_EXPERIMENT="${JOBS_PER_EXPERIMENT:-32}"
 SCORR_ARGS="${SCORR_ARGS-}"
 STRAN_ARGS="${STRAN_ARGS:--Q 4 -W 8 -q 10 -j 5 -w 8 -C 1000 -b 100 -V 0 -E 5 -p}"
 SKIP_DSEC="${SKIP_DSEC:-1}"
+KEEP_ARTIFACTS="${KEEP_ARTIFACTS:-0}"
 DRY_RUN="${DRY_RUN:-0}"
 
 EXPERIMENT_FLOWS=(scorr-stran stran2)
@@ -43,6 +44,10 @@ if [[ "$SKIP_DSEC" != 0 && "$SKIP_DSEC" != 1 ]]; then
     echo "ERROR: SKIP_DSEC must be 0 or 1" >&2
     exit 1
 fi
+if [[ "$KEEP_ARTIFACTS" != 0 && "$KEEP_ARTIFACTS" != 1 ]]; then
+    echo "ERROR: KEEP_ARTIFACTS must be 0 or 1" >&2
+    exit 1
+fi
 if [[ ! -x "$ABC" || ! -d "$AIG_DIR" ]]; then
     echo "ERROR: ABC executable or AIG_DIR is missing" >&2
     exit 1
@@ -62,6 +67,7 @@ run_one() {
         --scorr-args "$SCORR_ARGS" --stran-args "$STRAN_ARGS" --flow "$flow")
     [[ -z "$LIMIT" ]] || command+=(--limit "$LIMIT")
     [[ "$SKIP_DSEC" == 0 ]] || command+=(--skip-dsec)
+    [[ "$KEEP_ARTIFACTS" == 0 ]] || command+=(--keep-artifacts)
     printf '[launch] '
     printf '%q ' "${command[@]}"
     printf '\n'
