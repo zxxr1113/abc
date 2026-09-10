@@ -1,9 +1,35 @@
 // Isolated CEX reconstruction experiment. Included after the existing builders.
 // All state is scoped to one immutable ODC round; never used in strict passes.
 static Cec_TranSim_t * s_CexLong, * s_CexAug;
-static int s_CexMode, s_CexRound;
+static int s_CexMode, s_CexRound, s_CexProjectAll;
 static long long s_CexRoots, s_CexTriggered, s_CexPoints, s_CexAdded;
 static abctime s_CexTime;
+static long long s_CexCoreConflicts, s_CexRefinedLabels;
+
+// Refine only the selected core's <=256 minterms using the already computed
+// reachable source. A conflicting ON/OFF label is an exact infeasibility
+// witness for this support. It does not refute the root or any other support.
+static int Cec_TranCexRefineIsf(int root, Vec_Int_t * pool, Vec_Int_t * core,
+    int nCore, word * care, unsigned * off, unsigned * on)
+{
+    int s,i,key,label,k,period=1<<nCore,nBits=nCore<5?32:1<<nCore;
+    for(s=0;s<64*s_CexLong->nSlots;++s) {
+        if(!((care[s>>6]>>(s&63))&1)) continue;
+        key=0;
+        for(i=0;i<nCore;++i)
+            key |= Cec_TranTeachSampleValue(s_CexLong,
+                Vec_IntEntry(pool,Vec_IntEntry(core,i)),s)<<i;
+        label=Cec_TranTeachSampleValue(s_CexLong,root,s);
+        if(Abc_InfoHasBit(label?off:on,key)) {
+            s_CexCoreConflicts++; return 0;
+        }
+        if(!Abc_InfoHasBit(label?on:off,key)) {
+            s_CexRefinedLabels++;
+            for(k=key;k<nBits;k+=period) Abc_InfoSetBit(label?on:off,k);
+        }
+    }
+    return 1;
+}
 
 static word Cec_TranCexDiff(Cec_TranSim_t * pSim,
     Cec_TranCand_t const * c, word const * care, int s)
@@ -103,12 +129,16 @@ static void Cec_TranCexReconstruct(Cec_TranSim_t * old, Cec_ParTran_t * pars,
             Vec_IntEntry(primary,trial-1),care);
         if (nCore>0) {
             Cec_TranProjectRootIsfCareRaw(s_CexAug,root,pool,core,nCore,off,on,care);
+            if(s_CexProjectAll &&
+                !Cec_TranCexRefineIsf(root->iObj,pool,core,nCore,longCare,off,on))
+                goto core_done;
             Cec_TranCollectRootIsfCandidate(s_CexAug,pars,root,pool,ranks,
                 known,&seen,&extra,prof,core,nCore,off,on,0,care);
             if (pars->fBdcPortfolio)
                 Cec_TranCollectRootIsfCandidate(s_CexAug,pars,root,pool,ranks,
                     known,&seen,&extra,prof,core,nCore,off,on,1,care);
         }
+core_done:
         if (getenv("ABC_CEX_DETAIL")) {
             Abc_Print(1,"cex-core round=%d root=%d trial=%d n=%d pool=",s_CexRound,root->iObj,trial,nCore);
             Vec_IntForEachEntry(pool,obj,i) Abc_Print(1,"%s%d",i?",":"",obj);
@@ -123,6 +153,8 @@ static void Cec_TranCexReconstruct(Cec_TranSim_t * old, Cec_ParTran_t * pars,
         assert(!Cec_TranCandVecContains(&seen,c));
         assert(Cec_TranRecipeMatchesRoot(old,c,oldCare));
         assert(Cec_TranRecipeMatchesRoot(s_CexAug,c,care));
+        if(s_CexProjectAll)
+            assert(Cec_TranRecipeMatchesRoot(s_CexLong,c,longCare));
         Cec_TranCandVecPush(out,*c);
     }
     s_CexAdded+=extra.nSize;

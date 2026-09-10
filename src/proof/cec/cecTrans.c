@@ -10204,6 +10204,9 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         assert(s_CexMode >= 0 && s_CexMode <= 3);
         s_CexRound=iRound+1;
         s_CexRoots=s_CexTriggered=s_CexPoints=s_CexAdded=0; s_CexTime=0;
+        s_CexCoreConflicts=s_CexRefinedLabels=0;
+        s_CexProjectAll=getenv("ABC_CEX_PROJECT_ALL") ? atoi(getenv("ABC_CEX_PROJECT_ALL")) : 0;
+        assert(s_CexProjectAll==0 || s_CexProjectAll==1);
         if (s_CexMode) {
             Cec_ParTran_t LongPars=OdcPars;
             Cec_TranPatDb_t * empty=Cec_TranPatDbStart(p,0);
@@ -10287,6 +10290,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 Prof.nOdcWindowOverflow,Prof.nOdcWindowCareBits,Prof.nOdcWindowBits);
         if(s_CexMode) {
             Abc_Print(1,"cex-summary round=%d mode=%d roots=%lld triggered=%lld points=%lld added=%lld seconds=%.6f\n",s_CexRound,s_CexMode,s_CexRoots,s_CexTriggered,s_CexPoints,s_CexAdded,Cec_TranTimeSec(s_CexTime));
+            if(s_CexProjectAll) Abc_Print(1,"cex-isf-refine round=%d conflicting-cores=%lld refined-labels=%lld\n",s_CexRound,s_CexCoreConflicts,s_CexRefinedLabels);
             Cec_TranSimStop(s_CexLong); Cec_TranSimStop(s_CexAug);
             s_CexLong=s_CexAug=NULL; s_CexMode=0;
         }
