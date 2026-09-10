@@ -5,6 +5,7 @@ static int s_CexMode, s_CexRound, s_CexProjectAll;
 static long long s_CexRoots, s_CexTriggered, s_CexPoints, s_CexAdded;
 static abctime s_CexTime;
 static long long s_CexCoreConflicts, s_CexRefinedLabels;
+#include "cecTranCexCompress.h"
 
 // Refine only the selected core's <=256 minterms using the already computed
 // reachable source. A conflicting ON/OFF label is an exact infeasibility
@@ -51,7 +52,9 @@ static void Cec_TranCexReconstruct(Cec_TranSim_t * old, Cec_ParTran_t * pars,
     Cec_TranCandVec_t extra={0}, seen={0};
     Cec_TranCand_t rep;
     Vec_Int_t * primary, * core;
-    word * longCare, * care;
+    word * longCare, * care, * compactCare=NULL;
+    Cec_TranSim_t * buildSim;
+    word * buildCare;
     int points[64], n=0, s, lane, i, j, obj, nCore, trial, nTrials;
     int oldN=out->nSize;
     abctime clk;
@@ -116,27 +119,50 @@ static void Cec_TranCexReconstruct(Cec_TranSim_t * old, Cec_ParTran_t * pars,
     }
     memset(Cec_TranSimObj(s_CexAug,0),0,sizeof(word)*s_CexAug->nSlots);
     if (s_CexMode==2) assert(!Cec_TranRecipeMatchesRoot(s_CexAug,&rep,care));
+    buildSim=s_CexAug; buildCare=care;
+    if(s_CexCompress) {
+        compactCare=Cec_TranCexCompact(s_CexCompress>=3?old:s_CexAug,
+            s_CexCompress>=3?oldCare:care,
+            s_CexCompress>=3?s_CexLong:NULL,
+            s_CexCompress>=3?longCare:NULL,root->iObj,pool);
+        buildSim=s_CexPacked; buildCare=compactCare;
+    }
     primary=Vec_IntAlloc(pars->nKitCoreMax);
-    nCore=Cec_TranSelectCareObservedCoreExcept(s_CexAug,root->iObj,pool,
-        pars->nKitCoreMax,primary,-1,care);
+    { abctime cs=Abc_Clock();
+    nCore=(s_CexCompress==1?Cec_TranCexSelectWeighted:Cec_TranSelectCareObservedCoreExcept)(buildSim,root->iObj,pool,
+        pars->nKitCoreMax,primary,-1,buildCare);
+    s_CexSelectTime+=Abc_Clock()-cs;
+    }
     nTrials=nCore>0 ? 1+Vec_IntSize(primary) : 1;
     for (trial=0; trial<nTrials; ++trial)
     {
         unsigned off[8]={0}, on[8]={0};
         core=trial ? Vec_IntAlloc(pars->nKitCoreMax) : primary;
-        if (trial) nCore=Cec_TranSelectCareObservedCoreExcept(s_CexAug,
-            root->iObj,pool,pars->nKitCoreMax,core,
-            Vec_IntEntry(primary,trial-1),care);
+        if (trial) {
+            abctime cs=Abc_Clock();
+            nCore=(s_CexCompress==1?Cec_TranCexSelectWeighted:Cec_TranSelectCareObservedCoreExcept)(buildSim,
+                root->iObj,pool,pars->nKitCoreMax,core,
+                Vec_IntEntry(primary,trial-1),buildCare);
+            s_CexSelectTime+=Abc_Clock()-cs;
+        }
+        if(s_CexCompress==1) {
+            Vec_Int_t * check=Vec_IntAlloc(8);
+            int nc=Cec_TranSelectCareObservedCoreExcept(s_CexAug,root->iObj,pool,
+                pars->nKitCoreMax,check,trial?Vec_IntEntry(primary,trial-1):-1,care);
+            assert(nc==nCore && Vec_IntSize(check)==Vec_IntSize(core));
+            for(j=0;j<Vec_IntSize(core);++j) assert(Vec_IntEntry(check,j)==Vec_IntEntry(core,j));
+            Vec_IntFree(check);
+        }
         if (nCore>0) {
-            Cec_TranProjectRootIsfCareRaw(s_CexAug,root,pool,core,nCore,off,on,care);
+            Cec_TranProjectRootIsfCareRaw(buildSim,root,pool,core,nCore,off,on,buildCare);
             if(s_CexProjectAll &&
                 !Cec_TranCexRefineIsf(root->iObj,pool,core,nCore,longCare,off,on))
                 goto core_done;
-            Cec_TranCollectRootIsfCandidate(s_CexAug,pars,root,pool,ranks,
-                known,&seen,&extra,prof,core,nCore,off,on,0,care);
+            Cec_TranCollectRootIsfCandidate(buildSim,pars,root,pool,ranks,
+                known,&seen,&extra,prof,core,nCore,off,on,0,buildCare);
             if (pars->fBdcPortfolio)
-                Cec_TranCollectRootIsfCandidate(s_CexAug,pars,root,pool,ranks,
-                    known,&seen,&extra,prof,core,nCore,off,on,1,care);
+                Cec_TranCollectRootIsfCandidate(buildSim,pars,root,pool,ranks,
+                    known,&seen,&extra,prof,core,nCore,off,on,1,buildCare);
         }
 core_done:
         if (getenv("ABC_CEX_DETAIL")) {
@@ -182,5 +208,5 @@ core_done:
         }
     }
     Vec_IntFree(primary); Cec_TranCandVecStop(&extra); Cec_TranCandVecStop(&seen);
-    ABC_FREE(care); ABC_FREE(longCare); s_CexTime+=Abc_Clock()-clk;
+    ABC_FREE(compactCare); ABC_FREE(care); ABC_FREE(longCare); s_CexTime+=Abc_Clock()-clk;
 }

@@ -6707,6 +6707,9 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranTfoStats_t TfoStats = {0};
     Cec_TranDivRank_t * pRanks = NULL;
     word * pCareSource = NULL, * pCareBuild = NULL;
+    word * pGuideCare=NULL, * pGuideLongCare=NULL;
+    Cec_TranSim_t * pGuideSim=pSim;
+    int fGuide=0, fGuideImpossible=0;
     int i, nReservoirMax, nReservoirSize;
     int fObsSample = (pPars->nExplore & 2) && iWave == 0 &&
         Cec_TranRootBuildEligible(pRoot) &&
@@ -7030,18 +7033,76 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     for ( i = 0; i < Exist.nSize; i++ )
         Exist.pArray[i].nWave = iWave;
     pProf->timeRootDirect += Abc_Clock() - clk;
-    if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) )
-        Cec_TranCollectRootConstructedIter( p, pSim, pPars, pRoot,
-            pCursor, iWave,
-            pKnown, pCovered, pUsed, pMffc, vMffc, vPool,
-            pCareBuild, !fOdc, pRanks,
+    fGuide=fOdc && s_CexMode && s_CexCompress>=4 && Vec_IntSize(vPool)>0;
+    if(fGuide) {
+        abctime cg=Abc_Clock();
+        assert(iWave==0 && !pCursor->State[0] && !pCursor->pBuildCache);
+        pGuideLongCare=Cec_TranWindowCare(s_CexLong,pRoot->iObj,pPars,NULL);
+        pGuideCare=Cec_TranCexCompact(pSim,pCareBuild,s_CexLong,pGuideLongCare,pRoot->iObj,vPool);
+        pGuideSim=s_CexPacked; fGuideImpossible=s_CexThisConflict;
+        s_CexTime+=Abc_Clock()-cg;
+    }
+    if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) && !fGuideImpossible ) {
+        Cec_TranDepScratch_t GuideDep;
+        Cec_TranSim_t * pNativeSim=pGuideSim, * pNarrow=NULL;
+        Vec_Int_t * vNativePool=vPool, * vNarrow=NULL;
+        Cec_TranDivRank_t * pNativeRanks=pRanks, * pNarrowRanks=NULL;
+        Cec_TranRootCursor_t NarrowCursor={0}, * pNativeCursor=pCursor;
+        word * pNativeCare=fGuide?pGuideCare:pCareBuild, * pNarrowCare=NULL;
+        abctime cn=Abc_Clock();
+        if(fGuide && s_CexCompress==5) {
+            Vec_Int_t * core=Vec_IntAlloc(8);
+            int nc=Cec_TranSelectCareObservedCoreExcept(pGuideSim,pRoot->iObj,vPool,pPars->nKitCoreMax,core,-1,pGuideCare);
+            if(nc>0) {
+                int j,k;
+                vNarrow=Vec_IntAlloc(nc); pNarrowRanks=ABC_ALLOC(Cec_TranDivRank_t,nc);
+                Vec_IntForEachEntry(core,k,j) {
+                    Vec_IntPush(vNarrow,Vec_IntEntry(vPool,k));
+                    pNarrowRanks[j]=pRanks[k]; pNarrowRanks[j].iPos=j;
+                }
+                pNarrow=Cec_TranSimStartRootBatch(p,4,1);
+                s_CexPacked=pNarrow; s_CexNarrowing=1;
+                pNarrowCare=Cec_TranCexCompact(pGuideSim,pGuideCare,NULL,NULL,pRoot->iObj,vNarrow);
+                s_CexNarrowing=0; s_CexPacked=pGuideSim;
+                assert(!s_CexThisConflict && pNarrow->nSlots<=4);
+                pNativeSim=pNarrow; pNativeCare=pNarrowCare;
+                vNativePool=vNarrow; pNativeRanks=pNarrowRanks;
+                pNativeCursor=&NarrowCursor;
+                Cec_TranRootCursorBindBuildPool(pNativeCursor,0,vNativePool,pNativeRanks);
+                s_CexNarrowRoots++; s_CexNarrowDivsBefore+=Vec_IntSize(vPool); s_CexNarrowDivsAfter+=nc;
+            }
+            Vec_IntFree(core);
+        }
+        if(fGuide) {
+            Abc_ResubPrepareManager(pNativeSim->nSlots);
+            Cec_TranDepScratchStart(&GuideDep,pNativeSim->nSlots,Vec_IntSize(vNativePool),1);
+        }
+        Cec_TranCollectRootConstructedIter( p, pNativeSim, pPars, pRoot,
+            pNativeCursor, iWave,
+            pKnown, pCovered, pUsed, pMffc, vMffc, vNativePool,
+            pNativeCare, !fOdc, pNativeRanks,
             &Exist, &Build,
-            pDep, pDisc, pProf );
-    else if ( pPars->fUseConstr )
+            fGuide?&GuideDep:pDep, pDisc, pProf );
+        if(fGuide) {
+            Cec_TranDepScratchStop(&GuideDep);
+            Abc_ResubPrepareManager(pSim->nSlots);
+            for(i=0;i<Build.nSize;++i) {
+                assert(Cec_TranRecipeMatchesRoot(pSim,Build.pArray+i,pCareBuild));
+                assert(Cec_TranRecipeMatchesRoot(s_CexLong,Build.pArray+i,pGuideLongCare));
+            }
+        }
+        if(pNarrow) {
+            Cec_TranRootCursorStop(&NarrowCursor);
+            Cec_TranSimStop(pNarrow); ABC_FREE(pNarrowCare);
+            Vec_IntFree(vNarrow); ABC_FREE(pNarrowRanks);
+        }
+        if(fOdc) s_CexNativeTime+=Abc_Clock()-cn;
+    }
+    else if ( pPars->fUseConstr && !fGuideImpossible )
         pProf->nRootBuildMffcOneSkipped++;
     if ( pProf->DiagPhase && pPars->nKitCoreMax > 0 && iWave == 0 &&
          pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) &&
-         Vec_IntSize(vPool) > 0 )
+         Vec_IntSize(vPool) > 0 && !fGuideImpossible )
     {
         unsigned Off[8] = {0}, On[8] = {0};
         Vec_Int_t * vIsfCoreRanks = vForcedCoreRanks;
@@ -7069,23 +7130,23 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
                 vIsfCoreRanks, nCore, Off, On, 1, NULL );
         // Add a genuinely care-aware core/ISF portfolio without removing
         // the strict incumbent. All recipes still require the normal proof.
-        if ( pCareBuild && (pPars->nExplore & 8192) )
+        if ( (fGuide?pGuideCare:pCareBuild) && (pPars->nExplore & 8192) )
         {
             Vec_Int_t * vCareCore = Vec_IntAlloc(pPars->nKitCoreMax);
             unsigned CareOff[8] = {0}, CareOn[8] = {0};
-            int nCareCore = Cec_TranSelectCareObservedCoreExcept(pSim,
-                pRoot->iObj, vPool, pPars->nKitCoreMax, vCareCore, -1, pCareBuild);
+            int nCareCore = Cec_TranSelectCareObservedCoreExcept(pGuideSim,
+                pRoot->iObj, vPool, pPars->nKitCoreMax, vCareCore, -1, (fGuide?pGuideCare:pCareBuild));
             if ( nCareCore > 0 )
             {
-                Cec_TranProjectRootIsfCareRaw(pSim, pRoot, vPool,
-                    vCareCore, nCareCore, CareOff, CareOn, pCareBuild);
-                Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot, vPool,
+                Cec_TranProjectRootIsfCareRaw(pGuideSim, pRoot, vPool,
+                    vCareCore, nCareCore, CareOff, CareOn, (fGuide?pGuideCare:pCareBuild));
+                Cec_TranCollectRootIsfCandidate(pGuideSim, pPars, pRoot, vPool,
                     pRanks, pKnown, &Exist, &Build, pProf, vCareCore,
-                    nCareCore, CareOff, CareOn, 0, pCareBuild);
+                    nCareCore, CareOff, CareOn, 0, (fGuide?pGuideCare:pCareBuild));
                 if ( pPars->fBdcPortfolio )
-                    Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot, vPool,
+                    Cec_TranCollectRootIsfCandidate(pGuideSim, pPars, pRoot, vPool,
                         pRanks, pKnown, &Exist, &Build, pProf, vCareCore,
-                        nCareCore, CareOff, CareOn, 1, pCareBuild);
+                        nCareCore, CareOff, CareOn, 1, (fGuide?pGuideCare:pCareBuild));
             }
             if ( nCareCore > 0 && (pPars->nExplore & 67108864) )
             {
@@ -7094,20 +7155,20 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
                 {
                     Vec_Int_t * vAlt = Vec_IntAlloc(pPars->nKitCoreMax);
                     unsigned AltOff[8] = {0}, AltOn[8] = {0};
-                    int nAlt = Cec_TranSelectCareObservedCoreExcept(pSim,
-                        pRoot->iObj, vPool, pPars->nKitCoreMax, vAlt, excluded, pCareBuild);
+                    int nAlt = Cec_TranSelectCareObservedCoreExcept(pGuideSim,
+                        pRoot->iObj, vPool, pPars->nKitCoreMax, vAlt, excluded, (fGuide?pGuideCare:pCareBuild));
                     if ( nAlt > 0 )
                     {
                         pProf->nOdcCoreVariants++;
-                        Cec_TranProjectRootIsfCareRaw(pSim, pRoot, vPool,
-                            vAlt, nAlt, AltOff, AltOn, pCareBuild);
-                        Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot,
+                        Cec_TranProjectRootIsfCareRaw(pGuideSim, pRoot, vPool,
+                            vAlt, nAlt, AltOff, AltOn, (fGuide?pGuideCare:pCareBuild));
+                        Cec_TranCollectRootIsfCandidate(pGuideSim, pPars, pRoot,
                             vPool, pRanks, pKnown, &Exist, &Build, pProf,
-                            vAlt, nAlt, AltOff, AltOn, 0, pCareBuild);
+                            vAlt, nAlt, AltOff, AltOn, 0, (fGuide?pGuideCare:pCareBuild));
                         if ( pPars->fBdcPortfolio )
-                            Cec_TranCollectRootIsfCandidate(pSim, pPars, pRoot,
+                            Cec_TranCollectRootIsfCandidate(pGuideSim, pPars, pRoot,
                                 vPool, pRanks, pKnown, &Exist, &Build, pProf,
-                                vAlt, nAlt, AltOff, AltOn, 1, pCareBuild);
+                                vAlt, nAlt, AltOff, AltOn, 1, (fGuide?pGuideCare:pCareBuild));
                     }
                     Vec_IntFree(vAlt);
                 }
@@ -7127,9 +7188,30 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     if ( pOut->nSize > 1 )
         qsort( pOut->pArray, pOut->nSize, sizeof(Cec_TranCand_t),
             Cec_TranCandHeuristicCompare );
-    if (fOdc && s_CexMode) {
+    if (fOdc && s_CexMode && !fGuide) {
         Cec_TranCexReconstruct(pSim,pPars,pRoot,vPool,pRanks,pCareBuild,pKnown,pOut,pProf);
         if (pOut->nSize>1) qsort(pOut->pArray,pOut->nSize,sizeof(Cec_TranCand_t),Cec_TranCandHeuristicCompare);
+    }
+    if(fGuide) {
+        if(getenv("ABC_CEX_DETAIL") && Cec_TranResidualMix(pRoot->iObj)%64==0) {
+            Vec_Int_t * nodes=Vec_IntAlloc(32), * ends=Vec_IntAlloc(16);
+            int ov,j,obj;
+            Cec_TranWindowCollect(p,pRoot->iObj,Cec_TranWindowDepth(pPars),
+                100-pPars->nDepNodesMax,nodes,ends,&ov);
+            Abc_Print(1,"cex-window root=%d nodes=",pRoot->iObj);
+            Vec_IntForEachEntry(nodes,obj,j) Abc_Print(1,"%s%d",j?",":"",obj);
+            Abc_Print(1," ends=");
+            Vec_IntForEachEntry(ends,obj,j) Abc_Print(1,"%s%d",j?",":"",obj);
+            Abc_Print(1,"\n");
+            Vec_IntFree(nodes); Vec_IntFree(ends);
+            for(i=0;i<Build.nSize;++i) {
+                Cec_TranCand_t * c=Build.pArray+i;
+                Abc_Print(1,"cex-guide-recipe root=%d hash=%u long-match=%d out=%d recipe=",pRoot->iObj,Cec_TranCandHash(c),Cec_TranRecipeMatchesRoot(s_CexLong,c,pGuideLongCare),c->iOut);
+                for(j=0;j<2*c->nGates;++j) Abc_Print(1,"%s%d",j?",":"",c->Recipe[j]);
+                Abc_Print(1,"\n");
+            }
+        }
+        ABC_FREE(pGuideCare); ABC_FREE(pGuideLongCare);
     }
     Cec_TranCandVecStop( &Exist );
     Cec_TranCandVecStop( &Build );
@@ -10205,6 +10287,11 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         s_CexRound=iRound+1;
         s_CexRoots=s_CexTriggered=s_CexPoints=s_CexAdded=0; s_CexTime=0;
         s_CexCoreConflicts=s_CexRefinedLabels=0;
+        s_CexCompress=getenv("ABC_CEX_COMPRESS")?atoi(getenv("ABC_CEX_COMPRESS")):0;
+        assert(s_CexCompress>=0 && s_CexCompress<=5);
+        s_CexRawRows=s_CexUniqueRows=s_CexTables=s_CexPoolConflict=0;
+        s_CexNarrowing=0; s_CexNarrowRoots=s_CexNarrowDivsBefore=s_CexNarrowDivsAfter=0;
+        s_CexPackTime=s_CexSelectTime=s_CexConstructTime=s_CexNativeTime=s_CexDiscoveryTime=0;
         s_CexProjectAll=getenv("ABC_CEX_PROJECT_ALL") ? atoi(getenv("ABC_CEX_PROJECT_ALL")) : 0;
         assert(s_CexProjectAll==0 || s_CexProjectAll==1);
         if (s_CexMode) {
@@ -10215,6 +10302,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
             LongPars.nSimWords=1; LongPars.nSimFrames=256;
             s_CexLong=Cec_TranSimStart(p,&LongPars,empty);
             s_CexAug=Cec_TranSimStartRootBatch(p,pSim->nSlots+1,1);
+            if(s_CexCompress) s_CexPacked=Cec_TranSimStartRootBatch(p,pSim->nSlots+s_CexLong->nSlots,1);
             Cec_TranPatDbStop(empty);
             s_CexTime+=Abc_Clock()-cx;
             if (getenv("ABC_CEX_DETAIL")) {
@@ -10235,6 +10323,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 }
             }
         }
+        { abctime cd=Abc_Clock();
         for ( r = 0; r < nRoots; r++ )
         {
             if ( pRoots[r].nMffc <= 0 || (!fOdcDirect && pRoots[r].nMffc <= 1) )
@@ -10257,6 +10346,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 Cec_TranCandVecPush( &Candidates, RootCands.pArray[i] );
             }
         }
+        s_CexDiscoveryTime=Abc_Clock()-cd; }
         if ( fOdcDirect )
         {
             int KindGenerated[3] = {0};
@@ -10288,9 +10378,17 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
             Abc_Print(1,"stran-root ODC window discovery: round=%d roots=%lld nodes=%lld exits=%lld capacity-cuts=%lld care-bits=%lld total-bits=%lld.\n",
                 iRound+1,Prof.nOdcWindowRoots,Prof.nOdcWindowNodes,Prof.nOdcWindowEnds,
                 Prof.nOdcWindowOverflow,Prof.nOdcWindowCareBits,Prof.nOdcWindowBits);
+        if(s_CexMode || getenv("ABC_CEX_PROFILE"))
+            Abc_Print(1,"cex-build-time round=%d discovery-sec=%.6f native-sec=%.6f\n",s_CexRound,Cec_TranTimeSec(s_CexDiscoveryTime),Cec_TranTimeSec(s_CexNativeTime));
         if(s_CexMode) {
             Abc_Print(1,"cex-summary round=%d mode=%d roots=%lld triggered=%lld points=%lld added=%lld seconds=%.6f\n",s_CexRound,s_CexMode,s_CexRoots,s_CexTriggered,s_CexPoints,s_CexAdded,Cec_TranTimeSec(s_CexTime));
             if(s_CexProjectAll) Abc_Print(1,"cex-isf-refine round=%d conflicting-cores=%lld refined-labels=%lld\n",s_CexRound,s_CexCoreConflicts,s_CexRefinedLabels);
+            if(s_CexCompress==5) Abc_Print(1,"cex-core-guide round=%d roots=%lld divs-before=%lld divs-after=%lld\n",s_CexRound,s_CexNarrowRoots,s_CexNarrowDivsBefore,s_CexNarrowDivsAfter);
+            if(s_CexCompress) {
+                Abc_Print(1,"cex-compression round=%d mode=%d tables=%lld raw=%lld unique=%lld pool-conflict=%lld pack-sec=%.6f select-sec=%.6f construct-sec=%.6f\n",s_CexRound,s_CexCompress,s_CexTables,s_CexRawRows,s_CexUniqueRows,s_CexPoolConflict,Cec_TranTimeSec(s_CexPackTime),Cec_TranTimeSec(s_CexSelectTime),Cec_TranTimeSec(s_CexConstructTime));
+                Cec_TranSimStop(s_CexPacked); s_CexPacked=NULL;
+                ABC_FREE(s_CexWeights);
+            }
             Cec_TranSimStop(s_CexLong); Cec_TranSimStop(s_CexAug);
             s_CexLong=s_CexAug=NULL; s_CexMode=0;
         }
