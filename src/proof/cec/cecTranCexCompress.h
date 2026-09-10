@@ -26,7 +26,7 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
     int side,s,i,j,obj,keyRow,lab,slot;
     int * hash, * labels;
     word * keys, * key, * care, * rows;
-    int fast=getenv("ABC_CEX_PACK_FAST")!=NULL;
+    int fast=getenv("ABC_CEX_PACK_FAST")?atoi(getenv("ABC_CEX_PACK_FAST")):0;
     abctime clk=Abc_Clock();
     s_CexThisConflict=0;
     while(cap<2*maxRows) cap*=2;
@@ -87,6 +87,26 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
     s_CexPacked->nSlots=Abc_MaxInt(1,(n+63)/64);
     s_CexPacked->nWords=s_CexPacked->nSlots; s_CexPacked->nFrames=1;
     care=ABC_CALLOC(word,s_CexPacked->nSlots);
+    if(fast>=2) {
+        int block,wordSlot,lane,d;
+        word * dst=Cec_TranSimObj(s_CexPacked,target);
+        memset(dst,0,s_CexPacked->nSlots*sizeof(word));
+        for(j=0;j<n;++j) dst[j>>6]|=(word)labels[j]<<(j&63);
+        for(wordSlot=0;wordSlot<s_CexPacked->nSlots;++wordSlot)
+            for(block=0;block<nKey;++block) {
+                word matrix[64]={0};
+                for(lane=0;lane<64 && 64*wordSlot+lane<n;++lane)
+                    matrix[63-lane]=keys[(size_t)(64*wordSlot+lane)*nKey+block];
+                Cec_TranCexTranspose(matrix);
+                for(d=0;d<64 && 64*block+d<nDiv;++d)
+                    Cec_TranSimObj(s_CexPacked,Vec_IntEntry(pool,64*block+d))[wordSlot]=matrix[63-d];
+            }
+        if(getenv("ABC_CEX_PACK_AUDIT"))
+            for(j=0;j<n;++j)
+                Vec_IntForEachEntry(pool,obj,i)
+                    assert(Cec_TranTeachSampleValue(s_CexPacked,obj,j)==((keys[(size_t)j*nKey+(i>>6)]>>(i&63))&1));
+    }
+    else {
     for(i=-1;i<nDiv;++i) {
         word * dst=Cec_TranSimObj(s_CexPacked,i<0?target:Vec_IntEntry(pool,i));
         memset(dst,0,s_CexPacked->nSlots*sizeof(word));
@@ -94,6 +114,7 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
             int value=i<0?labels[j]:((keys[(size_t)j*nKey+(i>>6)]>>(i&63))&1);
             dst[j>>6] |= (word)value<<(j&63);
         }
+    }
     }
     memset(Cec_TranSimObj(s_CexPacked,0),0,s_CexPacked->nSlots*sizeof(word));
     for(j=0;j<n;++j) care[j>>6]|=(word)1<<(j&63);
