@@ -6688,6 +6688,8 @@ static int Cec_TranCandRootHeuristicCompare( const void * p0, const void * p1 )
     return Cec_TranCandHeuristicCompare( p0, p1 );
 }
 
+#include "cecTranCexProbe.h"
+
 static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranSim_t * pSource, Cec_TranPatDb_t * pDb, int fRootBatch,
     Cec_ParTran_t * pPars, Cec_TranRoot_t * pRoot,
@@ -7125,6 +7127,10 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     if ( pOut->nSize > 1 )
         qsort( pOut->pArray, pOut->nSize, sizeof(Cec_TranCand_t),
             Cec_TranCandHeuristicCompare );
+    if (fOdc && s_CexMode) {
+        Cec_TranCexReconstruct(pSim,pPars,pRoot,vPool,pRanks,pCareBuild,pKnown,pOut,pProf);
+        if (pOut->nSize>1) qsort(pOut->pArray,pOut->nSize,sizeof(Cec_TranCand_t),Cec_TranCandHeuristicCompare);
+    }
     Cec_TranCandVecStop( &Exist );
     Cec_TranCandVecStop( &Build );
     ABC_FREE( pRanks );
@@ -9690,6 +9696,7 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
             fProved &= Vec_IntEntry( vStatus, k );
             nProofs += Vec_IntEntry( vStatus, k );
         }
+        if(getenv("ABC_CEX_DETAIL")) Abc_Print(1,"cex-proof round=%d root=%d hash=%u proved=%d gain=%d\n",iRound+1,Cand.iTarget,Cec_TranCandHash(&Cand),fProved,Cand.Gain);
         if ( !fProved )
             continue;
         nProved++;
@@ -9718,6 +9725,9 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
         Cec_TranRootConsumeProved( p, &SafePool, pCovered, pUsed, pSolved,
             pMffc, vMffc, vSupport, &Selected, pProf );
     *pnSelected = Selected.nSize;
+    if(getenv("ABC_CEX_DETAIL")) for(i=0;i<Selected.nSize;++i)
+        Abc_Print(1,"cex-selected round=%d root=%d hash=%u gain=%d\n",iRound+1,Selected.pArray[i].iTarget,Cec_TranCandHash(Selected.pArray+i),Selected.pArray[i].Gain);
+
     if ( Selected.nSize )
     {
         for ( i = 0; i < Selected.nSize; i++ )
@@ -10190,6 +10200,38 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         Abc_ResubPrepareManager( pSim->nSlots );
         Cec_TranDepScratchStart( &Dep, pSim->nSlots,
             OdcPars.nConstrBaseMax ? OdcPars.nConstrBaseMax : 64, 1 );
+        s_CexMode = getenv("ABC_CEX_MODE") ? atoi(getenv("ABC_CEX_MODE")) : 0;
+        assert(s_CexMode >= 0 && s_CexMode <= 3);
+        s_CexRound=iRound+1;
+        s_CexRoots=s_CexTriggered=s_CexPoints=s_CexAdded=0; s_CexTime=0;
+        if (s_CexMode) {
+            Cec_ParTran_t LongPars=OdcPars;
+            Cec_TranPatDb_t * empty=Cec_TranPatDbStart(p,0);
+            abctime cx=Abc_Clock();
+            assert(!fRootBatch && fUseCare && (OdcPars.nExplore & 134217728));
+            LongPars.nSimWords=1; LongPars.nSimFrames=256;
+            s_CexLong=Cec_TranSimStart(p,&LongPars,empty);
+            s_CexAug=Cec_TranSimStartRootBatch(p,pSim->nSlots+1,1);
+            Cec_TranPatDbStop(empty);
+            s_CexTime+=Abc_Clock()-cx;
+            if (getenv("ABC_CEX_DETAIL")) {
+                int ci, f;
+                Abc_Print(1,"cex-snapshot round=%d objects=%d regs=%d\n",s_CexRound,Gia_ManObjNum(p),Gia_ManRegNum(p));
+                Gia_ManForEachCi(p,pObj,ci) Abc_Print(1,"cex-ci index=%d id=%d\n",ci,Gia_ObjId(p,pObj));
+                Gia_ManForEachAnd(p,pObj,ci) Abc_Print(1,"cex-gate id=%d a=%d b=%d xor=%d\n",ci,Gia_ObjFaninLit0p(p,pObj),Gia_ObjFaninLit1p(p,pObj),Gia_ObjIsXor(pObj));
+                Gia_ManForEachCo(p,pObj,ci) Abc_Print(1,"cex-co index=%d lit=%d\n",ci,Gia_ObjFaninLit0p(p,pObj));
+                Gia_ManForEachCi(p,pObj,ci) {
+                    Abc_Print(1,"cex-old-ci id=%d words=",Gia_ObjId(p,pObj));
+                    for(f=0;f<pSim->nSlots;++f) Abc_Print(1,"%s%llx",f?",":"",(unsigned long long)Cec_TranSimObj(pSim,Gia_ObjId(p,pObj))[f]);
+                    Abc_Print(1,"\n");
+                }
+                for(f=0;f<s_CexLong->nSlots;++f) {
+                    Abc_Print(1,"cex-pis frame=%d words=",f);
+                    Gia_ManForEachPi(p,pObj,ci) Abc_Print(1,"%s%llx",ci?",":"",(unsigned long long)Cec_TranSimObj(s_CexLong,Gia_ObjId(p,pObj))[f]);
+                    Abc_Print(1,"\n");
+                }
+            }
+        }
         for ( r = 0; r < nRoots; r++ )
         {
             if ( pRoots[r].nMffc <= 0 || (!fOdcDirect && pRoots[r].nMffc <= 1) )
@@ -10243,6 +10285,11 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
             Abc_Print(1,"stran-root ODC window discovery: round=%d roots=%lld nodes=%lld exits=%lld capacity-cuts=%lld care-bits=%lld total-bits=%lld.\n",
                 iRound+1,Prof.nOdcWindowRoots,Prof.nOdcWindowNodes,Prof.nOdcWindowEnds,
                 Prof.nOdcWindowOverflow,Prof.nOdcWindowCareBits,Prof.nOdcWindowBits);
+        if(s_CexMode) {
+            Abc_Print(1,"cex-summary round=%d mode=%d roots=%lld triggered=%lld points=%lld added=%lld seconds=%.6f\n",s_CexRound,s_CexMode,s_CexRoots,s_CexTriggered,s_CexPoints,s_CexAdded,Cec_TranTimeSec(s_CexTime));
+            Cec_TranSimStop(s_CexLong); Cec_TranSimStop(s_CexAug);
+            s_CexLong=s_CexAug=NULL; s_CexMode=0;
+        }
         nGenerated += Candidates.nSize;
         nPositive += Frontier.nSize;
         nGeneratedRound = Candidates.nSize;
