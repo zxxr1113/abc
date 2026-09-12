@@ -20,6 +20,51 @@ TFO+CEX control. The earlier six-arm measurement was 1.1552 / 1.0788.
 These are paired per-circuit pipeline ratios, excluding independent DSEC time;
 shared-host single-run timing does not establish a precise small difference.
 
+### Final ODC combination result and its limitation
+
+The three-arm cleaned-release matrix is complete: all 210 optimization
+invocations pass; there are no optimization timeouts, assertions or profile
+errors. All 70 ODC-combination products pass separate whole-circuit DSEC.
+Together with the six-arm matrix, the final ledger covers **630/630 products**:
+620 default DSEC PASS plus 10 raw UNDECIDED entries discharged by exact
+full-graph-pair binding to independent supplemental proofs. The raw statuses
+are unchanged (`formal-product-ledger.json`).
+
+| Clean release, integrated fast35 | Build % | Total SEQ % | Final AND sum | Time mean / median vs fresh TFO+CEX |
+|---|---:|---:|---:|---|
+| TFO+CEX control | 4.208656 | 4.765709 | 19,444 | 1 / 1 |
+| TFO+CEX + polarity + auxiliary | 7.057889 | 7.696956 | 18,319 | 1.1371 / 1.0550 |
+| Same new strict stage + existing ODC/H2 | 8.958466 | 9.597533 | 17,507 | 36.7280 / 3.7612 |
+
+**The ODC combination is not a further improvement in the headline averaged
+quality metric over the previous ODC release.** Against that earlier,
+input-hash-matched TFO+ODC+CEX batch, pooled final ANDs improve from 17,661
+to 17,507 (154 fewer; 15 better / 11 equal / 9 worse), but average Build falls
+from 9.042818% to 8.958466% (minus 0.084352 percentage points). Average total
+SEQ is almost unchanged: 9.599871% to 9.597533% (minus 0.002338 points).
+Gains on larger circuits can improve pooled AND counts while losses on small
+circuits lower the equal-circuit average. These are different metrics, not
+conflicting results. The largest pooled gains include systemcdes +53, SPI +35,
+i2c +23 and USB +21; des_area loses 18.
+
+Observed integrated per-circuit time ratios against the earlier ODC batch are
+0.8458 mean / 0.8788 median (two-command flow 0.8556 / 0.8984). These batches
+were run at different times on a shared host, so the roughly 15% measured
+reduction is not an isolated timing guarantee. The ODC package remains much
+more expensive than the improved strict-only stage. Its B128/q320 material
+budget, L16 iterations and weaker boundary obligations are unchanged.
+The strongest conclusion of this round is the substantial improvement in
+cheap native strict construction, not an across-the-board improvement after
+ODC. Keep the new strict switches independently selectable with ODC too.
+
+For the requested post-scorr view, using the control standalone `scorr_time_ms`
+for all matched circuits, mean/median `T(stran2)/T(scorr)-1` are 8.2772 / 1.7647
+(control), 10.3381 / 2.6364 (new strict), and 710.1028 / 11.5490 (new + ODC).
+All 35 denominators are positive; no exclusions or clamping were used.
+These large ratios are sensitive to tiny scorr denominators and outliers;
+use the direct paired pipeline ratios above for the main engineering comparison.
+See `post-scorr-overhead.json`, `odc-comparison.json`, and `release-analysis.json`.
+
 ### What was fixed, without adding a replacement pass
 
 The native single-root iterator still constructs AND/inverter recipes from
@@ -120,8 +165,8 @@ old control; final AND sums are supporting pooled counts.
 
 The two mechanisms overlap strongly: polarity-only gains cannot be added to
 the auxiliary-only gains. The combined incremental gain over auxiliary-only
-is 12 ANDs. The equal-size random control rules out interpreting the large
-auxiliary gain as merely 12.5% more rows. Reachable tail samples help less.
+is 12 ANDs. The equal-size random control does not support explaining the large
+auxiliary gain solely by 12.5% more rows. Reachable tail samples help less.
 
 On the initial eight-circuit pilot, pruning queries whose opposite value was
 already impossible in the unroll had zero net gain; broadening query columns
@@ -235,6 +280,10 @@ Raw full CSVs only are stored in
 and `20260912_strict_guide_{control,release,odc}`; pilots and logs are in evidence.
 Every experiment uses the same 35 input hashes, 1800-second invocation limit,
 both flows and independent DSEC; resource snapshots are in launch records.
+
+These experiments use one fixed independent auxiliary stream and the fast35
+corpus. They do not establish seed-independent improvement or generalization
+to the larger quick268/full corpus.
 
 The strict gap is materially smaller, but not closed. The next unresolved
 algorithmic question is how to use discriminating unreachable observations
