@@ -18,17 +18,19 @@ static void Cec_TranCexTranspose(word a[64])
             t=(a[k]^(a[k+j]>>j))&m; a[k]^=t; a[k+j]^=t<<j;
         }
 }
-static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
-    Cec_TranSim_t * b, word const * cb, int target, Vec_Int_t * pool)
+// Source and destination may alias: all source rows are read before writing
+// the compacted signatures. The caller owns destination capacity and care.
+static word * Cec_TranCexCompactInto(Cec_TranSim_t * a, word const * ca,
+    Cec_TranSim_t * b, word const * cb, int target, Vec_Int_t * pool,
+    Cec_TranSim_t * pPacked, int * pfConflict)
 {
     int nDiv=Vec_IntSize(pool), nKey=(nDiv+63)/64;
     int maxRows=64*(a->nSlots+(b?b->nSlots:0)), cap=1, n=0;
-    int side,s,i,j,obj,keyRow,lab,slot;
+    int side,s,i,j,obj,keyRow,lab,slot, fConflict=0;
     int * hash, * labels;
     word * keys, * key, * care, * rows;
     int fast=getenv("ABC_CEX_PACK_FAST")?atoi(getenv("ABC_CEX_PACK_FAST")):0;
     abctime clk=Abc_Clock();
-    s_CexThisConflict=0;
     while(cap<2*maxRows) cap*=2;
     hash=ABC_CALLOC(int,cap); labels=ABC_ALLOC(int,maxRows);
     keys=ABC_CALLOC(word,(size_t)maxRows*nKey); key=ABC_ALLOC(word,nKey);
@@ -66,7 +68,7 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
               while(hash[other]) {
                 int row=hash[other]-1;
                 if(labels[row]!=lab && !memcmp(keys+(size_t)row*nKey,key,nKey*sizeof(word))) {
-                    s_CexThisConflict=1; break;
+                    fConflict=1; break;
                 }
                 other=(other+1)&(cap-1);
               }
@@ -84,45 +86,46 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
             s_CexWeights[hash[slot]-1]++; s_CexRawRows++;
         }
     }
-    s_CexPacked->nSlots=Abc_MaxInt(1,(n+63)/64);
-    s_CexPacked->nWords=s_CexPacked->nSlots; s_CexPacked->nFrames=1;
-    care=ABC_CALLOC(word,s_CexPacked->nSlots);
+    pPacked->nSlots=Abc_MaxInt(1,(n+63)/64);
+    pPacked->nWords=pPacked->nSlots; pPacked->nFrames=1;
+    care=ABC_CALLOC(word,pPacked->nSlots);
     if(fast>=2) {
         int block,wordSlot,lane,d;
-        word * dst=Cec_TranSimObj(s_CexPacked,target);
-        memset(dst,0,s_CexPacked->nSlots*sizeof(word));
+        word * dst=Cec_TranSimObj(pPacked,target);
+        memset(dst,0,pPacked->nSlots*sizeof(word));
         for(j=0;j<n;++j) dst[j>>6]|=(word)labels[j]<<(j&63);
-        for(wordSlot=0;wordSlot<s_CexPacked->nSlots;++wordSlot)
+        for(wordSlot=0;wordSlot<pPacked->nSlots;++wordSlot)
             for(block=0;block<nKey;++block) {
                 word matrix[64]={0};
                 for(lane=0;lane<64 && 64*wordSlot+lane<n;++lane)
                     matrix[63-lane]=keys[(size_t)(64*wordSlot+lane)*nKey+block];
                 Cec_TranCexTranspose(matrix);
                 for(d=0;d<64 && 64*block+d<nDiv;++d)
-                    Cec_TranSimObj(s_CexPacked,Vec_IntEntry(pool,64*block+d))[wordSlot]=matrix[63-d];
+                    Cec_TranSimObj(pPacked,Vec_IntEntry(pool,64*block+d))[wordSlot]=matrix[63-d];
             }
         if(getenv("ABC_CEX_PACK_AUDIT"))
             for(j=0;j<n;++j)
                 Vec_IntForEachEntry(pool,obj,i)
-                    assert(Cec_TranTeachSampleValue(s_CexPacked,obj,j)==((keys[(size_t)j*nKey+(i>>6)]>>(i&63))&1));
+                    assert(Cec_TranTeachSampleValue(pPacked,obj,j)==((keys[(size_t)j*nKey+(i>>6)]>>(i&63))&1));
     }
     else {
     for(i=-1;i<nDiv;++i) {
-        word * dst=Cec_TranSimObj(s_CexPacked,i<0?target:Vec_IntEntry(pool,i));
-        memset(dst,0,s_CexPacked->nSlots*sizeof(word));
+        word * dst=Cec_TranSimObj(pPacked,i<0?target:Vec_IntEntry(pool,i));
+        memset(dst,0,pPacked->nSlots*sizeof(word));
         for(j=0;j<n;++j) {
             int value=i<0?labels[j]:((keys[(size_t)j*nKey+(i>>6)]>>(i&63))&1);
             dst[j>>6] |= (word)value<<(j&63);
         }
     }
     }
-    memset(Cec_TranSimObj(s_CexPacked,0),0,s_CexPacked->nSlots*sizeof(word));
+    memset(Cec_TranSimObj(pPacked,0),0,pPacked->nSlots*sizeof(word));
     for(j=0;j<n;++j) care[j>>6]|=(word)1<<(j&63);
-    s_CexTables++; s_CexUniqueRows+=n; s_CexPoolConflict+=s_CexThisConflict;
+    s_CexTables++; s_CexUniqueRows+=n; s_CexPoolConflict+=fConflict;
+    *pfConflict=fConflict;
     if(getenv("ABC_CEX_DETAIL") && s_CexCompress>=4 && !s_CexNarrowing && Cec_TranResidualMix(target)%64==0) {
         int raw=0;
         for(j=0;j<n;++j) raw+=s_CexWeights[j];
-        Abc_Print(1,"cex-quotient root=%d raw=%d rows=%d conflict=%d pool=",target,raw,n,s_CexThisConflict);
+        Abc_Print(1,"cex-quotient root=%d raw=%d rows=%d conflict=%d pool=",target,raw,n,fConflict);
         Vec_IntForEachEntry(pool,obj,i) Abc_Print(1,"%s%d",i?",":"",obj);
         Abc_Print(1,"\n");
         for(j=0;j<n;++j) {
@@ -134,6 +137,11 @@ static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
     ABC_FREE(hash); ABC_FREE(labels); ABC_FREE(keys); ABC_FREE(key); ABC_FREE(rows);
     s_CexPackTime+=Abc_Clock()-clk;
     return care;
+}
+static word * Cec_TranCexCompact(Cec_TranSim_t * a, word const * ca,
+    Cec_TranSim_t * b, word const * cb, int target, Vec_Int_t * pool)
+{
+    return Cec_TranCexCompactInto(a,ca,b,cb,target,pool,s_CexPacked,&s_CexThisConflict);
 }
 static int Cec_TranCexWeightedCount(int slot, word bits)
 {

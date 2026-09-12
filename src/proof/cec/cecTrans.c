@@ -199,6 +199,7 @@ static int Cec_TranOdcRootCareSelfTest();
 static int Cec_TranOdcFanoutSelfTest();
 static int Cec_TranOdcDirectSelfTest();
 static int Cec_TranCareIsfSelfTest();
+static int Cec_TranSigGuideSelfTest();
 typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
 struct Cec_TranTfoStats_t_
 {
@@ -225,7 +226,7 @@ int Cec_TranRootSelfTest()
         Cec_TranCompleteFaninTfoSelfTest() &&
         Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcRootCareSelfTest() &&
         Cec_TranOdcFanoutSelfTest() && Cec_TranWindowSelfTest() &&
-        Cec_TranOdcDirectSelfTest();
+        Cec_TranOdcDirectSelfTest() && Cec_TranSigGuideSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -6710,6 +6711,8 @@ static int Cec_TranCandRootHeuristicCompare( const void * p0, const void * p1 )
 }
 
 #include "cecTranCexProbe.h"
+#include "cecTranSigGuide.h"
+#include "cecTranSigGuideTest.h"
 
 static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranSim_t * pSource, Cec_TranPatDb_t * pDb, int fRootBatch,
@@ -6720,7 +6723,7 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     char const * pCovered, char const * pUsed,
     char * pMffc, Vec_Int_t * vMffc, Cec_TranDepScratch_t * pDep,
     Cec_TranDiscStat_t * pDisc, Cec_TranProf_t * pProf,
-    Cec_TranCandVec_t * pOut )
+    Cec_TranCandVec_t * pOut, Cec_TranSigGuide_t * pSigGuide )
 {
     Cec_TranCandVec_t Exist = {0}, Build = {0};
     Vec_Int_t * vPool, * vTfo = fUseTfoDivs ? Vec_IntAlloc( 32 ) : NULL;
@@ -7062,6 +7065,8 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
         pGuideCare=Cec_TranCexCompact(pSim,pCareBuild,s_CexLong,pGuideLongCare,pRoot->iObj,vPool);
         pGuideSim=s_CexPacked; fGuideImpossible=s_CexThisConflict;
         s_CexTime+=Abc_Clock()-cg;
+        Cec_TranSigGuideApply( pSigGuide, pRoot->iObj, vPool,
+            &pGuideSim, &pGuideCare, &fGuideImpossible );
     }
     if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) && !fGuideImpossible ) {
         Cec_TranDepScratch_t GuideDep;
@@ -9326,7 +9331,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
                 fUseTfoDivs, nTfoMax, 0,
                 &Known, pSolved,
                 pCovered, pUsed, pMffc, vMffc, &Dep, &Disc, &Prof,
-                &RootCands );
+                &RootCands, NULL );
             nGot = RootCands.nSize;
             for ( i = 0; i < RootCands.nSize; i++ )
                 Cec_TranCandVecPush( &Page, RootCands.pArray[i] );
@@ -10405,6 +10410,10 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         Abc_Print(1,"stran-root ODC spatial window config: depth=%d max-extra-ands=%d F=%d C=%d.\n",
             Cec_TranWindowDepth(&OdcPars),100-OdcPars.nDepNodesMax,OdcPars.nFrames,OdcPars.nBTLimit);
     if ( OdcPars.nExplore & 16777216 ) OdcPars.nStage5Paths = 4;
+    assert( !OdcPars.nSignatureGuide || (OdcPars.fOdcFanout && fUseCare &&
+        OdcPars.fUseConstr && (OdcPars.nExplore & 134217728) &&
+        getenv("ABC_CEX_MODE") && atoi(getenv("ABC_CEX_MODE")) == 2 &&
+        getenv("ABC_CEX_COMPRESS") && atoi(getenv("ABC_CEX_COMPRESS")) == 4) );
     OdcPars.nRootProofBatch = 0;
     OdcPars.nExplore &= ~6;
     // A uniform round cap bounds repeated rediscovery, independently of the
@@ -10421,6 +10430,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         Cec_TranDepScratch_t Dep;
         Cec_TranPatDb_t * pDb;
         Cec_TranSim_t * pSource, * pSim;
+        Cec_TranSigGuide_t * pSigGuide;
         Gia_Man_t * pDup = NULL, * pClean = NULL;
         Gia_Obj_t * pObj;
         Vec_Int_t * vMffc = Vec_IntAlloc( 128 );
@@ -10505,6 +10515,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 }
             }
         }
+        pSigGuide = Cec_TranSigGuideStart( p, OdcPars.nSignatureGuide );
         { abctime cd=Abc_Clock();
         for ( r = 0; r < nRoots; r++ )
         {
@@ -10521,7 +10532,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
                 &OdcPars, pRoots + r, pCursors + pRoots[r].iObj, 0,
                 OdcPars.fUseTfoDivs, nTfoMax, fUseCare, &Known, pSolved,
                 pCovered, pUsed, pMffc, vMffc, &Dep, &Disc, &Prof,
-                &RootCands );
+                &RootCands, pSigGuide );
             for ( i = 0; i < RootCands.nSize; i++ )
             {
                 Cec_TranCandVecPush( &Known, RootCands.pArray[i] );
@@ -10639,6 +10650,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         nLimitHits += !fCommitted && OdcPars.nOdcProofMax &&
             nTried >= OdcPars.nOdcProofMax && nTried < Frontier.nSize;
         TimeProofAll += TimeProof;
+        Cec_TranSigGuideStop( pSigGuide, iRound + 1, OdcPars.fProfile );
 
         Cec_TranCandVecStop( &Known );
         Cec_TranCandVecStop( &RootCands );

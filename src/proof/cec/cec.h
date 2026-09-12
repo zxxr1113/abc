@@ -348,6 +348,7 @@ struct Cec_ParTran_t_
     int              nStage5Paths;  // experimental Stage-5 paths per eligible top pivot (0/1 = baseline)
     int              nOdcProofMax;  // serial proof attempts or fanout candidates per snapshot (0 = all)
     int              nOdcFanoutRounds; // optional fanout discovery/commit round cap (0 = fixed point)
+    int              nSignatureGuide; // ODC observation guide: 0=off, 1=random, 2=missing-value SAT, 3=also aliases
     int              nExplore;      // opt-in exploration: 1=CI cache, 2=observations, 4=pool conflict stop, 8=CI shadow, 16=guided TFO rescue, 512=ODC Direct/MFFC1
     int              nCombBTLimit;  // root CBS conflict limit per cube
     int              nFreeWords;    // 64-bit independent PI/RO words for combination screening

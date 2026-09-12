@@ -17,6 +17,12 @@ NA = "N/A"
 TIME_PREFIX = "Sequential direct experiment-time profile:"
 BUILD_PREFIX = "Sequential direct seq-build experiment profile:"
 ROOT_TIME_PREFIX = "stran-root experiment-time profile:"
+SIGNATURE_GUIDE_PREFIX = "stran-root signature-guide:"
+SIGNATURE_GUIDE_KEYS = (
+    "roots", "low", "aliases", "changed", "split", "conflicts",
+    "rows-before", "rows-after", "sat", "sat-yes", "sat-no", "sat-unknown",
+    "prep-sec", "guide-sec", "sat-sec",
+)
 ROOT_PREPROCESS_DETAIL_PREFIX = "stran-root preprocessing-detail profile:"
 ROOT_PAGE_REUSE_DETAIL_PREFIX = "stran-root page-reuse-detail profile:"
 ROOT_EFFECT_PREFIX = "stran-root experiment-effect profile:"
@@ -591,6 +597,8 @@ STRAN2_PROFILE_FIELDS = [
 ]
 
 PROFILE_FIELDS = [
+    "signature_guide_records", "signature_guide_mode", "signature_guide_slots_max",
+    *[f"signature_guide_{key.replace('-', '_')}" for key in SIGNATURE_GUIDE_KEYS],
     "profile_schema", "profile_time_records", "profile_seq_build_records",
     "profile_closure_records", "profile_closure_sec", "profile_closure_and_gain",
     "profile_closure_selected", "profile_accounting_complete",
@@ -927,10 +935,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     stran2_placement_records: list[dict[str, int | float]] = []
     stran2_signature_records: list[dict[str, int | float]] = []
     stran2_teaching_records: list[dict[str, int | float]] = []
+    signature_guide_records: list[dict[str, int | float]] = []
     schemas: list[int] = []
     for line in stdout.splitlines():
         if not any(prefix in line for prefix in (
-            TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX,
+            TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX, SIGNATURE_GUIDE_PREFIX,
             ROOT_PREPROCESS_DETAIL_PREFIX,
             ROOT_PAGE_REUSE_DETAIL_PREFIX,
             ROOT_EFFECT_PREFIX, ROOT_LANE_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_COMMIT_PREFIX,
@@ -968,7 +977,9 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         schema = record.pop("schema", None)
         if isinstance(schema, int):
             schemas.append(schema)
-        if STRAN2_CEX_PREFIX in line:
+        if SIGNATURE_GUIDE_PREFIX in line:
+            signature_guide_records.append(record)
+        elif STRAN2_CEX_PREFIX in line:
             retained = re.search(r"(?:^| )retained=(\d+)/(\d+)(?: |$)", line)
             if retained:
                 record["retained"] = int(retained.group(1))
@@ -1166,6 +1177,14 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                     values.append(record[key])
                     break
         return sum(values) if values else NA
+
+    result.update({
+        "signature_guide_records": len(signature_guide_records) or NA,
+        "signature_guide_mode": max_field(signature_guide_records, "mode"),
+        "signature_guide_slots_max": max_field(signature_guide_records, "slots-max"),
+        **{f"signature_guide_{key.replace('-', '_')}":
+           sum_field(signature_guide_records, key) for key in SIGNATURE_GUIDE_KEYS},
+    })
 
     result.update({
         "stran2_cex_records": (

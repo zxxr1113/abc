@@ -42245,10 +42245,21 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     int c;
     Cec_ManTranSetDefaultParams( pPars );
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVLOPZEqwjbaeMJdxckilrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVLOPHZEqwjbaeMJdxckilrgftupoyh")) != EOF )
     {
         switch ( c )
         {
+        case 'H':
+        {
+            char * pEnd;
+            long Mode;
+            if ( globalUtilOptind >= argc ) goto usage;
+            Mode = strtol(argv[globalUtilOptind], &pEnd, 10);
+            if ( pEnd == argv[globalUtilOptind] || *pEnd || Mode < 0 || Mode > 3 ) goto usage;
+            globalUtilOptind++;
+            pPars->nSignatureGuide = (int)Mode;
+            break;
+        }
         case 'E':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nExplore = atoi(argv[globalUtilOptind++]);
@@ -42420,6 +42431,14 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             goto usage;
         }
     }
+    if ( pPars->nSignatureGuide && (!pPars->fUseOdc || !pPars->fOdcFanout ||
+         pPars->fOdcStrict || !pPars->fUseConstr || !(pPars->nExplore & 134217728) ||
+         !getenv("ABC_CEX_MODE") || atoi(getenv("ABC_CEX_MODE")) != 2 ||
+         !getenv("ABC_CEX_COMPRESS") || atoi(getenv("ABC_CEX_COMPRESS")) != 4) )
+    {
+        Abc_Print( -1, "&stran%s: -H requires care-aware -k -J construction with spatial windows, ABC_CEX_MODE=2 and ABC_CEX_COMPRESS=4. Use the signature preset.\n", fStran2 ? "2" : "" );
+        return 1;
+    }
     if ( pPars->fRootExhaustive )
         pPars->nGainMin = 0;
     if ( pAbc->pGia == NULL )
@@ -42444,7 +42463,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVLOZEqwjbae num] [-P root] [-MJdxckilrgftupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVLOHZEqwjbae num] [-P root] [-MJdxckilrgftupoyh]\n", fStran2 ? "2" : "" );
     Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow, 16=construction-guided TFO rescue, 512=ODC Direct/MFFC1 in -k -J, 4096=ODC combinational-boundary proof only in -k -J, 8192=care-aware Kit/BDC additions, 16384=strict root acceptance with care generation, 32768=ODC C10000, 65536=ODC F2, 131072=ODC q80, 262144=ODC F4, 524288=ODC q320, 1048576=ODC N40, 2097152=ODC K0, 4194304=ODC B64, 8388608=ODC B128 [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
@@ -42473,6 +42492,8 @@ usage:
     Abc_Print( -2, "\t-d     : toggle SEQ-only one-hop complete-fanin TFO divisors (cap=B) [default = %s]\n", pPars->fUseTfoDivs? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle serial first-level ODC Build after strict fixed point [default = %s]\n", pPars->fUseOdc? "yes": "no" );
     Abc_Print( -2, "\t-L num : -J discovery/commit round cap (0 = fixed point) [default = %d]\n", pPars->nOdcFanoutRounds );
+    Abc_Print( -2, "\t-H num : ODC signature guide: 0=off, 1=64 free-CI samples, 2=also missing-value SAT, 3=also aliases [default = %d]\n", pPars->nSignatureGuide );
+    Abc_Print( -2, "\t         requires the full-observation spatial ODC preset; auxiliary samples may restrict sequential don't-cares\n" );
     Abc_Print( -2, "\t-J     : use frozen fanout-boundary batch proof/commit in -k phase; -O caps candidates [default = %s]\n", pPars->fOdcFanout? "yes": "no" );
     Abc_Print( -2, "\t-i     : use strict full care in the serial phase (matched control) [default = %s]\n", pPars->fOdcStrict? "yes": "no" );
     Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
