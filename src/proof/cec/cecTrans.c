@@ -10580,10 +10580,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         nPositiveRound = Frontier.nSize;
 
         for ( i = 0; i < Gia_ManObjNum(p); i++ )
-        {
-            Cec_TranRootCursorCacheStop( pCursors + i );
-            Cec_TranTeachCacheStop( pCursors[i].pTeachCache );
-        }
+            Cec_TranRootCursorStop( pCursors + i );
         Cec_TranDepScratchStop( &Dep );
         Abc_ResubPrepareManager( 0 );
         if ( fRootBatch )
