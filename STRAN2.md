@@ -1,5 +1,257 @@
 # &stran2: Current Goal And Results
 
+## Review candidate: distinguish strict Build signatures and repair missing polarities (2026-09-12)
+
+The continuation answers why TFO+CEX still missed useful native construction.
+Owned tree: `/mnt/home/zhaoxiran/abc-strict-cex-refine`, branch
+`codex/stran2-strict-cex-refine`, based on `e293041870452e7b36ea271692b450f169444921`.
+Production remains unchanged at `3836f6091079664641bf42764b8a03c2310f6b54`.
+This is an opt-in review candidate; the production default is not changed.
+The earlier reachable-CEX release below remains the baseline, not the latest result.
+
+**Result:** native strict Build reduction rises from **4.208656% to 7.057889%**,
+and total SEQ reduction from **4.765709% to 7.696956%**, on all fast35 inputs.
+Final AND sum falls from **19,444 to 18,319**, another **1,125 ANDs** removed;
+21 circuits improve, 7 tie, and 7 regress. Latches remain 1,776 in both groups.
+The cleaned release reproduces the complete prototype graph pairs for all
+70 products (35 circuits, integrated and two-command flows). Fresh integrated
+runtime ratio is **1.1371 mean / 1.0550 median** against the freshly rerun
+TFO+CEX control. The earlier six-arm measurement was 1.1552 / 1.0788.
+These are paired per-circuit pipeline ratios, excluding independent DSEC time;
+shared-host single-run timing does not establish a precise small difference.
+
+### What was fixed, without adding a replacement pass
+
+The native single-root iterator still constructs AND/inverter recipes from
+its selected divisors. The existing complete root proof, composition, actual
+insertion and exact cleanup gain checks still decide what may be committed.
+No rewrite, SAT recipe synthesis, multi-output construction, extra retry pass,
+retiming or state encoding was added. Q4/W8, B16/q20, j5/w8, F1/C1000/b100,
+initial scorr, E5 switches and the normal epoch stopping rule stay fixed.
+
+Two independent mechanisms are exposed separately:
+
+1. **Complete polarity classification for empty labels.** In
+   `Gia_ManFindOneUnateInt`, the previous `if (...) positive; else if (...)
+   negative` records only the positive literal when both polarities satisfy
+   an empty OFF set. This is a real native iterator representational omission,
+   not merely a small q limit. The opt-in policy records both legal polarities.
+   It is scoped to strict SEQ RootPass and reset before other stages/commands.
+   Other resub clients and the COM/ODC constructors retain their old policy.
+2. **Separate auxiliary observations for strict Build.** Preserve all 2,048
+   Q4/W8 reset observations and append 256 independent combinational samples
+   with free PIs and ROs. A single snapshot-shared evaluation creates the extra
+   word per Q lane; no SAT call and no whole-graph simulation per root are added.
+   The resulting 2,304-row table guides divisor ranking/core selection and the
+   existing Build iterator. Direct matching keeps the original reset teacher,
+   although its selected pool can change. The reachable CEX bank and its Q/W
+   layout are unchanged. The extra random stream is independent and deterministic.
+   The table is immutable while cursors run and freed at snapshot teardown.
+   Root-local CEX overflow keeps the old path and explicitly profiles a skip.
+
+**Free-RO observations are not reachable CEX.** They strengthen the sampled
+construction problem and may exclude a recipe that is valid only on reachable
+states. They confer no proof privilege. Using them is an explicit conservative
+quality tradeoff, not a reachability claim or a complete strict search.
+
+### Mechanism evidence: available information did not guarantee construction
+
+For simple_spi's first strict snapshot, root 894 has exactly the same ordered
+pool `[78,86]` in the compared runs. Its old target signature is all zero;
+divisor 78 is also all zero, while divisor 86 has 126 ones. The useful recipe
+is `n78 AND n86` (native recipe `[156,172]`, output `-2`). With the old policy,
+both q20 and q320 generate **zero Build candidates** for this root; the trivial
+zero/existing candidates do not prove. Either the polarity repair or the
+auxiliary observations makes the native iterator produce the useful one-AND
+recipe at stage 1, rank 1. Independent universal combinational root CEC and
+full-circuit DSEC both pass; isolated exact cleanup removes 4 ANDs.
+This is a concrete missed construction, not a general single-root upper bound.
+
+The native self-test exhausts every nonempty subset of the four two-input
+valuations, all 16 target truth tables, and all eight distinct one-AND/inverter
+functions. There are **520 compatible recipe obligations**. The old iterator
+misses **228**; the new polarity policy misses **0**. This is completeness for
+that stated small language/test space only, not arbitrary recipe completeness.
+
+First-snapshot traces on i2c, simple_spi, ss_pcm and usb_phy confirm identical
+source graphs and bit-for-bit preservation of every original observation.
+There are **238 newly selected Build recipes** absent from old generated
+candidates; **200** use only materials already in the old pool. All 238 prove
+in the native combinational stage. However, most ordered pools also change:
+only 2 have the identical full ordered pool. Thus the overall gain includes
+better material selection as well as better native construction; it cannot
+all be attributed to fixing the iterator after a fixed pool.
+
+The old active reachable teacher makes 2,741 bounded queries across fast35:
+167 SAT, 2,574 UNSAT, zero UNKNOWN, with 0.323468 seconds total active-query
+work. Thus this batch does not suggest CDCL timeout is the principal bottleneck.
+Most queried opposite values cannot occur inside the configured reset horizon;
+spending more conflicts on those same UNSAT predicates will not create samples.
+This is bounded UNSAT, never an invariant or replacement certificate. Under the
+new optimization trajectory, existing queries rise to 3,478 (174 SAT, 3,304
+UNSAT), even though the auxiliary feature itself adds no queries. Fixed per-
+snapshot budgets do not imply identical numbers of successful descent epochs.
+
+A separate audit of 141 first-round ODC-selected recipes is especially useful:
+**139 pass strict root equivalence**, with the root exposed as an additional
+output and every original PO/RI retained. Fresh independent sequential checks
+and the native strict proof lane agree; **all 139 pass the native combinational
+proof stage**. Two are refuted under the strict root obligation. This shows
+that much of this sampled ODC success was discoverable without weaker ODC
+semantics. The ODC material/search budgets (B128/q320), spatial windows and
+snapshots differ, so this is not a decomposition of all final ODC gain.
+
+### Controlled alternatives and failures
+
+The six-arm full fast35 prototype comparison used the same native strict
+search budgets and both experiment flows. Percentages below are means of each
+circuit's ordered Build or total SEQ gain divided by its normalized source ANDs.
+Runtime ratios use per-circuit integrated pipeline times against that batch's
+old control; final AND sums are supporting pooled counts.
+
+| Strict TFO+CEX variant | Build % | Total SEQ % | Final AND sum | Extra AND removed | Better/equal/worse | Time mean / median |
+|---|---:|---:|---:|---:|---|---|
+| Previous release | 4.208656 | 4.765709 | 19,444 | 0 | 0/35/0 | 1 / 1 |
+| Polarity repair only | 4.733426 | 5.308183 | 19,262 | 182 | 12/23/0 | 1.0522 / 0.9688 |
+| Free-state auxiliary only | 6.996810 | 7.633133 | 18,331 | 1,113 | 21/7/7 | 1.1735 / 1.0976 |
+| Both (review candidate) | 7.057889 | 7.696956 | 18,319 | 1,125 | 21/7/7 | 1.1552 / 1.0788 |
+| Extra reachable tail observations | 4.825050 | 5.214369 | 19,315 | 129 | 21/10/4 | 1.1072 / 1.0914 |
+| Equal-size independent reset observations | 4.196982 | 4.755617 | 19,432 | 12 | 3/28/4 | 1.0437 / 1.0075 |
+
+The two mechanisms overlap strongly: polarity-only gains cannot be added to
+the auxiliary-only gains. The combined incremental gain over auxiliary-only
+is 12 ANDs. The equal-size random control rules out interpreting the large
+auxiliary gain as merely 12.5% more rows. Reachable tail samples help less.
+
+On the initial eight-circuit pilot, pruning queries whose opposite value was
+already impossible in the unroll had zero net gain; broadening query columns
+added 13 ANDs. Completing one independently sampled SAT justification cube
+added 15. Raising q20 to q320 at B16 added only 9. B128/q320 added 301, but
+on des_area the pipeline rose from about 9.35 to 245.79 seconds. Q1/W32 at
+the same 2,048 signature bits added 340, typically at 2–5x time. These are
+bounded diagnostic samples, not all-fast35 results or impossibility claims.
+The initial query prototype changed CO append order and hence SAT model
+completion; its nonreproducing control is explicitly invalidated and excluded.
+
+A ten-circuit follow-up tested two uniform restrictions: use free-state rows
+only for constant targets, and use the one-transition image of an arbitrary
+state. They recover some regressions but lose much of the useful gain on
+SPI/i2c/USB. The latter is still not a reset-reachable sample. Neither is in
+the review source; no circuit-name-specific policy was introduced.
+
+### Why some cases regress, and why fewer candidates need not mean less time
+
+All seven strict regressions are retained in the aggregate. On b03 and b04,
+first-snapshot traces identify respectively 1 and 8 old selected recipes
+excluded by auxiliary rows. Fresh independent checks of **all nine** expose
+the target root as an additional output: each is sequentially equivalent from
+reset but combinationally inequivalent with free ROs. This directly demonstrates
+the conservative mechanism's lost sequential opportunities. It explains all
+8 lost ANDs on b04; b03's final 4-AND loss also includes later trajectory changes,
+so the first-snapshot witness alone is not its complete final decomposition.
+
+In the clean integrated full batch, strict Build generated/submitted/proved/
+selected counters change from **180,005 / 176,789 / 4,237 / 716** to
+**25,296 / 21,458 / 7,167 / 1,133**. Roughly 86% fewer candidates are generated,
+while more are proved and selected. This supports better candidate quality,
+not just a larger search. It does not mean that every excluded old candidate
+was meaningless, as the nine regression witnesses demonstrate.
+
+The extra signature evaluation and copy cost totals only **0.004353 seconds**
+across integrated fast35. But the existing divisor/core algorithms see a
+larger and different relation and different optimization trajectories: profiled
+SEQ divisor selection grows from 8.3403 to 13.0441 seconds; its nested TFO core
+value work grows from 5.2202 to 8.3290. These nested clocks must not be summed.
+This explains why the complete pipeline still costs about 14–16% more, despite
+far fewer submitted candidates. The extra mechanism adds no SAT queries.
+
+### Review source, operation and validation
+
+The candidate depends on the previous commits 02f788aee (cursor cleanup),
+f4fbe6631 (ODC signature feature), e571aba2b (validation report), and e29304187
+(reachable strict CEX). Apply the incremental review change on that chain;
+cherry-picking it alone onto production is not a complete integration.
+
+The incremental source comprises `giaResub.c`, `cecTrans.c`, new
+`cecTranStrictGuide.h`, `run_stran2_strict_guide.sh`, additive profile parsing and
+parser/preset tests. All query/cube/ODC-reclassification/trace prototype hooks
+are removed; `cecTranStrictCexActive.h` is unchanged from e29304187.
+
+Use the opt-in preset with the compiled review binary:
+
+```sh
+ABC=/mnt/home/zhaoxiran/script2/evidence/strict_cex_refine/20260912/bin/abc-release \
+  bash scripts/run_stran2_strict_guide.sh
+```
+
+`STRICT_GUIDE=0` disables the free-state table; `STRICT_BOTH_POLARITIES=0`
+disables the polarity repair independently. Both default to 1 only in this
+new preset. The ordinary command defaults remain 0. `ODC_ENABLED=1` enables
+the existing ODC/H2 preset after strict processing. New additive fields
+`strict_guide_{records,snapshots,source_rows,auxiliary_rows,skipped_overflow,prep_sec}`
+aggregate per-snapshot increments. Existing strict CEX counters remain cumulative
+and are parsed from the last epoch; absent fields remain N/A.
+
+The release native self-test passes, including the exhaustive polarity check,
+old-row preservation, free-state truth evaluation and explicit exclusion of a
+sequentially valid recipe. All 24 Python profile/signature/preset tests pass
+with the built binary, with no skipped command tests. The ASAN build instruments
+both changed translation units (other ABC objects remain uninstrumented);
+native self-tests and b04/i2c/SPI/ss_pcm pass, all four products also passing
+independent DSEC. ASAN leak detection is disabled; this is not a whole-program
+leak-freedom claim. Assertions remain enabled in every binary.
+
+The six-arm matrix has 420 complete products: 412 default DSEC PASS, with 8
+b13_opt UNDECIDED preserved in the raw CSVs. Those eight correspond to two
+identical full graph-pair groups, both independently proven by the frozen
+checker with `dsec -r -m -T 1800`. The cleaned control/release validation has
+140 products: 138 default PASS; its two control b13_opt pairs match the already
+proven pairs exactly. All 70 newly guided release products default DSEC PASS.
+Graph identity checks preserve topology, full PI/RO/PO/RI interfaces and reset
+values while ignoring names/comments. Exact file hashes are also retained.
+
+Build provenance: assertions-enabled `gcc -g -O`; two changed translation units
+compiled and linked with 1,375 unchanged objects from the frozen e29304187 tree.
+Release binary SHA256:
+`2a05311de06bffd231e83cfb12ccbacc86905cf7b12b715df035d8860a0e99aa`.
+The final manifests include both changed C files, all included local feature
+headers, preset/parser hashes and the independent checker identity.
+A separate full build from this tree (`make -j16 ABC_USE_NO_READLINE=1`) also
+passes the native suite and all 12 focused control/candidate products. Their
+complete graph identities match the measured release, and all pass independent
+DSEC. Full-build binary `bin/abc-full` SHA256:
+`dafc89136a92491ab727fd6aad6f37e161f1145b25bb990df19f18501754d99d`.
+See `identity-full.json` and `full-pilot.json`; the full matrix timings use
+`abc-release`, not this separately built binary.
+
+
+Evidence root: `/mnt/home/zhaoxiran/script2/evidence/strict_cex_refine/20260912`.
+Key evidence: `analysis-6.json`, `release-analysis.json`, `candidate-counts.json`,
+`attribution_analysis.json`, `witnesses.json`, `odc_classify.json`,
+`regression-proof.json`, `supplement.json`, `release-graph-bindings.json`,
+`identity-release.json`, and the frozen `source-*` / `bin` variants.
+Raw full CSVs only are stored in
+`/mnt/home/zhaoxiran/script2/experiment_reports/20260912_strict_refine_{old,free,both,both_free,tail,random}`
+and `20260912_strict_guide_{control,release,odc}`; pilots and logs are in evidence.
+Every experiment uses the same 35 input hashes, 1800-second invocation limit,
+both flows and independent DSEC; resource snapshots are in launch records.
+
+The strict gap is materially smaller, but not closed. The next unresolved
+algorithmic question is how to use discriminating unreachable observations
+without excluding valuable reachable-only recipes or adding a second search
+pass. The tested constant-only and one-transition restrictions do not solve
+that tradeoff. ODC also retains distinct boundary semantics, material budgets
+and later snapshots; no evidence here establishes the theoretical limit of
+native strict construction. The review recommendation is to expose both
+switches, keep the conservative policy explicit, and avoid silently making
+it the production default.
+
+Budget accounting: this round retains the agreed 10 weekly-percentage-point
+ceiling. The shared account reset during the run; exact task consumption
+cannot be inferred. A conservative 7-point post-reset ceiling reserves at
+least 3 points for the pre-reset interval; no extra budget was assumed.
+The reset and checkpoint evidence is archived separately from quality data.
+
 ## Merge candidate: reachable signature teaching before strict SEQ Build (2026-09-12)
 
 The user asked to extend CEX teaching to the non-ODC phase and compare TFO,

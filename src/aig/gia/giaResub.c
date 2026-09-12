@@ -1530,18 +1530,32 @@ static inline int Gia_ManFindFirstCommonLit( Vec_Int_t * vArr1, Vec_Int_t * vArr
     return -1;
 }
 
+// Empty OFF sets admit both polarities. The historical single-polarity
+// classification is incomplete for sampled constant targets. Enable the full
+// classification only for the opt-in strict SEQ constructor; other clients
+// retain their existing policy. This follows the pass-owned resub manager.
+static int s_ResubBothPolarities = 0;
+void Abc_ResubSetBothPolarities( int Enable )
+{
+    assert( Enable == 0 || Enable == 1 );
+    s_ResubBothPolarities = Enable;
+}
+
 void Gia_ManFindOneUnateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits, Vec_Int_t * vNotUnateVars )
 {
     word * pDiv; int i;
     Vec_IntClear( vUnateLits );
     Vec_IntClear( vNotUnateVars );
     Vec_PtrForEachEntryStart( word *, vDivs, pDiv, i, 2 )
-        if ( !Abc_TtIntersectOne( pOff, 0, pDiv, 0, nWords ) )
-            Vec_IntPush( vUnateLits, Abc_Var2Lit(i, 0) );
-        else if ( !Abc_TtIntersectOne( pOff, 0, pDiv, 1, nWords ) )
-            Vec_IntPush( vUnateLits, Abc_Var2Lit(i, 1) );
-        else
-            Vec_IntPush( vNotUnateVars, i );
+    {
+        int Positive = !Abc_TtIntersectOne(pOff,0,pDiv,0,nWords);
+        int Negative = (!Positive || s_ResubBothPolarities) &&
+            !Abc_TtIntersectOne(pOff,0,pDiv,1,nWords);
+        if(Positive) Vec_IntPush(vUnateLits,Abc_Var2Lit(i,0));
+        if(Negative && (!Positive || s_ResubBothPolarities))
+            Vec_IntPush(vUnateLits,Abc_Var2Lit(i,1));
+        if(!Positive && !Negative) Vec_IntPush(vNotUnateVars,i);
+    }
 }
 int Gia_ManFindOneUnate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vUnateLits[2], Vec_Int_t * vNotUnateVars[2], int fVerbose, int * piChoice )
 {
@@ -4233,6 +4247,57 @@ static void Gia_ResbIteratorTightBudgetSelfTest()
     }
 }
 
+// Every nonempty subset of the four two-input valuations, all 16 target
+// truth tables, and all eight distinct one-AND/inverter functions. This checks
+// representational completeness on partial observations, not just simulation
+// consistency of whatever the iterator happens to emit.
+static void Gia_ResbEmptyLabelPolaritySelfTest()
+{
+    int mode,subset,target,i,j,k,rows[4],nr,n,attempt,done,bad,*a,count;
+    int need[8],seen[8],missing[2]={0},obligations[2]={0};
+    word Data[4]; void * Divs[4]; void * it;
+    int Saved=s_ResubBothPolarities;
+    for(i=0;i<4;++i)Divs[i]=Data+i;
+    for(mode=0;mode<=1;++mode)
+    {
+        Abc_ResubSetBothPolarities(mode);
+        for(subset=1;subset<16;++subset) for(target=0;target<16;++target)
+        {
+            memset(Data,0,sizeof(Data)); memset(need,0,sizeof(need));memset(seen,0,sizeof(seen));
+            nr=0;for(i=0;i<4;++i)if((subset>>i)&1)rows[nr++]=i;
+            for(i=0;i<64;++i)
+            {
+                int r=rows[i%nr];
+                Data[(target>>r)&1] |= (word)1<<i;
+                if(r&1)Data[2]|=(word)1<<i;
+                if(r&2)Data[3]|=(word)1<<i;
+            }
+            for(k=0;k<8;++k)
+            {
+                need[k]=1;
+                for(j=0;j<nr;++j)
+                {
+                    int r=rows[j],v=(((r&1)^(k&1)) & (((r>>1)&1)^((k>>1)&1))) ^ ((k>>2)&1);
+                    if(v!=((target>>r)&1))need[k]=0;
+                }
+                obligations[mode]+=need[k];
+            }
+            it=Abc_ResubIteratorStart(Divs,4,1,1,2,0,0);count=0;
+            do
+            {
+                n=Abc_ResubIteratorNext(it,&a,&attempt,&done,&bad);assert(!bad && ++count<128);
+                if(n==3 && a[0]/2==2 && a[1]/2==3 && a[2]/2==4)
+                    seen[(a[0]&1)+2*(a[1]&1)+4*(a[2]&1)]=1;
+            }while(!done);
+            Abc_ResubIteratorStop(it);
+            for(k=0;k<8;++k)missing[mode]+=need[k]&&!seen[k];
+        }
+        printf("stran polarity exhaustive: mode=%d compatible-one-AND=%d missing=%d\n",mode,obligations[mode],missing[mode]);
+    }
+    assert(missing[0]>0 && missing[1]==0);
+    Abc_ResubSetBothPolarities(Saved);
+}
+
 int Abc_ResubIteratorSelfTest()
 {
     word Off = 0x2, On = 0xD, D = 0x8, E = 0x5;
@@ -4249,6 +4314,7 @@ int Abc_ResubIteratorSelfTest()
     int nNext = 0, nInvalid = 0;
     int t, j, nRounds;
     unsigned Rand = 0x51A7E123;
+    Gia_ResbEmptyLabelPolaritySelfTest();
     Gia_ResbIteratorTightBudgetSelfTest();
     U.nCap = N.nCap = P.nCap = 8;
     U.pArray = ABC_ALLOC( int, 8 );

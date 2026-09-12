@@ -172,6 +172,7 @@ enum
 };
 
 extern void Abc_ResubPrepareManager( int nWords );
+extern void Abc_ResubSetBothPolarities( int Enable );
 extern void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor,
     int fUseSolvSched, int nStage5Paths, int fProfilePivots, int * pCursor,
@@ -202,6 +203,7 @@ static int Cec_TranCareIsfSelfTest();
 static int Cec_TranSigGuideSelfTest();
 static int Cec_TranStrictCexSelfTest();
 static int Cec_TranStrictCexActiveSelfTest();
+static int Cec_TranStrictGuideSelfTest();
 typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
 struct Cec_TranTfoStats_t_
 {
@@ -229,7 +231,8 @@ int Cec_TranRootSelfTest()
         Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcRootCareSelfTest() &&
         Cec_TranOdcFanoutSelfTest() && Cec_TranWindowSelfTest() &&
         Cec_TranOdcDirectSelfTest() && Cec_TranSigGuideSelfTest() &&
-        Cec_TranStrictCexSelfTest() && Cec_TranStrictCexActiveSelfTest();
+        Cec_TranStrictCexSelfTest() && Cec_TranStrictCexActiveSelfTest() &&
+        Cec_TranStrictGuideSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -6727,6 +6730,7 @@ static int Cec_TranCandRootHeuristicCompare( const void * p0, const void * p1 )
 #include "cecTranSigGuide.h"
 #include "cecTranSigGuideTest.h"
 #include "cecTranStrictCexActive.h"
+#include "cecTranStrictGuide.h"
 
 static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranSim_t * pSource, Cec_TranPatDb_t * pDb, int fRootBatch,
@@ -9246,6 +9250,18 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     }
     pSim = fRootBatch ? Cec_TranSimStartRootBatch( p,
         pPars->nSimWords, pPars->nSimFrames ) : pSource;
+    // Keep the Q/W reset teacher unchanged. The separate Build table adds
+    // conservative free-state observations before ranking or cursor creation.
+    if ( !fCombOnly && Cec_TranStrictCexOption("ABC_STRICT_GUIDE", 0, 1) )
+    {
+        if ( !fRootBatch )
+            pSim = Cec_TranStrictGuide( pSource, pPars->fProfile );
+        else if ( pPars->fProfile )
+            Abc_Print(1, "stran-root strict-signature-guide: schema=1 snapshots=0 source-rows=0 auxiliary-rows=0 skipped-overflow=1 prep-sec=0\n");
+    }
+    Abc_ResubSetBothPolarities( !fCombOnly &&
+        Cec_TranStrictCexOption("ABC_STRICT_BOTH_POLARITIES", 0, 1) );
+
     Prof.timeRootSimSig += Abc_Clock() - clk;
     Abc_ResubPrepareManager( pSim->nSlots );
     Cec_TranDepScratchStart( &Dep, pSim->nSlots,
@@ -9552,7 +9568,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Cec_TranRootCursorStop( pCursors + i );
     Cec_TranDepScratchStop( &Dep );
     Abc_ResubPrepareManager( 0 );
-    if ( fRootBatch )
+    Abc_ResubSetBothPolarities( 0 );
+    if ( pSim != pSource )
         Cec_TranSimStop( pSim );
     Cec_TranSimStop( pSource );
     if ( fOwnDb )
