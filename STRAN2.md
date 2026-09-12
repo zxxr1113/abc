@@ -1,5 +1,160 @@
 # &stran2: Current Goal And Results
 
+## Merge candidate: targeted signature guidance (2026-09-12)
+
+The user requested a merge-ready improvement to the existing single-root
+constructor. Source commit: `f4fbe6631`; separate cursor cleanup: `02f788aee`. The review branch is `codex/stran2-signature-guide`, based on
+`3836f6091079664641bf42764b8a03c2310f6b54`. Production `codex/stran2` and its
+unrelated working-tree edits were preserved. This entry documents an optional
+candidate; the approved baseline below remains the production default.
+
+The implementation strengthens the observation table supplied to native
+core/Build construction. The constructor still builds a recipe for one root,
+and the existing boundary proof, composition check, insertion and exact gain
+check decide whether it can replace that root. It adds no rewrite pass,
+multi-output synthesis, new divisor family, or SAT-generated recipe.
+
+### Algorithm and correctness contract
+
+1. At each immutable ODC discovery snapshot, evaluate one deterministic word
+   (64 assignments) with free combinational inputs: PIs and register outputs.
+   This costs one graph traversal shared by all roots and uses a separate RNG.
+2. If a root has only one target value under the original observation care,
+   append its and the complete divisor pool's auxiliary columns. In H2, if
+   this word is also constant, ask bounded SAT for the opposite root value
+   missing from that auxiliary word.
+   SAT assigns input values only. There are at most 64 queries per snapshot,
+   each capped at 100 conflicts. A satisfying partial assignment is completed
+   into 64 concrete lanes; only the root/pool union cone is evaluated.
+3. Preserve every original care observation. Compact the joined rows only
+   when the full divisor vector **and target label** are equal. Opposite
+   labels for the same pool assignment remain a conflict and stop this
+   impossible construction attempt. Feed the resulting table to the existing
+   constructor with its original pool, ranks, q and construction families.
+4. Every candidate still requires the existing formal boundary obligations
+   and composition/commit checks. Auxiliary samples confer no proof status.
+   SAT UNSAT/UNKNOWN here neither proves a replacement nor adds a sample.
+
+Free register-output assignments are **not reachable sequential CEX**. They
+strengthen the construction constraints and can exclude legal sequential/ODC
+recipes. H3 also triggers when a sampled root/divisor equality or complement
+is disproved by the auxiliary word; it is an experimental quality tradeoff.
+None of these modes guarantees per-circuit monotonic improvement. This does
+not complete the research on reachable, observability-aware CEX teaching.
+It also does not establish completeness of the native constructor relative
+to exact SAT synthesis: missing divisors, restricted recipe families and
+budget/selection gaps remain separate possible causes of lost opportunities.
+
+The integration replaces the prototype's global scratch context and fixed
+joined-buffer size with per-snapshot ownership and dynamic capacity. A private
+SAT AIG with an explicit literal map leaves source `Value` fields untouched;
+CI ordering, buffers and native XORs are handled explicitly. Cone evaluation
+uses an iterative stack. The profile includes early-return checks, preparation,
+SAT outcomes and compression counts; SAT seconds are nested within guide
+seconds and must not be added twice.
+
+An independent memory check also exposed an existing ODC cursor leak with H0:
+only caches were freed, leaving the frozen pool and ranks allocated each round.
+The branch uses the existing complete cursor destructor at the same cleanup
+point. This is a separate resource-lifetime repair, with no algorithm change.
+
+### Reproduction
+
+Build with assertions enabled, e.g. `make -j16 ABC_USE_NO_READLINE=1` on this host.
+From a fresh result directory, run:
+
+```sh
+ABC=/mnt/home/zhaoxiran/abc-signature-guide/abc \
+AIG_DIR=/path/to/inputs TMPDIR=/path/to/existing/scratch \
+TIMEOUT=1800 MAX_PARALLEL=2 JOBS_PER_EXPERIMENT=8 \
+SKIP_DSEC=0 KEEP_ARTIFACTS=1 \
+bash /mnt/home/zhaoxiran/abc-signature-guide/scripts/run_stran2_signature.sh
+```
+
+`SIGNATURE_GUIDE_MODE=0/1/2/3` selects the arm; the new preset defaults to H2.
+The bare command defaults to H0 and `run_stran2_quality.sh` is unchanged.
+Direct `-H` usage requires care-aware `-k -J` construction, spatial windows,
+`ABC_CEX_MODE=2` and `ABC_CEX_COMPRESS=4`; incompatible combinations are rejected.
+The preset holds the approved baseline's Q4/W8, long Q1/W256 observations,
+B128/q320 ODC budget, D4 windows and L16 cap fixed. It runs both common flows.
+
+### Fresh final-binary fast35 results
+
+All 35 original input hashes are paired, with both `scorr-stran` and integrated
+`stran2`, all four modes, 1800 seconds per invocation and 64 maximum workers
+per matrix. All 280 final-binary rows are execution/parser/DSEC PASS; there
+are no timeouts, assertions, profile errors or excluded cases. Latch sum is
+1,776 in each arm. Quality agrees across the two flows and every final graph
+(excluding names/comments) matches the corresponding frozen research prototype.
+
+The following is **integrated `stran2`**. Reduction is the arithmetic mean of
+per-circuit gain divided by normalized source ANDs; Build means
+`seq_build_ordered_and_gain`, total SEQ means `seq_stage_and_gain`. Runtime is
+the arithmetic mean / median of per-circuit pipeline-time ratios against H0,
+including initial scorr and excluding normalization and independent DSEC.
+
+| Mode | Ordered Build/source | Total SEQ/source | Final AND sum | Better/equal/worse vs H0 | Runtime mean / median ratio |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| H0: Control | 6.711162% | 7.254798% | 18,697 | 0/35/0 | 1.0000 / 1.0000 |
+| H1: One auxiliary word | 8.868207% | 9.411842% | 17,806 | 14/21/0 | 0.9176 / 0.9767 |
+| H2: Recommended: word + missing-value SAT | 9.013059% | 9.556694% | 17,709 | 14/21/0 | 0.9218 / 0.9851 |
+| H3: Also break observed aliases | 9.072764% | 9.616399% | 17,689 | 14/18/3 | 0.8488 / 0.9821 |
+
+Recommended H2 removes 988 additional ANDs in aggregate,
+with 14 circuits better, 21 equal and 0 worse.
+Its mean runtime change is -7.82%, with median
+-1.49%. These are fixed-seed observations on a
+selected fast35 corpus, not a generalization or statistical speed guarantee.
+Some individual runtimes increase; sub-second cases are sensitive to launch
+and scheduling variation. The complete per-case data are retained.
+H3 has three known one-AND regressions (b09, b09_opt, b11_opt), which is why
+it is not the recommended preset despite its better aggregate reduction.
+
+The H2 ODC phase generates 899,020 candidates versus
+1,904,077 for H0, proves
+14,823 versus
+9,487, and selects
+966 versus 658.
+ODC proof time totals 528.725s versus
+776.047s. H2 guide preparation totals
+0.001330s, guide work 0.135382s,
+including SAT solving 0.002945s. The interpretation is that
+more informative signatures avoid many unproductive recipes and expose more
+useful native constructions. At the fixed q/W budget, targeted assignments
+supply distinctions missing from the original observation table. Legacy `seq_constructed_*` counters omit this ODC phase
+and must not be used as its candidate totals.
+
+### Validation and evidence
+
+- Clean full build and the final cursor-fix rebuild; assertions enabled.
+  Native `&stran_resub_test`, 21 combined signature/closure/report Python tests,
+  and the 11 profile tests pass. New native tests cover a 513-word input table,
+  exact truth-row preservation, contradictory labels, bounded rare-value SAT,
+  UNSAT/UNKNOWN, CI mapping and untouched source scratch fields.
+- Final binary focused USB H0/H1/H2/H3 and i2c H2: 5/5 independent DSEC PASS.
+  Final AddressSanitizer selftest and USB H0/H2 plus i2c H2 runs pass, with
+  leak detection enabled and independent DSEC for all three final products.
+  Instrumentation covers the changed C translation units; unchanged dependencies
+  come from the clean build. Pre-fix leak reports are retained.
+- Five additional quick-corpus circuits selected by header structure and
+  SHA1(relative path), without constraints/justice/fairness, are tested in
+  H0/H2 and both flows: 20/20 execution and independent DSEC PASS. All bad-state
+  predicates are retained as observed POs. Existing ABC initialization
+  normalization adds PI/mux/phase state for uninitialized registers, which is
+  audited explicitly. H2 improves three integrated results and ties two;
+  this small sample is regression coverage, not a broad corpus claim.
+- The first hardened full matrix, before the cursor lifetime repair, also has
+  280/280 PASS rows. The final matrix is the release result above; the earlier
+  matrix is retained as separate provenance, not mixed into timing averages.
+
+Final binary SHA256: `b065ca44164f42f5460fdd2bc1943138b6c5faa4ffe2f97d4c822ee9e1b64def`.
+Complete release raw CSV pairs are under
+[`20260912_signature_guide_release_h2/`](/mnt/home/zhaoxiran/script2/experiment_reports/20260912_signature_guide_release_h2)
+and corresponding `h0`, `h1`, `h3` directories. Build/source hashes, command
+settings, all logs, graphs, independent audits, prototype comparison, profile
+analysis and the scoped patch are archived in
+[`signature_guide_merge/20260912/`](/mnt/home/zhaoxiran/script2/evidence/signature_guide_merge/20260912).
+
 ## Approved development baseline: TFO + complete-information ODC (2026-09-10)
 
 The user selected the **6.7111623876%** fast35 Ordered Seq Build/source
