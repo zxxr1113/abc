@@ -18,6 +18,15 @@ TIME_PREFIX = "Sequential direct experiment-time profile:"
 BUILD_PREFIX = "Sequential direct seq-build experiment profile:"
 ROOT_TIME_PREFIX = "stran-root experiment-time profile:"
 SIGNATURE_GUIDE_PREFIX = "stran-root signature-guide:"
+STRICT_CEX_PREFIX = "strict-cex epoch="
+STRICT_CEX_KEYS = (
+    "epoch", "mode", "solver", "bank", "seen", "added", "duplicate",
+    "invalid-reset", "invalid-split", "too-long", "overflow", "ignored-ind",
+    "injected", "split-pairs", "seconds", "active-low", "active-queries",
+    "active-sat", "active-unsat", "active-unknown", "active-split",
+    "active-invalid", "active-size-skip", "active-seconds", "active-conflicts",
+    "active-queue-cut",
+)
 SIGNATURE_GUIDE_KEYS = (
     "roots", "low", "aliases", "changed", "split", "conflicts",
     "rows-before", "rows-after", "sat", "sat-yes", "sat-no", "sat-unknown",
@@ -597,6 +606,8 @@ STRAN2_PROFILE_FIELDS = [
 ]
 
 PROFILE_FIELDS = [
+    "strict_cex_records",
+    *[f"strict_cex_{key.replace('-', '_')}" for key in STRICT_CEX_KEYS],
     "signature_guide_records", "signature_guide_mode", "signature_guide_slots_max",
     *[f"signature_guide_{key.replace('-', '_')}" for key in SIGNATURE_GUIDE_KEYS],
     "profile_schema", "profile_time_records", "profile_seq_build_records",
@@ -936,10 +947,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     stran2_signature_records: list[dict[str, int | float]] = []
     stran2_teaching_records: list[dict[str, int | float]] = []
     signature_guide_records: list[dict[str, int | float]] = []
+    strict_cex_records: list[dict[str, int | float]] = []
     schemas: list[int] = []
     for line in stdout.splitlines():
         if not any(prefix in line for prefix in (
-            TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX, SIGNATURE_GUIDE_PREFIX,
+            TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX, SIGNATURE_GUIDE_PREFIX, STRICT_CEX_PREFIX,
             ROOT_PREPROCESS_DETAIL_PREFIX,
             ROOT_PAGE_REUSE_DETAIL_PREFIX,
             ROOT_EFFECT_PREFIX, ROOT_LANE_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_COMMIT_PREFIX,
@@ -977,7 +989,9 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         schema = record.pop("schema", None)
         if isinstance(schema, int):
             schemas.append(schema)
-        if SIGNATURE_GUIDE_PREFIX in line:
+        if STRICT_CEX_PREFIX in line:
+            strict_cex_records.append(record)
+        elif SIGNATURE_GUIDE_PREFIX in line:
             signature_guide_records.append(record)
         elif STRAN2_CEX_PREFIX in line:
             retained = re.search(r"(?:^| )retained=(\d+)/(\d+)(?: |$)", line)
@@ -1184,6 +1198,15 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         "signature_guide_slots_max": max_field(signature_guide_records, "slots-max"),
         **{f"signature_guide_{key.replace('-', '_')}":
            sum_field(signature_guide_records, key) for key in SIGNATURE_GUIDE_KEYS},
+    })
+
+    # The strict bank spans epochs: these are cumulative counters, not per-
+    # epoch increments. Summing records would count the same traces repeatedly.
+    strict_last = strict_cex_records[-1] if strict_cex_records else {}
+    result.update({
+        "strict_cex_records": len(strict_cex_records) or NA,
+        **{f"strict_cex_{key.replace('-', '_')}": strict_last.get(key, NA)
+           for key in STRICT_CEX_KEYS},
     })
 
     result.update({

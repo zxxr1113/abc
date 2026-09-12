@@ -200,6 +200,8 @@ static int Cec_TranOdcFanoutSelfTest();
 static int Cec_TranOdcDirectSelfTest();
 static int Cec_TranCareIsfSelfTest();
 static int Cec_TranSigGuideSelfTest();
+static int Cec_TranStrictCexSelfTest();
+static int Cec_TranStrictCexActiveSelfTest();
 typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
 struct Cec_TranTfoStats_t_
 {
@@ -226,7 +228,8 @@ int Cec_TranRootSelfTest()
         Cec_TranCompleteFaninTfoSelfTest() &&
         Cec_TranFirstLevelCareSelfTest() && Cec_TranOdcRootCareSelfTest() &&
         Cec_TranOdcFanoutSelfTest() && Cec_TranWindowSelfTest() &&
-        Cec_TranOdcDirectSelfTest() && Cec_TranSigGuideSelfTest();
+        Cec_TranOdcDirectSelfTest() && Cec_TranSigGuideSelfTest() &&
+        Cec_TranStrictCexSelfTest() && Cec_TranStrictCexActiveSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -347,8 +350,10 @@ typedef struct Cec_TranDiagMffc_t_ {
     long long Outcome[2][3], SelectedGain[2];
     abctime EnumTime, BuildTime;
 } Cec_TranDiagMffc_t;
+typedef struct Cec_TranStrictCex_t_ Cec_TranStrictCex_t;
 struct Cec_TranProf_t_
 {
+    Cec_TranStrictCex_t * pStrictCex; // borrowed, strict SEQ proof observer only
     int DiagPhase;
     Cec_TranDiagMffc_t DiagMffc[8];
     int DiagRootAvailable;
@@ -823,6 +828,8 @@ static void Cec_TranPatDbRemapRegs( Cec_TranPatDb_t * pDb,
     }
     pDb->nRegs = nRegsNew;
 }
+
+#include "cecTranStrictCex.h"
 
 static inline word Cec_TranSetLane( word Value, int iLane, int fValue )
 {
@@ -3700,6 +3707,12 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
         Cor.nStepsMax = pPars->nStepsMax;
         Cor.fVerbose  = 0;
         Cor.pProfile  = pPars->fProfile ? &pProf->Corr : NULL;
+        if ( pProf->pStrictCex )
+        {
+            assert( !fCombOnly && pProf->DiagPhase == 1 );
+            Cor.pCexFunc = Cec_TranStrictCexObserve;
+            Cor.pCexData = pProf->pStrictCex;
+        }
         CorrBefore = pProf->Corr;
         clk = Abc_Clock();
         RetValue = Cec_ManLSCorrespondenceClasses( pBatch, &Cor );
@@ -6713,6 +6726,7 @@ static int Cec_TranCandRootHeuristicCompare( const void * p0, const void * p1 )
 #include "cecTranCexProbe.h"
 #include "cecTranSigGuide.h"
 #include "cecTranSigGuideTest.h"
+#include "cecTranStrictCexActive.h"
 
 static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
     Cec_TranSim_t * pSource, Cec_TranPatDb_t * pDb, int fRootBatch,
@@ -9154,7 +9168,7 @@ static inline int Cec_TranRootCandBucket( int sz )
 static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Cec_ParTran_t * pPars, int iRound, int fCombOnly,
     Cec_TranCandVec_t * pHistory, Cec_TranPatDb_t * pSharedDb,
-    int fRootBatch )
+    int fRootBatch, Cec_TranStrictCex_t * pStrictCex )
 {
     Cec_TranProf_t Prof = {0};
     Cec_TranDiscStat_t Disc = {0};
@@ -9198,6 +9212,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int nAndBefore = Gia_ManAndNum( p ), nRegBefore = Gia_ManRegNum( p );
     abctime clkTotal = Abc_Clock(), clk;
     Prof.DiagPhase = iPhase;
+    Prof.pStrictCex = !fCombOnly && pStrictCex && pStrictCex->Mode <= 3 ? pStrictCex : NULL;
     pDb = fOwnDb ? Cec_TranPatDbStart( p, 0 ) : pSharedDb;
     Gia_ManCreateRefs( p );
     if ( fUseTfoDivs )
@@ -9216,6 +9231,19 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Prof.pBuildSuppProf = Cec_TranSuppProfStart( Gia_ManObjNum(p) );
     clk = Abc_Clock();
     pSource = Cec_TranSimStart( p, pPars, pDb );
+    if ( !fCombOnly && pStrictCex && pStrictCex->Mode >= 4 &&
+         Cec_TranStrictCexActive(pStrictCex, p, pSource, pRoots, nRoots) )
+    {
+        Cec_TranPatDb_t * pTeach = Cec_TranStrictCexTeach(pStrictCex, p, pDb);
+        if ( pTeach )
+        {
+            if ( fOwnDb ) Cec_TranPatDbStop(pDb);
+            pDb = pTeach; fOwnDb = 1;
+            fRootBatch = Vec_PtrSize(pDb->vCexes) > 64 * pPars->nSimWords;
+            Cec_TranSimStop(pSource);
+            pSource = Cec_TranSimStart(p, pPars, pDb);
+        }
+    }
     pSim = fRootBatch ? Cec_TranSimStartRootBatch( p,
         pPars->nSimWords, pPars->nSimFrames ) : pSource;
     Prof.timeRootSimSig += Abc_Clock() - clk;
@@ -10716,6 +10744,7 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     int iRound, nAndInitial = Gia_ManAndNum(p);
     int nCombPasses = 0, nCombCommits = 0;
     int nSeqPasses = 0, nSeqCommits = 0;
+    Cec_TranStrictCex_t * pStrictCex = Cec_TranStrictCexStart( pGia, pPars );
     if ( pPars->fRootExhaustive )
         pPars->nGainMin = 0;
 
@@ -10732,7 +10761,7 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
         PassPars.nRootConstrTop = CEC_TRAN_COMB_BUILD_Q;
         PassPars.nRootProofBatch = 0;
         pNext = Cec_ManSequentialRootPass( p, &PassPars,
-            0, 1, &ProofHistory, pDb, fRootBatch );
+            0, 1, &ProofHistory, pDb, fRootBatch, NULL );
         Gia_ManStop( p );
         p = pNext;
         nAfterFirst = Gia_ManAndNum( p );
@@ -10757,8 +10786,15 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
         nBefore = Gia_ManAndNum( p );
         PassPars = *pPars;
         PassPars.nRootWaves = 1;
+        {
+        Cec_TranPatDb_t * pTeach = Cec_TranStrictCexTeach( pStrictCex, p, pDb );
         pNext = Cec_ManSequentialRootPass( p, &PassPars,
-            iRound, 0, &ProofHistory, pDb, fRootBatch );
+            iRound, 0, &ProofHistory, pTeach ? pTeach : pDb,
+            pTeach ? Vec_PtrSize(pTeach->vCexes) > 64 * pPars->nSimWords : fRootBatch,
+            pStrictCex );
+        if ( pTeach ) Cec_TranPatDbStop( pTeach );
+        Cec_TranStrictCexPrint( pStrictCex, iRound + 1 );
+        }
         Gia_ManStop( p );
         p = pNext;
         nAfterFirst = Gia_ManAndNum( p );
@@ -10778,6 +10814,7 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
         nSeqPasses, nSeqCommits, nAndInitial, Gia_ManAndNum(p),
         nAndInitial - Gia_ManAndNum(p) );
     Cec_TranCandVecStop( &ProofHistory );
+    Cec_TranStrictCexStop( pStrictCex );
     if ( pPars->fUseOdc )
         p = Cec_TranRunOdcSerial( p, pPars, pDb );
     return p;
@@ -10810,8 +10847,11 @@ Gia_Man_t * Cec_ManSequentialTransduction2( Gia_Man_t * pGia,
     Cor.nFrames = 1;
     Cor.nBTLimit = 1000;
     Cor.nProcs = 1;
-    Cor.pCexFunc = Cec_TranPatDbObserveScorr;
-    Cor.pCexData = pDb;
+    if ( Cec_TranStrictCexOption("ABC_STRICT_CEX_INITIAL", 1, 1) )
+    {
+        Cor.pCexFunc = Cec_TranPatDbObserveScorr;
+        Cor.pCexData = pDb;
+    }
     Cor.fCollectRegMap = 1;
     Abc_Print( 1, "stran2: running default scorr; reachable-CEX capacity=%d.\n",
         nCexMax );

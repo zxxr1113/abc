@@ -1,5 +1,262 @@
 # &stran2: Current Goal And Results
 
+## Merge candidate: reachable signature teaching before strict SEQ Build (2026-09-12)
+
+The user asked to extend CEX teaching to the non-ODC phase and compare TFO,
+TFO+CEX, and TFO+ODC+CEX. The owned review tree is
+`/mnt/home/zhaoxiran/abc-strict-cex`, branch `codex/stran2-strict-cex`, based
+on `e571aba2be56ecef567127dd28b0bf35cb92b421` from the signature-guide branch.
+It inherits that branch's cursor repair and H0–H3 ODC feature. Production
+`codex/stran2` remains at `3836f6091079664641bf42764b8a03c2310f6b54`;
+its unrelated edits and the uncommitted signature-tree preset were preserved.
+This is an optional integration candidate, not a production default change.
+
+**Result:** in strict TFO processing, the new mechanism removes 589 additional
+ANDs on fast35 (5 better, 30 equal, 0 worse), with mean per-circuit runtime
+ratio 1.1063 and median 1.0361. After the existing ODC/H2 portfolio, its net
+increment over that previous version is only 48 ANDs (2 better, 31 equal,
+2 worse), with runtime ratio 0.9901 / 0.9974. The latter timing difference is
+too small to establish a speedup on this shared host.
+
+### What changed, and what SAT constructs
+
+The native single-root constructor still chooses divisors, generates a small
+AND/inverter recipe, and submits that recipe to the existing strict proof,
+composition, insertion and exact cleanup gain checks. SAT constructs only
+**PI input traces that expose missing values**, never replacement recipes.
+There is no new rewrite, cut replacement, multi-output constructor, retiming,
+state encoding, or register optimization pass.
+
+At an existing strict SEQ snapshot, after the ordinary Q/W simulation and
+before any root iterator is started:
+
+1. Scan roots in the existing structural MFFC order. A target qualifies when
+   MFFC >= 2 and its entire current signature is constant. Select at most 64.
+2. Build one shared reset unrolling over the configured W frames. For each
+   selected root, ask whether the opposite value occurs in any of those
+   frames. The recommended backend is the existing CDCL solver with Tseitin
+   gate equations and 100 conflicts per query. A 500,000 object-frame bound
+   prevents an unbounded unroll. The source graph's Value fields are untouched.
+3. Complete a satisfying PI assignment and independently replay it on the
+   original sequential graph from zero reset. Keep it only when that replay
+   exhibits the requested value. UNSAT and UNKNOWN supply neither a sample
+   nor a replacement certificate. All old PIs and synchronous RI equations
+   are represented; ROs are never free initial-state variables in this mode.
+4. Deduplicate into a bank of at most 64 PI prefixes for the command. These
+   replace random lanes inside Q; retain initial scorr CEX too. If the combined
+   corpus overflows Q, use the existing wider-source/root-lane-selection path.
+   Replay once per snapshot, shared across roots. There is no whole-graph
+   simulation per root and no mutation of an active iterator's signatures.
+5. Later ordinary epochs reuse these PI prefixes on their current reset graph.
+   No old node ID, RO value, care mask or proof certificate crosses a snapshot.
+   No extra epoch is added when the normal AND-descent loop stops.
+
+Q4/W8, strict B16/q20/j5/w8, F1/C1000, native construction families and all
+proof/commit policies stay fixed in the comparison. Actual epoch counts may
+increase when extra profitable replacements keep the existing loop running.
+COM receives no new active sampler. The strict bank is freed before ODC;
+ODC continues to use the previous long-observation/H2 package. H2's auxiliary
+free-PI/RO observations are **not** reachable sequential CEX; its earlier
+correctness/tradeoff description below still applies.
+
+This follows the expressive-pattern direction of
+[Simulation-Guided Boolean Resubstitution](https://arxiv.org/abs/2007.02579)
+and [A Simulation-Guided Paradigm for Logic Synthesis and Verification](https://si2.epfl.ch/demichel/publications/archive/2022/sonia.pdf).
+Those works motivate informative simulation patterns; the local adaptation
+here is reset-reachable bounded PI witnesses feeding the existing sequential
+constructor and its fixed candidate budget. No novelty claim is made for
+simulation guidance or SAT-generated distinguishing inputs.
+
+### Experiments that distinguish the mechanism
+
+The first prototype only harvested packed BMC counterexamples from later
+strict candidate proofs and consumed them at an existing next epoch. In an
+8-circuit, four-arm pilot (off / initial-only / collect-only / replay), only
+i2c acquired useful prefixes; every arm had the same final AND count.
+Induction counterexamples were excluded because their reset reachability was
+unproved. This passive interface's limited coverage did not refute CEX teaching.
+
+Active missing-value queries with the circuit-based solver then reduced i2c
+1509 -> 1199 and usb_phy 636 -> 614. Collecting samples without consuming
+them reproduced the control; equal-length independent random PI prefixes did
+not reproduce the improvements. Selecting CDCL upfront, with the same 64-query
+and 100-conflict limits, improved i2c further to 1136. It was not a fallback
+after an UNKNOWN. All focused products passed independent DSEC. Random controls
+use their own subsequent trajectories, so their later query counts/prefix
+lengths are not asserted identical after the graphs diverge.
+
+On full fast35, 24 circuits triggered queries; 9 acquired witnesses and
+5 improved. There were 2,741 queries, 167 SAT, 2,574 UNSAT and 0 UNKNOWN,
+retaining 122 prefixes across circuits. Unrolling, solving and validation
+together cost 0.331508 seconds across the 35 integrated strict runs.
+Strict SEQ generated candidates fell from 211,015 to 201,498, and submissions
+from 207,406 to 197,847. These fields describe the strict stage, not all ODC
+enumeration. Initial scorr retained zero CEX on every circuit in this corpus.
+The two common flows produced identical quality and final graphs.
+
+The strongest attribution comes from first-epoch snapshots with identical
+graphs and exported complete simulation tables:
+
+* i2c root 1045 has the same 16 divisors in exactly the same order in both
+  runs. Its target remains all-zero in both tables, but 11 distractor divisor
+  columns change. All 20 old Build candidates are refuted by the new reachable
+  samples. Native construction now generates `root = n155 OR n1039`, encoded
+  as one inverted AND. It is rank 7 in the constructor and fits q20. A separate
+  insertion into the original snapshot, with complete PO/RI cleanup and a
+  fresh DSEC proof, reduces 1630 -> 1625 ANDs: exact isolated gain 5.
+* Raising the old first-snapshot budget to q80 still misses that recipe.
+  At q320, the old constructor generates, proves and selects it at recorded
+  rank 92. This is a budget/order loss, not theoretical inexpressibility.
+* i2c root 1075 has the same ordered 8-divisor pool. The old q80 and q320
+  runs both emit the same 35 Build candidates and miss a two-AND recipe that
+  the new q20 run generates at rank 8. Eighteen of its old q20 Build candidates
+  fail the new samples. Independent isolated insertion/DSEC confirms gain 3.
+  This implicates the finite heuristic construction path as well as ordering;
+  it is not a completeness result about all possible native or SAT search.
+* usb_phy root 736's useful one-AND recipe uses divisors already present in
+  the old pool; new sampling changes target ones from 0 to 1 out of 2048.
+  All 20 old Build candidates fail the new samples. Fresh isolated DSEC and
+  cleanup confirm gain 4. Here the overall pool/ranking also changes.
+
+Across i2c's first epoch, 96 newly selected Build recipes were absent from
+the old generated set; 74 use only old-pool materials, but only 2 have an
+identical complete ordered pool. Therefore the total improvement includes
+better divisor selection/ranking, not solely an internal constructor effect.
+All 96 selected recipes match both old and new reachable observation tables;
+the improvement is which useful recipe gets generated and proved.
+
+### Complete fast35 comparison
+
+All four arms run both common flows (280 products), same input hashes,
+1800 seconds per invocation, and 48 maximum experiment workers. Every
+optimization invocation passed execution/profile checks, with no timeout or
+assertion. Reduction below is the equal-circuit mean of gain/source ANDs;
+Build is `seq_build_ordered_and_gain`, total SEQ is `seq_stage_and_gain`.
+These exclude initial scorr and COM reductions. All arms have 1,776 latches.
+Runtime includes initial scorr and optimization, excludes normalization and
+independent equivalence checks, and is the mean / median of per-circuit time
+ratios against TFO-only. It is not a ratio of summed times.
+
+| Integrated configuration | Ordered Build/source | Total SEQ/source | Final AND sum | Runtime mean / median ratio |
+| --- | ---: | ---: | ---: | ---: |
+| TFO only | 3.441234% | 3.984869% | 20,033 | 1.0000 / 1.0000 |
+| TFO + reachable CEX | 4.208656% | 4.765709% | 19,444 | 1.1063 / 1.0361 |
+| TFO + ODC + CEX / H2 | 9.042818% | 9.599871% | 17,661 | 47.0685 / 5.9606 |
+| Previous ODC + H2 reference | 9.013059% | 9.556694% | 17,709 | 47.2279 / 6.7607 |
+
+The ODC arm explicitly adds the existing quality-oriented B128/q320,
+D4/L16 ODC portfolio after the fixed strict B16/q20 stage. Its roughly 47x
+mean / 6x median time ratio is the cost of that added portfolio, not the cost
+of the new strict CEX sampler. This is a configuration comparison, not equal
+total-work-budget TFO versus ODC. The previous ODC reference already incurred
+47.2279x mean time. Pipeline sums (supporting totals only) are 25.880 s,
+26.775 s, 2243.991 s and 2252.768 s in table order.
+
+Strict gains by circuit: ethernet +6, i2c +373, simple_spi +116,
+ss_pcm +72, usb_phy +22 ANDs. After ODC, the incremental differences relative
+to the previous ODC/H2 implementation are i2c +47, simple_spi +4,
+ss_pcm -2, usb_phy -1. Thus the 589 strict gain and the 48 post-ODC gain
+must not be added: many opportunities overlap with those ODC already recovers.
+
+The two small post-ODC regressions both stop with no profitable proved
+candidate at round 6 / 8; neither reaches L16 or fails a formal proof budget.
+The stronger strict prefix changes the subsequent finite ODC search graph.
+This local regression attribution is partial: a specific missing final ODC
+recipe has not been isolated, and there is no per-circuit repair or route rule.
+
+### Correctness and integration checks
+
+Native tests include exhaustive enumeration of all 16 two-frame PI traces in
+a small sequential example: one target can change, while another depends on
+a permanently-zero register and cannot. Both SAT backends agree with replay.
+The bank tests cover reset rejection, no-split rejection, duplicate handling,
+induction exclusion, horizon bounds and PI-only transfer across register-count
+changes. New clause construction is outside assertions. Assertions remained
+enabled throughout.
+
+Independent DSEC initially passed 276/280 products. Four b13_opt products
+(both TFO arms, both flows) returned **UNDECIDED**, encoded `FAIL(0)` by the
+existing runner. Their source/final graph pairs are identical. A separate
+frozen reference checker proved that exact pair with
+`dsec -r -m -T 1800` (checker-internal retiming disabled), reporting 0.01 s.
+Hash/graph identity binds that supplementary proof to all four products.
+The raw CSV statuses were preserved. Final independent proof coverage is
+280/280; there is no claimed PASS from exit status or simulation alone.
+
+The previous ODC reference reproduces all 70 frozen H2 final graphs from the
+earlier release. AddressSanitizer on the changed cecTrans translation unit
+passed native tests and four changed focused strict/ODC products; unchanged
+dependencies came from the full build. Eight instrumented focused products
+also passed independent DSEC, and the three isolated native-recipe witnesses
+have separate DSEC proofs. The shared profile parser and signature tests pass
+(11 + 5), as do four new cumulative-counter/preset tests. Strict counters take
+the last cumulative epoch record rather than summing repeated bank counts.
+
+The first build attempt lacked readline headers; continuing with
+`make -j16 ABC_USE_NO_READLINE=1` completed the full tree. Only mainUtils.c
+uses that macro; there was no struct/ABI change. Later builds recompiled the
+changed translation unit with assertions. Tested binary is `bin/abc-v3` under
+the evidence root, with source and binary hashes in `identity_v3.json`.
+The sampler's production code is identical to that binary's frozen sources.
+The new wrapper's default was subsequently set to the faster TFO+CEX route;
+all matrix arms had explicit ODC/CEX settings, so their commands are unchanged.
+
+### Reproduction and evidence
+
+The bare commands retain their previous behavior. The new wrapper defaults
+to TFO+CEX, CDCL, with the same Q4/W8/q20/j5/w8 settings:
+
+```sh
+ABC=/mnt/home/zhaoxiran/abc-strict-cex/abc \
+AIG_DIR=/path/to/inputs TMPDIR=/path/to/owned/scratch \
+TIMEOUT=1800 MAX_PARALLEL=2 JOBS_PER_EXPERIMENT=6 \
+SKIP_DSEC=0 KEEP_ARTIFACTS=1 \
+ODC_ENABLED=0 CEX_ENABLED=1 \
+bash /mnt/home/zhaoxiran/abc-strict-cex/scripts/run_stran2_strict_cex.sh
+```
+
+Use a fresh result directory for every invocation. Choose `(ODC_ENABLED,
+CEX_ENABLED)` as `(0,0)`, `(0,1)` or `(1,1)` for the requested three arms.
+The fourth reference uses `(1,1)` with `STRICT_CEX_MODE=0`. CEX_ENABLED=0
+disables constructor teaching, never the proof oracle's internal CEX logic.
+The wrapper validates its settings and overrides inherited teacher variables.
+Diagnostic strict modes are 0 off, 1 passive collect, 2 passive replay,
+3 passive random control, 4 active replay, 5 active collect, 6 active random
+control. `STRICT_CEX_SOLVER=0/1` selects CBS/CDCL upfront. The wrapper maps
+these to `ABC_STRICT_CEX_MODE`, `ABC_STRICT_CEX_SOLVER`, and the independent
+`ABC_STRICT_CEX_INITIAL` control. ODC retains its existing H2 options.
+
+Evidence root: `/mnt/home/zhaoxiran/script2/evidence/strict_cex/20260912/`.
+Key files: `plan.json`, `identity_v1/v2/v3.json`, `v1/v2/v3.json`,
+`pilot_odc.json`, `check_focus.json`, `trace_analysis.json`,
+`trace_refutations.json`, `budget_trace_analysis.json`, `witnesses.json`,
+`matrix.json`, `analysis.json`, and `audit_b13/result.json`. The private trace
+source/binaries are preserved as diagnostic artifacts, not merged hooks.
+Complete raw CSVs only are in
+`script2/experiment_reports/20260912_strict_cex_{tfo,tfo_cex,tfo_odc_cex,odc_reference}/`;
+each directory contains `stran_current_stran.csv` and `stran_current_stran2.csv`.
+
+### Remaining limits and stopping point
+
+This is a measured improvement to strict single-root Build under a small
+sample-acquisition budget. It does not establish completeness or universal
+quality monotonicity. Only constant observed roots are queried; other aliases,
+values first reachable beyond W, the 64-root priority/cap, bank saturation,
+and heuristic core/recipe restrictions remain. Four circuits receive new
+witnesses without a quality gain. Random-lane replacement does not preserve
+every old random sample, even though retained initial CEX remain represented.
+The strict bank is not yet fed into ODC, and this is not general sequential
+ODC learning. A development fast35 corpus and one shared-host timing run do
+not establish unseen-corpus generalization or a statistically reliable small
+speed difference. No unproved or simulator-only result was committed.
+
+The requested non-ODC extension, mechanism attribution and full configuration
+comparison are complete. Stop at the reviewed opt-in candidate rather than
+launching another algorithm direction in this task. This round used the
+research-auto default ceiling of 10 weekly percentage points; the shared
+account moved from 77% to 81% at the completion checkpoint. This is shared,
+rounded account usage, not a precise task consumption measurement.
+
 ## Merge candidate: targeted signature guidance (2026-09-12)
 
 The user requested a merge-ready improvement to the existing single-root
