@@ -42244,6 +42244,11 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     Gia_Man_t * pTemp;
     int c;
     Cec_ManTranSetDefaultParams( pPars );
+    // The historical &stran2 prepass used C1000 even though the shared
+    // &stran parameter default is C100.  Now that -C controls both the
+    // integrated scorr and later certificates, retain that &stran2 default.
+    if ( fStran2 )
+        pPars->nBTLimit = 1000;
     Extra_UtilGetoptReset();
     while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVLOPHZEqwjbaeMJdxckilrgftupoyh")) != EOF )
     {
@@ -42466,9 +42471,11 @@ usage:
     Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVLOHZEqwjbae num] [-P root] [-MJdxckilrgftupoyh]\n", fStran2 ? "2" : "" );
     Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow, 16=construction-guided TFO rescue, 512=ODC Direct/MFFC1 in -k -J, 4096=ODC combinational-boundary proof only in -k -J, 8192=care-aware Kit/BDC additions, 16384=strict root acceptance with care generation, 32768=ODC C10000, 65536=ODC F2, 131072=ODC q80, 262144=ODC F4, 524288=ODC q320, 1048576=ODC N40, 2097152=ODC K0, 4194304=ODC B64, 8388608=ODC B128 [default = 0]\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
-        fStran2 ? "default scorr plus CEX-first trace-signature " : "" );
-    Abc_Print( -2, "\t-F num : BMC/induction depth [default = %d]\n", pPars->nFrames );
-    Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation [default = %d]\n", pPars->nBTLimit );
+        fStran2 ? "integrated scorr plus CEX-first trace-signature " : "" );
+    Abc_Print( -2, "\t-F num : BMC/induction depth%s [default = %d]\n",
+        fStran2 ? " for integrated scorr and transaction proofs" : "", pPars->nFrames );
+    Abc_Print( -2, "\t-C num : scorr conflict limit per proof obligation%s [default = %d]\n",
+        fStran2 ? " in integrated scorr and transaction proofs" : "", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..100) [default = %d]\n", pPars->nDepNodesMax );
     Abc_Print( -2, "\t-G num : deprecated local-gain compatibility value; scheduler ignores it [default = %d]\n", pPars->nGainMin );

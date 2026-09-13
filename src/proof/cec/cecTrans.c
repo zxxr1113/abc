@@ -10852,28 +10852,47 @@ Gia_Man_t * Cec_ManSequentialTransduction2( Gia_Man_t * pGia,
     Cec_ParTran_t * pPars )
 {
     Cec_ParCor_t Cor;
+    Cec_ProfCor_t CorrProf;
     Cec_TranPatDb_t * pDb;
     Gia_Man_t * pScorr, * pNew;
+    abctime TimeScorr;
     int nCexMax = pPars->nSimWords >= 16 ? 1024 :
         Abc_MaxInt( 256, 64 * pPars->nSimWords );
     int fRootBatch;
     pDb = Cec_TranPatDbStart( pGia, nCexMax );
     pDb->nFramesMax = pPars->nSimFrames;
     Cec_ManCorSetDefaultParams( &Cor );
-    // Fixed-proof experiment: match the standalone &scorr -F 1 -C 1000.
-    Cor.nFrames = 1;
-    Cor.nBTLimit = 1000;
+    memset( &CorrProf, 0, sizeof(CorrProf) );
+    // The integrated prepass is part of &stran2's proof policy.  Honor the
+    // command's -F/-C settings here as well as in the later transaction
+    // certificates, so deeper correspondence can remove Direct/Existing
+    // opportunities before the Build search consumes its candidate budget.
+    Cor.nFrames = pPars->nFrames;
+    Cor.nBTLimit = pPars->nBTLimit;
     Cor.nProcs = 1;
+    Cor.pProfile = pPars->fProfile ? &CorrProf : NULL;
     if ( Cec_TranStrictCexOption("ABC_STRICT_CEX_INITIAL", 1, 1) )
     {
         Cor.pCexFunc = Cec_TranPatDbObserveScorr;
         Cor.pCexData = pDb;
     }
     Cor.fCollectRegMap = 1;
-    Abc_Print( 1, "stran2: running default scorr; reachable-CEX capacity=%d.\n",
+    Abc_Print( 1, "stran2: running integrated scorr; reachable-CEX capacity=%d.\n",
         nCexMax );
     Abc_Print( 1, "stran2 initial scorr config: F=%d C=%d.\n", Cor.nFrames, Cor.nBTLimit );
+    TimeScorr = Abc_Clock();
     pScorr = Cec_ManLSCorrespondence( pGia, &Cor );
+    TimeScorr = Abc_Clock() - TimeScorr;
+    if ( pPars->fProfile )
+        Abc_Print( 1, "stran2 initial scorr profile: schema=1 frames=%d conflict-limit=%d source-and=%d result-and=%d source-reg=%d result-reg=%d completed=%d rounds=%d bmc-unsat=%lld bmc-sat=%lld bmc-unknown=%lld induction-unsat=%lld induction-sat=%lld induction-unknown=%lld conflicts=%lld total-sec=%.6f bmc-sec=%.6f induction-sec=%.6f reduce-sec=%.6f.\n",
+            Cor.nFrames, Cor.nBTLimit, Gia_ManAndNum(pGia),
+            Gia_ManAndNum(pScorr), Gia_ManRegNum(pGia), Gia_ManRegNum(pScorr),
+            Cor.fCompleted, Cor.nRoundsDone,
+            CorrProf.nBmcUnsat, CorrProf.nBmcSat, CorrProf.nBmcUnknown,
+            CorrProf.nIndUnsat, CorrProf.nIndSat, CorrProf.nIndUnknown,
+            CorrProf.nConfUsed, Cec_TranTimeSec(TimeScorr),
+            1.0e-9 * CorrProf.timeBmc, 1.0e-9 * CorrProf.timeInd,
+            1.0e-9 * CorrProf.timeReduce );
     Cec_TranPatDbRemapRegs( pDb, Gia_ManRegNum(pScorr), Cor.vRegMap );
     Vec_IntFreeP( &Cor.vRegMap );
     Cec_TranPatDbSeal( pDb );

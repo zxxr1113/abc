@@ -100,6 +100,7 @@ ROOT_BUILD_GREEDY_PATH_PREFIX = (
     "stran-root build-greedy-path profile:"
 )
 STRAN2_CEX_PREFIX = "stran2 CEX corpus:"
+STRAN2_INITIAL_SCORR_PREFIX = "stran2 initial scorr profile:"
 STRAN2_PLACEMENT_PREFIX = "stran2 CEX placement:"
 STRAN2_SIGNATURE_PREFIX = "stran2 CEX trace signature:"
 STRAN2_SIGNATURE_LEGACY_PREFIX = "stran2 teaching signature:"
@@ -584,6 +585,14 @@ PHASE_PROFILE_FIELDS = [
 ]
 
 STRAN2_PROFILE_FIELDS = [
+    "stran2_initial_scorr_records",
+    *[f"stran2_initial_scorr_{key.replace('-', '_')}" for key in (
+        "frames", "conflict-limit", "source-and", "result-and",
+        "source-reg", "result-reg", "completed", "rounds",
+        "bmc-unsat", "bmc-sat", "bmc-unknown", "induction-unsat",
+        "induction-sat", "induction-unknown", "conflicts", "total-sec",
+        "bmc-sec", "induction-sec", "reduce-sec",
+    )],
     "stran2_cex_records", "stran2_cex_retained", "stran2_cex_capacity",
     "stran2_cex_packed_lanes_seen", "stran2_cex_duplicates",
     "stran2_cex_ignored_induction", "stran2_cex_too_long",
@@ -947,6 +956,7 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         for phase in ("comb", "seq")
     }
     stran2_cex_records: list[dict[str, int | float]] = []
+    stran2_initial_scorr_records: list[dict[str, int | float]] = []
     stran2_placement_records: list[dict[str, int | float]] = []
     stran2_signature_records: list[dict[str, int | float]] = []
     stran2_teaching_records: list[dict[str, int | float]] = []
@@ -985,7 +995,8 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             ROOT_BUILD_GREEDY_PIVOT_STATE_PREFIX,
             ROOT_BUILD_GREEDY_MULTIPATH_SUMMARY_PREFIX,
             ROOT_BUILD_GREEDY_PATH_PREFIX,
-            STRAN2_CEX_PREFIX, STRAN2_PLACEMENT_PREFIX,
+            STRAN2_CEX_PREFIX, STRAN2_INITIAL_SCORR_PREFIX,
+            STRAN2_PLACEMENT_PREFIX,
             STRAN2_SIGNATURE_PREFIX, STRAN2_SIGNATURE_LEGACY_PREFIX,
             STRAN2_TEACHING_PREFIX, STRAN2_TEACHING_LEGACY_PREFIX,
         )):
@@ -1000,6 +1011,8 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
             strict_cex_records.append(record)
         elif SIGNATURE_GUIDE_PREFIX in line:
             signature_guide_records.append(record)
+        elif STRAN2_INITIAL_SCORR_PREFIX in line:
+            stran2_initial_scorr_records.append(record)
         elif STRAN2_CEX_PREFIX in line:
             retained = re.search(r"(?:^| )retained=(\d+)/(\d+)(?: |$)", line)
             if retained:
@@ -1223,6 +1236,21 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     })
 
     result.update({
+        "stran2_initial_scorr_records": (
+            len(stran2_initial_scorr_records)
+            if stran2_initial_scorr_records else NA),
+        **{
+            f"stran2_initial_scorr_{key.replace('-', '_')}":
+                (stran2_initial_scorr_records[-1].get(key, NA)
+                 if stran2_initial_scorr_records else NA)
+            for key in (
+                "frames", "conflict-limit", "source-and", "result-and",
+                "source-reg", "result-reg", "completed", "rounds",
+                "bmc-unsat", "bmc-sat", "bmc-unknown", "induction-unsat",
+                "induction-sat", "induction-unknown", "conflicts",
+                "total-sec", "bmc-sec", "induction-sec", "reduce-sec",
+            )
+        },
         "stran2_cex_records": (
             len(stran2_cex_records) if stran2_cex_records else NA),
         "stran2_cex_retained": sum_field(stran2_cex_records, "retained"),
