@@ -10,8 +10,8 @@ latest measurements. Historical exploration notes are intentionally omitted.
 - Integrated feature commit: `55e476c65c6c29a26399e8e8c63566f972867de6`
 - That commit's measured binary SHA256:
   `cabea113620f6788af16ebfce2c95b64b39ddc674e3ca550fa626a4fabaaaed6`
-- Cleanup-validation binary SHA256:
-  `733e7b39584dd000a0c3277ebfb09edef885d6d033d9caeecb97d608c621b7ee`
+- Module-refactor validation binary SHA256:
+  `a19f03ddc156795692ff41e9a3bd5548979a2d6fff349164774e17e8fc93ceab`
 - Build: `make ABC_USE_NO_READLINE=1 -j8`
 
 `&stran2` now applies `-F/-C` uniformly to its initial integrated `scorr` and
@@ -48,7 +48,17 @@ them with silent fallbacks.
 
 Main implementation files:
 
-- `src/proof/cec/cecTrans.c`: orchestration, discovery, proof and commit
+- `src/proof/cec/cecTrans.c`: public entry points and root/epoch orchestration
+- `src/proof/cec/cecTranInt.h`: private types, counters and shared declarations
+- `src/proof/cec/cecTranCex.h`: retained CEX and trace simulation/selection
+- `src/proof/cec/cecTranTfo.h`: TFI/TFO divisor collection and ranking
+- `src/proof/cec/cecTranBuild.h`: construction and root discovery
+- `src/proof/cec/cecTranCandidate.h`: candidate recipes and canonicalization
+- `src/proof/cec/cecTranProof.h`: shared CBS/scorr proof
+- `src/proof/cec/cecTranGain.h`: exact MFFC/gain and support accounting
+- `src/proof/cec/cecTranCommit.h`: conflict selection and bundle commit
+- `src/proof/cec/cecTranOdc*.h`: ODC care, window proof and composition
+- `src/proof/cec/cecTranProfile.h`: profile emission
 - `src/proof/cec/cec.h`: public parameters
 - `src/aig/gia/giaResub.c`: native recipe iterator and polarity behavior
 - `src/proof/cec/cecTranCexCompress.h`: CEX corpus handling
@@ -57,6 +67,10 @@ Main implementation files:
 - `src/proof/cec/cecTranSigGuide.h`: optional ODC signature guide
 - `scripts/stran_profile.py`: stable profile parser
 - `scripts/bench_scorr_then_stran.py`: benchmark driver
+
+The `cecTran*.h` files above are private implementation fragments included by
+`cecTrans.c`; they deliberately remain one translation unit so the refactor
+does not widen the C API or change link-time behavior.
 
 ## Supported parameters
 
