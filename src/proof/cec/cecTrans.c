@@ -246,7 +246,6 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nKitCoreMax = 0;
     p->fBdcPortfolio = 0;
     p->nDepNodesMax = 20;
-    p->nGainMin    = 1;
     p->nSimWords   = 4;
     p->nSimFrames  = 8;
     p->nRootWaves  = 8;
@@ -272,7 +271,6 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseCbsMultiLit = 1;
     // A round owns one immutable proof snapshot.  Every successful COMB/SEQ
     // selection is committed before the next snapshot is rediscovered.
-    p->fRootExhaustive = 0;
     p->fUseFreeSim = 1;
     p->fUseHelpers = 1;
     p->fBuildOnly = 0;
@@ -2321,14 +2319,15 @@ static void Cec_TranRecipeMarkUsed_rec( int Code, int const * pRecipe,
 // and dead gates.  Sampled dominance is deliberately not a pruning rule.
 static void Cec_TranCandCanonicalizeRecipe( Cec_TranCand_t * pCand )
 {
-    int Work[2 * CEC_TRAN_RECIPE_NODES_MAX];
-    int OldMap[CEC_TRAN_RECIPE_NODES_MAX];
+    int Work[2 * CEC_TRAN_RECIPE_NODES_MAX] = {0};
+    int OldMap[CEC_TRAN_RECIPE_NODES_MAX] = {0};
     int CompactMap[CEC_TRAN_RECIPE_NODES_MAX];
     int Compact[2 * CEC_TRAN_RECIPE_NODES_MAX];
     char Used[CEC_TRAN_RECIPE_NODES_MAX] = {0};
     int i, k, a, b, Result, nWork = 0, nCompact = 0, iOut;
     if ( pCand->nGates == 0 )
         return;
+    assert( pCand->nGates <= CEC_TRAN_RECIPE_NODES_MAX );
     for ( i = 0; i < pCand->nGates; i++ )
     {
         a = Cec_TranRecipeMapCode( pCand->Recipe[2*i], OldMap, i );
@@ -10762,9 +10761,6 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     int nCombPasses = 0, nCombCommits = 0;
     int nSeqPasses = 0, nSeqCommits = 0;
     Cec_TranStrictCex_t * pStrictCex = Cec_TranStrictCexStart( pGia, pPars );
-    if ( pPars->fRootExhaustive )
-        pPars->nGainMin = 0;
-
     // Run arbitrary-state combinational proof exactly once on the initial
     // graph.  COM owns a fixed q=4 frontier, ignores the SEQ proof micro-batch
     // control, and therefore reaches selection after one proof batch.  It then

@@ -22,7 +22,7 @@ Examples:
   # Small Build pages with an easily edited proof budget.
   python3 scripts/bench_scorr_then_stran.py \
       --aig-dir benchmark --abc ./abc --jobs 4 --timeout 1800 \
-      --stran-args '-P root -F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 -Q 4 -W 8 -q 1 -w 8'
+      --stran-args '-F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 -Q 4 -W 8 -q 1 -w 8'
 """
 
 from __future__ import annotations
@@ -60,7 +60,7 @@ DEFAULT_OUT = "scorr_then_stran.csv"
 # it toggles implication rings *off* because they are enabled by default.
 DEFAULT_SCORR_ARGS = "-F 1 -C 200"
 DEFAULT_STRAN_ARGS = (
-    "-P root -F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 "
+    "-F 1 -C 1000 -S -1 -N 100 -B 64 -K 32 "
     "-Q 4 -W 8 -q 1 -w 8 -p"
 )
 NA = "N/A"
@@ -595,14 +595,16 @@ def worker(
             if isinstance(row["pipeline_system_ms"], int) else stran_system
         )
         row["stran_status"] = status_from(stran_rc, final)
+        # A timeout can leave a truncated profile. Preserve the execution
+        # status instead of replacing TIMEOUT with a parser error.
+        if row["stran_status"] != "PASS":
+            row["error"] = f"stran:{row['stran_status']}: {short_error(stran_out, stran_err)}"
+            return row
         try:
             row.update(parse_stran(stran_out))
         except ValueError as error:
             row["stran_status"] = "PROFILE_ERROR"
             row["error"] = f"profile: {error}"
-            return row
-        if row["stran_status"] != "PASS":
-            row["error"] = f"stran:{row['stran_status']}: {short_error(stran_out, stran_err)}"
             return row
         row["stran_and"], row["stran_latches"] = aig_stats(final)
         try:

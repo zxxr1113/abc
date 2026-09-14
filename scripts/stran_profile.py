@@ -194,6 +194,26 @@ ROOT_PHASE_PAGE_REUSE_DETAIL_FIELDS = [
     for key in ROOT_PAGE_REUSE_DETAIL_KEYS
 ]
 
+# Schema 9/10 diagnosis emitted by the production implementation.
+DIAG_PREFIX = "stran-root diagnosis profile:"
+DIAG_SPEC = {
+    "mffc-work": (range(8), ("calls", "next", "accepted", "enum-sec", "build-sec")),
+    "mffc-origin": (range(16), ("generated", "proved", "selected", "selected-and-gain")),
+    "root": (range(8), ("roots", "started", "exhausted", "next", "raw", "valid",
+        "positive", "nonpositive", "duplicate", "collapsed", "invalid",
+        "accepted", "pivots", "enum-sec", "build-sec")),
+    "gate": (range(64), ("count", "accepted", "nonpositive", "boundary", "rescued", "next-sec")),
+    "reject": ([8*s+b for s in (1, 3, 4, 5) for b in range(8)], ("count", "next-sec")),
+    "time": ([0], ("iterator-sec", "decode-sec", "exhausted-iterator-sec")),
+}
+DIAG_FIELDS = [
+    f"diag_{phase}_{family.replace('-', '_')}_{bucket}_{key.replace('-', '_')}"
+    for phase in ("all", "comb", "seq")
+    for family, (buckets, keys) in DIAG_SPEC.items()
+    for bucket in buckets
+    for key in keys
+]
+
 ROOT_PROFILE_FIELDS = [
     f"profile_{key.replace('-', '_')}"
     for key in ROOT_TIME_KEYS
@@ -617,6 +637,7 @@ STRAN2_PROFILE_FIELDS = [
 ]
 
 PROFILE_FIELDS = [
+    *DIAG_FIELDS,
     "strict_guide_records",
     *[f"strict_guide_{key.replace('-', '_')}" for key in STRICT_GUIDE_KEYS],
     "strict_cex_records",
@@ -963,10 +984,11 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     signature_guide_records: list[dict[str, int | float]] = []
     strict_guide_records: list[dict[str, int | float]] = []
     strict_cex_records: list[dict[str, int | float]] = []
+    diagnosis: dict[str, int | float] = {}
     schemas: list[int] = []
     for line in stdout.splitlines():
         if not any(prefix in line for prefix in (
-            TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX, SIGNATURE_GUIDE_PREFIX, STRICT_CEX_PREFIX, STRICT_GUIDE_PREFIX,
+            DIAG_PREFIX, TIME_PREFIX, BUILD_PREFIX, ROOT_TIME_PREFIX, SIGNATURE_GUIDE_PREFIX, STRICT_CEX_PREFIX, STRICT_GUIDE_PREFIX,
             ROOT_PREPROCESS_DETAIL_PREFIX,
             ROOT_PAGE_REUSE_DETAIL_PREFIX,
             ROOT_EFFECT_PREFIX, ROOT_LANE_PREFIX, ROOT_SUMMARY_PREFIX, ROOT_COMMIT_PREFIX,
@@ -1005,7 +1027,38 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
         schema = record.pop("schema", None)
         if isinstance(schema, int):
             schemas.append(schema)
-        if STRICT_GUIDE_PREFIX in line:
+        if DIAG_PREFIX in line:
+            phase_match = re.search(r"phase=(comb|seq)(?: |$)", line)
+            family_match = re.search(
+                r"family=(root|gate|reject|time|mffc-work|mffc-origin)(?: |$)", line
+            )
+            if schema not in (9, 10) or not phase_match or not family_match:
+                raise ValueError("Malformed diagnosis header")
+            phase, family = phase_match[1], family_match[1]
+            bucket = record.get("bucket")
+            buckets, keys = DIAG_SPEC[family]
+            if bucket not in buckets or any(key not in record for key in keys):
+                raise ValueError("Incomplete diagnosis record")
+            if any(record[key] < 0 for key in keys):
+                raise ValueError("Negative diagnosis measurement")
+            if family == "root":
+                if (
+                    record["valid"] != record["nonpositive"] + record["positive"]
+                    or record["positive"] != record["duplicate"] + record["accepted"]
+                    or record["next"] != record["valid"] + record["collapsed"]
+                        + record["invalid"] + record["exhausted"]
+                    or record["started"] > record["roots"]
+                    or record["raw"] < record["valid"] + record["collapsed"]
+                ):
+                    raise ValueError("Diagnosis root accounting mismatch")
+            for destination in (phase, "all"):
+                for key in keys:
+                    field = (
+                        f"diag_{destination}_{family.replace('-', '_')}_"
+                        f"{bucket}_{key.replace('-', '_')}"
+                    )
+                    diagnosis[field] = diagnosis.get(field, 0) + record[key]
+        elif STRICT_GUIDE_PREFIX in line:
             strict_guide_records.append(record)
         elif STRICT_CEX_PREFIX in line:
             strict_cex_records.append(record)
@@ -1700,6 +1753,27 @@ def parse_experiment_profile(stdout: str) -> dict[str, Any]:
                     )
                     result[field] = sum_field(records, metric)
 
+    result.update(diagnosis)
+    if diagnosis:
+        for phase in ("comb", "seq"):
+            for family, (buckets, keys) in DIAG_SPEC.items():
+                fields = [
+                    f"diag_{phase}_{family.replace('-', '_')}_{bucket}_{key.replace('-', '_')}"
+                    for bucket in buckets
+                    for key in keys
+                ]
+                if any(field in diagnosis for field in fields) and not all(
+                    field in diagnosis for field in fields
+                ):
+                    raise ValueError("Missing diagnosis bucket")
+        roots = [diagnosis.get(f"diag_all_root_{bucket}_roots") for bucket in range(8)]
+        eligible = result["root_build_horizon_eligible_roots"]
+        if (
+            all(value is not None for value in roots)
+            and eligible != NA
+            and sum(roots) != eligible
+        ):
+            raise ValueError("Diagnosis eligible root mismatch")
     if schemas:
         result["profile_schema"] = max(schemas)
     result["profile_time_records"] = len(time_records) if time_records else NA

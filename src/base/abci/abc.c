@@ -42250,7 +42250,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     if ( fStran2 )
         pPars->nBTLimit = 1000;
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNGQWKBTDVLOPHZEqwjbaeMJdxckilrgftupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNQWKBTDVLOHZEqwjbaeMJdxckilgfupoyh")) != EOF )
     {
         switch ( c )
         {
@@ -42289,11 +42289,6 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nDepNodesMax = atoi(argv[globalUtilOptind++]);
             if ( pPars->nDepNodesMax < 1 || pPars->nDepNodesMax > 100 ) goto usage;
-            break;
-        case 'G':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nGainMin = atoi(argv[globalUtilOptind++]);
-            if ( pPars->nGainMin < 0 ) goto usage;
             break;
         case 'Q':
             if ( globalUtilOptind >= argc ) goto usage;
@@ -42356,13 +42351,6 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
         case 'i':
             pPars->fOdcStrict ^= 1;
             break;
-        case 'P':
-            if ( globalUtilOptind >= argc ) goto usage;
-            if ( strcmp(argv[globalUtilOptind], "root") &&
-                 strcmp(argv[globalUtilOptind], "gate") )
-                goto usage;
-            globalUtilOptind++;
-            break;
         case 'Z':
             if ( globalUtilOptind >= argc ) goto usage;
             pPars->nHardConfTotal = atoi(argv[globalUtilOptind++]);
@@ -42407,18 +42395,11 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
         case 'l':
             pPars->fUseExisting ^= 1;
             break;
-        case 'r':
-            pPars->fRootExhaustive ^= 1;
-            break;
         case 'g':
             pPars->fUseFreeSim ^= 1;
             break;
         case 'f':
             pPars->fShadow ^= 1;
-            break;
-        case 't':
-            // All current per-root candidates are always submitted.  Keep
-            // the historical spelling accepted for command compatibility.
             break;
         case 'u':
             pPars->fUseHelpers ^= 1;
@@ -42444,8 +42425,6 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
         Abc_Print( -1, "&stran%s: -H requires care-aware -k -J construction with spatial windows, ABC_CEX_MODE=2 and ABC_CEX_COMPRESS=4. Use the signature preset.\n", fStran2 ? "2" : "" );
         return 1;
     }
-    if ( pPars->fRootExhaustive )
-        pPars->nGainMin = 0;
     if ( pAbc->pGia == NULL )
     {
         Abc_Print( -1, "&stran%s: There is no AIG.\n", fStran2 ? "2" : "" );
@@ -42468,8 +42447,12 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNGQWKBTDVLOHZEqwjbae num] [-P root] [-MJdxckilrgftupoyh]\n", fStran2 ? "2" : "" );
-    Abc_Print( -2, "\t-E num : exploration bits: 1=exact CI cache, 2=sample observations, 4=exact pool conflict stop, 8=CI shadow, 16=construction-guided TFO rescue, 512=ODC Direct/MFFC1 in -k -J, 4096=ODC combinational-boundary proof only in -k -J, 8192=care-aware Kit/BDC additions, 16384=strict root acceptance with care generation, 32768=ODC C10000, 65536=ODC F2, 131072=ODC q80, 262144=ODC F4, 524288=ODC q320, 1048576=ODC N40, 2097152=ODC K0, 4194304=ODC B64, 8388608=ODC B128 [default = 0]\n" );
+    Abc_Print( -2, "usage: &stran%s [-FCSNQWKBTDVLOHZEqwjbae num] [-MJdxckilgfupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "\t-E num : internal exploration bit mask [default = 0]\n" );
+    Abc_Print( -2, "\t         1=CI cache, 2=sample observations, 4=pool-conflict stop, 8=CI shadow, 16=TFO rescue, 512=ODC Direct/MFFC1, 4096=comb-boundary proof\n" );
+    Abc_Print( -2, "\t         8192=care Kit/BDC, 16384=strict root care, 32768=C10000, 65536=F2, 131072=q80, 262144=F4, 524288=q320, 1048576=N40\n" );
+    Abc_Print( -2, "\t         2097152=K0, 4194304=B64, 8388608=B128, 16777216=four Stage-5 paths, 33554432=pin care core, 67108864=alternate care cores\n" );
+    Abc_Print( -2, "\t         134217728=spatial window; bits 268435456/536870912 encode window depth 2/4/8\n" );
     Abc_Print( -2, "\t         performs %sroot-only sequential Direct resubstitution\n",
         fStran2 ? "integrated scorr plus CEX-first trace-signature " : "" );
     Abc_Print( -2, "\t-F num : BMC/induction depth%s [default = %d]\n",
@@ -42478,7 +42461,6 @@ usage:
         fStran2 ? " in integrated scorr and transaction proofs" : "", pPars->nBTLimit );
     Abc_Print( -2, "\t-S num : induction refinement-round limit [default = %d]\n", pPars->nStepsMax );
     Abc_Print( -2, "\t-N num : maximum AIG nodes in one dependency recipe (1..100) [default = %d]\n", pPars->nDepNodesMax );
-    Abc_Print( -2, "\t-G num : deprecated local-gain compatibility value; scheduler ignores it [default = %d]\n", pPars->nGainMin );
     Abc_Print( -2, "\t-Q num : 64-bit trace words per %ssimulation frame [default = %d]\n",
         fStran2 ? "CEX-first " : "random ", pPars->nSimWords );
     if ( fStran2 )
@@ -42503,7 +42485,6 @@ usage:
     Abc_Print( -2, "\t         requires the full-observation spatial ODC preset; auxiliary samples may restrict sequential don't-cares\n" );
     Abc_Print( -2, "\t-J     : use frozen fanout-boundary batch proof/commit in -k phase; -O caps candidates [default = %s]\n", pPars->fOdcFanout? "yes": "no" );
     Abc_Print( -2, "\t-i     : use strict full care in the serial phase (matched control) [default = %s]\n", pPars->fOdcStrict? "yes": "no" );
-    Abc_Print( -2, "\t-P str : accepted compatibility spelling: root or gate [default = root]\n" );
     Abc_Print( -2, "\t-Z num : whole-miter shadow-audit conflict cap (0 = unlimited) [default = %d]\n", pPars->nHardConfTotal );
     Abc_Print( -2, "\t-w num : SEQ candidate-generation/proof epochs; each drains commit waves to fixed point (0 = global fixed point) [default = %d]\n", pPars->nRootWaves );
     Abc_Print( -2, "\t-b num : root CBS conflict limit per cube (0 = propagation only) [default = %d]\n", pPars->nCombBTLimit );
@@ -42512,10 +42493,8 @@ usage:
     Abc_Print( -2, "\t-x     : toggle dependency-function resubstitution [default = %s]\n", pPars->fUseConstr? "yes": "no" );
     Abc_Print( -2, "\t-c     : toggle root CBS direct multi-literal cubes (off constructs XOR queries) [default = %s]\n", pPars->fUseCbsMultiLit? "yes": "no" );
     Abc_Print( -2, "\t-l     : toggle Existing lookup inside the ranked TFI divisor pool [default = %s]\n", pPars->fUseExisting? "yes": "no" );
-    Abc_Print( -2, "\t-r     : deprecated exhaustive-discovery spelling; accepted for compatibility\n" );
     Abc_Print( -2, "\t-g     : toggle independent PI/RO signature screening and CBS CEGIS [default = %s]\n", pPars->fUseFreeSim? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle whole-miter shadow audit [default = %s]\n", pPars->fShadow? "yes": "no" );
-    Abc_Print( -2, "\t-t     : accepted compatibility spelling; all current candidates are always submitted\n" );
     Abc_Print( -2, "\t-u     : toggle retained-proof induction helpers [default = %s]\n", pPars->fUseHelpers? "yes": "no" );
     Abc_Print( -2, "\t-y     : toggle Build-only discovery (suppress constant/existing) [default = %s]\n", pPars->fBuildOnly? "yes": "no" );
     Abc_Print( -2, "\t-p     : toggle phase and target-gate profiling [default = %s]\n", pPars->fProfile? "yes": "no" );

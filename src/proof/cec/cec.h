@@ -339,7 +339,6 @@ struct Cec_ParTran_t_
     int              nKitCoreMax;   // exact-observation separator size for an additional Kit candidate
     int              fBdcPortfolio; // add a BDC candidate on the same bounded observation core
     int              nDepNodesMax;  // maximum AIG nodes in a dependency recipe (1..100)
-    int              nGainMin;      // deprecated -G compatibility value; not a proof/helper gate
     int              nSimWords;     // 64-bit words per reachable simulation frame
     int              nSimFrames;    // random reset-reachable frames per signature batch
     int              nRootWaves;    // maximum SEQ proof epochs (0 = fixed point)
@@ -362,7 +361,6 @@ struct Cec_ParTran_t_
     int              fOdcFanout;    // opt-in frozen fanout-boundary proof and conservative bundle commit
     int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
-    int              fRootExhaustive;// deprecated -r compatibility bit
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
     int              fUseHelpers;   // seed every valid retained proof as an induction helper
     int              fBuildOnly;    // suppress constant/existing candidates
