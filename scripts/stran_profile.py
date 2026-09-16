@@ -637,6 +637,33 @@ STRAN2_PROFILE_FIELDS = [
 ]
 
 PROFILE_FIELDS = [
+    "stran_output_proof_enabled", "stran_prefix_proof_boundary", "stran_tail_proof_boundary",
+    "stran_tail_feedback", "stran_tail_extra_window", "stran_tail_extra_state",
+    "stran_direct_prefix_proof_boundary",
+    "tracebuild_mode", "tracebuild_commits", "tracebuild_gain", "tracebuild_proposals",
+    "tracebuild_branches", "tracebuild_exhausted", "tracebuild_capped", "tracebuild_proofs",
+    "tracebuild_sat", "tracebuild_unknown", "tracebuild_replay", "tracebuild_direct_capable",
+    "tracebuild_clauses", "tracebuild_patterns", "tracebuild_material",
+    "tracebuild_cost_evaluated", "tracebuild_cost_rejected",
+    "tracebuild_old_bound_excluded", "tracebuild_old_bound_positive",
+    "tracebuild_old_bound_proved", "tracebuild_zero_new_proved",
+    "tracebuild_zero_new_commits", "tracebuild_cost_raw_gates",
+    "tracebuild_cost_new_gates",
+    "tracebuild_cut_multi", "tracebuild_cut_views", "tracebuild_cut_capped", "tracebuild_cut_kit",
+    "tracebuild_cut_bdc", "tracebuild_cut_positive", "tracebuild_cut_proofs",
+    "tracebuild_cut_commit_kit", "tracebuild_cut_commit_bdc",
+    "tracebuild_cut_old_bound_excluded", "tracebuild_cut_old_bound_positive",
+    "tracebuild_cut_old_bound_proved",
+    "tracebuild_cut_raw_gates", "tracebuild_cut_new_gates",
+    "tracebuild_raw_frames", "tracebuild_kept_frames", "tracebuild_raw_terms", "tracebuild_kept_terms",
+    "tracebuild_state_divergent", "tracebuild_state_divergent_gain",
+    "tracebuild_root_refuted", "tracebuild_window_refuted",
+    "relobs_mode", "relobs_commits", "relobs_gain", "relobs_generated",
+    "relobs_constant_generated", "relobs_existing_generated", "relobs_build_generated",
+    "relobs_material", "relobs_tried", "relobs_sat", "relobs_unknown", "relobs_replay",
+    "relobs_state_divergent", "relobs_root_refuted", "relobs_window_refuted",
+    "relobs_state_divergent_gain", "relobs_build_commits", "relobs_build_gain",
+    "relobs_direct_commits", "relobs_direct_gain", "relobs_proof_seconds",
     *DIAG_FIELDS,
     "strict_guide_records",
     *[f"strict_guide_{key.replace('-', '_')}" for key in STRICT_GUIDE_KEYS],
@@ -902,6 +929,83 @@ def _root_summary_stage_gains(
 def parse_experiment_profile(stdout: str) -> dict[str, Any]:
     """Return fixed-schema metrics from one &stran stdout string."""
     result = {field: NA for field in PROFILE_FIELDS}
+    result["stran_output_proof_enabled"] = 0
+    for line in stdout.splitlines():
+        if line.startswith("stran-proof-boundary "):
+            scope = dict(re.findall(r"([\w-]+)=([^\s]+)", line))
+            result["stran_output_proof_enabled"] = int(scope["tail"] == "output")
+            result["stran_prefix_proof_boundary"] = scope["prefix"]
+            result["stran_tail_proof_boundary"] = scope["tail"]
+            for key in ("feedback", "extra-window", "extra-state"):
+                result["stran_tail_" + key.replace("-", "_")] = int(scope[key])
+        elif line.startswith("stran-direct-prefix "):
+            scope = dict(re.findall(r"([\w-]+)=([^\s]+)", line))
+            result["stran_direct_prefix_proof_boundary"] = scope["boundary"]
+    tracebuild = {field: 0 for field in PROFILE_FIELDS if field.startswith("tracebuild_")}
+    for line in stdout.splitlines():
+        if not line.startswith("tracebuild-"):
+            continue
+        kv = dict(re.findall(r"([\w-]+)=(-?\d+(?:\.\d+)?)", line))
+        if line.startswith("tracebuild-summary "):
+            for key in ("mode", "commits", "gain"):
+                tracebuild[f"tracebuild_{key}"] = int(kv[key])
+        elif line.startswith("tracebuild-search "):
+            for key in ("proposals", "branches", "exhausted", "capped", "proofs", "sat", "unknown", "replay", "direct-capable", "clauses", "patterns", "material"):
+                tracebuild["tracebuild_" + key.replace("-", "_")] += int(kv[key])
+        elif line.startswith("tracebuild-cone "):
+            for key in ("raw-frames", "kept-frames", "raw-terms", "kept-terms"):
+                tracebuild["tracebuild_" + key.replace("-", "_")] += int(kv[key])
+        elif line.startswith("tracebuild-cost "):
+            for key in ("evaluated", "rejected"):
+                tracebuild["tracebuild_cost_" + key] += int(kv[key])
+            for key in ("old-bound-excluded", "old-bound-positive",
+                        "old-bound-proved", "zero-new-proved",
+                        "zero-new-commits"):
+                tracebuild["tracebuild_" + key.replace("-", "_")] += int(kv[key])
+            tracebuild["tracebuild_cost_raw_gates"] += int(kv["raw-gates"])
+            tracebuild["tracebuild_cost_new_gates"] += int(kv["new-gates"])
+        elif line.startswith("tracebuild-cut "):
+            for key in ("multi", "views", "capped", "kit", "bdc", "positive",
+                        "proofs", "commit-kit", "commit-bdc", "old-bound-excluded",
+                        "old-bound-positive", "old-bound-proved"):
+                tracebuild["tracebuild_cut_" + key.replace("-", "_")] += int(kv[key])
+            tracebuild["tracebuild_cut_raw_gates"] += int(kv["raw-gates"])
+            tracebuild["tracebuild_cut_new_gates"] += int(kv["new-gates"])
+        elif line.startswith("tracebuild-commit "):
+            for key, field in (("root-status", "root_refuted"), ("window-status", "window_refuted"), ("state-status", "state_divergent")):
+                tracebuild["tracebuild_" + field] += int(kv[key]) == 0
+            if int(kv["state-status"]) == 0:
+                tracebuild["tracebuild_state_divergent_gain"] += int(kv["gain"])
+    result.update(tracebuild)
+    relobs = {field: 0 for field in PROFILE_FIELDS if field.startswith("relobs_")}
+    for line in stdout.splitlines():
+        if not line.startswith("relobs-"):
+            continue
+        kv = dict(re.findall(r"([\w-]+)=(-?\d+(?:\.\d+)?)", line))
+        if line.startswith("relobs-summary "):
+            for key in ("mode", "commits", "gain"):
+                relobs[f"relobs_{key}"] = int(kv[key])
+        elif line.startswith("relobs-discovery "):
+            for key, field in (("candidates", "generated"), ("material", "material"),
+                               ("constant", "constant_generated"), ("existing", "existing_generated"),
+                               ("build", "build_generated")):
+                relobs[f"relobs_{field}"] += int(kv[key])
+        elif line.startswith("relobs-round "):
+            for key in ("tried", "sat", "unknown", "replay"):
+                relobs[f"relobs_{key}"] += int(kv[key])
+        elif line.startswith("relobs-commit "):
+            gain = int(kv["gain"])
+            kind = "build" if int(kv["kind"]) == 2 else "direct"
+            relobs[f"relobs_{kind}_commits"] += 1
+            relobs[f"relobs_{kind}_gain"] += gain
+            for key, field in (("root-status", "root_refuted"), ("window-status", "window_refuted"),
+                               ("state-status", "state_divergent")):
+                relobs[f"relobs_{field}"] += int(kv[key]) == 0
+            if int(kv["state-status"]) == 0:
+                relobs["relobs_state_divergent_gain"] += gain
+        elif line.startswith("relobs-proof "):
+            relobs["relobs_proof_seconds"] += float(kv["seconds"])
+    result.update(relobs)
     time_records: list[dict[str, int | float]] = []
     build_records: list[dict[str, int | float]] = []
     root_time_records: list[dict[str, int | float]] = []

@@ -22,6 +22,7 @@
 #include "bool/kit/kit.h"
 #include "misc/util/utilTruth.h"
 #include "sat/bmc/bmc.h"
+#include "proof/pdr/pdr.h"
 #include <stddef.h>
 
 ABC_NAMESPACE_IMPL_START
@@ -41,7 +42,8 @@ int Cec_TranRootSelfTest()
         Cec_TranOdcFanoutSelfTest() && Cec_TranWindowSelfTest() &&
         Cec_TranOdcDirectSelfTest() && Cec_TranSigGuideSelfTest() &&
         Cec_TranStrictCexSelfTest() && Cec_TranStrictCexActiveSelfTest() &&
-        Cec_TranStrictGuideSelfTest();
+        Cec_TranStrictGuideSelfTest() && Cec_TranRelObsSelfTest() &&
+        Cec_TranTraceBuildSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -627,6 +629,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
 }
 
 #include "cecTranOdc.h"
+#include "cecTranRelObs.h"
+#include "cecTranTraceBuild.h"
 
 static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     Cec_ParTran_t * pPars, Cec_TranPatDb_t * pDb, int fRootBatch )
@@ -708,6 +712,23 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     Cec_TranStrictCexStop( pStrictCex );
     if ( pPars->fUseOdc )
         p = Cec_TranRunOdcSerial( p, pPars, pDb );
+    assert(!pPars->nRelObs || pPars->fOutputProof);
+    if ( pPars->nRelObs )
+        Abc_Print(1,"stran-proof-boundary prefix=%s tail=%s reset=zero all-cycles=1 mode=%d feedback=%d extra-window=%d extra-state=%d\n",
+            pPars->fUseOdc?"window":"root",pPars->fOutputProof?"output":"window",pPars->nRelObs,
+            pPars->nRelObs==27,0,0);
+    if ( pPars->nRelObs == 27 )
+    {
+        Cec_ParTran_t tail=*pPars;
+        // This is the same frozen Direct-only algorithm, with no intervening
+        // scorr or state cleanup. Attribute the subsequent Build separately.
+        Abc_Print(1,"stran-direct-prefix boundary=output mode=6 next=trace mode-next=27\n");
+        tail.nRelObs=6; tail.fOutputProof=1; p=Cec_TranRunRelObs(p,&tail);
+        tail.nRelObs=27; tail.fOutputProof=1;
+        p=Cec_TranRunTraceBuild(p,&tail);
+    }
+    else if ( pPars->nRelObs == 6 )
+        p = Cec_TranRunRelObs( p, pPars );
     return p;
 }
 

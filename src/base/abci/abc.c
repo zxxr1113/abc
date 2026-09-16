@@ -42250,10 +42250,21 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     if ( fStran2 )
         pPars->nBTLimit = 1000;
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "FCSNQWKBTDVLOHZEqwjbaeMJdxckilgfupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "YRFCSNQWKBTDVLOHZEqwjbaeMJdxckilgfupoyh")) != EOF )
     {
         switch ( c )
         {
+        case 'Y':
+            if ( globalUtilOptind >= argc ) goto usage;
+            if ( strcmp(argv[globalUtilOptind],"0") && strcmp(argv[globalUtilOptind],"1") ) goto usage;
+            pPars->fOutputProof = atoi(argv[globalUtilOptind++]);
+            break;
+        case 'R':
+            if ( globalUtilOptind >= argc ) goto usage;
+            pPars->nRelObs = atoi(argv[globalUtilOptind++]);
+            if ( pPars->nRelObs != 0 && pPars->nRelObs != 6 &&
+                 pPars->nRelObs != 27 ) goto usage;
+            break;
         case 'H':
         {
             char * pEnd;
@@ -42417,6 +42428,11 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             goto usage;
         }
     }
+    if ( pPars->nRelObs && !pPars->fOutputProof )
+    {
+        Abc_Print(-1,"&stran%s: -R 6/27 requires explicit permanent-output proof with -Y 1.\n",fStran2?"2":"");
+        return 1;
+    }
     if ( pPars->nSignatureGuide && (!pPars->fUseOdc || !pPars->fOdcFanout ||
          pPars->fOdcStrict || !pPars->fUseConstr || !(pPars->nExplore & 134217728) ||
          !getenv("ABC_CEX_MODE") || atoi(getenv("ABC_CEX_MODE")) != 2 ||
@@ -42447,7 +42463,9 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-FCSNQWKBTDVLOHZEqwjbae num] [-MJdxckilgfupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "usage: &stran%s [-YRFCSNQWKBTDVLOHZEqwjbae num] [-MJdxckilgfupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "\t-Y num : enable permanent external-PO proof from reset for the output tail (0/1) [default = %d]\n", pPars->fOutputProof );
+    Abc_Print( -2, "\t         -Y 1 preserves all POs at every cycle; internal state may diverge. It does not change the strict/window prefix.\n" );
     Abc_Print( -2, "\t-E num : internal exploration bit mask [default = 0]\n" );
     Abc_Print( -2, "\t         1=CI cache, 2=sample observations, 4=pool-conflict stop, 8=CI shadow, 16=TFO rescue, 512=ODC Direct/MFFC1, 4096=comb-boundary proof\n" );
     Abc_Print( -2, "\t         8192=care Kit/BDC, 16384=strict root care, 32768=C10000, 65536=F2, 131072=q80, 262144=F4, 524288=q320, 1048576=N40\n" );
@@ -42481,6 +42499,7 @@ usage:
     Abc_Print( -2, "\t-d     : toggle SEQ-only one-hop complete-fanin TFO divisors (cap=B) [default = %s]\n", pPars->fUseTfoDivs? "yes": "no" );
     Abc_Print( -2, "\t-k     : toggle serial first-level ODC Build after strict fixed point [default = %s]\n", pPars->fUseOdc? "yes": "no" );
     Abc_Print( -2, "\t-L num : -J discovery/commit round cap (0 = fixed point) [default = %d]\n", pPars->nOdcFanoutRounds );
+    Abc_Print( -2, "\t-R num : permanent-output quality tail: 0=off, 6=Direct, 27=Direct plus temporal Build and graph-costed multi-cut Kit/BDC [default = %d]\n", pPars->nRelObs );
     Abc_Print( -2, "\t-H num : ODC signature guide: 0=off, 1=64 free-CI samples, 2=also missing-value SAT, 3=also aliases [default = %d]\n", pPars->nSignatureGuide );
     Abc_Print( -2, "\t         requires the full-observation spatial ODC preset; auxiliary samples may restrict sequential don't-cares\n" );
     Abc_Print( -2, "\t-J     : use frozen fanout-boundary batch proof/commit in -k phase; -O caps candidates [default = %s]\n", pPars->fOdcFanout? "yes": "no" );

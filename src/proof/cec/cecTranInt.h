@@ -179,6 +179,8 @@ static int Cec_TranSigGuideSelfTest();
 static int Cec_TranStrictCexSelfTest();
 static int Cec_TranStrictCexActiveSelfTest();
 static int Cec_TranStrictGuideSelfTest();
+static int Cec_TranRelObsSelfTest();
+static int Cec_TranTraceBuildSelfTest();
 typedef struct Cec_TranTfoStats_t_ Cec_TranTfoStats_t;
 struct Cec_TranTfoStats_t_
 {

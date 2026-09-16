@@ -37,11 +37,12 @@ static int Cec_TranCandDynamicGainWithRefs( Gia_Man_t * p,
     Vec_Int_t * vSupport )
 {
     int i, iObj;
-    if ( pCovered[pCand->iTarget] || pUsed[pCand->iTarget] )
+    if ( (pCovered && pCovered[pCand->iTarget]) ||
+         (pUsed && pUsed[pCand->iTarget]) )
         return -1;
     Cec_TranCandCollectSupport( pCand, vSupport );
     Vec_IntForEachEntry( vSupport, iObj, i )
-        if ( pCovered[iObj] )
+        if ( pCovered && pCovered[iObj] )
             return -1;
     // The current recipe creates references to its support too.  Treat that
     // support as a boundary while computing this candidate's kill-set; this
@@ -73,11 +74,12 @@ static int Cec_TranCandFrozenGainWithRefs( Gia_Man_t * p,
     char * pMffc, Vec_Int_t * vMffc, Vec_Int_t * vBoundary )
 {
     int i, iObj, nNew;
-    if ( pCovered[pCand->iTarget] || pUsed[pCand->iTarget] )
+    if ( (pCovered && pCovered[pCand->iTarget]) ||
+         (pUsed && pUsed[pCand->iTarget]) )
         return -1;
     Cec_TranCandCollectSupport( pCand, vBoundary );
     Vec_IntForEachEntry( vBoundary, iObj, i )
-        if ( pCovered[iObj] )
+        if ( pCovered && pCovered[iObj] )
             return -1;
     nNew = Cec_TranFrozenRecipeCost( p, pHash, pCand,
         pCovered, vBoundary );
