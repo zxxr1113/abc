@@ -7,16 +7,21 @@ latest measurements. Historical exploration notes are intentionally omitted.
 
 - Production tree: `/mnt/home/zhaoxiran/abc`
 - Branch: `codex/stran2`
-- Integrated feature commit: `55e476c65c6c29a26399e8e8c63566f972867de6`
+- Production output/multi-cut integration commit:
+  `b9a3ee615fe1283f7a3a8c6c9f2c440755c5bbd3`
 - That commit's measured binary SHA256:
-  `cabea113620f6788af16ebfce2c95b64b39ddc674e3ca550fa626a4fabaaaed6`
-- Module-refactor validation binary SHA256:
+  `414e6b790a768dbb1ab0707735cac5286fbba9f7bab236cd2b31c11dcbf09ca1`
+- Earlier integrated F/C commit: `55e476c65c6c29a26399e8e8c63566f972867de6`
+- Earlier module-refactor validation binary SHA256:
   `a19f03ddc156795692ff41e9a3bd5548979a2d6fff349164774e17e8fc93ceab`
 - Build: `make ABC_USE_NO_READLINE=1 -j8`
 
 `&stran2` now applies `-F/-C` uniformly to its initial integrated `scorr` and
 to every later transaction proof. The no-option `&stran2` default remains
-F1/C1000. `&stran` keeps its F1/C100 default.
+F1/C1000. `&stran` keeps its F1/C100 default. The permanent-output tail is
+also off by default (`-R 0`, `-Y 0`). `-Y 1 -R 6` explicitly enables the
+Direct output tail; `-Y 1 -R 27` runs that same Direct prefix followed by the
+graph-costed multi-structural-cut Kit/BDC tail.
 
 The production path contains the validated strict prefix, reachable-CEX
 teaching, TFO divisors, immutable-page reuse, Kit/BDC construction, optional
@@ -417,8 +422,9 @@ Additional primary references:
 
 This review reads completed task records, source changes, raw CSVs and existing
 independent audit records. No optimization, build, new task or algorithm change
-was launched. Production remains `89858c9e93c1ccde6b06f42b62909fde12c57d09`.
-Only this report was updated. Research branches remain separate prototypes:
+was launched. At this review point production remained
+`89858c9e93c1ccde6b06f42b62909fde12c57d09`; only this report was updated.
+Research branches were then separate prototypes:
 
 - Output alignment / SAT-core feedback: task
   `01a09e87-3745-7540-aa19-a5a9e29026a6`, tree `abc-relobs-20260914`,
@@ -952,11 +958,11 @@ fourth experiment, combine branches or continue the stopped retry.
 
 ## Consolidation review and proposed speed focus (2026-09-16)
 
-The user requested a consolidated merge decision and an assessment of shifting
-from quality exploration to speed. This review changes documentation only:
-no merge, algorithm edit, experiment or task dispatch. Production is still
-`89858c9e93c1ccde6b06f42b62909fde12c57d09`; its only working-tree change is
-this report. The recommendations below are not integration authorization.
+This section records the read-only consolidation review made before the later
+integration authorization. At that review point production was
+`89858c9e93c1ccde6b06f42b62909fde12c57d09` and only this report was modified.
+The subsequent authorized implementation, validation and cleanup superseding
+that pre-integration state are recorded below.
 
 ### Production versus research inventory
 
@@ -1114,6 +1120,160 @@ Priority hypotheses, not launched implementations:
    Revalidate the selected quality reference on identical source hashes and
    explicit final proofs; candidate counts alone are not quality or speed.
 
+## Production output/multi-cut integration and archive (2026-09-16)
+
+The user subsequently authorized the reviewed output granularity and R27
+multi-cut path for production integration, while keeping the stable default
+and excluding the later SAT, residual, exact-only, positive-side and net-gain
+prototypes. Code commit
+`b9a3ee615fe1283f7a3a8c6c9f2c440755c5bbd3` is based on the preserved report
+commit `3de8aa1401a53ff9d4a9c230638e7da321def0f9` and contains the maintained
+implementation.
+
+### Shipped interface and proof boundary
+
+- Default behavior is unchanged: `nRelObs=0`, `fOutputProof=0`; no output tail
+  runs unless requested. The parser accepts only `-R 0`, `-R 6` and `-R 27`.
+  Modes 6 and 27 require the explicit `-Y 1` permanent-output opt-in.
+- `-Y 1 -R 6` is the frozen Direct output-tail algorithm. `-Y 1 -R 27` first
+  runs that identical Direct prefix, with no intervening scorr or cleanup, then
+  runs temporal-cone construction with multiple legal structural cuts,
+  Kit/BDC realization, frozen-DAG retained/new-node cost and current-graph
+  exact cleanup-gain revalidation.
+- Output commits prove the permanent external-PO product from zero reset with
+  shared PIs and independent old/new states at every cycle. Root/window/state
+  diagnostics are not accepted as substitutes. Assertions and replay remain
+  active.
+- `cecTranRelBuild.h`, its relation-SAT modes, residual hooks, one-/two-AND
+  grammar experiments, R29 exact, side-divisor modes and net-gain construction
+  were not imported. The production implementation is confined to
+  `cecTranRelObs.h`, `cecTranTraceBuild.h`, their small shared interfaces and
+  schema-stable profile parsing.
+
+The explicit measured quality command is:
+
+```text
+-b 100 -S -1 -N 20 -B 16 -T 8 -D 1 -K 8 -Q 4 -W 8
+-q 20 -j 5 -w 8 -V 0 -E 747118613 -d -k -J -O 0 -L 16
+-H 2 -F 2 -C 1000 -Y 1 -R 27 -p
+```
+
+It uses the same eight `ABC_CEX_*`/`ABC_STRICT_*` environment settings shown
+in the frozen R27 reproduction command. `-R 27` is an opt-in quality setting,
+not a new default or a speed recommendation.
+
+### Build, regression and default-path evidence
+
+The clean full build `make ABC_USE_NO_READLINE=1 -j8` passed, followed by:
+
+- `./abc -q '&stran_resub_test'`: PASS, including permanent-output Direct,
+  temporal-cone, disjoint-clause, structural-cut and actual-DAG-cost self-tests.
+- `test/run_stran_regression.sh ./abc`: PASS.
+- `test/run_stran_microbatch_regression.sh ./abc`: PASS.
+- `python3 -m unittest discover -s scripts -p 'test_*.py'`: 35 tests, 3
+  skipped, PASS.
+- `test/check_tracebuild_clause.py`: 54,272 function-trace checks, PASS;
+  `test/check_tracebuild_cone.py`: complete-pool closure PASS.
+- `test/run_stran_relobs_regression.py`: two small sequential products in
+  modes 0/6/27, all equivalent, including divergent internal states.
+- `git diff --check`: PASS.
+
+For a direct default-path comparison, the exact pre-integration parent
+`3de8aa140` was independently exported and built (binary SHA256
+`4b046063d0b5a1740f6e235b230fef98c6c28e53342cb055b42df740b77bcee5`).
+On Fast35 cases `001_b01` and `005_b03`, the full measured prefix with the
+tail omitted produced byte-identical canonical AIGs before and after the
+integration, independent DSEC passed 2/2, and the new output-tail log markers
+did not execute. The comparison archive is `default_r0_compare.tar`, SHA256
+`61feba93fe8c53f2dbc211d33c0a3f5527c50fab8d1ae8f8db6c6bacc1351cb8`.
+
+### Integrated Fast35 result and timing scope
+
+One Fast35 run used the exact frozen R27 parameters and environment, a uniform
+1800-second limit per ABC invocation and 16 workers. No 3600-second retry or
+Quick268 run was launched. The vanished temporary input directory was
+recovered from the 35 frozen R27 normalized `base.aig` artifacts. Those files
+are not byte-identical to the earlier raw input container, so their manifest is
+`f14614fa9c61211fe3cc641fb64f7b1d25d3900ed67327fd71feec6eb3568407`,
+not the old raw manifest
+`8c410b9842675867e43acaedf66e59af69c84ad8176c37ae46702e94c4a5a9b7`;
+before launching, the frozen independent
+checker proved all 35 recovered files equivalent to the maintained benchmark
+sources. The exact recovered set is retained in `recovered_inputs.tar`, SHA256
+`d773b688bbf6fe10a9e85f7c1e0ea916d91a0df944fb58e73bd80b5566bf08b8`.
+
+Optimization coverage is 27 PASS and 8 TIMEOUT. The timeout set is exactly
+`b11_opt`, `b12`, `b12_opt`, `des_area`, `i2c`, `simple_spi`,
+`steppermotordrive` and `systemcdes`; there are no optimization FAIL or UNKNOWN
+records. Runner DSEC is 26 PASS, one `FAIL(0)`/undecided on `b13_opt`, and N/A
+for the eight missing products. A separately frozen checker
+(`abc-baseline-cc295e594`, SHA256
+`2fe5213ea0823b9b18a47fdbec54dc3acd8181f01d365eb0a273a513cca6d26b`)
+proves all 27 generated products, including `b13_opt`: independent DSEC is 27
+PASS, 0 FAIL, 0 TIMEOUT, 0 UNKNOWN.
+
+The effective common set is `b01`, `b01_opt`, `b02`, `b02_opt`, `b03`,
+`b03_opt`, `b04`, `b04_opt`, `b05`, `b05_opt`, `b06`, `b06_opt`, `b07`,
+`b07_opt`, `b08`, `b08_opt`, `b09`, `b09_opt`, `b10`, `b10_opt`, `b11`,
+`b13`, `b13_opt`, `ethernet`, `sasc`, `ss_pcm` and `usb_phy`. Every one of
+their canonical final AIGs and the compared stage/Direct/trace/multi-cut
+metrics exactly matches the frozen R27 result.
+
+On those 27 cases, the matched quality comparison remains R21 4,100 -> R27
+4,004 final AND, +96 reduction, 11/16/0 better/equal/worse, with 967 latches
+in both arms. The authoritative frozen same-run R27/R21 pipeline
+ratio-of-sums is 1.010480. The fresh integration run has 7,298.432 seconds of
+completed-case optimization and 21,701.813 seconds across all 35 attempts
+including timeout walls. The historical R27 completed-case sum is 7,356.597
+seconds, so fresh/historical is 0.992093; this cross-date, jobs-16 versus
+jobs-2 observation is descriptive and is not a controlled speed claim. Do not
+splice the output Direct result into the multi-cut delta: the separate frozen
+R6 comparison remains 14,380 -> 12,418 on 31 common verified products, +1,962
+AND, with optimization sums 2,053.935 -> 6,324.506 seconds (3.079x).
+
+Raw evidence is under
+`/mnt/home/zhaoxiran/script2/experiment_reports/20260916_stran2_output_multicut_integrated_fast35_v1`:
+
+- integrated binary SHA256
+  `414e6b790a768dbb1ab0707735cac5286fbba9f7bab236cd2b31c11dcbf09ca1`;
+- CSV `stran2_r27_integrated.csv` SHA256
+  `0599743443c6387e971cb41c9722e29a998ee0b8598b19147174c157cb47ce6e`;
+- independent `summary.json` SHA256
+  `60689499c3bddd0b371a4c26e2467f89625cf67e80d1b9191ea06a357aa8cd8d`.
+
+### Archived research and final worktree state
+
+The six completed research trees were archived at
+`/mnt/home/zhaoxiran/script2/evidence/research_archives/20260916_stran2_consolidation_v1`.
+`MANIFEST.txt` SHA256 is
+`3fbe44d5dc708ff99308c4503a7bcd9d6227fd5a2622f96bc97108b4c24b0496`.
+The complete six-ref recovery bundle SHA256 is
+`5886fb01840d5c0dde4a4d2c04c2f221931ee45d96dfc7d086c0a795097946c8`;
+`git bundle verify` passed and a fresh clone resolved every exact commit:
+
+- output-relconstruct `19adf2bf039e8cbf49094f1599eafbecdc454a1b`;
+- netgain-construct `7bfb48dcdc67d63a4cf9f78b6f7bf3f3d7546056`;
+- relobs `e3c16c846a1094cd2a1c1e072d77ba1a589db6ae`;
+- cut-dagconstruct `01efff16216329ce37e79d3da4231244e9be02f4`;
+- odc-care `d8bbd0dd50c295d5fadc853960000241f48e51d7`;
+- spatial-odc `d63431761d8ac1e2e803409467c575e3eee38d20`.
+
+Each archive contains the exact tracked tree and STRAN2 snapshot. The dirty
+relobs tree additionally contains a binary patch for its modified STRAN2 and a
+tar of all five untracked `stran_residual*.py` scripts; the patch applies to
+the recorded HEAD and extracted scripts byte-compare to the originals. Branch
+refs and all pre-existing evidence/experiment reports remain. After verified
+archival, the six authorized worktrees were removed with `git worktree remove`
+and metadata was pruned. `git worktree list` now contains only production
+`/mnt/home/zhaoxiran/abc`; no unrelated worktree was removed.
+
+The next phase is speed analysis, not another quality search. Profile the
+Build, divisor collection, cut enumeration, proof, selection, snapshot restart
+and timeout-prefix costs separately before choosing a granularity. Preserve
+the integrated quality reference and distinguish lossless engineering from
+explicit budget/quality trades; this integration does not implement new speed
+semantics.
+
 ## Validation and data
 
 Required checks before changing the production branch:
@@ -1134,6 +1294,8 @@ and parser failures separately; never impute missing cases.
 Only the latest active result families are kept under
 `/mnt/home/zhaoxiran/script2/experiment_reports`:
 
+- `20260916_stran2_output_multicut_integrated_fast35_v1`: production
+  output/multi-cut integration run and independent product audit
 - `20260913_stran2_internal_scorr_*`: Fast35 F/C matrix
 - `20260914_stran2_frame_quick268_*`: Quick268 frame attribution
 
@@ -1141,6 +1303,7 @@ Supporting launch records and audits:
 
 - `/mnt/home/zhaoxiran/script2/evidence/stran2_scorr_fc/20260913`
 - `/mnt/home/zhaoxiran/script2/evidence/stran2_frame_attribution/20260914`
+- `/mnt/home/zhaoxiran/script2/evidence/research_archives/20260916_stran2_consolidation_v1`
 
 Do not add session handoff documents. Update this file only with a new complete,
 reproducible result or a changed production invariant.
