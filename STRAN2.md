@@ -1,5 +1,204 @@
 # `&stran2` development guide
 
+## 2026-09-24：整合、代码审查与开关使用说明
+
+本节是当前整合入口；下面保留既有测量和用户补充的历史证据。
+生产基线是 `29f797ae8`，不是从某个研究分支整体恢复。默认算法质量策略不变。
+这里的“主分支”指项目指定的生产分支 `codex/stran2`，不推送远端。
+
+整合源码提交：`767c0d5eae31a751dea61f05718e6007700aa944`。
+本次审查范围是 stran2 构造／证明／提交边界、缓存生命周期、参数入口和相关回归，
+不是对整个上游 ABC 或其他任务正在研究的 rewrite 作“全部无缺陷”保证。
+
+### 研究成果的处理决定
+
+| 工作 / 原分支 | 处理 | 原因与边界 |
+|---|---|---|
+| `codex/stran2-strict-speed-20260918` | 精确计算优化整合；Strict S0/w3 显式可选 | 稀疏观察核、剩余对数上界、共享目标边际计数、64×64 观察转置；排序与 tie 保持。S0/w3 改变搜索质量，不作为默认 |
+| `codex/stran2-window-speed-20260918` | 完整候选流缓存、masked-pair 证明分解可选；teaching 查表直接整合 | 缓存不缓存证明，有限 q 前缀不当作完整流。分解保持证明义务，但有限 SAT 轨迹会改变最终 QoR |
+| 同上：semantic dirty / worklist | 归档，暂不生产整合 | 历史约 1.81× whole-command 的组合结果有总 AND 回退；与本次 Strict 加速及缓存上限尚未配对验证。不是宣称无价值 |
+| 同上：dense / sparse / reference 多后端 | 只维护一个精确稀疏核，吸收安全上界剪枝 | 不把消融实验的三个重复实现和环境选择器一起带入生产；不据此声称复现 native 向量化收益 |
+| `codex/stran2-profiling-20260916` | 保存报告和原始证据，归档诊断分支 | 不把大批一次性观测钩子装回生产 |
+| `codex/stran2-frame-mechanism-20260921` | 归档机制研究 | 更大 F 非单调收益，不能直接视为默认质量提升 |
+| `codex/stran2-auto-20260922` 及 construct / proof / select | 归档，暂不整合 | temporal 候选、proof-union、细化策略的增益集中，且不同修改会改变搜索/证明轨迹 |
+| `codex/stran2-contribution-20260922` 及 hooks / replay / analysis | 保留贡献分析和证据，归档执行树 | 这是归因实验，不是另一个应合并的通用质量优化 |
+| 早期 TFO / CEX / ODC / output 分支 | 已有生产能力不重复合并；其余研究归档 | 生产已经包含 TFO、reachable CEX、完整窗口出口、R6/R27、多帧 F/C |
+
+提取来源：`56c71d914`、`26bcbec76`、`489756e07`（上界思想）、
+`0c65d6430`、`5a9c25f8d`、`34d7a6909`、`c5005b481`、
+`3b0876e3d`。这是手工审查后的局部整合，不是 cherry-pick 全部实验开关。
+Strict native cache 的历史收益几乎为零，因此只在 Window 阶段启用缓存。
+不引入 `-march=native` 默认编译选项，不把编译器收益算作算法收益。
+
+### 本次代码 review 的具体修改
+
+- 统一十进制整数解析：拒绝空值、垃圾后缀、溢出、越界值和尾随位置参数；
+  旧版 `atoi("garbage") == 0` 会意外选择 unlimited/off，现在提前报错。
+- 验证既有 CEX 数值环境变量，避免非法值进入内部断言；保留调试断言，不用静默 fallback 掩盖算法错误。
+- 拒绝 `-Y 1 -R 27 -q 0`（除非旧 E 位明确给 q320）：
+  Output Build 的 proposal frontier 需要正预算，不能沿用 Strict 的“0=穷尽”语义。
+- 合并共享的“已准备证明图 → CBS → correspondence”流程；Strict 和 Window factor 共用证明引擎，
+  不复制 solver 逻辑，不削弱所有出口、当前图重验、正 exact cleanup gain 的提交条件。
+- teaching 每一帧重复生成至多 186 个假设，改成与图无关的 512 种赋值查表；
+  删除热路径里的重复展开，不保留 FAST=0/1/2 的研究后端。
+- 从 factor 实验中删除较差的 zero-predicate 编码，只保留 masked-pair；
+  不引入 batch/skip/deadline/trace 的实验分支。
+- 缓存比较完整输入字节（hash 仅索引），记录候选顺序和排序元数据；
+  q 截断前缀不发布。修正包装器读取调用者尚未初始化的 output-stage 参数的问题。
+- 缓存默认限制 256 MiB 有效载荷（key、recipe、metadata）；达到上限放弃该缓存条目，
+  **继续原生搜索**，不是停止构造。容器容量、索引和分配器开销不在此数值内，因此不是 RSS 上限。
+- 不删除活跃功能的断言、负结果测试或研究证据；不顺带改写 ABC 的 rewrite 等无关模块。
+
+### 参数作用域与优先级
+
+流水线：初始 scorr → Strict COM/SEQ → 可选 Window ODC → 可选 Output Direct / Build。
+`-F/-C/-S/-B/-q` 等旧参数继续兼容。新参数使用可重复的 `-A 名称=值`，
+同名最后一次赋值生效，阶段独立参数优先于该阶段的旧参数和旧 `-E` 预算位。
+`spatial-depth` 直接修改 E 的空间窗口位，因此它与完整 `-E` 按命令顺序覆盖。
+
+| 新开关 | 默认 | 含义 / 合法范围 |
+|---|---|---|
+| `-A profile=quality` | 无覆盖 | 清除 Strict 专属 S/w 覆盖，重新继承 `-S/-w`；**不重置其他选项** |
+| `-A profile=strict-speed` | 不启用 | 等于 Strict 专属 S0/w3；不改变初始 scorr、Window、Output |
+| `-A strict-S=N` | 继承 -S | -1=无限制，0=不接受后续归纳轮的新增证明，正数=轮数上限；CBS 和完整初始 scorr 仍运行 |
+| `-A strict-w=N` | 继承 -w | Strict SEQ epoch 数，0=固定点 |
+| `-A initial-F=N` / `initial-C=N` | 继承 -F/-C | 仅 &stran2 初始 scorr；F≥1，C≥0 |
+| `-A window-F=N` / `window-C=N` | 继承 -F/-C 或旧 E | 仅 Window 事务证明；F≥1，C≥0 |
+| `-A window-S=N` | 继承 -S | 仅 Window 归纳 refinement，N≥-1 |
+| `-A window-B=N` | 继承 -B 或旧 E | Window 的物理 divisor 数，0=完整允许池 |
+| `-A window-q=N` | 继承 -q 或旧 E | Window 每 root 构造预算，0=穷尽；不影响 Strict / Output |
+| `-A spatial-depth=N` | 由 E 决定 | 0=关 spatial；1/2/4/8=空间窗口深度，不自动开启 -k/-J |
+| `-A window-cache=0/1` | 0 | 仅 Window 完整原生候选流缓存，要求 -k；每次 Window pass 结束释放 |
+| `-A window-cache-MiB=N` | 256 | 缓存有效载荷预算，0=不限；单独设置不自动打开缓存 |
+| `-A window-factor=0/1` | 0 | masked-pair 布尔差分证明，要求 -k -J 和 spatial；有限预算下不保证 QoR 完全一致 |
+| `-A output-L=N` | 0 | 每个 Output 子阶段独立轮数上限；R27 的 Direct 和 Build 各至多 N 轮，不是两者共享 N |
+
+Window 配置未开启 `-k` 会报错（单独缓存容量除外）；非 spatial 的 factor 会报错。
+注意 `-L` 只限制 `-J` Window；不会再隐式限制 Output。
+旧 `ABC_ODC_*` / `ABC_WINDOW_*` 研究环境开关没有移植，请使用上述正式参数。
+旧 shell 配方必须读取本节转换，不能假定研究环境变量仍有效。
+
+### 旧短选项完整速查
+
+表中是无参命令默认，不是历史 quality preset 的值。&stran2 C1000，&stran C100。
+
+| 选项 | 默认 | 用途与注意事项 |
+|---|---|---|
+| F / C / S | 1 / 1000 / -1 | 深度、每 obligation 冲突预算、归纳轮数；初始 scorr 不继承 S；更大 F/C 不保证更好 QoR |
+| B / K / N | 16 / 8 / 20 | divisor 数、TFI 深度（K0完整）、recipe AND 上限（1..100） |
+| Q / W | 4 / 8 | 每帧 64-bit trace words、帧数；不是 SAT 证明深度 |
+| T / D / V | 0 / 0 / 0 | Kit core（0..8）、BDC（0/1）、Stage-5 paths（0/1/2/4） |
+| q / j / w | 1 / 0 / 8 | 构造预算、证明 microbatch、Strict epoch；q0穷尽，j0旧即时路径，w0固定点 |
+| O / L | 64 / 0 | ODC proof 候选数上限、Window 轮数上限；0=不限 |
+| Y / R | 0 / 0 | 显式永久外部 PO 证明；R0关闭，R6 Direct，R27 Direct+Build，R6/27要求Y1 |
+| H | 0 | signature guide：1 free-CI、2加 missing-value SAT、3加 alias；要求 care-aware spatial Window、CEX_MODE2/COMPRESS4 |
+| b / a / e | 100 / 2 / 64 | root CBS 冲突数、free-state 随机 words、CBS CEX 保留数；b0仅传播，a0仅学习 CEX，e0仅随机 |
+| Z | 1000000 | shadow 全 miter 冲突上限；0=不限，不是普通候选证明预算 |
+| M / l / x / c / g / u | 开 | 依次：MFFC divisors、Existing、Build、CBS 多 literal、free-state 筛选、保留证明 helpers；出现一次翻转 |
+| d / k / J / i | 关 | TFO divisors、ODC、fanout batch、ODC full-care 对照；出现一次翻转 |
+| f / y / p / o | 关 | shadow 审计、仅 Build discovery、profiling、Stage-5 solvability scheduling；出现一次翻转 |
+| E | 0 | 兼容旧 exploration bitmask；新脚本优先使用可读的阶段参数和现有 preset |
+| h | — | 打印帮助（ABC 传统返回非零）；开关字母区分大小写 |
+
+`-y` 只抑制 discovery 的 constant/existing，不是允许绕过提交验证。
+`-i` 是比较 ODC 与 full-care 的控制实验，不是“更强质量模式”。
+`-H` 的 free-RO 样本会限制 sequential don't-cares，不能简单理解为永远提高质量。
+所有 toggle 都是“翻转”，不要在多层脚本中重复拼接 `-k -k`。
+`-E` 的完整位表仍在 `&stran2 -h`；保留旧位以兼容历史可复现命令，
+而非继续增加难读的大整数。预算覆盖位 32768/65536/131072/262144/524288/
+1048576/2097152/4194304/8388608 只在旧局部策略中有各自作用，
+尤其 Output 仍识别旧 q320/B128 位，不继承新的 window-q/window-B。
+
+### 使用例子
+
+保留既有 quality 配方，只采用精确实现优化：原命令不加新选项即可。
+若要使用历史完整观察的 Window 配方，进程环境保留：
+
+```sh
+export ABC_CEX_MODE=2 ABC_CEX_COMPRESS=4 ABC_CEX_PACK_FAST=2
+export ABC_CEX_PROJECT_ALL=0
+```
+
+在原完整 quality 命令后追加，分别选择：
+
+```text
+# Strict 的速度/质量取舍；不串改其他阶段
+-A profile=strict-speed
+
+# Window 阶段：明确预算并打开两项加速；原命令必须已有 -k -J
+-A spatial-depth=4 -A window-B=64 -A window-q=80 -L 4
+-A window-cache=1 -A window-cache-MiB=256 -A window-factor=1
+
+# 初始 scorr F1/C200，但事务仍用 F1/C1000
+-F 1 -C 1000 -A initial-F=1 -A initial-C=200
+
+# Output 两个子阶段各最多 4 轮，开启 R27 时全局 q 必须为正
+-Y 1 -R 27 -A output-L=4
+```
+
+这些是追加参数片段，不是单独完整的 shell 命令，也不是已经证明最优的统一 preset。
+验证产物必须保留 ABC 加载后的 before AIG，独立 DSEC 显式 timeout。
+不要将 ABC 进程退出码 0、parser 报错或 DSEC undecided 计作等价 PASS。
+
+### 本次整合验证（shuguang，2026-09-24）
+
+- 最终源码 `767c0d5eae31a751dea61f05718e6007700aa944`；冻结构建的 14 个
+  变更源码文件逐字节匹配提交。gcc/g++，`-g -O`，不使用 native ISA 优化。
+- 最终二进制 SHA256：
+  `820e29c6826a6097eeac61c90819621c0655d3981c7d7c630963a720332715dd`。
+- `&stran_resub_test`、普通回归、microbatch 回归、`git diff --check` 全部通过。
+- Python 42/42，通过显式设置 ABC 和 ABC_BIN 运行，没有跳过；包括整数/溢出、
+  环境值、阶段作用域、输出轮数、缓存/factor 和全部 teaching 赋值的独立 oracle。
+- 观察核独立 OFF×ON oracle：124 个矩阵、3,680 次检查全部通过。
+- 固定 Fast35、5 组、6 workers；优化和独立 DSEC 各 1800 秒上限；
+  最终 175/175 DSEC PASS，无 timeout、undecided、assertion、parser failure。
+  保留每组 ABC 加载后的 before 和 after；原始输入 hash 与 loaded hash 分别记录。
+
+| 组别 | 总 AND | 对照差值 | 35-case 命令 wall time 之和（秒） |
+|---|---:|---:|---:|
+| 原生产源码 control | 18023 | 0 | 275.709 |
+| 精确计算优化 exact | 18023 | 0 | 248.470 |
+| 再启用 Window cache | 18023 | 0 | 237.240 |
+| 再启用 Window factor | 18022 | -1 | 165.060 |
+| 再启用 Strict S0/w3 | 18060 | +37 | 159.195 |
+
+exact/cache 两组均为 35/35 **图结构逐字节一致**，不只是 AND 数相同。
+所有组 loaded 图结构相同。AIG 注释包含写入时间，不能直接用整个文件 SHA 判等；
+初版 runner 因时间注释报 identity failure，原记录不覆盖。
+`validation-final/structural-audit.json` 按 AIG header/latch/output/AND 的实际边界
+复核，结果 PASS；原始文件 SHA 和独立 DSEC 均保留，当前 runner 已修正。
+
+时间包括命令启动、读写和优化，不含随后独立 DSEC；这是同机并发整合筛查，
+不是长大样本低干扰性能结论，也没有重做全部 New58/Quick268。
+factor 和 speed 改变最终搜索结果，因此仍 opt-in。历史研究的 speedup
+不能直接套到这套新组合上。构建仍有与 control 相同的旧 CompactMap 编译警告；
+没有把“构建通过”表述成“整个 ABC 无警告/无缺陷”。
+
+可运行产物及构建来源位于归档根目录的 `release/abc-shuguang`、
+`release/manifest.json`；仅用于 shuguang。共享生产目录原有 `abc`
+可执行文件未覆盖，在 iscas1 使用新开关前必须按父工作流本机重编译。
+全部检查日志见 `checks/`；产品、命令、输入 hash、原始尝试和复核见
+`validation-final/`；前一轮整合验证保留在 `validation/`。
+
+### 恢复与实验材料
+
+归档根目录：
+`/mnt/home/zhaoxiran/script2/evidence/research_archives/20260924_consolidation`。
+`research.bundle` 保存整理前全部引用和完整历史；`production-user-files.tar.gz`
+另存生产目录原有 AGENTS.md、STRAN2.md 和 2026-09-21.md。
+`cleanup-manifest.json` 列出每条原分支的精确 SHA、恢复 tag、
+每棵工作树完整归档 SHA256 和实际移除清单。原始 benchmark/evidence 不删除。
+
+恢复某研究到新的工作树（不覆盖生产树）：
+
+```sh
+git worktree add -b codex/restore-window /mnt/home/zhaoxiran/abc-restore-window \
+  archive/20260924/codex/stran2-window-speed-20260918
+```
+
+其余具体恢复标签查 manifest；离线仓库损坏时可以从 bundle clone。
+本轮保留用户原有未提交文件，不把其他任务的改动并入本次提交。
+
 This file is the single source of truth for the current implementation and
 latest measurements. Historical exploration notes are intentionally omitted.
 
@@ -16,8 +215,9 @@ latest measurements. Historical exploration notes are intentionally omitted.
   `a19f03ddc156795692ff41e9a3bd5548979a2d6fff349164774e17e8fc93ceab`
 - Build: `make ABC_USE_NO_READLINE=1 -j8`
 
-`&stran2` now applies `-F/-C` uniformly to its initial integrated `scorr` and
-to every later transaction proof. The no-option `&stran2` default remains
+`&stran2` applies `-F/-C` by default to its initial integrated `scorr` and
+later transaction proofs; the stage-local `-A` overrides above are explicit exceptions.
+The no-option `&stran2` default remains
 F1/C1000. `&stran` keeps its F1/C100 default. The permanent-output tail is
 also off by default (`-R 0`, `-Y 0`). `-Y 1 -R 6` explicitly enables the
 Direct output tail; `-Y 1 -R 27` runs that same Direct prefix followed by the
