@@ -52,6 +52,12 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->nFrames     = 1;
     p->nBTLimit    = 100;
     p->nStepsMax   = -1;
+    p->nStrictSteps = -2; p->nStrictWaves = -1;
+    p->nInitialFrames = p->nInitialConflicts = -1;
+    p->nWindowFrames = p->nWindowConflicts = -1;
+    p->nWindowDivs = p->nWindowCandidates = -1;
+    p->nWindowSteps = -2;
+    p->nWindowCacheMiB = 256;
     p->nConstrMax  = 8;
     p->nConstrBaseMax = 16;
     p->nKitCoreMax = 0;
@@ -635,7 +641,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
 static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     Cec_ParTran_t * pPars, Cec_TranPatDb_t * pDb, int fRootBatch )
 {
-    Cec_ParTran_t PassPars;
+    Cec_ParTran_t PassPars, StrictPars = *pPars, * pGlobalPars = pPars;
     Cec_TranCandVec_t ProofHistory = {0};
     Gia_Man_t * p = Gia_ManDup( pGia );
     Gia_Man_t * pNext;
@@ -643,6 +649,10 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     int nCombPasses = 0, nCombCommits = 0;
     int nSeqPasses = 0, nSeqCommits = 0;
     Cec_TranStrictCex_t * pStrictCex = Cec_TranStrictCexStart( pGia, pPars );
+    if ( StrictPars.nStrictSteps >= -1 ) StrictPars.nStepsMax = StrictPars.nStrictSteps;
+    if ( StrictPars.nStrictWaves >= 0 ) StrictPars.nRootWaves = StrictPars.nStrictWaves;
+    pPars = &StrictPars;
+    Abc_Print(1,"stran-strict options: S=%d w=%d.\n",pPars->nStepsMax,pPars->nRootWaves);
     // Run arbitrary-state combinational proof exactly once on the initial
     // graph.  COM owns a fixed q=4 frontier, ignores the SEQ proof micro-batch
     // control, and therefore reaches selection after one proof batch.  It then
@@ -710,6 +720,7 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
         nAndInitial - Gia_ManAndNum(p) );
     Cec_TranCandVecStop( &ProofHistory );
     Cec_TranStrictCexStop( pStrictCex );
+    pPars = pGlobalPars;
     if ( pPars->fUseOdc )
         p = Cec_TranRunOdcSerial( p, pPars, pDb );
     assert(!pPars->nRelObs || pPars->fOutputProof);
@@ -762,8 +773,8 @@ Gia_Man_t * Cec_ManSequentialTransduction2( Gia_Man_t * pGia,
     // command's -F/-C settings here as well as in the later transaction
     // certificates, so deeper correspondence can remove Direct/Existing
     // opportunities before the Build search consumes its candidate budget.
-    Cor.nFrames = pPars->nFrames;
-    Cor.nBTLimit = pPars->nBTLimit;
+    Cor.nFrames = pPars->nInitialFrames < 0 ? pPars->nFrames : pPars->nInitialFrames;
+    Cor.nBTLimit = pPars->nInitialConflicts < 0 ? pPars->nBTLimit : pPars->nInitialConflicts;
     Cor.nProcs = 1;
     Cor.pProfile = pPars->fProfile ? &CorrProf : NULL;
     if ( Cec_TranStrictCexOption("ABC_STRICT_CEX_INITIAL", 1, 1) )

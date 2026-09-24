@@ -151,6 +151,8 @@ static int Cec_TranWindowObligations( Gia_Man_t * p,
     overflow = Vec_IntFind(vEnds,pCand->iTarget) >= 0;
     Vec_IntFree(vNodes); Vec_IntFree(vEnds); return overflow;
 }
+#include "cecTranWindowFactor.h"
+
 // Conservative composability: regions cannot overlap, and no region may
 // modify another region's frozen side inputs or candidate support. This
 // makes every subset safe. The depth-one control uses the same rule.
@@ -297,7 +299,9 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     for ( i = 0; i < nLimit; i++ )
     {
         KindSubmitted[pFrontier->pArray[i].nKind]++;
-        nFull += (pPars->nExplore & 134217728) ?
+        if ( pPars->fWindowFactor )
+            Cec_TranCandVecPush(&Obligations,pFrontier->pArray[i]);
+        else nFull += (pPars->nExplore & 134217728) ?
             Cec_TranWindowObligations(p,pFrontier->pArray+i,pPars,&Obligations) :
             Cec_TranOdcFanoutObligations( p, pFrontier->pArray + i,
                 pPars->fOdcStrict || (pPars->nExplore & 16384), &Obligations );
@@ -305,7 +309,10 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     }
     if ( Obligations.nSize )
     {
-        vStatus = Cec_TranProveRootBatch( p, NULL, 0,
+        if ( pPars->fWindowFactor )
+            vStatus = Cec_TranProveWindowFactorBatch(p,Obligations.pArray,
+                Obligations.nSize,pPars,pProf,fCombBoundaryOnly,&vStage,&nFull);
+        else vStatus = Cec_TranProveRootBatch( p, NULL, 0,
             Obligations.pArray, Obligations.nSize, pPars, pProf,
             fCombBoundaryOnly, &vStage );
         (*pnBatches)++;
@@ -434,6 +441,18 @@ static int Cec_TranWindowSelfTest()
     Cand.iTarget = Abc_Lit2Var(r); Cand.nKind = 2; Cand.nGates = 1;
     Cand.Recipe = Cec_TranRecipeAlloc(2); Cand.Recipe[0]=x; Cand.Recipe[1]=z;
     Cand.iOut = Cec_TranRecipeGateCode(0,0);
+    {
+        int depth, strict;
+        Cec_TranWindowFactorSequentialCheck();
+        for ( depth = 0; depth < 4; depth++ )
+            for ( strict = 0; strict < 2; strict++ )
+            {
+                Cec_ParTran_t Check = Pars;
+                Check.nExplore = 134217728 | (depth << 28);
+                Check.fOdcStrict = strict;
+                Cec_TranWindowFactorCheck(p,&Cand,&Check);
+            }
+    }
     Cec_TranWindowObligations(p,&Cand,&Pars,&Obs);
     assert(Obs.nSize == 1 && Obs.pArray[0].iTarget == Abc_Lit2Var(out));
     vStatus = Cec_TranProveRootBatch(p,NULL,0,Obs.pArray,Obs.nSize,&Pars,&Prof,1,&vStage);
@@ -450,6 +469,7 @@ static int Cec_TranWindowSelfTest()
     pDb=Cec_TranPatDbStart(p,0); pSim=Cec_TranSimStart(p,&Pars,pDb);
     Gia_ManStaticFanoutStart(p);
     c2=Cec_TranWindowCare(pSim,Abc_Lit2Var(r),&Pars,NULL); assert(c2[0]==~(word)0); ABC_FREE(c2);
+    Cec_TranWindowFactorCheck(p,&Cand,&Pars);
     Cec_TranWindowObligations(p,&Cand,&Pars,&Obs);
     vStatus=Cec_TranProveRootBatch(p,NULL,0,Obs.pArray,Obs.nSize,&Pars,&Prof,1,&vStage);
     { int i, pass=1; for(i=0;i<Obs.nSize;i++) pass &= Vec_IntEntry(vStatus,i); assert(!pass); }
@@ -757,6 +777,16 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     if ( OdcPars.nExplore & 2097152 ) OdcPars.nConstrMax = 0;
     if ( OdcPars.nExplore & 4194304 ) OdcPars.nConstrBaseMax = 64;
     if ( OdcPars.nExplore & 8388608 ) OdcPars.nConstrBaseMax = 128;
+    // Explicit stage-local options take precedence over legacy -E presets.
+    if ( OdcPars.nWindowFrames >= 0 ) OdcPars.nFrames = OdcPars.nWindowFrames;
+    if ( OdcPars.nWindowConflicts >= 0 ) OdcPars.nBTLimit = OdcPars.nWindowConflicts;
+    if ( OdcPars.nWindowDivs >= 0 ) OdcPars.nConstrBaseMax = OdcPars.nWindowDivs;
+    if ( OdcPars.nWindowCandidates >= 0 ) OdcPars.nRootConstrTop = OdcPars.nWindowCandidates;
+    if ( OdcPars.nWindowSteps >= -1 ) OdcPars.nStepsMax = OdcPars.nWindowSteps;
+    assert(!OdcPars.fWindowFactor || (OdcPars.fOdcFanout && (OdcPars.nExplore & 134217728)));
+    if ( OdcPars.fWindowCache ) Abc_ResubProblemCacheStart(OdcPars.nWindowCacheMiB);
+    Abc_Print(1,"stran-window options: S=%d cache=%d factor=%d.\n",
+        OdcPars.nStepsMax,OdcPars.fWindowCache,OdcPars.fWindowFactor);
     Abc_Print(1, "stran-root ODC quality config: F=%d C=%d q=%d B=%d N=%d K=%d care-kit=%d strict-root=%d.\n",
         OdcPars.nFrames, OdcPars.nBTLimit, OdcPars.nRootConstrTop,
         OdcPars.nConstrBaseMax, OdcPars.nDepNodesMax, OdcPars.nConstrMax,
@@ -1058,5 +1088,6 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         nGenerated, nPositive, nSampleStrict, nAttempts, nRejected,
         nCommits, nGain, nLimitHits, nInitial, Gia_ManAndNum(p),
         Cec_TranTimeSec(TimeProofAll), Cec_TranTimeSec(Abc_Clock() - TimeAll) );
+    if ( OdcPars.fWindowCache ) Abc_ResubProblemCacheStop(pPars->fProfile);
     return p;
 }

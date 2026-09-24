@@ -672,7 +672,7 @@ static Gia_Man_t * Cec_TranRunTraceBuild( Gia_Man_t * p, Cec_ParTran_t * pPars )
     pars.nConstrBaseMax=(pPars->nExplore&8388608)?128:pPars->nConstrBaseMax;
     assert(pPars->nRelObs==27 && pPars->fOutputProof);
     assert(pars.nRootConstrTop>0);
-    for ( ;; )
+    for ( ; !pPars->nOutputRounds || round < pPars->nOutputRounds; )
     {
         Cec_TranPatDb_t * db=Cec_TranPatDbStart(p,0);
         Cec_TranSim_t * sim=Cec_TranSimStart(p,&pars,db);

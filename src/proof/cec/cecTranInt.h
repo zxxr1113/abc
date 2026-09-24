@@ -147,6 +147,8 @@ enum
 };
 
 extern void Abc_ResubPrepareManager( int nWords );
+extern void Abc_ResubProblemCacheStart( int nPayloadMiB );
+extern void Abc_ResubProblemCacheStop( int fPrint );
 extern void Abc_ResubSetBothPolarities( int Enable );
 extern void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor,

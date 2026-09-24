@@ -216,7 +216,7 @@ static Gia_Man_t * Cec_TranRunRelObs( Gia_Man_t * p, Cec_ParTran_t * pPars )
     if ( pPars->nExplore & 524288 ) BuildPars.nRootConstrTop = 320;
     if ( pPars->nExplore & 8388608 ) BuildPars.nConstrBaseMax = 128;
     BuildPars.nRootProofBatch = 0;
-    for ( ;; )
+    for ( ; !pPars->nOutputRounds || Round < pPars->nOutputRounds; )
     {
         Cec_TranProf_t Prof = {0};
         Cec_TranDiscStat_t Disc = {0};

@@ -447,18 +447,15 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
 // equivalence classes and run one shared correspondence closure over exactly
 // these relations.  This retains &scorr's standard BMC, SRM, CEX resimulation,
 // class refinement, and induction fixed point without unrelated class search.
-static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
-    Cec_TranCand_t const * pHelpers, int nHelpers,
-    Cec_TranCand_t const * pCands, int nCands, Cec_ParTran_t * pPars,
-    Cec_TranProf_t * pProf, int fCombOnly, Vec_Str_t ** pvStage )
+static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
+    Cec_TranCand_t const * pCands, int nCands, int nHelpers,
+    Cec_ParTran_t * pPars, Cec_TranProf_t * pProf, int fCombOnly,
+    Vec_Str_t ** pvStage, Vec_Int_t * vPairs, Vec_Int_t * vCombPairs,
+    Vec_Int_t * vQueries, Vec_Int_t * vAndLeaves, Vec_Str_t * vAndCounts )
 {
     Cec_ParCor_t Cor;
-    Gia_Man_t * pBatch;
     Gia_Obj_t * pObj;
-    Vec_Int_t * vPairs, * vCombPairs, * vQueries;
     Vec_Int_t * vSeqPairs = NULL;
-    Vec_Int_t * vAndLeaves = NULL;
-    Vec_Str_t * vAndCounts = NULL;
     Vec_Int_t * vStatus = Vec_IntStart( nCands );
     Vec_Str_t * vStage;
     Cec_ProfCor_t CorrBefore;
@@ -467,14 +464,6 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     int SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH;
     abctime clk, timeSeq = 0;
     memset( &Cor, 0, sizeof(Cor) );
-    clk = Abc_Clock();
-    pBatch = Cec_TranBuildRootBatch( p, pHelpers, nHelpers, pCands, nCands,
-        !pPars->fUseCbsMultiLit ? 2 : 0,
-        &vPairs, &vCombPairs, &vQueries,
-        pPars->fUseCbsMultiLit ? &vAndLeaves : NULL,
-        pPars->fUseCbsMultiLit ? &vAndCounts : NULL );
-    clk = Abc_Clock() - clk;
-    pProf->timeRootCbsGraph += clk;
     pProf->nRootSrmNodesMax = Abc_MaxInt(
         pProf->nRootSrmNodesMax, Gia_ManObjNum(pBatch) );
     vStage = Cec_TranProveCombBatch( pBatch, pCands, nCands,
@@ -647,6 +636,26 @@ static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
     Gia_ManStop( pBatch );
     *pvStage = vStage;
     return vStatus;
+}
+
+static Vec_Int_t * Cec_TranProveRootBatch( Gia_Man_t * p,
+    Cec_TranCand_t const * pHelpers, int nHelpers,
+    Cec_TranCand_t const * pCands, int nCands, Cec_ParTran_t * pPars,
+    Cec_TranProf_t * pProf, int fCombOnly, Vec_Str_t ** pvStage )
+{
+    Vec_Int_t * vPairs, * vCombPairs, * vQueries;
+    Vec_Int_t * vAndLeaves = NULL;
+    Vec_Str_t * vAndCounts = NULL;
+    abctime clk = Abc_Clock();
+    Gia_Man_t * pBatch = Cec_TranBuildRootBatch( p, pHelpers, nHelpers,
+        pCands, nCands, !pPars->fUseCbsMultiLit ? 2 : 0,
+        &vPairs, &vCombPairs, &vQueries,
+        pPars->fUseCbsMultiLit ? &vAndLeaves : NULL,
+        pPars->fUseCbsMultiLit ? &vAndCounts : NULL );
+    pProf->timeRootCbsGraph += Abc_Clock() - clk;
+    return Cec_TranProveRootBatchPrepared(pBatch,pCands,nCands,nHelpers,
+        pPars,pProf,fCombOnly,pvStage,vPairs,vCombPairs,vQueries,
+        vAndLeaves,vAndCounts);
 }
 
 // A correspondence counterexample produced during induction is a local SRM

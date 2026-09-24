@@ -42237,12 +42237,82 @@ static int Abc_CommandAbc9StranResubTest( Abc_Frame_t * pAbc,
     return 0;
 }
 
+// Keep parsing local to &stran/&stran2; do not change other ABC commands.
+static int Abc_StranParseInt( char const * s, int * pValue )
+{
+    unsigned Value = 0, Limit;
+    int Negative = *s == '-';
+    if ( Negative || *s == '+' ) ++s;
+    if ( !*s ) return 0;
+    Limit = Negative ? 2147483648u : 2147483647u;
+    for ( ; *s; ++s )
+    {
+        unsigned Digit = (unsigned)(*s - '0');
+        if ( Digit > 9 || Value > (Limit - Digit) / 10 ) return 0;
+        Value = 10 * Value + Digit;
+    }
+    *pValue = Negative ? -(int)(Value - (Value != 0)) - (Value != 0) : (int)Value;
+    return 1;
+}
+
+static int Abc_StranNamedOption( Cec_ParTran_t * p, char const * s )
+{
+    struct { char const * Name; int * Field; int Min; } Options[] = {
+        {"initial-F",&p->nInitialFrames,1}, {"initial-C",&p->nInitialConflicts,0},
+        {"strict-S",&p->nStrictSteps,-1}, {"strict-w",&p->nStrictWaves,0},
+        {"window-F",&p->nWindowFrames,1}, {"window-C",&p->nWindowConflicts,0},
+        {"window-B",&p->nWindowDivs,0}, {"window-q",&p->nWindowCandidates,0},
+        {"window-S",&p->nWindowSteps,-1}, {"output-L",&p->nOutputRounds,0},
+        {"window-cache",&p->fWindowCache,0}, {"window-factor",&p->fWindowFactor,0},
+        {"window-cache-MiB",&p->nWindowCacheMiB,0}
+    };
+    char const * Eq = strchr(s,'=');
+    int i, Value;
+    if ( !Eq ) return 0;
+    if ( !strcmp(s,"profile=strict-speed") )
+    { p->nStrictSteps=0; p->nStrictWaves=3; return 1; }
+    if ( !strcmp(s,"profile=quality") )
+    { p->nStrictSteps=-2; p->nStrictWaves=-1; return 1; }
+    if ( !Abc_StranParseInt(Eq+1,&Value) ) return 0;
+    if ( Eq-s == 13 && !strncmp(s,"spatial-depth",13) )
+    {
+        int Bits;
+        switch ( Value ) {
+        case 0: Bits=0; break;
+        case 1: Bits=134217728; break;
+        case 2: Bits=134217728|268435456; break;
+        case 4: Bits=134217728|536870912; break;
+        case 8: Bits=134217728|268435456|536870912; break;
+        default: return 0;
+        }
+        p->nExplore=(p->nExplore & ~(134217728|268435456|536870912)) | Bits;
+        return 1;
+    }
+    for ( i=0; i<(int)(sizeof(Options)/sizeof(Options[0])); ++i )
+        if ( Eq-s == (int)strlen(Options[i].Name) && !strncmp(s,Options[i].Name,Eq-s) )
+        {
+            if ( Value < Options[i].Min ||
+                 ((Options[i].Field == &p->fWindowCache || Options[i].Field == &p->fWindowFactor) && Value > 1) )
+                return 0;
+            *Options[i].Field=Value;
+            return 1;
+        }
+    return 0;
+}
+
 static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     int argc, char ** argv, int fStran2 )
 {
     Cec_ParTran_t Pars, * pPars = &Pars;
     Gia_Man_t * pTemp;
-    int c;
+    int c, Value;
+    struct { char const * Name; int Max; } EnvOptions[] = {
+        {"ABC_CEX_MODE",3}, {"ABC_CEX_COMPRESS",6},
+        {"ABC_CEX_PROJECT_ALL",1}, {"ABC_CEX_PACK_FAST",2},
+        {"ABC_STRICT_CEX_INITIAL",1}, {"ABC_STRICT_CEX_MODE",6},
+        {"ABC_STRICT_CEX_SOLVER",1}, {"ABC_STRICT_GUIDE",1},
+        {"ABC_STRICT_BOTH_POLARITIES",1}
+    };
     Cec_ManTranSetDefaultParams( pPars );
     // The historical &stran2 prepass used C1000 even though the shared
     // &stran parameter default is C100.  Now that -C controls both the
@@ -42250,96 +42320,87 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     if ( fStran2 )
         pPars->nBTLimit = 1000;
     Extra_UtilGetoptReset();
-    while ( (c = Extra_UtilGetopt(argc, argv, "YRFCSNQWKBTDVLOHZEqwjbaeMJdxckilgfupoyh")) != EOF )
+    while ( (c = Extra_UtilGetopt(argc, argv, "AYRFCSNQWKBTDVLOHZEqwjbaeMJdxckilgfupoyh")) != EOF )
     {
+        // Numeric options are signed decimal integers only. Reject overflow,
+        // missing values and junk before any graph mutation.
+        if ( strchr("YRFCSNQWKBTDVLOHZEqwjbae", c) )
+        {
+            if ( globalUtilOptind >= argc ||
+                 !Abc_StranParseInt(argv[globalUtilOptind], &Value) )
+                goto usage;
+            globalUtilOptind++;
+        }
         switch ( c )
         {
+        case 'A':
+            if ( globalUtilOptind >= argc ||
+                 !Abc_StranNamedOption(pPars,argv[globalUtilOptind++]) ) goto usage;
+            break;
         case 'Y':
-            if ( globalUtilOptind >= argc ) goto usage;
-            if ( strcmp(argv[globalUtilOptind],"0") && strcmp(argv[globalUtilOptind],"1") ) goto usage;
-            pPars->fOutputProof = atoi(argv[globalUtilOptind++]);
+            pPars->fOutputProof = Value;
+            if ( Value < 0 || Value > 1 ) goto usage;
             break;
         case 'R':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRelObs = atoi(argv[globalUtilOptind++]);
+            pPars->nRelObs = Value;
             if ( pPars->nRelObs != 0 && pPars->nRelObs != 6 &&
                  pPars->nRelObs != 27 ) goto usage;
             break;
         case 'H':
-        {
-            char * pEnd;
-            long Mode;
-            if ( globalUtilOptind >= argc ) goto usage;
-            Mode = strtol(argv[globalUtilOptind], &pEnd, 10);
-            if ( pEnd == argv[globalUtilOptind] || *pEnd || Mode < 0 || Mode > 3 ) goto usage;
-            globalUtilOptind++;
-            pPars->nSignatureGuide = (int)Mode;
+            pPars->nSignatureGuide = Value;
+            if ( Value < 0 || Value > 3 ) goto usage;
             break;
-        }
         case 'E':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nExplore = atoi(argv[globalUtilOptind++]);
+            pPars->nExplore = Value;
             if ( pPars->nExplore < 0 || (pPars->nExplore & ~(31 | 512 | 4096 | 8192 | 16384 | 32768 | 65536 | 131072 | 262144 | 524288 | 1048576 | 2097152 | 4194304 | 8388608 | 16777216 | 33554432 | 67108864 | 134217728 | 268435456 | 536870912)) ) goto usage;
             break;
         case 'F':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nFrames = atoi(argv[globalUtilOptind++]);
+            pPars->nFrames = Value;
             if ( pPars->nFrames < 1 ) goto usage;
             break;
         case 'C':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nBTLimit = atoi(argv[globalUtilOptind++]);
+            pPars->nBTLimit = Value;
             if ( pPars->nBTLimit < 0 ) goto usage;
             break;
         case 'S':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nStepsMax = atoi(argv[globalUtilOptind++]);
+            pPars->nStepsMax = Value;
             if ( pPars->nStepsMax < -1 ) goto usage;
             break;
         case 'N':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nDepNodesMax = atoi(argv[globalUtilOptind++]);
+            pPars->nDepNodesMax = Value;
             if ( pPars->nDepNodesMax < 1 || pPars->nDepNodesMax > 100 ) goto usage;
             break;
         case 'Q':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nSimWords = atoi(argv[globalUtilOptind++]);
+            pPars->nSimWords = Value;
             if ( pPars->nSimWords < 1 ) goto usage;
             break;
         case 'W':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nSimFrames = atoi(argv[globalUtilOptind++]);
+            pPars->nSimFrames = Value;
             if ( pPars->nSimFrames < 1 ) goto usage;
             break;
         case 'K':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nConstrMax = atoi(argv[globalUtilOptind++]);
+            pPars->nConstrMax = Value;
             if ( pPars->nConstrMax < 0 ) goto usage;
             break;
         case 'B':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nConstrBaseMax = atoi(argv[globalUtilOptind++]);
+            pPars->nConstrBaseMax = Value;
             if ( pPars->nConstrBaseMax < 0 ) goto usage;
             break;
         case 'T':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nKitCoreMax = atoi(argv[globalUtilOptind++]);
+            pPars->nKitCoreMax = Value;
             if ( pPars->nKitCoreMax < 0 || pPars->nKitCoreMax > 8 ) goto usage;
             break;
         case 'D':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->fBdcPortfolio = atoi(argv[globalUtilOptind++]);
+            pPars->fBdcPortfolio = Value;
             if ( pPars->fBdcPortfolio < 0 || pPars->fBdcPortfolio > 1 ) goto usage;
             break;
         case 'V':
-            if ( globalUtilOptind >= argc ) goto usage;
-            c = atoi(argv[globalUtilOptind++]);
+            c = Value;
             if ( c != 0 && c != 1 && c != 2 && c != 4 ) goto usage;
             pPars->nStage5Paths = c;
             break;
         case 'O':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nOdcProofMax = atoi(argv[globalUtilOptind++]);
+            pPars->nOdcProofMax = Value;
             if ( pPars->nOdcProofMax < 0 ) goto usage;
             break;
         case 'M':
@@ -42352,8 +42413,7 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             pPars->fUseOdc ^= 1;
             break;
         case 'L':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nOdcFanoutRounds = atoi(argv[globalUtilOptind++]);
+            pPars->nOdcFanoutRounds = Value;
             if ( pPars->nOdcFanoutRounds < 0 ) goto usage;
             break;
         case 'J':
@@ -42363,38 +42423,31 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             pPars->fOdcStrict ^= 1;
             break;
         case 'Z':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nHardConfTotal = atoi(argv[globalUtilOptind++]);
+            pPars->nHardConfTotal = Value;
             if ( pPars->nHardConfTotal < 0 ) goto usage;
             break;
         case 'w':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootWaves = atoi(argv[globalUtilOptind++]);
+            pPars->nRootWaves = Value;
             if ( pPars->nRootWaves < 0 ) goto usage;
             break;
         case 'q':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootConstrTop = atoi(argv[globalUtilOptind++]);
+            pPars->nRootConstrTop = Value;
             if ( pPars->nRootConstrTop < 0 ) goto usage;
             break;
         case 'j':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nRootProofBatch = atoi(argv[globalUtilOptind++]);
+            pPars->nRootProofBatch = Value;
             if ( pPars->nRootProofBatch < 0 ) goto usage;
             break;
         case 'b':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nCombBTLimit = atoi(argv[globalUtilOptind++]);
+            pPars->nCombBTLimit = Value;
             if ( pPars->nCombBTLimit < 0 ) goto usage;
             break;
         case 'a':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nFreeWords = atoi(argv[globalUtilOptind++]);
+            pPars->nFreeWords = Value;
             if ( pPars->nFreeWords < 0 ) goto usage;
             break;
         case 'e':
-            if ( globalUtilOptind >= argc ) goto usage;
-            pPars->nFreeCexMax = atoi(argv[globalUtilOptind++]);
+            pPars->nFreeCexMax = Value;
             if ( pPars->nFreeCexMax < 0 ) goto usage;
             break;
         case 'x':
@@ -42428,6 +42481,44 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
             goto usage;
         }
     }
+    if ( globalUtilOptind != argc ) goto usage;
+    for ( c=0; c<(int)(sizeof(EnvOptions)/sizeof(EnvOptions[0])); ++c )
+    {
+        char const * Text = getenv(EnvOptions[c].Name);
+        if ( Text && (!Abc_StranParseInt(Text,&Value) || Value < 0 || Value > EnvOptions[c].Max) )
+        {
+            Abc_Print(-1,"%s must be an integer in [0,%d].\n",EnvOptions[c].Name,EnvOptions[c].Max);
+            return 1;
+        }
+    }
+    if ( (long long)pPars->nSimWords * pPars->nSimFrames > 2147483647 / 128 )
+    {
+        Abc_Print(-1,"Q*W exceeds the supported observation index range.\n");
+        return 1;
+    }
+    if ( !fStran2 && (pPars->nInitialFrames >= 0 || pPars->nInitialConflicts >= 0) )
+    {
+        Abc_Print(-1,"&stran: initial-F/C require &stran2.\n");
+        return 1;
+    }
+    if ( (pPars->fWindowCache || pPars->fWindowFactor ||
+          pPars->nWindowFrames >= 0 || pPars->nWindowConflicts >= 0 ||
+          pPars->nWindowDivs >= 0 || pPars->nWindowCandidates >= 0 ||
+          pPars->nWindowSteps >= -1) && !pPars->fUseOdc )
+    {
+        Abc_Print(-1,"Window options require -k.\n");
+        return 1;
+    }
+    if ( pPars->fWindowFactor && (!pPars->fOdcFanout || !(pPars->nExplore & 134217728)) )
+    {
+        Abc_Print(-1,"window-factor requires -k -J and a spatial window.\n");
+        return 1;
+    }
+    if ( pPars->nOutputRounds && !pPars->nRelObs ) goto usage;
+    // Trace Build allocates a finite proposal frontier; q=0 has no defined
+    // unbounded implementation there (unlike Strict/Window).
+    if ( pPars->nRelObs == 27 && !pPars->nRootConstrTop && !(pPars->nExplore & 524288) )
+        goto usage;
     if ( pPars->nRelObs && !pPars->fOutputProof )
     {
         Abc_Print(-1,"&stran%s: -R 6/27 requires explicit permanent-output proof with -Y 1.\n",fStran2?"2":"");
@@ -42463,7 +42554,13 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: &stran%s [-YRFCSNQWKBTDVLOHZEqwjbae num] [-MJdxckilgfupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print( -2, "usage: &stran%s [-A name=value] [-YRFCSNQWKBTDVLOHZEqwjbae num] [-MJdxckilgfupoyh]\n", fStran2 ? "2" : "" );
+    Abc_Print(-2,"\t-A key=value : stage-local controls (repeatable; last assignment wins)\n");
+    Abc_Print(-2,"\t  profile=quality|strict-speed: resets strict overrides or sets strict-S=0, strict-w=3\n");
+    Abc_Print(-2,"\t  initial-F/C, strict-S/w, window-F/C/B/q/S, window-cache=0|1, window-factor=0|1, output-L\n");
+    Abc_Print(-2,"\t  spatial-depth=0|1|2|4|8 replaces the spatial/depth bits of -E (0 disables).\n");
+    Abc_Print(-2,"\t  Defaults inherit legacy options; explicit stage overrides beat -E. Cache/factor default off.\n");
+    Abc_Print(-2,"\t  window-cache-MiB: cache payload limit (default 256; 0 unlimited; not an RSS cap).\n");
     Abc_Print( -2, "\t-Y num : enable permanent external-PO proof from reset for the output tail (0/1) [default = %d]\n", pPars->fOutputProof );
     Abc_Print( -2, "\t         -Y 1 preserves all POs at every cycle; internal state may diverge. It does not change the strict/window prefix.\n" );
     Abc_Print( -2, "\t-E num : internal exploration bit mask [default = 0]\n" );

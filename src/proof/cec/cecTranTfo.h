@@ -362,24 +362,34 @@ static Cec_TranDivRank_t * Cec_TranRankDivReservoir( Cec_TranSim_t * pSim,
         Vec_IntSize(vReservoir) );
     word * pTarget = Cec_TranSimObj( pSim, iTarget );
     word * pDiv;
-    word nOff0, nOff1, nOn0, nOn1;
+    word nOff0, nOff1, nOn0, nOn1, nOff = 0, nOn = 0;
     Vec_Int_t * vRootSupp = Vec_IntAlloc( 32 );
     Vec_Int_t * vDivSupp = Vec_IntAlloc( 32 );
     int i, k, s, iObj, RootNode = iTarget;
     int nRank = Vec_IntSize(vReservoir), nKeep = nRank;
     abctime clk = Abc_Clock();
+    // Target marginals are shared by every divisor. The two zero-divisor
+    // quadrants are exact complements of the one-divisor quadrants, including
+    // masked care. Preserve the score and all ranking ties with half as many
+    // per-divisor popcounts; no cross-root signature cache is needed.
+    for ( s = 0; s < pSim->nSlots; s++ )
+    {
+        word Care = pCare ? pCare[s] : ~(word)0;
+        nOff += Abc_TtCountOnes( ~pTarget[s] & Care );
+        nOn  += Abc_TtCountOnes(  pTarget[s] & Care );
+    }
     Vec_IntForEachEntry( vReservoir, iObj, i )
     {
         pDiv = Cec_TranSimObj( pSim, iObj );
-        nOff0 = nOff1 = nOn0 = nOn1 = 0;
+        nOff1 = nOn1 = 0;
         for ( s = 0; s < pSim->nSlots; s++ )
         {
             word Care = pCare ? pCare[s] : ~(word)0;
-            nOff0 += Abc_TtCountOnes( ~pTarget[s] & ~pDiv[s] & Care );
             nOff1 += Abc_TtCountOnes( ~pTarget[s] &  pDiv[s] & Care );
-            nOn0  += Abc_TtCountOnes(  pTarget[s] & ~pDiv[s] & Care );
             nOn1  += Abc_TtCountOnes(  pTarget[s] &  pDiv[s] & Care );
         }
+        nOff0 = nOff - nOff1;
+        nOn0 = nOn - nOn1;
         pRanks[i].Score = nOff0 * nOn1 + nOff1 * nOn0;
         pRanks[i].iPos = i;
     }

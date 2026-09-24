@@ -349,6 +349,14 @@ struct Cec_ParTran_t_
     int              nOdcFanoutRounds; // optional fanout discovery/commit round cap (0 = fixed point)
     int              nSignatureGuide; // ODC observation guide: 0=off, 1=random, 2=missing-value SAT, 3=also aliases
     int              nRelObs;       // permanent-output tail: 0=off, 6=Direct, 27=Direct plus graph-costed multi-cut Build
+    int              nStrictSteps, nStrictWaves; // -2 / -1 inherits S / w
+    int              nInitialFrames, nInitialConflicts; // -1 inherits F/C
+    int              nWindowFrames, nWindowConflicts; // -1 inherits F/C
+    int              nWindowDivs, nWindowCandidates; // -1 inherits B/q
+    int              nWindowSteps; // -2 inherits S; -1 unlimited
+    int              fWindowCache, fWindowFactor; // opt-in exact stream / masked proof
+    int              nWindowCacheMiB; // logical cache payload limit, 0 = unlimited
+    int              nOutputRounds; // per output substage, 0 = fixed point
     int              fOutputProof; // explicit opt-in to whole-output sequential proof (-Y 1)
     int              nExplore;      // opt-in exploration: 1=CI cache, 2=observations, 4=pool conflict stop, 8=CI shadow, 16=guided TFO rescue, 512=ODC Direct/MFFC1
     int              nCombBTLimit;  // root CBS conflict limit per cube

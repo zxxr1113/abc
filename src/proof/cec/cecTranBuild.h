@@ -1,6 +1,24 @@
 // Build construction and root discovery.
 // Private implementation fragment included only by cecTrans.c.
 
+static void Cec_TranCexTranspose( word a[64] );
+
+static void Cec_TranObservationRows( Cec_TranSim_t * pSim,
+    Vec_Int_t * vPool, int iSlot, word * pRows, int nKeyWords )
+{
+    int k, d, b, nDivs = Vec_IntSize(vPool);
+    for ( k = 0; k < nKeyWords; k++ )
+    {
+        word Matrix[64] = {0};
+        for ( d = 0; d < 64 && 64*k + d < nDivs; d++ )
+            Matrix[63-d] = Cec_TranSimObj(pSim,
+                Vec_IntEntry(vPool, 64*k + d))[iSlot];
+        Cec_TranCexTranspose( Matrix );
+        for ( b = 0; b < 64; b++ )
+            pRows[b*nKeyWords + k] = Matrix[63-b];
+    }
+}
+
 static word Cec_TranResidualMix( word Value )
 {
     Value ^= Value >> 30;
@@ -18,7 +36,7 @@ static int Cec_TranObservationConflict( Cec_TranSim_t * pSim, int iTarget,
 {
     word * pRows;
     word Value, Hash;
-    int i, k, b, s, iObj, h, Label, fConflict = 0;
+    int k, b, s, h, Label, fConflict = 0;
     int nCap = 1, nDivs = Vec_IntSize(vPool);
     int nKeyWords = Abc_MaxInt( 1, (nDivs + 63) >> 6 );
     *pnUnique = 0;
@@ -36,17 +54,10 @@ static int Cec_TranObservationConflict( Cec_TranSim_t * pSim, int iTarget,
         pSim->pObsLabels = ABC_ALLOC( unsigned char, pSim->nObsCap );
     }
     memset( pSim->pObsLabels, 0, nCap );
-    pRows = ABC_CALLOC( word, 64 * nKeyWords );
+    pRows = ABC_ALLOC( word, 64 * nKeyWords );
     for ( s = 0; s < pSim->nSlots; s++ )
     {
-        memset( pRows, 0, sizeof(word) * 64 * nKeyWords );
-        Vec_IntForEachEntry( vPool, iObj, i )
-        {
-            Value = Cec_TranSimObj(pSim, iObj)[s];
-            for ( b = 0; b < 64; b++ )
-                pRows[b*nKeyWords + (i >> 6)] |=
-                    ((Value >> b) & 1) << (i & 63);
-        }
+        Cec_TranObservationRows( pSim, vPool, s, pRows, nKeyWords );
         Value = Cec_TranSimObj(pSim, iTarget)[s];
         for ( b = 0; b < 64; b++ )
         {
@@ -111,6 +122,37 @@ static int Cec_TranObservationSelfTest()
     ABC_FREE( Sim.pObsKeys );
     ABC_FREE( Sim.pObsLabels );
     Vec_IntFree( vPool );
+    // Independently check natural lane/divisor order, padding and multiple
+    // words against scalar bit extraction, including empty and partial tiles.
+    {
+        Cec_TranSim_t Test = {0};
+        Vec_Int_t * vTest = Vec_IntAlloc( 129 );
+        word Data[130*3], Rows[64*3], State = 1;
+        int n, s, b, k, d;
+        Test.nSlots = 3;
+        Test.pSims = Data;
+        for ( i = 0; i < 130*3; i++ )
+            Data[i] = State = Cec_TranResidualMix(State);
+        for ( n = 0; n <= 129; n++ )
+        {
+            int nWords = Abc_MaxInt(1, (n+63)/64);
+            if ( n ) Vec_IntPush(vTest, n);
+            for ( s = 0; s < 3; s++ )
+            {
+                memset(Rows, 0xff, sizeof(Rows));
+                Cec_TranObservationRows(&Test, vTest, s, Rows, nWords);
+                for ( b = 0; b < 64; b++ )
+                    for ( k = 0; k < nWords; k++ )
+                    {
+                        word Expected = 0;
+                        for ( d = 0; d < 64 && 64*k+d < n; d++ )
+                            Expected |= ((Data[(64*k+d+1)*3+s] >> b) & 1) << d;
+                        assert(Rows[b*nWords+k] == Expected);
+                    }
+            }
+        }
+        Vec_IntFree(vTest);
+    }
     return 1;
 }
 
@@ -293,20 +335,28 @@ static int Cec_TranSelectCareObservedCoreExcept( Cec_TranSim_t * pSim,
     int iTarget, Vec_Int_t * vPool, int nCoreMax, Vec_Int_t * vCoreRanks,
     int iForbiddenRank, word const * pCare )
 {
-    int Totals[256][2] = {{0}}, NextTotals[256][2] = {{0}};
+    int Totals[256][2] = {{0}}, NextTotals[256][2];
+    int Slots[256] = {0}, NextSlots[256];
+    long long Suffix[257];
     int nSlots = pSim->nSlots, nDivs = Vec_IntSize(vPool);
     int nGroups = 1, nCore = 0, nGroupsMax = 1 << nCoreMax;
-    word * pCurrent = ABC_CALLOC( word, 2 * nGroupsMax * nSlots );
-    word * pNext = ABC_CALLOC( word, 2 * nGroupsMax * nSlots );
+    // Only indexed words of active groups are read. Initialization and
+    // splitting write each indexed word before the group becomes active.
+    word * pCurrent = ABC_ALLOC( word, 2 * nGroupsMax * nSlots );
+    word * pNext = ABC_ALLOC( word, 2 * nGroupsMax * nSlots );
+    int * pCurrentSlots = ABC_ALLOC( int, nGroupsMax * nSlots );
+    int * pNextSlots = ABC_ALLOC( int, nGroupsMax * nSlots );
     char * pSelected = ABC_CALLOC( char, nDivs );
     word * pTarget = Cec_TranSimObj( pSim, iTarget );
-    int g, i, k, s, iBest, nNextGroups;
+    int g, i, j, k, s, iBest, nNextGroups;
     assert( nCoreMax > 0 && nCoreMax <= 8 );
     Vec_IntClear( vCoreRanks );
     for ( s = 0; s < nSlots; s++ )
     {
         pCurrent[s] = ~pTarget[s] & (pCare ? pCare[s] : ~(word)0);
         pCurrent[nSlots + s] = pTarget[s] & (pCare ? pCare[s] : ~(word)0);
+        if ( pCurrent[s] | pCurrent[nSlots + s] )
+            pCurrentSlots[Slots[0]++] = s;
         Totals[0][0] += Abc_TtCountOnes( pCurrent[s] );
         Totals[0][1] += Abc_TtCountOnes( pCurrent[nSlots + s] );
     }
@@ -314,7 +364,11 @@ static int Cec_TranSelectCareObservedCoreExcept( Cec_TranSim_t * pSim,
         nGroups = 0;
     while ( nGroups && nCore < nCoreMax )
     {
-        long long BestScore = 0;
+        long long BestScore = 0, MaxScore = 0;
+        Suffix[nGroups] = 0;
+        for ( g = nGroups - 1; g >= 0; g-- )
+            Suffix[g] = Suffix[g+1] + (long long)Totals[g][0] * Totals[g][1];
+        MaxScore = Suffix[0];
         iBest = -1;
         for ( i = 0; i < nDivs; i++ )
             if ( i != iForbiddenRank && !pSelected[i] )
@@ -325,8 +379,14 @@ static int Cec_TranSelectCareObservedCoreExcept( Cec_TranSim_t * pSim,
                 for ( g = 0; g < nGroups; g++ )
                 {
                     int nOff1 = 0, nOn1 = 0;
-                    for ( s = 0; s < nSlots; s++ )
+                    // Even separating all remaining opposite-label pairs
+                    // cannot beat the earlier rank; preserve first-rank ties.
+                    if ( Score + Suffix[g] <= BestScore ) break;
+                    // Inactive words contain no OFF/ON observations and
+                    // contribute exactly zero to every divisor's score.
+                    for ( j = 0; j < Slots[g]; j++ )
                     {
+                        s = pCurrentSlots[g*nSlots + j];
                         nOff1 += Abc_TtCountOnes(
                             pCurrent[(2*g)*nSlots + s] & pDiv[s] );
                         nOn1 += Abc_TtCountOnes(
@@ -338,47 +398,71 @@ static int Cec_TranSelectCareObservedCoreExcept( Cec_TranSim_t * pSim,
                 }
                 if ( Score > BestScore )
                     iBest = i, BestScore = Score;
+                // All unresolved opposite-label pairs are separated. Later
+                // ranks cannot improve this score, including its stable tie.
+                if ( BestScore == MaxScore )
+                    break;
             }
         if ( iBest < 0 )
             break;
         pSelected[iBest] = 1;
         Vec_IntPush( vCoreRanks, iBest );
         nCore++;
+        if ( BestScore == MaxScore )
+        {
+            nGroups = 0;
+            break;
+        }
+        // Preserve the selected partial core on failure without materializing
+        // a partition that cannot be examined after the core bound is reached.
+        if ( nCore == nCoreMax )
+            break;
         nNextGroups = 0;
-        memset( NextTotals, 0, sizeof(NextTotals) );
         for ( g = 0; g < nGroups; g++ )
             for ( k = 0; k < 2; k++ )
             {
-                int nOff = 0, nOn = 0;
+                int nOff = 0, nOn = 0, nActive = 0;
                 word * pDiv = Cec_TranSimObj( pSim,
                     Vec_IntEntry(vPool, iBest) );
-                for ( s = 0; s < nSlots; s++ )
+                for ( j = 0; j < Slots[g]; j++ )
                 {
+                    s = pCurrentSlots[g*nSlots + j];
                     word Phase = k ? pDiv[s] : ~pDiv[s];
                     word Off = pCurrent[(2*g)*nSlots + s] & Phase;
                     word On = pCurrent[(2*g+1)*nSlots + s] & Phase;
-                    pNext[(2*nNextGroups)*nSlots + s] = Off;
-                    pNext[(2*nNextGroups+1)*nSlots + s] = On;
-                    nOff += Abc_TtCountOnes( Off );
-                    nOn += Abc_TtCountOnes( On );
+                    if ( Off | On )
+                    {
+                        pNextSlots[nNextGroups*nSlots + nActive++] = s;
+                        pNext[(2*nNextGroups)*nSlots + s] = Off;
+                        pNext[(2*nNextGroups+1)*nSlots + s] = On;
+                        nOff += Abc_TtCountOnes( Off );
+                        nOn += Abc_TtCountOnes( On );
+                    }
                 }
                 if ( nOff && nOn )
                 {
                     NextTotals[nNextGroups][0] = nOff;
                     NextTotals[nNextGroups][1] = nOn;
+                    NextSlots[nNextGroups] = nActive;
                     nNextGroups++;
                     assert( nNextGroups <= nGroupsMax );
                 }
             }
         {
             word * pTemp = pCurrent;
+            int * pTempSlots = pCurrentSlots;
             pCurrent = pNext;
             pNext = pTemp;
+            pCurrentSlots = pNextSlots;
+            pNextSlots = pTempSlots;
         }
-        memcpy( Totals, NextTotals, sizeof(Totals) );
+        memcpy( Totals, NextTotals, sizeof(Totals[0]) * nNextGroups );
+        memcpy( Slots, NextSlots, sizeof(Slots[0]) * nNextGroups );
         nGroups = nNextGroups;
     }
     ABC_FREE( pSelected );
+    ABC_FREE( pNextSlots );
+    ABC_FREE( pCurrentSlots );
     ABC_FREE( pNext );
     ABC_FREE( pCurrent );
     return nGroups ? -1 : nCore;

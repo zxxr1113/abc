@@ -366,6 +366,52 @@ static unsigned Cec_TranTeachMix( unsigned x )
     return x ^ (x >> 16);
 }
 
+// The teaching hypothesis universe depends only on at most eight divisor
+// bits and one target bit. Cache its exact cover for all 512 assignments;
+// frames then OR at most three words instead of rebuilding 186 hypotheses.
+// ABC runs this discovery serially; tables contain no graph-dependent state.
+static word const * Cec_TranTeachCoverLookup( int nDivs, int Assignment )
+{
+    static word Table[9][512][3];
+    static int Ready[9];
+    int a, i, j, h, t, v;
+    assert( nDivs >= 0 && nDivs <= 8 );
+    assert( Assignment >= 0 && Assignment < (1 << (nDivs + 1)) );
+    if ( !Ready[nDivs] )
+    {
+        for ( a = 0; a < (1 << (nDivs + 1)); a++ )
+        {
+            word * pRow = Table[nDivs][a];
+            t = (a >> nDivs) & 1; h = 0;
+            Cec_TranTeachCoverAdd(pRow, &h, 0, t);
+            Cec_TranTeachCoverAdd(pRow, &h, 1, t);
+            for ( i = 0; i < nDivs; i++ )
+            {
+                v = (a >> i) & 1;
+                Cec_TranTeachCoverAdd(pRow, &h, v, t);
+                Cec_TranTeachCoverAdd(pRow, &h, !v, t);
+            }
+            for ( i = 0; i < nDivs; i++ )
+                for ( j = i + 1; j < nDivs; j++ )
+                {
+                    int x = (a >> i) & 1, y = (a >> j) & 1;
+                    v = x & y;
+                    Cec_TranTeachCoverAdd(pRow, &h, v, t);
+                    Cec_TranTeachCoverAdd(pRow, &h, !v, t);
+                    v = x | y;
+                    Cec_TranTeachCoverAdd(pRow, &h, v, t);
+                    Cec_TranTeachCoverAdd(pRow, &h, !v, t);
+                    v = x ^ y;
+                    Cec_TranTeachCoverAdd(pRow, &h, v, t);
+                    Cec_TranTeachCoverAdd(pRow, &h, !v, t);
+                }
+            assert(h == 2 + 2*nDivs + 3*nDivs*(nDivs-1));
+        }
+        Ready[nDivs] = 1;
+    }
+    return Table[nDivs][Assignment];
+}
+
 // When more CEX traces exist than Q words can hold, greedily put the most
 // root-relevant traces first.  Relevance is measured over every frame against
 // cheap wrong explanations of the root.  Proxy saturation never wastes
@@ -386,7 +432,7 @@ static int Cec_TranTeachSelectCex( Cec_TranSim_t * pSource,
     word * pDone = ABC_CALLOC( word, nHypWords );
     word * pAll = ABC_CALLOC( word, nHypWords );
     char * pChosen = ABC_CALLOC( char, nCexes );
-    int c, f, i, k, d0, d1, iHyp, Target, Value, Best, BestScore;
+    int c, f, i, k, Target, Best, BestScore;
     int nSelected = 0, nCovered = 0, nDistinguishable = 0;
     nSelectMax = Abc_MinInt( nSelectMax, nCexes );
     for ( c = 0; c < nCexes; c++ )
@@ -404,28 +450,13 @@ static int Cec_TranTeachSelectCex( Cec_TranSim_t * pSource,
             for ( i = 0; i < nDivs; i++ )
                 DivValues[i] = Cec_TranTeachSampleValue( pSource,
                     Vec_IntEntry(vPool, i), iSample );
-            iHyp = 0;
-            Cec_TranTeachCoverAdd( pRow, &iHyp, 0, Target );
-            Cec_TranTeachCoverAdd( pRow, &iHyp, 1, Target );
-            for ( i = 0; i < nDivs; i++ )
             {
-                Cec_TranTeachCoverAdd( pRow, &iHyp, DivValues[i], Target );
-                Cec_TranTeachCoverAdd( pRow, &iHyp, !DivValues[i], Target );
+                int Assignment = Target << nDivs;
+                word const * pLookup;
+                for ( i = 0; i < nDivs; i++ ) Assignment |= DivValues[i] << i;
+                pLookup = Cec_TranTeachCoverLookup(nDivs, Assignment);
+                for ( k = 0; k < nHypWords; k++ ) pRow[k] |= pLookup[k];
             }
-            for ( d0 = 0; d0 < nDivs; d0++ )
-                for ( d1 = d0 + 1; d1 < nDivs; d1++ )
-                {
-                    Value = DivValues[d0] & DivValues[d1];
-                    Cec_TranTeachCoverAdd( pRow, &iHyp, Value, Target );
-                    Cec_TranTeachCoverAdd( pRow, &iHyp, !Value, Target );
-                    Value = DivValues[d0] | DivValues[d1];
-                    Cec_TranTeachCoverAdd( pRow, &iHyp, Value, Target );
-                    Cec_TranTeachCoverAdd( pRow, &iHyp, !Value, Target );
-                    Value = DivValues[d0] ^ DivValues[d1];
-                    Cec_TranTeachCoverAdd( pRow, &iHyp, Value, Target );
-                    Cec_TranTeachCoverAdd( pRow, &iHyp, !Value, Target );
-                }
-            assert( iHyp == nHyps );
         }
         for ( k = 0; k < nHypWords; k++ )
             pAll[k] |= pRow[k];

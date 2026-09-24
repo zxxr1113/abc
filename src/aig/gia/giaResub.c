@@ -2994,6 +2994,7 @@ enum
     GIA_RESUB_PIVOT_PROFILE_SIZE = GIA_RESUB_PIVOT_STATE_TIME + 2
 };
 typedef struct Gia_ResbIter_t_ Gia_ResbIter_t;
+typedef struct Gia_ResbMemoEntry_t_ Gia_ResbMemoEntry_t;
 struct Gia_ResbIter_t_
 {
     Gia_ResbMan_t * p;
@@ -3003,11 +3004,15 @@ struct Gia_ResbIter_t_
     int nTotal[2];
     int fPreparedUnates;
     int fPreparedPairs;
+    Gia_ResbMemoEntry_t * pMemo;
+    int fMemoReplay, iMemo;
     long long PivotProfile[GIA_RESUB_PIVOT_PROFILE_SIZE];
     long long CacheProfileLast[GIA_RESUB_REC_DUP_DEPTH_3PLUS -
         GIA_RESUB_CACHE_LOOKUPS + 1];
     long long MultiPathCacheProfileLast[6];
 };
+
+#include "giaResubMemo.h"
 
 static int Gia_ResbPivotRankBin( int Rank )
 {
@@ -3458,6 +3463,8 @@ void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
         pIt->n = pIt->i = 0;
         pIt->k = 1;
     }
+    Gia_ResbMemoBind(pIt,ppDivs,nDivs,nWords,nLimit,nDivsMax,fUseZero,
+        fUseXor,fUseSolvSched,nStage5Paths,fProfilePivots,pCursor,ppRootCache);
     return pIt;
 }
 
@@ -3466,6 +3473,7 @@ void Abc_ResubIteratorResumeStop( void * pVoid, int * pCursor )
     Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
     if ( pIt == NULL )
         return;
+    Gia_ResbMemoUnbind(pIt);
     pCursor[0] = pIt->Stage;
     pCursor[1] = pIt->n;
     pCursor[2] = pIt->i;
@@ -3524,7 +3532,7 @@ static void Gia_ResbIterStage5Decode( Gia_ResbMan_t * p, int Slot,
     }
 }
 
-int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
+static int Gia_ResbIteratorNextReal( void * pVoid, int ** ppArray,
     int * pnAttempt, int * pfExhausted, int * pfInvalid )
 {
     Gia_ResbIter_t * pIt = (Gia_ResbIter_t *)pVoid;
@@ -3655,6 +3663,22 @@ int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
     if ( pnAttempt )
         *pnAttempt = pIt->Stage;
     return Vec_IntSize( p->vGates );
+}
+
+int Abc_ResubIteratorNext( void * pVoid, int ** ppArray,
+    int * pnAttempt, int * pfExhausted, int * pfInvalid )
+{
+    Gia_ResbIter_t * pIt=(Gia_ResbIter_t *)pVoid;
+    int Result, Attempt=0;
+    if ( pIt->pMemo && pIt->fMemoReplay )
+        return Gia_ResbMemoReplay(pIt,ppArray,pnAttempt,pfExhausted,pfInvalid);
+    Result=Gia_ResbIteratorNextReal(pVoid,ppArray,&Attempt,pfExhausted,pfInvalid);
+    // This is an output parameter, possibly uninitialized by the caller.
+    // Preserve the original contract: only yielded recipes write the tag.
+    if ( pnAttempt && Result ) *pnAttempt=Attempt;
+    if ( pIt->pMemo && !pIt->pMemo->fComplete )
+        Gia_ResbMemoRecord(pIt,*ppArray,Result,Attempt,*pfExhausted,*pfInvalid);
+    return Result;
 }
 
 // Return profiling for all greedy pivots consumed by the most recent Next().
@@ -4298,6 +4322,125 @@ static void Gia_ResbEmptyLabelPolaritySelfTest()
     Abc_ResubSetBothPolarities(Saved);
 }
 
+static void Gia_ResbProblemCacheCompare( void ** Divs, int nWords,
+    int nLimit, int fPages )
+{
+    Gia_ResbIter_t * Base=(Gia_ResbIter_t *)Abc_ResubIteratorStart(
+        Divs,8,nWords,nLimit,6,0,0);
+    void * Iter=NULL, * RootCache=NULL;
+    int Cursor[6]={0}, * a, * b, na, nb, sa, sb, ea, eb, ia, ib, Count=0;
+    long long Profile[GIA_RESUB_PIVOT_PROFILE_SIZE];
+    int k;
+    Base->p->fProfilePivots=1;
+    Abc_ResubPrepareManager(nWords);
+    do
+    {
+        if ( !Iter ) Iter=Abc_ResubIteratorResumeStart(Divs,8,nWords,
+            nLimit,6,0,0,0,1,1,Cursor,&RootCache);
+        sa=sb=0;
+        na=Abc_ResubIteratorNext(Base,&a,&sa,&ea,&ia);
+        nb=Abc_ResubIteratorNext(Iter,&b,&sb,&eb,&ib);
+        assert(na==nb && sa==sb && ea==eb && ia==ib);
+        if ( na ) assert(!memcmp(a,b,na*sizeof(int)));
+        Abc_ResubIteratorReadPivotProfile(Iter,Profile);
+        if ( na ) for ( k=GIA_RESUB_PIVOT_CURRENT_PATH; k<=GIA_RESUB_PIVOT_CURRENT_DUPLICATE; k++ )
+            assert(Profile[k]==Base->PivotProfile[k]);
+        if ( fPages || eb )
+        {
+            Abc_ResubIteratorResumeStop(Iter,Cursor);
+            Iter=NULL;
+        }
+        assert(++Count<4096);
+    } while ( !ea );
+    assert(!Iter);
+    Abc_ResubRootCacheStop(RootCache);
+    Abc_ResubIteratorStop(Base);
+    Abc_ResubPrepareManager(0);
+}
+
+static void Gia_ResbProblemCacheSelfTest()
+{
+    word Data[8][2], Target;
+    word Patterns[6]={ABC_CONST(0xAAAAAAAAAAAAAAAA),ABC_CONST(0xCCCCCCCCCCCCCCCC),
+        ABC_CONST(0xF0F0F0F0F0F0F0F0),ABC_CONST(0xFF00FF00FF00FF00),
+        ABC_CONST(0xFFFF0000FFFF0000),ABC_CONST(0xFFFFFFFF00000000)};
+    void * Divs[8];
+    int i, w, Words, Limit, SavedPolarity=s_ResubBothPolarities;
+    long long Hits;
+    for ( i=0; i<8; i++ ) Divs[i]=Data[i];
+    for ( i=2; i<8; i++ ) for ( w=0; w<2; w++ )
+        Data[i][w]=w ? ~Patterns[i-2] : Patterns[i-2];
+    for ( w=0; w<2; w++ )
+    {
+        Target=(Data[2][w]&Data[3][w]) | (~Data[4][w]&Data[5][w]);
+        Data[0][w]=~Target; Data[1][w]=Target;
+    }
+    Abc_ResubProblemCacheStart(0);
+    for ( Words=1; Words<=2; Words++ ) for ( Limit=2; Limit<=3; Limit++ )
+    {
+        Hits=s_pResbMemo->nHits;
+        Gia_ResbProblemCacheCompare(Divs,Words,Limit,0);
+        assert(s_pResbMemo->nHits==Hits);
+        Gia_ResbProblemCacheCompare(Divs,Words,Limit,0);
+        assert(s_pResbMemo->nHits==Hits+1);
+        // Replaying one item then resuming without the original residual
+        // cache must preserve the rest of the complete ordered stream.
+        Gia_ResbProblemCacheCompare(Divs,Words,Limit,1);
+        assert(s_pResbMemo->nHits==Hits+2);
+    }
+    {
+        Gia_ResbMemoEntry_t * e=(Gia_ResbMemoEntry_t *)Vec_PtrEntry(s_pResbMemo->vEntries,0);
+        Vec_Wrd_t * Key=Vec_WrdDup(e->vKey);
+        Vec_WrdWriteEntry(Key,0,Vec_WrdEntry(Key,0)+100);
+        // Deliberately use the stored hash with different bytes: a hash
+        // collision must never select the old problem.
+        assert(Gia_ResbMemoFind(e->Hash,Key)==NULL);
+        Vec_WrdFree(Key);
+    }
+    Data[7][1]^=1;
+    Hits=s_pResbMemo->nHits;
+    Gia_ResbProblemCacheCompare(Divs,2,3,0);
+    assert(s_pResbMemo->nHits==Hits);
+    Gia_ResbProblemCacheCompare(Divs,2,3,0);
+    assert(s_pResbMemo->nHits==Hits+1);
+    Abc_ResubSetBothPolarities(!SavedPolarity);
+    Hits=s_pResbMemo->nHits;
+    Gia_ResbProblemCacheCompare(Divs,2,3,0);
+    assert(s_pResbMemo->nHits==Hits);
+    Abc_ResubSetBothPolarities(SavedPolarity);
+    {
+        int Cursor[6]={0}, * Array, Attempt=0, Exhausted, Invalid;
+        int nBefore=Vec_PtrSize(s_pResbMemo->vEntries);
+        void * RootCache=NULL, * Iter;
+        for ( w=0; w<2; w++ )
+        {
+            Target=Data[2][w]&Data[3][w];
+            Data[0][w]=~Target; Data[1][w]=Target;
+        }
+        Abc_ResubPrepareManager(2);
+        Iter=Abc_ResubIteratorResumeStart(Divs,8,2,3,6,0,0,0,1,1,Cursor,&RootCache);
+        assert(Abc_ResubIteratorNext(Iter,&Array,&Attempt,&Exhausted,&Invalid)>0);
+        assert(!Exhausted && !Invalid);
+        Abc_ResubIteratorResumeStop(Iter,Cursor);
+        Abc_ResubRootCacheStop(RootCache);
+        Abc_ResubPrepareManager(0);
+        assert(Vec_PtrSize(s_pResbMemo->vEntries)==nBefore);
+        assert(s_pResbMemo->nIncomplete>0);
+        Gia_ResbProblemCacheCompare(Divs,2,3,0);
+        Gia_ResbProblemCacheCompare(Divs,2,3,0);
+    }
+    Abc_ResubProblemCacheStop(0);
+    Abc_ResubProblemCacheStart(1);
+    s_pResbMemo->nByteLimit = 1; // refuse even the key; stream is unchanged
+    Gia_ResbProblemCacheCompare(Divs,2,3,0);
+    assert(s_pResbMemo->nBudgetSkips && !s_pResbMemo->nBytes);
+    s_pResbMemo->nByteLimit = (GIA_RESUB_MEMO_OPTIONS+16)*sizeof(word)+1;
+    Gia_ResbProblemCacheCompare(Divs,2,3,0); // drop an in-flight prefix
+    assert(s_pResbMemo->nIncomplete && !s_pResbMemo->nBytes);
+    Abc_ResubProblemCacheStop(0);
+    Abc_Print(1,"stran complete-native cache word/options/collision/prefix/resume/ordered-stream self-test: PASS\n");
+}
+
 int Abc_ResubIteratorSelfTest()
 {
     word Off = 0x2, On = 0xD, D = 0x8, E = 0x5;
@@ -4462,6 +4605,7 @@ int Abc_ResubIteratorSelfTest()
     ABC_FREE( N.pArray );
     ABC_FREE( P.pArray );
     assert( nNext > 0 && nInvalid == 0 && fSawResumedPair );
+    Gia_ResbProblemCacheSelfTest();
     return 1;
 }
 
