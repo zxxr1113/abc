@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "cases": ["045_mem_ctrl", "060_wb_dma", "034_b20_opt", "041_des_area"],
+  "chunk": "chunk_00000",
+  "roots": "first 32 completed roots from existing frozen root_search.jsonl",
+  "pool": "exact saved pool and pool_info; no reranking or alias refresh",
+  "models": "one complete graph-PI projection for every saved image-SAT candidate; skip UNKNOWN",
+  "domain": "reset union unrestricted one-step image; image models are NOT reset-reachable teachers",
+  "dedup": "exact current PI plus successor-state assignment; source provenance retained for duplicate projections",
+  "projection_accounting": "report exact ordered root+pool projection novelty and duplicates separately; no unsafe root-only dedup",
+  "matched_random": "same number of exact-dedup current PI/successor assignments; independently random prior PI/state/current PI; seed 2026100207",
+  "budget_seconds_per_case": 120,
+  "model_conflicts_per_query": 1000,
+  "new_candidate_proof": "existing free SAT, reset UNSAT, image UNSAT; independent free witness replay",
+  "area_claim": false,
+  "same_budget_comparison_claim": false,
+  "source_mutation": false
+}

@@ -161,6 +161,89 @@ python3 research/stran2-guide-20261002/nonlinear_divisors/anytime.py \
 
 证据摘要、独立复核及共同前缀差分保存在 `research/stran2-guide-20261002/anytime_validation_20261001/`；原始chunk证书、generation产品、失败/预算状态、冻结源文件随v2实验归档交付。不得把“6份已验证incumbent”写成“6份已完整搜索的结果”。
 
+### 第三轮：固定 image 域的反例引导构造诊断
+
+`image_cegar_diagnostic/diagnostic.py` 首先只作机制诊断，不修改生产算法。固定原六例中的 mem_ctrl、wb_dma、b20_opt、des_area 的首个 32-root chunk，保持原图、divisor 池、排序、语法、代价和证明类不变；b20 首块没有候选，原样保留。对 reset-UNSAT/free-SAT/image-SAT 候选，独立 helper 在相同 1000-conflict 限额下返回前态、前拍 PI、当前 PI，并在原始 AIG 上回放转移与根差异；随后按 `(当前PI, 后继状态)` 精确去重。这些样本只约束固定的 reset∪unrestricted-image 候选类，**不是可达轨迹**，不能灌入一般 reachable-state teacher 或 depth2 lane。证明仍须重新完成原三元组；样本一致本身不是证书。
+
+mem_ctrl 的 232 个 SAT 模型归并为 14 个 image 样本，正代价签名命中从 819,778 降到 48,516，同池重新搜索发现 179 个新保留配方，其中 49 个完整证明通过；相同数量随机 image 样本的对照没有发现新保留配方。wb_dma 的 173 个模型归并为 28 个样本，发现 65 个新配方、9 个新证明；4 个旧证明仍满足全部新样本，随机对照亦无新配方。des_area 新增 6 个配方但无新证明；b20 首块仍为空。这是额外诊断成本的机制证据，不能把 mem 搜索从 23.59s 降到 1.53s 当成端到端加速：模型生成、控制臂、重证明及审计都需要成本。
+
+另行 `audit_products.py` 对 49 个 mem 新关系、9 个 wb 新关系和 4 个 wb 旧关系执行 62 个新证明三元组及精确产品重放。mem 的 Build-only 产品选 6 个 Build，9432→9410，减 22 AND；wb 的产品选 6 个新 Build，3703→3680，减 23 AND。但 mem 选中根的 300 个常量/池内/实际使用 divisor 的 Direct 对照得到 10 个正收益关系，涉及 5 根：Direct-only 减 25，混合产品减 27，混合集合只保留 root1263 的一个 fresh Build，**同一混合集合的真正条件 Build 边际仅为 2 AND**。wb 同范围 300 个 Direct 对照无正收益证明，6 个 Build 的边际为 23 AND；旧池单独产品减 2，故旧独立产品到新混合产品的差为 21，而移除同一新混合选中集合的新 Build 为 23，两种差不可混淆。此范围不是全图 Direct 穷尽。
+
+最终产品审计 `/tmp/image-cegar-products-v3/` 的 20 个 baseline/product DSEC 全 PASS，独立复审另有 4 个 DSEC PASS；所有 22 个保存的 AIG 在审计 v1/v2/v3 逐字节相同。独立检查还回放 614 份 witness、1986 个证明查询和每产品 128 组任意 PI/RO 的全部输出。额外审计成本 mem 为 29.94s（非 DSEC 4.09s），wb 为 4.83s（非 DSEC 1.52s）。诊断、额外产品和后续等预算在线运行是三个独立实验，不能混算成本或改写旧 TIMEOUT。
+
+补查同一一/两门语法中经结构哈希变成零新增门、但指向池外原节点的 Direct：`hash_direct_audit.py` 在 61 个确定性小图、147,552 个暴力规范化配方上与优化收集器完全一致。anytime-v2 b20 的 57 个选中根额外暴露 234 个 literal，CEGAR wb 的 6 根额外暴露 14 个，全部被保存的 image 样本反驳，独立原始 AIG 模拟器复核 248 个反例通过；没有值得调用 SAT 的额外候选。两例分别额外耗时 1.43s/0.47s。这个阴性结果只补全上述冻结池的一/两门哈希 Direct 范围，不表示全图不存在其他 Direct。
+
+### 在线 image 引导 v1：等变换预算与额外 Direct 归因
+
+显式 `--image-model-solver` 开启 `image_guided.py`；默认 mode-off 保持原 anytime 行为，b03 的 20 份关键语义、查询及产品与冻结 v2 对照一致。初始 pool/rank/alias 完全冻结，反例只更新构造签名；完成证明块并保存 checkpoint 后，才从完整 reset-UNSAT/free-SAT/image-SAT 证书提取独立模型、原图回放、精确赋值去重与完整 root+pool 投影新颖性检查。所有查询、反馈、重搜、重建仍在同一个硬 120s 预算内；普通 proof solver 和证明原图不变。已尝试候选按语义身份排除（含 UNKNOWN），但排除发生在原 bounded top-k 后，因此终止仅表示“没有新的已返回 top-k”，不是枚举所有更低排名的配方。已证候选不因 teacher 版本变化丢弃。
+
+冻结 `/tmp/image-guided-pilot-v1/` 对原六例、相同每查询 1000 conflicts、2 workers 的结果如下。Direct 审计严格另计成本，不称整套混合产品在 120s 内生成。
+
+| 案例 | 在线搜索状态 | Build-only AND | 原 anytime-v2 Build-only AND | 额外审计后同一混合集合 fresh Build 边际 |
+|---|---|---:|---:|---:|
+| b03 | COMPLETE | 5 | 5 | 3 |
+| i2c | COMPLETE | 13 | 10 | 7 |
+| des_area | COMPLETE | 0 | 0 | 0 |
+| b20_opt | BUDGET_EXHAUSTED | 66 | 74 | 65 |
+| mem_ctrl | BUDGET_EXHAUSTED | 136 | 0 | 41 |
+| wb_dma | COMPLETE | 83 | 2 | 76 |
+
+六个保留产品的 12 次 baseline/product DSEC 全 PASS；121 个选中 free witness 独立回放、六图逐字节重建及每图 128 组自由赋值全部 CO 对照通过。完整反馈审计覆盖 275 个完成轮次、8792 个 image 模型、1809 个重建新约束及 10908 个完成候选身份；与旧 v2 都扫描到的 6468 根具有完全相同的池及池来源记录。b20/mem 的选中 checkpoint 分别在 104.574s/85.294s 被 supervisor 收到；两者搜索仍未完成，不能用有效 incumbent 掩盖覆盖不足。
+
+`image_cegar_diagnostic/audit_online_products.py` 对全部 121 个选中根，审计常量、saved pool、实际使用 divisor 的两种相位，以及同一一/两门语法哈希成零 fresh-gate 的池外输出；共 6374 个 Direct 候选。每个证明绑定不可变 CNF、精确 assumptions、solver 与原始 receipt；重放 Direct-only、混合选择、从**同一混合选择**移除 Build 三种产品，并验证实际新门仍在最终图存活。最终 `/tmp/image-guided-attribution-v3/` 与初版所有 36 份 AIG 和 Direct 候选语义逐项相同；18 个产品臂均有 PASS 证书，允许只在原输入、输出图、ABC、日志身份完全一致时复用 DSEC，不能把复用写成新运行次数。
+
+**全原图结构 alias 补查已完成。** materialized-helper 对照发现旧版 wb 的一个 recipe 等于编号晚于 root 的原节点；其 fanin 都早于 root，不能仅凭编号较晚认定复用会成环。随后对两臂全部选中配方及实际混合集合进行了完整原图 canonical hash、独立原始 AIG 解码、依赖无环和精确同集合重放：新版121个输出全部结构新，旧版69个仅 wb/root759 是已有表达式。故新版192 AND保持，旧版有界 Direct 后的82应更正为80 AND。这个补查排除了原图**结构相同**的表达式，不证明不存在其他布尔等价旧节点或更广的顺序 Direct。详见下文全图更正。
+
+在上述较窄范围内，条件 Build 合计 **192 AND**，相对原 loaded AND 的等例均值 **0.664383%**、加权比例 **0.273528%**；按绝对 AND 的最大贡献移除 wb_dma 后剩 116 AND、等例 0.638180%；主指标等例均值的最大贡献却是小分母 b03，移除它后剩 189 AND、等例 **0.328509%**，小例分母效应必须保留。它仍是冻结前缀上、选中根的有界 Direct 集下的独立原型结果，不是全图 Direct 饱和或 native 新颖性验证。mem 的 Direct-only 重选减 123、混合减 156、同混合集合只保留 Direct 减 115，故 Build 边际是 **156−115=41**，不能误用不同选择的 156−123。mem 还发现两个原池外的哈希 Direct，但其保留内部门使实际代价不占优：root1286 的 Direct 减4、Build 减7，root1375 的该 Direct 减1、另一 Direct 减8。证明有 Direct 替代不等于证明它支配 Build。
+
+初次完整 Direct 归因新增 wall，按表中顺序为 0.63/1.15/0.18/29.86/26.34/7.84s（其中非 DSEC 为 0.13/0.47/0.18/26.42/12.44/5.46s）。守卫及复用优化后的 v3 验证又分别耗时 0.12/0.38/0.20/10.27/6.81/2.68s，没有重跑 solver 或 DSEC；这些都是额外审计成本，不能拿最终缓存验证时间替代原始证明成本。配套回归 14/14 通过。
+
+b20 的原始退步来自覆盖预算：在线已走到的根所对应旧 v2 的 39 个选中关系全部证明并保留；旧版另外 18 个位于 root9791–10477，超出在线最后 root9050。相同 3232 根进度在线已有 66 AND、旧版 64，但在线到达需 104.57s、旧版 89.12s，旧版最后到74的 checkpoint 在119.01s。在线花 68.75s 在引导流程，初始搜索18.46s、普通证明26.13s；3008 次重访中1240次完整 target+pool 投影没有变化，可以进一步消除这类不改变任何 recipe 一致性结果的重搜。不能据此给出未经消融的速度承诺；后续仅改重复工作消除，不按案例更换搜索规则。
+
+### 全原图结构新颖性更正与第二次等语义迭代
+
+独立 `global_expression_review/review.py` 用原始二进制 AIGER 解码器和独立 canonical hash 复核了在线121个与旧版69个选中 recipe，保留 complement、常量、折叠和两门依赖；另以128组自由赋值及折叠/相位/成环 fixtures 检查。在线121个均具有原图中不存在的结构输出，且无晚编号的已有中间表达式；旧版68个结构新，唯一已有输出是 wb/root759→node3895/lit7790。该节点 TFI 不含 root，所有批量替换依赖检查无环。这里的“结构新”不是布尔功能新颖性或 native 搜索新颖性。
+
+`image_cegar_diagnostic/audit_global_alias_products.py`保留该已有表达式的原 recipe 重放方式，只将它在归因上降为既有逻辑复用，并在同一选中集合的 no-genuine-Build 臂保留。这样不会引入直接读取未来拓扑编号的实现风险，也不改变产品。完整原图与先前 Direct 审计结合后，旧版条件值为 **3/3/0/74/0/0 = 80 AND**，在线 v1 为 **3/7/0/65/41/76 = 192 AND**；等例原 loaded 比例为 **0.499758%→0.664383%（+0.164625 pp）**，加权增量 **+0.159558 pp**。最大增量来自 wb，移除它后仍有 **+36 AND / +0.038470 pp**。两臂各自搜索覆盖不同，仍须报告3/6与4/6完成，其余为预算内有效 incumbent，不外推到全55。global 审计另花1.11s/1.31s，依赖48份 exact graph/input/ABC/log-bound PASS证书，没有重复solver/DSEC运行。来源 `/tmp/nonlinear-anytime-v2-global-alias-audit-v1/`、`/tmp/image-guided-global-alias-audit-v1/` 和 `/tmp/image-guided-global-corrected-comparison.json`。
+
+接着只改变重复工作：若追加 image 行没有改变某根完整 `(target, frozen pool...)` 投影的集合，则任意同池 recipe 的布尔一致性、factor 条件及原有 signature-independent 代价/排序不变，可直接复用已经完整搜索且所有 top-k 身份都已尝试的结果。缓存绑定 root、ordered pool 及 pool metadata，深拷贝避免后续 proof mutation；所有模型查询、全局样本和证明仍保留。冻结 v1 的完整前缀差分覆盖8694次根重访（2783次可跳过）、1809条接受约束、371份CNF/query日程及10908个候选，全部语义相同，且不重跑solver；82项测试中71项通过、11项因未设置特定depth2外部输入预期跳过。
+
+等预算 `/tmp/image-guided-pilot-v2/` 实际跳过2666次重搜，但六个产品和 baseline **全部逐字节等于 v1**，没有质量提升。i2c/des/wb wall 从31.42/18.23/87.69s变为34.40/20.64/90.20s，b20/mem仍120s且搜索前缀更短；不能声称端到端加速，运行干扰与未优化开销仍存在。121份选中配方、成本、witness、pool及proof CNF/assumptions与v1一致，仅收据来源不同，因此上述更正后的192可由明确绑定复用，未重复证明。下一项独立诊断是模型helper每轮两次读取152MB二进制作SHA的开销，不能将尚未完成的优化计入本轮结果。
+
+### 第三次等语义迭代：模型 helper 身份检查与最终六例
+
+`diagnostic.collect_models` 原先每轮调用前后各完整读取一次152MB的模型solver二进制作SHA。在线 v3 将其改为 case入口/正常出口/controller 权威审计完整SHA，且每次调用前、后及 finally 都检查由该SHA绑定的 device/inode/size/mtime_ns/ctime_ns；source、CNF、queries、variables、models 与原图回放检查未减少。独立 diagnostic 默认仍完整SHA，不要求外部调用者相信在线guard。14个对抗测试覆盖替换、恢复mtime但ctime变化、执行/超时期间修改及边界/默认行为。真实helper逐项差分覆盖冻结v2的263轮、8198份模型及358份CNF/query日程（10349候选），模型、查询与回放全部相同，每次调用内部helper完整hash从2次降为0。当次nonlinear发现82项，其中71项通过、11项因未设置外部depth2输入跳过；45项diagnostic测试通过。
+
+首次 `/tmp/image-guided-pilot-v3/` 因4.9GiB tmpfs写满而失败，仅前三例已报告结果，未完成全批次完整性收尾；它作为 **ENOSPC 失败的部分运行**保留，不与后续成功例拼接。完整六例重新运行于工作区磁盘 `evidence-preserved/image-guided-pilot-v3-retry1/`，相同冻结源码、120s预算、每查询1000conflicts和2workers；所有12份DSEC及最终source integrity通过。历史v1/v2移至工作区并保留旧路径symlink，8282/7969份文件逐字节SHA核对无变化。磁盘与tmpfs的变化使端到端v2/v3时间比较混入存储因素，**不宣称干净的速度倍率**；消除重复hash调用本身的语义差分仍成立。
+
+最终 raw Build-only 为 **5/13/0/75/136/83**。新 b20 选择58个Build，其中40个沿用v1身份、18个新增、8个旧身份不再选中；不是简单追加10个候选。75AND checkpoint在115.459s被接收，mem136在85.333s被接收；这两例搜索仍不完整。独立产品审计回放131个free witness、六图逐字节重建、768组任意赋值全部CO以及12份保存的DSEC日志；另独立重跑mem DSEC PASS。
+
+b20重新进行3138个有界Direct候选审计，9414个逻辑查询、6278个实际查询，无UNKNOWN和正收益Direct；58个输出及recipe中间门均在完整原图结构hash中不存在。混合产品11195AND、同集合noBuild11270AND，因此条件Build边际为75。其余五例73份选中recipe、成本、witness、pool、CNF/assumptions/status及产品均与v1精确绑定，复用已验证的127AND，不重复solver或DSEC。最终修正后的六例为 **3/7/0/75/41/76 = 202 AND**，原无image基线为80AND；等例原loaded比例 **0.499758%→0.676783%（+0.177025pp）**，加权增量 **+0.173804pp**。去掉最大增量wb后仍有 **+46AND/+0.053351pp**。b20 Direct审计额外27.05s、global alias重放0.51s；图完全相同时才复用已绑定的DSEC证书，没有伪称新的证明运行。该结果仍受前述选中根Direct范围、结构而非布尔新颖性、冻结first-SEQ前缀和4/6完整搜索的边界约束。
+
+首次ENOSPC还暴露出supervisor在打开日志前已启动child、而cleanup保护较晚开始的问题。成功六例冻结完成后另补工程修正：先打开日志再spawn，selector初始化也纳入owned process-group kill/reap范围，原目录写不下时把原始错误记录至可写fallback并重新抛出原异常。17项supervisor回归（含真实child/grandchild清理）及独立复核通过；该修正不冒充已用成功六例重跑。最终主测试发现87项，76项通过、11项depth2因未设snapshot而跳过；父任务随后显式指定冻结v3原型snapshot补跑这11项，全部通过；另45项diagnostic通过，`git diff --check`通过。
+
+下一阶段只扩展冻结样本：`full_cohort_validation/` 预注册全部55例两臂对照，共110个planned arm-case，使用同一最终runtime的普通anytime与显式image选项。输入/分母双哈希、参数、配对次序、2workers、独立DSEC与额外Direct/global审计均固定；所有未启动、错误、UNKNOWN和预算用尽保留，只有双臂有效审计交集可进入正式配对均值。两个arm都使用磁盘以消除先前存储差异，仍不作正式速度宣称。协议准备不代表实验已执行；最终运行状态与数据另行追加。
+
+### 先行工作校准与待证明贡献
+
+本轮检索后的结论是：reset/image 证明原理及反例反馈均有明确先行工作，不能作为新理论宣称。
+
+- [ICCAD 2008, Scalable and Scalably-Verifiable Sequential Synthesis](https://people.eecs.berkeley.edu/~alanmi/publications/2008/iccad08_seq.pdf) 的 signal correspondence 已结合仿真、SAT 反例、归纳与投机缩减。当前差别首先在于构造原图未含的 h，而非归纳证明本身。
+- [TRETS 2011, Scalable Don't-Care-Based Logic Optimization and Resynthesis](https://people.eecs.berkeley.edu/~alanmi/publications/2011/trets11_mfs.pdf) 已把时序 external-care 条件与 SAT resubstitution 结合，非线性 divisor 或保守 care 域本身不新。
+- [Lee et al., A Simulation-Guided Paradigm for Logic Synthesis and Verification](https://si2.epfl.ch/~demichel/publications/archive/2021/TCAD3108704.pdf)（DOI 10.1109/TCAD.2021.3108704，2021 在线，正式卷期为 TCAD 41(8):2573–2586, 2022）§VI 已有搜索、SAT 验证、将失败反例加入仿真并重搜的循环。因此本轮 image-CEX 适配是待评估的工程机制，不是首次提出 CEGAR 合成。
+- [DATE 2024, Scalable Sequential Optimization Under Observability Don't Cares](https://people.eecs.berkeley.edu/~alanmi/publications/2024/date24_seq.pdf) §III.E Theorem 1 已用初始化 base 与无假设的未初始化两帧末帧等价，充分证明时序等价。这里的严格根等价是该原理的更强特例；image 不是比既有 SODC 更强的证明域。“reset/image”是本文对其条件的对应解释，不是该论文原术语；其 §V 也提出以反例引导仿真作提前拒绝。
+- [TCAD journal extension, Scalable Sequential Logic Synthesis Using Observability Don't Care Conditions](https://people.eecs.berkeley.edu/~alanmi/publications/2025/tcad25_seq.pdf)（2025 在线、2026 卷期，DOI 10.1109/TCAD.2025.3583206）进一步研究假设、深度、窗口和 resubstitution；其 §III.D 的具体单 fanin 替换生成器与这里的一/两门配方语法不同，但其 SODC 正确性条件更宽，不能仅凭名称断言一方完整包含另一方。
+
+可检验假设收窄为：在相同输入、候选池、成本和时间预算下，更丰富且考虑复用成本的表达式构造，以及经过原图回放的 image 约束更新，是否得到更多真实 fresh-gate 的非组合缩减。必须补匹配的候选生成器对照与 Direct 归因，不能只展示 scorr 未构造 h 时的结果。若将 h 显式保留在不改转移函数的辅助逻辑中，则已接受的 image1 关系理论上本来就是一步归纳可证；普通 scorr 的有限预算发现结果可区分“发明表达式”与“新证明能力”，但未合并不等于数学上不可证明。上述定向文献检查不是新颖性保证。
+
+### 将 h 预先物化后，普通 scorr 能取得哪些关系
+
+为分开表达式发现与证明取得，对预先指定的 anytime-v2 b03/b20_opt/wb_dma 的 5/57/1 个选中关系，在**原转移保持不变**的图上添加并保留 root/h 成对辅助 PO；原 PO、RI 顺序及 reset 不变。普通未修改的 `&scorr -F 1 -C 1000` 每例在 120s 预算内重复到加载图精确固定点，保存所有中间图并比较带完整 complement phase 的成对 CO literal。三例均在第2轮达到该流程固定点，分别合并 **3/5、13/57、0/1** 对，scorr 累计 wall 0.064/0.719/0.241s；所有增强前后图独立 DSEC PASS，六项回归通过。证据与复现脚本在 `research/stran2-guide-20261002/materialized_helper_audit/`。
+
+总共 16/63 合并，余47个只记 `NOT_MERGED`，绝不解释为不可证明。63个关系本来都满足 reset 与 unrestricted-image 义务，数学上已是一步归纳可证。额外一次 wb verbose replay 0.064s、与首轮产物同图，记录的 UNKNOWN 为0；源码显示候选类别会在任意前态的归纳反例重仿真时细分，可能丢失实际 image 有效关系，但日志没有逐节点 class/具体 root-h 查询轨迹，故这只是有依据的假说，不是已定位原因。这个对照说明实际证明取得与理论充分条件有区别，不能称新证明定理。
+
+尤其 wb 的 `h=(lit1144 & lit1508)` 在完整原图中已存在为 node3895/lit7790；待替换 root759，h 的 fanin 为 node572/754，均早于 root，原依赖无环。故辅助物化不新增 AND，且不能因 node3895 编号较晚就把它视作不可复用。这个发现触发了上文**全原图结构 alias 与新 Build 归因重查**。它不否定原产品 DSEC 或总面积测量，但可能改变其中多少应称“真正新表达式”的结论。
+
 ## 2026-10-01 并行时序 Guide 研究（已暂停，等待新的算法方向）
 
 用户要求继承此前会话，将组合与时序 Guide 分开，以较大的可达样本及压缩改善时序 Build，并明确授权本轮“额度不限，深入探索”。质量先以超过已验证的 Fast35 联合稳定基线后 **0.28169% / 35 AND / 29 Build / 8 例**，且扩展到更多和更大电路为检查点；未承诺必然达到的数值提升。只统计上述独立自由状态 SAT、完整 SEQ 和精确提交重放同时满足的 Build。总 Build、总 SEQ、Direct 以及 CBS-only 整流程差均另列。时间暂不是放弃有质量价值方向的理由，但必须记录工作量、覆盖和超时。

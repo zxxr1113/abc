@@ -1,0 +1,781 @@
+[
+  {
+    "anytime_certificate": {
+      "candidate_index": 1,
+      "chunk": "chunk_00000",
+      "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "miter_literals": {
+        "free": 427,
+        "reset": 0,
+        "step": 437
+      },
+      "out": -5,
+      "receipts": {
+        "free": {
+          "assumptions": [
+            427
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "001_free.queries",
+          "queries_sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf",
+          "result": "SAT",
+          "results_file": "001_free.results.csv",
+          "results_sha256": "942092424b8d69c1671d85e1284b3f7f1185ae7260fe792f8e1e1d2aa07d0908",
+          "reused": false,
+          "row": 1
+        },
+        "reset": {
+          "assumptions": [
+            0
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "000_reset.queries",
+          "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+          "result": "UNSAT",
+          "results_file": "000_reset.results.csv",
+          "results_sha256": "380fe4ba98da1a99ec54fb9426a9d9e7f044a12406bd584abdc7514bf9467f34",
+          "reused": true,
+          "row": 0
+        },
+        "step": {
+          "assumptions": [
+            437
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "002_step.queries",
+          "queries_sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed",
+          "result": "UNSAT",
+          "results_file": "002_step.results.csv",
+          "results_sha256": "f5f174bca83c2fccae02efaed5e413b09d9f127ab1fc709288f51f09d78faaf6",
+          "reused": false,
+          "row": 1
+        }
+      },
+      "recipe": [
+        47,
+        66,
+        -3,
+        81
+      ],
+      "root": 51,
+      "schema": 1
+    },
+    "conservative_gain": 1,
+    "divisor_roles": {
+      "23": {
+        "distance": 2,
+        "nonlinear": false,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      },
+      "33": {
+        "distance": 6,
+        "nonlinear": true,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      },
+      "40": {
+        "distance": 4,
+        "nonlinear": true,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      }
+    },
+    "divisors": [
+      23,
+      33,
+      40
+    ],
+    "free_witness": {
+      "inputs": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "kind": "free_PI_RO",
+      "lane": 7,
+      "replacement": 1,
+      "replay": "PASS",
+      "root": 0,
+      "state": [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    "fresh_gates": 2,
+    "original_mffc": 3,
+    "out": -5,
+    "proof": {
+      "commit": "NOT_RUN",
+      "dsec": "NOT_RUN",
+      "exact_selected_set_gain": null,
+      "free": "SAT",
+      "free_witness_replayed": true,
+      "main_metric_eligible": false,
+      "native_recipe_novelty": "NOT_CHECKED",
+      "production_seq_proof": "NOT_RUN",
+      "reset": "UNSAT",
+      "sequential_relation": "PROVED_RESET_IMAGE",
+      "skipped_later_obligations_reason": null,
+      "step": "UNSAT"
+    },
+    "qualified_offline_opportunity": true,
+    "recipe": [
+      47,
+      66,
+      -3,
+      81
+    ],
+    "removable": 3,
+    "removable_nodes": [
+      49,
+      50,
+      51
+    ],
+    "retained_mffc_nodes": [],
+    "root": 51,
+    "witness_lane": 7
+  },
+  {
+    "anytime_certificate": {
+      "candidate_index": 9,
+      "chunk": "chunk_00000",
+      "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "miter_literals": {
+        "free": 585,
+        "reset": 0,
+        "step": 593
+      },
+      "out": -2,
+      "receipts": {
+        "free": {
+          "assumptions": [
+            585
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "001_free.queries",
+          "queries_sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf",
+          "result": "SAT",
+          "results_file": "001_free.results.csv",
+          "results_sha256": "942092424b8d69c1671d85e1284b3f7f1185ae7260fe792f8e1e1d2aa07d0908",
+          "reused": false,
+          "row": 9
+        },
+        "reset": {
+          "assumptions": [
+            0
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "000_reset.queries",
+          "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+          "result": "UNSAT",
+          "results_file": "000_reset.results.csv",
+          "results_sha256": "380fe4ba98da1a99ec54fb9426a9d9e7f044a12406bd584abdc7514bf9467f34",
+          "reused": true,
+          "row": 0
+        },
+        "step": {
+          "assumptions": [
+            593
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "002_step.queries",
+          "queries_sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed",
+          "result": "UNSAT",
+          "results_file": "002_step.results.csv",
+          "results_sha256": "f5f174bca83c2fccae02efaed5e413b09d9f127ab1fc709288f51f09d78faaf6",
+          "reused": false,
+          "row": 9
+        }
+      },
+      "recipe": [
+        47,
+        71
+      ],
+      "root": 56,
+      "schema": 1
+    },
+    "conservative_gain": 1,
+    "divisor_roles": {
+      "23": {
+        "distance": 2,
+        "nonlinear": false,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      },
+      "35": {
+        "distance": 5,
+        "nonlinear": true,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      }
+    },
+    "divisors": [
+      23,
+      35
+    ],
+    "free_witness": {
+      "inputs": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "kind": "free_PI_RO",
+      "lane": 7,
+      "replacement": 1,
+      "replay": "PASS",
+      "root": 0,
+      "state": [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    "fresh_gates": 1,
+    "original_mffc": 2,
+    "out": -2,
+    "proof": {
+      "commit": "NOT_RUN",
+      "dsec": "NOT_RUN",
+      "exact_selected_set_gain": null,
+      "free": "SAT",
+      "free_witness_replayed": true,
+      "main_metric_eligible": false,
+      "native_recipe_novelty": "NOT_CHECKED",
+      "production_seq_proof": "NOT_RUN",
+      "reset": "UNSAT",
+      "sequential_relation": "PROVED_RESET_IMAGE",
+      "skipped_later_obligations_reason": null,
+      "step": "UNSAT"
+    },
+    "qualified_offline_opportunity": true,
+    "recipe": [
+      47,
+      71
+    ],
+    "removable": 2,
+    "removable_nodes": [
+      55,
+      56
+    ],
+    "retained_mffc_nodes": [],
+    "root": 56,
+    "witness_lane": 7
+  },
+  {
+    "anytime_certificate": {
+      "candidate_index": 23,
+      "chunk": "chunk_00000",
+      "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "miter_literals": {
+        "free": 817,
+        "reset": 0,
+        "step": 825
+      },
+      "out": -2,
+      "receipts": {
+        "free": {
+          "assumptions": [
+            817
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "001_free.queries",
+          "queries_sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf",
+          "result": "SAT",
+          "results_file": "001_free.results.csv",
+          "results_sha256": "942092424b8d69c1671d85e1284b3f7f1185ae7260fe792f8e1e1d2aa07d0908",
+          "reused": false,
+          "row": 23
+        },
+        "reset": {
+          "assumptions": [
+            0
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "000_reset.queries",
+          "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+          "result": "UNSAT",
+          "results_file": "000_reset.results.csv",
+          "results_sha256": "380fe4ba98da1a99ec54fb9426a9d9e7f044a12406bd584abdc7514bf9467f34",
+          "reused": true,
+          "row": 0
+        },
+        "step": {
+          "assumptions": [
+            825
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "002_step.queries",
+          "queries_sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed",
+          "result": "UNSAT",
+          "results_file": "002_step.results.csv",
+          "results_sha256": "f5f174bca83c2fccae02efaed5e413b09d9f127ab1fc709288f51f09d78faaf6",
+          "reused": false,
+          "row": 23
+        }
+      },
+      "recipe": [
+        55,
+        76
+      ],
+      "root": 61,
+      "schema": 1
+    },
+    "conservative_gain": 1,
+    "divisor_roles": {
+      "27": {
+        "distance": 2,
+        "nonlinear": false,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      },
+      "38": {
+        "distance": 3,
+        "nonlinear": true,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      }
+    },
+    "divisors": [
+      27,
+      38
+    ],
+    "free_witness": {
+      "inputs": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "kind": "free_PI_RO",
+      "lane": 7,
+      "replacement": 1,
+      "replay": "PASS",
+      "root": 0,
+      "state": [
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ]
+    },
+    "fresh_gates": 1,
+    "original_mffc": 2,
+    "out": -2,
+    "proof": {
+      "commit": "NOT_RUN",
+      "dsec": "NOT_RUN",
+      "exact_selected_set_gain": null,
+      "free": "SAT",
+      "free_witness_replayed": true,
+      "main_metric_eligible": false,
+      "native_recipe_novelty": "NOT_CHECKED",
+      "production_seq_proof": "NOT_RUN",
+      "reset": "UNSAT",
+      "sequential_relation": "PROVED_RESET_IMAGE",
+      "skipped_later_obligations_reason": null,
+      "step": "UNSAT"
+    },
+    "qualified_offline_opportunity": true,
+    "recipe": [
+      55,
+      76
+    ],
+    "removable": 2,
+    "removable_nodes": [
+      60,
+      61
+    ],
+    "retained_mffc_nodes": [],
+    "root": 61,
+    "witness_lane": 7
+  },
+  {
+    "anytime_certificate": {
+      "candidate_index": 31,
+      "chunk": "chunk_00000",
+      "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "miter_literals": {
+        "free": 949,
+        "reset": 0,
+        "step": 957
+      },
+      "out": -3,
+      "receipts": {
+        "free": {
+          "assumptions": [
+            949
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "001_free.queries",
+          "queries_sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf",
+          "result": "SAT",
+          "results_file": "001_free.results.csv",
+          "results_sha256": "942092424b8d69c1671d85e1284b3f7f1185ae7260fe792f8e1e1d2aa07d0908",
+          "reused": false,
+          "row": 31
+        },
+        "reset": {
+          "assumptions": [
+            0
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "000_reset.queries",
+          "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+          "result": "UNSAT",
+          "results_file": "000_reset.results.csv",
+          "results_sha256": "380fe4ba98da1a99ec54fb9426a9d9e7f044a12406bd584abdc7514bf9467f34",
+          "reused": true,
+          "row": 0
+        },
+        "step": {
+          "assumptions": [
+            957
+          ],
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "queries_file": "002_step.queries",
+          "queries_sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed",
+          "result": "UNSAT",
+          "results_file": "002_step.results.csv",
+          "results_sha256": "f5f174bca83c2fccae02efaed5e413b09d9f127ab1fc709288f51f09d78faaf6",
+          "reused": false,
+          "row": 31
+        }
+      },
+      "recipe": [
+        46,
+        75
+      ],
+      "root": 102,
+      "schema": 1
+    },
+    "conservative_gain": 1,
+    "divisor_roles": {
+      "23": {
+        "distance": 2,
+        "nonlinear": false,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      },
+      "37": {
+        "distance": null,
+        "nonlinear": true,
+        "retained_mffc": 0,
+        "roles": [
+          "peer"
+        ]
+      }
+    },
+    "divisors": [
+      23,
+      37
+    ],
+    "free_witness": {
+      "inputs": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "kind": "free_PI_RO",
+      "lane": 0,
+      "replacement": 1,
+      "replay": "PASS",
+      "root": 0,
+      "state": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    "fresh_gates": 1,
+    "original_mffc": 2,
+    "out": -3,
+    "proof": {
+      "commit": "NOT_RUN",
+      "dsec": "NOT_RUN",
+      "exact_selected_set_gain": null,
+      "free": "SAT",
+      "free_witness_replayed": true,
+      "main_metric_eligible": false,
+      "native_recipe_novelty": "NOT_CHECKED",
+      "production_seq_proof": "NOT_RUN",
+      "reset": "UNSAT",
+      "sequential_relation": "PROVED_RESET_IMAGE",
+      "skipped_later_obligations_reason": null,
+      "step": "UNSAT"
+    },
+    "qualified_offline_opportunity": true,
+    "recipe": [
+      46,
+      75
+    ],
+    "removable": 2,
+    "removable_nodes": [
+      101,
+      102
+    ],
+    "retained_mffc_nodes": [],
+    "root": 102,
+    "witness_lane": 0
+  },
+  {
+    "anytime_certificate": {
+      "candidate_index": 0,
+      "chunk": "chunk_00001",
+      "cnf_sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184",
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "miter_literals": {
+        "free": 409,
+        "reset": 0,
+        "step": 417
+      },
+      "out": -3,
+      "receipts": {
+        "free": {
+          "assumptions": [
+            409
+          ],
+          "cnf_sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184",
+          "queries_file": "001_free.queries",
+          "queries_sha256": "bf3bd8eac743e74a1275d82e2e821cce9516f5bc11578bb86dbdc7b46c009626",
+          "result": "SAT",
+          "results_file": "001_free.results.csv",
+          "results_sha256": "a801c90a5369d92a5f4b604aae58e4948603f3924f76c34c267b2d7c20000f3e",
+          "reused": false,
+          "row": 0
+        },
+        "reset": {
+          "assumptions": [
+            0
+          ],
+          "cnf_sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184",
+          "queries_file": "000_reset.queries",
+          "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+          "result": "UNSAT",
+          "results_file": "000_reset.results.csv",
+          "results_sha256": "b68bb49a904d60eef0a479186851d24837d587b19ab6a2a68027f8b383b1719d",
+          "reused": false,
+          "row": 0
+        },
+        "step": {
+          "assumptions": [
+            417
+          ],
+          "cnf_sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184",
+          "queries_file": "002_step.queries",
+          "queries_sha256": "3eec78754fb56c1d2c1c1e234bde5405c2f356ef3f4aa0d99cf7d78d068a3583",
+          "result": "UNSAT",
+          "results_file": "002_step.results.csv",
+          "results_sha256": "e3cff494c1c9286e4fc046d5d5600f5faa8321be1378a19b3a8c8d26e758fb51",
+          "reused": false,
+          "row": 0
+        }
+      },
+      "recipe": [
+        54,
+        59
+      ],
+      "root": 110,
+      "schema": 1
+    },
+    "conservative_gain": 1,
+    "divisor_roles": {
+      "27": {
+        "distance": 2,
+        "nonlinear": false,
+        "retained_mffc": 0,
+        "roles": [
+          "tfi"
+        ]
+      },
+      "29": {
+        "distance": null,
+        "nonlinear": true,
+        "retained_mffc": 0,
+        "roles": [
+          "peer"
+        ]
+      }
+    },
+    "divisors": [
+      27,
+      29
+    ],
+    "free_witness": {
+      "inputs": [
+        1,
+        0,
+        0,
+        0
+      ],
+      "kind": "free_PI_RO",
+      "lane": 0,
+      "replacement": 1,
+      "replay": "PASS",
+      "root": 0,
+      "state": [
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0
+      ]
+    },
+    "fresh_gates": 1,
+    "original_mffc": 2,
+    "out": -3,
+    "proof": {
+      "commit": "NOT_RUN",
+      "dsec": "NOT_RUN",
+      "exact_selected_set_gain": null,
+      "free": "SAT",
+      "free_witness_replayed": true,
+      "main_metric_eligible": false,
+      "native_recipe_novelty": "NOT_CHECKED",
+      "production_seq_proof": "NOT_RUN",
+      "reset": "UNSAT",
+      "sequential_relation": "PROVED_RESET_IMAGE",
+      "skipped_later_obligations_reason": null,
+      "step": "UNSAT"
+    },
+    "qualified_offline_opportunity": true,
+    "recipe": [
+      54,
+      59
+    ],
+    "removable": 2,
+    "removable_nodes": [
+      109,
+      110
+    ],
+    "retained_mffc_nodes": [],
+    "root": 110,
+    "witness_lane": 0
+  }
+]

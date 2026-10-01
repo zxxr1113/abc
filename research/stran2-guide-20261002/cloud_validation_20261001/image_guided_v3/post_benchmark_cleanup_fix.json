@@ -1,0 +1,9 @@
+{
+  "scope": "Post-v3-benchmark supervisor startup robustness change; no rerun of the frozen cohort claimed",
+  "frozen_benchmark_anytime_sha256": "3f817b4b7ac9e0919a94ccc210e1aa86ea655416f467850a9763f7e9e5b61e62",
+  "current_sources": {
+    "research/stran2-guide-20261002/nonlinear_divisors/anytime.py": "f41e674fed0221341bdf13a730a8f58606cbe985fc83918b7cae94b28fd6a038",
+    "research/stran2-guide-20261002/nonlinear_divisors/test_anytime_supervisor.py": "5a2d3674e6508aae45269e31f36ed4623cc37833d18d324f538eea4f07cd4ba1"
+  },
+  "patch_sha256": "490caf1a915017e808f0f94a9c6512887c8902039d62e9c6238823b62115a35e"
+}

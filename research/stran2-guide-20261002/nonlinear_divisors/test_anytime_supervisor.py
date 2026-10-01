@@ -4,6 +4,7 @@
 Child processes only emit synthetic protocol events or sleep. Checkpoint files
 are synthetic protocol fixtures; they are not proof or measured-area evidence.
 """
+import errno
 import json
 import os
 from pathlib import Path
@@ -191,6 +192,108 @@ class SupervisorTests(unittest.TestCase):
         except FileNotFoundError:
             return False
         return state not in ("Z", "X")
+
+    def test_log_open_enospc_does_not_spawn_and_preserves_fallback(self):
+        for explicit_fallback in (False, True):
+            with self.subTest(explicit=explicit_fallback), tempfile.TemporaryDirectory() as temp:
+                root=Path(temp);out=root/"full";out.mkdir();fallback=root/"writable";fallback.mkdir()
+                original_open=Path.open
+                def full_output(path,*args,**kwargs):
+                    if path.parent==out:
+                        raise OSError(errno.ENOSPC,"synthetic full output filesystem")
+                    return original_open(path,*args,**kwargs)
+                options=dict(failure_dir=fallback) if explicit_fallback else {}
+                with mock.patch.object(Path,"open",full_output), \
+                     mock.patch.object(Path,"cwd",return_value=fallback), \
+                     mock.patch.object(a.subprocess,"Popen") as spawned:
+                    with self.assertRaises(OSError) as caught:
+                        a.supervise([sys.executable,"-c","import time; time.sleep(30)"],out,
+                                    time.monotonic(),2,**options)
+                    spawned.assert_not_called()
+                self.assertEqual(caught.exception.errno,errno.ENOSPC)
+                files=list(fallback.glob("stran2-supervisor-failure-*.json"))
+                self.assertEqual(len(files),1)
+                report=json.loads(files[0].read_text())
+                self.assertEqual(report["status"],"SUPERVISOR_ERROR")
+                self.assertIsNone(report["child_pid"])
+                self.assertEqual(report["errno"],errno.ENOSPC)
+                self.assertIn("synthetic full output filesystem",report["traceback"])
+                self.assertTrue(any(str(files[0]) in note for note in caught.exception.__notes__))
+
+    def test_popen_failure_preserves_primary_error_record(self):
+        with tempfile.TemporaryDirectory() as temp:
+            out=Path(temp);error=OSError(errno.EAGAIN,"synthetic spawn failure")
+            with mock.patch.object(a.subprocess,"Popen",side_effect=error):
+                with self.assertRaises(OSError) as caught:self.run_child(out,"pass")
+            self.assertIs(caught.exception,error)
+            report=json.loads((out/"supervisor_failure.json").read_text())
+            self.assertIsNone(report["child_pid"])
+            self.assertIn("synthetic spawn failure",report["error"])
+
+    def startup_failure_cleans_group(self,stage):
+        with tempfile.TemporaryDirectory() as temp:
+            out=Path(temp);pidfile=out/"descendant.pid";spawned=[]
+            code=("import subprocess,sys,time; from pathlib import Path; "
+                  "p=subprocess.Popen([sys.executable,'-B','-c','import time; time.sleep(30)']); "
+                  f"Path({str(pidfile)!r}).write_text(str(p.pid)); time.sleep(30)")
+            original_popen=a.subprocess.Popen
+            selector=a.selectors.DefaultSelector();original_register=selector.register;registrations=0
+            def track(*args,**kwargs):
+                process=original_popen(*args,**kwargs);spawned.append(process);return process
+            def fail():
+                limit=time.monotonic()+2
+                while not pidfile.exists() and time.monotonic()<limit:time.sleep(0.005)
+                self.assertTrue(pidfile.exists(),"synthetic grandchild did not start")
+                raise OSError(errno.EMFILE,"synthetic selector startup failure")
+            def register(*args,**kwargs):
+                nonlocal registrations
+                registrations+=1
+                if registrations==2:fail()
+                return original_register(*args,**kwargs)
+            descendant=None
+            try:
+                with mock.patch.object(a.subprocess,"Popen",side_effect=track), \
+                     mock.patch.object(a.selectors,"DefaultSelector",side_effect=fail if stage=="constructor" else lambda:selector), \
+                     mock.patch.object(selector,"register",side_effect=register):
+                    with self.assertRaisesRegex(OSError,"selector startup failure"):
+                        self.run_child(out,code,seconds=5)
+                self.assertEqual(len(spawned),1);leader=spawned[0];descendant=int(pidfile.read_text())
+                self.assertIsNotNone(leader.returncode)
+                with self.assertRaises(ChildProcessError):os.waitpid(leader.pid,os.WNOHANG)
+                until=time.monotonic()+0.5
+                while self.process_is_live(descendant) and time.monotonic()<until:time.sleep(0.01)
+                self.assertFalse(self.process_is_live(descendant),"owned grandchild survived startup error")
+                self.assertTrue(leader.stdout.closed and leader.stderr.closed)
+                report=json.loads((out/"supervisor_failure.json").read_text())
+                self.assertEqual(report["child_pid"],leader.pid)
+                self.assertEqual(report["child_exit_code"],leader.returncode)
+            finally:
+                selector.close()
+                for process in spawned:
+                    try:os.killpg(process.pid,signal.SIGKILL)
+                    except ProcessLookupError:pass
+                    process.wait()
+                if descendant is None and pidfile.exists():descendant=int(pidfile.read_text())
+                if descendant is not None:
+                    try:os.kill(descendant,signal.SIGKILL)
+                    except ProcessLookupError:pass
+
+    @unittest.skipUnless(os.name == "posix" and Path("/proc").exists(), "Linux process-group test")
+    def test_selector_constructor_failure_kills_and_reaps_owned_group(self):
+        self.startup_failure_cleans_group("constructor")
+
+    @unittest.skipUnless(os.name == "posix" and Path("/proc").exists(), "Linux process-group test")
+    def test_selector_registration_failure_kills_and_reaps_owned_group(self):
+        self.startup_failure_cleans_group("registration")
+
+    def test_failure_record_error_does_not_mask_original_exception(self):
+        with tempfile.TemporaryDirectory() as temp:
+            error=OSError(errno.EAGAIN,"original startup error")
+            with mock.patch.object(a.subprocess,"Popen",side_effect=error), \
+                 mock.patch.object(a,"write_json",side_effect=OSError(errno.ENOSPC,"output full")), \
+                 mock.patch.object(a.tempfile,"NamedTemporaryFile",side_effect=OSError(errno.ENOSPC,"fallback full")):
+                with self.assertRaises(OSError) as caught:self.run_child(Path(temp),"pass")
+            self.assertIs(caught.exception,error)
 
     def test_checkpoint_rejects_missing_required_artifacts(self):
         for missing in ("all", "product.aig", "selection.json"):

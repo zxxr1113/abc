@@ -1,0 +1,163 @@
+{
+  "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+  "after_sha256": "990038dd3467fbd3bfba27bfceac11dc382798f50ed72cbcec74ccd28eabcf25",
+  "command": "&r /tmp/materialized-helper-audit-v1/060_wb_dma/augmented.aig; &scorr -F 1 -C 1000 -v -w; &w /tmp/materialized-helper-audit-v1/diagnostic_wb/verbose.aig",
+  "direct_pair_attempt": "UNKNOWN_NO_PER_PAIR_TRACE",
+  "exit_code": 0,
+  "extra_diagnostic_cost": true,
+  "failed_sum": 0,
+  "graph_identical_to_primary_round1": true,
+  "graph_sha256": "a86a14acc5745d1a475f03d3a0b2c9e309911dfab9f184ff5e1dc38c54a6b7b8",
+  "log_sha256": "eafde304a23d5f0894509c13aac3d718738c655be527ae756f8c8f295808418d",
+  "source_sha256": "93c822a8301f3d212a7f58f2de2d040280c33f1fc75b65d30680bee651b114e0",
+  "specific_class_membership_after_simulation": "UNKNOWN_NO_PER_NODE_TRACE",
+  "status": "EXIT",
+  "status_rows": [
+    {
+      "disproved": 0,
+      "failed": 0,
+      "proved": 0,
+      "round": 0
+    },
+    {
+      "disproved": 70,
+      "failed": 0,
+      "proved": 20,
+      "round": 1
+    },
+    {
+      "disproved": 242,
+      "failed": 0,
+      "proved": 81,
+      "round": 2
+    },
+    {
+      "disproved": 384,
+      "failed": 0,
+      "proved": 69,
+      "round": 3
+    },
+    {
+      "disproved": 383,
+      "failed": 0,
+      "proved": 90,
+      "round": 4
+    },
+    {
+      "disproved": 329,
+      "failed": 0,
+      "proved": 89,
+      "round": 5
+    },
+    {
+      "disproved": 362,
+      "failed": 0,
+      "proved": 119,
+      "round": 6
+    },
+    {
+      "disproved": 222,
+      "failed": 0,
+      "proved": 71,
+      "round": 7
+    },
+    {
+      "disproved": 255,
+      "failed": 0,
+      "proved": 75,
+      "round": 8
+    },
+    {
+      "disproved": 447,
+      "failed": 0,
+      "proved": 121,
+      "round": 9
+    },
+    {
+      "disproved": 611,
+      "failed": 0,
+      "proved": 224,
+      "round": 10
+    },
+    {
+      "disproved": 462,
+      "failed": 0,
+      "proved": 142,
+      "round": 11
+    },
+    {
+      "disproved": 454,
+      "failed": 0,
+      "proved": 112,
+      "round": 12
+    },
+    {
+      "disproved": 251,
+      "failed": 0,
+      "proved": 33,
+      "round": 13
+    },
+    {
+      "disproved": 130,
+      "failed": 0,
+      "proved": 40,
+      "round": 14
+    },
+    {
+      "disproved": 93,
+      "failed": 0,
+      "proved": 37,
+      "round": 15
+    },
+    {
+      "disproved": 64,
+      "failed": 0,
+      "proved": 24,
+      "round": 16
+    },
+    {
+      "disproved": 58,
+      "failed": 0,
+      "proved": 27,
+      "round": 17
+    },
+    {
+      "disproved": 34,
+      "failed": 0,
+      "proved": 14,
+      "round": 18
+    },
+    {
+      "disproved": 22,
+      "failed": 0,
+      "proved": 13,
+      "round": 19
+    },
+    {
+      "disproved": 8,
+      "failed": 0,
+      "proved": 7,
+      "round": 20
+    },
+    {
+      "disproved": 5,
+      "failed": 0,
+      "proved": 5,
+      "round": 21
+    },
+    {
+      "disproved": 2,
+      "failed": 0,
+      "proved": 1,
+      "round": 22
+    },
+    {
+      "disproved": 0,
+      "failed": 0,
+      "proved": 0,
+      "round": 23
+    }
+  ],
+  "timeout_seconds": 120,
+  "wall_s": 0.06400027800009411
+}

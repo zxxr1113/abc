@@ -1,0 +1,70 @@
+{
+  "scope": "Frozen reviewed fixed-six image-guided research; no all55 results yet; full evidence distributed separately",
+  "files": [
+    {
+      "path": "v1_raw_comparison.json",
+      "source": "/tmp/image-guided-pilot-v1/paired_raw_build_comparison.json",
+      "sha256": "07b2ba35fb3dca7a24c77e8f549a16d22d5c5b3dc225fb74635d8343f3113158"
+    },
+    {
+      "path": "v2_projection_comparison.json",
+      "source": "/tmp/image-guided-pilot-v2/paired_discovery_skip_comparison.json",
+      "sha256": "64a2ddef1238f4cd261826070ada591ce9dd716744e61a1be47c73e2a9b2f304"
+    },
+    {
+      "path": "v1_corrected_comparison.json",
+      "source": "/tmp/image-guided-global-corrected-comparison.json",
+      "sha256": "ca39a6edeef78caeea9bb1747ebc09310ec1d697c354ead032655b2734c17146"
+    },
+    {
+      "path": "v3_corrected_summary.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/image-guided-v3-corrected-attribution-summary.json",
+      "sha256": "b9156a8c489e81b089fd3ffbe60137b65526b0d2b4d27bea483e123998ac9bd9"
+    },
+    {
+      "path": "v3_failed_attempt.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/image-guided-v3-enospc-failure-summary.json",
+      "sha256": "95dadaee500d8eaecb91d83e8edc5dfee69263c674c5fb3a56b362800dc2c6d3"
+    },
+    {
+      "path": "post_benchmark_cleanup_fix.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/supervisor_startup_cleanup.json",
+      "sha256": "d0e87f59ce408e99b3ba99d3b548b8be30a63cb73337dca3d9a0190b8ba12a7d"
+    },
+    {
+      "path": "v3_product_review.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/image-guided-v3-independent-products/review.json",
+      "sha256": "2e10e7fce312baaddb28e3ed05a2d7cfe5664f95d94546569e00ff56256bb528"
+    },
+    {
+      "path": "v3_b20_attribution_review.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/image-guided-v3-b20-independent-attribution/review.json",
+      "sha256": "e68aa7cdc0793ac0c40c4f6e70026b2eb6f18a138328720490b9575ff49274dc"
+    },
+    {
+      "path": "v3_unchanged_case_binding.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/image-guided-v1-v3-independent-binding.json",
+      "sha256": "4e9f0d2da017302dc9acaf3b0831410684cab3e73d2469b47bc9665e1eb66e90"
+    },
+    {
+      "path": "release_nonlinear_tests.log",
+      "source": "/tmp/image-guided-final-nonlinear-tests.log",
+      "sha256": "d69debbe77a9e087561b4811d3e2973aabd917c85b397522da3477106cce5ac8"
+    },
+    {
+      "path": "release_diagnostic_tests.log",
+      "source": "/tmp/image-guided-final-diagnostic-tests.log",
+      "sha256": "02ad361ed638838284714261d5f96ea7da544e6a64c18d541ba6866d5d61348a"
+    },
+    {
+      "path": "release_depth2_tests.log",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/release-v3-depth2-tests.log",
+      "sha256": "c08c1442a49ebd8956c125dbc85c8fe13f5afd8dac88d6d75f3f6d988c9caac3"
+    },
+    {
+      "path": "release_cohort_orchestration_tests.log",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/release-v3-full-cohort-tests.log",
+      "sha256": "5382c6071588bd414795c5597dcd74031cc2f05bc6465e9cc351dbb8f16a7f18"
+    }
+  ]
+}

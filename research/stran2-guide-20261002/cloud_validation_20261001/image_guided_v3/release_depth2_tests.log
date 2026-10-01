@@ -1,0 +1,16 @@
+test_all_predecessor_frame_pi_independent (test_deeper_image.ExhaustiveTests.test_all_predecessor_frame_pi_independent) ... ok
+test_combinational_circuit_with_no_state (test_deeper_image.ExhaustiveTests.test_combinational_circuit_with_no_state) ... ok
+test_constants_complemented_next_state_and_internal_gates (test_deeper_image.ExhaustiveTests.test_constants_complemented_next_state_and_internal_gates) ... ok
+test_current_pi_independent_from_predecessor (test_deeper_image.ExhaustiveTests.test_current_pi_independent_from_predecessor) ... ok
+test_deadline_checked_during_frame_construction (test_deeper_image.ExhaustiveTests.test_deadline_checked_during_frame_construction) ... ok
+test_delay_transient_invariant_needs_depth_two (test_deeper_image.ExhaustiveTests.test_delay_transient_invariant_needs_depth_two) ... ok
+test_intermediate_reset_frame_cannot_be_omitted (test_deeper_image.ExhaustiveTests.test_intermediate_reset_frame_cannot_be_omitted) ... ok
+test_random_small_original_transition_exhaustion (test_deeper_image.ExhaustiveTests.test_random_small_original_transition_exhaustion) ... ok
+test_reject_bad_graph_and_recipe (test_deeper_image.ExhaustiveTests.test_reject_bad_graph_and_recipe) ... ok
+test_self_loop_unreachable_state_remains_unproved (test_deeper_image.ExhaustiveTests.test_self_loop_unreachable_state_remains_unproved) ... ok
+test_solver_matches_exhaustive_obligations (test_deeper_image.SolverTests.test_solver_matches_exhaustive_obligations) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.139s
+
+OK

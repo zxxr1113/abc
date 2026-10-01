@@ -1,0 +1,68 @@
+test_copied_input_or_bound_evidence_drift_is_rejected (test_audit_online_products.Tests.test_copied_input_or_bound_evidence_drift_is_rejected) ... ok
+test_matched_grammar_includes_outputs_outside_pool (test_audit_online_products.Tests.test_matched_grammar_includes_outputs_outside_pool) ... ok
+test_missing_or_unvalidated_cases_are_not_zero (test_audit_online_products.Tests.test_missing_or_unvalidated_cases_are_not_zero) ... ok
+test_notice_preserves_earliest_best_and_deadline (test_audit_online_products.Tests.test_notice_preserves_earliest_best_and_deadline) ... ok
+test_only_exact_conclusive_receipts_skip_solver (test_audit_online_products.Tests.test_only_exact_conclusive_receipts_skip_solver) ... ok
+test_parsed_cache_still_checks_each_receipt_hash (test_audit_online_products.Tests.test_parsed_cache_still_checks_each_receipt_hash) ... ok
+test_receipt_checks_exact_cnf_assumptions_status_and_paths (test_audit_online_products.Tests.test_receipt_checks_exact_cnf_assumptions_status_and_paths) ... ok
+test_unknown_receipts_are_requeried (test_audit_online_products.Tests.test_unknown_receipts_are_requeried) ... ok
+test_cost_and_direct_disguised_as_build_rejected (test_audit_products.Tests.test_cost_and_direct_disguised_as_build_rejected) ... ok
+test_direct_zero_gates_can_cost_more_than_build (test_audit_products.Tests.test_direct_zero_gates_can_cost_more_than_build) ... ok
+test_independent_free_witness_rejects_tampering (test_audit_products.Tests.test_independent_free_witness_rejects_tampering) ... ok
+test_output_never_enters_source_evidence (test_audit_products.Tests.test_output_never_enters_source_evidence) ... ok
+test_receipts_reconstruct_and_reject_status_and_row_changes (test_audit_products.Tests.test_receipts_reconstruct_and_reject_status_and_row_changes) ... ok
+test_replay_exact_same_set_differs_from_reselection (test_audit_products.Tests.test_replay_exact_same_set_differs_from_reselection) ... ok
+test_empty_size_stratum_not_zero_percent (test_compare_attribution.Tests.test_empty_size_stratum_not_zero_percent) ... ok
+test_equal_case_and_weighted_delta_are_distinct (test_compare_attribution.Tests.test_equal_case_and_weighted_delta_are_distinct) ... ok
+test_policy_mismatch_rejected (test_compare_attribution.Tests.test_policy_mismatch_rejected) ... ok
+test_unpaired_cohort_rejected (test_compare_attribution.Tests.test_unpaired_cohort_rejected) ... ok
+test_bad_model_and_source_miter_rejected (test_diagnostic.Tests.test_bad_model_and_source_miter_rejected) ... ok
+test_exhaustive_frame_maps_and_literal_polarities (test_diagnostic.Tests.test_exhaustive_frame_maps_and_literal_polarities) ... ok
+test_exhaustive_image_valid_class_preservation (test_diagnostic.Tests.test_exhaustive_image_valid_class_preservation) ... ok
+test_independent_current_inputs_required (test_diagnostic.Tests.test_independent_current_inputs_required) ... ok
+test_projection_keeps_target_and_pool (test_diagnostic.Tests.test_projection_keeps_target_and_pool) ... ok
+test_real_helper_sat_unsat_polarity_and_current_pi (test_diagnostic.Tests.test_real_helper_sat_unsat_polarity_and_current_pi) ... ok
+test_unreachable_image_never_reset_teacher (test_diagnostic.Tests.test_unreachable_image_never_reset_teacher) ... ok
+test_dead_constructed_gate_not_global_fresh_output (test_global_alias_products.Tests.test_dead_constructed_gate_not_global_fresh_output) ... ok
+test_demotion_preserves_exact_materialization (test_global_alias_products.Tests.test_demotion_preserves_exact_materialization) ... ok
+test_later_id_alias_and_complement (test_global_alias_products.Tests.test_later_id_alias_and_complement) ... ok
+test_novel_build_removal_does_not_reselect (test_global_alias_products.Tests.test_novel_build_removal_does_not_reselect) ... ok
+test_root_dependent_only_alias_is_not_safe (test_global_alias_products.Tests.test_root_dependent_only_alias_is_not_safe) ... ok
+test_two_gate_output_and_intermediate_aliases (test_global_alias_products.Tests.test_two_gate_output_and_intermediate_aliases) ... ok
+test_controller_rechecks_helper_after_budget_exhaustion (test_model_helper_guard.CaseBoundaryTests.test_controller_rechecks_helper_after_budget_exhaustion) ... ok
+test_entry_rejects_wrong_bound_helper_sha (test_model_helper_guard.CaseBoundaryTests.test_entry_rejects_wrong_bound_helper_sha) ... ok
+test_exit_rejects_drift_even_without_model_calls (test_model_helper_guard.CaseBoundaryTests.test_exit_rejects_drift_even_without_model_calls) ... ok
+test_transform_full_sha_checks_helper_at_entry_and_normal_exit (test_model_helper_guard.CaseBoundaryTests.test_transform_full_sha_checks_helper_at_entry_and_normal_exit) ... ok
+test_exception_path_checks_anchored_identity_in_finally (test_model_helper_guard.HelperGuardTests.test_exception_path_checks_anchored_identity_in_finally) ... ok
+test_fast_mode_still_independently_replays_models (test_model_helper_guard.HelperGuardTests.test_fast_mode_still_independently_replays_models) ... /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpktqzyl9t/call_1/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_fast_mode_still_rejects_cnf_query_and_projection_file_drift (test_model_helper_guard.HelperGuardTests.test_fast_mode_still_rejects_cnf_query_and_projection_file_drift) ... ok
+test_fast_repeated_calls_do_not_hash_helper_and_keep_artifact_checks (test_model_helper_guard.HelperGuardTests.test_fast_repeated_calls_do_not_hash_helper_and_keep_artifact_checks) ... /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkvfub6hu/call_1/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpkvfub6hu/call_2/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_in_place_same_length_restored_mtime_rejected_by_ctime (test_model_helper_guard.HelperGuardTests.test_in_place_same_length_restored_mtime_rejected_by_ctime) ... /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmp9n47rf7h/call_1/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_malformed_binding_rejected (test_model_helper_guard.HelperGuardTests.test_malformed_binding_rejected) ... ok
+test_mutation_during_helper_execution_rejected (test_model_helper_guard.HelperGuardTests.test_mutation_during_helper_execution_rejected) ... ok
+test_replacement_between_calls_rejected_without_rebinding (test_model_helper_guard.HelperGuardTests.test_replacement_between_calls_rejected_without_rebinding) ... /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpro9ybpx4/call_1/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_standalone_default_still_hashes_helper_before_and_after (test_model_helper_guard.HelperGuardTests.test_standalone_default_still_hashes_helper_before_and_after) ... /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpj_byf4at/call_1/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_unmutated_timeout_is_still_timeout (test_model_helper_guard.HelperGuardTests.test_unmutated_timeout_is_still_timeout) ... ok
+
+----------------------------------------------------------------------
+Ran 45 tests in 0.047s
+
+OK

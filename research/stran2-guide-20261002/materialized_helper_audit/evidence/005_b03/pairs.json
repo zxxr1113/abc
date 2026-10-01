@@ -1,0 +1,111 @@
+[
+  {
+    "appended_nodes": [
+      113,
+      114
+    ],
+    "candidate_sha256": "51df3151653b4b9a15ec5cabdd172d41a481e699c67af85b2c6478f5a699b0a0",
+    "free_witness_sha256": "6fe826a23cab295f5acf14ef3576c10a89a311fe5c2c13b86496db9c957ddca3",
+    "helper_literal": 229,
+    "helper_po_index": 5,
+    "index": 0,
+    "live_appended_nodes": [
+      113,
+      114
+    ],
+    "out": -5,
+    "recipe": [
+      47,
+      66,
+      -3,
+      81
+    ],
+    "root": 51,
+    "root_literal": 102,
+    "root_po_index": 4
+  },
+  {
+    "appended_nodes": [
+      115
+    ],
+    "candidate_sha256": "abdbab118df4168fa127266a3b57b722fe6201cc86aa150e8de63938cd0e7bff",
+    "free_witness_sha256": "6fe826a23cab295f5acf14ef3576c10a89a311fe5c2c13b86496db9c957ddca3",
+    "helper_literal": 230,
+    "helper_po_index": 7,
+    "index": 1,
+    "live_appended_nodes": [
+      115
+    ],
+    "out": -2,
+    "recipe": [
+      47,
+      71
+    ],
+    "root": 56,
+    "root_literal": 112,
+    "root_po_index": 6
+  },
+  {
+    "appended_nodes": [
+      116
+    ],
+    "candidate_sha256": "e90ecf8cc3dfe7689efadde8b912724f9a6ab110ab6c2fc4a5832f64a0ef6f66",
+    "free_witness_sha256": "6fe826a23cab295f5acf14ef3576c10a89a311fe5c2c13b86496db9c957ddca3",
+    "helper_literal": 232,
+    "helper_po_index": 9,
+    "index": 2,
+    "live_appended_nodes": [
+      116
+    ],
+    "out": -2,
+    "recipe": [
+      55,
+      76
+    ],
+    "root": 61,
+    "root_literal": 122,
+    "root_po_index": 8
+  },
+  {
+    "appended_nodes": [
+      117
+    ],
+    "candidate_sha256": "58eefc6ab133e2b751a22b9226988f422a18fafeb6a256eb6b00d269fb4ff06e",
+    "free_witness_sha256": "12b545185f4709d57dc482efbd00870a4daf8334c18ac578c1d8bcb393955534",
+    "helper_literal": 235,
+    "helper_po_index": 11,
+    "index": 3,
+    "live_appended_nodes": [
+      117
+    ],
+    "out": -3,
+    "recipe": [
+      46,
+      75
+    ],
+    "root": 102,
+    "root_literal": 204,
+    "root_po_index": 10
+  },
+  {
+    "appended_nodes": [
+      118
+    ],
+    "candidate_sha256": "e6780717e37c8398db4a58e06e358ddd736fcc1ae328182cba59fa7cf08e7c1c",
+    "free_witness_sha256": "12b545185f4709d57dc482efbd00870a4daf8334c18ac578c1d8bcb393955534",
+    "helper_literal": 237,
+    "helper_po_index": 13,
+    "index": 4,
+    "live_appended_nodes": [
+      118
+    ],
+    "out": -3,
+    "recipe": [
+      54,
+      59
+    ],
+    "root": 110,
+    "root_literal": 220,
+    "root_po_index": 12
+  }
+]

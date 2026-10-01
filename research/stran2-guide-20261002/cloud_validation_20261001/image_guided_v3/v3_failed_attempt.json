@@ -1,0 +1,29 @@
+{
+  "status": "INFRASTRUCTURE_FAILURE_ENOSPC",
+  "attempt": "/tmp/image-guided-pilot-v3",
+  "log": "/tmp/image-guided-pilot-v3.log",
+  "log_sha256": "4e804c93369e7a64b2c4e0dd81c2ff22b034b5c049861fccad551e6c99b86778",
+  "completed_case_records": [
+    {
+      "case": "005_b03",
+      "status": "COMPLETE",
+      "raw_gain": 5,
+      "result_sha256": "6b148effff5b5fca5020d32b6980b06dd455de1f6d0e605c84113f07f37d61d6"
+    },
+    {
+      "case": "041_des_area",
+      "status": "COMPLETE",
+      "raw_gain": 0,
+      "result_sha256": "62e3c3ec92ce059104341c25e3ce8fbf89986880a12bf048aa1363d01117a05e"
+    },
+    {
+      "case": "044_i2c",
+      "status": "COMPLETE",
+      "raw_gain": 13,
+      "result_sha256": "56872680eac901c9fe5e571dfb84c2fed82b35308281ecee1f9cdf07eeeda985"
+    }
+  ],
+  "cohort_finalization_missing": true,
+  "remaining_owned_processes_detected": false,
+  "conclusion": "Failed attempt retained unchanged; no completed-cohort quality or speed conclusion. Full predefined cohort will be rerun to workspace disk in a new directory."
+}

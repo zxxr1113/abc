@@ -190,3 +190,74 @@ completed discovery; all six incumbents passed both DSEC checks. These results
 close the lost-certificate/product gap, but do not establish native novelty,
 production integration or broad large-design gains. See `STRAN2.md` for the
 measurements, unchanged original timeouts and remaining discovery/proof limits.
+
+## Optional replay-checked image guidance
+
+Build the separate model-emitting helper against an existing `libabc.a`, then
+explicitly opt in. Omitting `--image-model-solver` keeps mode-off behavior:
+
+```sh
+bash research/stran2-guide-20261002/image_cegar_diagnostic/build_model_solver.sh \
+  /tmp/stran2-image-model-solver
+python3 -B research/stran2-guide-20261002/nonlinear_divisors/anytime.py \
+  --pilot --workers 2 --solver /tmp/stran2-query-solver --abc "$PWD/abc" \
+  --image-model-solver /tmp/stran2-image-model-solver \
+  --out /tmp/nonlinear-image-guided-pilot
+STRAN2_MODEL_SOLVER=/tmp/stran2-image-model-solver \
+STRAN2_SOLVER=/tmp/stran2-query-solver STRAN2_ABC="$PWD/abc" \
+  python3 -B -m unittest discover \
+  -s research/stran2-guide-20261002/nonlinear_divisors -p 'test_image_guided.py' -v
+```
+
+The initial divisor pools and their ranks remain frozen. After a completed proof
+chunk/checkpoint, eligible image-SAT models are replayed against the immutable
+original transition and deduplicated. Only new target-plus-pool constraints are
+appended to construction signatures; free witnesses and the independent proof
+solver are unchanged. The extra model queries, replay, search restarts and
+checkpoints all consume the same hard transform budget. Samples belong only to
+the unrestricted one-step-image search class, never to a reachable teacher.
+
+Attempted semantic candidate identities (including UNKNOWN) are not retried.
+The current implementation applies that exclusion after the same bounded top-k
+selection. Thus a completed search means this bounded procedure has completed;
+`no untried returned top-k` does not prove that no lower-ranked recipe exists.
+Old proved candidates and the best admitted checkpoint are retained.
+
+Build-only output gains need a separate selected-root Direct sensitivity audit
+before interpreting them as gains requiring fresh construction. That audit must
+include constants, saved pool/used divisors and same-grammar zero-fresh hash
+outputs, with actual retained-cone cleanup. Its additional proof and DSEC costs
+are reported separately. See `STRAN2.md` for the frozen cohort results and
+remaining comparison limits; this mode remains an isolated research prototype.
+
+### Corrected attribution and disk-backed evidence
+
+Run the separate auditors after a completed, source-verified cohort. Each output
+must be new. Prefer workspace disk, not space-limited `/tmp`, for substantial
+cohorts:
+
+```sh
+python3 -B research/stran2-guide-20261002/image_cegar_diagnostic/audit_online_products.py \
+  --run /path/to/image-guided-run --out /path/to/direct-attribution \
+  --solver /tmp/stran2-query-solver --abc "$PWD/abc"
+python3 -B research/stran2-guide-20261002/image_cegar_diagnostic/audit_global_alias_products.py \
+  --attribution /path/to/direct-attribution --out /path/to/global-alias-attribution \
+  --abc "$PWD/abc"
+```
+
+The second audit checks the entire original structural hash, including safe
+later-ID aliases. Prefix-created logic is not necessarily globally new logic.
+Demoted old expressions remain materialized identically in the fixed-selected-set
+no-genuine-Build arm; no unsafe forward-ID graph lookup is introduced. Structural
+novelty still does not establish Boolean novelty or global Direct saturation.
+The final six-case guarded-helper retry measured corrected gains
+3/7/0/75/41/76 AND, with4/6 complete searches and two budget-exhausted incumbents.
+Audit costs are additional. See the authoritative report for infrastructure
+failure retention, storage/timing limits and the prepared all55 protocol.
+
+Online helper integrity uses full SHA at case boundaries/controller validation
+and SHA-anchored metadata checks on every invocation. Standalone diagnostic mode
+retains full helper hashing by default. The post-benchmark supervisor fix opens
+its log before child launch and cleans up owned process groups on setup errors;
+failures can leave a uniquely named error JSON in the caller's writable working
+directory when the primary output filesystem is full.

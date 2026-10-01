@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "frozen_source_hashes": 11,
+  "cases": [
+    {
+      "file": "005_b03.aig",
+      "status": "COMPLETE",
+      "selected_builds": 5,
+      "gain": 5,
+      "admitted_elapsed_s": 2.0720352409989573,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "044_i2c.aig",
+      "status": "COMPLETE",
+      "selected_builds": 7,
+      "gain": 13,
+      "admitted_elapsed_s": 18.118996147997677,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "041_des_area.aig",
+      "status": "COMPLETE",
+      "selected_builds": 0,
+      "gain": 0,
+      "admitted_elapsed_s": 0.6632858640004997,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "034_b20_opt.aig",
+      "status": "BUDGET_EXHAUSTED",
+      "selected_builds": 58,
+      "gain": 75,
+      "admitted_elapsed_s": 115.45868187700034,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "045_mem_ctrl.aig",
+      "status": "BUDGET_EXHAUSTED",
+      "selected_builds": 30,
+      "gain": 136,
+      "admitted_elapsed_s": 85.33278577300007,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "060_wb_dma.aig",
+      "status": "COMPLETE",
+      "selected_builds": 31,
+      "gain": 83,
+      "admitted_elapsed_s": 51.769184340999345,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    }
+  ],
+  "total_witnesses": 131,
+  "sum_gain": 312,
+  "additional_independent_DSEC_case": "045_mem_ctrl.aig",
+  "additional_independent_DSEC": {
+    "status": "PASS",
+    "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/045_mem_ctrl.aig /workspace/scratch/7e0c7273599c/evidence-preserved/image-guided-pilot-v3-retry1/045_mem_ctrl/checkpoints/checkpoint_00023/product.aig",
+    "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+    "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+    "timeout_seconds": 120,
+    "exit_code": 0,
+    "wall_s": 4.4357977690015105,
+    "log_sha256": "9f87546f460b5043251df7a38910b55213acf2ee51cad4d31d6f398a3df8a23d"
+  },
+  "budget_exhaustion_not_relabelled_complete": true
+}

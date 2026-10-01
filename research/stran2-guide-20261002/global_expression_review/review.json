@@ -1,0 +1,3975 @@
+{
+  "accounting_assessment": {
+    "exact_metric": "AND count after cleanup of the identical selected set with globally structurally novel Build entries removed, minus AND count after cleanup of the full identical selected set. Preserve all Direct and demoted entries, and do not reselect.",
+    "limits": "No new exact marginal or DSEC result is asserted here. Whole-original structural absence does not rule out Boolean-equivalent original nodes, sequential Direct alternatives, or native candidate-generator overlap.",
+    "reason": "Novelty is classified against the immutable original whole graph; replay mechanism can materialize its identical earlier-fanin expression at the replacement root. This is an existing-expression/Direct realization, not globally new Build, even when it allocates a temporary prefix node.",
+    "safety": "Keep the original recipe prefix restriction and existing proof-backed builder. An original alias ID greater than the root is not itself a cycle, but raw reuse requires root-excluding TFI plus combined replacement dependency validation; never feed a future ID to an earlier-ID-only mapping array.",
+    "verdict": "Legitimate to retain the identical demoted recipe materialization in the same-selected-set no-genuine-Build replay."
+  },
+  "classification": "whole-original normalized structural hash, not Boolean equivalence or global sequential Direct saturation",
+  "independent_parser_and_normalizer": true,
+  "product_replays_run": 0,
+  "runs": {
+    "/tmp/image-guided-pilot-v1": {
+      "cases": {
+        "005_b03": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 5
+          },
+          "historical_product_and": 79,
+          "historical_product_reduction": 5,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig",
+          "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 40,
+              "original_prefix_divisors": [
+                23,
+                33,
+                40
+              ],
+              "out": -5,
+              "output_aliases": [],
+              "output_canonical_literal": 229,
+              "recipe": [
+                47,
+                66,
+                -3,
+                81
+              ],
+              "root": 51,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 35,
+              "original_prefix_divisors": [
+                23,
+                35
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 226,
+              "recipe": [
+                47,
+                71
+              ],
+              "root": 56,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 38,
+              "original_prefix_divisors": [
+                27,
+                38
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 226,
+              "recipe": [
+                55,
+                76
+              ],
+              "root": 61,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 37,
+              "original_prefix_divisors": [
+                23,
+                37
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 227,
+              "recipe": [
+                46,
+                75
+              ],
+              "root": 102,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 29,
+              "original_prefix_divisors": [
+                27,
+                29
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 227,
+              "recipe": [
+                54,
+                59
+              ],
+              "root": 110,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 5,
+          "selection_path": "/tmp/image-guided-pilot-v1/005_b03/checkpoints/checkpoint_00002/selection.json",
+          "selection_sha256": "c554da3a3d980891a228d96080181e99e75d0d68a55b4b5bdac83cd7d7229716"
+        },
+        "034_b20_opt": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 48
+          },
+          "historical_product_and": 11204,
+          "historical_product_reduction": 66,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/034_b20_opt.aig",
+          "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1531,
+              "original_prefix_divisors": [
+                1353,
+                1531
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2707,
+                3063
+              ],
+              "root": 1532,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1535,
+              "original_prefix_divisors": [
+                1341,
+                1535
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2683,
+                3071
+              ],
+              "root": 1536,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1537,
+              "original_prefix_divisors": [
+                1318,
+                1537
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2637,
+                3075
+              ],
+              "root": 1539,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1281,
+              "original_prefix_divisors": [
+                56,
+                1281
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                113,
+                2562
+              ],
+              "root": 1545,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1209,
+              "original_prefix_divisors": [
+                53,
+                64,
+                1209
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                106,
+                129,
+                -3,
+                2419
+              ],
+              "root": 1569,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1185,
+              "original_prefix_divisors": [
+                52,
+                64,
+                1185
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                104,
+                129,
+                -3,
+                2371
+              ],
+              "root": 1573,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1232,
+              "original_prefix_divisors": [
+                54,
+                64,
+                1232
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                108,
+                129,
+                -3,
+                2465
+              ],
+              "root": 1578,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1267,
+              "original_prefix_divisors": [
+                55,
+                64,
+                1267
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                110,
+                129,
+                -3,
+                2535
+              ],
+              "root": 1582,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1598,
+              "original_prefix_divisors": [
+                1444,
+                1598
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2889,
+                3197
+              ],
+              "root": 1599,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1602,
+              "original_prefix_divisors": [
+                1410,
+                1602
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2821,
+                3205
+              ],
+              "root": 1603,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1726,
+              "original_prefix_divisors": [
+                719,
+                1726
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1439,
+                3453
+              ],
+              "root": 1727,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1836,
+              "original_prefix_divisors": [
+                768,
+                1836
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1537,
+                3673
+              ],
+              "root": 1839,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1896,
+              "original_prefix_divisors": [
+                792,
+                1896
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1585,
+                3793
+              ],
+              "root": 1897,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1975,
+              "original_prefix_divisors": [
+                804,
+                1975
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1609,
+                3951
+              ],
+              "root": 1976,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 846,
+              "original_prefix_divisors": [
+                40,
+                64,
+                846
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                80,
+                129,
+                -3,
+                1693
+              ],
+              "root": 2037,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2102,
+              "original_prefix_divisors": [
+                867,
+                2102
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1735,
+                4205
+              ],
+              "root": 2105,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2163,
+              "original_prefix_divisors": [
+                890,
+                2163
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1781,
+                4327
+              ],
+              "root": 2165,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2233,
+              "original_prefix_divisors": [
+                900,
+                2233
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1801,
+                4467
+              ],
+              "root": 2234,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2312,
+              "original_prefix_divisors": [
+                946,
+                2312
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1893,
+                4625
+              ],
+              "root": 2315,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2376,
+              "original_prefix_divisors": [
+                957,
+                2376
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1915,
+                4753
+              ],
+              "root": 2377,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2458,
+              "original_prefix_divisors": [
+                982,
+                2458
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1965,
+                4917
+              ],
+              "root": 2459,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2528,
+              "original_prefix_divisors": [
+                1031,
+                2528
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2063,
+                5057
+              ],
+              "root": 2531,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2599,
+              "original_prefix_divisors": [
+                1054,
+                2599
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2109,
+                5199
+              ],
+              "root": 2600,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1099,
+              "original_prefix_divisors": [
+                50,
+                64,
+                1099
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                100,
+                129,
+                -3,
+                2199
+              ],
+              "root": 2761,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2841,
+              "original_prefix_divisors": [
+                1151,
+                2841
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2303,
+                5683
+              ],
+              "root": 2844,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2681,
+              "original_prefix_divisors": [
+                1089,
+                2681
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2179,
+                5363
+              ],
+              "root": 4288,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6745,
+              "original_prefix_divisors": [
+                6644,
+                6745
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13289,
+                13491
+              ],
+              "root": 6746,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6749,
+              "original_prefix_divisors": [
+                6667,
+                6749
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13335,
+                13499
+              ],
+              "root": 6750,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6753,
+              "original_prefix_divisors": [
+                6679,
+                6753
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13359,
+                13507
+              ],
+              "root": 6754,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6657,
+              "original_prefix_divisors": [
+                279,
+                6657
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                558,
+                13314
+              ],
+              "root": 6757,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 6617,
+              "original_prefix_divisors": [
+                269,
+                279,
+                6617
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                538,
+                559,
+                -3,
+                13235
+              ],
+              "root": 6790,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6793,
+              "original_prefix_divisors": [
+                6601,
+                6793
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13203,
+                13587
+              ],
+              "root": 6794,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6628,
+              "original_prefix_divisors": [
+                6592,
+                6628
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13185,
+                13256
+              ],
+              "root": 6797,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6808,
+              "original_prefix_divisors": [
+                6628,
+                6808
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13257,
+                13617
+              ],
+              "root": 6809,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6827,
+              "original_prefix_divisors": [
+                6690,
+                6827
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13381,
+                13655
+              ],
+              "root": 6828,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6831,
+              "original_prefix_divisors": [
+                6705,
+                6831
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13411,
+                13663
+              ],
+              "root": 6832,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 6463,
+              "original_prefix_divisors": [
+                255,
+                279,
+                6463
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                510,
+                559,
+                -3,
+                12927
+              ],
+              "root": 7214,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7272,
+              "original_prefix_divisors": [
+                6471,
+                7272
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                12943,
+                14545
+              ],
+              "root": 7275,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7333,
+              "original_prefix_divisors": [
+                6483,
+                7333
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                12967,
+                14667
+              ],
+              "root": 7335,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7391,
+              "original_prefix_divisors": [
+                6492,
+                7391
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                12985,
+                14783
+              ],
+              "root": 7394,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7467,
+              "original_prefix_divisors": [
+                6504,
+                7467
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13009,
+                14935
+              ],
+              "root": 7469,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6515,
+              "original_prefix_divisors": [
+                260,
+                6515
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                521,
+                13030
+              ],
+              "root": 7534,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7621,
+              "original_prefix_divisors": [
+                6528,
+                7621
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13057,
+                15243
+              ],
+              "root": 7622,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7696,
+              "original_prefix_divisors": [
+                6537,
+                7696
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13075,
+                15393
+              ],
+              "root": 7699,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7771,
+              "original_prefix_divisors": [
+                6547,
+                7771
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13095,
+                15543
+              ],
+              "root": 7772,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7844,
+              "original_prefix_divisors": [
+                6557,
+                7844
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13115,
+                15689
+              ],
+              "root": 7846,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7933,
+              "original_prefix_divisors": [
+                6566,
+                7933
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13133,
+                15867
+              ],
+              "root": 7935,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 6580,
+              "original_prefix_divisors": [
+                266,
+                279,
+                6580
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                532,
+                559,
+                -3,
+                13161
+              ],
+              "root": 8022,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 48,
+          "selection_path": "/tmp/image-guided-pilot-v1/034_b20_opt/checkpoints/checkpoint_00041/selection.json",
+          "selection_sha256": "223070924de7740404a376c32c8d055a775e7f3c35afbfebf0d6e226f7824e40"
+        },
+        "041_des_area": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {},
+          "historical_product_and": 4752,
+          "historical_product_reduction": 0,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/041_des_area.aig",
+          "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [],
+          "selected": 0,
+          "selection_path": "/tmp/image-guided-pilot-v1/041_des_area/checkpoints/checkpoint_00000/selection.json",
+          "selection_sha256": "c6e3bd35c74358bea6b4a7721f8aac1ff07acb3fc0227730432aa41df4d63be6"
+        },
+        "044_i2c": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 7
+          },
+          "historical_product_and": 1105,
+          "historical_product_reduction": 13,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig",
+          "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 151,
+              "original_prefix_divisors": [
+                74,
+                151
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                149,
+                303
+              ],
+              "root": 157,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 154,
+              "original_prefix_divisors": [
+                72,
+                154
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                145,
+                309
+              ],
+              "root": 161,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 154,
+              "original_prefix_divisors": [
+                75,
+                154
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                151,
+                308
+              ],
+              "root": 162,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 678,
+              "original_prefix_divisors": [
+                72,
+                678
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                144,
+                1356
+              ],
+              "root": 701,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 719,
+              "original_prefix_divisors": [
+                71,
+                719
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                143,
+                1438
+              ],
+              "root": 722,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 729,
+              "original_prefix_divisors": [
+                684,
+                729
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                1369,
+                1459
+              ],
+              "root": 731,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 682,
+              "original_prefix_divisors": [
+                679,
+                682
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                1359,
+                1365
+              ],
+              "root": 773,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 7,
+          "selection_path": "/tmp/image-guided-pilot-v1/044_i2c/checkpoints/checkpoint_00006/selection.json",
+          "selection_sha256": "4b9814d2402101101a2492ec6d91afb8d11a8353d7a25696a5b63a9b2cd7b0fc"
+        },
+        "045_mem_ctrl": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 30
+          },
+          "historical_product_and": 9296,
+          "historical_product_reduction": 136,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/045_mem_ctrl.aig",
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1232,
+              "original_prefix_divisors": [
+                963,
+                1232
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1926,
+                2464
+              ],
+              "root": 1242,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1267,
+              "original_prefix_divisors": [
+                1179,
+                1267
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                2358,
+                2534
+              ],
+              "root": 1269,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1249,
+              "original_prefix_divisors": [
+                913,
+                1249
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1826,
+                2498
+              ],
+              "root": 1275,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1278,
+              "original_prefix_divisors": [
+                1240,
+                1278
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                2481,
+                2557
+              ],
+              "root": 1286,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1184,
+              "original_prefix_divisors": [
+                956,
+                1184
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1912,
+                2368
+              ],
+              "root": 1292,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1228,
+              "original_prefix_divisors": [
+                967,
+                1228
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1935,
+                2457
+              ],
+              "root": 1298,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1184,
+              "original_prefix_divisors": [
+                945,
+                1184
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1890,
+                2368
+              ],
+              "root": 1305,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1227,
+              "original_prefix_divisors": [
+                969,
+                1227
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1938,
+                2455
+              ],
+              "root": 1314,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1322,
+              "original_prefix_divisors": [
+                1190,
+                1191,
+                1322
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 21198,
+              "recipe": [
+                2382,
+                2645,
+                -3,
+                2380
+              ],
+              "root": 1327,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1184,
+              "original_prefix_divisors": [
+                919,
+                1184
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1838,
+                2368
+              ],
+              "root": 1328,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1182,
+              "original_prefix_divisors": [
+                908,
+                1182
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1817,
+                2365
+              ],
+              "root": 1345,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1178,
+              "original_prefix_divisors": [
+                909,
+                1178
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1818,
+                2356
+              ],
+              "root": 1355,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1190,
+              "original_prefix_divisors": [
+                921,
+                1190
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1843,
+                2381
+              ],
+              "root": 1375,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1379,
+              "original_prefix_divisors": [
+                196,
+                1379
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                393,
+                2758
+              ],
+              "root": 1390,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1182,
+              "original_prefix_divisors": [
+                904,
+                1182
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1808,
+                2364
+              ],
+              "root": 1397,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1423,
+              "original_prefix_divisors": [
+                1265,
+                1423
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                2531,
+                2847
+              ],
+              "root": 1426,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1421,
+              "original_prefix_divisors": [
+                905,
+                1421
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1811,
+                2842
+              ],
+              "root": 1431,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1459,
+              "original_prefix_divisors": [
+                906,
+                1459
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1812,
+                2919
+              ],
+              "root": 1461,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1459,
+              "original_prefix_divisors": [
+                906,
+                1456,
+                1459
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 21198,
+              "recipe": [
+                1812,
+                2912,
+                -2,
+                2919
+              ],
+              "root": 1466,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1186,
+              "original_prefix_divisors": [
+                916,
+                1186
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1833,
+                2373
+              ],
+              "root": 1495,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1235,
+              "original_prefix_divisors": [
+                960,
+                1235
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1921,
+                2471
+              ],
+              "root": 1690,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1180,
+              "original_prefix_divisors": [
+                921,
+                1180
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1842,
+                2360
+              ],
+              "root": 1694,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1213,
+              "original_prefix_divisors": [
+                940,
+                1213
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1880,
+                2427
+              ],
+              "root": 1712,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1713,
+              "original_prefix_divisors": [
+                906,
+                1713
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1812,
+                3426
+              ],
+              "root": 1718,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1213,
+              "original_prefix_divisors": [
+                939,
+                1213
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1878,
+                2426
+              ],
+              "root": 1727,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1736,
+              "original_prefix_divisors": [
+                1733,
+                1736
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                3466,
+                3472
+              ],
+              "root": 1742,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1229,
+              "original_prefix_divisors": [
+                962,
+                1229
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1924,
+                2458
+              ],
+              "root": 1751,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1193,
+              "original_prefix_divisors": [
+                890,
+                1193
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 21196,
+              "recipe": [
+                1781,
+                2387
+              ],
+              "root": 1761,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1767,
+              "original_prefix_divisors": [
+                196,
+                1765,
+                1767
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 21198,
+              "recipe": [
+                393,
+                3535,
+                -3,
+                3530
+              ],
+              "root": 1773,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1401,
+              "original_prefix_divisors": [
+                890,
+                1401
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 21197,
+              "recipe": [
+                1781,
+                2803
+              ],
+              "root": 1947,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 30,
+          "selection_path": "/tmp/image-guided-pilot-v1/045_mem_ctrl/checkpoints/checkpoint_00023/selection.json",
+          "selection_sha256": "a367a6f677bab1d320ec2dd430d869b0246d94c656b6d254f0b5cdf77b9bc17f"
+        },
+        "060_wb_dma": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 31
+          },
+          "historical_product_and": 3620,
+          "historical_product_reduction": 83,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/060_wb_dma.aig",
+          "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 760,
+              "original_prefix_divisors": [
+                564,
+                746,
+                760
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1492
+              ],
+              "root": 765,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 771,
+              "original_prefix_divisors": [
+                564,
+                760,
+                771
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1542
+              ],
+              "root": 776,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 782,
+              "original_prefix_divisors": [
+                564,
+                760,
+                782
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1564
+              ],
+              "root": 787,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 793,
+              "original_prefix_divisors": [
+                564,
+                760,
+                793
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1586
+              ],
+              "root": 798,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 804,
+              "original_prefix_divisors": [
+                564,
+                760,
+                804
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1608
+              ],
+              "root": 809,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 815,
+              "original_prefix_divisors": [
+                564,
+                760,
+                815
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1630
+              ],
+              "root": 820,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 829,
+              "original_prefix_divisors": [
+                564,
+                826,
+                829
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1658,
+                -3,
+                1652
+              ],
+              "root": 831,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 840,
+              "original_prefix_divisors": [
+                564,
+                837,
+                840
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1680,
+                -3,
+                1674
+              ],
+              "root": 842,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 851,
+              "original_prefix_divisors": [
+                564,
+                848,
+                851
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1702,
+                -3,
+                1696
+              ],
+              "root": 853,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 862,
+              "original_prefix_divisors": [
+                564,
+                859,
+                862
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1724,
+                -3,
+                1718
+              ],
+              "root": 864,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 873,
+              "original_prefix_divisors": [
+                564,
+                870,
+                873
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1746,
+                -3,
+                1740
+              ],
+              "root": 875,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 881,
+              "original_prefix_divisors": [
+                564,
+                760,
+                881
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1762
+              ],
+              "root": 886,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 892,
+              "original_prefix_divisors": [
+                564,
+                760,
+                892
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1784
+              ],
+              "root": 897,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 903,
+              "original_prefix_divisors": [
+                564,
+                760,
+                903
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1806
+              ],
+              "root": 908,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 917,
+              "original_prefix_divisors": [
+                564,
+                914,
+                917
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1834,
+                -3,
+                1828
+              ],
+              "root": 919,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 928,
+              "original_prefix_divisors": [
+                573,
+                925,
+                928
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1147,
+                1856,
+                -3,
+                1850
+              ],
+              "root": 930,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 939,
+              "original_prefix_divisors": [
+                564,
+                936,
+                939
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1878,
+                -3,
+                1872
+              ],
+              "root": 941,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 950,
+              "original_prefix_divisors": [
+                564,
+                947,
+                950
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1900,
+                -3,
+                1894
+              ],
+              "root": 952,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 958,
+              "original_prefix_divisors": [
+                564,
+                760,
+                958
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1521,
+                -3,
+                1916
+              ],
+              "root": 963,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 972,
+              "original_prefix_divisors": [
+                564,
+                969,
+                972
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1129,
+                1944,
+                -3,
+                1938
+              ],
+              "root": 974,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 750,
+              "original_prefix_divisors": [
+                566,
+                750
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 8884,
+              "recipe": [
+                1132,
+                1500
+              ],
+              "root": 1838,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 749,
+              "original_prefix_divisors": [
+                567,
+                749
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 8884,
+              "recipe": [
+                1134,
+                1499
+              ],
+              "root": 2450,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2510,
+              "original_prefix_divisors": [
+                2446,
+                2510
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 8884,
+              "recipe": [
+                4893,
+                5020
+              ],
+              "root": 2512,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 3109,
+              "original_prefix_divisors": [
+                571,
+                3030,
+                3109
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1143,
+                6218,
+                -3,
+                6060
+              ],
+              "root": 3112,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 3606,
+              "original_prefix_divisors": [
+                829,
+                3583,
+                3606
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 8886,
+              "recipe": [
+                1659,
+                7213,
+                -3,
+                7166
+              ],
+              "root": 3609,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 3629,
+              "original_prefix_divisors": [
+                753,
+                3629
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 8884,
+              "recipe": [
+                1506,
+                7259
+              ],
+              "root": 3638,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 3646,
+              "original_prefix_divisors": [
+                570,
+                3643,
+                3646
+              ],
+              "out": -5,
+              "output_aliases": [],
+              "output_canonical_literal": 8887,
+              "recipe": [
+                1141,
+                7287,
+                -2,
+                7293
+              ],
+              "root": 3649,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 749,
+              "original_prefix_divisors": [
+                568,
+                749
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 8884,
+              "recipe": [
+                1136,
+                1499
+              ],
+              "root": 3937,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 3947,
+              "original_prefix_divisors": [
+                1831,
+                3947
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 8885,
+              "recipe": [
+                3663,
+                7894
+              ],
+              "root": 3949,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 3956,
+              "original_prefix_divisors": [
+                749,
+                3956
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 8884,
+              "recipe": [
+                1499,
+                7913
+              ],
+              "root": 3958,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 4204,
+              "original_prefix_divisors": [
+                3917,
+                4204
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 8884,
+              "recipe": [
+                7835,
+                8409
+              ],
+              "root": 4205,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 31,
+          "selection_path": "/tmp/image-guided-pilot-v1/060_wb_dma/checkpoints/checkpoint_00028/selection.json",
+          "selection_sha256": "066c92a8982b1d4198cf930d4c2094ee51111543f3f3dea7a82e2fdade9efe84"
+        }
+      },
+      "counts": {
+        "structurally_novel_output_entirely_new_gates": 121
+      },
+      "total_selected": 121
+    },
+    "/tmp/nonlinear-anytime-pilot-v2": {
+      "cases": {
+        "005_b03": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 5
+          },
+          "historical_product_and": 79,
+          "historical_product_reduction": 5,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig",
+          "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 40,
+              "original_prefix_divisors": [
+                23,
+                33,
+                40
+              ],
+              "out": -5,
+              "output_aliases": [],
+              "output_canonical_literal": 229,
+              "recipe": [
+                47,
+                66,
+                -3,
+                81
+              ],
+              "root": 51,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 35,
+              "original_prefix_divisors": [
+                23,
+                35
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 226,
+              "recipe": [
+                47,
+                71
+              ],
+              "root": 56,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 38,
+              "original_prefix_divisors": [
+                27,
+                38
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 226,
+              "recipe": [
+                55,
+                76
+              ],
+              "root": 61,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 37,
+              "original_prefix_divisors": [
+                23,
+                37
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 227,
+              "recipe": [
+                46,
+                75
+              ],
+              "root": 102,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 29,
+              "original_prefix_divisors": [
+                27,
+                29
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 227,
+              "recipe": [
+                54,
+                59
+              ],
+              "root": 110,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 5,
+          "selection_path": "/tmp/nonlinear-anytime-pilot-v2/005_b03/checkpoints/checkpoint_00002/selection.json",
+          "selection_sha256": "bb55db79a1759ea998bee5e3a7da40009cf695625529ac64a17d5698838bde08"
+        },
+        "034_b20_opt": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 57
+          },
+          "historical_product_and": 11196,
+          "historical_product_reduction": 74,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/034_b20_opt.aig",
+          "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1531,
+              "original_prefix_divisors": [
+                1353,
+                1531
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2707,
+                3063
+              ],
+              "root": 1532,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1535,
+              "original_prefix_divisors": [
+                1341,
+                1535
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2683,
+                3071
+              ],
+              "root": 1536,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1537,
+              "original_prefix_divisors": [
+                1318,
+                1537
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2637,
+                3075
+              ],
+              "root": 1539,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1209,
+              "original_prefix_divisors": [
+                53,
+                64,
+                1209
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                106,
+                129,
+                -3,
+                2419
+              ],
+              "root": 1569,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1185,
+              "original_prefix_divisors": [
+                52,
+                64,
+                1185
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                104,
+                129,
+                -3,
+                2371
+              ],
+              "root": 1573,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1232,
+              "original_prefix_divisors": [
+                54,
+                64,
+                1232
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                108,
+                129,
+                -3,
+                2465
+              ],
+              "root": 1578,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1267,
+              "original_prefix_divisors": [
+                55,
+                64,
+                1267
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                110,
+                129,
+                -3,
+                2535
+              ],
+              "root": 1582,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1598,
+              "original_prefix_divisors": [
+                1444,
+                1598
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2889,
+                3197
+              ],
+              "root": 1599,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1602,
+              "original_prefix_divisors": [
+                1410,
+                1602
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2821,
+                3205
+              ],
+              "root": 1603,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1726,
+              "original_prefix_divisors": [
+                719,
+                1726
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1439,
+                3453
+              ],
+              "root": 1727,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1836,
+              "original_prefix_divisors": [
+                768,
+                1836
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1537,
+                3673
+              ],
+              "root": 1839,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1896,
+              "original_prefix_divisors": [
+                792,
+                1896
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1585,
+                3793
+              ],
+              "root": 1897,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 1975,
+              "original_prefix_divisors": [
+                804,
+                1975
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1609,
+                3951
+              ],
+              "root": 1976,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 846,
+              "original_prefix_divisors": [
+                40,
+                64,
+                846
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                80,
+                129,
+                -3,
+                1693
+              ],
+              "root": 2037,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2102,
+              "original_prefix_divisors": [
+                867,
+                2102
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1735,
+                4205
+              ],
+              "root": 2105,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2163,
+              "original_prefix_divisors": [
+                890,
+                2163
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1781,
+                4327
+              ],
+              "root": 2165,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2233,
+              "original_prefix_divisors": [
+                900,
+                2233
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1801,
+                4467
+              ],
+              "root": 2234,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2312,
+              "original_prefix_divisors": [
+                946,
+                2312
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1893,
+                4625
+              ],
+              "root": 2315,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2376,
+              "original_prefix_divisors": [
+                957,
+                2376
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1915,
+                4753
+              ],
+              "root": 2377,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2458,
+              "original_prefix_divisors": [
+                982,
+                2458
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                1965,
+                4917
+              ],
+              "root": 2459,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2528,
+              "original_prefix_divisors": [
+                1031,
+                2528
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2063,
+                5057
+              ],
+              "root": 2531,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2599,
+              "original_prefix_divisors": [
+                1054,
+                2599
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2109,
+                5199
+              ],
+              "root": 2600,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 1099,
+              "original_prefix_divisors": [
+                50,
+                64,
+                1099
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                100,
+                129,
+                -3,
+                2199
+              ],
+              "root": 2761,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2841,
+              "original_prefix_divisors": [
+                1151,
+                2841
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2303,
+                5683
+              ],
+              "root": 2844,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 2681,
+              "original_prefix_divisors": [
+                1089,
+                2681
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                2179,
+                5363
+              ],
+              "root": 4288,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6793,
+              "original_prefix_divisors": [
+                6601,
+                6793
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13203,
+                13587
+              ],
+              "root": 6794,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6628,
+              "original_prefix_divisors": [
+                6592,
+                6628
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13185,
+                13256
+              ],
+              "root": 6797,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 6463,
+              "original_prefix_divisors": [
+                255,
+                279,
+                6463
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                510,
+                559,
+                -3,
+                12927
+              ],
+              "root": 7214,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7272,
+              "original_prefix_divisors": [
+                6471,
+                7272
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                12943,
+                14545
+              ],
+              "root": 7275,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7333,
+              "original_prefix_divisors": [
+                6483,
+                7333
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                12967,
+                14667
+              ],
+              "root": 7335,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7391,
+              "original_prefix_divisors": [
+                6492,
+                7391
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                12985,
+                14783
+              ],
+              "root": 7394,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7467,
+              "original_prefix_divisors": [
+                6504,
+                7467
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13009,
+                14935
+              ],
+              "root": 7469,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 6515,
+              "original_prefix_divisors": [
+                260,
+                6515
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                521,
+                13030
+              ],
+              "root": 7534,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7621,
+              "original_prefix_divisors": [
+                6528,
+                7621
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13057,
+                15243
+              ],
+              "root": 7622,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7696,
+              "original_prefix_divisors": [
+                6537,
+                7696
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13075,
+                15393
+              ],
+              "root": 7699,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7771,
+              "original_prefix_divisors": [
+                6547,
+                7771
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13095,
+                15543
+              ],
+              "root": 7772,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7844,
+              "original_prefix_divisors": [
+                6557,
+                7844
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13115,
+                15689
+              ],
+              "root": 7846,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 7933,
+              "original_prefix_divisors": [
+                6566,
+                7933
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 23464,
+              "recipe": [
+                13133,
+                15867
+              ],
+              "root": 7935,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 2,
+              "original_prefix_divisor_max": 6580,
+              "original_prefix_divisors": [
+                266,
+                279,
+                6580
+              ],
+              "out": -4,
+              "output_aliases": [],
+              "output_canonical_literal": 23466,
+              "recipe": [
+                532,
+                559,
+                -3,
+                13161
+              ],
+              "root": 8022,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                453,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                906,
+                19345
+              ],
+              "root": 9791,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                434,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                868,
+                19345
+              ],
+              "root": 9914,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                444,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                888,
+                19345
+              ],
+              "root": 9943,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                446,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                892,
+                19345
+              ],
+              "root": 10013,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                431,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                862,
+                19345
+              ],
+              "root": 10063,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                457,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                914,
+                19345
+              ],
+              "root": 10071,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                438,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                876,
+                19345
+              ],
+              "root": 10106,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                448,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                896,
+                19345
+              ],
+              "root": 10133,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                436,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                872,
+                19345
+              ],
+              "root": 10164,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                455,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                910,
+                19345
+              ],
+              "root": 10204,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                441,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                882,
+                19345
+              ],
+              "root": 10222,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                451,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                902,
+                19345
+              ],
+              "root": 10244,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                459,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                918,
+                19345
+              ],
+              "root": 10294,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                433,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                866,
+                19345
+              ],
+              "root": 10326,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                445,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                890,
+                19345
+              ],
+              "root": 10332,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                442,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                884,
+                19345
+              ],
+              "root": 10383,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                454,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                908,
+                19345
+              ],
+              "root": 10415,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 9672,
+              "original_prefix_divisors": [
+                440,
+                9672
+              ],
+              "out": -3,
+              "output_aliases": [],
+              "output_canonical_literal": 23465,
+              "recipe": [
+                880,
+                19345
+              ],
+              "root": 10477,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 57,
+          "selection_path": "/tmp/nonlinear-anytime-pilot-v2/034_b20_opt/checkpoints/checkpoint_00040/selection.json",
+          "selection_sha256": "6b6a10b305fe38173f1a975b79e7bcae733979ee5e8d8480bace44bb5d4b0b43"
+        },
+        "041_des_area": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {},
+          "historical_product_and": 4752,
+          "historical_product_reduction": 0,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/041_des_area.aig",
+          "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [],
+          "selected": 0,
+          "selection_path": "/tmp/nonlinear-anytime-pilot-v2/041_des_area/checkpoints/checkpoint_00000/selection.json",
+          "selection_sha256": "c6e3bd35c74358bea6b4a7721f8aac1ff07acb3fc0227730432aa41df4d63be6"
+        },
+        "044_i2c": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "structurally_novel_output_entirely_new_gates": 6
+          },
+          "historical_product_and": 1108,
+          "historical_product_reduction": 10,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig",
+          "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 150,
+              "original_prefix_divisors": [
+                71,
+                150
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                143,
+                300
+              ],
+              "root": 153,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 151,
+              "original_prefix_divisors": [
+                74,
+                151
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                149,
+                303
+              ],
+              "root": 157,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 154,
+              "original_prefix_divisors": [
+                72,
+                154
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                145,
+                309
+              ],
+              "root": 161,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 154,
+              "original_prefix_divisors": [
+                75,
+                154
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                151,
+                308
+              ],
+              "root": 162,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 719,
+              "original_prefix_divisors": [
+                71,
+                719
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                143,
+                1438
+              ],
+              "root": 722,
+              "structural_and_phase_simulation_128_assignments": true
+            },
+            {
+              "category": "structurally_novel_output_entirely_new_gates",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 1,
+              "original_prefix_divisor_max": 729,
+              "original_prefix_divisors": [
+                684,
+                729
+              ],
+              "out": -2,
+              "output_aliases": [],
+              "output_canonical_literal": 2528,
+              "recipe": [
+                1369,
+                1459
+              ],
+              "root": 731,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 6,
+          "selection_path": "/tmp/nonlinear-anytime-pilot-v2/044_i2c/checkpoints/checkpoint_00002/selection.json",
+          "selection_sha256": "fa16b992e35416cb906bce6758c70b602b0d72dcf03c92f935f74573c50bcca9"
+        },
+        "045_mem_ctrl": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {},
+          "historical_product_and": 9432,
+          "historical_product_reduction": 0,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/045_mem_ctrl.aig",
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [],
+          "selected": 0,
+          "selection_path": "/tmp/nonlinear-anytime-pilot-v2/045_mem_ctrl/checkpoints/checkpoint_00000/selection.json",
+          "selection_sha256": "c6e3bd35c74358bea6b4a7721f8aac1ff07acb3fc0227730432aa41df4d63be6"
+        },
+        "060_wb_dma": {
+          "combined_raw_alias_dependency_graph_acyclic": true,
+          "counts": {
+            "output_alias_existing_original": 1
+          },
+          "historical_product_and": 3701,
+          "historical_product_reduction": 2,
+          "input_path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/060_wb_dma.aig",
+          "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+          "original_hash_normalization_changed_nodes": 0,
+          "rows": [
+            {
+              "category": "output_alias_existing_original",
+              "later_original_intermediates": [],
+              "live_globally_new_gate_count": 0,
+              "original_prefix_divisor_max": 754,
+              "original_prefix_divisors": [
+                572,
+                754
+              ],
+              "out": -2,
+              "output_aliases": [
+                {
+                  "literal": 7790,
+                  "original_tfi_excludes_root": true,
+                  "source_id_later_than_root": true,
+                  "source_node": 3895
+                }
+              ],
+              "output_canonical_literal": 7790,
+              "recipe": [
+                1144,
+                1508
+              ],
+              "root": 759,
+              "structural_and_phase_simulation_128_assignments": true
+            }
+          ],
+          "selected": 1,
+          "selection_path": "/tmp/nonlinear-anytime-pilot-v2/060_wb_dma/checkpoints/checkpoint_00001/selection.json",
+          "selection_sha256": "6e02086db4f9f8a86d9f2dd9d14a6778e926936e8e79df71f798ac3db349e001"
+        }
+      },
+      "counts": {
+        "output_alias_existing_original": 1,
+        "structurally_novel_output_entirely_new_gates": 68
+      },
+      "total_selected": 69
+    }
+  },
+  "sat_queries_run": 0,
+  "schema": 1,
+  "script_sha256": "456659d79acfcabcadbd6d04c69202204f4040d092eb1157b8697f15d12c666a",
+  "selftest": {
+    "exhaustive_assignments_per_fixture": 8,
+    "later_intermediate_and_individual_combined_cycle_checks": true,
+    "normalization_fixtures": 8,
+    "status": "PASS"
+  }
+}

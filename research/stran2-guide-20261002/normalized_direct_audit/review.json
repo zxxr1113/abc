@@ -1,0 +1,69 @@
+{
+  "cases": [
+    {
+      "additional_literals": 234,
+      "audit_artifacts_sha256": {
+        "/tmp/hash-direct-b20-v2/alternatives.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "/tmp/hash-direct-b20-v2/original_selection_replay.aig": "a7eb2991213c8ce5d1ef7436444d84ccb04ce5bae43449047752f26cdb895fe7",
+        "/tmp/hash-direct-b20-v2/query_order.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "/tmp/hash-direct-b20-v2/result.json": "cd04a7a10dd14d4e3e6db246a35d813cf5b1af3e95b773e9ed14869342b95e1a",
+        "/tmp/hash-direct-b20-v2/scope.json": "3589f4ae0fe9b2adf17a6ba2364b0b8552afd1dc7eec2341f0f83d0fa40472a5"
+      },
+      "case": "034_b20_opt",
+      "domains": {
+        "unrestricted_one_step_image": 234
+      },
+      "exact_zero_fresh_literals": 538,
+      "formal_queries": 0,
+      "independent_raw_refutations": 234,
+      "inverse_closure_matches_collector": true,
+      "selected_roots": 57,
+      "status": "PASS"
+    },
+    {
+      "additional_literals": 14,
+      "audit_artifacts_sha256": {
+        "/tmp/hash-direct-cegar-wb-v2/alternatives.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "/tmp/hash-direct-cegar-wb-v2/original_selection_replay.aig": "204fa63ea23bb852213ee1d1b04d52187c7f130a08e2183a26446e4cf1121fd6",
+        "/tmp/hash-direct-cegar-wb-v2/query_order.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "/tmp/hash-direct-cegar-wb-v2/result.json": "89c11cde891c4204290a602e82b0fcfa0f1351501bbec37246dedb1e0548c6d4",
+        "/tmp/hash-direct-cegar-wb-v2/scope.json": "f615661d86139ae14954f4ab99f73561b1e8b35eb656faee7745035e4fb0c663"
+      },
+      "case": "060_wb_dma",
+      "domains": {
+        "unrestricted_one_step_image": 14
+      },
+      "exact_zero_fresh_literals": 114,
+      "formal_queries": 0,
+      "independent_raw_refutations": 14,
+      "inverse_closure_matches_collector": true,
+      "selected_roots": 6,
+      "status": "PASS"
+    }
+  ],
+  "completeness": "Exact frozen signed-pool nondegenerate first-AND and connected second-AND grammar, both phases, old IDs below root; not full-graph or semantic equivalence closure",
+  "findings": [],
+  "fixture_tests": {
+    "boundary_coverage": {
+      "constant_collapse": true,
+      "future_hash_excluded": true,
+      "outside_pool_hash": true,
+      "self_hash_excluded": true
+    },
+    "brute_force_recipes": 50304,
+    "fixtures": 87,
+    "gate_budgets": [
+      1,
+      2
+    ],
+    "seed": 2026100153,
+    "status": "PASS"
+  },
+  "interpretation": "All 248 extras fail unrestricted-image sufficiency by independent replay. This does not prove reachable-state inequivalence.",
+  "no_runtime_or_existing_evidence_edits": true,
+  "review_source_sha256": "92f399762dd9780ff2e02cbdeece0e698e3007baa626dc38aa0cfc126c3e55f5",
+  "reviewed_collector_sha256": "c3116812d28f1fafd1e98b71f3f4c7fb2d9e877029f4bd6d9eef8697954a5251",
+  "status": "PASS",
+  "unexercised": "Formal proof and exact counterfactual cost branches are not reached because no extra passes signatures.",
+  "wall_s": 1.2754534930008958
+}

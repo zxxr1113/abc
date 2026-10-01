@@ -1,0 +1,43 @@
+======== ABC command line "&r /tmp/materialized-helper-audit-v1/060_wb_dma/augmented.aig; &scorr -F 1 -C 1000 -v -w; &w /tmp/materialized-helper-audit-v1/diagnostic_wb/verbose.aig"
+cst =    4224  cls =      0  lit =    4224  unused =     217  proof =     0
+cst =    3058  cls =    154  lit =    3468  unused =     819  proof =     0
+cst =    3050  cls =    157  lit =    3450  unused =     834  proof =     0
+cst =    3050  cls =    154  lit =    3442  unused =     845  proof =     0
+cst =    3048  cls =    156  lit =    3440  unused =     845  proof =     0
+cst =    3047  cls =    157  lit =    3438  unused =     846  proof =     0
+cst =    2955  cls =    160  lit =    3434  unused =     847  proof =     0
+cst =    2955  cls =    159  lit =    3433  unused =     849  proof =     0
+cst =    2954  cls =    159  lit =    3432  unused =     850  proof =     0
+cst =    2954  cls =    159  lit =    3432  unused =     850  proof =     0
+Obj =    5180. And =    3703. Conf =  1000. Fr = 1. Lcorr = 0. Ring = 1. CSat = 1. Oracle = 0. Dyn = 0. DynAdapt = 0. IncrFb = 100%. DynRb = 20%. DynCmp = 4x.
+  0 : c =    2954  cl =    159  lit =    3432  p =     0  d =     0  f =     0  -  T =     0.01 sec
+  1 : c =    2729  cl =    176  lit =    3405  p =    20  d =    70  f =     0  -  T =     0.00 sec
+  2 : c =    2404  cl =    211  lit =    3305  p =    81  d =   242  f =     0  -  T =     0.00 sec
+  3 : c =    2176  cl =    294  lit =    3041  p =    69  d =   384  f =     0  -  T =     0.00 sec
+  4 : c =    1954  cl =    317  lit =    2741  p =    90  d =   383  f =     0  -  T =     0.00 sec
+  5 : c =    1705  cl =    298  lit =    2442  p =    89  d =   329  f =     0  -  T =     0.00 sec
+  6 : c =    1608  cl =    271  lit =    2230  p =   119  d =   362  f =     0  -  T =     0.00 sec
+  7 : c =     775  cl =    261  lit =    2116  p =    71  d =   222  f =     0  -  T =     0.00 sec
+  8 : c =     507  cl =    270  lit =    1871  p =    75  d =   255  f =     0  -  T =     0.00 sec
+  9 : c =     289  cl =    378  lit =    1364  p =   121  d =   447  f =     0  -  T =     0.00 sec
+ 10 : c =     230  cl =    347  lit =     953  p =   224  d =   611  f =     0  -  T =     0.00 sec
+ 11 : c =     122  cl =    228  lit =     566  p =   142  d =   462  f =     0  -  T =     0.00 sec
+ 12 : c =      63  cl =    140  lit =     281  p =   112  d =   454  f =     0  -  T =     0.00 sec
+ 13 : c =      37  cl =     83  lit =     173  p =    33  d =   251  f =     0  -  T =     0.00 sec
+ 14 : c =      33  cl =     69  lit =     137  p =    40  d =   130  f =     0  -  T =     0.00 sec
+ 15 : c =      29  cl =     52  lit =     105  p =    37  d =    93  f =     0  -  T =     0.00 sec
+ 16 : c =      18  cl =     42  lit =      84  p =    24  d =    64  f =     0  -  T =     0.00 sec
+ 17 : c =      11  cl =     26  lit =      49  p =    27  d =    58  f =     0  -  T =     0.00 sec
+ 18 : c =       8  cl =     22  lit =      35  p =    14  d =    34  f =     0  -  T =     0.00 sec
+ 19 : c =       2  cl =      8  lit =      11  p =    13  d =    22  f =     0  -  T =     0.00 sec
+ 20 : c =       1  cl =      5  lit =       7  p =     7  d =     8  f =     0  -  T =     0.00 sec
+ 21 : c =       1  cl =      2  lit =       3  p =     5  d =     5  f =     0  -  T =     0.00 sec
+ 22 : c =       0  cl =      0  lit =       0  p =     1  d =     2  f =     0  -  T =     0.00 sec
+ 23 : c =       0  cl =      0  lit =       0  p =     0  d =     0  f =     0  -  T =     0.00 sec
+Srm   =     0.01 sec ( 15.98 %)
+Sat   =     0.01 sec ( 29.17 %)
+Sim   =     0.01 sec ( 32.61 %)
+Other =     0.01 sec ( 22.24 %)
+TOTAL =     0.03 sec
+NBeg = 3703. NEnd = 3703. (Gain =   0.00 %).  RBeg = 521. REnd = 521. (Gain =   0.00 %).
+Flop output names are not available. Use command "&get -n".

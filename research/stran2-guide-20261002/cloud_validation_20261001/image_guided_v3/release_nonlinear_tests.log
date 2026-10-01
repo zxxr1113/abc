@@ -1,0 +1,98 @@
+test_between_chunk_solver_replacement_rejected (test_anytime.CacheTests.test_between_chunk_solver_replacement_rejected) ... ok
+test_cache_hit_rejects_changed_cnf (test_anytime.CacheTests.test_cache_hit_rejects_changed_cnf) ... ok
+test_conclusive_identical_queries_reuse_only (test_anytime.CacheTests.test_conclusive_identical_queries_reuse_only) ... ok
+test_exact_ordered_assumption_tuple (test_anytime.CacheTests.test_exact_ordered_assumption_tuple) ... ok
+test_invalid_assumption_rejected (test_anytime.CacheTests.test_invalid_assumption_rejected) ... ok
+test_invalid_solver_status_never_admitted (test_anytime.CacheTests.test_invalid_solver_status_never_admitted) ... ok
+test_partial_solver_result_never_admitted (test_anytime.CacheTests.test_partial_solver_result_never_admitted) ... ok
+test_solver_mutation_with_preserved_mtime_rejected_on_cache_hit (test_anytime.CacheTests.test_solver_mutation_with_preserved_mtime_rejected_on_cache_hit) ... ok
+test_unknown_is_requeried_not_broadcast (test_anytime.CacheTests.test_unknown_is_requeried_not_broadcast) ... ok
+test_unknown_retries_on_later_phase_too (test_anytime.CacheTests.test_unknown_retries_on_later_phase_too) ... ok
+test_full_relation_then_exact_checkpoint (test_anytime.ProofTests.test_full_relation_then_exact_checkpoint) ... ok
+test_reset_sat_skips_free_and_step (test_anytime.ProofTests.test_reset_sat_skips_free_and_step) ... ok
+test_step_sat_never_product_eligible (test_anytime.ProofTests.test_step_sat_never_product_eligible) ... ok
+test_unknown_reset_never_step_or_qualification (test_anytime.ProofTests.test_unknown_reset_never_step_or_qualification) ... ok
+test_unproved_candidate_rejected_by_checkpoint (test_anytime.ProofTests.test_unproved_candidate_rejected_by_checkpoint) ... ok
+test_partial_product_not_completed_search_or_missing_zero (test_anytime.SummaryTests.test_partial_product_not_completed_search_or_missing_zero) ... ok
+test_budget_result_retains_best_admitted_checkpoint_without_rebuild (test_anytime_supervisor.SupervisorTests.test_budget_result_retains_best_admitted_checkpoint_without_rebuild) ... ok
+test_checkpoint_rejects_missing_required_artifacts (test_anytime_supervisor.SupervisorTests.test_checkpoint_rejects_missing_required_artifacts) ... ok
+test_checkpoint_rejects_tampered_files_manifest_or_identity (test_anytime_supervisor.SupervisorTests.test_checkpoint_rejects_tampered_files_manifest_or_identity) ... ok
+test_clean_complete_and_explicit_error (test_anytime_supervisor.SupervisorTests.test_clean_complete_and_explicit_error) ... ok
+test_clean_exit_requires_complete_notice (test_anytime_supervisor.SupervisorTests.test_clean_exit_requires_complete_notice) ... ok
+test_complete_requires_clean_exit (test_anytime_supervisor.SupervisorTests.test_complete_requires_clean_exit) ... ok
+test_deadline_kills_descendant_after_worker_exits (test_anytime_supervisor.SupervisorTests.test_deadline_kills_descendant_after_worker_exits) ... ok
+test_failure_record_error_does_not_mask_original_exception (test_anytime_supervisor.SupervisorTests.test_failure_record_error_does_not_mask_original_exception) ... ok
+test_incomplete_staging_and_partial_notice_are_ignored (test_anytime_supervisor.SupervisorTests.test_incomplete_staging_and_partial_notice_are_ignored) ... ok
+test_log_open_enospc_does_not_spawn_and_preserves_fallback (test_anytime_supervisor.SupervisorTests.test_log_open_enospc_does_not_spawn_and_preserves_fallback) ... ok
+test_no_admitted_checkpoint_has_no_postbudget_fallback_product (test_anytime_supervisor.SupervisorTests.test_no_admitted_checkpoint_has_no_postbudget_fallback_product) ... ok
+test_nonobject_json_stdout_does_not_escape_supervision (test_anytime_supervisor.SupervisorTests.test_nonobject_json_stdout_does_not_escape_supervision) ... ok
+test_popen_failure_preserves_primary_error_record (test_anytime_supervisor.SupervisorTests.test_popen_failure_preserves_primary_error_record) ... ok
+test_receipt_time_overrides_claimed_early_completion (test_anytime_supervisor.SupervisorTests.test_receipt_time_overrides_claimed_early_completion) ... ok
+test_selector_constructor_failure_kills_and_reaps_owned_group (test_anytime_supervisor.SupervisorTests.test_selector_constructor_failure_kills_and_reaps_owned_group) ... ok
+test_selector_registration_failure_kills_and_reaps_owned_group (test_anytime_supervisor.SupervisorTests.test_selector_registration_failure_kills_and_reaps_owned_group) ... ok
+test_worker_error_cleans_redirected_descendant (test_anytime_supervisor.SupervisorTests.test_worker_error_cleans_redirected_descendant) ... ok
+test_all_predecessor_frame_pi_independent (test_deeper_image.ExhaustiveTests.test_all_predecessor_frame_pi_independent) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_combinational_circuit_with_no_state (test_deeper_image.ExhaustiveTests.test_combinational_circuit_with_no_state) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_constants_complemented_next_state_and_internal_gates (test_deeper_image.ExhaustiveTests.test_constants_complemented_next_state_and_internal_gates) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_current_pi_independent_from_predecessor (test_deeper_image.ExhaustiveTests.test_current_pi_independent_from_predecessor) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_deadline_checked_during_frame_construction (test_deeper_image.ExhaustiveTests.test_deadline_checked_during_frame_construction) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_delay_transient_invariant_needs_depth_two (test_deeper_image.ExhaustiveTests.test_delay_transient_invariant_needs_depth_two) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_intermediate_reset_frame_cannot_be_omitted (test_deeper_image.ExhaustiveTests.test_intermediate_reset_frame_cannot_be_omitted) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_random_small_original_transition_exhaustion (test_deeper_image.ExhaustiveTests.test_random_small_original_transition_exhaustion) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_reject_bad_graph_and_recipe (test_deeper_image.ExhaustiveTests.test_reject_bad_graph_and_recipe) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_self_loop_unreachable_state_remains_unproved (test_deeper_image.ExhaustiveTests.test_self_loop_unreachable_state_remains_unproved) ... skipped 'set STRAN2_FROZEN_PACKAGE to the explicit frozen source directory'
+test_solver_matches_exhaustive_obligations (test_deeper_image.SolverTests.test_solver_matches_exhaustive_obligations) ... skipped 'set frozen source and STRAN2_SOLVER'
+test_attempted_semantic_identity_cannot_retry_across_versions (test_image_guided.GuidanceTests.test_attempted_semantic_identity_cannot_retry_across_versions) ... ok
+test_changed_model_helper_rejected_before_query (test_image_guided.GuidanceTests.test_changed_model_helper_rejected_before_query) ... ok
+test_duplicate_projection_preserves_signed_pair_recipes_and_full_topk (test_image_guided.GuidanceTests.test_duplicate_projection_preserves_signed_pair_recipes_and_full_topk) ... ok
+test_expired_total_deadline_stops_before_model_or_search (test_image_guided.GuidanceTests.test_expired_total_deadline_stops_before_model_or_search) ... ok
+test_new_projection_restarts_only_relevant_root (test_image_guided.GuidanceTests.test_new_projection_restarts_only_relevant_root) ... ok
+test_no_model_query_for_unknown_or_proved (test_image_guided.GuidanceTests.test_no_model_query_for_unknown_or_proved) ... ok
+test_real_model_replay_clone_pool_freeze_and_unknown_retry_exclusion (test_image_guided.GuidanceTests.test_real_model_replay_clone_pool_freeze_and_unknown_retry_exclusion) ... /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpl5e5eajs/image_guidance/round_00000/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/image_cegar_diagnostic/diagnostic.py:235: ResourceWarning: unclosed file <_io.TextIOWrapper name='/tmp/tmpl5e5eajs/only_seen/image_guidance/round_00000/results.csv' mode='r' encoding='UTF-8'>
+  rows=list(csv.DictReader((out/"results.csv").open()))
+ResourceWarning: Enable tracemalloc to get the object allocation traceback
+ok
+test_skip_preserves_earlier_candidates_and_rejects_untried (test_image_guided.GuidanceTests.test_skip_preserves_earlier_candidates_and_rejects_untried) ... ok
+test_skip_rejects_root_pool_or_info_mismatch (test_image_guided.GuidanceTests.test_skip_rejects_root_pool_or_info_mismatch) ... ok
+test_exact_and_projection_duplicates_are_not_constraints (test_image_guided.ProjectionTests.test_exact_and_projection_duplicates_are_not_constraints) ... ok
+test_incomplete_or_nonboolean_sample_rejected (test_image_guided.ProjectionTests.test_incomplete_or_nonboolean_sample_rejected) ... ok
+test_projection_contains_target_and_every_pool_node (test_image_guided.ProjectionTests.test_projection_contains_target_and_every_pool_node) ... ok
+test_repeated_projection_with_distinct_domain_key_not_new (test_image_guided.ProjectionTests.test_repeated_projection_with_distinct_domain_key_not_new) ... ok
+test_dead_created_intermediate_is_not_build (test_independent_review.IndependentReview.test_dead_created_intermediate_is_not_build) ... ok
+test_dsec_parser_requires_clean_single_verdict (test_independent_review.IndependentReview.test_dsec_parser_requires_clean_single_verdict) ... ok
+test_malformed_and_cyclic_references_fail_closed (test_independent_review.IndependentReview.test_malformed_and_cyclic_references_fail_closed) ... ok
+test_normalization_and_retention_exhaustively (test_independent_review.IndependentReview.test_normalization_and_retention_exhaustively) ... ok
+test_product_import_is_order_independent (test_independent_review.IndependentReview.test_product_import_is_order_independent) ... ok
+test_rebuild_and_binary_serialization (test_independent_review.IndependentReview.test_rebuild_and_binary_serialization) ... ok
+test_unknown_or_sat_relation_never_enters_product (test_independent_review.IndependentReview.test_unknown_or_sat_relation_never_enters_product) ... ok
+test_complete_triples_only (test_partial_audit.PartialPrefixTests.test_complete_triples_only) ... ok
+test_prefix_order_and_ranges_strict (test_partial_audit.PartialPrefixTests.test_prefix_order_and_ranges_strict) ... ok
+test_unknown_or_sat_relation_rejected (test_partial_audit.PartialPrefixTests.test_unknown_or_sat_relation_rejected) ... ok
+test_unterminated_tail_is_not_certificate (test_partial_audit.PartialPrefixTests.test_unterminated_tail_is_not_certificate) ... ok
+test_accepts_explicit_complete_depth2_preserves_old_status (test_product_depth2.TypedCertificateTests.test_accepts_explicit_complete_depth2_preserves_old_status) ... ok
+test_depth1_default_still_requires_all_three_results (test_product_depth2.TypedCertificateTests.test_depth1_default_still_requires_all_three_results) ... ok
+test_rejects_missing_wrong_or_unknown_obligation (test_product_depth2.TypedCertificateTests.test_rejects_missing_wrong_or_unknown_obligation) ... ok
+test_rejects_wrong_input_or_candidate_identity (test_product_depth2.TypedCertificateTests.test_rejects_wrong_input_or_candidate_identity) ... ok
+test_image_only_is_insufficient (test_prototype.IntegrationTests.test_image_only_is_insufficient) ... ok
+test_independent_current_pi (test_prototype.IntegrationTests.test_independent_current_pi) ... ok
+test_reset_only_is_insufficient (test_prototype.IntegrationTests.test_reset_only_is_insufficient) ... ok
+test_valid_nonlinear_fixture_product (test_prototype.IntegrationTests.test_valid_nonlinear_fixture_product) ... ok
+test_binary_roundtrip_and_empty_replay (test_prototype.UnitTests.test_binary_roundtrip_and_empty_replay) ... ok
+test_conflicting_selected_dependencies (test_prototype.UnitTests.test_conflicting_selected_dependencies) ... ok
+test_hash_demotes_direct (test_prototype.UnitTests.test_hash_demotes_direct) ... ok
+test_no_dead_fresh_gates_and_normalization_truth (test_prototype.UnitTests.test_no_dead_fresh_gates_and_normalization_truth) ... ok
+test_packed_complement_and_references (test_prototype.UnitTests.test_packed_complement_and_references) ... ok
+test_product_binds_input_hash_and_deadline (test_prototype.UnitTests.test_product_binds_input_hash_and_deadline) ... ok
+test_random_normalization_truth (test_prototype.UnitTests.test_random_normalization_truth) ... ok
+test_raw_two_gate_template_can_cost_one_gate (test_prototype.UnitTests.test_raw_two_gate_template_can_cost_one_gate) ... ok
+test_reject_unsupported_interfaces_and_reset (test_prototype.UnitTests.test_reject_unsupported_interfaces_and_reset) ... ok
+test_retained_dependency_chain (test_prototype.UnitTests.test_retained_dependency_chain) ... ok
+test_retained_internal_divisor_cost (test_prototype.UnitTests.test_retained_internal_divisor_cost) ... ok
+
+----------------------------------------------------------------------
+Ran 87 tests in 6.353s
+
+OK (skipped=11)

@@ -1,0 +1,25 @@
+{
+  "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+  "audit_script_sha256": "113039d04705d061e731485dbce27e31c25222ad6a83db2b729f2b64c4a7087f",
+  "dsec_separate_budget_per_case": 120,
+  "fixed_cases": [
+    "005_b03",
+    "034_b20_opt",
+    "060_wb_dma"
+  ],
+  "interpretation": "Tests ordinary scorr acquisition of supplied relations, not expression discovery, new proof power, area, or native QoR",
+  "schema": 1,
+  "scorr_command": "&scorr -F 1 -C 1000 -v",
+  "scorr_total_budget_per_case": 120,
+  "source_hashes": {
+    "nonlinear_divisors/anytime.py": "eb21d9bd838a453126c15a6aadcdc0f077174e411e74e8fa44cf673917032014",
+    "nonlinear_divisors/product.py": "97985c9dde8e8171ebe69e3452b7ae93ff6ec90d6a2d908e5931fa02187565bc",
+    "nonlinear_divisors/prototype.py": "a052a17c2a5c0c7816a4106c326543d8978deb37172fe6947003fda10b762f67",
+    "seq_care_synthesis/guide.py": "22d372ca2a96044e2f16ac1e38b2113436518f79f21072cec3660dee51c60f71",
+    "seq_care_synthesis/scan_exact_care.py": "bb6abc7a08d1275c2567237c412c4284e8cc69a54f0315f393edcd5c19d88854",
+    "seq_cut_image/diagnose.py": "6591e7ca66fbdaca907bb61102489c98052f2e602e20afd94ae4dfbbf3fb4b8f",
+    "teacher_adaptive_tools/teacher_bmc.py": "197bfab8b547e620c9eb9b7c8921f96b09b98fa10ddb01eacb9825ca343a0b60"
+  },
+  "source_run": "/tmp/nonlinear-anytime-pilot-v2",
+  "stopping_rule": "Stop when all selected pairs merge; otherwise repeat identical command on its output until exact loaded graph fixedpoint or shared 120s budget"
+}

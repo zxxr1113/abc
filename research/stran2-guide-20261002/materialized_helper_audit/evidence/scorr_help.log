@@ -1,0 +1,21 @@
+======== ABC command line "&scorr -h"
+usage: &scorr [-FCGXPSZ num] [-pkrecqiowvh]
+	         performs signal correspondence computation
+	-C num : the max number of conflicts at a node [default = 100]
+	-F num : the number of timeframes in inductive case [default = 1]
+	-G num : the number of timeframes in the prefix [default = 0]
+	-X num : the number of iterations of little or no improvement [default = 0]
+	-P num : the number of concurrent processes [default = 1]
+	-S num : the number of flops in one partition [default = 0]
+	-Z num : the average flop include frequency [default = 0]
+	-p     : toggle using partitioning for the input AIG [default = no]
+	-k     : toggle using constant correspondence [default = no]
+	-r     : toggle using implication rings during refinement [default = yes]
+	-e     : toggle using equivalences as choices [default = no]
+	-c     : toggle using circuit-based SAT solver [default = yes]
+	-q     : toggle quitting when PO is not a constant candidate [default = no]
+	-i     : toggle incremental TFO-triggered re-proof [default = no]
+	-o     : toggle calling old engine [default = no]
+	-w     : toggle printing verbose info about equivalent flops [default = no]
+	-v     : toggle printing verbose information [default = no]
+	-h     : print the command usage

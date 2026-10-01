@@ -1,0 +1,30 @@
+======== ABC command line "&r /tmp/materialized-helper-audit-v1/034_b20_opt/augmented.aig; &w /tmp/materialized-helper-audit-v1/034_b20_opt/loaded_001.aig; &scorr -F 1 -C 1000 -v; &w /tmp/materialized-helper-audit-v1/034_b20_opt/round_001.aig"
+cst =   11764  cls =      0  lit =   11764  unused =      32  proof =     0
+cst =    3820  cls =   1045  lit =    8945  unused =    1806  proof =     0
+cst =    2157  cls =   1286  lit =    5839  unused =    4671  proof =     0
+cst =    1045  cls =   1132  lit =    4008  unused =    6656  proof =     0
+cst =     547  cls =    818  lit =    2581  unused =    8397  proof =     0
+cst =     461  cls =    692  lit =    2080  unused =    9024  proof =     0
+cst =     418  cls =    633  lit =    1822  unused =    9341  proof =     0
+cst =     285  cls =    592  lit =    1577  unused =    9627  proof =     0
+cst =     211  cls =    536  lit =    1332  unused =    9928  proof =     0
+cst =     166  cls =    508  lit =    1157  unused =   10131  proof =     0
+Obj =   12362. And =   11335. Conf =  1000. Fr = 1. Lcorr = 0. Ring = 1. CSat = 1. Oracle = 0. Dyn = 0. DynAdapt = 0. IncrFb = 100%. DynRb = 20%. DynCmp = 4x.
+  0 : c =     166  cl =    508  lit =    1157  p =     0  d =     0  f =     0  -  T =     0.02 sec
+  1 : c =      72  cl =    200  lit =     384  p =   275  d =   666  f =    31  -  T =     0.11 sec
+  2 : c =      13  cl =     79  lit =     128  p =   116  d =   172  f =   108  -  T =     0.11 sec
+  3 : c =       4  cl =     32  lit =      43  p =    73  d =    42  f =    60  -  T =     0.02 sec
+  4 : c =       1  cl =     16  lit =      22  p =    46  d =     9  f =     9  -  T =     0.00 sec
+  5 : c =       0  cl =     16  lit =      20  p =    36  d =     1  f =     1  -  T =     0.00 sec
+  6 : c =       0  cl =     16  lit =      19  p =    35  d =     0  f =     1  -  T =     0.00 sec
+  7 : c =       0  cl =     16  lit =      18  p =    34  d =     0  f =     1  -  T =     0.00 sec
+  8 : c =       0  cl =     16  lit =      17  p =    33  d =     0  f =     1  -  T =     0.00 sec
+  9 : c =       0  cl =     16  lit =      16  p =    32  d =     0  f =     1  -  T =     0.00 sec
+ 10 : c =       0  cl =     15  lit =      15  p =    31  d =     0  f =     1  -  T =     0.00 sec
+ 11 : c =       0  cl =     15  lit =      15  p =     0  d =     0  f =     0  -  T =     0.00 sec
+Srm   =     0.01 sec (  4.58 %)
+Sat   =     0.25 sec ( 83.94 %)
+Sim   =     0.01 sec (  4.68 %)
+Other =     0.02 sec (  6.80 %)
+TOTAL =     0.30 sec
+NBeg = 11335. NEnd = 11317. (Gain =   0.16 %).  RBeg = 429. REnd = 429. (Gain =   0.00 %).

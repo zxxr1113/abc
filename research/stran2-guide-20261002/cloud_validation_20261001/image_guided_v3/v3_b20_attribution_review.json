@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "case": "034_b20_opt",
+      "status": "PASS",
+      "selected_builds": 58,
+      "direct_candidates": 3138,
+      "replayed_free_witnesses": 3196,
+      "positive_directs": 0,
+      "positive_direct_free_classes": {
+        "SAT": 0,
+        "UNSAT": 0,
+        "UNKNOWN": 0
+      },
+      "mixed_prefix_fresh_builds": 58,
+      "earlier_id_conditional_AND": 75,
+      "earlier_id_scope_only": true,
+      "new_DSEC_runs": 0,
+      "saved_DSEC_certificates_verified": 3
+    }
+  ],
+  "totals": {
+    "candidates": 3138,
+    "receipt_obligations": 9414,
+    "raw_witnesses": 3196,
+    "rebuilds": 3,
+    "DSEC_certificates": 3
+  },
+  "conditional_sum": 75,
+  "scope": "Earlier-ID/prefix-fresh classification ONLY; excludes later original structural aliases. NOT a global-new-expression or final scientific Build contribution claim.",
+  "source_results_sha256": "a886c7a35bb8df5edb1689540697a5650b58f7b37fc728cd6755de92a1ef9ed7",
+  "script_sha256": "c95a8474b015ab99f70d81bd6444bb434d4eb793a6cf6b5cda87bbe0bdf13975",
+  "wall_s": 2.8058752690012625
+}

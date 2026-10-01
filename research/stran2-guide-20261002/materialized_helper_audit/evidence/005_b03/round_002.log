@@ -1,0 +1,24 @@
+======== ABC command line "&r /tmp/materialized-helper-audit-v1/005_b03/round_001.aig; &w /tmp/materialized-helper-audit-v1/005_b03/loaded_002.aig; &scorr -F 1 -C 1000 -v; &w /tmp/materialized-helper-audit-v1/005_b03/round_002.aig"
+cst =     108  cls =      0  lit =     108  unused =       4  proof =     0
+cst =      17  cls =     15  lit =      43  unused =      54  proof =     0
+cst =       9  cls =     15  lit =      27  unused =      70  proof =     0
+cst =       9  cls =     13  lit =      25  unused =      74  proof =     0
+cst =       9  cls =     13  lit =      25  unused =      74  proof =     0
+cst =       9  cls =     13  lit =      25  unused =      74  proof =     0
+cst =       9  cls =     13  lit =      25  unused =      74  proof =     0
+cst =       9  cls =     13  lit =      25  unused =      74  proof =     0
+cst =       9  cls =     13  lit =      25  unused =      74  proof =     0
+cst =       9  cls =     13  lit =      25  unused =      74  proof =     0
+Obj =     151. And =      84. Conf =  1000. Fr = 1. Lcorr = 0. Ring = 1. CSat = 1. Oracle = 0. Dyn = 0. DynAdapt = 0. IncrFb = 100%. DynRb = 20%. DynCmp = 4x.
+  0 : c =       9  cl =     13  lit =      25  p =     0  d =     0  f =     0  -  T =     0.00 sec
+  1 : c =       3  cl =      7  lit =      10  p =    18  d =     8  f =     0  -  T =     0.00 sec
+  2 : c =       1  cl =      5  lit =       6  p =     8  d =     3  f =     0  -  T =     0.00 sec
+  3 : c =       0  cl =      1  lit =       1  p =     5  d =     4  f =     0  -  T =     0.00 sec
+  4 : c =       0  cl =      0  lit =       0  p =     0  d =     2  f =     0  -  T =     0.00 sec
+  5 : c =       0  cl =      0  lit =       0  p =     0  d =     0  f =     0  -  T =     0.00 sec
+Srm   =     0.00 sec (  6.51 %)
+Sat   =     0.00 sec ( 11.54 %)
+Sim   =     0.00 sec (  5.14 %)
+Other =     0.00 sec ( 76.80 %)
+TOTAL =     0.00 sec
+NBeg = 84. NEnd = 84. (Gain =   0.00 %).  RBeg = 24. REnd = 24. (Gain =   0.00 %).

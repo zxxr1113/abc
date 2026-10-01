@@ -1,0 +1,78 @@
+{
+  "scope": "Raw Build-only products before mandatory separately timed selected-root Direct audit; not main metric",
+  "baseline": "/tmp/nonlinear-anytime-pilot-v2",
+  "candidate": "/tmp/image-guided-pilot-v1",
+  "source_integrity": {
+    "status": "PASS"
+  },
+  "rows": [
+    {
+      "file": "005_b03.aig",
+      "status": "COMPLETE",
+      "raw_build_gain": 5,
+      "baseline_raw_build_gain": 5,
+      "selected_builds": 5,
+      "transform_wall_s": 2.033007144998919,
+      "accepted_checkpoint_s": 1.5636857989993587,
+      "baseline_dsec": "PASS",
+      "product_dsec": "PASS"
+    },
+    {
+      "file": "044_i2c.aig",
+      "status": "COMPLETE",
+      "raw_build_gain": 13,
+      "baseline_raw_build_gain": 10,
+      "selected_builds": 7,
+      "transform_wall_s": 31.420451330001015,
+      "accepted_checkpoint_s": 22.635936097000013,
+      "baseline_dsec": "PASS",
+      "product_dsec": "PASS"
+    },
+    {
+      "file": "041_des_area.aig",
+      "status": "COMPLETE",
+      "raw_build_gain": 0,
+      "baseline_raw_build_gain": 0,
+      "selected_builds": 0,
+      "transform_wall_s": 18.226744216999577,
+      "accepted_checkpoint_s": 0.5501338479989499,
+      "baseline_dsec": "PASS",
+      "product_dsec": "PASS"
+    },
+    {
+      "file": "034_b20_opt.aig",
+      "status": "BUDGET_EXHAUSTED",
+      "raw_build_gain": 66,
+      "baseline_raw_build_gain": 74,
+      "selected_builds": 48,
+      "transform_wall_s": 120.00796617800006,
+      "accepted_checkpoint_s": 104.57428901599997,
+      "baseline_dsec": "PASS",
+      "product_dsec": "PASS"
+    },
+    {
+      "file": "045_mem_ctrl.aig",
+      "status": "BUDGET_EXHAUSTED",
+      "raw_build_gain": 136,
+      "baseline_raw_build_gain": 0,
+      "selected_builds": 30,
+      "transform_wall_s": 120.01144207200014,
+      "accepted_checkpoint_s": 85.2942325339991,
+      "baseline_dsec": "PASS",
+      "product_dsec": "PASS"
+    },
+    {
+      "file": "060_wb_dma.aig",
+      "status": "COMPLETE",
+      "raw_build_gain": 83,
+      "baseline_raw_build_gain": 2,
+      "selected_builds": 31,
+      "transform_wall_s": 87.68847997000012,
+      "accepted_checkpoint_s": 83.09155626000029,
+      "baseline_dsec": "PASS",
+      "product_dsec": "PASS"
+    }
+  ],
+  "baseline_total_raw_build_gain": 91,
+  "candidate_total_raw_build_gain": 303
+}

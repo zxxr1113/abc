@@ -1,0 +1,47 @@
+{
+  "largest_case_bytes": {
+    "direct_audit": 54405616,
+    "global_audit": 3780056,
+    "transform": 363980669
+  },
+  "observations": {
+    "direct_audit": {
+      "case_logical_bytes": {
+        "005_b03": 1034978,
+        "034_b20_opt": 54405616,
+        "041_des_area": 591191,
+        "044_i2c": 2165008,
+        "045_mem_ctrl": 37078872,
+        "060_wb_dma": 25017548
+      },
+      "largest_case": "034_b20_opt",
+      "source_run": "/tmp/image-guided-attribution-v3"
+    },
+    "global_audit": {
+      "case_logical_bytes": {
+        "005_b03": 155189,
+        "034_b20_opt": 3780056,
+        "041_des_area": 116909,
+        "044_i2c": 263751,
+        "045_mem_ctrl": 253607,
+        "060_wb_dma": 257903
+      },
+      "largest_case": "034_b20_opt",
+      "source_run": "/tmp/nonlinear-anytime-v2-global-alias-audit-v1"
+    },
+    "transform": {
+      "case_logical_bytes": {
+        "005_b03": 501695,
+        "034_b20_opt": 363980669,
+        "041_des_area": 37718218,
+        "044_i2c": 27303145,
+        "045_mem_ctrl": 193932775,
+        "060_wb_dma": 0
+      },
+      "largest_case": "034_b20_opt",
+      "source_run": "/tmp/image-guided-pilot-v3"
+    }
+  },
+  "schema": 1,
+  "scope": "read-only logical-byte snapshot of retained evidence; incomplete v3 transform included; not a worst-case bound"
+}

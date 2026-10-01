@@ -1,0 +1,19 @@
+[
+  {
+    "appended_nodes": [],
+    "candidate_sha256": "8d81b2a261944183f9d412ab5a92d4ff85dbd5ee8a6efc13467a2138fe094bb5",
+    "free_witness_sha256": "68d5e1fb454d4bea440c173eda474084f7ec1c5cffebd08bda3be206825f3eea",
+    "helper_literal": 7790,
+    "helper_po_index": 216,
+    "index": 0,
+    "live_appended_nodes": [],
+    "out": -2,
+    "recipe": [
+      1144,
+      1508
+    ],
+    "root": 759,
+    "root_literal": 1518,
+    "root_po_index": 215
+  }
+]

@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "case": "005_b03",
+      "selected": 5,
+      "input_config_pool_candidate_witness_identity": "PASS",
+      "CNF_assumption_status_identity": "PASS",
+      "both_raw_checkpoint_receipts": "PASS",
+      "product_baseline_bytes": "IDENTICAL",
+      "reusable_prior_conditional_AND": 3
+    },
+    {
+      "case": "044_i2c",
+      "selected": 7,
+      "input_config_pool_candidate_witness_identity": "PASS",
+      "CNF_assumption_status_identity": "PASS",
+      "both_raw_checkpoint_receipts": "PASS",
+      "product_baseline_bytes": "IDENTICAL",
+      "reusable_prior_conditional_AND": 7
+    },
+    {
+      "case": "041_des_area",
+      "selected": 0,
+      "input_config_pool_candidate_witness_identity": "PASS",
+      "CNF_assumption_status_identity": "PASS",
+      "both_raw_checkpoint_receipts": "PASS",
+      "product_baseline_bytes": "IDENTICAL",
+      "reusable_prior_conditional_AND": 0
+    },
+    {
+      "case": "045_mem_ctrl",
+      "selected": 30,
+      "input_config_pool_candidate_witness_identity": "PASS",
+      "CNF_assumption_status_identity": "PASS",
+      "both_raw_checkpoint_receipts": "PASS",
+      "product_baseline_bytes": "IDENTICAL",
+      "reusable_prior_conditional_AND": 41
+    },
+    {
+      "case": "060_wb_dma",
+      "selected": 31,
+      "input_config_pool_candidate_witness_identity": "PASS",
+      "CNF_assumption_status_identity": "PASS",
+      "both_raw_checkpoint_receipts": "PASS",
+      "product_baseline_bytes": "IDENTICAL",
+      "reusable_prior_conditional_AND": 76
+    }
+  ],
+  "unchanged_selected_recipes": 73,
+  "reused_prior_conditional_AND": 127,
+  "separately_reviewed_b20_conditional_AND": 75,
+  "total_conditional_AND": 202,
+  "global_structural_alias_classification": "Separately reviewed by dedicated global reviewer; not duplicated here",
+  "binding_file_sha256": "5e36d4039258a9cc5f9089e1977a5bc65043331f43c305b0fab2abc59cc486a2",
+  "script_sha256": "17ecbccce3ff0cb78e009d437db4e5c0b56b65ccf9f19dc18de1869047c52326"
+}

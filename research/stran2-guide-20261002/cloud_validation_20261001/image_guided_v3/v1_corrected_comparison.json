@@ -1,0 +1,109 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "case": "005_b03",
+      "loaded_and": 128,
+      "baseline_gain": 3,
+      "refined_gain": 3,
+      "delta_gain": 0
+    },
+    {
+      "case": "044_i2c",
+      "loaded_and": 2879,
+      "baseline_gain": 3,
+      "refined_gain": 7,
+      "delta_gain": 4
+    },
+    {
+      "case": "041_des_area",
+      "loaded_and": 10133,
+      "baseline_gain": 0,
+      "refined_gain": 0,
+      "delta_gain": 0
+    },
+    {
+      "case": "034_b20_opt",
+      "loaded_and": 13440,
+      "baseline_gain": 74,
+      "refined_gain": 65,
+      "delta_gain": -9
+    },
+    {
+      "case": "045_mem_ctrl",
+      "loaded_and": 34059,
+      "baseline_gain": 0,
+      "refined_gain": 41,
+      "delta_gain": 41
+    },
+    {
+      "case": "060_wb_dma",
+      "loaded_and": 9555,
+      "baseline_gain": 0,
+      "refined_gain": 76,
+      "delta_gain": 76
+    }
+  ],
+  "all_cases": {
+    "cases": 6,
+    "baseline": {
+      "and_gain": 80,
+      "equal_case_percent": 0.49975801438440376,
+      "weighted_percent": 0.11396985497335954
+    },
+    "refined": {
+      "and_gain": 192,
+      "equal_case_percent": 0.6643825590633793,
+      "weighted_percent": 0.27352765193606293
+    },
+    "delta": {
+      "and_gain": 112,
+      "equal_case_percent": 0.16462454467897555,
+      "weighted_percent": 0.15955779696270336
+    }
+  },
+  "excluding_largest_increment_case": "060_wb_dma",
+  "excluding_largest_increment": {
+    "cases": 5,
+    "baseline": {
+      "and_gain": 80,
+      "equal_case_percent": 0.5997096172612845,
+      "weighted_percent": 0.1319282969705965
+    },
+    "refined": {
+      "and_gain": 116,
+      "equal_case_percent": 0.6381800546541819,
+      "weighted_percent": 0.1912960306073649
+    },
+    "delta": {
+      "and_gain": 36,
+      "equal_case_percent": 0.03847043739289733,
+      "weighted_percent": 0.059367733636768415
+    }
+  },
+  "excluding_b03": {
+    "cases": 5,
+    "baseline": {
+      "and_gain": 77,
+      "equal_case_percent": 0.13095961726128452,
+      "weighted_percent": 0.10989638340992779
+    },
+    "refined": {
+      "and_gain": 189,
+      "equal_case_percent": 0.3285090708760552,
+      "weighted_percent": 0.2697456683698227
+    },
+    "delta": {
+      "and_gain": 112,
+      "equal_case_percent": 0.19754945361477066,
+      "weighted_percent": 0.15984928495989495
+    }
+  },
+  "scope": "bounded earlier-ID Direct/hash grammar plus whole-original structural output-alias correction; no global Boolean Direct exhaustion or native novelty claim",
+  "baseline_additional_global_audit_wall_s": 1.1118883959934465,
+  "baseline_new_DSEC_calls": 0,
+  "baseline_DSEC_certificates_PASS": 24,
+  "online_additional_global_audit_wall_s": 1.3136529289986356,
+  "online_new_DSEC_calls": 0,
+  "online_DSEC_certificates_PASS": 24
+}

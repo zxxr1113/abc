@@ -1,0 +1,11 @@
+test_complemented_helper_uses_original_source_ids (test_audit.MaterializedGraphTests.test_complemented_helper_uses_original_source_ids) ... ok
+test_empty_selection_is_exact_original (test_audit.MaterializedGraphTests.test_empty_selection_is_exact_original) ... ok
+test_pair_equality_includes_complemented_phase (test_audit.MaterializedGraphTests.test_pair_equality_includes_complemented_phase) ... ok
+test_preserves_original_transition_and_outputs (test_audit.MaterializedGraphTests.test_preserves_original_transition_and_outputs) ... ok
+test_rejects_cyclic_divisor (test_audit.MaterializedGraphTests.test_rejects_cyclic_divisor) ... ok
+test_rejects_mismatched_witness (test_audit.MaterializedGraphTests.test_rejects_mismatched_witness) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.003s
+
+OK

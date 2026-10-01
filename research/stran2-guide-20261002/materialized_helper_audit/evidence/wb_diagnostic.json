@@ -1,0 +1,197 @@
+{
+  "diagnostic_replay": {
+    "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+    "after_sha256": "990038dd3467fbd3bfba27bfceac11dc382798f50ed72cbcec74ccd28eabcf25",
+    "command": "&r /tmp/materialized-helper-audit-v1/060_wb_dma/augmented.aig; &scorr -F 1 -C 1000 -v -w; &w /tmp/materialized-helper-audit-v1/diagnostic_wb/verbose.aig",
+    "direct_pair_attempt": "UNKNOWN_NO_PER_PAIR_TRACE",
+    "exit_code": 0,
+    "extra_diagnostic_cost": true,
+    "failed_sum": 0,
+    "graph_identical_to_primary_round1": true,
+    "graph_sha256": "a86a14acc5745d1a475f03d3a0b2c9e309911dfab9f184ff5e1dc38c54a6b7b8",
+    "log_sha256": "eafde304a23d5f0894509c13aac3d718738c655be527ae756f8c8f295808418d",
+    "source_sha256": "93c822a8301f3d212a7f58f2de2d040280c33f1fc75b65d30680bee651b114e0",
+    "specific_class_membership_after_simulation": "UNKNOWN_NO_PER_NODE_TRACE",
+    "status": "EXIT",
+    "status_rows": [
+      {
+        "disproved": 0,
+        "failed": 0,
+        "proved": 0,
+        "round": 0
+      },
+      {
+        "disproved": 70,
+        "failed": 0,
+        "proved": 20,
+        "round": 1
+      },
+      {
+        "disproved": 242,
+        "failed": 0,
+        "proved": 81,
+        "round": 2
+      },
+      {
+        "disproved": 384,
+        "failed": 0,
+        "proved": 69,
+        "round": 3
+      },
+      {
+        "disproved": 383,
+        "failed": 0,
+        "proved": 90,
+        "round": 4
+      },
+      {
+        "disproved": 329,
+        "failed": 0,
+        "proved": 89,
+        "round": 5
+      },
+      {
+        "disproved": 362,
+        "failed": 0,
+        "proved": 119,
+        "round": 6
+      },
+      {
+        "disproved": 222,
+        "failed": 0,
+        "proved": 71,
+        "round": 7
+      },
+      {
+        "disproved": 255,
+        "failed": 0,
+        "proved": 75,
+        "round": 8
+      },
+      {
+        "disproved": 447,
+        "failed": 0,
+        "proved": 121,
+        "round": 9
+      },
+      {
+        "disproved": 611,
+        "failed": 0,
+        "proved": 224,
+        "round": 10
+      },
+      {
+        "disproved": 462,
+        "failed": 0,
+        "proved": 142,
+        "round": 11
+      },
+      {
+        "disproved": 454,
+        "failed": 0,
+        "proved": 112,
+        "round": 12
+      },
+      {
+        "disproved": 251,
+        "failed": 0,
+        "proved": 33,
+        "round": 13
+      },
+      {
+        "disproved": 130,
+        "failed": 0,
+        "proved": 40,
+        "round": 14
+      },
+      {
+        "disproved": 93,
+        "failed": 0,
+        "proved": 37,
+        "round": 15
+      },
+      {
+        "disproved": 64,
+        "failed": 0,
+        "proved": 24,
+        "round": 16
+      },
+      {
+        "disproved": 58,
+        "failed": 0,
+        "proved": 27,
+        "round": 17
+      },
+      {
+        "disproved": 34,
+        "failed": 0,
+        "proved": 14,
+        "round": 18
+      },
+      {
+        "disproved": 22,
+        "failed": 0,
+        "proved": 13,
+        "round": 19
+      },
+      {
+        "disproved": 8,
+        "failed": 0,
+        "proved": 7,
+        "round": 20
+      },
+      {
+        "disproved": 5,
+        "failed": 0,
+        "proved": 5,
+        "round": 21
+      },
+      {
+        "disproved": 2,
+        "failed": 0,
+        "proved": 1,
+        "round": 22
+      },
+      {
+        "disproved": 0,
+        "failed": 0,
+        "proved": 0,
+        "round": 23
+      }
+    ],
+    "timeout_seconds": 120,
+    "wall_s": 0.06400027800009411
+  },
+  "existing_later_alias": true,
+  "fanin_nodes": [
+    754,
+    572
+  ],
+  "free_witness_helper": 1,
+  "free_witness_root": 0,
+  "helper_depends_on_root": false,
+  "helper_original_fanins": [
+    1508,
+    1144
+  ],
+  "helper_original_literal": 7790,
+  "helper_original_node": 3895,
+  "mechanism": {
+    "direct_root_helper_attempt": "UNKNOWN_NO_PER_PAIR_INSTRUMENTATION",
+    "initial_class_assignment": "Both original ANDs enter candidate-constant class by source; exact later membership not emitted",
+    "initial_simulation": "Zero-reset sequential; a genuinely image-valid equality should survive these samples (source/mathematical inference, not per-node trace)",
+    "observed_unknown_conflict_outcomes": "None in saved wb verbose induction rounds; f=0 throughout",
+    "ordinary_induction_solver": "Cbs_ManSolveMiterNc, C1000",
+    "ordinary_nonempty_base_solver": "Tas_ManSolveMiterNc, C1000",
+    "representative_rewrite": "Full CO literal comparison includes phase; final h literal3058 is renumbering, not evidence of a root/h merge",
+    "resimulation_loss_hypothesis": "Source full resimulation refines at f=0 after loading arbitrary predecessor-state induction CEX; valid reset/image relations with free-state SAT can split there. Plausible mechanism, exact offending CEX/ring edge not observed"
+  },
+  "out": -2,
+  "prior_metric_scope": "EARLIER_ID_RECIPE_SCOPE_PENDING_GLOBAL_STRUCTURAL_ALIAS_AUDIT",
+  "recipe": [
+    1144,
+    1508
+  ],
+  "root": 759,
+  "source_input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d"
+}

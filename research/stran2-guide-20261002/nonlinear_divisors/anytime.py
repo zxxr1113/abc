@@ -9,6 +9,12 @@ The supervisor accepts checkpoints observed before one total transform deadline;
 startup, parsing, signatures, discovery, proof and all reconstruction are inside.
 Independent baseline/product DSEC run afterward with separately reported budgets.
 A retained product never changes BUDGET_EXHAUSTED into exhaustive COMPLETE.
+
+--image-model-solver explicitly enables replay-checked image-domain feedback.
+Pool/ranking/aliases and per-root top-k remain at the initial policy; only recipe
+construction signatures grow. These image models are not reachable teachers or
+proof certificates. Build-only products require a separately timed selected-root
+Direct sensitivity audit before interpreting the gain as the main Build metric.
 """
 from __future__ import annotations
 
@@ -26,6 +32,7 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 import traceback
 
@@ -292,6 +299,10 @@ def transform(job):
         source_hashes=job["source_hashes"],
         config=asdict(config), chunk_roots=job["chunk_roots"], host=socket.gethostname(),
         python=sys.version, native_recipe_novelty="NOT_CHECKED"))
+    model_identity = None
+    if job.get("image_model_solver"):
+        model_identity, _ = bind_executable(job["image_model_solver"],
+            job["image_model_solver_sha256"], job["image_model_solver_identity"])
     metrics, timing = Counter(), Counter()
     qualified, checkpoint, chunk_index = [], 0, 0
     progress = dict(stage="baseline_checkpoint", searched_roots=0, proof_completed_chunks=0,
@@ -312,32 +323,54 @@ def transform(job):
     for node in range(1, a.m + 1):
         aliases[min(seq[node], seq[node] ^ seq_mask)].append(node)
     timing["initialization_wall_s"] += time.monotonic() - start
-    pending, roots_in_chunk = [], 0
+    # The optional feedback lane never changes the pool/rank/alias view.
+    pool_seq, pool_seq_mask = seq, seq_mask
+    guidance = None
+    if job.get("image_model_solver"):
+        from image_guided import ImageGuidance
+        guidance = ImageGuidance(a, graph, base, step, seq, seq_mask, free, free_mask,
+            structure, config, job, deadline, model_identity)
+    pending, roots_in_chunk, chunk_roots = [], 0, []
 
     def flush():
-        nonlocal pending, roots_in_chunk, checkpoint, chunk_index
-        deadline.remaining()
-        chunk_start = time.monotonic()
-        chunk_dir = out / "chunks" / f"chunk_{chunk_index:05d}"
-        accepted, report = prove_chunk(a, graph, dict(free=base, reset=reset, step=step),
-            free, pending, chunk_dir, solver, deadline, input_hash, solver_identity)
-        timing["proof_wall_s"] += time.monotonic() - chunk_start
-        for key in ("requested_queries", "actual_queries", "conclusive_cache_hits", "unknown_not_cached",
-                    "reset_sat", "reset_unknown", "reset_reject_skipped_free_and_step",
-                    "theoretical_unfiltered_queries", "solver_conflicts", "solver_process_wall_s"):
-            metrics[key] += report.get(key, 0)
-        qualified.extend(accepted)
-        progress.update(stage="checkpoint", proof_completed_chunks=chunk_index + 1,
-                        qualified_candidates=len(qualified))
-        if accepted:
-            start = time.monotonic()
-            publish_checkpoint(source, qualified, out, checkpoint, deadline, input_hash, progress)
-            timing["checkpoint_wall_s"] += time.monotonic() - start
-            checkpoint += 1
-        write_json(out / "progress.json", dict(**progress, metrics=dict(metrics), timing=dict(timing),
-                   transform_elapsed_s=time.monotonic() - deadline.start))
-        pending, roots_in_chunk = [], 0
-        chunk_index += 1
+        nonlocal pending, roots_in_chunk, chunk_roots, checkpoint, chunk_index, seq, seq_mask
+        while True:
+            deadline.remaining()
+            chunk_start = time.monotonic()
+            chunk_dir = out / "chunks" / f"chunk_{chunk_index:05d}"
+            if guidance:
+                guidance.mark_attempted(pending)
+            accepted, report = prove_chunk(a, graph, dict(free=base, reset=reset, step=step),
+                free, pending, chunk_dir, solver, deadline, input_hash, solver_identity)
+            timing["proof_wall_s"] += time.monotonic() - chunk_start
+            for key in ("requested_queries", "actual_queries", "conclusive_cache_hits", "unknown_not_cached",
+                        "reset_sat", "reset_unknown", "reset_reject_skipped_free_and_step",
+                        "theoretical_unfiltered_queries", "solver_conflicts", "solver_process_wall_s"):
+                metrics[key] += report.get(key, 0)
+            qualified.extend(accepted)
+            progress.update(stage="checkpoint", proof_completed_chunks=chunk_index + 1,
+                            qualified_candidates=len(qualified))
+            if guidance:
+                progress["image_guidance"] = guidance.report()
+            if accepted:
+                start = time.monotonic()
+                publish_checkpoint(source, qualified, out, checkpoint, deadline, input_hash, progress)
+                timing["checkpoint_wall_s"] += time.monotonic() - start
+                checkpoint += 1
+            write_json(out / "progress.json", dict(**progress, metrics=dict(metrics), timing=dict(timing),
+                       transform_elapsed_s=time.monotonic() - deadline.start))
+            chunk_index += 1
+            if not guidance:
+                break
+            pending = guidance.refine(chunk_roots, pending, out)
+            seq, seq_mask = guidance.seq, guidance.mask
+            progress["image_guidance"] = guidance.report()
+            progress["discovered_candidates"] += len(pending)
+            write_json(out / "progress.json", dict(**progress, metrics=dict(metrics), timing=dict(timing),
+                       transform_elapsed_s=time.monotonic() - deadline.start))
+            if not pending:
+                break
+        pending, roots_in_chunk, chunk_roots = [], 0, []
 
     with (out / "root_search.jsonl").open("w", buffering=1) as rootlog:
         for root in range(structure.nci + 1, a.m + 1):
@@ -349,15 +382,22 @@ def transform(job):
             if len(mffc) < 2:
                 continue
             metrics["eligible_roots"] += 1
-            pool, info, pool_stats = make_pool(structure, root, mffc, seq, seq_mask, aliases, config)
+            pool, info, pool_stats = make_pool(structure, root, mffc, pool_seq, pool_seq_mask, aliases, config)
             found, stats = search_root(structure, root, pool, info, seq, seq_mask,
                                       free, free_mask, config, deadline)
             metrics.update(stats)
             metrics["searched_roots"] += 1
             timing["search_wall_s"] += time.monotonic() - start
-            rootlog.write(json.dumps(dict(root=root, mffc=len(mffc), pool=pool, pool_info=info,
-                pool_stats=pool_stats, search=dict(stats), candidates=len(found)), sort_keys=True) + "\n")
+            root_record = dict(root=root, mffc=len(mffc), pool=pool, pool_info=info,
+                pool_stats=pool_stats, search=dict(stats), candidates=len(found))
+            if guidance:
+                guidance.remember_search(root, pool, info, found, stats)
+                root_record.update(teacher_version=guidance.version, pool_signature_version=0,
+                                   construction_signature_bits=guidance.mask.bit_length())
+                guidance.annotate(found)
+            rootlog.write(json.dumps(root_record, sort_keys=True) + "\n")
             pending.extend(found)
+            chunk_roots.append(dict(root=root, pool=list(pool), pool_info=info))
             roots_in_chunk += 1
             progress.update(stage="search", last_completed_root=root,
                 searched_roots=metrics["searched_roots"],
@@ -368,6 +408,9 @@ def transform(job):
             flush()
     require(sha(source) == input_hash, "input changed during transform")
     bind_executable(solver, job["solver_sha256"], solver_identity)
+    if guidance:
+        bind_executable(job["image_model_solver"], job["image_model_solver_sha256"], model_identity)
+        progress["image_guidance"] = guidance.report()
     deadline.remaining()
     result = dict(schema=1, status="COMPLETE", search_complete=True, **progress,
                   metrics=dict(metrics), timing=dict(timing),
@@ -391,17 +434,50 @@ def worker(path):
         return 124 if status == "BUDGET_EXHAUSTED" else 1
 
 
-def supervise(command, out, start, seconds):
-    """Receive completion notices before deadline; kill the entire worker group."""
+def record_supervisor_failure(out, command, start, error, process, failure_dir=None):
+    """Preserve an infrastructure error even when the output filesystem is full.
+
+    The optional fallback defaults to the caller's current working directory;
+    it should be on a writable filesystem distinct from a space-limited out.
+    """
+    failure = dict(schema=1, status="SUPERVISOR_ERROR", error=repr(error),
+        error_type=type(error).__name__, errno=getattr(error, "errno", None), traceback=traceback.format_exc(),
+        command=list(map(str, command)), out=str(out),
+        child_pid=process.pid if process is not None else None,
+        child_exit_code=process.returncode if process is not None else None,
+        elapsed_s=time.monotonic() - start)
+    target = Path(out) / "supervisor_failure.json"
+    try:
+        write_json(target, failure)
+        return str(target)
+    except (OSError, ValueError):
+        pass
+    try:
+        fallback = Path.cwd() if failure_dir is None else Path(failure_dir)
+        fallback.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", prefix="stran2-supervisor-failure-",
+                                         suffix=".json", dir=fallback, delete=False) as stream:
+            json.dump(failure, stream, indent=2, sort_keys=True)
+            stream.write("\n")
+            return stream.name
+    except (OSError, ValueError):
+        return None  # Preserve/re-raise the original error even if both disks fail.
+
+
+def supervise(command, out, start, seconds, failure_dir=None):
+    """Receive notices before deadline and clean up all owned startup failures."""
     end, notices, terminal, buffer = start + seconds, [], None, b""
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                               start_new_session=True)
-    selector = selectors.DefaultSelector()
-    selector.register(process.stdout, selectors.EVENT_READ, "stdout")
-    selector.register(process.stderr, selectors.EVENT_READ, "stderr")
+    process, selector, log = None, None, None
     exhausted = False
-    with (out / "driver.log").open("wb") as log:
+    try:
         try:
+            # Fail before launch when the primary log cannot be opened.
+            log = (out / "driver.log").open("wb")
+            process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                       start_new_session=True)
+            selector = selectors.DefaultSelector()
+            selector.register(process.stdout, selectors.EVENT_READ, "stdout")
+            selector.register(process.stderr, selectors.EVENT_READ, "stderr")
             while selector.get_map():
                 remaining = end - time.monotonic()
                 if remaining <= 0:
@@ -444,16 +520,26 @@ def supervise(command, out, start, seconds):
                         os.killpg(process.pid, signal.SIGKILL)
             process.wait()
         finally:
-            # A worker can die while its solver has redirected standard streams.
-            # Always reap the group, even when pipe EOF or the leader arrived first.
-            try:
-                os.killpg(process.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            process.wait()
-            selector.close()
-            process.stdout.close()
-            process.stderr.close()
+            # Selector construction/registration and I/O errors are covered too.
+            # Kill descendants even if their leader exited and closed its pipes.
+            if process is not None:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait()
+            if selector is not None:
+                selector.close()
+            if process is not None:
+                process.stdout.close()
+                process.stderr.close()
+            if log is not None:
+                log.close()
+    except BaseException as error:
+        failure = record_supervisor_failure(out, command, start, error, process, failure_dir)
+        if failure and hasattr(error, "add_note"):
+            error.add_note("Supervisor failure record: " + failure)
+        raise
     status = "ERROR" if terminal == "ERROR" else "BUDGET_EXHAUSTED" if exhausted else terminal or "ERROR"
     if status == "COMPLETE" and process.returncode != 0:
         status = "ERROR"
@@ -533,6 +619,9 @@ def run_case(case, out, source_dir, plan, config, solver, abc, chunk_roots, dsec
                start=start, end=start + config.wall_seconds, chunk_roots=chunk_roots,
                source_hashes=plan["runtime_source_hashes"], solver_sha256=plan["solver_sha256"],
                solver_identity=plan["solver_identity"])
+    if plan.get("image_model_solver"):
+        for key in ("image_model_solver", "image_model_solver_sha256", "image_model_solver_identity"):
+            job[key] = plan[key]
     write_json(out / "job.json", job)
     command = [sys.executable, "-B", str(source_dir / "nonlinear_divisors/anytime.py"),
                "--worker-job", str(out / "job.json")]
@@ -553,6 +642,9 @@ def run_case(case, out, source_dir, plan, config, solver, abc, chunk_roots, dsec
     audit_start = time.monotonic()
     require(sha(case["input"]) == case["input_sha256"], "input changed before independent DSEC")
     bind_executable(solver, plan["solver_sha256"], plan["solver_identity"])
+    if plan.get("image_model_solver"):
+        bind_executable(plan["image_model_solver"], plan["image_model_solver_sha256"], plan["image_model_solver_identity"])
+        result["image_guidance_attribution"] = "Build-only checkpoint; separately timed selected-root Direct sensitivity audit REQUIRED"
     require(all(sha(source_dir / name) == digest for name, digest in plan["runtime_source_hashes"].items()),
             "frozen source changed during transform")
     if driver["observed_checkpoints"]:
@@ -616,6 +708,8 @@ def main():
     selection.add_argument("--cases", nargs="+")
     parser.add_argument("--solver", type=Path, required=True)
     parser.add_argument("--abc", type=Path)
+    parser.add_argument("--image-model-solver", type=Path,
+                        help="opt-in image-only guidance with frozen initial pools; requires separate Direct sensitivity audit")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=1)
     parser.add_argument("--chunk-roots", type=int, default=32)
@@ -634,20 +728,34 @@ def main():
     args.out = args.out.resolve()
     args.out.mkdir(parents=True, exist_ok=False)
     source_dir = args.out / "source"
-    for name in RUNTIME:
+    runtime = list(RUNTIME)
+    if args.image_model_solver:
+        from image_guided import RUNTIME as IMAGE_RUNTIME
+        runtime.extend(IMAGE_RUNTIME)
+    for name in runtime:
         target = source_dir / name
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(PACKAGE / name, target)
     solver_identity, solver_hash = bind_executable(args.solver)
     plan = dict(schema=1, algorithm="anytime_reset_image_v2", cases=names, config=asdict(config),
         chunk_roots=args.chunk_roots, workers=args.workers, dsec_seconds=args.dsec_seconds,
-        runtime_source_hashes={name: sha(source_dir / name) for name in RUNTIME},
+        runtime_source_hashes={name: sha(source_dir / name) for name in runtime},
         solver=str(args.solver.resolve()), solver_sha256=solver_hash, solver_identity=solver_identity,
         abc=str(args.abc.resolve()) if args.abc else None, abc_sha256=sha(args.abc) if args.abc else None,
         host=socket.gethostname(), manifest_sha256=sha(PACKAGE / "cases.json"),
         transform_budget_boundary="before each worker launch through exit/kill; includes all checkpoint products",
         dsec_boundary="two independent checks after transform; each has its own limit",
         original_mode_and_evidence="UNCHANGED", native_recipe_novelty="NOT_CHECKED")
+    if args.image_model_solver:
+        model_identity, model_hash = bind_executable(args.image_model_solver)
+        plan.update(algorithm="anytime_image_guided_frozen_pool_v3",
+            image_model_solver=str(args.image_model_solver.resolve()),
+            image_model_solver_sha256=model_hash, image_model_solver_identity=model_identity,
+            image_model_solver_guard="full SHA at bound case entry/exit and controller validation; anchored dev/ino/size/mtime_ns/ctime_ns around every invocation",
+            pool_policy="immutable initial signatures, ranks and aliases",
+            construction_policy="append independently replayed unrestricted-one-step-image constraints; restart changed-projection roots in current chunk",
+            unchanged_projection_policy="skip discovery only when complete target+frozen-pool projection set is unchanged; retain every accepted global sample",
+            reachable_teacher=False, direct_sensitivity_audit="REQUIRED; outside transform, separately timed")
     write_json(args.out / "plan.json", plan)
     results = []
     def work(name):
@@ -667,7 +775,12 @@ def main():
             results.append(result)
             results.sort(key=lambda r: names.index(r["file"]))
             write_json(args.out / "results.json", results)
-            write_json(args.out / "summary.json", aggregate(results))
+            summary = aggregate(results)
+            if args.image_model_solver:
+                summary.update(gain_attribution="raw Build-only checkpoint before selected-root Direct sensitivity",
+                    main_metric_status="NOT_ESTABLISHED_UNTIL_SEPARATE_DIRECT_SENSITIVITY_AUDIT",
+                    direct_sensitivity_audit="REQUIRED; outside transform, separately timed")
+            write_json(args.out / "summary.json", summary)
             emit(dict(file=name, status=result["status"],
                       validated_gain=(result.get("product") or {}).get("validated_standalone_noncomb_build_gain")))
     write_json(args.out / "source_integrity.json", dict(status="PASS" if all(

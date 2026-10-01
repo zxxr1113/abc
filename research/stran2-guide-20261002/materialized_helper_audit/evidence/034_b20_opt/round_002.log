@@ -1,0 +1,25 @@
+======== ABC command line "&r /tmp/materialized-helper-audit-v1/034_b20_opt/round_001.aig; &w /tmp/materialized-helper-audit-v1/034_b20_opt/loaded_002.aig; &scorr -F 1 -C 1000 -v; &w /tmp/materialized-helper-audit-v1/034_b20_opt/round_002.aig"
+cst =   11746  cls =      0  lit =   11746  unused =      32  proof =     0
+cst =    3819  cls =   1045  lit =    8927  unused =    1806  proof =     0
+cst =    2157  cls =   1274  lit =    5821  unused =    4683  proof =     0
+cst =    1045  cls =   1119  lit =    3993  unused =    6666  proof =     0
+cst =     547  cls =    804  lit =    2566  unused =    8408  proof =     0
+cst =     461  cls =    678  lit =    2065  unused =    9035  proof =     0
+cst =     418  cls =    619  lit =    1807  unused =    9352  proof =     0
+cst =     285  cls =    578  lit =    1562  unused =    9638  proof =     0
+cst =     211  cls =    522  lit =    1317  unused =    9939  proof =     0
+cst =     166  cls =    494  lit =    1142  unused =   10142  proof =     0
+Obj =   12344. And =   11317. Conf =  1000. Fr = 1. Lcorr = 0. Ring = 1. CSat = 1. Oracle = 0. Dyn = 0. DynAdapt = 0. IncrFb = 100%. DynRb = 20%. DynCmp = 4x.
+  0 : c =     166  cl =    494  lit =    1142  p =     0  d =     0  f =     0  -  T =     0.02 sec
+  1 : c =      84  cl =    195  lit =     377  p =   251  d =   661  f =    31  -  T =     0.12 sec
+  2 : c =      15  cl =     53  lit =      97  p =    86  d =   208  f =    61  -  T =     0.07 sec
+  3 : c =       7  cl =     18  lit =      29  p =    24  d =    32  f =    54  -  T =     0.02 sec
+  4 : c =       3  cl =      7  lit =      10  p =    13  d =    13  f =     9  -  T =     0.01 sec
+  5 : c =       0  cl =      0  lit =       0  p =     5  d =     5  f =     3  -  T =     0.01 sec
+  6 : c =       0  cl =      0  lit =       0  p =     0  d =     0  f =     0  -  T =     0.00 sec
+Srm   =     0.01 sec (  3.86 %)
+Sat   =     0.20 sec ( 83.06 %)
+Sim   =     0.01 sec (  5.23 %)
+Other =     0.02 sec (  7.85 %)
+TOTAL =     0.24 sec
+NBeg = 11317. NEnd = 11317. (Gain =   0.00 %).  RBeg = 429. REnd = 429. (Gain =   0.00 %).

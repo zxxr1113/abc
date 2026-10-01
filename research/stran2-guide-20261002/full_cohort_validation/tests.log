@@ -1,0 +1,45 @@
+test_all55_exact_once_per_arm (__main__.RunnerTests.test_all55_exact_once_per_arm) ... ok
+test_capacity_is_evidence_based (__main__.RunnerTests.test_capacity_is_evidence_based) ... ok
+test_capacity_stop_preserves_entire_plan_without_launching_later_wave (__main__.RunnerTests.test_capacity_stop_preserves_entire_plan_without_launching_later_wave) ... {"wave": 0, "arm": "ordinary", "exit_code": 0}
+{"wave": 1, "arm": "imageguided", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 2, "next_block": 1, "reason": "insufficient free disk", "required_free_disk_bytes": 6696727361, "actual_free_disk_bytes": 27938406400, "remaining_not_started": 106, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_cli_only_optin_differs (__main__.RunnerTests.test_cli_only_optin_differs) ... ok
+test_corrected_summary_uses_paired_gains_and_integrity (__main__.RunnerTests.test_corrected_summary_uses_paired_gains_and_integrity) ... ok
+test_duplicate_result_rejected (__main__.RunnerTests.test_duplicate_result_rejected) ... ok
+test_frozen_dependency_lists_include_both_auditors (__main__.RunnerTests.test_frozen_dependency_lists_include_both_auditors) ... ok
+test_initial_admission_failure_retains_all110 (__main__.RunnerTests.test_initial_admission_failure_retains_all110) ... {"status": "CAPACITY_STOP", "next_wave": 0, "next_block": 0, "reason": "insufficient free disk", "required_free_disk_bytes": 6422576217, "actual_free_disk_bytes": 27938435072, "remaining_not_started": 110, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_missing_error_and_not_started_retained (__main__.RunnerTests.test_missing_error_and_not_started_retained) ... ok
+test_mixed_wave_state_denied (__main__.RunnerTests.test_mixed_wave_state_denied) ... ok
+test_resource_floor_blocks_current_low_disk (__main__.RunnerTests.test_resource_floor_blocks_current_low_disk) ... ok
+test_resume_ambiguous_unstarted_artifacts_denied (__main__.RunnerTests.test_resume_ambiguous_unstarted_artifacts_denied) ... {"wave": 0, "arm": "ordinary", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 1, "next_block": 0, "reason": "insufficient free disk", "required_free_disk_bytes": 5495847328, "actual_free_disk_bytes": 27938381824, "remaining_not_started": 108, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_resume_between_arms_preserves_completed_artifacts (__main__.RunnerTests.test_resume_between_arms_preserves_completed_artifacts) ... {"wave": 0, "arm": "ordinary", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 1, "next_block": 0, "reason": "insufficient free disk", "required_free_disk_bytes": 5495847328, "actual_free_disk_bytes": 27938381824, "remaining_not_started": 108, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+{"wave": 1, "arm": "imageguided", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 2, "next_block": 1, "reason": "insufficient free disk", "required_free_disk_bytes": 6696727361, "actual_free_disk_bytes": 27938336768, "remaining_not_started": 106, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_resume_completed_metadata_drift_denied (__main__.RunnerTests.test_resume_completed_metadata_drift_denied) ... {"wave": 0, "arm": "ordinary", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 1, "next_block": 0, "reason": "insufficient free disk", "required_free_disk_bytes": 5495847328, "actual_free_disk_bytes": 27938381824, "remaining_not_started": 108, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_resume_does_not_retry_error_wave (__main__.RunnerTests.test_resume_does_not_retry_error_wave) ... {"wave": 0, "arm": "ordinary", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 1, "next_block": 0, "reason": "insufficient free disk", "required_free_disk_bytes": 5495847328, "actual_free_disk_bytes": 27938377728, "remaining_not_started": 108, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+{"wave": 1, "arm": "imageguided", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 2, "next_block": 1, "reason": "insufficient free disk", "required_free_disk_bytes": 6696727361, "actual_free_disk_bytes": 27938332672, "remaining_not_started": 106, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_resume_frozen_tool_drift_denied_before_execution (__main__.RunnerTests.test_resume_frozen_tool_drift_denied_before_execution) ... {"wave": 0, "arm": "ordinary", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 1, "next_block": 0, "reason": "insufficient free disk", "required_free_disk_bytes": 5495847328, "actual_free_disk_bytes": 27938377728, "remaining_not_started": 108, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_resume_protocol_drift_denied_before_execution (__main__.RunnerTests.test_resume_protocol_drift_denied_before_execution) ... {"wave": 0, "arm": "ordinary", "exit_code": 0}
+{"status": "CAPACITY_STOP", "next_wave": 1, "next_block": 0, "reason": "insufficient free disk", "required_free_disk_bytes": 5495847328, "actual_free_disk_bytes": 27938377728, "remaining_not_started": 108, "message": "Capacity stop: remaining planned cases are NOT_STARTED, not failures or zero gain. Review storage before explicit resume."}
+ok
+test_summary_retains_direct_unknown_and_dsec_status (__main__.RunnerTests.test_summary_retains_direct_unknown_and_dsec_status) ... ok
+test_unknown_result_rejected (__main__.RunnerTests.test_unknown_result_rejected) ... ok
+test_wave_barrier_and_balanced_arm_order (__main__.RunnerTests.test_wave_barrier_and_balanced_arm_order) ... ok
+
+----------------------------------------------------------------------
+Ran 20 tests in 0.114s
+
+OK
