@@ -1,0 +1,12 @@
+test_dense_topology_rejects_cycle (test_toy.ToyTests.test_dense_topology_rejects_cycle) ... ok
+test_dsec_exit_zero_is_not_pass (test_toy.ToyTests.test_dsec_exit_zero_is_not_pass) ... ok
+test_exhaustive_reset_image_and_free_witness (test_toy.ToyTests.test_exhaustive_reset_image_and_free_witness) ... ok
+test_nonzero_reset_is_rejected (test_toy.ToyTests.test_nonzero_reset_is_rejected) ... ok
+test_pair_comparison_includes_phase (test_toy.ToyTests.test_pair_comparison_includes_phase) ... ok
+test_source_consistent_speculative_witness (test_toy.ToyTests.test_source_consistent_speculative_witness) ... ok
+test_transition_mutation_is_detected (test_toy.ToyTests.test_transition_mutation_is_detected) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.008s
+
+OK

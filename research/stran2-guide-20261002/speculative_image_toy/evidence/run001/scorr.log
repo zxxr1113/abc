@@ -1,0 +1,21 @@
+======== ABC command line "&r /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/original.aig; &w /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/loaded.aig; &scorr -F 1 -C 1000 -v; &w /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/after.aig"
+cst =      14  cls =      0  lit =      14  unused =       3  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+cst =       0  cls =      1  lit =       1  unused =      15  proof =     0
+Obj =      23. And =      11. Conf =  1000. Fr = 1. Lcorr = 0. Ring = 1. CSat = 1. Oracle = 0. Dyn = 0. DynAdapt = 0. IncrFb = 100%. DynRb = 20%. DynCmp = 4x.
+  0 : c =       0  cl =      1  lit =       1  p =     0  d =     0  f =     0  -  T =     0.00 sec
+  1 : c =       0  cl =      0  lit =       0  p =     0  d =     2  f =     0  -  T =     0.00 sec
+  2 : c =       0  cl =      0  lit =       0  p =     0  d =     0  f =     0  -  T =     0.00 sec
+Srm   =     0.00 sec (  1.17 %)
+Sat   =     0.00 sec (  4.09 %)
+Sim   =     0.00 sec (  0.70 %)
+Other =     0.00 sec ( 94.04 %)
+TOTAL =     0.00 sec
+NBeg = 11. NEnd = 11. (Gain =   0.00 %).  RBeg = 3. REnd = 3. (Gain =   0.00 %).

@@ -224,6 +224,36 @@ b20重新进行3138个有界Direct候选审计，9414个逻辑查询、6278个�
 
 下一阶段只扩展冻结样本：`full_cohort_validation/` 预注册全部55例两臂对照，共110个planned arm-case，使用同一最终runtime的普通anytime与显式image选项。输入/分母双哈希、参数、配对次序、2workers、独立DSEC与额外Direct/global审计均固定；所有未启动、错误、UNKNOWN和预算用尽保留，只有双臂有效审计交集可进入正式配对均值。两个arm都使用磁盘以消除先前存储差异，仍不作正式速度宣称。协议准备不代表实验已执行；最终运行状态与数据另行追加。
 
+### 冻结55例全量双臂对照：已完成变换与归因复核
+
+上述准备协议现已执行：2026-10-01 20:46:18 UTC 启动，结果根目录 `/workspace/shared/stran2-all55-matched-v3/`，协议SHA256 `22dcbbd02296a737def146ca2749d19e6d26a7577909062e08aefc67869fc8e2`。同一冻结runtime、普通anytime与显式image选项，全部55例及两臂共110次变换；每例120s、每查询1000conflicts、最大2workers，按manifest相邻两例分组、交替先跑哪一臂。两个arm都在工作区磁盘，未按结果调参、更换案例或拼接旧pilot。所有source/input/tool完整性PASS，110个保留产物的220份baseline/product DSEC全PASS，无ERROR、NOT_STARTED、capacity stop或resume。普通38例搜完、17例预算用尽；image43例搜完、12例预算用尽；共同完整搜索交集37例。有效incumbent不等于完整搜索。
+
+逐臂逐例完成同一有界Direct审计和whole-original结构alias修正后，全部110行有完整有效归因，Direct查询没有UNKNOWN。独立复核覆盖499份源证明CNF（10422个源候选）、960份被选free witness、220份变换产品精确重建、14080组任意状态全部CO、全部220份保存的DSEC；归因另复核50504个Direct候选、151512个收据义务、51166份保存witness、770份精确重放及DSEC绑定，没有重跑solver/DSEC。这里的正收益Direct观察包含70个free-SAT与5个free-UNSAT，后者是组合替代，同样正确地参与Direct-first归因；不能把六例中Direct的特殊性质外推。全图结构alias降级仍只有普通wb/root759。
+
+| 全55例，额外归因审计后条件Build | 普通anytime | image引导 | 配对增量 |
+|---|---:|---:|---:|
+| 精确AND总数 | 442 | 808 | **+366** |
+| 逐例相对原loaded AND，再等例平均 | 0.557331% | 0.715828% | **+0.158496 pp** |
+| 有正Build贡献的案例数 | 32 | 37 | +5 |
+| 新方法逐例更好/相同/更差 | — | **12 / 43 / 0** | 单次冻结协议结果 |
+
+加权总AND增量相对全部原loaded AND为 **+0.062100%**。这不是整电路面积改善82.8%，也不是相对任意最强native流程的面积下界；442/808只统计本定义的条件Build贡献。主指标仍是有界Direct条件下、完整原图结构hash修正的新表达式边际，并非全图布尔Direct穷尽或生产集成。
+
+| 原loaded尺寸分层 | 案例数 | 新增AND | 等例增量 |
+|---|---:|---:|---:|
+| <1k | 27 | +24 | +0.195659 pp |
+| 1k–10k | 13 | +223 | +0.229498 pp |
+| 10k–100k | 14 | +119 | +0.032216 pp |
+| ≥100k | 1 | 0 | 0 |
+
+大设计改善仍弱，唯一≥100k样本没有取得增量也不意味着已穷尽机会。绝对增量最大是wb_dma的+76AND，剔除后仍+290AND/+0.146702pp；主指标归一化增量最大却是steppermotordrive的+19/414，剔除它后等例增量为 **+0.076443pp**。这两种leave-largest不能混称。
+
+不使用原六例作贡献来源的补充描述：除去它们后，余49例为372→606AND、**+234AND/+0.154709pp**，8好41平0差；它们并非全新盲测holdout，manifest的discovery/holdout只是历史分组标签。只看两臂都完成搜索的37例则89→121AND、+32AND/+0.157323pp，5好32平。由于存在原版/opt变体，55也不等于55个独立设计族；事后按文件名去编号及`_opt`合并为36组、每组先平均再等权，仅作描述性敏感性分析，得到10组改善26组持平、+0.202702pp，不替换预注册全55主指标，也不声称已验证真实设计谱系。
+
+本次六例子集实际是普通70→image202，和较早pilot的80→202不同：同为120s，普通b20本次保留64、此前74，波次伙伴与执行条件会影响预算前缀。全量结论严格用本次配对，不能拼接较好的历史结果；“12好0差”是这一次冻结协议观察，不是任意运行条件下无回归的保证。
+
+56个串行波次的外层wall合计2853.919s（47.57min，含controller及变换后DSEC）；变换worker wall求和普通2504.821s、image2192.847s，是带上限的覆盖计数，不作为正式加速倍率。逐例Direct归因额外wall合计488.305s，全图alias归因18.740s，独立复核还另有成本。结果表 `corrected_rows.json` 保留所有110行及各阶段状态，`corrected_summary.json` 与独立 `evidence-preserved/full55-independent-review/aggregate_review.json` 给出配对、尺寸分层和敏感性。模型/teacher域全量独立回放也已PASS：55个image案例的1802个完整轮次、47069份保存模型、9541条接受约束、51939个完整候选签名版本及22492次投影跳过全部复核，57297条两臂共有pool记录一致。3个末尾未完成引导轮和4个未完成proof chunk明确排除，未进入任何保留产物。此只读回放额外328.764s，无新solver/DSEC调用；归因producer实际执行101292个Direct查询和36个新DSEC调用，不能将复用证书计成新运行。索引为 `evidence-preserved/full55-independent-review/review.json`。
+
 ### 先行工作校准与待证明贡献
 
 本轮检索后的结论是：reset/image 证明原理及反例反馈均有明确先行工作，不能作为新理论宣称。
@@ -243,6 +273,16 @@ b20重新进行3138个有界Direct候选审计，9414个逻辑查询、6278个�
 总共 16/63 合并，余47个只记 `NOT_MERGED`，绝不解释为不可证明。63个关系本来都满足 reset 与 unrestricted-image 义务，数学上已是一步归纳可证。额外一次 wb verbose replay 0.064s、与首轮产物同图，记录的 UNKNOWN 为0；源码显示候选类别会在任意前态的归纳反例重仿真时细分，可能丢失实际 image 有效关系，但日志没有逐节点 class/具体 root-h 查询轨迹，故这只是有依据的假说，不是已定位原因。这个对照说明实际证明取得与理论充分条件有区别，不能称新证明定理。
 
 尤其 wb 的 `h=(lit1144 & lit1508)` 在完整原图中已存在为 node3895/lit7790；待替换 root759，h 的 fanin 为 node572/754，均早于 root，原依赖无环。故辅助物化不新增 AND，且不能因 node3895 编号较晚就把它视作不可复用。这个发现触发了上文**全原图结构 alias 与新 Build 归因重查**。它不否定原产品 DSEC 或总面积测量，但可能改变其中多少应称“真正新表达式”的结论。
+
+### 为何 semantic 一步归纳成立仍可能被普通 scorr 拆开（源码推导与独立 toy）
+
+进一步源码核对排除了F1的off-by-one解释：普通signal-correspondence的F1确实用两组独立PI检查一次转移后的frame1，base覆盖reset frame0（`cecCorr.c:475–503,522–541,623–650`）。默认候选允许AND与有引用RO共享class，小ID作代表（`cecClass.c:1003–1017,594–620,239–259`）。但`SpecReal`只跳过当前root的替换，其fanin仍递归走投机representative，包括frame0（`cecCorr.c:407–423,437–452`）。默认查询是class implication ring而非所有指定pair；SRM没有显式合取原前态全部class等式，CBS只逐CO求解（`cecCorr.c:481–553,2315`；`giaCSat.c:1155–1176,1217`）。归纳SAT模型回到原图重仿真时，从任意前态frame0开始细分，F1实际还模拟frame2（`cecCorr.c:1990,2353–2355,1151–1186`；`cecSeq.c:143–167`）。
+
+一个严格的源码一致抽象例子：零reset的q、r、c，PI为e、u、v，令`q'=e?u:q`、`r'=e?v:r`、`c'=e?(u&v):(q&r)`，并令`g=q&r`，c和g均可观测。对任意前态，原转移都有`c'=q'&r'`，reset也有c=g，故该关系是完整one-step-image有效。若候选class为{c,g}、更早的RO c作代表，投机frame0把g替成c，实际构造的c后继成为`c~'=e?(u&v):c`。取`e=0,q=r=1,c=0`，则frame1的g为1、投机c为0，ring中的g⇒c为SAT；同一赋值经**原**转移，frame1却是c=g=1。原图重仿真只在前态frame0有g=1、c=0，仍可据此拆掉这个正确的image关系。
+
+因此“投机SRM测试与反例细分”不等于对每个关系执行完整semantic 1-induction，图固定点也不意味着所有此类等式已穷尽。这个抽象例子不需要UNKNOWN、增加证明深度或额外错误候选；最初它只是源码推导；随后已用未修改ABC执行最小回归，结果如下，但仍不是wb未合并原因的实际跟踪证据。后续最小诊断应在隔离trace build上先跑toy再跑wb：用稳定的成对PO序号在每次read/cleanup后重新解析完整driver literal与phase，记录初始/base/每轮class、输出到ring-edge映射、首次拆分的CEX lane与逐帧原图值。若已绑定的image1关系在原图frame≥1出现差异，须检查证书身份/phase/模拟语义，而不能继续归咎frame0。仅禁止frame0细分不是已验证修复；保留这些关系需要独立原转移证书等可靠证明路径。这些观察也不改变DATE2024已覆盖reset/image充分条件的先行工作边界。
+
+补充toy执行已完成：`speculative_image_toy/` 保存独立AIG生成器、穷举解码器、7项通过的回归测试和所有原始图/日志。64条原转移、8条reset、512条独立当前PI的image义务全部穷举通过，另有32个自由状态差异witness。未修改的 `&scorr -F 1 -C 1000` 后成对PO仍为literal12与14，实际 **NOT_MERGED**；原图→结果DSEC PASS，完整run wall0.586s，源码及ABC身份未变。这确认“semantic一步成立但该实际调用不合并”的现象；首次拆分的具体model/frame仍未跟踪，不能把形式推导直接写成toy或wb的已观测因果轨迹。它是全55之外的补充理论实验，不改变全55统计。
 
 ## 2026-10-01 并行时序 Guide 研究（已暂停，等待新的算法方向）
 

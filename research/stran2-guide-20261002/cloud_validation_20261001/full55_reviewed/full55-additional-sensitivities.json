@@ -1,0 +1,120 @@
+{
+  "excluding_exploratory_six_not_blind_holdout": {
+    "cases": 49,
+    "ordinary": 372,
+    "imageguided": 606,
+    "delta_and": 234,
+    "equal_case_delta_pp": 0.15470910478650574,
+    "improve": 8,
+    "tie": 41,
+    "worse": 0
+  },
+  "both_search_complete_only": {
+    "cases": 37,
+    "ordinary": 89,
+    "imageguided": 121,
+    "delta_and": 32,
+    "equal_case_delta_pp": 0.15732265463695463,
+    "improve": 5,
+    "tie": 32,
+    "worse": 0
+  },
+  "positive_rows": [
+    {
+      "delta": 3,
+      "file": "021_b11.aig",
+      "imageguided": 4,
+      "loaded_and": 611,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 1
+    },
+    {
+      "delta": 4,
+      "file": "023_b12.aig",
+      "imageguided": 6,
+      "loaded_and": 1002,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 2
+    },
+    {
+      "delta": 2,
+      "file": "024_b12_opt.aig",
+      "imageguided": 2,
+      "loaded_and": 988,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 0
+    },
+    {
+      "delta": 4,
+      "file": "044_i2c.aig",
+      "imageguided": 7,
+      "loaded_and": 2879,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 3
+    },
+    {
+      "delta": 19,
+      "file": "052_steppermotordrive.aig",
+      "imageguided": 20,
+      "loaded_and": 414,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 1
+    },
+    {
+      "delta": 70,
+      "file": "029_b15.aig",
+      "imageguided": 70,
+      "loaded_and": 8432,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 0
+    },
+    {
+      "delta": 69,
+      "file": "030_b15_opt.aig",
+      "imageguided": 70,
+      "loaded_and": 8417,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 1
+    },
+    {
+      "delta": 11,
+      "file": "034_b20_opt.aig",
+      "imageguided": 75,
+      "loaded_and": 13440,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 64
+    },
+    {
+      "delta": 2,
+      "file": "035_b21.aig",
+      "imageguided": 62,
+      "loaded_and": 12776,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 60
+    },
+    {
+      "delta": 41,
+      "file": "045_mem_ctrl.aig",
+      "imageguided": 41,
+      "loaded_and": 34059,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 0
+    },
+    {
+      "delta": 65,
+      "file": "053_systemcaes.aig",
+      "imageguided": 65,
+      "loaded_and": 27879,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 0
+    },
+    {
+      "delta": 76,
+      "file": "060_wb_dma.aig",
+      "imageguided": 76,
+      "loaded_and": 9555,
+      "no_unknown_in_bounded_direct_audits": true,
+      "ordinary": 0
+    }
+  ]
+}

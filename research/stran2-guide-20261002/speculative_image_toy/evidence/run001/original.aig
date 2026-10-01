@@ -1,0 +1,9 @@
+aig 17 3 3 2 11
+23
+29
+35
+12
+14
+
+c
+speculative_image_toy; outputs c,g; zero-reset

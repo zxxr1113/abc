@@ -1,0 +1,12 @@
+[
+  {
+    "executions_sha256": "a6634dc021e75f0afb201181ac41a8cac4a8d323eea15a6c54625db5351d6ba9",
+    "invocation": 0,
+    "ledger_sha256": "58d158ee8d081fbdeb7630d40390c946d88a45e3594a9e0781af3eb79bc1a1dc",
+    "mode": "transform",
+    "output_root": "/workspace/shared/stran2-all55-matched-v3",
+    "protocol_sha256": "22dcbbd02296a737def146ca2749d19e6d26a7577909062e08aefc67869fc8e2",
+    "started_utc": "2026-10-01T20:46:18Z",
+    "status": "ALL_PLANNED_WAVES_ATTEMPTED"
+  }
+]

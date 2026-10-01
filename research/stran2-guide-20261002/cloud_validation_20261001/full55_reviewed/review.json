@@ -1,0 +1,74 @@
+{
+  "all_planned_rows_preserved": true,
+  "arm_case_rows": 110,
+  "artifacts": {
+    "additional_sensitivities_review.json": "f56ddd7e4016f05a71ee637b70f85b2f8fbb3299376e1821acde16c163e16584",
+    "aggregate_review.json": "7476f95f93c58b3394d7f8dbd3e5517a303c0be2c4ea6d2ce1744567e5c640a1",
+    "attribution_progress.json": "009aaddb938730aafb397d2c95370b1508df89083ea5ac54b50ded6a9e7f8989",
+    "decoder_portability.json": "77dd588a22653fb14738b56e82462579d3ddb2591c4de71f43a76568d0f15226",
+    "guidance_binding_review.json": "5782ff117ffb4c78d116ddd96eb7b468c7ccc750acc6f37015c7f33e1d99fbb3",
+    "guidance_review.json": "ce793f7c0d6351b15853f2ed03552aa6f44b586c5cf12b712ff47b89f3936f5c",
+    "producer_aggregate_comparison.json": "1ad2ad64be5e802e698f955b9e755a76fe647b42108a3655bb774e6a378b4ac9",
+    "transform_review.json": "34771f329735ac713e68cc5fe97a957e7b6f313f4021a1cb0541de2af0caffbb"
+  },
+  "coverage_caveats": [
+    "Image search complete 43/55; ordinary 38/55. Budget-exhausted entries measure retained certified products, not complete search opportunity.",
+    "Bounded selected-root Direct alternatives and whole-original structural aliases; no global Boolean Direct saturation or native-search novelty.",
+    "All completed guidance rounds are checked; three trailing incomplete rounds and four incomplete proof chunks remain explicitly incomplete.",
+    "Original loaded AND is the denominator; experiments start from packaged first_seq inputs.",
+    "Filename grouping is descriptive and not verified design independence; exploratory six are reused and not a blind holdout."
+  ],
+  "extra_audit_cost": {
+    "independent_model_domain_review_wall_s": 328.7640830940036,
+    "producer_case_audit_wall_s": 507.04508890902434,
+    "producer_direct_queries": 101292,
+    "producer_new_DSEC_calls": 36,
+    "reviewer_new_DSEC_calls": 0,
+    "reviewer_new_solver_queries": 0,
+    "scope": "Additional audit costs, excluded from each 120-second transform budget; case wall sums may differ from end-to-end controller time"
+  },
+  "input_cases": 55,
+  "missing_rows": 0,
+  "paired_corrected_primary": {
+    "both_searches_complete": 37,
+    "cases": 55,
+    "delta_AND": 366,
+    "equal_case_delta_pp": 0.15849641684403923,
+    "imageguided_AND": 808,
+    "imageguided_equal_case_percent": 0.7158277467257919,
+    "imageguided_weighted_percent": 0.1370957753122407,
+    "negative": 0,
+    "negative_cases": [],
+    "neutral": 43,
+    "ordinary_AND": 442,
+    "ordinary_equal_case_percent": 0.5573313298817526,
+    "ordinary_weighted_percent": 0.07499546124753761,
+    "positive": 12,
+    "positive_cases": [
+      "021_b11.aig",
+      "023_b12.aig",
+      "024_b12_opt.aig",
+      "044_i2c.aig",
+      "052_steppermotordrive.aig",
+      "029_b15.aig",
+      "030_b15_opt.aig",
+      "034_b20_opt.aig",
+      "035_b21.aig",
+      "045_mem_ctrl.aig",
+      "053_systemcaes.aig",
+      "060_wb_dma.aig"
+    ],
+    "weighted_delta_pp": 0.0621003140647031
+  },
+  "protocol_sha256": "22dcbbd02296a737def146ca2749d19e6d26a7577909062e08aefc67869fc8e2",
+  "review_scripts": {
+    "aggregate.py": "52c1bec8162f6cef65ca90f65a80cf52254493dd99c6bc296d6f0e96976627f1",
+    "attribution.py": "4e80a573b7334447606163eb5bc4101f60e4c30c236b8307e9ac6cbd5caf3afe",
+    "guidance_bindings.py": "cb182dfe31b331d691dd7ab3ffe04323c2f92cfc953eb91589b869063d41560e",
+    "guidance_wave.py": "99759fa1898ebf73fd6f32dbdc827aab74e881d43238b3ba3b1851c4e344c93e",
+    "raw_decoder.py": "3abfb86d0e3aee5c586ceea2dc2d61f53466f276dbfec4c2cee496a752dc4310",
+    "review.py": "f4c840e0eae5f80af574dcaa61688adc15a73468ac4b749a715ce8bf25d7b98f"
+  },
+  "source_root": "/workspace/shared/stran2-all55-matched-v3",
+  "status": "PASS"
+}

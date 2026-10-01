@@ -1,0 +1,9 @@
+{
+  "corrected_metric_status": "REQUIRES_SEPARATE_AUDITS",
+  "missing_data_are_zero": false,
+  "planned": 110,
+  "statuses": {
+    "BUDGET_EXHAUSTED": 29,
+    "COMPLETE": 81
+  }
+}

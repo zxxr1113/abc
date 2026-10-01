@@ -1,0 +1,48 @@
+{
+  "status": "PASS",
+  "additional": {
+    "excluding_exploratory_six_not_blind_holdout": {
+      "cases": 49,
+      "ordinary": 372,
+      "imageguided": 606,
+      "delta_and": 234,
+      "equal_case_delta_pp": 0.15470910478650574,
+      "improve": 8,
+      "tie": 41,
+      "worse": 0
+    },
+    "both_search_complete_only": {
+      "cases": 37,
+      "ordinary": 89,
+      "imageguided": 121,
+      "delta_and": 32,
+      "equal_case_delta_pp": 0.1573226546369546,
+      "improve": 5,
+      "tie": 32,
+      "worse": 0
+    }
+  },
+  "filename_grouping": {
+    "groups": 36,
+    "mean_delta_pp": 0.20270190084485049,
+    "improved": 10,
+    "tied": 26,
+    "worse": 0,
+    "scope": "Post-hoc descriptive filename grouping, not preregistered primary metric or verified lineage; remove numeric prefix and trailing _opt"
+  },
+  "contemporaneous_pilot_six": {
+    "cases": 6,
+    "ordinary": 70,
+    "imageguided": 202,
+    "delta_and": 132,
+    "equal_case_delta_pp": 0.18942613198056288,
+    "improve": 4,
+    "tie": 2,
+    "worse": 0
+  },
+  "source_independent_aggregate_sha256": "7476f95f93c58b3394d7f8dbd3e5517a303c0be2c4ea6d2ce1744567e5c640a1",
+  "parent_files": {
+    "evidence-preserved/full55-additional-sensitivities.json": "4231329e92e0c91ab028beeb1848859a020df898bff9226508536b5245d3955b",
+    "evidence-preserved/full55-filename-family-sensitivity.json": "3dc02a66e74c153240ab0e30a88274b33539e46fbc833c5a20e71bb117d3e4c9"
+  }
+}

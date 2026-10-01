@@ -1,0 +1,109 @@
+{
+  "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+  "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+  "after_pair": {
+    "c_literal": 12,
+    "c_po_index": 0,
+    "g_literal": 14,
+    "g_po_index": 1,
+    "status": "NOT_MERGED"
+  },
+  "causal_trace": "NOT_CAPTURED",
+  "dsec": {
+    "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/original.aig /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/after.aig",
+    "exit_code": 0,
+    "log_sha256": "93958f4ece8bf69b897361f15634dbb9a9b91e53d6589e91c5f6ec991a084664",
+    "status": "PASS",
+    "timeout_seconds": 29.656454790998396,
+    "wall_s": 0.06499943800008623
+  },
+  "exhaustive": {
+    "free_witness": {
+      "inputs": [
+        0,
+        0,
+        0
+      ],
+      "outputs": [
+        0,
+        1
+      ],
+      "state": [
+        1,
+        1,
+        0
+      ],
+      "successor": [
+        1,
+        1,
+        1
+      ]
+    },
+    "free_witnesses": 32,
+    "image_rows": 512,
+    "reset_rows": 8,
+    "speculative_witness": {
+      "condition": "candidate class {c,g}; representative c",
+      "inputs": [
+        0,
+        0,
+        0
+      ],
+      "original_c_frame1": 1,
+      "raw_g_frame1": 1,
+      "speculative_c_frame1": 0,
+      "state": [
+        1,
+        1,
+        0
+      ],
+      "status": "ALGEBRAIC_CONDITIONAL_NOT_TRACE"
+    },
+    "status": "PASS",
+    "transition_rows": 64
+  },
+  "files_sha256": {
+    "after.aig": "caf57b9f671ee9e0dfe050d2df525e92d563ed5ff88fa354ca23f12357d1440e",
+    "dsec.log": "93958f4ece8bf69b897361f15634dbb9a9b91e53d6589e91c5f6ec991a084664",
+    "exhaustive.json": "3d0c301ce2193f2b62c3b0c8d4779f452e7758a7989cb41b991a5e7b2106e01b",
+    "loaded.aig": "8e45151e22d922fbe7e410376d1895b2a526f556da3e45bf5d51dcc22f97edee",
+    "original.aig": "4f6427358d33bf57a46e719725e130c3c104f7c26a3cc9940a8ece04f46908d7",
+    "scorr.log": "a93242afda40a0c1c832ded29a723b1bee4ebe56363a41c6f93e8f937e912aa7"
+  },
+  "identities_unchanged": true,
+  "input_pair": {
+    "c_literal": 12,
+    "c_po_index": 0,
+    "g_literal": 14,
+    "g_po_index": 1,
+    "status": "NOT_MERGED"
+  },
+  "loaded_pair": {
+    "c_literal": 12,
+    "c_po_index": 0,
+    "g_literal": 14,
+    "g_po_index": 1,
+    "status": "NOT_MERGED"
+  },
+  "schema": 1,
+  "scorr": {
+    "command": "&r /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/original.aig; &w /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/loaded.aig; &scorr -F 1 -C 1000 -v; &w /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/speculative_image_toy/evidence/run001/after.aig",
+    "exit_code": 0,
+    "log_sha256": "a93242afda40a0c1c832ded29a723b1bee4ebe56363a41c6f93e8f937e912aa7",
+    "status": "EXIT",
+    "timeout_seconds": 29.728482702998008,
+    "wall_s": 0.06755624700235785
+  },
+  "shared_budget_seconds": 30.0,
+  "source_sha256": {
+    "research/stran2-guide-20261002/speculative_image_toy/run_toy.py": "28403562a962aa434c442ff3df0a4a508043bee7f012e728351f6205c6001ec2",
+    "research/stran2-guide-20261002/speculative_image_toy/test_toy.py": "051b638c7756516d9c3382fd2239a95de6a94e82f129410d6dd17aab468d73c0",
+    "src/aig/gia/giaCSat.c": "265dee3291c59c1f9f176a1f01bfb6cc58539ae2d09288ca82f79c9893342436",
+    "src/base/abci/abc.c": "e04f60e80eef0b32892ba49be8d1f610551de2c48687a0b3955ea91c8cc61398",
+    "src/proof/cec/cecClass.c": "859bda7758a9003ef98e69fe67bfcdaa5f5bbb1e064877203dbf30db915742e4",
+    "src/proof/cec/cecCore.c": "1d154743f61f275106e6bb0cf76a26a667ba9e4a9dc08e0c60c478e68bc25176",
+    "src/proof/cec/cecCorr.c": "6a924945146bffee5bbdc9190cce3a5d2f169e0c7d6515bb18f1e812f046cc1a",
+    "src/proof/cec/cecSeq.c": "91119f4ba3551d97712a14d38b3f6afceb893e7b87d4e7fa700568385fa1a6fb"
+  },
+  "total_wall_s": 0.5864502809999976
+}

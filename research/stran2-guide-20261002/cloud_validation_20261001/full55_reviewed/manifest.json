@@ -1,0 +1,57 @@
+{
+  "scope": "Completed frozen all55 paired transforms and reviewed conditional attribution; full selected graphs and detailed reviewer evidence supplied as separate artifact",
+  "files": [
+    {
+      "path": "additional_sensitivities_review.json",
+      "sha256": "f56ddd7e4016f05a71ee637b70f85b2f8fbb3299376e1821acde16c163e16584"
+    },
+    {
+      "path": "aggregate_review.json",
+      "sha256": "7476f95f93c58b3394d7f8dbd3e5517a303c0be2c4ea6d2ce1744567e5c640a1"
+    },
+    {
+      "path": "attempt_history.json",
+      "sha256": "af1bbc79276e3058c5ab91839af474a7205cba89b897ac1df4807d30c2573660"
+    },
+    {
+      "path": "corrected_rows.json",
+      "sha256": "df8c828d38274b7c8ea7ac14d2f6aea513bd466307dad7ce48edd6ee4adaed36"
+    },
+    {
+      "path": "corrected_summary.json",
+      "sha256": "d8292827199e4b57a16803f95e41f8a11a243528415e078f6791103080496299"
+    },
+    {
+      "path": "coverage.json",
+      "sha256": "abc989161210e20c4ca6ae360500a7cd0b2b4cac395a39dccd8e38f9bd9a76b9"
+    },
+    {
+      "path": "full55-additional-sensitivities.json",
+      "sha256": "4231329e92e0c91ab028beeb1848859a020df898bff9226508536b5245d3955b"
+    },
+    {
+      "path": "full55-filename-family-sensitivity.json",
+      "sha256": "3dc02a66e74c153240ab0e30a88274b33539e46fbc833c5a20e71bb117d3e4c9"
+    },
+    {
+      "path": "guidance_review.json",
+      "sha256": "ce793f7c0d6351b15853f2ed03552aa6f44b586c5cf12b712ff47b89f3936f5c"
+    },
+    {
+      "path": "integrity.json",
+      "sha256": "395938a61375993447840c4b8b3988cb069f6b486c3d663bbfdd86d0246cf351"
+    },
+    {
+      "path": "paired_results.csv",
+      "sha256": "fdaeab3650c6e356d5ab39b4a4018a9362af27e026ea4b9a5ed632e04daa7558"
+    },
+    {
+      "path": "review.json",
+      "sha256": "cc773272ae58e94ce14ec2506281f521dcbeed1a7b9a8a862915c37c8e89a5d5"
+    },
+    {
+      "path": "transform_review.json",
+      "sha256": "34771f329735ac713e68cc5fe97a957e7b6f313f4021a1cb0541de2af0caffbb"
+    }
+  ]
+}

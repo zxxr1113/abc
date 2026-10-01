@@ -1,0 +1,3302 @@
+[
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "001_b01.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 40,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "001_b01.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 40,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "002_b01_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 39,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "002_b01_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 39,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "003_b02.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 21,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "003_b02.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 21,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "004_b02_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 21,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "004_b02_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 21,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 3,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "005_b03.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 128,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 3,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "005_b03.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 128,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 3,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "006_b03_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 128,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 3,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "006_b03_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 128,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "007_b04.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 546,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "007_b04.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 546,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 2,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "008_b04_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 524,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 2,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "008_b04_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 524,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 5,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "009_b05.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 830,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 5,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "009_b05.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 830,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 5,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "010_b05_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 507,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 5,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "010_b05_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 507,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "011_b06.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 42,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "011_b06.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 42,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "012_b06_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 42,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "012_b06_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 42,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "013_b07.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 365,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "013_b07.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 365,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "014_b07_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 359,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "014_b07_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 359,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "015_b08.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 155,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "015_b08.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 155,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "016_b08_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 147,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "016_b08_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 147,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 8,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "017_b09.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 136,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 8,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "017_b09.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 136,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 10,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "018_b09_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 135,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 10,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "018_b09_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 135,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "019_b10.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 180,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "019_b10.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 180,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 4,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "020_b10_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 174,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 4,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "020_b10_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 174,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "021_b11.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 611,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 4,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "021_b11.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 611,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 3,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "022_b11_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 526,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 3,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "022_b11_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 526,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 2,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "023_b12.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 1002,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 6,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "023_b12.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 1002,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "024_b12_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 988,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 2,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "024_b12_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 988,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "025_b13.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 261,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "025_b13.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 261,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "026_b13_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 244,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "026_b13_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 244,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "041_des_area.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 10133,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "041_des_area.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 10133,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "043_ethernet.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 195995,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "043_ethernet.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 195995,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 3,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "044_i2c.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 2879,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 7,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "044_i2c.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 2879,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "048_sasc.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 1757,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "048_sasc.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 1757,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "049_simple_spi.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 2297,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "049_simple_spi.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 2297,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "051_ss_pcm.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 993,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "051_ss_pcm.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 993,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "052_steppermotordrive.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 414,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 20,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "052_steppermotordrive.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 414,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "054_systemcdes.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 6105,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "054_systemcdes.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 6105,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 2,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "057_usb_phy.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 1063,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 2,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "057_usb_phy.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 1063,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 17,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "027_b14.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 6069,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 17,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "027_b14.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 6069,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 14,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "028_b14_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 5926,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 14,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "028_b14_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 5926,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "029_b15.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 8432,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 70,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "029_b15.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 8432,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "030_b15_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 8417,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 70,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "030_b15_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 8417,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "031_b17.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 27549,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "031_b17.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 27549,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "032_b17_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 27650,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "032_b17_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 27650,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 53,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "033_b20.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 12214,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 53,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "033_b20.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 12214,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 64,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "034_b20_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 13440,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 75,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "034_b20_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 13440,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 60,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "035_b21.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 12776,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 62,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "035_b21.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 12776,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 59,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "036_b21_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 13484,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 59,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "036_b21_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 13484,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 50,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "037_b22.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 18478,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 50,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "037_b22.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 18478,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 63,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "038_b22_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 19029,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 63,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "038_b22_opt.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 19029,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "039_ac97_ctrl.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 34300,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "039_ac97_ctrl.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 34300,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "040_aes_core.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 45779,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "040_aes_core.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 45779,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "045_mem_ctrl.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 34059,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 41,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "045_mem_ctrl.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 34059,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "047_pci_spoci_ctrl.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 3319,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 1,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "047_pci_spoci_ctrl.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 3319,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "050_spi.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 9132,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "050_spi.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 9132,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "053_systemcaes.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 27879,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 65,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "053_systemcaes.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 27879,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "055_tv80.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 22095,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "055_tv80.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 22095,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "ordinary",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 0,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "060_wb_dma.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 9555,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": false,
+    "transform_status": "BUDGET_EXHAUSTED"
+  },
+  {
+    "arm": "imageguided",
+    "audit_status": "GLOBAL_STRUCTURAL_ALIAS_ACCOUNTING_COMPLETE",
+    "corrected_gain": 76,
+    "direct_audit_status": "ATTRIBUTION_AUDIT_COMPLETE",
+    "direct_dsec": {
+      "direct_only": "PASS",
+      "mixed": "PASS",
+      "same_mixed_set_without_build": "PASS"
+    },
+    "direct_unknown_queries": 0,
+    "file": "060_wb_dma.aig",
+    "global_dsec": {
+      "mixed": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      },
+      "original": {
+        "full": "PASS",
+        "without_genuinely_new_build": "PASS"
+      }
+    },
+    "loaded_and": 9555,
+    "transform_dsec": {
+      "baseline_dsec": "PASS",
+      "independent_dsec": "PASS"
+    },
+    "transform_search_complete": true,
+    "transform_status": "COMPLETE"
+  }
+]

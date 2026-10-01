@@ -1,0 +1,353 @@
+{
+  "scope": "Post-hoc descriptive filename grouping, not preregistered primary metric or verified lineage; remove numeric prefix and trailing _opt",
+  "families": 36,
+  "equal_family_delta_pp": 0.20270190084485049,
+  "improved_families": 10,
+  "tied_families": 26,
+  "worsened_families": 0,
+  "rows": [
+    {
+      "family": "b01",
+      "files": [
+        "001_b01.aig",
+        "002_b01_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "b02",
+      "files": [
+        "003_b02.aig",
+        "004_b02_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "b03",
+      "files": [
+        "005_b03.aig",
+        "006_b03_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 2.34375,
+      "mean_imageguided_percent": 2.34375
+    },
+    {
+      "family": "b04",
+      "files": [
+        "007_b04.aig",
+        "008_b04_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.2824147862315801,
+      "mean_imageguided_percent": 0.2824147862315801
+    },
+    {
+      "family": "b05",
+      "files": [
+        "009_b05.aig",
+        "010_b05_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.7943014662199093,
+      "mean_imageguided_percent": 0.7943014662199093
+    },
+    {
+      "family": "b06",
+      "files": [
+        "011_b06.aig",
+        "012_b06_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 1.1904761904761905,
+      "mean_imageguided_percent": 1.1904761904761905
+    },
+    {
+      "family": "b07",
+      "files": [
+        "013_b07.aig",
+        "014_b07_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "b08",
+      "files": [
+        "015_b08.aig",
+        "016_b08_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "b09",
+      "files": [
+        "017_b09.aig",
+        "018_b09_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 6.64488017429194,
+      "mean_imageguided_percent": 6.64488017429194
+    },
+    {
+      "family": "b10",
+      "files": [
+        "019_b10.aig",
+        "020_b10_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 1.4272030651340997,
+      "mean_imageguided_percent": 1.4272030651340997
+    },
+    {
+      "family": "b11",
+      "files": [
+        "021_b11.aig",
+        "022_b11_opt.aig"
+      ],
+      "mean_delta_pp": 0.24549918166939444,
+      "mean_ordinary_percent": 0.3670041632180618,
+      "mean_imageguided_percent": 0.6125033448874563
+    },
+    {
+      "family": "b12",
+      "files": [
+        "023_b12.aig",
+        "024_b12_opt.aig"
+      ],
+      "mean_delta_pp": 0.30081537330197905,
+      "mean_ordinary_percent": 0.09980039920159679,
+      "mean_imageguided_percent": 0.4006157725035759
+    },
+    {
+      "family": "b13",
+      "files": [
+        "025_b13.aig",
+        "026_b13_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.3964889140129389,
+      "mean_imageguided_percent": 0.3964889140129389
+    },
+    {
+      "family": "des_area",
+      "files": [
+        "041_des_area.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "ethernet",
+      "files": [
+        "043_ethernet.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "i2c",
+      "files": [
+        "044_i2c.aig"
+      ],
+      "mean_delta_pp": 0.13893713094824592,
+      "mean_ordinary_percent": 0.10420284821118443,
+      "mean_imageguided_percent": 0.24313997915943034
+    },
+    {
+      "family": "sasc",
+      "files": [
+        "048_sasc.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "simple_spi",
+      "files": [
+        "049_simple_spi.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.043535045711798,
+      "mean_imageguided_percent": 0.043535045711798
+    },
+    {
+      "family": "ss_pcm",
+      "files": [
+        "051_ss_pcm.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "steppermotordrive",
+      "files": [
+        "052_steppermotordrive.aig"
+      ],
+      "mean_delta_pp": 4.5893719806763285,
+      "mean_ordinary_percent": 0.24154589371980675,
+      "mean_imageguided_percent": 4.830917874396135
+    },
+    {
+      "family": "systemcdes",
+      "files": [
+        "054_systemcdes.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "usb_phy",
+      "files": [
+        "057_usb_phy.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.18814675446848542,
+      "mean_imageguided_percent": 0.18814675446848542
+    },
+    {
+      "family": "b14",
+      "files": [
+        "027_b14.aig",
+        "028_b14_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.2581795458649204,
+      "mean_imageguided_percent": 0.2581795458649204
+    },
+    {
+      "family": "b15",
+      "files": [
+        "029_b15.aig",
+        "030_b15_opt.aig"
+      ],
+      "mean_delta_pp": 0.8249701460336326,
+      "mean_ordinary_percent": 0.005940358797671379,
+      "mean_imageguided_percent": 0.8309105048313038
+    },
+    {
+      "family": "b17",
+      "files": [
+        "031_b17.aig",
+        "032_b17_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0018149479109949545,
+      "mean_imageguided_percent": 0.0018149479109949545
+    },
+    {
+      "family": "b20",
+      "files": [
+        "033_b20.aig",
+        "034_b20_opt.aig"
+      ],
+      "mean_delta_pp": 0.04092261904761905,
+      "mean_ordinary_percent": 0.4550593776072735,
+      "mean_imageguided_percent": 0.4959819966548925
+    },
+    {
+      "family": "b21",
+      "files": [
+        "035_b21.aig",
+        "036_b21_opt.aig"
+      ],
+      "mean_delta_pp": 0.007827175954915467,
+      "mean_ordinary_percent": 0.45359308938611714,
+      "mean_imageguided_percent": 0.4614202653410327
+    },
+    {
+      "family": "b22",
+      "files": [
+        "037_b22.aig",
+        "038_b22_opt.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.3008328399425852,
+      "mean_imageguided_percent": 0.3008328399425852
+    },
+    {
+      "family": "ac97_ctrl",
+      "files": [
+        "039_ac97_ctrl.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "aes_core",
+      "files": [
+        "040_aes_core.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.002184407697852727,
+      "mean_imageguided_percent": 0.002184407697852727
+    },
+    {
+      "family": "mem_ctrl",
+      "files": [
+        "045_mem_ctrl.aig"
+      ],
+      "mean_delta_pp": 0.12037934173052645,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.12037934173052645
+    },
+    {
+      "family": "pci_spoci_ctrl",
+      "files": [
+        "047_pci_spoci_ctrl.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.030129557095510694,
+      "mean_imageguided_percent": 0.030129557095510694
+    },
+    {
+      "family": "spi",
+      "files": [
+        "050_spi.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "systemcaes",
+      "files": [
+        "053_systemcaes.aig"
+      ],
+      "mean_delta_pp": 0.23315039994260914,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.23315039994260914
+    },
+    {
+      "family": "tv80",
+      "files": [
+        "055_tv80.aig"
+      ],
+      "mean_delta_pp": 0.0,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.0
+    },
+    {
+      "family": "wb_dma",
+      "files": [
+        "060_wb_dma.aig"
+      ],
+      "mean_delta_pp": 0.7953950811093667,
+      "mean_ordinary_percent": 0.0,
+      "mean_imageguided_percent": 0.7953950811093667
+    }
+  ]
+}
