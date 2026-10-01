@@ -1,0 +1,50 @@
+{
+  "artifact": "runs/qualified-union-v2/result.json",
+  "build_only_byte_identical_to_B": true,
+  "case": "045_mem_ctrl",
+  "diagnostic_B_qualified": 51,
+  "direct_candidates": 312,
+  "direct_scope_identical": true,
+  "extra_wall_s": 4.857270929998776,
+  "fresh_dsec_runs": 0,
+  "genuine_build_same_set_marginal": 3,
+  "initial_proved": 49,
+  "input_copy_integrity": "PASS",
+  "main_transform_budget_claim": false,
+  "mixed_byte_identical_to_B": true,
+  "mixed_gain": 28,
+  "native_novelty": "NOT_CHECKED",
+  "new_dsec_wall_s": 0,
+  "new_identity_same_set_marginal": 3,
+  "new_proof_queries": 0,
+  "new_proved": 3,
+  "paired_mixed_gain_vs_A": 1,
+  "preserved_displaced_initial_identity": [
+    [
+      1263,
+      [
+        393,
+        2503,
+        -3,
+        2523
+      ],
+      -4
+    ]
+  ],
+  "prior_failed_attempt": "qualified-union-v1 stopped before products on Python tuple versus saved JSON list comparison; no product or formal query from that attempt is credited",
+  "qualified_union": 52,
+  "raw_build_only_gain": 23,
+  "result_sha256": "6a0c7da02f6fe9c921ee60b4463d43eb9d85fc99e66da970dae521411d6e7c4e",
+  "reused_bound_dsec_graphs": 4,
+  "selected_roots": [
+    1242,
+    1263,
+    1282,
+    1292,
+    1298,
+    1305
+  ],
+  "source_integrity": "PASS",
+  "status": "QUALIFIED_UNION_AUDIT_COMPLETE",
+  "verified_existing_proof_queries": 1092
+}

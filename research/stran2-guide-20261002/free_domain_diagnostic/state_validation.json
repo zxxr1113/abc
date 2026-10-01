@@ -1,0 +1,16 @@
+{
+  "code_sha256": {
+    "audit_qualified_union.py": "7f6de61a30f86437cfe6a89cf47d457b7fdc8160ec1e7f2ea1c8e991a1ea6c45",
+    "free_state.py": "9277ba808c52407631b9968e5a1c41790435ecc3d8efa266f87cfa6671a2a7a4",
+    "test_free_state.py": "d912b9dae155a58874f3737df635e0f020932828805c913e3967b7cf6b5b088a"
+  },
+  "log_sha256": "da8ef6ac83018715331ff4c294cbe6ee67f466985304d88ea6d17861f93c73a7",
+  "note": "Standalone state/provenance only; exact receipt files must be authenticated upstream",
+  "runtime_integration": false,
+  "saved_free_domains_reproduced": 4,
+  "saved_model_rows": 420,
+  "skipped": 0,
+  "status": "PASS",
+  "tests": 32,
+  "timed_pilot": false
+}

@@ -1,0 +1,11 @@
+{
+  "arithmetic": "PASS",
+  "diagnostic_bound_sources": "PASS",
+  "diagnostic_results_sha256": "39027a2c8dc7513dcbbfb045220be698d2a36cdc39bde92618943f6ae76a454a",
+  "dsec_logs": "PASS",
+  "per_case_bound_source_checks": 178,
+  "product_bound_sources": "PASS",
+  "product_results_sha256": "37684fea4fd7130101fac1e6086274efdb64b958e3474554ff770dcfbb8aae46",
+  "tests": "10/10 PASS",
+  "tests_log_sha256": "e1f1ee5ab182e263bafa5264f19e229c61afe1f0156ab6053de29d00b45217e0"
+}

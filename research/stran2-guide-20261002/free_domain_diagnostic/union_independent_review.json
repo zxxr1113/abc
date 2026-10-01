@@ -1,0 +1,55 @@
+{
+  "all_proof_obligations_reconstructed": 1092,
+  "byte_identical_to_B": true,
+  "direct_scope": 312,
+  "displaced_initial_identity": [
+    1263,
+    [
+      393,
+      2503,
+      -3,
+      2523
+    ],
+    -4
+  ],
+  "dsec_reruns": 0,
+  "dsec_reuse_bindings": 4,
+  "extra_audit_wall_s": 4.857270929998776,
+  "genuine_build_same_set_marginal_AND": 3,
+  "new_qualified": 3,
+  "paired_gain_AND": 1,
+  "preserved_initial": 49,
+  "product_counts": {
+    "build_only": 9409,
+    "mixed": 9404,
+    "mixed_without_all_genuine_build": 9407,
+    "mixed_without_new": 9407
+  },
+  "products_replayed": 4,
+  "qualified_union": 52,
+  "review_wall_s": 2.6807576539977163,
+  "solver_reruns": 0,
+  "source_manifest": {
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/build_only/product.aig": "2d6da2ca771169fd73ff50f45d82b84346a20f50e025c40b4590dd0d155e4305",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/build_only/result.json": "2836ae195778e6f2bd41bac028500e9403f73a0f5938f6c4e348cea5f8794444",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/build_only/selection.json": "b6e924604092d8d1bdec4e26098bad2a67ce9b7b2e34c25453c8c9242e971fe7",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/fresh_build_proofs_reconstructed.cnf": "54a0054aa4782e1f1d335f8ea8d8021352ecb1ee6c8d6d028043eb5e0445747d",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/fresh_direct_proofs_reconstructed.cnf": "7498e010e1fa114a3a2eee152a366b43f598551782ee0263ea7928769a64544e",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/input.aig": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed/product.aig": "f331eeaa9e0422c2b26bb123bae8794e80231ef552632f2067062eef45e5b60c",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed/result.json": "b7f9da8fefe0fbe4b409574ea23709e96db285d7b57536e9bcef2a4a638bf4fe",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed/selection.json": "b5dc433520c2defc8764e00401006a1042dbc9f2c9a4596f2db756fe7d286113",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed_without_all_genuine_build/product.aig": "a015b3b78c869ce84d5505c6f2d0df1ec7f15bbf3150cffbd98ef7c7e199fc60",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed_without_all_genuine_build/result.json": "5a0a9fe2e0113fcb68acba27cb04f1030271feac78694fa6532d76c8f191c742",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed_without_all_genuine_build/selection.json": "db5d106f517f98ffe6b803695585099e73c40f6c710b955e6ce46cf4b2123a86",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed_without_new/product.aig": "a015b3b78c869ce84d5505c6f2d0df1ec7f15bbf3150cffbd98ef7c7e199fc60",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed_without_new/result.json": "5a0a9fe2e0113fcb68acba27cb04f1030271feac78694fa6532d76c8f191c742",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/mixed_without_new/selection.json": "db5d106f517f98ffe6b803695585099e73c40f6c710b955e6ce46cf4b2123a86",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/plan.json": "eb3212103dff424ed602d283e41e3af249c3ef418776da9bbbf13b7c473f5f8a",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/result.json": "6a0c7da02f6fe9c921ee60b4463d43eb9d85fc99e66da970dae521411d6e7c4e",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/selected_sets.json": "25f6b3ec65b4688ad6e4fc69c08823fb5c8da1e097b01f92c52faf049a2d2a3c",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/verified_direct_scope.json": "08f89b4fc28a4fbaadabef548a98108720bef616d17272dc8e14a732200746ac",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/qualified-union-v2/whole_original_classification.json": "eda295a856b4a3b9b084f1c6fdfd0ed19a2a124f067398f25b452ae5d86fb0b0"
+  },
+  "status": "PASS"
+}

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "cases": ["045_mem_ctrl", "060_wb_dma", "034_b20_opt", "041_des_area"],
+  "case_seconds": 120,
+  "workers": 1,
+  "roots": "Unchanged ordered first 32 completed roots/pools from ordinary chunk_00000; keep empty b20 chunk",
+  "sequence_domain": "Frozen reset plus unrestricted one-step image signatures after FIRST saved image refinement, identical in every arm",
+  "free_domain": "Unrestricted current PI/RO; predecessor state need not be reachable",
+  "arms": {
+    "A": "Original 256 free samples",
+    "B": "Append up to 256 distinct (previous_inputs, previous_state) from ordered pre-successor-dedup saved models, excluding original free worlds",
+    "C": "Append up to 256 distinct (current_inputs, previous_state) from SAME ordered models, excluding original free worlds; cross-time recombination only in unrestricted free domain",
+    "random_B": "Uniform random PI/RO, exact B added count",
+    "random_C": "Uniform random PI/RO, exact C added count; shared random prefix"
+  },
+  "random_seed": 2026100213,
+  "search": "Unmodified frozen runtime search_root, fresh Structure per distinct domain; identical-domain hashes may reuse exact search results",
+  "proof": "Fresh free SAT/reset0 UNSAT/unrestricted one-step image UNSAT for every new retained identity, 1000 conflicts; one immutable union proof graph with exact assumptions",
+  "tracing": "New retained identities individually require initial free-difference predicate zero, appended witness, fixed sequence equality, positive cost, nonlinear divisor, and same normalization; counters alone do not identify missed Builds",
+  "products": "Only if new qualified identities exist; separately timed whole-original structural alias, bounded Direct sensitivity, same-selected-set removal, and DSEC before any area claim",
+  "forbidden": ["sequence-domain predecessor samples", "reachable teacher", "feedback rounds", "root/pool replacement", "old-model re-solve", "main 120-second transform claim", "native novelty claim"]
+}

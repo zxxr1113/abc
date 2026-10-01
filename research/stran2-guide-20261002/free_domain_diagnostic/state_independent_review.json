@@ -1,0 +1,51 @@
+{
+  "atomic_rejection_cases": 14,
+  "caller_boundary": "External immutable CNF/query/model byte validation must precede API; module checks schema and original transition/relation replay and grants no proof authority",
+  "cases": {
+    "034_b20_opt": {
+      "appended_worlds": 0,
+      "batched_domain_and_origins_exact": true,
+      "saved_B_domain_exact": true,
+      "source_models": 0
+    },
+    "041_des_area": {
+      "appended_worlds": 7,
+      "batched_domain_and_origins_exact": true,
+      "saved_B_domain_exact": true,
+      "source_models": 15
+    },
+    "045_mem_ctrl": {
+      "appended_worlds": 14,
+      "batched_domain_and_origins_exact": true,
+      "saved_B_domain_exact": true,
+      "source_models": 232
+    },
+    "060_wb_dma": {
+      "appended_worlds": 24,
+      "batched_domain_and_origins_exact": true,
+      "saved_B_domain_exact": true,
+      "source_models": 173
+    }
+  },
+  "default_disabled": true,
+  "models_per_trial": 600,
+  "new_dsec_runs": 0,
+  "new_solver_queries": 0,
+  "partition_sizes": [
+    1,
+    37,
+    256,
+    "random1..256"
+  ],
+  "randomized_stream_trials": 20,
+  "real_B_witness_replays": 281,
+  "real_source_models": 420,
+  "review_wall_s": 15.078868986998714,
+  "runtime_integration": false,
+  "state_source_hashes": {
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/free_state.py": "9277ba808c52407631b9968e5a1c41790435ecc3d8efa266f87cfa6671a2a7a4",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/independent.py": "cd1610200221c44e6caf02750823de81fe89169b46be59b335e99d964432e8b0",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/test_free_state.py": "d912b9dae155a58874f3737df635e0f020932828805c913e3967b7cf6b5b088a"
+  },
+  "status": "PASS"
+}
