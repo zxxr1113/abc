@@ -1,0 +1,2661 @@
+{
+  "all": {
+    "aliases": 9,
+    "cases": [
+      "005_b03.aig",
+      "006_b03_opt.aig",
+      "007_b04.aig",
+      "008_b04_opt.aig",
+      "009_b05.aig",
+      "010_b05_opt.aig",
+      "020_b10_opt.aig",
+      "021_b11.aig",
+      "022_b11_opt.aig",
+      "023_b12.aig",
+      "029_b15.aig",
+      "030_b15_opt.aig",
+      "044_i2c.aig",
+      "055_tv80.aig"
+    ],
+    "classifications": {
+      "different_from_all_old_same_root_functions": 23,
+      "no_old_same_root_candidate": 20,
+      "old_function_alias": 7
+    },
+    "total": 50
+  },
+  "artifacts_sha256": {
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/005_b03/result.json": "0d8c0e748cc591e8fb13aae9dcdcec67ff87142b8b2a85e4c7b18c97792cc08c",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/006_b03_opt/result.json": "b964f353fe08b2d05a1d35b2a46eb7d5d65ed81e1271e9dcba4238df076559d6",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/007_b04/result.json": "71ef71985da5d698fbe7d40e7c1f4582f189b383174352cfecad57ff5f84e5ab",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/008_b04_opt/result.json": "955ca616620d8b0df2489bf1853975422fd7eb06dea2c392481aa5fae303a297",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/009_b05/result.json": "b96b0cde3e29eb2a02c226d8beb07119084e740961af5702fa9cfcb5cd007afe",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/010_b05_opt/result.json": "bd4a6a6cacd4fb08798e31cf4a819cdeecae0a2cc60a32efa5481ca7271b244b",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/020_b10_opt/result.json": "1cc67f1a4abb0e6378f3bf33d3c8533820c5d4ca45459f5a3b1195b94d6ee569",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/021_b11/result.json": "080311265f99ef655629aebfe1d1402fa6975dcd03287ed39ce8203f38c13017",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/022_b11_opt/result.json": "049effc0d11f83fc91755687aa158f4cf47fd9c98f7328a5e071d7fdd72aaaf2",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/023_b12/result.json": "0b97e26d114da33f1f061df274f7278a099fc4e5d99e5ceef1c2027a3a01489d",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/029_b15/result.json": "c17bbde5dc51e36d26db60420fd0a6910b4646352afc9a063c0aaaaffc6c30c1",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/030_b15_opt/result.json": "23f81c711f6c97d6a90c4d2bdf2d5539224cf9ddc3ce4af3820c064b8be015fc",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/044_i2c/result.json": "6cd66ca184c55852f7987f90ffed6743fcb11d31cca56d6aceb6e999b5af8609",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/oracle55/055_tv80/result.json": "f184956daff496aa44ffa7ff053feb7f6a0d7ad93df9647bc65ca844d1898c5d",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/runs/20261001T0704_shuguang_new58_holdout_joint/029_b15/round-03-scorr.aig": "c57b1feeed294940120983e512154a4c8e2da2846ab389606cd58334afd1d191",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/runs/20261001T0704_shuguang_new58_holdout_joint/030_b15_opt/round-03-scorr.aig": "092c9e9e9f392dcae21874cf91187958218e6dea78646eb90de76650e4a52156",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/runs/20261001T0704_shuguang_new58_holdout_joint/055_tv80/round-04-scorr.aig": "055ca168fea6d62c0c2b75543d3a58c4a6832926d75c09e64fbc98d2fe2c7fe4",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/frozen_rules.json": "3618fbae567eff1f84c0ccc39bf06b73b23ef23dd462946d657e8d4308421f89",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/005_b03/diagnostic/result.json": "730d21b088294ac600223f56d1755e2b466cae4c541822cc4e9466139874d7b5",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/006_b03_opt/diagnostic/result.json": "b2b1b276c643d303fed9a021a78b5eab4160f2d2d243aca4c337d4572ac433ba",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/007_b04/diagnostic/result.json": "9e31fd05d0498ef0b158f18b67a2353bb25c4ab791fa222b00863343beaab5f7",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/008_b04_opt/diagnostic/result.json": "fd2ef846bf20bae55edf1521d60915c75ee3b615d84901da405a120ec9298ea0",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/009_b05/diagnostic/result.json": "0daec1de590fae03d30928acfbf2d9a744056a6bb06583cb7d1239c2d2e38b8d",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/010_b05_opt/diagnostic/result.json": "4f802b272b8429cf341e4a6e9c527698cc90444fce79146bf7e86bf618f3a9d1",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/020_b10_opt/diagnostic/result.json": "4bc5e67a4743f810711ccda1dcde17a015f79c95696013ad85c6fcde6427a545",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/021_b11/diagnostic/result.json": "377c4c5f100ab854a8eea354e52420a9d18424c7667676beba3d0054918de7af",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/022_b11_opt/diagnostic/result.json": "42e0d3190caa8d5a21194a39f6178f6f3d507179c8bdfb4b756de363ae40a143",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/023_b12/diagnostic/result.json": "d67d903f0a9fec88ad8e09b92fa8a4eaaeea3996c6b9fc2898a130cc47d2d200",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/029_b15/diagnostic/result.json": "de95eb163dda8ca329e353cfbc8ae892f2f4825704f63d97f28869d608f9d51f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/030_b15_opt/diagnostic/result.json": "dbf92f6d9a2ddeaf9d2f616fb91220ef47c004aa45145543580f7de602d6d90f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/044_i2c/diagnostic/result.json": "b9bf536146d670f98468d1c0f3628f861678e7f184f1cb81f864143184f79ec1",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/runs/20261001T160313Z_shuguang_fixed55/full/055_tv80/diagnostic/result.json": "122915309b15c0c8cff3252f0ab220e3d3922a2aa2fe6c1a198674fa005eec88",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image/source_comparison.json": "db724cd3fdc6193891e792330c4fbd511db61fec741cc0d804c9f9460340abfd",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/005_b03/alias.cnf": "35dc3845490c54fa75a8acc32d8000ef655d7e4adabed50a6e2bc45e7a294cb2",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/005_b03/alias.queries": "a66597a617d32f3be64bd3053a65308b7dbd177d4ef01f20e83623418c9156a8",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/005_b03/alias.results.csv": "8ad3df6cd0922b760b467aa470c1b372446982d01737f267e0b3eb3c52c42550",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/005_b03/process.json": "cd6d0d560e332bc8d0238e8450bd96175c38b33d583d678ea867f670affc4538",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/005_b03/query_bindings.json": "aabedd12a53ce5f6985c354ad3ebbc10722bd40cf0db3a39198e466ec3c0b378",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/005_b03/result.json": "087dd795c556a904a87a3ea0d74dc8e9bce191544dda08917ae9b484c549210b",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/005_b03/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/006_b03_opt/alias.cnf": "b831c8aaae7a6679451bdff18cce747ccc0f8b099a1acfa9b40cf7d2864e70fa",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/006_b03_opt/alias.queries": "b9536c3022951e439133fadaeab74b212063b6425489b19a75f49bdd927e7b45",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/006_b03_opt/alias.results.csv": "555bf552c15570a6dd5da7172bb0d57b261a5dfe5998bdc2cfc4f57e54ade461",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/006_b03_opt/process.json": "88773584dfef8ebab4a9832e3dce97c5b341452614776ede60ed09109d99fc8c",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/006_b03_opt/query_bindings.json": "72ad420fad99377dfa72365b1b6e2b31916c7aeb9e3edc73c89912a4d8ab12b7",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/006_b03_opt/result.json": "9346c018f1f588af497d68aa217426eabaa049cbfcdf78ae2a466270ef3070bd",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/006_b03_opt/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/007_b04/alias.cnf": "7fa5e892ca44346ab81377fb50b2036e94d7cb8e2b18e67ed7cfcd324bbdfd40",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/007_b04/alias.queries": "5be038b37c45e8eb2c92ae7f00c3d989eadcc3fbcbf629d2fae3cf53c7da5966",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/007_b04/alias.results.csv": "ae186904fe5633f1c770bfea60a104619b04c19cf52c091190129101af1797f7",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/007_b04/process.json": "fa5bcb2059b7b08635ac1b1c18c62ecce2c88d6a59475dc4a384b953235ac7bb",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/007_b04/query_bindings.json": "c02d11d250ab93148a4f4a50abbd50813e213a89584ff91988865f2d2431f25d",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/007_b04/result.json": "b433ed8aa63b137c90df6fb0d8d6ca28af0191fbffc13560e33f72ea9ffcd9c4",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/007_b04/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/008_b04_opt/alias.cnf": "cd9ee72b90748e27440c2895c3c41685b2f819ed1e625fa3dc224eba25d98df9",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/008_b04_opt/alias.queries": "3b33549acd241c105b6b3a3e72f0389e9674a12044758095f79eb1aac939f921",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/008_b04_opt/alias.results.csv": "17500376fff0f388375b634fc0d6f27c506bb8ae02cff291a15153d19f0427a0",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/008_b04_opt/process.json": "31527827bffefd1f3d431ff216c0b209400b4bae4d10729ae0236866a56bb34c",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/008_b04_opt/query_bindings.json": "83ac9415e03644b4932257271512e8ca0cf31ea346df28a355f57bef60ed8800",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/008_b04_opt/result.json": "5fe0c30f5107b95059df033e7f1ccc58473183aa60d252c34c7e82e6634bb1f9",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/008_b04_opt/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/009_b05/alias.cnf": "0d5f5ebb189c5e2be1690f1ce3fc751274a3ae5f76ba06f0ff5839d2061e4a1f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/009_b05/alias.queries": "0247a2a09e7cb42a0dbf4b354643eddf162b70b31c69427f513b7e51fb87fde4",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/009_b05/alias.results.csv": "9f2a5ee59b3720a75d577d9765fff638567cbbd311f869762943dc1a5b008ed1",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/009_b05/process.json": "20616ce808968b312642342b2826fc259bbc24e3b1924d713fa9eb7b7e783660",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/009_b05/query_bindings.json": "8ae83220c8e83ed5b26d5752ee245836705804235fbf0c6e734e2a9ed452963b",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/009_b05/result.json": "bd996d63e38ac46b27f55a2da3bf611fa7a23f59d72fdd7e5d2efa59b9271398",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/009_b05/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/010_b05_opt/alias.cnf": "2605c1ce7c3e651b3266871ded84fec166c78b843088bc43d4e1a35a57c73b5e",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/010_b05_opt/alias.queries": "97828c1c0a17bd77e46a4c1daf38093141857f3643979cbbc9181463835bc2c3",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/010_b05_opt/alias.results.csv": "6223948cb3a25ffe6b2a209369ef2d627b81ffb5901da93064ccf0d2c2550059",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/010_b05_opt/process.json": "9f21adcd5c7195ed0ebacf1101fcc05bceceec336b230541732c6d61eb4cb86d",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/010_b05_opt/query_bindings.json": "f8e054773c3ce1249547be7c8c5361bd5f1252173239741b526b24e903e23b4b",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/010_b05_opt/result.json": "7bf0227996c3ef511ef7c7ef09631cd1e1619d24c5c0fada949b54b9f7fc59ce",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/010_b05_opt/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/020_b10_opt/alias.cnf": "ac8dc58cff9edc56ecc6608112c046c5a33877121fc5b737780ac52e63adb80f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/020_b10_opt/alias.queries": "83211498664dffaee031c5a8d3dcb94839b25aab179acd55232b6c1e3ce099ce",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/020_b10_opt/alias.results.csv": "6b87720b352b679a7c3f7f9e885c7d1e2fba6662987433f956cd66a26d7ccf5f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/020_b10_opt/process.json": "eb04ffd32577f0d3d3087ffb37b17d7d1f6ff3cef4f740866b20de84881fc6b5",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/020_b10_opt/query_bindings.json": "8777c5297d8569cec3fe88ee2df644d48cb0d6c431920f7b6b0602dafc839277",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/020_b10_opt/result.json": "6aec7186c99a76a3619cdb2be01a5fd9a29b93d62da4e2d0a467d4f21c466825",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/020_b10_opt/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/021_b11/alias.cnf": "e1dd426bde1e582c5d6d79d0ff69227964f55e043fbfa79f6c2d1e23a3d34809",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/021_b11/alias.queries": "95c696fba520a3e11d544692834b67a7e0bdbd47d35f13a81e09011ff8c4a3ae",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/021_b11/alias.results.csv": "c81ac46bdb9541f84bb9d4f58120077dc6c4fe433dfe7a1c4bd0209bc34e2f32",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/021_b11/process.json": "07a7bd7be30853e0993780af0f48a260778b268469f2328d349159e0b5fd2399",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/021_b11/query_bindings.json": "a9d067b8da26ea4d5d52dc78c374756b2243b1fd067a3eae436ad0592214f4c9",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/021_b11/result.json": "4336465466eabd1a966179298835fe84e7d387837417e88720ca7bc7b209dc98",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/021_b11/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/022_b11_opt/alias.cnf": "6715932354343f17462dfca39ad97ad8ea21b87c9d94b66451360d4cf9a16094",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/022_b11_opt/alias.queries": "d91a33ae347c6521a01f8f8385c2c3ebee7d5089b84ddd976ca5423ed2e574c0",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/022_b11_opt/alias.results.csv": "5a402a802481932ad167314e80392b953f2c819e41ca2d28269a710c2a1bebbc",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/022_b11_opt/process.json": "707811958d2a2df68c5683cc748cd30a621bef4c8f4b77632425d79a507be584",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/022_b11_opt/query_bindings.json": "b2f2864a9d3fe0cbc137e8fb0d1d9262796c13723f8c44e258ef7bc59e0dbc74",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/022_b11_opt/result.json": "c1661001c8b0597d988f49f911d950eb9a47c631f5cdc0708566701f957f4461",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/022_b11_opt/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/023_b12/alias.cnf": "951a705436b6fff38bf02ad398c51fb1b6dbe62d9acd7974cd27b44d0ad657b3",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/023_b12/alias.queries": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/023_b12/alias.results.csv": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/023_b12/process.json": "92bffcdc7aee19eab3a4b0b1b22a39cd11b849fa8ef729ddf46626160ecc828f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/023_b12/query_bindings.json": "9676f5e41880b9b369bbb8fd6686d91819e0e60153a5c9073808804099c3a5a1",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/023_b12/result.json": "50fa110ecd0988028e0e3a65d4d4141a1b607e649018dc5f09fa44cec7ff646a",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/023_b12/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/029_b15/alias.cnf": "0c624a764265337c0ba13ab952a29d420ce70804b85f44d70d845ac22d107f3c",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/029_b15/alias.queries": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/029_b15/alias.results.csv": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/029_b15/process.json": "bc4f63c76c1c3ac6073d62004070d3824ed450cbdc9b8a61c9a4aef378ec175c",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/029_b15/query_bindings.json": "a3ff1246076d15ed6eb279c4ae5b45d6e6b0c9598deafefabd89703584bf1224",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/029_b15/result.json": "17896fac524dbdeb06714859026c15464f9cfb21d8f147333d45384792451c4f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/029_b15/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/030_b15_opt/alias.cnf": "c255261d9cb6f8fb4452144670129a977ecc29687985293e5c1e5c4dacc49024",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/030_b15_opt/alias.queries": "d70fbfadede20d1c4b9e21a377d8c274b3be890452e1d51fa1063931c9af14ee",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/030_b15_opt/alias.results.csv": "00bcddaae9ac407c22472a36c340eaa63005c36930f7b6f652f365345c69096f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/030_b15_opt/process.json": "6b786c2e55d7a8e572905d46d04d36ae09446b2c09c8ca371ec76bf42ffb399f",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/030_b15_opt/query_bindings.json": "2b59e93ae02c1583f9e77bd7fcfb760a64d21fe91ce643b587194bb0f9aad74e",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/030_b15_opt/result.json": "c60b322bf498615b9323a0958d449d6fac0caee19d7c756cd994e525d5413d43",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/030_b15_opt/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/044_i2c/alias.cnf": "6e912f17c7e672f53e472ed402b686752eae69c32ee3980bc1fa9c6782b9a984",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/044_i2c/alias.queries": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/044_i2c/alias.results.csv": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/044_i2c/process.json": "1fe0ad4a6483e60493a5c6d04bbe31d0e0d469833ad308a4da0812626da1a328",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/044_i2c/query_bindings.json": "ce60635803862db3cb1d5a2eee66500f0c42a7c6bc525330f9e55dc8ddd189cb",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/044_i2c/result.json": "bc26b5ab2127a3ca4efdbcfd5e10f38c3ec0c9852bc7ffedf9e4938a623ce3be",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/044_i2c/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/055_tv80/alias.cnf": "5f9755e4ffa7e4fa0267efdbe0594d64543487068c630f04ed29f5e08055fc63",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/055_tv80/alias.queries": "4d661a86c48c11d7ce95673965ef0a0d97f1d1e8e05a778736f7951a4724a3cf",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/055_tv80/alias.results.csv": "115d31b3d3e2f8416bce9e1e8de192183368b919c5243666803536cd0fb71e36",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/055_tv80/process.json": "a8af7737b24039ea9caf83a7e0ca60352acdf3dfd377502d4afe9317f7d49b21",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/055_tv80/query_bindings.json": "4ba11918f49046d83aa3ab2204f33e85669559fc6c92b81b3f90de9c8195cd54",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/055_tv80/result.json": "c59b7dc6c050f2ca085f7e57814cffd1c1a472d3393ce0d02a86f026d4d7af3c",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_independent/alias_audit/055_tv80/solver.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/005_b03/round-01-scorr.aig": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/006_b03_opt/round-01-scorr.aig": "22baa3cf639c82a547d2d74880873c5173a445eea4bb6551a6c25e5d6b85921e",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/007_b04/round-02-scorr.aig": "076d3ddfd1bd410b6f4d92f1cda2bd62417a8ad900debb6510462eecae1d7618",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/008_b04_opt/round-02-scorr.aig": "118ca78b272dcdd91cf50765f67c2cc45adb97d7dd956f8cb82954a998fae0cb",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/009_b05/round-03-scorr.aig": "b9ba9997f5021b86ae0668adda5a93987d1536984bbc0dba1f35fda7950bcdc3",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/010_b05_opt/round-02-scorr.aig": "99fae2672e229b9f07de138a97319cc071a5d26c9014124dbeb7b01d38115a76",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/020_b10_opt/round-02-scorr.aig": "a7099bc8e1628a5e3103eb2a74075c99d3d05c97100a8c8d1f8e5e575c92b7bf",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/021_b11/round-02-scorr.aig": "007d615a83e5a6344bc0c5dfa0ffcd5f39b5384c6f6a4a142925252dd9c8ad21",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/022_b11_opt/round-02-scorr.aig": "276c0b75cd0a37e1a70882e76bf3f386af0bd9fbf5b54c1036d88a36a44f5431",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/023_b12/round-02-scorr.aig": "049b31182c279fd4099680328156385703a41f885977f39f6db52ed5ed738aa6",
+    "/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seedhr111_stran2_proof_reassessment/joint_baseline/prefix/044_i2c/round-05-scorr.aig": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba"
+  },
+  "candidates": [
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "005_b03.aig",
+      "gates": 4,
+      "old_same_root_candidates": 2,
+      "out": -8,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 4,
+          "old_out": -8,
+          "old_recipe": [
+            47,
+            73,
+            43,
+            78,
+            -3,
+            -5,
+            89,
+            -6
+          ],
+          "query_index": 0,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            47,
+            73,
+            90,
+            -3
+          ],
+          "query_index": 1,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        47,
+        73,
+        43,
+        46,
+        -3,
+        -5,
+        89,
+        -6
+      ],
+      "root": 46,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "006_b03_opt.aig",
+      "gates": 4,
+      "old_same_root_candidates": 2,
+      "out": -8,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 4,
+          "old_out": -8,
+          "old_recipe": [
+            45,
+            71,
+            41,
+            76,
+            -3,
+            -5,
+            87,
+            -6
+          ],
+          "query_index": 0,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            45,
+            71,
+            88,
+            -3
+          ],
+          "query_index": 1,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        45,
+        71,
+        41,
+        44,
+        -3,
+        -5,
+        87,
+        -6
+      ],
+      "root": 45,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 1,
+      "classification": "old_function_alias",
+      "file": "007_b04.aig",
+      "gates": 2,
+      "old_same_root_candidates": 1,
+      "out": -5,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -5,
+          "old_recipe": [
+            25,
+            155,
+            8,
+            -3
+          ],
+          "query_index": 0,
+          "result": "equivalent",
+          "solver_answer": -1
+        }
+      ],
+      "recipe": [
+        25,
+        216,
+        8,
+        -3
+      ],
+      "root": 111,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 1,
+      "classification": "old_function_alias",
+      "file": "008_b04_opt.aig",
+      "gates": 2,
+      "old_same_root_candidates": 1,
+      "out": -5,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -5,
+          "old_recipe": [
+            25,
+            155,
+            8,
+            -3
+          ],
+          "query_index": 0,
+          "result": "equivalent",
+          "solver_answer": -1
+        }
+      ],
+      "recipe": [
+        25,
+        216,
+        8,
+        -3
+      ],
+      "root": 111,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 2,
+      "classification": "old_function_alias",
+      "file": "009_b05.aig",
+      "gates": 3,
+      "old_same_root_candidates": 2,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            2,
+            740,
+            63,
+            -3
+          ],
+          "query_index": 0,
+          "result": "equivalent",
+          "solver_answer": -1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 1,
+          "old_out": -2,
+          "old_recipe": [
+            63,
+            743
+          ],
+          "query_index": 1,
+          "result": "equivalent",
+          "solver_answer": -1
+        }
+      ],
+      "recipe": [
+        2,
+        66,
+        69,
+        -2,
+        63,
+        -5
+      ],
+      "root": 546,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 2,
+      "classification": "old_function_alias",
+      "file": "010_b05_opt.aig",
+      "gates": 3,
+      "old_same_root_candidates": 2,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            2,
+            618,
+            63,
+            -3
+          ],
+          "query_index": 0,
+          "result": "equivalent",
+          "solver_answer": -1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 1,
+          "old_out": -2,
+          "old_recipe": [
+            63,
+            621
+          ],
+          "query_index": 1,
+          "result": "equivalent",
+          "solver_answer": -1
+        }
+      ],
+      "recipe": [
+        2,
+        66,
+        69,
+        -2,
+        63,
+        -5
+      ],
+      "root": 496,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "020_b10_opt.aig",
+      "gates": 1,
+      "old_same_root_candidates": 1,
+      "out": -2,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 1,
+          "old_out": -2,
+          "old_recipe": [
+            29,
+            58
+          ],
+          "query_index": 0,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        27,
+        58
+      ],
+      "root": 109,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 2,
+      "old_same_root_candidates": 6,
+      "out": -4,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 5,
+          "old_out": -10,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            402,
+            -3,
+            75,
+            -5,
+            -6,
+            -8
+          ],
+          "query_index": 0,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 4,
+          "old_out": -8,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            404,
+            -3,
+            -5,
+            -6
+          ],
+          "query_index": 1,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            25,
+            75,
+            387,
+            402,
+            -2,
+            -4
+          ],
+          "query_index": 2,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            384,
+            404,
+            -2
+          ],
+          "query_index": 3,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            387,
+            404,
+            -2
+          ],
+          "query_index": 4,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            310,
+            387,
+            25,
+            311,
+            386,
+            -4,
+            24,
+            310,
+            404,
+            -3,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 5,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        311,
+        387,
+        404,
+        -2
+      ],
+      "root": 203,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 3,
+      "old_same_root_candidates": 6,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 5,
+          "old_out": -10,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            402,
+            -3,
+            75,
+            -5,
+            -6,
+            -8
+          ],
+          "query_index": 6,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 4,
+          "old_out": -8,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            404,
+            -3,
+            -5,
+            -6
+          ],
+          "query_index": 7,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            25,
+            75,
+            387,
+            402,
+            -2,
+            -4
+          ],
+          "query_index": 8,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            384,
+            404,
+            -2
+          ],
+          "query_index": 9,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            387,
+            404,
+            -2
+          ],
+          "query_index": 10,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            310,
+            387,
+            25,
+            311,
+            386,
+            -4,
+            24,
+            310,
+            404,
+            -3,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 11,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        75,
+        311,
+        387,
+        402,
+        -2,
+        -4
+      ],
+      "root": 203,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 2,
+      "old_same_root_candidates": 6,
+      "out": -4,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 5,
+          "old_out": -10,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            402,
+            -3,
+            75,
+            -5,
+            -6,
+            -8
+          ],
+          "query_index": 12,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 4,
+          "old_out": -8,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            404,
+            -3,
+            -5,
+            -6
+          ],
+          "query_index": 13,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            25,
+            75,
+            387,
+            402,
+            -2,
+            -4
+          ],
+          "query_index": 14,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            384,
+            404,
+            -2
+          ],
+          "query_index": 15,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            387,
+            404,
+            -2
+          ],
+          "query_index": 16,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            310,
+            387,
+            25,
+            311,
+            386,
+            -4,
+            24,
+            310,
+            404,
+            -3,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 17,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        25,
+        395,
+        404,
+        -2
+      ],
+      "root": 203,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 3,
+      "old_same_root_candidates": 6,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 5,
+          "old_out": -10,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            402,
+            -3,
+            75,
+            -5,
+            -6,
+            -8
+          ],
+          "query_index": 18,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 4,
+          "old_out": -8,
+          "old_recipe": [
+            24,
+            395,
+            25,
+            394,
+            404,
+            -3,
+            -5,
+            -6
+          ],
+          "query_index": 19,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            25,
+            75,
+            387,
+            402,
+            -2,
+            -4
+          ],
+          "query_index": 20,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            384,
+            404,
+            -2
+          ],
+          "query_index": 21,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            25,
+            387,
+            404,
+            -2
+          ],
+          "query_index": 22,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            310,
+            387,
+            25,
+            311,
+            386,
+            -4,
+            24,
+            310,
+            404,
+            -3,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 23,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        25,
+        75,
+        395,
+        402,
+        -2,
+        -4
+      ],
+      "root": 203,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 3,
+      "old_same_root_candidates": 3,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            74,
+            402,
+            -5,
+            -7,
+            -10,
+            -12,
+            -9,
+            -14
+          ],
+          "query_index": 24,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            552,
+            -5,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 25,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            44,
+            593,
+            586,
+            593,
+            45,
+            587,
+            592,
+            -6,
+            552,
+            -3,
+            -5,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 26,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        45,
+        587,
+        552,
+        -3,
+        42,
+        -4
+      ],
+      "root": 301,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 4,
+      "old_same_root_candidates": 3,
+      "out": -8,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            74,
+            402,
+            -5,
+            -7,
+            -10,
+            -12,
+            -9,
+            -14
+          ],
+          "query_index": 27,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            552,
+            -5,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 28,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            44,
+            593,
+            586,
+            593,
+            45,
+            587,
+            592,
+            -6,
+            552,
+            -3,
+            -5,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 29,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        45,
+        587,
+        402,
+        -3,
+        42,
+        74,
+        -4,
+        -6
+      ],
+      "root": 301,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 3,
+      "old_same_root_candidates": 3,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            74,
+            402,
+            -5,
+            -7,
+            -10,
+            -12,
+            -9,
+            -14
+          ],
+          "query_index": 30,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            552,
+            -5,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 31,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            44,
+            593,
+            586,
+            593,
+            45,
+            587,
+            592,
+            -6,
+            552,
+            -3,
+            -5,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 32,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        45,
+        587,
+        552,
+        592,
+        -3,
+        -4
+      ],
+      "root": 301,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 4,
+      "old_same_root_candidates": 3,
+      "out": -8,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            74,
+            402,
+            -5,
+            -7,
+            -10,
+            -12,
+            -9,
+            -14
+          ],
+          "query_index": 33,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            552,
+            -5,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 34,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            44,
+            593,
+            586,
+            593,
+            45,
+            587,
+            592,
+            -6,
+            552,
+            -3,
+            -5,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 35,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        45,
+        587,
+        402,
+        592,
+        74,
+        -3,
+        -4,
+        -6
+      ],
+      "root": 301,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 3,
+      "old_same_root_candidates": 3,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            74,
+            402,
+            -5,
+            -7,
+            -10,
+            -12,
+            -9,
+            -14
+          ],
+          "query_index": 36,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            552,
+            -5,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 37,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            44,
+            593,
+            586,
+            593,
+            45,
+            587,
+            592,
+            -6,
+            552,
+            -3,
+            -5,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 38,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        45,
+        587,
+        552,
+        -3,
+        595,
+        -4
+      ],
+      "root": 301,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "021_b11.aig",
+      "gates": 4,
+      "old_same_root_candidates": 3,
+      "out": -8,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            74,
+            402,
+            -5,
+            -7,
+            -10,
+            -12,
+            -9,
+            -14
+          ],
+          "query_index": 39,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            42,
+            45,
+            587,
+            -2,
+            43,
+            44,
+            43,
+            586,
+            552,
+            -5,
+            -7,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 40,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -14,
+          "old_recipe": [
+            44,
+            593,
+            586,
+            593,
+            45,
+            587,
+            592,
+            -6,
+            552,
+            -3,
+            -5,
+            -9,
+            -10,
+            -12
+          ],
+          "query_index": 41,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        45,
+        587,
+        402,
+        -3,
+        74,
+        595,
+        -4,
+        -6
+      ],
+      "root": 301,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "021_b11.aig",
+      "gates": 10,
+      "old_same_root_candidates": 0,
+      "out": -21,
+      "pairs": [],
+      "recipe": [
+        281,
+        553,
+        43,
+        553,
+        45,
+        281,
+        587,
+        -6,
+        43,
+        44,
+        43,
+        586,
+        -3,
+        -5,
+        -9,
+        -11,
+        -14,
+        -16,
+        -13,
+        -18
+      ],
+      "root": 302,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "021_b11.aig",
+      "gates": 6,
+      "old_same_root_candidates": 0,
+      "out": -12,
+      "pairs": [],
+      "recipe": [
+        42,
+        44,
+        552,
+        -2,
+        42,
+        552,
+        586,
+        -6,
+        551,
+        -5,
+        -9,
+        -10
+      ],
+      "root": 302,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "021_b11.aig",
+      "gates": 6,
+      "old_same_root_candidates": 0,
+      "out": -12,
+      "pairs": [],
+      "recipe": [
+        44,
+        552,
+        592,
+        -2,
+        552,
+        586,
+        592,
+        -6,
+        551,
+        -5,
+        -9,
+        -10
+      ],
+      "root": 302,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "021_b11.aig",
+      "gates": 6,
+      "old_same_root_candidates": 0,
+      "out": -12,
+      "pairs": [],
+      "recipe": [
+        44,
+        552,
+        595,
+        -2,
+        552,
+        586,
+        595,
+        -6,
+        551,
+        -5,
+        -9,
+        -10
+      ],
+      "root": 302,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 5,
+      "old_same_root_candidates": 2,
+      "out": -10,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -15,
+          "old_recipe": [
+            25,
+            39,
+            322,
+            521,
+            -2,
+            -4,
+            24,
+            38,
+            -4,
+            -8,
+            482,
+            -7,
+            -11,
+            -12
+          ],
+          "query_index": 0,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            323,
+            482,
+            24,
+            39,
+            482,
+            -4,
+            25,
+            38,
+            482,
+            -8,
+            -3,
+            -7,
+            521,
+            -11,
+            -12,
+            -14
+          ],
+          "query_index": 1,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        323,
+        482,
+        24,
+        39,
+        482,
+        -4,
+        -3,
+        -7,
+        521,
+        -8
+      ],
+      "root": 261,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 1,
+      "classification": "old_function_alias",
+      "file": "022_b11_opt.aig",
+      "gates": 2,
+      "old_same_root_candidates": 2,
+      "out": -4,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 7,
+          "old_out": -15,
+          "old_recipe": [
+            25,
+            39,
+            322,
+            521,
+            -2,
+            -4,
+            24,
+            38,
+            -4,
+            -8,
+            482,
+            -7,
+            -11,
+            -12
+          ],
+          "query_index": 2,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 8,
+          "old_out": -16,
+          "old_recipe": [
+            323,
+            482,
+            24,
+            39,
+            482,
+            -4,
+            25,
+            38,
+            482,
+            -8,
+            -3,
+            -7,
+            521,
+            -11,
+            -12,
+            -14
+          ],
+          "query_index": 3,
+          "result": "equivalent",
+          "solver_answer": -1
+        }
+      ],
+      "recipe": [
+        325,
+        482,
+        521,
+        -3
+      ],
+      "root": 261,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 7,
+      "old_same_root_candidates": 2,
+      "out": -15,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 9,
+          "old_out": -18,
+          "old_recipe": [
+            25,
+            39,
+            322,
+            521,
+            -2,
+            -4,
+            24,
+            38,
+            322,
+            -8,
+            38,
+            520,
+            482,
+            -7,
+            -11,
+            -13,
+            -14,
+            -16
+          ],
+          "query_index": 4,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 10,
+          "old_out": -20,
+          "old_recipe": [
+            483,
+            521,
+            25,
+            39,
+            322,
+            521,
+            -4,
+            -6,
+            24,
+            38,
+            322,
+            -10,
+            38,
+            520,
+            -3,
+            -9,
+            -13,
+            -15,
+            -16,
+            -18
+          ],
+          "query_index": 5,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        323,
+        482,
+        521,
+        -2,
+        24,
+        39,
+        482,
+        -6,
+        39,
+        520,
+        -5,
+        -9,
+        -11,
+        -12
+      ],
+      "root": 263,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 1,
+      "old_same_root_candidates": 1,
+      "out": -2,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 1,
+          "old_out": -2,
+          "old_recipe": [
+            53,
+            364
+          ],
+          "query_index": 6,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        338,
+        364
+      ],
+      "root": 451,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 1,
+      "old_same_root_candidates": 1,
+      "out": -2,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 1,
+          "old_out": -2,
+          "old_recipe": [
+            53,
+            364
+          ],
+          "query_index": 7,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        333,
+        364
+      ],
+      "root": 451,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 2,
+      "old_same_root_candidates": 1,
+      "out": -4,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            24,
+            162,
+            53,
+            364,
+            -3,
+            -5
+          ],
+          "query_index": 8,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        338,
+        364,
+        905,
+        -3
+      ],
+      "root": 453,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "022_b11_opt.aig",
+      "gates": 3,
+      "old_same_root_candidates": 0,
+      "out": -6,
+      "pairs": [],
+      "recipe": [
+        338,
+        364,
+        899,
+        -3,
+        905,
+        -4
+      ],
+      "root": 454,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "022_b11_opt.aig",
+      "gates": 4,
+      "old_same_root_candidates": 0,
+      "out": -8,
+      "pairs": [],
+      "recipe": [
+        338,
+        364,
+        885,
+        -3,
+        899,
+        905,
+        -4,
+        -6
+      ],
+      "root": 455,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 1,
+      "old_same_root_candidates": 1,
+      "out": -2,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 1,
+          "old_out": -2,
+          "old_recipe": [
+            54,
+            68
+          ],
+          "query_index": 9,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        54,
+        178
+      ],
+      "root": 512,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 3,
+      "old_same_root_candidates": 1,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            66,
+            179,
+            54,
+            68,
+            -3,
+            -5
+          ],
+          "query_index": 10,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        54,
+        178,
+        66,
+        179,
+        -3,
+        -5
+      ],
+      "root": 513,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "022_b11_opt.aig",
+      "gates": 3,
+      "old_same_root_candidates": 1,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            66,
+            179,
+            54,
+            68,
+            -3,
+            -5
+          ],
+          "query_index": 11,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        66,
+        69,
+        54,
+        68,
+        -3,
+        -5
+      ],
+      "root": 513,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "023_b12.aig",
+      "gates": 1,
+      "old_same_root_candidates": 0,
+      "out": -3,
+      "pairs": [],
+      "recipe": [
+        850,
+        884
+      ],
+      "root": 1071,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "023_b12.aig",
+      "gates": 2,
+      "old_same_root_candidates": 0,
+      "out": -5,
+      "pairs": [],
+      "recipe": [
+        801,
+        850,
+        859,
+        -2
+      ],
+      "root": 1071,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "023_b12.aig",
+      "gates": 2,
+      "old_same_root_candidates": 0,
+      "out": -5,
+      "pairs": [],
+      "recipe": [
+        802,
+        804,
+        884,
+        -2
+      ],
+      "root": 1071,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "023_b12.aig",
+      "gates": 2,
+      "old_same_root_candidates": 0,
+      "out": -4,
+      "pairs": [],
+      "recipe": [
+        850,
+        884,
+        2137,
+        -3
+      ],
+      "root": 1072,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "023_b12.aig",
+      "gates": 3,
+      "old_same_root_candidates": 0,
+      "out": -6,
+      "pairs": [],
+      "recipe": [
+        850,
+        884,
+        2116,
+        -3,
+        2137,
+        -4
+      ],
+      "root": 1073,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "044_i2c.aig",
+      "gates": 2,
+      "old_same_root_candidates": 0,
+      "out": -4,
+      "pairs": [],
+      "recipe": [
+        85,
+        154,
+        1437,
+        -3
+      ],
+      "root": 723,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "044_i2c.aig",
+      "gates": 3,
+      "old_same_root_candidates": 0,
+      "out": -6,
+      "pairs": [],
+      "recipe": [
+        85,
+        154,
+        1434,
+        -3,
+        1437,
+        -4
+      ],
+      "root": 724,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "029_b15.aig",
+      "gates": 1,
+      "old_same_root_candidates": 0,
+      "out": -2,
+      "pairs": [],
+      "recipe": [
+        6719,
+        6769
+      ],
+      "root": 3386,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 1,
+      "classification": "old_function_alias",
+      "file": "030_b15_opt.aig",
+      "gates": 2,
+      "old_same_root_candidates": 4,
+      "out": -5,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -5,
+          "old_recipe": [
+            152,
+            2369,
+            159,
+            -3
+          ],
+          "query_index": 0,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 1,
+          "old_out": -3,
+          "old_recipe": [
+            159,
+            2767
+          ],
+          "query_index": 1,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            159,
+            2767,
+            2735,
+            -3
+          ],
+          "query_index": 2,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_structural_hash",
+          "old_gates": 1,
+          "old_out": -3,
+          "old_recipe": [
+            159,
+            2769
+          ],
+          "result": "equivalent"
+        }
+      ],
+      "recipe": [
+        157,
+        2766,
+        159,
+        -3
+      ],
+      "root": 1386,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 1,
+      "classification": "old_function_alias",
+      "file": "030_b15_opt.aig",
+      "gates": 3,
+      "old_same_root_candidates": 4,
+      "out": -6,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            152,
+            2369,
+            159,
+            -3,
+            2717,
+            -4
+          ],
+          "query_index": 3,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 3,
+          "old_out": -6,
+          "old_recipe": [
+            158,
+            2735,
+            2717,
+            -3,
+            2767,
+            -4
+          ],
+          "query_index": 4,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            159,
+            2717,
+            2767,
+            -2
+          ],
+          "query_index": 5,
+          "result": "different",
+          "solver_answer": 1
+        },
+        {
+          "method": "original_graph_structural_hash",
+          "old_gates": 2,
+          "old_out": -4,
+          "old_recipe": [
+            159,
+            2717,
+            2769,
+            -2
+          ],
+          "result": "equivalent"
+        }
+      ],
+      "recipe": [
+        157,
+        2766,
+        159,
+        2717,
+        -3,
+        -4
+      ],
+      "root": 1387,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "030_b15_opt.aig",
+      "gates": 1,
+      "old_same_root_candidates": 0,
+      "out": -2,
+      "pairs": [],
+      "recipe": [
+        896,
+        16010
+      ],
+      "root": 8008,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "030_b15_opt.aig",
+      "gates": 3,
+      "old_same_root_candidates": 0,
+      "out": -6,
+      "pairs": [],
+      "recipe": [
+        2726,
+        16011,
+        896,
+        16010,
+        -3,
+        -5
+      ],
+      "root": 8009,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "055_tv80.aig",
+      "gates": 7,
+      "old_same_root_candidates": 0,
+      "out": -14,
+      "pairs": [],
+      "recipe": [
+        5262,
+        13056,
+        13095,
+        -2,
+        5263,
+        13065,
+        13095,
+        -6,
+        13048,
+        13144,
+        -5,
+        -9,
+        -10,
+        -12
+      ],
+      "root": 6582,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "055_tv80.aig",
+      "gates": 4,
+      "old_same_root_candidates": 0,
+      "out": -8,
+      "pairs": [],
+      "recipe": [
+        5262,
+        13056,
+        5263,
+        13065,
+        2160,
+        -3,
+        -5,
+        -6
+      ],
+      "root": 10828,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "055_tv80.aig",
+      "gates": 5,
+      "old_same_root_candidates": 1,
+      "out": -10,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 6,
+          "old_out": -12,
+          "old_recipe": [
+            13056,
+            13065,
+            719,
+            12277,
+            5262,
+            13056,
+            2160,
+            -3,
+            -5,
+            -7,
+            -8,
+            -10
+          ],
+          "query_index": 0,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        5262,
+        13056,
+        5263,
+        13065,
+        2160,
+        -3,
+        21643,
+        -5,
+        -6,
+        -8
+      ],
+      "root": 10829,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "different_from_all_old_same_root_functions",
+      "file": "055_tv80.aig",
+      "gates": 6,
+      "old_same_root_candidates": 1,
+      "out": -12,
+      "pairs": [
+        {
+          "method": "original_graph_free_PI_RO_SAT",
+          "old_gates": 6,
+          "old_out": -12,
+          "old_recipe": [
+            13056,
+            13065,
+            719,
+            12277,
+            5262,
+            13056,
+            2160,
+            -3,
+            -5,
+            -7,
+            -8,
+            -10
+          ],
+          "query_index": 1,
+          "result": "different",
+          "solver_answer": 1
+        }
+      ],
+      "recipe": [
+        719,
+        12277,
+        5262,
+        13056,
+        5263,
+        13065,
+        2160,
+        -3,
+        -5,
+        -7,
+        -8,
+        -10
+      ],
+      "root": 10829,
+      "selected_by_full_one_per_root": false
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "055_tv80.aig",
+      "gates": 6,
+      "old_same_root_candidates": 0,
+      "out": -12,
+      "pairs": [],
+      "recipe": [
+        5262,
+        13056,
+        5263,
+        13065,
+        163,
+        2160,
+        21643,
+        -3,
+        -6,
+        -8,
+        -5,
+        -10
+      ],
+      "root": 10830,
+      "selected_by_full_one_per_root": true
+    },
+    {
+      "alias_count": 0,
+      "classification": "no_old_same_root_candidate",
+      "file": "055_tv80.aig",
+      "gates": 7,
+      "old_same_root_candidates": 0,
+      "out": -15,
+      "pairs": [],
+      "recipe": [
+        163,
+        2160,
+        5262,
+        13056,
+        -2,
+        -4,
+        5263,
+        13065,
+        -2,
+        -8,
+        21643,
+        -7,
+        -11,
+        -12
+      ],
+      "root": 10831,
+      "selected_by_full_one_per_root": true
+    }
+  ],
+  "full_one_per_root_selected": {
+    "aliases": 0,
+    "cases": [
+      "020_b10_opt.aig",
+      "021_b11.aig",
+      "022_b11_opt.aig",
+      "023_b12.aig",
+      "029_b15.aig",
+      "030_b15_opt.aig",
+      "044_i2c.aig",
+      "055_tv80.aig"
+    ],
+    "classifications": {
+      "different_from_all_old_same_root_functions": 7,
+      "no_old_same_root_candidate": 15
+    },
+    "total": 22
+  },
+  "large": {
+    "aliases": 0,
+    "cases": [
+      "055_tv80.aig"
+    ],
+    "classifications": {
+      "different_from_all_old_same_root_functions": 2,
+      "no_old_same_root_candidate": 4
+    },
+    "total": 6
+  },
+  "limitations": [
+    "Equivalence is relative to all saved old three-source candidates at the same root, not native candidates that were never exported.",
+    "Different-function status uses complete SAT verdicts with no care clauses; no DRAT or independent proof kernel used.",
+    "No old candidate at a root is absence in this archive, not a theorem about every possible expression.",
+    "No area credit: actual product requires full certificate, free root-difference witness, same-set exact removal and independent DSEC."
+  ],
+  "protocol": {
+    "bound": "Uniform 1000 conflicts/query and 120 seconds/case, one process per case, no retries.",
+    "care_clauses": false,
+    "interpretation": "No candidate selected-area or optimizer claim; unknown/timeout cannot prove functional novelty. Roots without old candidates are separately labelled.",
+    "proof_order": [
+      "original-graph structural hash identity",
+      "exhaustive independent union external-support truth equality (only a sufficient alias condition)",
+      "free original-graph recipe XOR recipe SAT for every remaining pair"
+    ],
+    "rules_sha256": "3618fbae567eff1f84c0ccc39bf06b73b23ef23dd462946d657e8d4308421f89",
+    "scope": "All 50 new exact free-SAT recipes compared to every old three-source candidate at the same root on the same original free PI/RO graph.",
+    "script_sha256": "6f59d1967f51734c3d3c138a2804749ddb3c44a402869f768f30416a3202439c",
+    "source_comparison_sha256": "db724cd3fdc6193891e792330c4fbd511db61fec741cc0d804c9f9460340abfd"
+  },
+  "status": "PASS"
+}

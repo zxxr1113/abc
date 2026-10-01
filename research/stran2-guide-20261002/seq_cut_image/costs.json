@@ -1,0 +1,3696 @@
+{
+  "cases": [
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.12153219804167747,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.1228761300444603,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "001_b01.aig",
+      "loaded_AND": 40
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.12076261267066002,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.12055472284555435,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "002_b01_opt.aig",
+      "loaded_AND": 39
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.12186410650610924,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 4,
+              "csv_sha256": "8a9f537dad9e2b9d7664b705dc4552630b76ea1b350d3522232ada5634e094cc",
+              "observed_queries": 60,
+              "solver_wall_s": 4.4086e-05,
+              "statuses": {
+                "-1": 60
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.12087064981460571,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "003_b02.aig",
+      "loaded_AND": 21
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.11804049462080002,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 3,
+              "csv_sha256": "984668f0ff9a77638e1b1a0b35bae3b6f92f9bd6c1f8f19ffea78564f25d6801",
+              "observed_queries": 58,
+              "solver_wall_s": 5.0759e-05,
+              "statuses": {
+                "-1": 58
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11787257343530655,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "004_b02_opt.aig",
+      "loaded_AND": 21
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.16924483329057693,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 5,
+              "csv_sha256": "aea88299d1584b6de289fe191b0db1c5615da53059c99af14b1bc1db62b0f177",
+              "observed_queries": 50,
+              "solver_wall_s": 7.0875e-05,
+              "statuses": {
+                "-1": 50
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "c8beea267789eb498ac829069bbeb5950a216f5479f149c446e94160fefa4c4c",
+              "observed_queries": 4,
+              "solver_wall_s": 4.616e-05,
+              "statuses": {
+                "1": 4
+              }
+            },
+            "image": {
+              "conflicts": 3,
+              "csv_sha256": "dfd30ea944a0251b3a09d979a644f80a649dbfe5c625ff1ad596280736e57b45",
+              "observed_queries": 540,
+              "solver_wall_s": 0.001110929,
+              "statuses": {
+                "-1": 430,
+                "1": 110
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11910596117377281,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 5,
+              "csv_sha256": "854aa6b5eb8d3b21350af20b96f5cd2e0c0487b5a5e65b101439b4f37e840a25",
+              "observed_queries": 50,
+              "solver_wall_s": 6.0999e-05,
+              "statuses": {
+                "-1": 50
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "b059de840a7d036baccf01f197bcbacd3d40b63a1d4bc8d6d3c90f703f32f946",
+              "observed_queries": 3,
+              "solver_wall_s": 3.7819e-05,
+              "statuses": {
+                "1": 3
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "005_b03.aig",
+      "loaded_AND": 128
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.21864165738224983,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6,
+              "csv_sha256": "e08b76d59c91594a35d3b5955b7f8dfb64f5054c7a6e04020660d467169deb66",
+              "observed_queries": 60,
+              "solver_wall_s": 9.1794e-05,
+              "statuses": {
+                "-1": 59,
+                "1": 1
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "5adc83f2213508f1fa7ca284a800a33efa94d94362d52e1619103f9216d650c5",
+              "observed_queries": 4,
+              "solver_wall_s": 4.6339e-05,
+              "statuses": {
+                "1": 4
+              }
+            },
+            "image": {
+              "conflicts": 4,
+              "csv_sha256": "a177f8a6268327c4a1f0302d76641dc4c57bf09496cc05347e5dfdcf7e6940c3",
+              "observed_queries": 498,
+              "solver_wall_s": 0.000884113,
+              "statuses": {
+                "-1": 412,
+                "1": 86
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.16907092556357384,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6,
+              "csv_sha256": "0f5d87da4d873669e1b29d15e6be52f1191691d4d93351c0febaeb4794611b06",
+              "observed_queries": 60,
+              "solver_wall_s": 8.7633e-05,
+              "statuses": {
+                "-1": 59,
+                "1": 1
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "712b61e53dd62dc70cfddeeedceb6cb3488340c9c11e37bb2e6fb9c9343ae536",
+              "observed_queries": 3,
+              "solver_wall_s": 3.5699e-05,
+              "statuses": {
+                "1": 3
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "006_b03_opt.aig",
+      "loaded_AND": 128
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.36862942948937416,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 17,
+              "csv_sha256": "7dcd222af4e0c16962f1670d752e18a8a92021ef100b1a6487c37efb605366d9",
+              "observed_queries": 128,
+              "solver_wall_s": 0.000521584,
+              "statuses": {
+                "-1": 123,
+                "1": 5
+              }
+            },
+            "free": {
+              "conflicts": 16,
+              "csv_sha256": "c8b84a684fb5d9a32dcf752caacbea872a0d1903345952d36b4cafc41688200e",
+              "observed_queries": 18,
+              "solver_wall_s": 0.001488091,
+              "statuses": {
+                "1": 18
+              }
+            },
+            "image": {
+              "conflicts": 81,
+              "csv_sha256": "b048e74c482b91c59b1ac6c3ab5734c0715a78b7f964b212f8fe1b9f14778d05",
+              "observed_queries": 1554,
+              "solver_wall_s": 0.023994393,
+              "statuses": {
+                "-1": 1308,
+                "1": 246
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.21845950558781624,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 17,
+              "csv_sha256": "b008413d1119ad4d9aca31cce46d546fee079c7ef278ce12949d5da908656904",
+              "observed_queries": 128,
+              "solver_wall_s": 0.00046325,
+              "statuses": {
+                "-1": 123,
+                "1": 5
+              }
+            },
+            "free": {
+              "conflicts": 20,
+              "csv_sha256": "82be7c93394fdef638f12ebed77050a39ba33effd0fff9df382da0259626ccf6",
+              "observed_queries": 17,
+              "solver_wall_s": 0.000941042,
+              "statuses": {
+                "1": 17
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "007_b04.aig",
+      "loaded_AND": 546
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.31810543686151505,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 9,
+              "csv_sha256": "9d72706ae329f4532b15e4a9d4f192447bc019c54c155eaf3fa5e481117f5f68",
+              "observed_queries": 106,
+              "solver_wall_s": 0.000139245,
+              "statuses": {
+                "-1": 105,
+                "1": 1
+              }
+            },
+            "free": {
+              "conflicts": 18,
+              "csv_sha256": "3f16091d9a714f3a69d415c51d668dd76e8d6e7d4ac576427be44c7f9ca544d1",
+              "observed_queries": 18,
+              "solver_wall_s": 0.000863354,
+              "statuses": {
+                "1": 18
+              }
+            },
+            "image": {
+              "conflicts": 49,
+              "csv_sha256": "96ce9a4653372fca88ee803954eba249ed91432331dddc653bfc8e3ed8e505a3",
+              "observed_queries": 1328,
+              "solver_wall_s": 0.0111475,
+              "statuses": {
+                "-1": 1165,
+                "1": 163
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.2180943340063095,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 9,
+              "csv_sha256": "d6751c42941f29e2d9abd12bf1cf0c328a8939df50c2608cbdc7397dc496e8aa",
+              "observed_queries": 106,
+              "solver_wall_s": 0.000144429,
+              "statuses": {
+                "-1": 105,
+                "1": 1
+              }
+            },
+            "free": {
+              "conflicts": 14,
+              "csv_sha256": "11b29474b76558ce882fbaad298c15b006d04cff3f8c552ddf504cf184096daa",
+              "observed_queries": 17,
+              "solver_wall_s": 0.00084875,
+              "statuses": {
+                "1": 17
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "008_b04_opt.aig",
+      "loaded_AND": 524
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.3674091249704361,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 27,
+              "csv_sha256": "26fbf947041d71f3ff7cab7e4bdb51d00162a68b1734cd91378e30fe87c67c9f",
+              "observed_queries": 48,
+              "solver_wall_s": 0.0013599390000000001,
+              "statuses": {
+                "-1": 41,
+                "1": 7
+              }
+            },
+            "free": {
+              "conflicts": 8,
+              "csv_sha256": "61afeb0525523a3e8d72e7296ef8217a0eb455fce762866568d73ae6547796f8",
+              "observed_queries": 3,
+              "solver_wall_s": 0.000258062,
+              "statuses": {
+                "1": 3
+              }
+            },
+            "image": {
+              "conflicts": 255,
+              "csv_sha256": "48e6900c8bd38429cb8fede0236892562efe8678098e6cf61baeb0fee0b7ca47",
+              "observed_queries": 2042,
+              "solver_wall_s": 0.035257544,
+              "statuses": {
+                "-1": 1579,
+                "1": 463
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.16668051481246948,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 27,
+              "csv_sha256": "1a5352b27396863b3264891be09f5f62e8d672ca1e0b28fa133cc95691bbd495",
+              "observed_queries": 48,
+              "solver_wall_s": 0.000780201,
+              "statuses": {
+                "-1": 41,
+                "1": 7
+              }
+            },
+            "free": {
+              "conflicts": 8,
+              "csv_sha256": "9656e0bae8b30a27add6f05b421cc352d36736e4f4b5659549a7a57feb6df369",
+              "observed_queries": 2,
+              "solver_wall_s": 0.000200745,
+              "statuses": {
+                "1": 2
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "009_b05.aig",
+      "loaded_AND": 830
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.4246629811823368,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 50,
+              "csv_sha256": "5c1aae710089d978b63d6682bf9e21b705b88758c00fa2b6615763c8b6738e0d",
+              "observed_queries": 60,
+              "solver_wall_s": 0.001012986,
+              "statuses": {
+                "-1": 52,
+                "1": 8
+              }
+            },
+            "free": {
+              "conflicts": 5,
+              "csv_sha256": "e77f7e398f817f3b29fe09413264126690d0282baf271e1f47b55bf7f994c433",
+              "observed_queries": 3,
+              "solver_wall_s": 0.000211756,
+              "statuses": {
+                "1": 3
+              }
+            },
+            "image": {
+              "conflicts": 238,
+              "csv_sha256": "a23cae07569ad610bf969d4da36a73ec950643615635f01973c68e482a5b9a9f",
+              "observed_queries": 2472,
+              "solver_wall_s": 0.046481695,
+              "statuses": {
+                "-1": 1844,
+                "1": 628
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.16717886924743652,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 50,
+              "csv_sha256": "cf2e4da2b5adab8f182c3b45e6f09b97ecf983ec19340dae5791207b503976a3",
+              "observed_queries": 60,
+              "solver_wall_s": 0.001021934,
+              "statuses": {
+                "-1": 52,
+                "1": 8
+              }
+            },
+            "free": {
+              "conflicts": 5,
+              "csv_sha256": "1a917d2c297dfc29fa9b1397a7550c0b2e46004d7727996e94591c1efe66a9e5",
+              "observed_queries": 2,
+              "solver_wall_s": 0.000158708,
+              "statuses": {
+                "1": 2
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "010_b05_opt.aig",
+      "loaded_AND": 507
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.12293152138590813,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.12379325181245804,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "011_b06.aig",
+      "loaded_AND": 42
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.11626265197992325,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11705959588289261,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "012_b06_opt.aig",
+      "loaded_AND": 42
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.5673586837947369,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 11,
+              "csv_sha256": "9276bcf7068a591b4563be3abf8d4e56e982c894d3de88d3642c623983cc85d0",
+              "observed_queries": 62,
+              "solver_wall_s": 0.000555498,
+              "statuses": {
+                "-1": 50,
+                "1": 12
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 270,
+              "csv_sha256": "b8d5f6f2fa85acf5fd4a1fe8afadf5dc6c579e344263ca0b360664a97f47b10a",
+              "observed_queries": 4330,
+              "solver_wall_s": 0.0498198,
+              "statuses": {
+                "-1": 3453,
+                "1": 877
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.16742126643657684,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 11,
+              "csv_sha256": "5ddf4493233c17c3ddc9925cdf01fc333f6c4b956b94a3f9155263a184dc5688",
+              "observed_queries": 62,
+              "solver_wall_s": 0.000553153,
+              "statuses": {
+                "-1": 50,
+                "1": 12
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "013_b07.aig",
+      "loaded_AND": 365
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.5674697123467922,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 24,
+              "csv_sha256": "1d230b5c8baa51307b30f36cb30ecc68642da7af54403afc49814f78bcff0f45",
+              "observed_queries": 102,
+              "solver_wall_s": 0.001392044,
+              "statuses": {
+                "-1": 71,
+                "1": 31
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 304,
+              "csv_sha256": "63c46ff04527f2cba0833c4f310f863e26b219781b1ebaa2ce5aa7f801a9ec5a",
+              "observed_queries": 4622,
+              "solver_wall_s": 0.06603328,
+              "statuses": {
+                "-1": 3449,
+                "1": 1173
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.1668691150844097,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 24,
+              "csv_sha256": "4464d63fe6cff672b5e1f553ec10e29487e3f57fcc33183e6de51756a6874c70",
+              "observed_queries": 102,
+              "solver_wall_s": 0.001395487,
+              "statuses": {
+                "-1": 71,
+                "1": 31
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "014_b07_opt.aig",
+      "loaded_AND": 359
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.1663847304880619,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 1,
+              "csv_sha256": "ea4945442f7677ebe9907db4040c187f624ecd021dca4b66edfbe1b4e449c261",
+              "observed_queries": 38,
+              "solver_wall_s": 0.000230019,
+              "statuses": {
+                "-1": 19,
+                "1": 19
+              }
+            },
+            "free": {
+              "conflicts": 11,
+              "csv_sha256": "c83b6d6dcdeca915c558c7e258a7d3a24b2146da5f49950215d8306f687a2b18",
+              "observed_queries": 2,
+              "solver_wall_s": 3.6318e-05,
+              "statuses": {
+                "-1": 2
+              }
+            },
+            "image": {
+              "conflicts": 16,
+              "csv_sha256": "05db2803436f4d90328f12e22403ad54622fa0e249202dd242eaff97b0596db4",
+              "observed_queries": 504,
+              "solver_wall_s": 0.003153745,
+              "statuses": {
+                "-1": 267,
+                "1": 237
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11705952510237694,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 1,
+              "csv_sha256": "2b6b28014b7643f2a6155cce9aacd064ee86f5408875ce7c7fb43757d0e51f39",
+              "observed_queries": 38,
+              "solver_wall_s": 0.000224562,
+              "statuses": {
+                "-1": 19,
+                "1": 19
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "015_b08.aig",
+      "loaded_AND": 155
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.16691187024116516,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6,
+              "csv_sha256": "08995d6f2000b855db026935d29b4399a4c35364e9503836fc239e214a9f49dc",
+              "observed_queries": 10,
+              "solver_wall_s": 0.000117327,
+              "statuses": {
+                "-1": 5,
+                "1": 5
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 20,
+              "csv_sha256": "f0ed42e66db8b40cb755bc67cc99b1076c3d81f05e0f8c7815bab88804a6f869",
+              "observed_queries": 300,
+              "solver_wall_s": 0.002546197,
+              "statuses": {
+                "-1": 154,
+                "1": 146
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.1167503222823143,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6,
+              "csv_sha256": "12888505dfdcde2237c277980dfe71b2b2e38fb65abf016f3d07aedef93dbaaf",
+              "observed_queries": 10,
+              "solver_wall_s": 0.000118498,
+              "statuses": {
+                "-1": 5,
+                "1": 5
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "016_b08_opt.aig",
+      "loaded_AND": 147
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.317057803273201,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 4,
+              "csv_sha256": "4315f4c365baa5459f8c572d75f7b4f687e36ae5b4fa80cda872907787f4908b",
+              "observed_queries": 34,
+              "solver_wall_s": 0.000127532,
+              "statuses": {
+                "-1": 28,
+                "1": 6
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "373ea38f373947c838bc5c51b81ecf42e98b23bd79e07925370586fef8250893",
+              "observed_queries": 3,
+              "solver_wall_s": 4.22e-05,
+              "statuses": {
+                "1": 3
+              }
+            },
+            "image": {
+              "conflicts": 15,
+              "csv_sha256": "27f0d90286542a6a5033584f902897cec7a38e5fc46c4dea570963864cdbea0f",
+              "observed_queries": 2074,
+              "solver_wall_s": 0.003291386,
+              "statuses": {
+                "-1": 2008,
+                "1": 66
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11664025485515594,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 4,
+              "csv_sha256": "8c48c59e32ca2ca5107598440bdcdddc899485cf09f6050ed0cd0af94f464f5c",
+              "observed_queries": 34,
+              "solver_wall_s": 0.000126516,
+              "statuses": {
+                "-1": 28,
+                "1": 6
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "e1458c95972d5f66d5288d5aee41048bb60f549537bff1ec4814a9c872ae8a54",
+              "observed_queries": 3,
+              "solver_wall_s": 4.2949e-05,
+              "statuses": {
+                "1": 3
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "017_b09.aig",
+      "loaded_AND": 136
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.31726356595754623,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 7,
+              "csv_sha256": "54ef36b2026e9e88c0baed1fc15dd1dbf0b4ddf3e3f73edcaf4997f9bb40ffd4",
+              "observed_queries": 48,
+              "solver_wall_s": 0.00024465,
+              "statuses": {
+                "-1": 36,
+                "1": 12
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "9595b5da2c8376ee7790aa25bfc9cb7a6e86b75e977d17b0e90f1ab438bf016f",
+              "observed_queries": 5,
+              "solver_wall_s": 7.0676e-05,
+              "statuses": {
+                "1": 5
+              }
+            },
+            "image": {
+              "conflicts": 23,
+              "csv_sha256": "5fb7586f4e0430d84e065fac8e11abb30d128d006680330759c32b55be1234a1",
+              "observed_queries": 2042,
+              "solver_wall_s": 0.003209713,
+              "statuses": {
+                "-1": 1932,
+                "1": 110
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11681293323636055,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 7,
+              "csv_sha256": "cbe6037edbf2689d82f85fb1022331068d76c67c6559806fb5a5513fe4149eba",
+              "observed_queries": 48,
+              "solver_wall_s": 0.000247626,
+              "statuses": {
+                "-1": 36,
+                "1": 12
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "858f67d2402040564858650166787dbecd3f3b69feb76684f3f4014ac020980d",
+              "observed_queries": 5,
+              "solver_wall_s": 7.1544e-05,
+              "statuses": {
+                "1": 5
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "018_b09_opt.aig",
+      "loaded_AND": 135
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.31673068553209305,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 21,
+              "csv_sha256": "0c863e97fb94d17abe049763a7661a06eb76ea406eae99ef2effc179a8c87297",
+              "observed_queries": 24,
+              "solver_wall_s": 0.00032558,
+              "statuses": {
+                "-1": 18,
+                "1": 6
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 62,
+              "csv_sha256": "f95666721323140a52cfdf896a8fc2aeb2a6b911f3e246f61c691ca073b25b9b",
+              "observed_queries": 1250,
+              "solver_wall_s": 0.008875698,
+              "statuses": {
+                "-1": 950,
+                "1": 300
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.1667855717241764,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 21,
+              "csv_sha256": "d30bf13926b21c8fa0836386c0fbb828e51f2d1b3738480b2d1f9d5e5e30a14d",
+              "observed_queries": 24,
+              "solver_wall_s": 0.00031345,
+              "statuses": {
+                "-1": 18,
+                "1": 6
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "019_b10.aig",
+      "loaded_AND": 180
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.31657934188842773,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 10,
+              "csv_sha256": "f3844d1f1e660b426c3a165ed9bfa4d4d49b134471028e631d915e5f0a26c979",
+              "observed_queries": 16,
+              "solver_wall_s": 0.000133989,
+              "statuses": {
+                "-1": 15,
+                "1": 1
+              }
+            },
+            "free": {
+              "conflicts": 1,
+              "csv_sha256": "b4979a127c00446d385042ce928d6adbfa8b0feeac35c0ec7ff8d5e54d653275",
+              "observed_queries": 1,
+              "solver_wall_s": 3.596e-05,
+              "statuses": {
+                "1": 1
+              }
+            },
+            "image": {
+              "conflicts": 57,
+              "csv_sha256": "e553bc5c437fa4b155a05c87fb9273985d74952709e46a4965a6343d7a4ba9e1",
+              "observed_queries": 1994,
+              "solver_wall_s": 0.011254228,
+              "statuses": {
+                "-1": 1554,
+                "1": 440
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.16678481549024582,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 10,
+              "csv_sha256": "29d6ee84aed5e07df0038c523f8abbaacef5aa0e74cfe5e4e892aeac2171da3f",
+              "observed_queries": 16,
+              "solver_wall_s": 0.000132479,
+              "statuses": {
+                "-1": 15,
+                "1": 1
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "020_b10_opt.aig",
+      "loaded_AND": 174
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.5175951197743416,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 32,
+              "csv_sha256": "b5be2c2be4684cc864aabb143b4f4fbf1cc85d52a55833ce485f0a0cb820ac32",
+              "observed_queries": 124,
+              "solver_wall_s": 0.001090123,
+              "statuses": {
+                "-1": 108,
+                "1": 16
+              }
+            },
+            "free": {
+              "conflicts": 19,
+              "csv_sha256": "4688cf528259e32cbfaf154d03a78f8354154366324f98be920c61a74b7d9877",
+              "observed_queries": 19,
+              "solver_wall_s": 0.000950614,
+              "statuses": {
+                "-1": 1,
+                "1": 18
+              }
+            },
+            "image": {
+              "conflicts": 201,
+              "csv_sha256": "13e6822fbffca6f20026853c93c184818c8a4a15fb6b935f71a03636683d144b",
+              "observed_queries": 2716,
+              "solver_wall_s": 0.046704791,
+              "statuses": {
+                "-1": 2127,
+                "1": 589
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.2665814384818077,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 32,
+              "csv_sha256": "47f37d471c34fa57c035cdbdaf173bf03765caac544d1b62789e4f3bbd78347d",
+              "observed_queries": 124,
+              "solver_wall_s": 0.001119314,
+              "statuses": {
+                "-1": 108,
+                "1": 16
+              }
+            },
+            "free": {
+              "conflicts": 17,
+              "csv_sha256": "f871e3794357a1a72d726d666e6689160a6cb3d159013fd04efc470467fda6d8",
+              "observed_queries": 9,
+              "solver_wall_s": 0.000482776,
+              "statuses": {
+                "-1": 1,
+                "1": 8
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "021_b11.aig",
+      "loaded_AND": 611
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.517556220293045,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 32,
+              "csv_sha256": "ac365a03af77bbb88f46ae68ad4cc88d377a4680de75130d984370e5fc37715c",
+              "observed_queries": 174,
+              "solver_wall_s": 0.00151,
+              "statuses": {
+                "-1": 149,
+                "1": 25
+              }
+            },
+            "free": {
+              "conflicts": 23,
+              "csv_sha256": "0962d8f68c7e4ddfbfc339c630f6d6b39712af7aafd641c6819a4295dd13fe34",
+              "observed_queries": 20,
+              "solver_wall_s": 0.001259037,
+              "statuses": {
+                "1": 20
+              }
+            },
+            "image": {
+              "conflicts": 213,
+              "csv_sha256": "b110ae88c3d6998d5d84a801fb4dc0f171328898872054dde3bd5083fdbbd302",
+              "observed_queries": 2660,
+              "solver_wall_s": 0.044097562,
+              "statuses": {
+                "-1": 2092,
+                "1": 568
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.26800888776779175,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 32,
+              "csv_sha256": "62a0441ae77bf34302b15f0100a2110753882f0f703b1967686806dff792d1f7",
+              "observed_queries": 174,
+              "solver_wall_s": 0.001513507,
+              "statuses": {
+                "-1": 149,
+                "1": 25
+              }
+            },
+            "free": {
+              "conflicts": 13,
+              "csv_sha256": "ae128899202e25f293d6fe0cb71fc8015488a2124ea48d3732c8199730bd03ec",
+              "observed_queries": 11,
+              "solver_wall_s": 0.000626418,
+              "statuses": {
+                "1": 11
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "022_b11_opt.aig",
+      "loaded_AND": 526
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 1.3195892050862312,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 295,
+              "csv_sha256": "a85c0f0f723d0d7b4d0bda8e7ebeffcac09fc400eed40033a6ab49516e3cc202",
+              "observed_queries": 814,
+              "solver_wall_s": 0.046274932,
+              "statuses": {
+                "-1": 434,
+                "1": 380
+              }
+            },
+            "free": {
+              "conflicts": 8,
+              "csv_sha256": "2b40c3c94c2496b66a2f6910f1fcc8c65364eef8d3eee5aca3a342fcc9d19aa9",
+              "observed_queries": 5,
+              "solver_wall_s": 0.00055024,
+              "statuses": {
+                "1": 5
+              }
+            },
+            "image": {
+              "conflicts": 850,
+              "csv_sha256": "49b0e453893a9d864d69a24c2c46802ae20df5175e94638b1791192b3ff680da",
+              "observed_queries": 9106,
+              "solver_wall_s": 0.475155366,
+              "statuses": {
+                "-1": 5035,
+                "1": 4071
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.31666697561740875,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 295,
+              "csv_sha256": "e92349bbaee38ba66123d9fb551d4809b8d537822fed20ece81f7a0774fc9746",
+              "observed_queries": 814,
+              "solver_wall_s": 0.047677316,
+              "statuses": {
+                "-1": 434,
+                "1": 380
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "023_b12.aig",
+      "loaded_AND": 1002
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 1.4186541996896267,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 221,
+              "csv_sha256": "66254e435bb8e07db231588c09506f2dc745fb16039fa56432e7e2190a2e2f9c",
+              "observed_queries": 936,
+              "solver_wall_s": 0.050095468,
+              "statuses": {
+                "-1": 491,
+                "1": 445
+              }
+            },
+            "free": {
+              "conflicts": 7,
+              "csv_sha256": "5998f155aec7f17bebfee7ca6d4c14628cfd34efcf9c51f3ab27ccdf3a0edbb1",
+              "observed_queries": 1,
+              "solver_wall_s": 6.5286e-05,
+              "statuses": {
+                "-1": 1
+              }
+            },
+            "image": {
+              "conflicts": 742,
+              "csv_sha256": "1ab57a318c1155380aede9ff111113651cc8088a5b3c0063e1a55286a00cc840",
+              "observed_queries": 9678,
+              "solver_wall_s": 0.511810396,
+              "statuses": {
+                "-1": 5228,
+                "1": 4450
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.317167691886425,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 221,
+              "csv_sha256": "e828b9c2a305b0718b769ad25f60599d716205556a2760717b132c79068571a2",
+              "observed_queries": 936,
+              "solver_wall_s": 0.050142106,
+              "statuses": {
+                "-1": 491,
+                "1": 445
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "024_b12_opt.aig",
+      "loaded_AND": 988
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.21673619002103806,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 18,
+              "csv_sha256": "96e26b097b00bf898614f87eb81531f36aa8e400f40ad7e98e2c43d1b2cd7e86",
+              "observed_queries": 46,
+              "solver_wall_s": 0.000570896,
+              "statuses": {
+                "-1": 25,
+                "1": 21
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 32,
+              "csv_sha256": "9daecab9b41b2ad85247eb4e8600e3d417dac7130a0df7b11d31c68fb5fe65c5",
+              "observed_queries": 1146,
+              "solver_wall_s": 0.008775071,
+              "statuses": {
+                "-1": 690,
+                "1": 456
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11622355133295059,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 18,
+              "csv_sha256": "89dde7675333f4b0de197bfe81ca7b14842eb7a2e79794b12186353de53cb248",
+              "observed_queries": 46,
+              "solver_wall_s": 0.000579924,
+              "statuses": {
+                "-1": 25,
+                "1": 21
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "025_b13.aig",
+      "loaded_AND": 261
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.21658515557646751,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 10,
+              "csv_sha256": "fe2aa3d56ede46ac971ad0ec75ee1877612aec9216e7651144cc119f0ffcf7cd",
+              "observed_queries": 48,
+              "solver_wall_s": 0.000547909,
+              "statuses": {
+                "-1": 25,
+                "1": 23
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 36,
+              "csv_sha256": "cd3bddafa0ce76912a6332c59ad8df13b1f288c9d5acf3ebbb05927472527bf6",
+              "observed_queries": 1346,
+              "solver_wall_s": 0.011448092,
+              "statuses": {
+                "-1": 783,
+                "1": 563
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.11669516563415527,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 10,
+              "csv_sha256": "bf1a7be858a8f173cb73c24d9e4c070c7cae8a8837daad84b9bc913216aa760d",
+              "observed_queries": 48,
+              "solver_wall_s": 0.000556265,
+              "statuses": {
+                "-1": 25,
+                "1": 23
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "026_b13_opt.aig",
+      "loaded_AND": 244
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 3.221115544438362,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 143,
+              "csv_sha256": "78187bc06bfdacede306e4b973330e6aa62333934aa26eea8478cceb284e414c",
+              "observed_queries": 146,
+              "solver_wall_s": 0.080065177,
+              "statuses": {
+                "-1": 22,
+                "1": 124
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 465,
+              "csv_sha256": "c07596064f3c5ed3d1a2c3f3272514202f889166948321501771bd49dbd75f00",
+              "observed_queries": 5420,
+              "solver_wall_s": 1.848077752,
+              "statuses": {
+                "-1": 2511,
+                "1": 2909
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.8177987411618233,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 143,
+              "csv_sha256": "88c4f6d4094552acb2158aa8ed34afae30e458339333c31b55e2b8f6e47a6797",
+              "observed_queries": 146,
+              "solver_wall_s": 0.080109563,
+              "statuses": {
+                "-1": 22,
+                "1": 124
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "041_des_area.aig",
+      "loaded_AND": 10133
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.2673904299736023,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "e83ed0a8a5bcf6ac38ddd4333971b689729e372f6888a3d0a378cc2ba2a844b6",
+              "observed_queries": 52,
+              "solver_wall_s": 0.000452272,
+              "statuses": {
+                "-1": 26,
+                "1": 26
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 8,
+              "csv_sha256": "058d5ef0fe70c60fc1d6315724f5622265f7bbdd5635204ec904584478940157",
+              "observed_queries": 2982,
+              "solver_wall_s": 0.027824649,
+              "statuses": {
+                "-1": 1433,
+                "1": 1549
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.14122860506176949,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "a9bcc8382636324c366122a128dbbe0fd380694e7a43c344a6e7b78f4f5be5d2",
+              "observed_queries": 52,
+              "solver_wall_s": 0.000443051,
+              "statuses": {
+                "-1": 26,
+                "1": 26
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "043_ethernet.aig",
+      "loaded_AND": 195995
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 3.671358585357666,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 176,
+              "csv_sha256": "cb5a3d31d580e279f6573645b8745ebbf96bdde71fe095322b39478a2682ca10",
+              "observed_queries": 1062,
+              "solver_wall_s": 0.059072126,
+              "statuses": {
+                "-1": 589,
+                "1": 473
+              }
+            },
+            "free": {
+              "conflicts": 14,
+              "csv_sha256": "781cb1b1f9ed2be03c5ca4ebb01ee5f16e4ff597068f87bbac60f2d8e6d62705",
+              "observed_queries": 21,
+              "solver_wall_s": 0.002148848,
+              "statuses": {
+                "1": 21
+              }
+            },
+            "image": {
+              "conflicts": 360,
+              "csv_sha256": "8e276d047cbade5eba5504e22690d7d3546d888bf05db6d6c66f18e2044b9678",
+              "observed_queries": 30214,
+              "solver_wall_s": 1.910703609,
+              "statuses": {
+                "-1": 15143,
+                "1": 15071
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.4170001447200775,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 176,
+              "csv_sha256": "c6a2445e7dfade9cf29142097c3fcb9f4d2aba316bf7597402976edccb913cb0",
+              "observed_queries": 1062,
+              "solver_wall_s": 0.058163665,
+              "statuses": {
+                "-1": 589,
+                "1": 473
+              }
+            },
+            "free": {
+              "conflicts": 19,
+              "csv_sha256": "695b18b7058943e5fbe5df4599fb499bfa3d0da8fa682b8adf2dbfab5f9bdb0a",
+              "observed_queries": 19,
+              "solver_wall_s": 0.002073378,
+              "statuses": {
+                "1": 19
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "044_i2c.aig",
+      "loaded_AND": 2879
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 1.0688613392412663,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 12,
+              "csv_sha256": "6cb154b228c20751e08c07edd6171b737b29f849c0bc74643aa5a9ae968e743b",
+              "observed_queries": 80,
+              "solver_wall_s": 0.001726373,
+              "statuses": {
+                "-1": 53,
+                "1": 27
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 38,
+              "csv_sha256": "0eed72b8a456ee5bbdce245b4203ede0341ece6f177fb1880992c67f27e307da",
+              "observed_queries": 10408,
+              "solver_wall_s": 0.292966087,
+              "statuses": {
+                "-1": 5316,
+                "1": 5092
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.1667874939739704,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 12,
+              "csv_sha256": "e583e32eebd9d186c2fa57bd667d1a5307ef705cdf004e4bd451bf7e9f72a70b",
+              "observed_queries": 80,
+              "solver_wall_s": 0.00171835,
+              "statuses": {
+                "-1": 53,
+                "1": 27
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "048_sasc.aig",
+      "loaded_AND": 1757
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 2.369874756783247,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 51,
+              "csv_sha256": "3d3e88fe81279f17dfaa862eb8ad3aee13cdd8a410e9f93e2b48dd6a782c97c6",
+              "observed_queries": 1274,
+              "solver_wall_s": 0.043899039,
+              "statuses": {
+                "-1": 686,
+                "1": 588
+              }
+            },
+            "free": {
+              "conflicts": 14,
+              "csv_sha256": "004830da9916c597b4aba9995ba3aad934541c97f61ae413ed145ecff782e774",
+              "observed_queries": 4,
+              "solver_wall_s": 0.00040137399999999997,
+              "statuses": {
+                "-1": 1,
+                "1": 3
+              }
+            },
+            "image": {
+              "conflicts": 83,
+              "csv_sha256": "300062b302c5b09189d9732c6b55abd50018c360933f4d49b222847db03fea01",
+              "observed_queries": 23548,
+              "solver_wall_s": 0.919204538,
+              "statuses": {
+                "-1": 11753,
+                "1": 11795
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.41699041798710823,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 51,
+              "csv_sha256": "b9569b04086a7e01346dce0963846b4c22be03275d932f76bf53288b13b3ce5e",
+              "observed_queries": 1274,
+              "solver_wall_s": 0.045418918,
+              "statuses": {
+                "-1": 686,
+                "1": 588
+              }
+            },
+            "free": {
+              "conflicts": 14,
+              "csv_sha256": "5b725000660f529e2adb0aa3b17ba7695be1c67f3aaa95ecd2f2fecac94f8ffc",
+              "observed_queries": 4,
+              "solver_wall_s": 0.00040489,
+              "statuses": {
+                "-1": 1,
+                "1": 3
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "049_simple_spi.aig",
+      "loaded_AND": 2297
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.567473191767931,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "0deb2bb4864a0f594467e5eb174bc437715df4342ff8fc6c8fdb1da5c50190d0",
+              "observed_queries": 6,
+              "solver_wall_s": 0.00010288800000000001,
+              "statuses": {
+                "-1": 3,
+                "1": 3
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 11,
+              "csv_sha256": "8e008b5544b03505caa4b8d8c7864ceef9cafa0ca87f57f06b89fdcd50f6ac51",
+              "observed_queries": 3990,
+              "solver_wall_s": 0.058894661,
+              "statuses": {
+                "-1": 1995,
+                "1": 1995
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.1673676148056984,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 0,
+              "csv_sha256": "ebb8e746a122a214f15b25f0f3be3bf6fee65b7b1c49bbe059642d221ecbca08",
+              "observed_queries": 6,
+              "solver_wall_s": 0.00010297,
+              "statuses": {
+                "-1": 3,
+                "1": 3
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "051_ss_pcm.aig",
+      "loaded_AND": 993
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.4672949090600014,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 36,
+              "csv_sha256": "d8cd43db8c9487a0dea2d724f69e2118b88d8980fc2bf592e00817daecd8dcf9",
+              "observed_queries": 344,
+              "solver_wall_s": 0.002880436,
+              "statuses": {
+                "-1": 202,
+                "1": 142
+              }
+            },
+            "free": {
+              "conflicts": 27,
+              "csv_sha256": "563f2a6b7c05a7d1b452fd76422e13a7dd5dbd83b8a8f1b64e04b09b4d0214e4",
+              "observed_queries": 10,
+              "solver_wall_s": 0.000175432,
+              "statuses": {
+                "-1": 6,
+                "1": 4
+              }
+            },
+            "image": {
+              "conflicts": 53,
+              "csv_sha256": "dafdb99ae0964cf6cbc433c2e5529890d60729184e5e1d6385a7a8b06c421f67",
+              "observed_queries": 2660,
+              "solver_wall_s": 0.021354585,
+              "statuses": {
+                "-1": 1406,
+                "1": 1254
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.26744185388088226,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 36,
+              "csv_sha256": "82d52343abc6e05d5e0298b64f52e6f9206edf1c29ed114525df0bef6b9a8aeb",
+              "observed_queries": 344,
+              "solver_wall_s": 0.002899302,
+              "statuses": {
+                "-1": 202,
+                "1": 142
+              }
+            },
+            "free": {
+              "conflicts": 27,
+              "csv_sha256": "3be6bfbc455a0aeb4c7bdf578036bf4f5357e857eb7e4d4a815a1b151987a1ba",
+              "observed_queries": 9,
+              "solver_wall_s": 0.000159767,
+              "statuses": {
+                "-1": 5,
+                "1": 4
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "052_steppermotordrive.aig",
+      "loaded_AND": 414
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 3.5230873972177505,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 127,
+              "csv_sha256": "546c2123199e435b3a106edc3401918213a5a2754dfd1f36a5b2891b13a64120",
+              "observed_queries": 24,
+              "solver_wall_s": 0.006347361,
+              "statuses": {
+                "-1": 19,
+                "1": 5
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 796,
+              "csv_sha256": "ed41f933e2986ca773bae05c7c7e316d4621a8e2b0acd5308e4543488d2036e5",
+              "observed_queries": 7806,
+              "solver_wall_s": 2.345183042,
+              "statuses": {
+                "-1": 3704,
+                "1": 4102
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.47322703897953033,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 127,
+              "csv_sha256": "3fde60c97569c82fc6cca947cba79c6d394132f9004647a4a358991ef4b360ba",
+              "observed_queries": 24,
+              "solver_wall_s": 0.006286076,
+              "statuses": {
+                "-1": 19,
+                "1": 5
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "054_systemcdes.aig",
+      "loaded_AND": 6105
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 0.5677391067147255,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 16,
+              "csv_sha256": "67eaa140215cdcefeedab7b1f577023b8a3e766877dd8d70da40e24b0b9a6456",
+              "observed_queries": 88,
+              "solver_wall_s": 0.001684636,
+              "statuses": {
+                "-1": 52,
+                "1": 36
+              }
+            },
+            "free": {
+              "conflicts": 7,
+              "csv_sha256": "fc3eb251d33b7c54626d082e4a3f33e436d74c331c1c3feee7541418018fe20c",
+              "observed_queries": 5,
+              "solver_wall_s": 0.00026699899999999997,
+              "statuses": {
+                "1": 5
+              }
+            },
+            "image": {
+              "conflicts": 62,
+              "csv_sha256": "22cab632f50e18b96aa488a4ea42621e9df35ccb0067068d80ec9c20044a23e5",
+              "observed_queries": 5562,
+              "solver_wall_s": 0.115219544,
+              "statuses": {
+                "-1": 3116,
+                "1": 2446
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.1666242964565754,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 16,
+              "csv_sha256": "eb75e0cb47f1856b01e314a3fa19c808dae57c87bf047cc65b5325478037f863",
+              "observed_queries": 88,
+              "solver_wall_s": 0.001682698,
+              "statuses": {
+                "-1": 52,
+                "1": 36
+              }
+            },
+            "free": {
+              "conflicts": 7,
+              "csv_sha256": "426f2f042646f721f504162a056789277babaab445f04d3e6c51e027c255da59",
+              "observed_queries": 5,
+              "solver_wall_s": 0.000267844,
+              "statuses": {
+                "1": 5
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "discovery",
+      "file": "057_usb_phy.aig",
+      "loaded_AND": 1063
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 8.879456922411919,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 173,
+              "csv_sha256": "c3281baf50730844bc7a7d0c5a1b583b4cc32b1462a0d8ecd2c4a763aae97da1",
+              "observed_queries": 996,
+              "solver_wall_s": 0.283598383,
+              "statuses": {
+                "-1": 498,
+                "1": 498
+              }
+            },
+            "free": {
+              "conflicts": 15,
+              "csv_sha256": "a2d5607245d46756782d0439e5243bc388ea0007134c8a2d79f8f7b3631551a7",
+              "observed_queries": 5,
+              "solver_wall_s": 0.00018413000000000001,
+              "statuses": {
+                "-1": 5
+              }
+            },
+            "image": {
+              "conflicts": 2111,
+              "csv_sha256": "eaf48520f083e8d2bfa3f20a832e8967dacb54b942802b9ac5eeceef59c4a26c",
+              "observed_queries": 22912,
+              "solver_wall_s": 6.156101169,
+              "statuses": {
+                "-1": 13410,
+                "1": 9502
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 1.0683868937194347,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 173,
+              "csv_sha256": "104f07bd09e178f47c72d9e34785b880d37814af401c2518b075db609b37d986",
+              "observed_queries": 996,
+              "solver_wall_s": 0.282666642,
+              "statuses": {
+                "-1": 498,
+                "1": 498
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "027_b14.aig",
+      "loaded_AND": 6069
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 9.882500048726797,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 304,
+              "csv_sha256": "4dc8776ccfeac91be3c232d6e0681bd11c4d47701ba61d92a5a2859e05925dd2",
+              "observed_queries": 1268,
+              "solver_wall_s": 0.389708171,
+              "statuses": {
+                "-1": 656,
+                "1": 612
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 3007,
+              "csv_sha256": "a6735747b6521e6f5ff87e4241cf8155fd3821daf64e59db6d8cb36bc04817e8",
+              "observed_queries": 24102,
+              "solver_wall_s": 6.874945269,
+              "statuses": {
+                "-1": 14035,
+                "1": 10067
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 1.217802107334137,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 304,
+              "csv_sha256": "6b42620c2253577cf3a1c9c41e8bcbc58cb82a550023bae7642f2b6b87e45c11",
+              "observed_queries": 1268,
+              "solver_wall_s": 0.391222106,
+              "statuses": {
+                "-1": 656,
+                "1": 612
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "028_b14_opt.aig",
+      "loaded_AND": 5926
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 31.01280414313078,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 1962,
+              "csv_sha256": "3c64403b9e207b09c615db0aa4048c5102a0a9b9894f11187f2f899ffa036cab",
+              "observed_queries": 8096,
+              "solver_wall_s": 3.204234274,
+              "statuses": {
+                "-1": 4369,
+                "1": 3727
+              }
+            },
+            "free": {
+              "conflicts": 27,
+              "csv_sha256": "59642378b8f0ce275616f4a8bd74a2946be48f1816c73961c7e675446a690320",
+              "observed_queries": 2,
+              "solver_wall_s": 0.0016810290000000001,
+              "statuses": {
+                "-1": 1,
+                "1": 1
+              }
+            },
+            "image": {
+              "conflicts": 7700,
+              "csv_sha256": "8b73121025eb710ab0ae973d3bdfff5b6b14b645eae6fa7e065627465aa169c9",
+              "observed_queries": 55604,
+              "solver_wall_s": 22.588851262,
+              "statuses": {
+                "-1": 32102,
+                "1": 23502
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 4.724221087992191,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 1962,
+              "csv_sha256": "0ecfe5799e91ac67b57c8294d8c02d92a06351376eceb9fdf3f145d51d827c38",
+              "observed_queries": 8096,
+              "solver_wall_s": 3.214459129,
+              "statuses": {
+                "-1": 4369,
+                "1": 3727
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "029_b15.aig",
+      "loaded_AND": 8432
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 35.914349380880594,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2003,
+              "csv_sha256": "e803757748ce38b4157e49b6b1aef097e19864561887f2b0d52d99ad7c9725bf",
+              "observed_queries": 5804,
+              "solver_wall_s": 2.388361469,
+              "statuses": {
+                "-1": 3276,
+                "1": 2528
+              }
+            },
+            "free": {
+              "conflicts": 58,
+              "csv_sha256": "c172ecc9f983e52efdafd80b6a251b2b99c6cb1f52f8c0c5c82720872e7efff6",
+              "observed_queries": 19,
+              "solver_wall_s": 0.015035907,
+              "statuses": {
+                "-1": 3,
+                "1": 16
+              }
+            },
+            "image": {
+              "conflicts": 8633,
+              "csv_sha256": "64cf1fb5ab7564b9161c716858ea38d2273fde7880090d6cf811139b72575745",
+              "observed_queries": 63008,
+              "solver_wall_s": 27.81783935,
+              "statuses": {
+                "-1": 35294,
+                "1": 27714
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 3.8718435168266296,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2003,
+              "csv_sha256": "0845b6d464be09371bffb9447077951e81e17a3ddcf051427ce7376a8b19bde5",
+              "observed_queries": 5804,
+              "solver_wall_s": 2.36328832,
+              "statuses": {
+                "-1": 3276,
+                "1": 2528
+              }
+            },
+            "free": {
+              "conflicts": 61,
+              "csv_sha256": "ca4c5105a751f76333b0e733bf6aefcc24ac3155891b5b39fe9d77b6a8627d49",
+              "observed_queries": 10,
+              "solver_wall_s": 0.0092263,
+              "statuses": {
+                "-1": 3,
+                "1": 7
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "030_b15_opt.aig",
+      "loaded_AND": 8417
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 120.03493724763393,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6519,
+              "csv_sha256": "8ce3e7f9c2bba127280b17108b69c69363beff392d7eb5f52eaa22937c74f078",
+              "observed_queries": 30222,
+              "solver_wall_s": 37.190983676,
+              "statuses": {
+                "-1": 16583,
+                "1": 13639
+              }
+            },
+            "free": null,
+            "image": {
+              "conflicts": 10491,
+              "csv_sha256": "4c50f862e3940dedfcab275931c17ece190473ca485664abc7d2e582167777e9",
+              "observed_queries": 65381,
+              "solver_wall_s": 73.06479416,
+              "statuses": {
+                "-1": 38399,
+                "1": 26982
+              }
+            }
+          },
+          "status": "timeout"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 42.77214578539133,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6519,
+              "csv_sha256": "5e488948c935b3e79ea61103bebd66f5fdb563b6c8b5f3a2121bf3d7c1d09cb6",
+              "observed_queries": 30222,
+              "solver_wall_s": 37.016348605,
+              "statuses": {
+                "-1": 16583,
+                "1": 13639
+              }
+            },
+            "free": {
+              "conflicts": 134,
+              "csv_sha256": "4d893e37f5bc5d029cd702fc2c3f7c1c617192a9440b5dbeab8b42b96aa37f92",
+              "observed_queries": 228,
+              "solver_wall_s": 0.555541872,
+              "statuses": {
+                "-1": 7,
+                "1": 221
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "031_b17.aig",
+      "loaded_AND": 27549
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 120.03527107089758,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 7549,
+              "csv_sha256": "be6a2c610f6aa8c291c39cf45c6221c5712722673e7d9b3a1c393cf3230c05a5",
+              "observed_queries": 27968,
+              "solver_wall_s": 35.616558263,
+              "statuses": {
+                "-1": 15498,
+                "1": 12470
+              }
+            },
+            "free": null,
+            "image": {
+              "conflicts": 8818,
+              "csv_sha256": "3b4d4db0e53f988ba5f6cb2548ea225f0a0c64f9ac8eda7e0ef5e0f6b44ce028",
+              "observed_queries": 63727,
+              "solver_wall_s": 74.172461191,
+              "statuses": {
+                "-1": 37397,
+                "1": 26330
+              }
+            }
+          },
+          "status": "timeout"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 41.72193092852831,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 7549,
+              "csv_sha256": "cc3e47720d2967c3663c2f3001e9aed11eff7507a9262f7d0fe6d12f5f3c2b56",
+              "observed_queries": 27968,
+              "solver_wall_s": 35.49269485,
+              "statuses": {
+                "-1": 15498,
+                "1": 12470
+              }
+            },
+            "free": {
+              "conflicts": 140,
+              "csv_sha256": "6a3905ff046541c89c61bec405fed798c8666de71f8292679c8e7cc4b5a7c356",
+              "observed_queries": 216,
+              "solver_wall_s": 0.56923511,
+              "statuses": {
+                "-1": 1,
+                "1": 215
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "032_b17_opt.aig",
+      "loaded_AND": 27650
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 33.12363591045141,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 826,
+              "csv_sha256": "cc2e699ebb6222101d05dc34686f5c9aa9af6827841ec453c4f89c4b560b22cf",
+              "observed_queries": 2272,
+              "solver_wall_s": 1.489788552,
+              "statuses": {
+                "-1": 1144,
+                "1": 1128
+              }
+            },
+            "free": {
+              "conflicts": 37,
+              "csv_sha256": "a68151dad0da46717a0707a7a731da32850b168e92d8b426c82fcfebe7a5077e",
+              "observed_queries": 8,
+              "solver_wall_s": 0.00172724,
+              "statuses": {
+                "-1": 8
+              }
+            },
+            "image": {
+              "conflicts": 9789,
+              "csv_sha256": "cdcf300ad7bb7843d81ae91071b78d1738422314c6e3a74e028b8c3e303a12a0",
+              "observed_queries": 44466,
+              "solver_wall_s": 27.039872189,
+              "statuses": {
+                "-1": 25888,
+                "1": 18578
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 3.021047178655863,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 826,
+              "csv_sha256": "f1fb1e521ecde24f51d721aad79d08d34239e5fc137f83aa9f19c3ef17c5f276",
+              "observed_queries": 2272,
+              "solver_wall_s": 1.489233041,
+              "statuses": {
+                "-1": 1144,
+                "1": 1128
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "033_b20.aig",
+      "loaded_AND": 12214
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 53.49686726182699,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2210,
+              "csv_sha256": "9cc84bbbe211c65497c9c7b3494468d56f260b92d695d5554710e3e11878c164",
+              "observed_queries": 5954,
+              "solver_wall_s": 4.296976601,
+              "statuses": {
+                "-1": 3169,
+                "1": 2785
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 17174,
+              "csv_sha256": "30953fae090abe79823b9b9db53bbe41d1eb0c1ab7df184b87b0008b17813d5f",
+              "observed_queries": 65592,
+              "solver_wall_s": 43.076956459,
+              "statuses": {
+                "-1": 38599,
+                "1": 26993
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 6.275890368968248,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2210,
+              "csv_sha256": "1ec759038348d3b8afdf9f5998e14900c8b28f46d68566e0916f53b893706c24",
+              "observed_queries": 5954,
+              "solver_wall_s": 4.282827908,
+              "statuses": {
+                "-1": 3169,
+                "1": 2785
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "034_b20_opt.aig",
+      "loaded_AND": 13440
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 33.812670063227415,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 1017,
+              "csv_sha256": "9ff69ff51565edddde9d302c7e615b5a20f330db218699e1d4b4547e2ed63a67",
+              "observed_queries": 3286,
+              "solver_wall_s": 2.199293607,
+              "statuses": {
+                "-1": 1649,
+                "1": 1637
+              }
+            },
+            "free": {
+              "conflicts": 48,
+              "csv_sha256": "d3869e913ed384ba43f022214ecf614c283e122d520cc7ec09a9ca2777ad9e04",
+              "observed_queries": 8,
+              "solver_wall_s": 0.0022132610000000002,
+              "statuses": {
+                "-1": 8
+              }
+            },
+            "image": {
+              "conflicts": 8848,
+              "csv_sha256": "5e4836a0fb0faac61c6a12176a880481baf22e9029cb3d0f7b6e5b943bc8ba22",
+              "observed_queries": 41900,
+              "solver_wall_s": 27.216626582,
+              "statuses": {
+                "-1": 23106,
+                "1": 18794
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 3.921718019992113,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 1017,
+              "csv_sha256": "f14bd7d801b8400e290cafd9d8970707899b337d3bce72a8c36dfc3e83a62f4d",
+              "observed_queries": 3286,
+              "solver_wall_s": 2.194502383,
+              "statuses": {
+                "-1": 1649,
+                "1": 1637
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "035_b21.aig",
+      "loaded_AND": 12776
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 50.09486527740955,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2178,
+              "csv_sha256": "ef3050f397954c674cf109abfc59e6519dcaee77c0016f669e95e3cf2078a63a",
+              "observed_queries": 5916,
+              "solver_wall_s": 4.370181633,
+              "statuses": {
+                "-1": 3106,
+                "1": 2810
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 14906,
+              "csv_sha256": "2cad1acd2b5f352dec88a12b0b7b936549ed831c79638bc6f32665bcf6b9d8bf",
+              "observed_queries": 60116,
+              "solver_wall_s": 39.389113482,
+              "statuses": {
+                "-1": 35307,
+                "1": 24809
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 6.224632263183594,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2178,
+              "csv_sha256": "a413cffd9a7bb627e7dda5a704cce6b172e723a4ab9645f4fffd02aed238d6db",
+              "observed_queries": 5916,
+              "solver_wall_s": 4.334424084,
+              "statuses": {
+                "-1": 3106,
+                "1": 2810
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "036_b21_opt.aig",
+      "loaded_AND": 13484
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 90.5368118211627,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2415,
+              "csv_sha256": "78fadadc6dec5389a6f68ec9d8f170f4949c6b6ed6e1be80aa33161f17322e4e",
+              "observed_queries": 5074,
+              "solver_wall_s": 5.257681398,
+              "statuses": {
+                "-1": 2556,
+                "1": 2518
+              }
+            },
+            "free": {
+              "conflicts": 85,
+              "csv_sha256": "914a4a925230a0944e35dec8930b76efb660ec46c0a5d84637d5cc30bb22a5a8",
+              "observed_queries": 5,
+              "solver_wall_s": 0.004818413,
+              "statuses": {
+                "-1": 4,
+                "1": 1
+              }
+            },
+            "image": {
+              "conflicts": 21468,
+              "csv_sha256": "bf7e6f7c77b313d8e9b9352371b86fe0dca766c361a07c2ff48cf6cbad977610",
+              "observed_queries": 80576,
+              "solver_wall_s": 77.78004322,
+              "statuses": {
+                "-1": 45192,
+                "1": 35384
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 7.527024660259485,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 2415,
+              "csv_sha256": "68b423971d9c616e699c57cfa047422bad916e39ecbaf888922aef1e158cec70",
+              "observed_queries": 5074,
+              "solver_wall_s": 5.195308337,
+              "statuses": {
+                "-1": 2556,
+                "1": 2518
+              }
+            },
+            "free": {
+              "conflicts": 89,
+              "csv_sha256": "72692e7a537d8409bbda6cdbb659847fa644fc9a020974ada5ddd48c098b80af",
+              "observed_queries": 1,
+              "solver_wall_s": 0.006036554,
+              "statuses": {
+                "1": 1
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "037_b22.aig",
+      "loaded_AND": 18478
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 115.18066065385938,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6758,
+              "csv_sha256": "103f3b55c6d29f0d3ea8c8c150c4d8764685596cd6eeb2f2be6723e6aa30916b",
+              "observed_queries": 7776,
+              "solver_wall_s": 8.63553563,
+              "statuses": {
+                "-1": 4116,
+                "1": 3660
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 38906,
+              "csv_sha256": "4537283cb95e87739e7250845d73c6da8c3b5e30cefcbf34be6a3d56d7d4fe38",
+              "observed_queries": 101024,
+              "solver_wall_s": 97.401010373,
+              "statuses": {
+                "-1": 59463,
+                "1": 41561
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 11.281971532851458,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 6758,
+              "csv_sha256": "5f42144306ea4c1e1fd95d88f7140cdfb0cd576934293c4ef99844b8aa5b2dd1",
+              "observed_queries": 7776,
+              "solver_wall_s": 8.633917221,
+              "statuses": {
+                "-1": 4116,
+                "1": 3660
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "038_b22_opt.aig",
+      "loaded_AND": 19029
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 120.03463104367256,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 290,
+              "csv_sha256": "a819b65da1506dede2ec0c3f73461ae662f540e890a439f9b0d80b407705f156",
+              "observed_queries": 13404,
+              "solver_wall_s": 9.752317499,
+              "statuses": {
+                "-1": 6747,
+                "1": 6657
+              }
+            },
+            "free": null,
+            "image": {
+              "conflicts": 627,
+              "csv_sha256": "2c1388f73de2b6ac2ae1aea85df9364db568819fc07b4f58378dad0327946225",
+              "observed_queries": 133713,
+              "solver_wall_s": 100.113122747,
+              "statuses": {
+                "-1": 67505,
+                "1": 66208
+              }
+            }
+          },
+          "status": "timeout"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 11.531181186437607,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 290,
+              "csv_sha256": "fcf99b046132bab504b6e192f368e454e2f95435e21b0bb3b7ce85195423d537",
+              "observed_queries": 13404,
+              "solver_wall_s": 9.743251358,
+              "statuses": {
+                "-1": 6747,
+                "1": 6657
+              }
+            },
+            "free": {
+              "conflicts": 76,
+              "csv_sha256": "f97e283ec07677eae07b93dd226df7c116981f3aff7f255181f8a5b53fe30185",
+              "observed_queries": 17,
+              "solver_wall_s": 0.017972011,
+              "statuses": {
+                "-1": 5,
+                "1": 12
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "039_ac97_ctrl.aig",
+      "loaded_AND": 34300
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 56.00030744075775,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 3536,
+              "csv_sha256": "0089494a0acbd690cbe422632594b79afa1ee7f1b06ef11979e1ef1be0099d6a",
+              "observed_queries": 298,
+              "solver_wall_s": 0.661347418,
+              "statuses": {
+                "-1": 158,
+                "1": 140
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 172919,
+              "csv_sha256": "b832606efc81cdd5dddf06f34a0032f05860f81009184d8e4eba5fc7140bec81",
+              "observed_queries": 23630,
+              "solver_wall_s": 50.017137037,
+              "statuses": {
+                "-1": 11833,
+                "0": 11,
+                "1": 11786
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 3.120596621185541,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 3536,
+              "csv_sha256": "4d62a75cbd4366aaa8c5e7555056bd626c5520acdda1e97e8d7aa9e39c004a22",
+              "observed_queries": 298,
+              "solver_wall_s": 0.661350137,
+              "statuses": {
+                "-1": 158,
+                "1": 140
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "040_aes_core.aig",
+      "loaded_AND": 45779
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 120.03511317819357,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 5768,
+              "csv_sha256": "c215d51c1c4efec6360baf85a65f82a6bde374d05e914d5663fb501af9975cf9",
+              "observed_queries": 65584,
+              "solver_wall_s": 34.748212755,
+              "statuses": {
+                "-1": 37404,
+                "1": 28180
+              }
+            },
+            "free": null,
+            "image": {
+              "conflicts": 2737,
+              "csv_sha256": "816c7ab218478b61c017560952c336443d8f185aab1eb5dd9c538a91b48efa80",
+              "observed_queries": 124357,
+              "solver_wall_s": 76.150627181,
+              "statuses": {
+                "-1": 62585,
+                "1": 61772
+              }
+            }
+          },
+          "status": "timeout"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 41.82200348749757,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 5768,
+              "csv_sha256": "47f0caee71b159fb8a93a34b4907a1cec692a205396932f938871f8b4a188567",
+              "observed_queries": 65584,
+              "solver_wall_s": 34.651265788,
+              "statuses": {
+                "-1": 37404,
+                "1": 28180
+              }
+            },
+            "free": {
+              "conflicts": 2706,
+              "csv_sha256": "40ba50f1bf6bf90b11dda1d57dfe20f8372b05e0c9cd1ee443c419aba82b803a",
+              "observed_queries": 1425,
+              "solver_wall_s": 1.435400703,
+              "statuses": {
+                "-1": 526,
+                "1": 899
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "045_mem_ctrl.aig",
+      "loaded_AND": 34059
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 2.0694086737930775,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 389,
+              "csv_sha256": "c05e2fc7146a047124c7c3fdafbbcbc3611ef4cd86fcae7514632bd032185c8c",
+              "observed_queries": 1876,
+              "solver_wall_s": 0.16466851799999999,
+              "statuses": {
+                "-1": 945,
+                "1": 931
+              }
+            },
+            "free": {
+              "conflicts": 15,
+              "csv_sha256": "163676bac5542ba2ab11787fe019088c1daf8fa756b22500f59fac2e65c7a417",
+              "observed_queries": 2,
+              "solver_wall_s": 0.000515103,
+              "statuses": {
+                "-1": 1,
+                "1": 1
+              }
+            },
+            "image": {
+              "conflicts": 1117,
+              "csv_sha256": "a5b5abcde311f5172f92c752269bad5cfaed585f4ae269303f3087bc25d60917",
+              "observed_queries": 11458,
+              "solver_wall_s": 1.049669608,
+              "statuses": {
+                "-1": 5782,
+                "1": 5676
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 0.46711818128824234,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 389,
+              "csv_sha256": "26e47800034a8ce9e18404129c1e68dfca660f06ca4955293d50a361c3de28cf",
+              "observed_queries": 1876,
+              "solver_wall_s": 0.162910281,
+              "statuses": {
+                "-1": 945,
+                "1": 931
+              }
+            },
+            "free": {
+              "conflicts": 19,
+              "csv_sha256": "941b6b8db6d95ab2d193c90854031cb265f6b2f945fcca3f35d72150182a49c3",
+              "observed_queries": 1,
+              "solver_wall_s": 0.000715859,
+              "statuses": {
+                "1": 1
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "047_pci_spoci_ctrl.aig",
+      "loaded_AND": 3319
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 27.30588500574231,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 555,
+              "csv_sha256": "a5aa7ff61ffda87ee6ddeb95d6e3710c22b090426bc679b267af14bd9d2b9cab",
+              "observed_queries": 7474,
+              "solver_wall_s": 1.935608898,
+              "statuses": {
+                "-1": 3602,
+                "1": 3872
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": {
+              "conflicts": 1162,
+              "csv_sha256": "12d1d3d59af5fe2a0e26f6c76d4965b0ee8527443df8782042ea4ccc46130fdb",
+              "observed_queries": 82914,
+              "solver_wall_s": 20.630881114,
+              "statuses": {
+                "-1": 40412,
+                "1": 42502
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 2.6201025135815144,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 555,
+              "csv_sha256": "3273ec8e6cbcbd2f1cc31562f750cb7be4602ee235fd011a76c0cf7f1b5e0610",
+              "observed_queries": 7474,
+              "solver_wall_s": 1.924098831,
+              "statuses": {
+                "-1": 3602,
+                "1": 3872
+              }
+            },
+            "free": {
+              "conflicts": 0,
+              "csv_sha256": "da0b11d849bc94c53bc7ba0a57964f3abf35e12698c11596ac711c396cca559b",
+              "observed_queries": 0,
+              "solver_wall_s": 0,
+              "statuses": {}
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "050_spi.aig",
+      "loaded_AND": 9132
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 120.03503459319472,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 3041,
+              "csv_sha256": "c0a0e533b4cb0a90666adb6698156e2b27892374972d44b7a2932f5150351ee7",
+              "observed_queries": 12498,
+              "solver_wall_s": 9.139408443,
+              "statuses": {
+                "-1": 6935,
+                "1": 5563
+              }
+            },
+            "free": null,
+            "image": {
+              "conflicts": 19363,
+              "csv_sha256": "f6114f457ec566658d5d1bb7b993e774ce3ff857537ff7e541bc6e7714126d06",
+              "observed_queries": 120787,
+              "solver_wall_s": 101.639705675,
+              "statuses": {
+                "-1": 60536,
+                "1": 60251
+              }
+            }
+          },
+          "status": "timeout"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 12.038072854280472,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 3041,
+              "csv_sha256": "a8bc578492bc267a09a141058dcdbd1f14b418ceda1e88b5c68257aa62e8240f",
+              "observed_queries": 12498,
+              "solver_wall_s": 9.064202926,
+              "statuses": {
+                "-1": 6935,
+                "1": 5563
+              }
+            },
+            "free": {
+              "conflicts": 176,
+              "csv_sha256": "09e1132ed2847916a442b097b801be92da291563767d50b5c62eefca6ca5cecc",
+              "observed_queries": 135,
+              "solver_wall_s": 0.183863841,
+              "statuses": {
+                "-1": 6,
+                "1": 129
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "053_systemcaes.aig",
+      "loaded_AND": 27879
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 103.69137456640601,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 3657,
+              "csv_sha256": "cc4a128e0a0d56389d8fb668155cf4736b67d04437f03079d03a75a311fd27cb",
+              "observed_queries": 14104,
+              "solver_wall_s": 9.521518337,
+              "statuses": {
+                "-1": 7062,
+                "1": 7042
+              }
+            },
+            "free": {
+              "conflicts": 276,
+              "csv_sha256": "425155c6a09d87e26a7a0070d4b91d753b408fb539639254c08f79f5394c40a9",
+              "observed_queries": 43,
+              "solver_wall_s": 0.027479869,
+              "statuses": {
+                "-1": 36,
+                "1": 7
+              }
+            },
+            "image": {
+              "conflicts": 10671,
+              "csv_sha256": "24fbc22b9c541bf6ac7390676f64e68879375da3b8ddb418e118fcdf11288fff",
+              "observed_queries": 124698,
+              "solver_wall_s": 85.669461036,
+              "statuses": {
+                "-1": 62720,
+                "1": 61978
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 11.133233118802309,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 3657,
+              "csv_sha256": "5ef403673c06035cfe7c54010f033eb9db9ecf94441c08d7c10f0d95f3aa406e",
+              "observed_queries": 14104,
+              "solver_wall_s": 9.502189441,
+              "statuses": {
+                "-1": 7062,
+                "1": 7042
+              }
+            },
+            "free": {
+              "conflicts": 114,
+              "csv_sha256": "7ac936d8daecb5d6d31c1088d79ecd4cf5ebad433fca2e027185ea26a9a400a0",
+              "observed_queries": 9,
+              "solver_wall_s": 0.013409276,
+              "statuses": {
+                "-1": 8,
+                "1": 1
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "055_tv80.aig",
+      "loaded_AND": 22095
+    },
+    {
+      "arms": {
+        "full": {
+          "direct_child_pipeline_wall_s": 40.630311857908964,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 542,
+              "csv_sha256": "6b8a78a44453d66613731dc917ec217a05e150d0de9d1d4849cca8a90f76176d",
+              "observed_queries": 23190,
+              "solver_wall_s": 4.417157236,
+              "statuses": {
+                "-1": 11878,
+                "1": 11312
+              }
+            },
+            "free": {
+              "conflicts": 120,
+              "csv_sha256": "885739a7d3b71218ddb5f93f1ce2461e9ce78a7412880a868fb998a868c8c811",
+              "observed_queries": 75,
+              "solver_wall_s": 0.02806284,
+              "statuses": {
+                "-1": 2,
+                "1": 73
+              }
+            },
+            "image": {
+              "conflicts": 624,
+              "csv_sha256": "b52441dc33ef1abd033b4996ce5f961ecd5fde85b63aae8377ab4eed8f31376d",
+              "observed_queries": 145566,
+              "solver_wall_s": 28.024843947,
+              "statuses": {
+                "-1": 72861,
+                "1": 72705
+              }
+            }
+          },
+          "status": "complete"
+        },
+        "pair": {
+          "direct_child_pipeline_wall_s": 7.011273700743914,
+          "nested_solver_note": "observed CSV work is contained within direct-child wall; timeout work is lower bound; missing phases retain null",
+          "observed_work": {
+            "care": {
+              "conflicts": 542,
+              "csv_sha256": "726a2bc986a06f5e1c2802b130e723246ffb8f4b7fe855f69b97b330093e5e06",
+              "observed_queries": 23190,
+              "solver_wall_s": 4.348907367,
+              "statuses": {
+                "-1": 11878,
+                "1": 11312
+              }
+            },
+            "free": {
+              "conflicts": 120,
+              "csv_sha256": "65b3a2a60e34fbe51ee14bac60f99c8b2fce14f9c4dcd47a6afca7cbf6567f77",
+              "observed_queries": 75,
+              "solver_wall_s": 0.028787678,
+              "statuses": {
+                "-1": 2,
+                "1": 73
+              }
+            },
+            "image": null
+          },
+          "status": "complete"
+        }
+      },
+      "family": "holdout",
+      "file": "060_wb_dma.aig",
+      "loaded_AND": 9555
+    }
+  ],
+  "groups": {
+    "full": {
+      "completed": 50,
+      "direct_child_pipeline_wall_sum_s": 1317.061650954187,
+      "nested_observed_solver_wall_s": 1170.835055859,
+      "observed_queries": 1849818,
+      "observed_solver_conflicts": 420343,
+      "planned": 55
+    },
+    "pair": {
+      "completed": 55,
+      "direct_child_pipeline_wall_sum_s": 230.7247467637062,
+      "nested_observed_solver_wall_s": 178.07969353000001,
+      "observed_queries": 251290,
+      "observed_solver_conflicts": 56838,
+      "planned": 55
+    }
+  },
+  "note": "Full fixed55 all110 attempts; includes5 full timeouts; pilot costs separate in pilot_summary. No ABC transform, achieved area or speedup is inferred.",
+  "schema": 1,
+  "source_summary_sha256": "71327521b4c95170ee9e912a604ac2ad920dadd320c9fe098c3bb9828f11c721"
+}

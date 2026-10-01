@@ -1,0 +1,311 @@
+{
+  "all_mapped_from_unconsumed_original_complete_care_certificates": true,
+  "care_only_first_selected": 204,
+  "limitations": "Pure structural certificate transport check, not a new solver proof. Original complete root equality is transported through an already proved acyclic root bundle; independent DSEC and actual selected-set replay separately validate the products.",
+  "mixed_closure_selected": 14,
+  "mixed_first_exact_same_care_recipes": 204,
+  "root_and_expression_structural_pairs": [
+    {
+      "current_out": -4,
+      "current_recipe": [
+        2424,
+        13765,
+        -3,
+        1893
+      ],
+      "current_root": 6891,
+      "source_out": -4,
+      "source_recipe": [
+        2424,
+        14385,
+        1893,
+        -3
+      ],
+      "source_root": 7201
+    },
+    {
+      "current_out": -10,
+      "current_recipe": [
+        11726,
+        16089,
+        15872,
+        16089,
+        -3,
+        2557,
+        -5,
+        12375,
+        -8,
+        -6
+      ],
+      "current_root": 8046,
+      "source_out": -10,
+      "source_recipe": [
+        11952,
+        17461,
+        17192,
+        17461,
+        2575,
+        -3,
+        12677,
+        -5,
+        -6,
+        -8
+      ],
+      "source_root": 8732
+    },
+    {
+      "current_out": -10,
+      "current_recipe": [
+        11732,
+        15977,
+        15872,
+        15977,
+        -3,
+        2557,
+        -5,
+        12375,
+        -8,
+        -6
+      ],
+      "current_root": 7990,
+      "source_out": -10,
+      "source_recipe": [
+        11958,
+        17319,
+        17192,
+        17319,
+        2575,
+        -3,
+        12677,
+        -5,
+        -6,
+        -8
+      ],
+      "source_root": 8661
+    },
+    {
+      "current_out": -6,
+      "current_recipe": [
+        1897,
+        12401,
+        13110,
+        13112,
+        -4,
+        -2
+      ],
+      "current_root": 6563,
+      "source_out": -6,
+      "source_recipe": [
+        1897,
+        12727,
+        13578,
+        13580,
+        -2,
+        -4
+      ],
+      "source_root": 6797
+    },
+    {
+      "current_out": -4,
+      "current_recipe": [
+        1687,
+        1812,
+        -2,
+        15842
+      ],
+      "current_root": 7926,
+      "source_out": -4,
+      "source_recipe": [
+        1687,
+        1812,
+        17148,
+        -2
+      ],
+      "source_root": 8579
+    },
+    {
+      "current_out": -2,
+      "current_recipe": [
+        1929,
+        19472
+      ],
+      "current_root": 9741,
+      "source_out": -2,
+      "source_recipe": [
+        1929,
+        20968
+      ],
+      "source_root": 10489
+    },
+    {
+      "current_out": -14,
+      "current_recipe": [
+        15902,
+        15924,
+        -2,
+        16015,
+        15902,
+        15925,
+        -6,
+        16014,
+        -5,
+        15928,
+        -9,
+        16035,
+        -12,
+        -10
+      ],
+      "current_root": 8018,
+      "source_out": -14,
+      "source_recipe": [
+        17222,
+        17244,
+        17363,
+        -2,
+        17222,
+        17245,
+        17362,
+        -6,
+        17248,
+        -5,
+        17383,
+        -9,
+        -10,
+        -12
+      ],
+      "source_root": 8692
+    },
+    {
+      "current_out": -8,
+      "current_recipe": [
+        1992,
+        2497,
+        2536,
+        3326,
+        -4,
+        -2,
+        -7,
+        14305
+      ],
+      "current_root": 7154,
+      "source_out": -8,
+      "source_recipe": [
+        1992,
+        2497,
+        2540,
+        3396,
+        -2,
+        -4,
+        15115,
+        -7
+      ],
+      "source_root": 7559
+    },
+    {
+      "current_out": -6,
+      "current_recipe": [
+        2665,
+        12308,
+        12320,
+        12598,
+        -4,
+        -2
+      ],
+      "current_root": 6304,
+      "source_out": -6,
+      "source_recipe": [
+        2697,
+        12598,
+        12610,
+        12980,
+        -2,
+        -4
+      ],
+      "source_root": 6495
+    },
+    {
+      "current_out": -4,
+      "current_recipe": [
+        483,
+        11724,
+        -3,
+        1812
+      ],
+      "current_root": 6028,
+      "source_out": -4,
+      "source_recipe": [
+        483,
+        11950,
+        1812,
+        -3
+      ],
+      "source_root": 6152
+    },
+    {
+      "current_out": -2,
+      "current_recipe": [
+        1814,
+        1817
+      ],
+      "current_root": 1694,
+      "source_out": -2,
+      "source_recipe": [
+        1814,
+        1817
+      ],
+      "source_root": 1737
+    },
+    {
+      "current_out": -2,
+      "current_recipe": [
+        1687,
+        1812
+      ],
+      "current_root": 1433,
+      "source_out": -2,
+      "source_recipe": [
+        1687,
+        1812
+      ],
+      "source_root": 1461
+    },
+    {
+      "current_out": -2,
+      "current_recipe": [
+        1930,
+        2539
+      ],
+      "current_root": 6149,
+      "source_out": -2,
+      "source_recipe": [
+        1930,
+        2553
+      ],
+      "source_root": 6291
+    },
+    {
+      "current_out": -3,
+      "current_recipe": [
+        1849,
+        1851
+      ],
+      "current_root": 6230,
+      "source_out": -3,
+      "source_recipe": [
+        1849,
+        1851
+      ],
+      "source_root": 6397
+    }
+  ],
+  "source_hashes": {
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_certificate/inputs/045_mem_ctrl.json": "41425ebde0c6c3b49ee4506699913c92b3397feb930943fc6bf1051758f68d2d",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/mem_ctrl_independent_review/review.py": "5150d15ab5d744a5c3a33549a6995e538458068e062846943b204500b12eef70",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/mem_ctrl_independent_review/transport.py": "f23198ab36419bd0e13f64bae6146b5224f1901c86707abe334f4ac849480fc4",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/new58_unified/runs/20261001T150823Z_shuguang_fixed55/mixed/045_mem_ctrl/audit/commit-0001-before.aig": "ceb35684b2d6e72b528dc82f26e17e603cb53bee5640fb70879ef278595f196c",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/new58_unified/runs/20261001T150823Z_shuguang_fixed55/mixed/045_mem_ctrl/audit/commit-0001-candidates.csv": "28d225037f2b404e9c731ea6b9e0c641b56ff4b46c662d5c5440b924b07234ae",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/new58_unified/runs/20261001T150823Z_shuguang_fixed55/mixed/045_mem_ctrl/audit/commit-0002-before.aig": "18b7a8ea7f4d5cba68c06859c941e210308989c4144e2fc4823fb8b7635f07c3",
+    "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/new58_unified/runs/20261001T150823Z_shuguang_fixed55/mixed/045_mem_ctrl/audit/commit-0002-candidates.csv": "7916c7ca57038bad8aaf55c5c625eda54d19b5b1713ccf8cfc05ede366c26f81"
+  },
+  "status": "PASS"
+}

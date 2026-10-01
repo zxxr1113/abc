@@ -1,0 +1,5463 @@
+{
+  "cases": [
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/001_b01/diagnostic/result.json",
+          "result_sha256": "66bb982fa4f0533747ee4c16dfe33b65b94cb9a3fc8c5e3f2fe0ecd9250107d6",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.12153812125325203
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/001_b01/diagnostic/result.json",
+          "result_sha256": "d671f705286d2681b5346159285846d8f9887599e30bda7fefda71f2402394c3",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.12028327211737633
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/001_b01/diagnostic/result.json",
+          "result_sha256": "db91b27d5449fa205ef22732698f0171263e39c4ded688e826d7995418c7c7af",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11979454755783081
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/001_b01/diagnostic/result.json",
+          "result_sha256": "06d42c0276db3ff89df41db86b82b5fc8bd77d9a746265221e051b6561e5488c",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11995301768183708
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "001_b01.aig",
+      "input_and": 33,
+      "loaded_and": 40,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/002_b01_opt/diagnostic/result.json",
+          "result_sha256": "e7c358c1fdb2d7c7d4c2cffebac3c7fc06bd3758bdbd21758af5016105119da6",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.12167342007160187
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/002_b01_opt/diagnostic/result.json",
+          "result_sha256": "b7ff913dd5651e34d88b39fc99e60f6fb0d67ab01880f23e37b3082945b5895c",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.12074549496173859
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/002_b01_opt/diagnostic/result.json",
+          "result_sha256": "906b634e3f744b44664e067674473197a42e8d9a3bd9dd191534af287d9f440e",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11827141419053078
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/002_b01_opt/diagnostic/result.json",
+          "result_sha256": "9078594f62f5e230693673cbd5ea3443787168545b603f7d5f2e7c1c9cf47e54",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11918842047452927
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "002_b01_opt.aig",
+      "input_and": 36,
+      "loaded_and": 39,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/003_b02/diagnostic/result.json",
+          "result_sha256": "ba30649c98ed5609f3675f7c6beac4537cafaa90ed93f1befa77fc08fe2ee9ca",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.32134077697992325
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/003_b02/diagnostic/result.json",
+          "result_sha256": "9e402ff9a20cba127fd6f5b634acc4990bb4918416090bf4d06d4fa9f7525d35",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.12200000137090683
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/003_b02/diagnostic/result.json",
+          "result_sha256": "990420659bf53939dd145bc81ed77b32aec928fd246c7a63d27bd076c0fc51b6",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11921990662813187
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/003_b02/diagnostic/result.json",
+          "result_sha256": "e8ccbd557a3447c95bc74eefbc9ab8947c4223a05bd792f780f49675ef457bff",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11909008771181107
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "003_b02.aig",
+      "input_and": 18,
+      "loaded_and": 21,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/004_b02_opt/diagnostic/result.json",
+          "result_sha256": "bc152d26ed9538bdb181839f81540b561f473d5caff6a4b2eebc9a8d3f72ac02",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.31855011358857155
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/004_b02_opt/diagnostic/result.json",
+          "result_sha256": "c0b6a6c6616a35b38997dac0c1f143faa405c83e7737634785d0353240dd20e5",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11921680718660355
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/004_b02_opt/diagnostic/result.json",
+          "result_sha256": "d936102c5f8d4c74d387fe1dd397c2dfceee8469a21d56d42e5abc90ebbaa204",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11949829757213593
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/004_b02_opt/diagnostic/result.json",
+          "result_sha256": "f10acb9e6e3607ead67ef61d69d8adfc347413776c37702999e6aa1a256529af",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11855234578251839
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "004_b02_opt.aig",
+      "input_and": 18,
+      "loaded_and": 21,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 4,
+          "positive_recipes": 4,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/005_b03/diagnostic/result.json",
+          "result_sha256": "50a5bca9314a7937ab3d65c934d543da69a631a722e4422d0d6ed211da46d453",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.319476131349802
+        },
+        "full_sop": {
+          "free_sat": 4,
+          "positive_recipes": 4,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/005_b03/diagnostic/result.json",
+          "result_sha256": "3642b831bc31d811974a10045f0689eb42831fd26d4700e76184c93065ae775e",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.16914206743240356
+        },
+        "pair_aig3": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/005_b03/diagnostic/result.json",
+          "result_sha256": "99fa0b7c4fc8c9fd5e7d63d57b8d0e3466e4c2affa17f94109d420c7281af778",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.319688867777586
+        },
+        "pair_sop": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/005_b03/diagnostic/result.json",
+          "result_sha256": "10f0fd58c40b0e8c26520f23fbd73edd25eaf2348a5ac3dd586d56a6738e90e3",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.11933504417538643
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              47,
+              73,
+              -3,
+              90
+            ],
+            "root": 46,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 1
+        },
+        "lanes": 4096,
+        "new_exact_sat": 1,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "005_b03.aig",
+      "input_and": 84,
+      "loaded_and": 128,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 4,
+          "positive_recipes": 4,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/006_b03_opt/diagnostic/result.json",
+          "result_sha256": "8f6795c23672d6886d99a6ce78967330a93fbb12552b3bffeed3933f65480854",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.3183760978281498
+        },
+        "full_sop": {
+          "free_sat": 4,
+          "positive_recipes": 4,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/006_b03_opt/diagnostic/result.json",
+          "result_sha256": "e1d32767e7868502ad267107008d8de9c2a5f394b06f78fc8cc064a4aec2eb38",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.16832926124334335
+        },
+        "pair_aig3": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/006_b03_opt/diagnostic/result.json",
+          "result_sha256": "bd7dbed3211daa933c5aeabd3536badc3b962a693d7e1347e18a00fa04df5973",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.3182031065225601
+        },
+        "pair_sop": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/006_b03_opt/diagnostic/result.json",
+          "result_sha256": "6bd534cd86412b619931284f560690ce906949859e3425fd3e8578e56f67841c",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.16909969225525856
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              45,
+              71,
+              -3,
+              88
+            ],
+            "root": 45,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 1
+        },
+        "lanes": 4096,
+        "new_exact_sat": 1,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "006_b03_opt.aig",
+      "input_and": 75,
+      "loaded_and": 128,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 18,
+          "positive_recipes": 18,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/007_b04/diagnostic/result.json",
+          "result_sha256": "f8aca4a5ace4f04e04b3e24b89aa8fe329fcf254192ea53ed500ef03f57c8bef",
+          "selected_roots": 17,
+          "status": "complete",
+          "wall_s": 0.41742855310440063
+        },
+        "full_sop": {
+          "free_sat": 18,
+          "positive_recipes": 18,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/007_b04/diagnostic/result.json",
+          "result_sha256": "ec10cfb5387ebc408bc44fb6dc15951649f00d389376d2a697786e188b0cc614",
+          "selected_roots": 17,
+          "status": "complete",
+          "wall_s": 0.26743486896157265
+        },
+        "pair_aig3": {
+          "free_sat": 17,
+          "positive_recipes": 17,
+          "potential": 16,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/007_b04/diagnostic/result.json",
+          "result_sha256": "5bc9c7a8184d19707497aa9fbad79c1b3edd19caecf33b1e99d51f808ec32354",
+          "selected_roots": 16,
+          "status": "complete",
+          "wall_s": 0.4184211306273937
+        },
+        "pair_sop": {
+          "free_sat": 17,
+          "positive_recipes": 17,
+          "potential": 16,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/007_b04/diagnostic/result.json",
+          "result_sha256": "1eaaee911e59ad779f580459b003a168779fa1bcfcd547f519654382dd2b42e4",
+          "selected_roots": 16,
+          "status": "complete",
+          "wall_s": 0.21803487092256546
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -5,
+            "recipe": [
+              25,
+              216,
+              -3,
+              8
+            ],
+            "root": 111,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -5,
+            "recipe": [
+              25,
+              155,
+              -3,
+              8
+            ],
+            "root": 111,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 2
+        },
+        "lanes": 4096,
+        "new_exact_sat": 2,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 1,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "007_b04.aig",
+      "input_and": 456,
+      "loaded_and": 546,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 18,
+          "positive_recipes": 18,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/008_b04_opt/diagnostic/result.json",
+          "result_sha256": "1e3c0f61703e6b248e6cbdb146bf6db9d411e0c769270fd928d4c85aa77d5313",
+          "selected_roots": 17,
+          "status": "complete",
+          "wall_s": 0.4176633022725582
+        },
+        "full_sop": {
+          "free_sat": 18,
+          "positive_recipes": 18,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/008_b04_opt/diagnostic/result.json",
+          "result_sha256": "0877370588d6c6aadd4d45c3d74379f600d97bda25e0bd6721d80baeadf45ab6",
+          "selected_roots": 17,
+          "status": "complete",
+          "wall_s": 0.21759772300720215
+        },
+        "pair_aig3": {
+          "free_sat": 17,
+          "positive_recipes": 17,
+          "potential": 16,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/008_b04_opt/diagnostic/result.json",
+          "result_sha256": "2c79d89a3e442ce4566c411380919e690d66264404b216bc431ee270a997058a",
+          "selected_roots": 16,
+          "status": "complete",
+          "wall_s": 0.36832280457019806
+        },
+        "pair_sop": {
+          "free_sat": 17,
+          "positive_recipes": 17,
+          "potential": 16,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/008_b04_opt/diagnostic/result.json",
+          "result_sha256": "ebd42998178fc4475c40fc85da8cb6fc6a27f6c5936b60b6a7674fd382b6466e",
+          "selected_roots": 16,
+          "status": "complete",
+          "wall_s": 0.21848850697278976
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -5,
+            "recipe": [
+              25,
+              216,
+              -3,
+              8
+            ],
+            "root": 111,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -5,
+            "recipe": [
+              25,
+              155,
+              -3,
+              8
+            ],
+            "root": 111,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 2
+        },
+        "lanes": 4096,
+        "new_exact_sat": 2,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 1,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "008_b04_opt.aig",
+      "input_and": 431,
+      "loaded_and": 524,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 4,
+          "positive_recipes": 4,
+          "potential": 4,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/009_b05/diagnostic/result.json",
+          "result_sha256": "16d49368680d71de7a025ca5733f8f578c2ed5b437bbfcefe625b7b13c5647b5",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.41772129014134407
+        },
+        "full_sop": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/009_b05/diagnostic/result.json",
+          "result_sha256": "78dd8028105923afd55aac77edd417742f6739bb752d5b1c017238224f68e02f",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.26780592277646065
+        },
+        "pair_aig3": {
+          "free_sat": 2,
+          "positive_recipes": 2,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/009_b05/diagnostic/result.json",
+          "result_sha256": "2f84e3c019994e3ce44b1f61cf03faf51a59fcb5154a6693f2a5ea17c0ccb3ab",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.36739805713295937
+        },
+        "pair_sop": {
+          "free_sat": 2,
+          "positive_recipes": 2,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/009_b05/diagnostic/result.json",
+          "result_sha256": "dc681c4969aa5b693cc934a152d6f2e8a5373e21f5b94e8f5a4de3ed60777966",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.1671789512038231
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "comparisons": [],
+            "out": -5,
+            "recipe": [
+              67,
+              68,
+              -3,
+              63
+            ],
+            "root": 545,
+            "root_witness_bit": 0,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              2,
+              66,
+              -2,
+              69,
+              -5,
+              63
+            ],
+            "root": 546,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              2,
+              740,
+              -3,
+              63
+            ],
+            "root": 546,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "original-CI-witness-different-from-every-old": 1,
+          "same-explicit-support-function": 2
+        },
+        "lanes": 4096,
+        "new_exact_sat": 3,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 1,
+        "full_image_sop": 0,
+        "interaction": 1,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "009_b05.aig",
+      "input_and": 523,
+      "loaded_and": 830,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 4,
+          "positive_recipes": 4,
+          "potential": 4,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/010_b05_opt/diagnostic/result.json",
+          "result_sha256": "9cf1b6a08e37abc095d905b6f8a418fbcb10721a8a1d3c8dfd4e6128d845b9ce",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.4279976189136505
+        },
+        "full_sop": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/010_b05_opt/diagnostic/result.json",
+          "result_sha256": "5474b34910bbf33582a591183826723be6eac69f31148984473e31779f4585a0",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.2671396806836128
+        },
+        "pair_aig3": {
+          "free_sat": 2,
+          "positive_recipes": 2,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/010_b05_opt/diagnostic/result.json",
+          "result_sha256": "f9b4a7a9a6c5ca45f5b03ea421228bad75aa0bbb61e70afbb992ae18bddeb82d",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.36698493361473083
+        },
+        "pair_sop": {
+          "free_sat": 2,
+          "positive_recipes": 2,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/010_b05_opt/diagnostic/result.json",
+          "result_sha256": "94aac24761d8a2dd25651b10e1ffd9be75ddc22014df34d38b0d5235441f86db",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.16733038797974586
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "comparisons": [],
+            "out": -5,
+            "recipe": [
+              67,
+              68,
+              -3,
+              63
+            ],
+            "root": 495,
+            "root_witness_bit": 0,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              2,
+              66,
+              -2,
+              69,
+              -5,
+              63
+            ],
+            "root": 496,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              2,
+              618,
+              -3,
+              63
+            ],
+            "root": 496,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "original-CI-witness-different-from-every-old": 1,
+          "same-explicit-support-function": 2
+        },
+        "lanes": 4096,
+        "new_exact_sat": 3,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 1,
+        "full_image_sop": 0,
+        "interaction": 1,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "010_b05_opt.aig",
+      "input_and": 474,
+      "loaded_and": 507,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/011_b06/diagnostic/result.json",
+          "result_sha256": "e463975d30542a9c4c90f463390eeeb1ea4b454accba9475ff4dc949c499fbc6",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11721669510006905
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/011_b06/diagnostic/result.json",
+          "result_sha256": "76024743c3ab39489a5c17445a825ad4c16d15ab9eef5ef651b9804f3498fa90",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.1266196183860302
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/011_b06/diagnostic/result.json",
+          "result_sha256": "20f5caf96f66f33e87fe17e53333648798dfc5c7c435a54e7dfe808d3972d105",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11711784452199936
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/011_b06/diagnostic/result.json",
+          "result_sha256": "eef73f1a4ae57191f9f62d7e1e2154adedda75e6f2e92f5eedfb748d0d5784fe",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11763713881373405
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "011_b06.aig",
+      "input_and": 37,
+      "loaded_and": 42,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/012_b06_opt/diagnostic/result.json",
+          "result_sha256": "9139a88211c05096d7019a562032b2954e252cd5e266ce82f1356ba3824adef7",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11724160984158516
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/012_b06_opt/diagnostic/result.json",
+          "result_sha256": "ae13fe9bd0fc635ce31e4bb021e0f5b5bec5458b0c29136f6543715152f1406f",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11726310849189758
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/012_b06_opt/diagnostic/result.json",
+          "result_sha256": "42e9e01e3ef57203b19417ed98647f8d9f578f02d012f6f66fc3c01ce7abdd00",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11781111732125282
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/012_b06_opt/diagnostic/result.json",
+          "result_sha256": "44d8f960648bbdeb93a9acc28dbe45d01301edf42827c560591e2c6e35e856fa",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11619654297828674
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "012_b06_opt.aig",
+      "input_and": 37,
+      "loaded_and": 42,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/013_b07/diagnostic/result.json",
+          "result_sha256": "763959c2a364cffdb07f51c32e22bc02c37e59365b2c8538bf330dc0f62b34e4",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.517907164990902
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/013_b07/diagnostic/result.json",
+          "result_sha256": "08182c3532b533e6fdbdb102899ba930bd9333b4ec7bf6dc7456215dbd38a19f",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.31696542724967003
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/013_b07/diagnostic/result.json",
+          "result_sha256": "d3fc7dec100eb8a4e21e00523641aae8984ea7968848863aeeeb29d972f86329",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.31705453991889954
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/013_b07/diagnostic/result.json",
+          "result_sha256": "72c5cfa6af860b4773ed4f06f467d9c2b6cddaf35f5372a58d4ca613ebeda086",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.16657961905002594
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "013_b07.aig",
+      "input_and": 323,
+      "loaded_and": 365,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/014_b07_opt/diagnostic/result.json",
+          "result_sha256": "3bd51473259d2e7f18c9b850c44c357bf8b3f2fd5f4063f24378d24f509b7f77",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.5177721716463566
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/014_b07_opt/diagnostic/result.json",
+          "result_sha256": "c23b4c2c7b16dff6adb1bb5bfd462aaf86e36e0acd26bdb9803dd8a5486fc077",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.3687759265303612
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/014_b07_opt/diagnostic/result.json",
+          "result_sha256": "8a889551c491198622ff5c463e88bc268755e34636794d59e320e4b8a47abe80",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.3675330877304077
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/014_b07_opt/diagnostic/result.json",
+          "result_sha256": "669ae3a048507464ec3cca1556a2740fea53a48940e24db049da0dfc7d46d8db",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.16702837124466896
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "014_b07_opt.aig",
+      "input_and": 327,
+      "loaded_and": 359,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 2,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/015_b08/diagnostic/result.json",
+          "result_sha256": "d6bb34fbc885053474ebbe5f6f23ebf17b60b3018995ccaaf6e9b5d8f6f1bb55",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.37647340819239616
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 2,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/015_b08/diagnostic/result.json",
+          "result_sha256": "12a784175708ff81e0869f88ad6b0bd6bd00a27603f05db7a6c44d0a13ad0a00",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.16730642691254616
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/015_b08/diagnostic/result.json",
+          "result_sha256": "f3c13a66953bc17c1e599868ee6c16a1ec956159a75b2d2ad5e675265326039c",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11722123250365257
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/015_b08/diagnostic/result.json",
+          "result_sha256": "58bb75f51f0f5626cac6d948164f8598679a2b9d348f4a2382fa1b14cf3ff941",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11714779585599899
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "015_b08.aig",
+      "input_and": 135,
+      "loaded_and": 155,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/016_b08_opt/diagnostic/result.json",
+          "result_sha256": "acb550a7a5abaee2bfee7dffadf6ec7133e100e461d5921f5832c7fabc4301ad",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.31758419051766396
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/016_b08_opt/diagnostic/result.json",
+          "result_sha256": "eed349aa5c970f738a73315ece2dba45149c3665d34de13b571d574e9ce28a64",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.1672128587961197
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/016_b08_opt/diagnostic/result.json",
+          "result_sha256": "6becc838333101eeb9d2338625f0d7c2c48e5b43baf626d29f5760bffc9c63b4",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11779922991991043
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/016_b08_opt/diagnostic/result.json",
+          "result_sha256": "fef60f488ca342c64686766879b0126586ffa946b00cbdb1259d077cb5652a39",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11709724739193916
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "016_b08_opt.aig",
+      "input_and": 134,
+      "loaded_and": 147,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/017_b09/diagnostic/result.json",
+          "result_sha256": "06d3eecee987690f8c3fe4a4d5c0d95346cdff489125c875ae6123fc3d015eaa",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.41748230531811714
+        },
+        "full_sop": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/017_b09/diagnostic/result.json",
+          "result_sha256": "039934c0f4ee9944fdaeb6da96a45de8b91d3120b1352764b2c1ef4396fa86ab",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.21717314794659615
+        },
+        "pair_aig3": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/017_b09/diagnostic/result.json",
+          "result_sha256": "556a995251caf0b012193c859301c683100e0c9dc792b6062b61b3fe7906077e",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.31789787858724594
+        },
+        "pair_sop": {
+          "free_sat": 3,
+          "positive_recipes": 3,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/017_b09/diagnostic/result.json",
+          "result_sha256": "79728450b1a6d73a4bfd1c22e532b6349ca1899b6101209f1e72396fc716abf8",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.11747411265969276
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              46,
+              144,
+              -3,
+              7
+            ],
+            "root": 79,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              7,
+              149,
+              46,
+              144,
+              -5,
+              -2
+            ],
+            "root": 80,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 2
+        },
+        "lanes": 4096,
+        "new_exact_sat": 2,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "017_b09.aig",
+      "input_and": 123,
+      "loaded_and": 136,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/018_b09_opt/diagnostic/result.json",
+          "result_sha256": "a300768138173bf06c4fbd5be4459c3972bb98dabc8ad34790c58a7f171e469b",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.41785071417689323
+        },
+        "full_sop": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/018_b09_opt/diagnostic/result.json",
+          "result_sha256": "ce11e6b5031a77ebe37fab3afdc96473df59f30d26f2a2bb657f42800e2ad7eb",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.21692363172769547
+        },
+        "pair_aig3": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/018_b09_opt/diagnostic/result.json",
+          "result_sha256": "67a7f42b844cc77002f878edea40c176a24fe149fb66a3acab76ab6ef158e3df",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.31706760451197624
+        },
+        "pair_sop": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/018_b09_opt/diagnostic/result.json",
+          "result_sha256": "ea9891b5421e3cab0e5d0a729c89c6e400493397d1d4e09e64ea53b34e36eafb",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.11659923940896988
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              6,
+              132,
+              -3,
+              5
+            ],
+            "root": 74,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              5,
+              139,
+              6,
+              132,
+              -5,
+              -2
+            ],
+            "root": 75,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              5,
+              147,
+              44,
+              134,
+              -5,
+              -2
+            ],
+            "root": 75,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 3
+        },
+        "lanes": 4096,
+        "new_exact_sat": 3,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "018_b09_opt.aig",
+      "input_and": 130,
+      "loaded_and": 135,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/019_b10/diagnostic/result.json",
+          "result_sha256": "b119592edb6c903e4fc2df3cba697e093edb96ae3a278d9b312bb998150e7a61",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.4178674593567848
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/019_b10/diagnostic/result.json",
+          "result_sha256": "088a5c9e7e6593e82dae90028191bb66ecb12833ade87c63fa3562b88a2e8b3b",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.2181348316371441
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/019_b10/diagnostic/result.json",
+          "result_sha256": "c40d1ae888e956d3a3603b52ee631391acef48caf99e69aef7eae1169bca2964",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.3175780884921551
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/019_b10/diagnostic/result.json",
+          "result_sha256": "c048b548850f857c6513fe18b1051b6b526a8d762a72b1d0c4fc2abadb2d9984",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11707325652241707
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "019_b10.aig",
+      "input_and": 164,
+      "loaded_and": 180,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 1,
+          "positive_recipes": 1,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/020_b10_opt/diagnostic/result.json",
+          "result_sha256": "538ffc7c199de67236f86f10f40f5684fb525c9446db72c28f87ca1a88d2d577",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.4179708957672119
+        },
+        "full_sop": {
+          "free_sat": 1,
+          "positive_recipes": 1,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/020_b10_opt/diagnostic/result.json",
+          "result_sha256": "66b5ad3e94147680735656b788e2d29ff1e9845166640c075aa9b6dea430eb97",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.26752785220742226
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/020_b10_opt/diagnostic/result.json",
+          "result_sha256": "120bc8e833858045604e5141630aa02baed9cb04603340c0580e4ea7a7ef5542",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.31735676899552345
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/020_b10_opt/diagnostic/result.json",
+          "result_sha256": "21a2c3b222bb005d86fa371096fec45fa4768773f3e5ad46af53a7999b59dfb7",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11680115014314651
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 1,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "020_b10_opt.aig",
+      "input_and": 157,
+      "loaded_and": 174,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 16,
+          "positive_recipes": 17,
+          "potential": 19,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/021_b11/diagnostic/result.json",
+          "result_sha256": "e2e16af1c88f8114064c5a4de70ed58777213762dc626b1f098792df63067578",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.5178005918860435
+        },
+        "full_sop": {
+          "free_sat": 18,
+          "positive_recipes": 19,
+          "potential": 19,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/021_b11/diagnostic/result.json",
+          "result_sha256": "9bb2aca1de5ead4cf0166cf0d08145aa0310b9c0c3632dfb47c34d608bb793cf",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.3179320879280567
+        },
+        "pair_aig3": {
+          "free_sat": 8,
+          "positive_recipes": 9,
+          "potential": 11,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/021_b11/diagnostic/result.json",
+          "result_sha256": "58eeb7a74e5c2894d97bbf03f9c5a1e8243fed816188da8559555328d506c965",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.41775647550821304
+        },
+        "pair_sop": {
+          "free_sat": 8,
+          "positive_recipes": 9,
+          "potential": 11,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/021_b11/diagnostic/result.json",
+          "result_sha256": "69627e445b96b4f9a9600eb03f1f0f12d70ab3d0e1e17e381cd754bee67218b3",
+          "selected_roots": 2,
+          "status": "complete",
+          "wall_s": 0.2672438807785511
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              25,
+              387,
+              -2,
+              404
+            ],
+            "root": 203,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              25,
+              384,
+              -2,
+              404
+            ],
+            "root": 203,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              25,
+              75,
+              -2,
+              387,
+              -4,
+              402
+            ],
+            "root": 203,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              25,
+              395,
+              -2,
+              404
+            ],
+            "root": 203,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              25,
+              75,
+              -2,
+              395,
+              -4,
+              402
+            ],
+            "root": 203,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              42,
+              552,
+              45,
+              587,
+              -5,
+              -2
+            ],
+            "root": 301,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              45,
+              587,
+              -3,
+              552,
+              -4,
+              592
+            ],
+            "root": 301,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              45,
+              587,
+              -3,
+              552,
+              -4,
+              595
+            ],
+            "root": 301,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 8
+        },
+        "lanes": 4096,
+        "new_exact_sat": 8,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 8,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "021_b11.aig",
+      "input_and": 487,
+      "loaded_and": 611,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 19,
+          "positive_recipes": 19,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/022_b11_opt/diagnostic/result.json",
+          "result_sha256": "2e335869db1e4251b2f3b0db0b868b8baff4ffabb413eb001ba74bd2289c84cf",
+          "selected_roots": 11,
+          "status": "complete",
+          "wall_s": 0.5674202851951122
+        },
+        "full_sop": {
+          "free_sat": 20,
+          "positive_recipes": 20,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/022_b11_opt/diagnostic/result.json",
+          "result_sha256": "9918991750eb841b288705e9deb954ad2d7020493f4181ea18edaae4974d2cef",
+          "selected_roots": 11,
+          "status": "complete",
+          "wall_s": 0.3800199404358864
+        },
+        "pair_aig3": {
+          "free_sat": 11,
+          "positive_recipes": 11,
+          "potential": 9,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/022_b11_opt/diagnostic/result.json",
+          "result_sha256": "63e15da25494acc7f85db788ed20d11f9d873d81580443997bcb8b2aec909643",
+          "selected_roots": 9,
+          "status": "complete",
+          "wall_s": 0.41711652651429176
+        },
+        "pair_sop": {
+          "free_sat": 11,
+          "positive_recipes": 11,
+          "potential": 9,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/022_b11_opt/diagnostic/result.json",
+          "result_sha256": "684502ea1a4660bfc19fdb5e684faeb958139c454cf55e69adb472011308f76e",
+          "selected_roots": 9,
+          "status": "complete",
+          "wall_s": 0.2671426795423031
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              325,
+              482,
+              -3,
+              521
+            ],
+            "root": 261,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              24,
+              162,
+              53,
+              364,
+              -5,
+              -3
+            ],
+            "root": 453,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              338,
+              364,
+              -3,
+              905
+            ],
+            "root": 453,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              338,
+              364,
+              -3,
+              899,
+              -4,
+              905
+            ],
+            "root": 454,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              44,
+              958,
+              56,
+              179,
+              -5,
+              -3
+            ],
+            "root": 483,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              44,
+              958,
+              -3,
+              965
+            ],
+            "root": 483,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              54,
+              68,
+              66,
+              69,
+              -5,
+              -3
+            ],
+            "root": 513,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              54,
+              178,
+              66,
+              179,
+              -5,
+              -3
+            ],
+            "root": 513,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 8
+        },
+        "lanes": 4096,
+        "new_exact_sat": 8,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 8,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "022_b11_opt.aig",
+      "input_and": 495,
+      "loaded_and": 526,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 6,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/023_b12/diagnostic/result.json",
+          "result_sha256": "f6872014407a2c24a3025d4f9f649fca86d81ccb5dfb1ba718f3088f87870029",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.6179369539022446
+        },
+        "full_sop": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 6,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/023_b12/diagnostic/result.json",
+          "result_sha256": "fc5a02f8d4b68859d3d2194f8ebc0cb9d7402a1c5d7467c17ab86810f0fc9b5d",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.46787377819418907
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/023_b12/diagnostic/result.json",
+          "result_sha256": "eaeae479b03565c589d0c78b1026dec8a6d624be5f7718516758399ff8634caa",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.46726706251502037
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/023_b12/diagnostic/result.json",
+          "result_sha256": "ea09892bec6de9b56e9e9d5ab354c6158cfb9fd0945aa1b0e754aa46d27fc59b",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.26738784834742546
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -5,
+            "recipe": [
+              801,
+              850,
+              -2,
+              859
+            ],
+            "root": 1071,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -5,
+            "recipe": [
+              802,
+              804,
+              -2,
+              884
+            ],
+            "root": 1071,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              850,
+              884,
+              -3,
+              2137
+            ],
+            "root": 1072,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              850,
+              884,
+              -3,
+              2116,
+              -4,
+              2137
+            ],
+            "root": 1073,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 4
+        },
+        "lanes": 4096,
+        "new_exact_sat": 4,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 6,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "023_b12.aig",
+      "input_and": 976,
+      "loaded_and": 1002,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 1,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/024_b12_opt/diagnostic/result.json",
+          "result_sha256": "488619d4a7bf1236e773a04e946c6f5ee9cc1fb26f1a84ec1998c3c98016c3b7",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.6677583269774914
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 1,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/024_b12_opt/diagnostic/result.json",
+          "result_sha256": "899417b6af5cda68dc444a7c322b7e874ba5826677a6d75d3fcdb77a90f7f0c8",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.4676872752606869
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/024_b12_opt/diagnostic/result.json",
+          "result_sha256": "822994599e051a84395665d598226e45a82947484a708e4079eb10eeeb7319bd",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.4666268303990364
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/024_b12_opt/diagnostic/result.json",
+          "result_sha256": "5400ee258bc195e386ea9f4b6cf29237725d3845284c821058f1de1265b4b6de",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.318094190210104
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "024_b12_opt.aig",
+      "input_and": 958,
+      "loaded_and": 988,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/025_b13/diagnostic/result.json",
+          "result_sha256": "10d5056f8a73fbd39662b7de8195390c30771f3ac1afa671ecd7b146cba5cdcd",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.36776214092969894
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/025_b13/diagnostic/result.json",
+          "result_sha256": "0cabc488fb05e5a384585058c19b6117837e56bbd6cce108bd05af3ba90b5c45",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.16721047833561897
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/025_b13/diagnostic/result.json",
+          "result_sha256": "af62923177f4ff7cb3c95b9e63bf234cf060f07b607603563eeec8b1f36cc174",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.3177553229033947
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/025_b13/diagnostic/result.json",
+          "result_sha256": "79dab790a60f602e6e6fedd66bc51500cb04d6b89efd64c03bf3b62143101db5",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11713826656341553
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "025_b13.aig",
+      "input_and": 203,
+      "loaded_and": 261,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/026_b13_opt/diagnostic/result.json",
+          "result_sha256": "cf4ebbaa3db85df3e9f35c55fe04e9e983a698c3ae5da2f7268e86d9e55aae88",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.36758581176400185
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/026_b13_opt/diagnostic/result.json",
+          "result_sha256": "3ee8cd789485f997d0d66a4cff357fa4f3041b0e827f80c791873fbe7676c5aa",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.1673722304403782
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/026_b13_opt/diagnostic/result.json",
+          "result_sha256": "6ae4487061f98fcf3e00d9b541627478fd90458649a74d8a8711ba5da268c7d4",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.316973939538002
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/026_b13_opt/diagnostic/result.json",
+          "result_sha256": "1aff9760040b4a4a9f39ace330852167c709b28edb3593dbaef2781eeb9c2c0e",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11693302169442177
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "026_b13_opt.aig",
+      "input_and": 203,
+      "loaded_and": 244,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/041_des_area/diagnostic/result.json",
+          "result_sha256": "f9da3c23f73b884474e36f9fc081f2d393e2933c8ad775d17454e7cebf849ebe",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.9185137152671814
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/041_des_area/diagnostic/result.json",
+          "result_sha256": "b1bc98cbdb6f92b9e09b8ca99d10fbfd3faf609f79788ab51aacad520614eeae",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.918163113296032
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/041_des_area/diagnostic/result.json",
+          "result_sha256": "b9b38391fd2b483b56479e7aaefbee197cc99aa567e3f5d582f80d2d3f0ee4bd",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.7678509280085564
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/041_des_area/diagnostic/result.json",
+          "result_sha256": "df609748e2426cfe03a2c8036921f310d8f6e073d178115e78fca1f202f9bf70",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.7688334733247757
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "041_des_area.aig",
+      "input_and": 4752,
+      "loaded_and": 10133,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/043_ethernet/diagnostic/result.json",
+          "result_sha256": "95cc74157cc98154daf4890ae20073159ca57fcf9ac8d3daf1d0074b70c3a0e8",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.3673652857542038
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/043_ethernet/diagnostic/result.json",
+          "result_sha256": "f17df7d0328e58b5a184597eae68a9b81465c96920e74868af65f332d605c0ab",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.16694485023617744
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/043_ethernet/diagnostic/result.json",
+          "result_sha256": "d8c95e81a21c9385256c042a6314f5893701b70a1da30226c1bfea0661561cb4",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11761317402124405
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/043_ethernet/diagnostic/result.json",
+          "result_sha256": "dcc1ef02304604bd4c4a226343415badf01bc22e9857bf02bdc42eaba46865d1",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11743711307644844
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "043_ethernet.aig",
+      "input_and": 202,
+      "loaded_and": 195995,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 29,
+          "positive_recipes": 29,
+          "potential": 27,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/044_i2c/diagnostic/result.json",
+          "result_sha256": "7200526f3309573a929cc0c3266998ee60e76d38dc9076b0e8173765aed103da",
+          "selected_roots": 15,
+          "status": "complete",
+          "wall_s": 0.9179192297160625
+        },
+        "full_sop": {
+          "free_sat": 21,
+          "positive_recipes": 21,
+          "potential": 20,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/044_i2c/diagnostic/result.json",
+          "result_sha256": "7b60f2e9a3db14f5761b95f7171f1a933f37cf51978e95e3c37cabc5ab6d33cd",
+          "selected_roots": 10,
+          "status": "complete",
+          "wall_s": 0.7187860384583473
+        },
+        "pair_aig3": {
+          "free_sat": 27,
+          "positive_recipes": 27,
+          "potential": 23,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/044_i2c/diagnostic/result.json",
+          "result_sha256": "324b1eba10c3ca6055b98a32d9ce82e587a5ff5134ffa5875c189008165bf38a",
+          "selected_roots": 13,
+          "status": "complete",
+          "wall_s": 0.6172980256378651
+        },
+        "pair_sop": {
+          "free_sat": 19,
+          "positive_recipes": 19,
+          "potential": 16,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/044_i2c/diagnostic/result.json",
+          "result_sha256": "2b5e2a010eea34c9b99ee9d49bf2f4a1fa5080df53efa01482676660eda1426d",
+          "selected_roots": 8,
+          "status": "complete",
+          "wall_s": 0.8185841329395771
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              143,
+              300
+            ],
+            "root": 153,
+            "root_witness_bit": 1,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              143,
+              144
+            ],
+            "root": 153,
+            "root_witness_bit": 1,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              143,
+              150
+            ],
+            "root": 157,
+            "root_witness_bit": 2,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              149,
+              150
+            ],
+            "root": 157,
+            "root_witness_bit": 3,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              145,
+              146
+            ],
+            "root": 160,
+            "root_witness_bit": 6,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              143,
+              146
+            ],
+            "root": 161,
+            "root_witness_bit": 5,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              143,
+              318
+            ],
+            "root": 161,
+            "root_witness_bit": 6,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              82,
+              142,
+              -2,
+              386
+            ],
+            "root": 205,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              82,
+              142,
+              -2,
+              368,
+              -4,
+              384
+            ],
+            "root": 205,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              82,
+              142,
+              -2,
+              404
+            ],
+            "root": 205,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              82,
+              142,
+              -2,
+              386,
+              -5,
+              413
+            ],
+            "root": 207,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              48,
+              83,
+              142,
+              406,
+              -5,
+              -3
+            ],
+            "root": 207,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              82,
+              142,
+              -2,
+              404,
+              -5,
+              413
+            ],
+            "root": 207,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              142,
+              406,
+              -3,
+              413
+            ],
+            "root": 207,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              142,
+              406,
+              -3,
+              413,
+              -5,
+              344
+            ],
+            "root": 208,
+            "status": "unresolved-by-simulation"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              84,
+              304,
+              -2,
+              1348
+            ],
+            "root": 701,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              85,
+              154,
+              -3,
+              1437
+            ],
+            "root": 723,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              85,
+              154,
+              -3,
+              1434,
+              -4,
+              1437
+            ],
+            "root": 724,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              85,
+              156,
+              -3,
+              1369
+            ],
+            "root": 731,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              85,
+              156,
+              196,
+              1366,
+              -5,
+              -3
+            ],
+            "root": 731,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              85,
+              156,
+              -3,
+              1361,
+              -4,
+              1369
+            ],
+            "root": 732,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "original-CI-witness-different-from-every-old": 7,
+          "same-explicit-support-function": 13,
+          "unresolved-by-simulation": 1
+        },
+        "lanes": 4096,
+        "new_exact_sat": 21,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 7,
+        "full_image_sop": 4,
+        "interaction": 0,
+        "pair_completion": 7
+      },
+      "family": "discovery",
+      "file": "044_i2c.aig",
+      "input_and": 1118,
+      "loaded_and": 2879,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/048_sasc/diagnostic/result.json",
+          "result_sha256": "272084a0f3184771072fa5ec7d06b7a9491adf1b455e3be5f2784ed2b6434070",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.5678363256156445
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/048_sasc/diagnostic/result.json",
+          "result_sha256": "951299b98300936d7f366e1bd545206a32e8108bd5cc12d9c4fe95850afcb175",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.3172732889652252
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/048_sasc/diagnostic/result.json",
+          "result_sha256": "942cfc365402b4f3e3ed9dc737df02532e5809958753cd3b6ecd6db3efb0b58b",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.36858000606298447
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/048_sasc/diagnostic/result.json",
+          "result_sha256": "583d3db61e6fedc729473241096fef2515fad2152552de22d12ceecf220318a7",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.21706485003232956
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "048_sasc.aig",
+      "input_and": 760,
+      "loaded_and": 1757,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 3,
+          "positive_recipes": 5,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/049_simple_spi/diagnostic/result.json",
+          "result_sha256": "71ee83184d2e8823819e9ee22371765e2456646424541c98a277b93d4bb06850",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.968547947704792
+        },
+        "full_sop": {
+          "free_sat": 3,
+          "positive_recipes": 4,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/049_simple_spi/diagnostic/result.json",
+          "result_sha256": "0cad39c37bb63ad674d8e407b868212d6ffee3c1b91347351645422b8bff3abe",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.6679917015135288
+        },
+        "pair_aig3": {
+          "free_sat": 3,
+          "positive_recipes": 5,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/049_simple_spi/diagnostic/result.json",
+          "result_sha256": "5a7d15551b55e4eea597a04bafa7d342fbb4e81f8ddf06152fc16b106bbf8ffb",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.5678173340857029
+        },
+        "pair_sop": {
+          "free_sat": 3,
+          "positive_recipes": 4,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/049_simple_spi/diagnostic/result.json",
+          "result_sha256": "a3430c968d75090049f3c4253507f09fac24d57d0c201bacfe4153c73cf7199f",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.4178650230169296
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -7,
+            "recipe": [
+              195,
+              662,
+              196,
+              1278,
+              -5,
+              -3
+            ],
+            "root": 779,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 1
+        },
+        "lanes": 4096,
+        "new_exact_sat": 1,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "049_simple_spi.aig",
+      "input_and": 1022,
+      "loaded_and": 2297,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/051_ss_pcm/diagnostic/result.json",
+          "result_sha256": "c54fd4538e1aee70e8ddfd0bce52885638b32c941ff63d5f5362fe13941c4540",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.23830632492899895
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/051_ss_pcm/diagnostic/result.json",
+          "result_sha256": "2a32373dd6b39716a61c2d3ffe0d4727020161490cdcbb31cb28a6484764d771",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.3680284880101681
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/051_ss_pcm/diagnostic/result.json",
+          "result_sha256": "61baa1e0b8cc871fc860718f4cf2c5c7c5fb46b87ef2196f109bd1c6d61db93e",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.11723802611231804
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/051_ss_pcm/diagnostic/result.json",
+          "result_sha256": "96a7e5c84ecfcaced8e090d40604c3d2ea3f14505c8b94134bb829ce7c64cd95",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.46215498074889183
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "051_ss_pcm.aig",
+      "input_and": 405,
+      "loaded_and": 993,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 5,
+          "positive_recipes": 11,
+          "potential": 4,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/052_steppermotordrive/diagnostic/result.json",
+          "result_sha256": "9b44cffeadd18c629d3f5c8576e3a7f65161850901dd79d246f916ce13841b34",
+          "selected_roots": 4,
+          "status": "complete",
+          "wall_s": 0.417784471064806
+        },
+        "full_sop": {
+          "free_sat": 4,
+          "positive_recipes": 10,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/052_steppermotordrive/diagnostic/result.json",
+          "result_sha256": "3cb7b2ecfa36645a56316a46534f34326959dfcbeb2013c6f4b3ae5cedd99bcb",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.21787157654762268
+        },
+        "pair_aig3": {
+          "free_sat": 5,
+          "positive_recipes": 10,
+          "potential": 4,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/052_steppermotordrive/diagnostic/result.json",
+          "result_sha256": "4fc3caf171b977282e25d42d41efc766d2521b82d7ad4d216ceacfe9351689d8",
+          "selected_roots": 4,
+          "status": "complete",
+          "wall_s": 0.3175019882619381
+        },
+        "pair_sop": {
+          "free_sat": 4,
+          "positive_recipes": 9,
+          "potential": 3,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/052_steppermotordrive/diagnostic/result.json",
+          "result_sha256": "96c43aa20010fb71092a37e46c14958dfd3ce4e8e4d92398f537e58c43384400",
+          "selected_roots": 3,
+          "status": "complete",
+          "wall_s": 0.11715282872319221
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "comparisons": [],
+            "out": -7,
+            "recipe": [
+              31,
+              147,
+              -3,
+              153,
+              -5,
+              83
+            ],
+            "root": 80,
+            "root_witness_bit": 3,
+            "status": "original-CI-witness-different-from-every-old"
+          }
+        ],
+        "counts": {
+          "original-CI-witness-different-from-every-old": 1
+        },
+        "lanes": 4096,
+        "new_exact_sat": 1,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 1,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 1
+      },
+      "family": "discovery",
+      "file": "052_steppermotordrive.aig",
+      "input_and": 151,
+      "loaded_and": 414,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/054_systemcdes/diagnostic/result.json",
+          "result_sha256": "486770b1afdfc25477d22d5cb49060329a84cfb2e8988c6d10881ab2d649080c",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.8182758539915085
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/054_systemcdes/diagnostic/result.json",
+          "result_sha256": "1e24367983213d46983f8dddaa98c447d1eb755d095029a86727d9fa1d72da55",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.6179830469191074
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/054_systemcdes/diagnostic/result.json",
+          "result_sha256": "cbc715ae5896b33d6b637be3d9be13bb155fbaeadaee9e0ff80d73059b77658d",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.7677148878574371
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/054_systemcdes/diagnostic/result.json",
+          "result_sha256": "ab3a131f669f45483000443aca8f792da2ee0e2278acd1b96d798c698f77983f",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 0.6177002936601639
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "054_systemcdes.aig",
+      "input_and": 2920,
+      "loaded_and": 6105,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 5,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/057_usb_phy/diagnostic/result.json",
+          "result_sha256": "d61fcbcd83836977ccee00c36749754be987a366f7d62fea08e9bfda3cab8151",
+          "selected_roots": 5,
+          "status": "complete",
+          "wall_s": 0.4684540592133999
+        },
+        "full_sop": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 5,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/057_usb_phy/diagnostic/result.json",
+          "result_sha256": "8a747cd4e752a11d7db34fa415290cc85225a4bbeb6677fd7c31dbcc77d0e20b",
+          "selected_roots": 5,
+          "status": "complete",
+          "wall_s": 0.26755667850375175
+        },
+        "pair_aig3": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 5,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/057_usb_phy/diagnostic/result.json",
+          "result_sha256": "9c8a71a8e2496d43226a50e71e345c281e85670e5e9985a91def24727f4c78a0",
+          "selected_roots": 5,
+          "status": "complete",
+          "wall_s": 0.4677853360772133
+        },
+        "pair_sop": {
+          "free_sat": 5,
+          "positive_recipes": 5,
+          "potential": 5,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/057_usb_phy/diagnostic/result.json",
+          "result_sha256": "0410487610612c6a946f95f2eb566fdd391efffc5179745a5b78f2f01f5a6642",
+          "selected_roots": 5,
+          "status": "complete",
+          "wall_s": 0.16723359748721123
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              145,
+              614,
+              -2,
+              618
+            ],
+            "root": 317,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              617,
+              619,
+              -2,
+              937
+            ],
+            "root": 474,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              617,
+              619,
+              -2,
+              937,
+              -5,
+              4
+            ],
+            "root": 475,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "same-explicit-support-function": 3
+        },
+        "lanes": 4096,
+        "new_exact_sat": 3,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "discovery",
+      "file": "057_usb_phy.aig",
+      "input_and": 427,
+      "loaded_and": 1063,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 5,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/027_b14/diagnostic/result.json",
+          "result_sha256": "fa605898fc1407e41d6c900dd94114f653a5a3228699da4d29f4deae12e21562",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.468816064298153
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 5,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/027_b14/diagnostic/result.json",
+          "result_sha256": "c1e7908b34cf58162cd4cd4a43718ab4e6c6dd99c8b2ef3f5747e0cdbe843417",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.3191168121993542
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/027_b14/diagnostic/result.json",
+          "result_sha256": "47a8e5b5f043fd49e8e55b837203f704c16ba3969b0de4a9d897327dfe29f06a",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.168188776820898
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/027_b14/diagnostic/result.json",
+          "result_sha256": "ae552f32f005d74e63c682ea8b5cc3aef92920ed8737503b333b0051e3ba48be",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.1182264797389507
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "027_b14.aig",
+      "input_and": 5196,
+      "loaded_and": 6069,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/028_b14_opt/diagnostic/result.json",
+          "result_sha256": "adcf54d422be4e27e684a2ff86e40bfe3fdfe23a2fa5e369a0e66b9a38540c57",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.619256380945444
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/028_b14_opt/diagnostic/result.json",
+          "result_sha256": "c815e6847b1ceb1604a3bc8068f9712432b7c39ab7da4b987e94f9dc48e73a9e",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.3191072940826416
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/028_b14_opt/diagnostic/result.json",
+          "result_sha256": "d00bed6efb23893a8d37b1024322f49b91270659cedccf76b7066a66cfd47056",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.5187553875148296
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/028_b14_opt/diagnostic/result.json",
+          "result_sha256": "027ea858cf8bdf492200af7582a0659e93a6d6785a2659c851685e0745151efc",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 1.2188466638326645
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "028_b14_opt.aig",
+      "input_and": 5122,
+      "loaded_and": 5926,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 1,
+          "positive_recipes": 2,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/029_b15/diagnostic/result.json",
+          "result_sha256": "746fa54ba9711b54e031d160ee85945e701a29e87e64526682b4c6e4ef338b0d",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 3.622178267687559
+        },
+        "full_sop": {
+          "free_sat": 1,
+          "positive_recipes": 2,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/029_b15/diagnostic/result.json",
+          "result_sha256": "5a319c69895e6a4d70245b1e82f3aff63d74b0eb95a1e0f1ebb74c389745db33",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 3.1211701557040215
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/029_b15/diagnostic/result.json",
+          "result_sha256": "c5c44453496bf1e332d9fc5e2d43b098f52d1b577a0ab87662a7c73d9c243a30",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 4.923032633960247
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/029_b15/diagnostic/result.json",
+          "result_sha256": "da5d52c922ce07916c51eeb32f402c68dad957a800e1f0422de83a2b4ede63cb",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 4.723758585751057
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 1,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "029_b15.aig",
+      "input_and": 7734,
+      "loaded_and": 8432,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 17,
+          "positive_recipes": 20,
+          "potential": 12,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/030_b15_opt/diagnostic/result.json",
+          "result_sha256": "bd1ca0ccfecdfcba021e2a5df2a2e367ba76b536ff8abea7e6e70827d1556328",
+          "selected_roots": 12,
+          "status": "complete",
+          "wall_s": 3.422145541757345
+        },
+        "full_sop": {
+          "free_sat": 16,
+          "positive_recipes": 19,
+          "potential": 12,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/030_b15_opt/diagnostic/result.json",
+          "result_sha256": "41c3d1f754b5255739a22751b06b67021da2d89186bdfbccb6d6feda35b4e617",
+          "selected_roots": 12,
+          "status": "complete",
+          "wall_s": 3.1218954026699066
+        },
+        "pair_aig3": {
+          "free_sat": 7,
+          "positive_recipes": 10,
+          "potential": 6,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/030_b15_opt/diagnostic/result.json",
+          "result_sha256": "05906b797633bb4d6271d6da17903cfc91accbcea56c93cf4312891d516940de",
+          "selected_roots": 6,
+          "status": "complete",
+          "wall_s": 4.122121784836054
+        },
+        "pair_sop": {
+          "free_sat": 7,
+          "positive_recipes": 10,
+          "potential": 6,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/030_b15_opt/diagnostic/result.json",
+          "result_sha256": "ebd9e0c88cc92df7c603334f65297dda48deddf52dc32eb577241955dae109af",
+          "selected_roots": 6,
+          "status": "complete",
+          "wall_s": 3.9220930710434914
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -5,
+            "recipe": [
+              155,
+              2766,
+              -3,
+              159
+            ],
+            "root": 1386,
+            "status": "unresolved-by-simulation"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              159,
+              2767,
+              -3,
+              2735
+            ],
+            "root": 1386,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "comparisons": [
+              {
+                "bit": 2,
+                "old_out": -6,
+                "old_recipe": [
+                  157,
+                  2766,
+                  159,
+                  2717,
+                  -3,
+                  -4
+                ]
+              },
+              {
+                "bit": 2,
+                "old_out": -4,
+                "old_recipe": [
+                  159,
+                  2717,
+                  2769,
+                  -2
+                ]
+              }
+            ],
+            "out": -6,
+            "recipe": [
+              155,
+              2766,
+              -3,
+              159,
+              -4,
+              2717
+            ],
+            "root": 1387,
+            "root_witness_bit": 18,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [
+              {
+                "bit": 2,
+                "old_out": -6,
+                "old_recipe": [
+                  157,
+                  2766,
+                  159,
+                  2717,
+                  -3,
+                  -4
+                ]
+              },
+              {
+                "bit": 2,
+                "old_out": -4,
+                "old_recipe": [
+                  159,
+                  2717,
+                  2769,
+                  -2
+                ]
+              }
+            ],
+            "out": -6,
+            "recipe": [
+              159,
+              2767,
+              -3,
+              2735,
+              -5,
+              2717
+            ],
+            "root": 1387,
+            "root_witness_bit": 18,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              159,
+              2717,
+              -2,
+              2769
+            ],
+            "root": 1387,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              6564,
+              7426,
+              -3,
+              7406
+            ],
+            "root": 3716,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              6564,
+              7426,
+              -3,
+              7387,
+              -4,
+              7406
+            ],
+            "root": 3717,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              10268,
+              10660,
+              -3,
+              10707
+            ],
+            "root": 5354,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              10268,
+              10660,
+              -3,
+              10698,
+              -4,
+              10707
+            ],
+            "root": 5355,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              896,
+              16010,
+              2726,
+              16011,
+              -5,
+              -3
+            ],
+            "root": 8009,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "original-CI-witness-different-from-every-old": 2,
+          "same-explicit-support-function": 7,
+          "unresolved-by-simulation": 1
+        },
+        "lanes": 4096,
+        "new_exact_sat": 10,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 6,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "030_b15_opt.aig",
+      "input_and": 7569,
+      "loaded_and": 8417,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "full_sop": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "pair_aig3": {
+          "free_sat": 223,
+          "positive_recipes": 231,
+          "potential": 131,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/031_b17/diagnostic/result.json",
+          "result_sha256": "ec666034ebf669f08b20cd8d38f2fcab7c9767c57044acfd480e588fe62213b4",
+          "selected_roots": 116,
+          "status": "complete",
+          "wall_s": 43.072931949049234
+        },
+        "pair_sop": {
+          "free_sat": 221,
+          "positive_recipes": 228,
+          "potential": 131,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/031_b17/diagnostic/result.json",
+          "result_sha256": "d6c6b559f2989f2862bd591abd5216ecf11afe2a800cdf168720b5750eef07a9",
+          "selected_roots": 116,
+          "status": "complete",
+          "wall_s": 42.47218380868435
+        }
+      },
+      "completion_novelty": null,
+      "delta": null,
+      "family": "holdout",
+      "file": "031_b17.aig",
+      "input_and": 25293,
+      "loaded_and": 27549,
+      "zero_full_sop_opened": null
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "full_sop": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "pair_aig3": {
+          "free_sat": 215,
+          "positive_recipes": 216,
+          "potential": 132,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/032_b17_opt/diagnostic/result.json",
+          "result_sha256": "88975dc5922192db3199a2a648e6e53c3a755f5f9ed4c8391435502cfe185f89",
+          "selected_roots": 122,
+          "status": "complete",
+          "wall_s": 41.917639054358006
+        },
+        "pair_sop": {
+          "free_sat": 215,
+          "positive_recipes": 216,
+          "potential": 132,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/032_b17_opt/diagnostic/result.json",
+          "result_sha256": "9b3f3991cfcceef984b096386d6874ce8f5e508726d8512905e452dc0c2f25c2",
+          "selected_roots": 122,
+          "status": "complete",
+          "wall_s": 41.56993195042014
+        }
+      },
+      "completion_novelty": null,
+      "delta": null,
+      "family": "holdout",
+      "file": "032_b17_opt.aig",
+      "input_and": 24740,
+      "loaded_and": 27650,
+      "zero_full_sop_opened": null
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 8,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/033_b20/diagnostic/result.json",
+          "result_sha256": "6dcb4ebe98e5ea71d3bf89b165df58958fd70991abe406e52d169eaea8e01a3c",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.6708427630364895
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 8,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/033_b20/diagnostic/result.json",
+          "result_sha256": "fc4ab63d9d143362ed6a8f5bee8c0d494af86ce395da04b323521ecaabf0ae30",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.671792920678854
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/033_b20/diagnostic/result.json",
+          "result_sha256": "ab4c1c74397f566ad60882a1809cc9806981567559e87fa43e2624c47aedf88c",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.171109087765217
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/033_b20/diagnostic/result.json",
+          "result_sha256": "db431cd33e1ce46cb375b1f4cd9d82119d391daa8d088f5616a044df526b6a79",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.970534671097994
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "033_b20.aig",
+      "input_and": 10730,
+      "loaded_and": 12214,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/034_b20_opt/diagnostic/result.json",
+          "result_sha256": "09b17b72f45bcc95999a29450eb7864f54489abd8509bc1edbe7bf39539c6319",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 4.027348726987839
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/034_b20_opt/diagnostic/result.json",
+          "result_sha256": "8bdbbdf2375eadc3d0146805e2a7f71d2ea815ae2f7082e9588e523f4b7dd821",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.4716329015791416
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/034_b20_opt/diagnostic/result.json",
+          "result_sha256": "f7ab461c64a57de25aac6cd71177ab94df4b9207a36d37d4bedd8178039a3bde",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 6.425205949693918
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/034_b20_opt/diagnostic/result.json",
+          "result_sha256": "9d6d75a36d306ac0716117d8b2f3c806f9ed9244c4e9461e99ff6edf9067b962",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 6.22543191537261
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "034_b20_opt.aig",
+      "input_and": 11270,
+      "loaded_and": 13440,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 8,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/035_b21/diagnostic/result.json",
+          "result_sha256": "951fc17d655179f08d18dd6b55ac6f853e286f4865ebbcc2898e5a1bdfd092a7",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.8208718337118626
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 8,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/035_b21/diagnostic/result.json",
+          "result_sha256": "13b1c4ddbde29667a89843aa6a0d89f0ae8b179dd0554889f2854e41bea166f8",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.176523629575968
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/035_b21/diagnostic/result.json",
+          "result_sha256": "685bf465df42716ff628d1a6e8efc147ab26c621b6ea490017e2f26d93c4b322",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.9721870869398117
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/035_b21/diagnostic/result.json",
+          "result_sha256": "70bc0d493e837024b5840aabccba653cd3faec25415e994a10d3dc8a838ad9d2",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.7717356123030186
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "035_b21.aig",
+      "input_and": 10794,
+      "loaded_and": 12776,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/036_b21_opt/diagnostic/result.json",
+          "result_sha256": "80701f2ffc267d3a2eee134d7ed80cbf8987d47984d303df0efea22efc5a0f02",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.472147688269615
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/036_b21_opt/diagnostic/result.json",
+          "result_sha256": "8a94d8567c384f5a556e6b9522976543ca5e5fa310185f633b1ea3d2c7d5fb23",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.473234213888645
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/036_b21_opt/diagnostic/result.json",
+          "result_sha256": "d5367f51db20ea076542401c57da94b4c8a80079f23ef2e8f362ad6a01928ac3",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 6.375573433935642
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/036_b21_opt/diagnostic/result.json",
+          "result_sha256": "6642d0245aebc591ec38a24177dc27e7ac812fd79911db667cf1ff7dd48ed761",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 6.175987958908081
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "036_b21_opt.aig",
+      "input_and": 11186,
+      "loaded_and": 13484,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 1,
+          "positive_recipes": 5,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/037_b22/diagnostic/result.json",
+          "result_sha256": "77f08c9fc614e8554a7ed5df54d682f1856eb7590e72f873b32e401a69e64d35",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 4.523078355938196
+        },
+        "full_sop": {
+          "free_sat": 1,
+          "positive_recipes": 5,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/037_b22/diagnostic/result.json",
+          "result_sha256": "bc374c1cc2c540cd3466b53be84e6ef7ad4f318a1a89d62d441ea2d6fe91a877",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 3.922769472002983
+        },
+        "pair_aig3": {
+          "free_sat": 1,
+          "positive_recipes": 1,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/037_b22/diagnostic/result.json",
+          "result_sha256": "c847dcc5a87369ea0f4ea994f1aa61a8eb4fd848cca042cd01e031343c9cf988",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 7.726417895406485
+        },
+        "pair_sop": {
+          "free_sat": 1,
+          "positive_recipes": 1,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/037_b22/diagnostic/result.json",
+          "result_sha256": "e70b45f92709768ecadd5792ef2d64fddc0a424e3952e0a43006d11d7e5b8313",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 7.527923256158829
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "037_b22.aig",
+      "input_and": 16152,
+      "loaded_and": 18478,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/038_b22_opt/diagnostic/result.json",
+          "result_sha256": "d9d0935f84c6fe5e68b7b69f89d6ef46369508f83d9e01d3294cffbbcc104f57",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 5.124705974012613
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/038_b22_opt/diagnostic/result.json",
+          "result_sha256": "e55c23c928674001e58df620a07d5a9f5d89a85a2695a18c340424b4fa8afdee",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 5.025138035416603
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/038_b22_opt/diagnostic/result.json",
+          "result_sha256": "3f6643a4ec8f14916bd6fda29fd02781bfaa9ee78b944dfeec1f6d5b8b52039b",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 11.533116791397333
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/038_b22_opt/diagnostic/result.json",
+          "result_sha256": "7a1fdba1568a751681c13766beef7a768fb49e8eabdec43efe1b94d5df889fb7",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 11.432655412703753
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "038_b22_opt.aig",
+      "input_and": 16227,
+      "loaded_and": 19029,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "full_sop": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "pair_aig3": {
+          "free_sat": 12,
+          "positive_recipes": 17,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/039_ac97_ctrl/diagnostic/result.json",
+          "result_sha256": "3169f1b10601f12cbf87ff8c5bd6d9e6ba64790fd36a461e4fa7d2d2d1722015",
+          "selected_roots": 6,
+          "status": "complete",
+          "wall_s": 11.833043057471514
+        },
+        "pair_sop": {
+          "free_sat": 12,
+          "positive_recipes": 17,
+          "potential": 17,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/039_ac97_ctrl/diagnostic/result.json",
+          "result_sha256": "f519637e08589dae757e5261485bf45c8f6397c80a292c84f6c4d961605662a9",
+          "selected_roots": 6,
+          "status": "complete",
+          "wall_s": 11.632041897624731
+        }
+      },
+      "completion_novelty": null,
+      "delta": null,
+      "family": "holdout",
+      "file": "039_ac97_ctrl.aig",
+      "input_and": 14630,
+      "loaded_and": 34300,
+      "zero_full_sop_opened": null
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/040_aes_core/diagnostic/result.json",
+          "result_sha256": "ce90c1b1495b089a980044c3fb86d1c1de21add70fbb0c2803c486e1feca4c8d",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.6217376179993153
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/040_aes_core/diagnostic/result.json",
+          "result_sha256": "5bec3272b8f951a287c84db3f7935fb459c0ba8fa36ea28131f22dd49aedccaf",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.271325346082449
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/040_aes_core/diagnostic/result.json",
+          "result_sha256": "77b161a95f15cb786869729681b607d11148096fa1d4b296bcf2e908280682a4",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.221276480704546
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/040_aes_core/diagnostic/result.json",
+          "result_sha256": "b34fc411853aaa92341af6d91435a720928c4e1fd6cb5ac256c45a03b5fbbb5b",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 3.2213914580643177
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "040_aes_core.aig",
+      "input_and": 22300,
+      "loaded_and": 45779,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "full_sop": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "pair_aig3": {
+          "free_sat": 1322,
+          "positive_recipes": 1877,
+          "potential": 2122,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/045_mem_ctrl/diagnostic/result.json",
+          "result_sha256": "22bca72cfd54d42cb01d44395560f2e7f11f62a51040ddd666e5947f0fdcb298",
+          "selected_roots": 546,
+          "status": "complete",
+          "wall_s": 43.42855690419674
+        },
+        "pair_sop": {
+          "free_sat": 899,
+          "positive_recipes": 1425,
+          "potential": 1655,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/045_mem_ctrl/diagnostic/result.json",
+          "result_sha256": "e7f5b428db597deb84bc462fcdc99791433df765fd8c8e59e2925da9e6278a07",
+          "selected_roots": 423,
+          "status": "complete",
+          "wall_s": 42.02681287750602
+        }
+      },
+      "completion_novelty": null,
+      "delta": null,
+      "family": "holdout",
+      "file": "045_mem_ctrl.aig",
+      "input_and": 9432,
+      "loaded_and": 34059,
+      "zero_full_sop_opened": null
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 1,
+          "positive_recipes": 2,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/047_pci_spoci_ctrl/diagnostic/result.json",
+          "result_sha256": "bdec0bf54b9797960ac48755febe11329c716c329285c8b9ed88c07a51596e1f",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.6178896687924862
+        },
+        "full_sop": {
+          "free_sat": 1,
+          "positive_recipes": 2,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/047_pci_spoci_ctrl/diagnostic/result.json",
+          "result_sha256": "4f461a2ed16abce7360129d90af0002b1b555258c50d048f560b9e8498ec68ca",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.4177554287016392
+        },
+        "pair_aig3": {
+          "free_sat": 1,
+          "positive_recipes": 1,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/047_pci_spoci_ctrl/diagnostic/result.json",
+          "result_sha256": "8b83cdba3bd7ba0755d3c80c0197840f08bbca0dcb44a885fb1c5cedb0837315",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.9183132536709309
+        },
+        "pair_sop": {
+          "free_sat": 1,
+          "positive_recipes": 1,
+          "potential": 1,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/047_pci_spoci_ctrl/diagnostic/result.json",
+          "result_sha256": "9b7e20911e3bd94c7818d1e978e84da0bafdde264993f7097badc1be74c0ff9b",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 0.46764693036675453
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "047_pci_spoci_ctrl.aig",
+      "input_and": 1470,
+      "loaded_and": 3319,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/050_spi/diagnostic/result.json",
+          "result_sha256": "36c996123e4305ea8c031b898d1cb5e76c53efd79a1596130ebd1c91d7a69833",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.271356873214245
+        },
+        "full_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/050_spi/diagnostic/result.json",
+          "result_sha256": "efd80481a8bd588b203ec3b03ce1c4526c7bf847b7709c56555318abb761bff4",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.0208913423120975
+        },
+        "pair_aig3": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/050_spi/diagnostic/result.json",
+          "result_sha256": "461b64ba588d2b12f87b4f4a878d25c6b6bd229336d5c162fd78ac4c559c8e4e",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.6708838678896427
+        },
+        "pair_sop": {
+          "free_sat": 0,
+          "positive_recipes": 0,
+          "potential": 0,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/050_spi/diagnostic/result.json",
+          "result_sha256": "4734bd0d9af87a55c1ae8e4d3bbac66e1f7fc4048d065c1e6362a1f5b06b6eb5",
+          "selected_roots": 0,
+          "status": "complete",
+          "wall_s": 2.8209653832018375
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 0,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "050_spi.aig",
+      "input_and": 4423,
+      "loaded_and": 9132,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "full_sop": {
+          "free_sat": null,
+          "positive_recipes": null,
+          "potential": null,
+          "selected_roots": null,
+          "status": "source-full-timeout",
+          "wall_s": null
+        },
+        "pair_aig3": {
+          "free_sat": 129,
+          "positive_recipes": 135,
+          "potential": 181,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/053_systemcaes/diagnostic/result.json",
+          "result_sha256": "0cf8f1640e185e7468a292ae7f4961cc9b045c02376a7f93c45d23d5d7aa1896",
+          "selected_roots": 64,
+          "status": "complete",
+          "wall_s": 12.33481589332223
+        },
+        "pair_sop": {
+          "free_sat": 129,
+          "positive_recipes": 135,
+          "potential": 181,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/053_systemcaes/diagnostic/result.json",
+          "result_sha256": "9dca389e4c492ddae12189d337654e9188c7c86494460b6f0e0fe1f8f5f6c99c",
+          "selected_roots": 64,
+          "status": "complete",
+          "wall_s": 12.08467185497284
+        }
+      },
+      "completion_novelty": null,
+      "delta": null,
+      "family": "holdout",
+      "file": "053_systemcaes.aig",
+      "input_and": 13391,
+      "loaded_and": 27879,
+      "zero_full_sop_opened": null
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 6,
+          "positive_recipes": 42,
+          "potential": 12,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/055_tv80/diagnostic/result.json",
+          "result_sha256": "015e722f645f7a8dbb32be636348a9f6fc29115ea9498599935c53a700eb4116",
+          "selected_roots": 5,
+          "status": "complete",
+          "wall_s": 4.025383710861206
+        },
+        "full_sop": {
+          "free_sat": 7,
+          "positive_recipes": 43,
+          "potential": 14,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/055_tv80/diagnostic/result.json",
+          "result_sha256": "bec498ac454940ea9396c24257e161b4d3c5b7c863bd338976729e58a5568019",
+          "selected_roots": 6,
+          "status": "complete",
+          "wall_s": 4.1727598793804646
+        },
+        "pair_aig3": {
+          "free_sat": 1,
+          "positive_recipes": 9,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/055_tv80/diagnostic/result.json",
+          "result_sha256": "1748df7c445ec077e2680591f6db4ed520d7b8ccaaa810060a4690e2aa97c9cf",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 11.38247175514698
+        },
+        "pair_sop": {
+          "free_sat": 1,
+          "positive_recipes": 9,
+          "potential": 2,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/055_tv80/diagnostic/result.json",
+          "result_sha256": "74ea3d7deda57a5d73f4b79fe234c460c7e9fcbb5608e3a73f1f37a95e192cfc",
+          "selected_roots": 1,
+          "status": "complete",
+          "wall_s": 11.231355141848326
+        }
+      },
+      "completion_novelty": {
+        "classifications": [],
+        "counts": {},
+        "lanes": 4096,
+        "new_exact_sat": 0,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": -2,
+        "full_image_sop": 12,
+        "interaction": -2,
+        "pair_completion": 0
+      },
+      "family": "holdout",
+      "file": "055_tv80.aig",
+      "input_and": 10806,
+      "loaded_and": 22095,
+      "zero_full_sop_opened": false
+    },
+    {
+      "arms": {
+        "full_aig3": {
+          "free_sat": 89,
+          "positive_recipes": 91,
+          "potential": 75,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/aig3/060_wb_dma/diagnostic/result.json",
+          "result_sha256": "a37b3476c8591b3a49d6e15dc96c638896038fc6bf72327bded5dd5599b4765e",
+          "selected_roots": 51,
+          "status": "complete",
+          "wall_s": 3.876196339726448
+        },
+        "full_sop": {
+          "free_sat": 73,
+          "positive_recipes": 75,
+          "potential": 67,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/interaction/runs/20261001T161641Z_shuguang_fixed55/sop/060_wb_dma/diagnostic/result.json",
+          "result_sha256": "87e37aa30b59b47c647ded857495a5a49ccca1a232a1c6eeec83d2552c035cd6",
+          "selected_roots": 46,
+          "status": "complete",
+          "wall_s": 3.8218744210898876
+        },
+        "pair_aig3": {
+          "free_sat": 89,
+          "positive_recipes": 91,
+          "potential": 75,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/aig3/060_wb_dma/diagnostic/result.json",
+          "result_sha256": "ac38c70541748a92f889b513f3aac6a4294059b5e1a0cfc874ecf7c00d3fd2b8",
+          "selected_roots": 51,
+          "status": "complete",
+          "wall_s": 6.625251963734627
+        },
+        "pair_sop": {
+          "free_sat": 73,
+          "positive_recipes": 75,
+          "potential": 67,
+          "result": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_aig3_completion/runs/20261001T160716Z_shuguang_fixed55/sop/060_wb_dma/diagnostic/result.json",
+          "result_sha256": "7284fb77d15e342848c58d79f10520c130a8f73d05a1a3d61c9aaae321082a60",
+          "selected_roots": 46,
+          "status": "complete",
+          "wall_s": 6.375328492373228
+        }
+      },
+      "completion_novelty": {
+        "classifications": [
+          {
+            "out": -4,
+            "recipe": [
+              1144,
+              1514,
+              -3,
+              1499
+            ],
+            "root": 760,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              1144,
+              1512,
+              -3,
+              1499
+            ],
+            "root": 760,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              1144,
+              1510,
+              -3,
+              1499
+            ],
+            "root": 760,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1132,
+              1504
+            ],
+            "root": 1838,
+            "root_witness_bit": 0,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1132,
+              1135
+            ],
+            "root": 1838,
+            "root_witness_bit": 0,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1129,
+              1132
+            ],
+            "root": 1838,
+            "root_witness_bit": 0,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1132,
+              1141
+            ],
+            "root": 1838,
+            "root_witness_bit": 0,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1132,
+              1145
+            ],
+            "root": 1838,
+            "root_witness_bit": 0,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1127,
+              1134
+            ],
+            "root": 2448,
+            "root_witness_bit": 3,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1127,
+              1134
+            ],
+            "root": 2450,
+            "root_witness_bit": 3,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1134,
+              4898
+            ],
+            "root": 2450,
+            "root_witness_bit": 251,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              730,
+              6046,
+              -2,
+              6058
+            ],
+            "root": 3112,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              1200,
+              6046,
+              -2,
+              6060
+            ],
+            "root": 3113,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              730,
+              1200,
+              -2,
+              6046,
+              -4,
+              6058
+            ],
+            "root": 3113,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              1200,
+              6046,
+              -2,
+              6060,
+              -5,
+              6232
+            ],
+            "root": 3117,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -5,
+            "recipe": [
+              213,
+              7253,
+              -3,
+              1499
+            ],
+            "root": 3629,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "comparisons": [
+              {
+                "bit": 1,
+                "old_out": -3,
+                "old_recipe": [
+                  1137,
+                  1139
+                ]
+              }
+            ],
+            "out": -2,
+            "recipe": [
+              3663,
+              7264
+            ],
+            "root": 3635,
+            "root_witness_bit": 55,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [
+              {
+                "bit": 3,
+                "old_out": -3,
+                "old_recipe": [
+                  1137,
+                  1139
+                ]
+              }
+            ],
+            "out": -2,
+            "recipe": [
+              1135,
+              3663
+            ],
+            "root": 3635,
+            "root_witness_bit": 1,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              1135,
+              1137,
+              -2,
+              1139
+            ],
+            "root": 3636,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -5,
+            "recipe": [
+              1135,
+              1137,
+              -2,
+              1139
+            ],
+            "root": 3637,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "comparisons": [
+              {
+                "bit": 1,
+                "old_out": -5,
+                "old_recipe": [
+                  1135,
+                  1137,
+                  1139,
+                  -2
+                ]
+              },
+              {
+                "bit": 1,
+                "old_out": -3,
+                "old_recipe": [
+                  1135,
+                  3662
+                ]
+              }
+            ],
+            "out": -2,
+            "recipe": [
+              1127,
+              7273
+            ],
+            "root": 3637,
+            "root_witness_bit": 3,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              213,
+              7253,
+              -3,
+              1499,
+              -4,
+              7272
+            ],
+            "root": 3638,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              1135,
+              1137,
+              -2,
+              1139,
+              -4,
+              7259
+            ],
+            "root": 3638,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              213,
+              7253,
+              -3,
+              1499,
+              -4,
+              7275
+            ],
+            "root": 3638,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              1146,
+              1514,
+              -2,
+              7771
+            ],
+            "root": 3892,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              437,
+              1146,
+              -2,
+              1512
+            ],
+            "root": 3892,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -4,
+            "recipe": [
+              437,
+              1146,
+              -2,
+              1514
+            ],
+            "root": 3892,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1133,
+              1136
+            ],
+            "root": 3937,
+            "root_witness_bit": 2,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1127,
+              1136
+            ],
+            "root": 3937,
+            "root_witness_bit": 3,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1138,
+              7264
+            ],
+            "root": 3943,
+            "root_witness_bit": 55,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1127,
+              1138
+            ],
+            "root": 3943,
+            "root_witness_bit": 1,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "comparisons": [],
+            "out": -2,
+            "recipe": [
+              1135,
+              1138
+            ],
+            "root": 3943,
+            "root_witness_bit": 1,
+            "status": "original-CI-witness-different-from-every-old"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              212,
+              1136,
+              213,
+              7886,
+              -5,
+              -3
+            ],
+            "root": 3949,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              212,
+              1136,
+              213,
+              7891,
+              -5,
+              -3
+            ],
+            "root": 3949,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              212,
+              1136,
+              7886,
+              7893,
+              -5,
+              -3
+            ],
+            "root": 3949,
+            "status": "same-explicit-support-function"
+          },
+          {
+            "out": -6,
+            "recipe": [
+              212,
+              7874,
+              213,
+              1138,
+              -5,
+              -3
+            ],
+            "root": 3949,
+            "status": "same-explicit-support-function"
+          }
+        ],
+        "counts": {
+          "original-CI-witness-different-from-every-old": 16,
+          "same-explicit-support-function": 20
+        },
+        "lanes": 4096,
+        "new_exact_sat": 36,
+        "scope": "Witness-novel recipes, not a count of distinct new functions; same signatures remain unresolved.",
+        "seed": 2026100153
+      },
+      "delta": {
+        "full_completion": 8,
+        "full_image_sop": 0,
+        "interaction": 0,
+        "pair_completion": 8
+      },
+      "family": "holdout",
+      "file": "060_wb_dma.aig",
+      "input_and": 3703,
+      "loaded_and": 9555,
+      "zero_full_sop_opened": false
+    }
+  ],
+  "cost": {
+    "full_aig3_new_child_wall_s": 62.81035517156124,
+    "full_sop_cached_replay_wall_s": 53.57927975803614,
+    "original_full_source_attempt_wall_s": 1317.061650954187,
+    "reused_source_not_free": true
+  },
+  "groups": {
+    "1k10k": {
+      "common": 13,
+      "deltas": {
+        "full_completion": {
+          "equal_case_pp": 0.025143521320841744,
+          "sum": 15
+        },
+        "full_image_sop": {
+          "equal_case_pp": 0.06314487802096752,
+          "sum": 17
+        },
+        "interaction": {
+          "equal_case_pp": 0.0,
+          "sum": 0
+        },
+        "pair_completion": {
+          "equal_case_pp": 0.025143521320841744,
+          "sum": 15
+        }
+      },
+      "full_sop_zero_cases": 5,
+      "loaded_and_common": 65953,
+      "planned": 13,
+      "potential": {
+        "full_aig3": {
+          "equal_case_pct": 0.23900670458131495,
+          "sum": 130,
+          "weighted_pct": 0.19711006322684335
+        },
+        "full_sop": {
+          "equal_case_pct": 0.2138631832604732,
+          "sum": 115,
+          "weighted_pct": 0.1743665943929768
+        },
+        "pair_aig3": {
+          "equal_case_pct": 0.17586182656034743,
+          "sum": 113,
+          "weighted_pct": 0.1713341318817946
+        },
+        "pair_sop": {
+          "equal_case_pct": 0.1507183052395057,
+          "sum": 98,
+          "weighted_pct": 0.14859066304792806
+        }
+      },
+      "states": {
+        "full_aig3": {
+          "complete": 13
+        },
+        "full_sop": {
+          "complete": 13
+        },
+        "pair_aig3": {
+          "complete": 13
+        },
+        "pair_sop": {
+          "complete": 13
+        }
+      },
+      "zero_full_sop_opened": []
+    },
+    "all55": {
+      "common": 50,
+      "deltas": {
+        "full_completion": {
+          "equal_case_pp": 0.017541608713992005,
+          "sum": 16
+        },
+        "full_image_sop": {
+          "equal_case_pp": 0.09308276764528084,
+          "sum": 48
+        },
+        "interaction": {
+          "equal_case_pp": 0.006173375296177015,
+          "sum": 0
+        },
+        "pair_completion": {
+          "equal_case_pp": 0.011368233417814988,
+          "sum": 16
+        }
+      },
+      "full_sop_zero_cases": 28,
+      "loaded_and_common": 437932,
+      "planned": 55,
+      "potential": {
+        "full_aig3": {
+          "equal_case_pct": 0.4951016319876428,
+          "sum": 234,
+          "weighted_pct": 0.05343295306120585
+        },
+        "full_sop": {
+          "equal_case_pct": 0.47756002327365077,
+          "sum": 218,
+          "weighted_pct": 0.04977941780915759
+        },
+        "pair_aig3": {
+          "equal_case_pct": 0.39584548904618494,
+          "sum": 186,
+          "weighted_pct": 0.04247234730506106
+        },
+        "pair_sop": {
+          "equal_case_pct": 0.38447725562836993,
+          "sum": 170,
+          "weighted_pct": 0.0388188120530128
+        }
+      },
+      "states": {
+        "full_aig3": {
+          "complete": 50,
+          "source-full-timeout": 5
+        },
+        "full_sop": {
+          "complete": 50,
+          "source-full-timeout": 5
+        },
+        "pair_aig3": {
+          "complete": 55
+        },
+        "pair_sop": {
+          "complete": 55
+        }
+      },
+      "zero_full_sop_opened": []
+    },
+    "discovery35": {
+      "common": 35,
+      "deltas": {
+        "full_completion": {
+          "equal_case_pp": 0.022925898839062882,
+          "sum": 10
+        },
+        "full_image_sop": {
+          "equal_case_pp": 0.12904810183070323,
+          "sum": 29
+        },
+        "interaction": {
+          "equal_case_pp": 0.009077731042513248,
+          "sum": 2
+        },
+        "pair_completion": {
+          "equal_case_pp": 0.013848167796549632,
+          "sum": 8
+        }
+      },
+      "full_sop_zero_cases": 19,
+      "loaded_and_common": 229787,
+      "planned": 35,
+      "potential": {
+        "full_aig3": {
+          "equal_case_pct": 0.6778820491731106,
+          "sum": 132,
+          "weighted_pct": 0.05744450295273449
+        },
+        "full_sop": {
+          "equal_case_pct": 0.6549561503340477,
+          "sum": 122,
+          "weighted_pct": 0.053092646668436425
+        },
+        "pair_aig3": {
+          "equal_case_pct": 0.5397562162998941,
+          "sum": 101,
+          "weighted_pct": 0.04395374847141048
+        },
+        "pair_sop": {
+          "equal_case_pct": 0.5259080485033445,
+          "sum": 93,
+          "weighted_pct": 0.04047226344397203
+        }
+      },
+      "states": {
+        "full_aig3": {
+          "complete": 35
+        },
+        "full_sop": {
+          "complete": 35
+        },
+        "pair_aig3": {
+          "complete": 35
+        },
+        "pair_sop": {
+          "complete": 35
+        }
+      },
+      "zero_full_sop_opened": []
+    },
+    "ge10k": {
+      "common": 10,
+      "deltas": {
+        "full_completion": {
+          "equal_case_pp": -0.0009051821679112922,
+          "sum": -2
+        },
+        "full_image_sop": {
+          "equal_case_pp": 0.005431093007467753,
+          "sum": 12
+        },
+        "interaction": {
+          "equal_case_pp": -0.0009051821679112922,
+          "sum": -2
+        },
+        "pair_completion": {
+          "equal_case_pp": 0.0,
+          "sum": 0
+        }
+      },
+      "full_sop_zero_cases": 8,
+      "loaded_and_common": 363423,
+      "planned": 15,
+      "potential": {
+        "full_aig3": {
+          "equal_case_pct": 0.005972277118302258,
+          "sum": 13,
+          "weighted_pct": 0.0035770988627577232
+        },
+        "full_sop": {
+          "equal_case_pct": 0.006877459286213552,
+          "sum": 15,
+          "weighted_pct": 0.004127421764720449
+        },
+        "pair_aig3": {
+          "equal_case_pct": 0.001446366278745798,
+          "sum": 3,
+          "weighted_pct": 0.00082548435294409
+        },
+        "pair_sop": {
+          "equal_case_pct": 0.001446366278745798,
+          "sum": 3,
+          "weighted_pct": 0.00082548435294409
+        }
+      },
+      "states": {
+        "full_aig3": {
+          "complete": 10,
+          "source-full-timeout": 5
+        },
+        "full_sop": {
+          "complete": 10,
+          "source-full-timeout": 5
+        },
+        "pair_aig3": {
+          "complete": 15
+        },
+        "pair_sop": {
+          "complete": 15
+        }
+      },
+      "zero_full_sop_opened": []
+    },
+    "holdout20": {
+      "common": 15,
+      "deltas": {
+        "full_completion": {
+          "equal_case_pp": 0.004978265088826625,
+          "sum": 6
+        },
+        "full_image_sop": {
+          "equal_case_pp": 0.009163654545961904,
+          "sum": 19
+        },
+        "interaction": {
+          "equal_case_pp": -0.0006034547786075282,
+          "sum": -2
+        },
+        "pair_completion": {
+          "equal_case_pp": 0.005581719867434153,
+          "sum": 8
+        }
+      },
+      "full_sop_zero_cases": 9,
+      "loaded_and_common": 208145,
+      "planned": 20,
+      "potential": {
+        "full_aig3": {
+          "equal_case_pct": 0.06861399188821792,
+          "sum": 102,
+          "weighted_pct": 0.04900429988709794
+        },
+        "full_sop": {
+          "equal_case_pct": 0.06363572679939128,
+          "sum": 96,
+          "weighted_pct": 0.04612169401138629
+        },
+        "pair_aig3": {
+          "equal_case_pct": 0.060053792120863536,
+          "sum": 85,
+          "weighted_pct": 0.040836916572581615
+        },
+        "pair_sop": {
+          "equal_case_pct": 0.05447207225342938,
+          "sum": 77,
+          "weighted_pct": 0.03699344207163276
+        }
+      },
+      "states": {
+        "full_aig3": {
+          "complete": 15,
+          "source-full-timeout": 5
+        },
+        "full_sop": {
+          "complete": 15,
+          "source-full-timeout": 5
+        },
+        "pair_aig3": {
+          "complete": 20
+        },
+        "pair_sop": {
+          "complete": 20
+        }
+      },
+      "zero_full_sop_opened": []
+    },
+    "lt1k": {
+      "common": 27,
+      "deltas": {
+        "full_completion": {
+          "equal_case_pp": 0.020713573341028534,
+          "sum": 3
+        },
+        "full_image_sop": {
+          "equal_case_pp": 0.13996089029321432,
+          "sum": 19
+        },
+        "interaction": {
+          "equal_case_pp": 0.01176742912918384,
+          "sum": 2
+        },
+        "pair_completion": {
+          "equal_case_pp": 0.008946144211844694,
+          "sum": 1
+        }
+      },
+      "full_sop_zero_cases": 15,
+      "loaded_and_common": 8556,
+      "planned": 27,
+      "potential": {
+        "full_aig3": {
+          "equal_case_pct": 0.799565617357112,
+          "sum": 91,
+          "weighted_pct": 1.0635811126694716
+        },
+        "full_sop": {
+          "equal_case_pct": 0.7788520440160834,
+          "sum": 88,
+          "weighted_pct": 1.0285179990649835
+        },
+        "pair_aig3": {
+          "equal_case_pct": 0.6478372979347138,
+          "sum": 70,
+          "weighted_pct": 0.8181393174380551
+        },
+        "pair_sop": {
+          "equal_case_pct": 0.6388911537228691,
+          "sum": 69,
+          "weighted_pct": 0.8064516129032258
+        }
+      },
+      "states": {
+        "full_aig3": {
+          "complete": 27
+        },
+        "full_sop": {
+          "complete": 27
+        },
+        "pair_aig3": {
+          "complete": 27
+        },
+        "pair_sop": {
+          "complete": 27
+        }
+      },
+      "zero_full_sop_opened": []
+    }
+  },
+  "leave_one_out": [
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "001_b01.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "002_b01_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "003_b02.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "004_b02_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "005_b03.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "006_b03_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "007_b04.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "008_b04_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.015440785877321568,
+      "excluded": "009_b05.aig",
+      "full_completion_potential_delta": 15
+    },
+    {
+      "equal_case_pp": 0.013874321978009793,
+      "excluded": "010_b05_opt.aig",
+      "full_completion_potential_delta": 15
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "011_b06.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "012_b06_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "013_b07.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "014_b07_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "015_b08.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "016_b08_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "017_b09.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "018_b09_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "019_b10.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "020_b10_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "021_b11.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "022_b11_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "023_b12.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "024_b12_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "025_b13.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "026_b13_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "041_des_area.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "043_ethernet.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.012937560337554487,
+      "excluded": "044_i2c.aig",
+      "full_completion_potential_delta": 9
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "048_sasc.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "049_simple_spi.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "051_ss_pcm.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.012970092693465171,
+      "excluded": "052_steppermotordrive.aig",
+      "full_completion_potential_delta": 15
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "054_systemcdes.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "057_usb_phy.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "027_b14.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "028_b14_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "029_b15.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "030_b15_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "033_b20.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "034_b20_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "035_b21.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "036_b21_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "037_b22.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "038_b22_opt.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "040_aes_core.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "047_pci_spoci_ctrl.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01789960072856327,
+      "excluded": "050_spi.aig",
+      "full_completion_potential_delta": 16
+    },
+    {
+      "equal_case_pp": 0.01808433178323904,
+      "excluded": "055_tv80.aig",
+      "full_completion_potential_delta": 18
+    },
+    {
+      "equal_case_pp": 0.016190910973226284,
+      "excluded": "060_wb_dma.aig",
+      "full_completion_potential_delta": 8
+    }
+  ],
+  "limitations": [
+    "Five original full-image timeouts retained as null; no rerun or fallback.",
+    "One best completion/cut may discard another noncombinational function in favor of a cheaper combinational completion.",
+    "Bounded<=3 AND family under frozen local care only; zero result does not rule out larger AIG or broader care/search."
+  ],
+  "rules_sha256": "c1a85cdc2d01519714ae286738017aa576e0dbd65f7670600c3517a5e7b39191",
+  "schema": 1,
+  "scope": "All potential columns are overlapping per-root retained-MFFC structural estimates, NOT committed Build gain. Independent free-SAT uses1000-conflict screening. No C transform matrix.",
+  "script_sha256": "86c63bd0257e9db047adfca4657c0e89b9315cdd97d22bca3c4f53dfddb29bb7",
+  "status": "PASS"
+}

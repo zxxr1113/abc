@@ -1,0 +1,68 @@
+{
+  "host": "shuguang",
+  "jobs": 32,
+  "pid": 554899,
+  "run_id": "20261001T162338Z_shuguang_554899",
+  "scratch": "/dev/shm/stran2-guide-20261001T162338Z_shuguang_554899",
+  "script_sha256": "0e75b1f22ec298e97bedf0e10e8382ee9f47abc36b6c940dde2b92deb780b9b2",
+  "status": "ready",
+  "variants": {
+    "seq_cut_image_runtime": {
+      "binary": "/dev/shm/stran2-guide-20261001T162338Z_shuguang_554899/seq_cut_image_runtime/abc",
+      "binary_archive": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.abc.gz",
+      "binary_sha256": "9ea683adb037f2ada07865eb8659ba0320e8f7d353751afbe4662d3a33c0a8bf",
+      "build_returncode": 0,
+      "checks": [
+        {
+          "command": [
+            "/dev/shm/stran2-guide-20261001T162338Z_shuguang_554899/seq_cut_image_runtime/abc",
+            "-q",
+            "&stran_resub_test"
+          ],
+          "log": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.check-0.log",
+          "returncode": 0,
+          "timeout_s": 120
+        },
+        {
+          "command": [
+            "bash",
+            "test/run_stran_regression.sh",
+            "/dev/shm/stran2-guide-20261001T162338Z_shuguang_554899/seq_cut_image_runtime/abc"
+          ],
+          "log": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.check-1.log",
+          "returncode": 0,
+          "timeout_s": 120
+        },
+        {
+          "command": [
+            "bash",
+            "test/run_stran_microbatch_regression.sh",
+            "/dev/shm/stran2-guide-20261001T162338Z_shuguang_554899/seq_cut_image_runtime/abc"
+          ],
+          "log": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.check-2.log",
+          "returncode": 0,
+          "timeout_s": 120
+        },
+        {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "scripts",
+            "-p",
+            "test_*.py"
+          ],
+          "log": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.check-3.log",
+          "returncode": 0,
+          "timeout_s": 120
+        }
+      ],
+      "scratch_source": "/dev/shm/stran2-guide-20261001T162338Z_shuguang_554899/seq_cut_image_runtime",
+      "source_archive": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.source.tar.gz",
+      "source_sha256": "62b1b0c2a259ca68c2473d5c875fac6c321b840611cf024f99d177e79c5f4220",
+      "status": "ready"
+    }
+  }
+}

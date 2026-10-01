@@ -1,0 +1,175 @@
+--- /mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_only/source/src/proof/cec/cecTranCareCertificate.h	2026-10-01 12:26:51.940453087 +0000
++++ /mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/source/src/proof/cec/cecTranCareCertificate.h	2026-10-01 16:16:32.956336459 +0000
+@@ -28,13 +28,13 @@
+     return Built[Abc_Lit2Var(Lit)] ^ Abc_LitIsCompl(Lit);
+ }
+ 
+-static void Cec_TranCareCertificateRead( Gia_Man_t * p, Cec_TranSeqCare_t * pCare, FILE * f )
++static void Cec_TranCareCertificateRead( Gia_Man_t * p, Cec_TranSeqCare_t * pCare, FILE * f, int Version )
+ {
+     Vec_Int_t * vClauses, * vQueries;
+     sat_solver * s;
+     Gia_Obj_t * o;
+     Cec_TranCand_t * q;
+-    int i,j,nc,u,v,k,nVars=Gia_ManObjNum(p),Next,Clause[2],Built[CEC_TRAN_RECIPE_NODES_MAX];
++    int i,j,nc,u,v,k,n,Prev,nVars=Gia_ManObjNum(p),Next,Clause[6],Built[CEC_TRAN_RECIPE_NODES_MAX];
+     int x,y,a,b,d,Answer,Before,nSat=0,nUnknown=0,nUnsat=0,nConf=0,Kind,Ans0,Ans1;
+     char SourceSha[65];
+     int Enabled=Cec_TranStrictCexOption("ABC_STRICT_CARE_CERTIFICATE",0,1);
+@@ -43,16 +43,36 @@
+     vClauses=Vec_IntAlloc(2*nc);
+     for ( i=0; i<nc; i++ )
+     {
+-        assert(fscanf(f,"%d%d%d%d%d%d%64s",&u,&v,&k,&Kind,&Ans0,&Ans1,SourceSha)==7);
+-        assert(u>0 && u<v && v<1+Gia_ManCiNum(p)+Gia_ManAndNum(p));
+-        assert(k>=0 && k<4);
+-        // The launch validator checks this digest against archived full proof
+-        // records and their original graph. Runtime accepts only complete
+-        // primitive answers; graph equality itself was checked above.
+-        assert((Kind==0 && Ans0==-1 && Ans1==-1) || (Kind==1 && Ans0==-1 && Ans1==0));
++        // v1 remains byte-compatible. v2 stores one arity-2..6 clause;
++        // splitting a higher-order forbidden pattern into pairs is unsound.
++        assert(Version==1 || Version==2);
++        if ( Version==1 )
++        {
++            n=2;
++            assert(fscanf(f,"%d%d%d%d%d%d%64s",&u,&v,&k,&Kind,&Ans0,&Ans1,SourceSha)==7);
++            assert(u>0 && u<v && v<1+Gia_ManCiNum(p)+Gia_ManAndNum(p));
++            Clause[0]=u;Clause[1]=v;
++        }
++        else
++        {
++            assert(fscanf(f,"%d",&n)==1 && n>=2 && n<=6);
++            Prev=0;
++            for ( j=0; j<n; j++ )
++            {
++                assert(fscanf(f,"%d",&u)==1 && u>Prev && u<1+Gia_ManCiNum(p)+Gia_ManAndNum(p));
++                Clause[j]=u;Prev=u;
++            }
++            assert(fscanf(f,"%d%d%d%d%64s",&k,&Kind,&Ans0,&Ans1,SourceSha)==5);
++        }
++        assert(k>=0 && k<(1<<n));
++        // The launch validator reconstructs the actual original CNF/query and
++        // checks proof records, graph identity and file digests. k>2 primitives
++        // are accepted only from reset AND unrestricted-image dual UNSAT.
++        assert((Kind==0 && Ans0==-1 && Ans1==-1) || (n==2 && Kind==1 && Ans0==-1 && Ans1==0));
+         assert(strlen(SourceSha)==64);
+         for ( j=0; j<64; j++ ) assert((SourceSha[j]>='0' && SourceSha[j]<='9') || (SourceSha[j]>='a' && SourceSha[j]<='f'));
+-        Vec_IntPushTwo(vClauses,2*u+(k&1),2*v+((k>>1)&1));
++        Vec_IntPush(vClauses,n);
++        for ( j=0; j<n; j++ ) Vec_IntPush(vClauses,2*Clause[j]+((k>>j)&1));
+     }
+     if ( !Enabled )
+     {
+@@ -67,7 +87,11 @@
+         assert(!Gia_ObjIsXor(o));
+         Cec_TranCareAnd(s,Gia_ObjFaninLit0p(p,o),Gia_ObjFaninLit1p(p,o),2*i);
+     }
+-    for ( i=0; i<Vec_IntSize(vClauses); i+=2 ) Cec_TranCareClause(s,Vec_IntArray(vClauses)+i,2);
++    for ( i=0; i<Vec_IntSize(vClauses); i+=n+1 )
++    {
++        n=Vec_IntEntry(vClauses,i);
++        Cec_TranCareClause(s,Vec_IntArray(vClauses)+i+1,n);
++    }
+     vQueries=Vec_IntAlloc(pCare->Cands.nSize);Next=Gia_ManObjNum(p);
+     for ( i=0; i<pCare->Cands.nSize; i++ )
+     {
+--- /mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/care_only/source/src/proof/cec/cecTranSeqCare.h	2026-10-01 12:25:32.411649714 +0000
++++ /mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_cut_image_runtime/source/src/proof/cec/cecTranSeqCare.h	2026-10-01 16:19:19.102218054 +0000
+@@ -24,7 +24,7 @@
+     char Magic[64];
+     int ni, nr, no, na, nc, i, j, root, gates, out, removable, a, b, c, fCertificate;
+     assert(f && fscanf(f, "%63s%d%d%d%d%d", Magic, &ni, &nr, &no, &na, &nc) == 6);
+-    fCertificate = !strcmp(Magic,"stran-seq-care-cert-v1");
++    fCertificate = !strcmp(Magic,"stran-seq-care-cert-v2") ? 2 : !strcmp(Magic,"stran-seq-care-cert-v1");
+     assert((fCertificate || !strcmp(Magic,"stran-seq-care-cut2-v1")) && nc >= 0);
+     assert(ni == Gia_ManPiNum(p) && nr == Gia_ManRegNum(p));
+     assert(no == Gia_ManPoNum(p) && na == Gia_ManAndNum(p));
+@@ -88,7 +88,7 @@
+         Cec_TranCandVecPush(&pCare->Cands,Cand);
+         Cec_TranCandRecipeRelease(&Cand);
+     }
+-    if ( fCertificate ) Cec_TranCareCertificateRead(p,pCare,f);
++    if ( fCertificate ) Cec_TranCareCertificateRead(p,pCare,f,fCertificate);
+     while ( (c=fgetc(f)) != EOF ) assert(c==' ' || c=='\n' || c=='\r' || c=='\t');
+     fclose(f);
+     Abc_Print(1,"stran-seq-care-cut2: schema=1 phase=seq snapshot=first graph-identity=complete loaded=%d cut-leaf-cap=6 cut-count-cap=8 pair-conflicts=1000 file=%s\n",nc,pName);
+@@ -192,6 +192,61 @@
+     pProf->pSeqCare = NULL;
+ }
+ 
++// The parity image has no binary restriction: q2=q0 XOR q1.
++// Triple q0&q1&q2 is always zero, but pair q0&q1 is not. This catches
++// accidental pair decomposition or a dropped/polarity-reversed clause literal.
++static void Cec_TranCareFullClauseSelfTest()
++{
++    Gia_Man_t * p=Gia_ManStart(32);
++    Cec_TranSeqCare_t * Care=ABC_CALLOC(Cec_TranSeqCare_t,1);
++    Cec_TranProf_t Prof;
++    Cec_TranCand_t Cand;
++    FILE * f=tmpfile();
++    char * Old=getenv("ABC_STRICT_CARE_CERTIFICATE") ? Abc_UtilStrsav(getenv("ABC_STRICT_CARE_CERTIFICATE")) : NULL;
++    int a=Gia_ManAppendCi(p), b=Gia_ManAppendCi(p), q0=Gia_ManAppendCi(p), q1=Gia_ManAppendCi(p), q2=Gia_ManAppendCi(p);
++    int Pair=Gia_ManAppendAnd(p,q0,q1), Triple=Gia_ManAppendAnd(p,Pair,q2);
++    int x=Gia_ManAppendAnd(p,a,b^1), y=Gia_ManAppendAnd(p,a^1,b), z=Gia_ManAppendAnd(p,x^1,y^1), i;
++    Gia_ManAppendCo(p,Triple);Gia_ManAppendCo(p,a);Gia_ManAppendCo(p,b);Gia_ManAppendCo(p,z^1);Gia_ManSetRegNum(p,3);
++    for ( i=0; i<2; i++ )
++    {
++        memset(&Cand,0,sizeof(Cand));Cand.iTarget=Abc_Lit2Var(i ? Triple : Pair);
++        Cand.nKind=CEC_TRAN_CAND_CONSTR;Cand.fStrict=1;Cand.nGates=1;Cand.iOut=-2;
++        Cand.Recipe=Cec_TranRecipeAlloc(2);Cand.Recipe[0]=a;Cand.Recipe[1]=a^1;
++        Cec_TranCandVecPush(&Care->Cands,Cand);Cec_TranCandRecipeRelease(&Cand);
++    }
++    Care->vRootToCand=Vec_IntStartFull(Gia_ManObjNum(p));
++    Care->vObserved=Vec_IntStart(2);Care->vCbs=Vec_IntStart(2);Care->vSeq=Vec_IntStart(2);
++    assert(f);fprintf(f,"4\n");
++    for ( i=0; i<8; i++ )
++        if ( i==1 || i==2 || i==4 || i==7 ) fprintf(f,"3 3 4 5 %d 0 -1 -1 %064d\n",i,0);
++    rewind(f);setenv("ABC_STRICT_CARE_CERTIFICATE","1",1);
++    Cec_TranCareCertificateRead(p,Care,f,2);fclose(f);
++    assert(Vec_IntEntry(Care->vCertified,0)==0 && Vec_IntEntry(Care->vCertified,1)==1);
++    if ( Old ) {setenv("ABC_STRICT_CARE_CERTIFICATE",Old,1);ABC_FREE(Old);}
++    else unsetenv("ABC_STRICT_CARE_CERTIFICATE");
++    memset(&Prof,0,sizeof(Prof));Prof.pSeqCare=Care;Cec_TranSeqCareStop(&Prof);Gia_ManStop(p);
++    // Exhaust every assignment and forbidden polarity for each supported arity.
++    for ( i=2; i<=6; i++ )
++    {
++        int Pattern,Assignment,j,Clause[6],Assumptions[6];
++        for ( Pattern=0; Pattern<(1<<i); Pattern++ )
++        {
++            sat_solver * s=sat_solver_new();sat_solver_setnvars(s,i+1);
++            for ( j=0; j<i; j++ ) Clause[j]=2*(j+1)+((Pattern>>j)&1);
++            Cec_TranCareClause(s,Clause,i);
++            for ( Assignment=0; Assignment<(1<<i); Assignment++ )
++            {
++                int Answer;
++                for ( j=0; j<i; j++ ) Assumptions[j]=2*(j+1)+!((Assignment>>j)&1);
++                Answer=sat_solver_solve(s,Assumptions,Assumptions+i,1000,0,0,0);
++                assert(Answer==(Assignment==Pattern ? l_False : l_True));
++            }
++            sat_solver_delete(s);
++        }
++    }
++    Abc_Print(1,"stran-care-full-clause-selftest: PASS arities=2..6 all-polarities parity-triple-certified pair-refuted\n");
++}
++
+ static int Cec_TranCareCertificateSelfTest()
+ {
+     Gia_Man_t * p=Gia_ManStart(16);
+@@ -214,7 +269,7 @@
+     Care->vRootToCand=Vec_IntStartFull(Gia_ManObjNum(p));Vec_IntWriteEntry(Care->vRootToCand,Abc_Lit2Var(Root),0);
+     Care->vObserved=Vec_IntStart(1);Care->vCbs=Vec_IntStart(1);Care->vSeq=Vec_IntStart(1);
+     assert(f);fprintf(f,"2\n1 2 2 0 -1 -1 %064d\n1 2 3 0 -1 -1 %064d\n",0,0);rewind(f);
+-    setenv("ABC_STRICT_CARE_CERTIFICATE","1",1);Cec_TranCareCertificateRead(p,Care,f);fclose(f);
++    setenv("ABC_STRICT_CARE_CERTIFICATE","1",1);Cec_TranCareCertificateRead(p,Care,f,1);fclose(f);
+     if ( Old ) {setenv("ABC_STRICT_CARE_CERTIFICATE",Old,1);ABC_FREE(Old);}
+     else unsetenv("ABC_STRICT_CARE_CERTIFICATE");
+     memset(&Prof,0,sizeof(Prof));Prof.DiagPhase=1;Prof.pSeqCare=Care;
+@@ -225,6 +280,7 @@
+     assert(Prof.nSeqSeeded==0 && Prof.nSeqSplit==0 && Prof.nSeqUnknown==0);
+     assert(Prof.nSeqSeeded>=Prof.nSeqCands-Prof.nSeqComposedProved);
+     Vec_IntFree(Status);Vec_StrFree(Stage);Cec_TranSeqCareStop(&Prof);Gia_ManStop(p);
++    Cec_TranCareFullClauseSelfTest();
+     Abc_Print(1,"stran-care-certificate-selftest: PASS composed=1 scorr-obligations=0 seeded=0 cbs-proved=0\n");
+     return 1;
+ }

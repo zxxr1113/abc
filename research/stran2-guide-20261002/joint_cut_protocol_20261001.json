@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "frozen_at_utc": "2026-10-01T15:51:50Z",
+  "hypothesis": "A full cut image can expose jointly forbidden leaf patterns missed by binary care, yielding new positive non-combinational Build recipes after the fixed scorr plus matched COM prefix.",
+  "single_algorithm_variable": "Replace pairwise care projection by full cut-pattern projection; retain the same at-most-six-leaf, at-most-eight-cuts-per-root enumeration, greedy two-polarity SOP completion, positive conservative MFFC filter, free-state SAT check, and one-recipe-per-root ranking.",
+  "proof_rule": "A cut assignment is forbidden only if its assumptions are UNSAT in both the reset image and the free-prestate one-step image of the original AIG. SAT or UNKNOWN in either image leaves it allowed. Sampled signatures guide which assignments to query but cannot prove a forbidden assignment.",
+  "primary_cohort": {
+    "name": "New58 fixed strong-prefix eligible55",
+    "rules_path": "/mnt/home/zhaoxiran/script2/evidence/stran2_seq_guide_20261001/seq_care_cut2/frozen_rules.json",
+    "rules_sha256": "d7f4812c085540e6bb68f4bddf1dda524cbab644bed0bb5fd0bad63b9dfa231f",
+    "expected_cases": 55,
+    "historical_exclusions": ["046_pci_bridge32.aig", "056_usb_funct.aig", "059_wb_conmax.aig"]
+  },
+  "comparison": {
+    "same_binary_arms": ["certificate_off", "mixed", "care_only", "joint_cut_mixed", "joint_cut_care_only"],
+    "transform_timeout_s": 120,
+    "independent_dsec_timeout_s": 120,
+    "independent_free_sat_timeout_s": 30,
+    "independent_free_sat_conflicts": 1000000,
+    "valid_only_if": "Original ABC-loaded AIG and final product have a matching typed interface; DSEC PASS; each counted Build has a replayed free-state SAT witness, complete SEQ certificate, and positive exact selected-set cleanup contribution.",
+    "primary_metric": "For each paired valid case, exact non-combinational SEQ Build AND gain divided by that case's original ABC-loaded AND; report arithmetic mean across cases, as well as total AND and count.",
+    "missing_policy": "Keep every timeout, undecided, assertion, parser failure, and unavailable prefix as a separate outcome; never impute zero reduction or include in a paired mean.",
+    "strata_loaded_and": ["<1000", "1000-9999", ">=10000"],
+    "robustness": ["paired better/equal/worse counts", "per-case gains", "per-size equal-case mean", "largest-contributor leave-one-out", "distinct design-family support", "independent HWMCC eligible cohort with typed checker"]
+  },
+  "stage_gates": [
+    "First run a uniform-budget offline opportunity screen over the complete fixed cohort; report all cases and costs.",
+    "Only if multiple independent cases show new positive free-SAT recipes, construct an isolated C import variant and run the paired ABC matrix.",
+    "Do not claim Guide success from recipe potential, a single case, total final AND, or a common-completed subset without its failures and leave-one-out analysis."
+  ]
+}

@@ -1,0 +1,805 @@
+{
+  "base_commit": "75ae0910ee100ba6162e333b1fab42b7d2f42dda",
+  "branch": "codex/stran2-guide-dot-20261002",
+  "entrypoint": "STRAN2.md",
+  "files": [
+    {
+      "path": "research/stran2-guide-20261002/.gitattributes",
+      "sha256": "aeace9897e0a603c1fa0eb23fc0e366e57cebf480b5104b5de23dfd8c6da6abd",
+      "size_bytes": 34
+    },
+    {
+      "path": "research/stran2-guide-20261002/README.md",
+      "sha256": "1bed2ce35526df4bc786ca0cc17717567abe301ee36c3bbe16151191961325c7",
+      "size_bytes": 2825
+    },
+    {
+      "path": "research/stran2-guide-20261002/build_query_solver.sh",
+      "sha256": "c8c142f58197b4a687b75d8d7871b638fdf0ac86f89226bfe389978600ee25cd",
+      "size_bytes": 541
+    },
+    {
+      "path": "research/stran2-guide-20261002/cases.json",
+      "sha256": "7241e1bb55ebdc82e3bd6d6ad581b11d38d3117cc1042cb1c9d355e88d1045dc",
+      "size_bytes": 23311
+    },
+    {
+      "path": "research/stran2-guide-20261002/cut_image_independent/original_transition_verification.json",
+      "sha256": "b9dbbde6e798ad3f2d27e43c73b61e9280632c56cfeffb7f5b2c022a96f96551",
+      "size_bytes": 438777
+    },
+    {
+      "path": "research/stran2-guide-20261002/cut_image_independent/summary.json",
+      "sha256": "96dcc0d0218ffa024d893ac63863cc8f8f4c3d4c08c6c9ab76f35b7b32aebb98",
+      "size_bytes": 15382
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/001_b01.aig",
+      "sha256": "681a23c01edc33bd721b6b32d34701fc9d72f8bfdb026942e7236066c883a6ba",
+      "size_bytes": 403
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/002_b01_opt.aig",
+      "sha256": "68284a80476b4c029aeefc217d00ecab917d60521ae227c54fa2a14878ac82b0",
+      "size_bytes": 414
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/003_b02.aig",
+      "sha256": "761096fb9df802491a65a8d61da72a14bbe40876c5c267bcce5b7f3986c29e70",
+      "size_bytes": 367
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/004_b02_opt.aig",
+      "sha256": "9dd2e8addc71ee79211f0c2773658885f070c4d8005b1d972bb80f9d51530088",
+      "size_bytes": 372
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/005_b03.aig",
+      "sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "size_bytes": 611
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/006_b03_opt.aig",
+      "sha256": "22baa3cf639c82a547d2d74880873c5173a445eea4bb6551a6c25e5d6b85921e",
+      "size_bytes": 588
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/007_b04.aig",
+      "sha256": "076d3ddfd1bd410b6f4d92f1cda2bd62417a8ad900debb6510462eecae1d7618",
+      "size_bytes": 1781
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/008_b04_opt.aig",
+      "sha256": "118ca78b272dcdd91cf50765f67c2cc45adb97d7dd956f8cb82954a998fae0cb",
+      "size_bytes": 1719
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/009_b05.aig",
+      "sha256": "b9ba9997f5021b86ae0668adda5a93987d1536984bbc0dba1f35fda7950bcdc3",
+      "size_bytes": 1902
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/010_b05_opt.aig",
+      "sha256": "99fae2672e229b9f07de138a97319cc071a5d26c9014124dbeb7b01d38115a76",
+      "size_bytes": 1790
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/011_b06.aig",
+      "sha256": "646aec8aee9c06fa998118c3ea64618ca70ee2058014a508552892f8f1a245c2",
+      "size_bytes": 431
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/012_b06_opt.aig",
+      "sha256": "9afa5a37c62ab85779cf0ba416e6e17caaa154df410df99b46435c3c624e0f9e",
+      "size_bytes": 437
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/013_b07.aig",
+      "sha256": "cc81f60fbb1179a27cf06c3a156598a57a7c1087d390ab4967aa08ffb7c7ec1e",
+      "size_bytes": 1304
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/014_b07_opt.aig",
+      "sha256": "19ee194ad56cbb58291a2666a30a91dc385807f9a53b6310c30be7b37330e952",
+      "size_bytes": 1313
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/015_b08.aig",
+      "sha256": "7754efbe89812a3ddde550d1f94128fe862ff79b2ca68bb2bdd4bf87875e0ab4",
+      "size_bytes": 719
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/016_b08_opt.aig",
+      "sha256": "f104bf0fdefe943df99bbb8a2301a3b927d16953cdec3c5b4f46c08e315c4b6b",
+      "size_bytes": 725
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/017_b09.aig",
+      "sha256": "44296eea0221811e00c9c337f118a265a49e71af79fcbe854f4f95404e2fe85e",
+      "size_bytes": 723
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/018_b09_opt.aig",
+      "sha256": "93f2e29695bf46689ea150de7e6b84ea70667cb7e1514364216268e213dfff72",
+      "size_bytes": 744
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/019_b10.aig",
+      "sha256": "83b285344db02fd600434bc2e0519feab1a912c1ea1b9b4a22806c5a832d9cc4",
+      "size_bytes": 793
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/020_b10_opt.aig",
+      "sha256": "a7099bc8e1628a5e3103eb2a74075c99d3d05c97100a8c8d1f8e5e575c92b7bf",
+      "size_bytes": 774
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/021_b11.aig",
+      "sha256": "007d615a83e5a6344bc0c5dfa0ffcd5f39b5384c6f6a4a142925252dd9c8ad21",
+      "size_bytes": 1727
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/022_b11_opt.aig",
+      "sha256": "276c0b75cd0a37e1a70882e76bf3f386af0bd9fbf5b54c1036d88a36a44f5431",
+      "size_bytes": 1770
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/023_b12.aig",
+      "sha256": "049b31182c279fd4099680328156385703a41f885977f39f6db52ed5ed738aa6",
+      "size_bytes": 3498
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/024_b12_opt.aig",
+      "sha256": "c43055435f9185781a862d17a8ee4bbfffc626a2ebca02b03ca3ba5477a38c3a",
+      "size_bytes": 3463
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/025_b13.aig",
+      "sha256": "9c7b114e7d1135abbf50ef803f97ffd02426f4a265a8f48d1ced82e36ed2933e",
+      "size_bytes": 1050
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/026_b13_opt.aig",
+      "sha256": "b13793d009479224babaf89adadb161075bbd888127bd459c44357c3a6bd98e8",
+      "size_bytes": 1057
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/027_b14.aig",
+      "sha256": "e07b0e88a5ec451d4163342a03a4aa785d5892c2eb3da71b71e2d259dc97787d",
+      "size_bytes": 15798
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/028_b14_opt.aig",
+      "sha256": "070a0fe5b88ba8aef7eafd8ab8ecef20ba4ebab039696c2e176a0fa4bc55765f",
+      "size_bytes": 15633
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/029_b15.aig",
+      "sha256": "c57b1feeed294940120983e512154a4c8e2da2846ab389606cd58334afd1d191",
+      "size_bytes": 24434
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/030_b15_opt.aig",
+      "sha256": "092c9e9e9f392dcae21874cf91187958218e6dea78646eb90de76650e4a52156",
+      "size_bytes": 23878
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/031_b17.aig",
+      "sha256": "81afda880b87ba3c1d8a108873c1dec0fd89c6d81fe16fc94d23cbc833dd55a1",
+      "size_bytes": 84582
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/032_b17_opt.aig",
+      "sha256": "4f833b0073d3ce1811efac26189477a14c3b980cf917956adc7c7b28e1b8dda5",
+      "size_bytes": 82552
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/033_b20.aig",
+      "sha256": "e94c5af5f75de64f0a10cfcbd4a7c684d8f169bdb0a8a8071aa342a3026620dc",
+      "size_bytes": 32291
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/034_b20_opt.aig",
+      "sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "size_bytes": 34004
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/035_b21.aig",
+      "sha256": "a92bda158acc4690f68b3140ef5f0b47fdac15ed4c4fa60e73c972ebeb0c9f64",
+      "size_bytes": 32297
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/036_b21_opt.aig",
+      "sha256": "1a8b1c76d067b7fca3a26d97bef953e6e5aba4115406b8ed6c436e6abc36b407",
+      "size_bytes": 33629
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/037_b22.aig",
+      "sha256": "b610840ab2bdb3c138acc6319c4fbca65a157d97cb2025b83305f1ca0c683c68",
+      "size_bytes": 48954
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/038_b22_opt.aig",
+      "sha256": "6041c3c00071bf76d3007f6f35597022f1ad87f6e0b22718e8a74824bfd8d69d",
+      "size_bytes": 49307
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/039_ac97_ctrl.aig",
+      "sha256": "ca0a7c81c293399eec028a804251d789c84724217e0922107a5d80eba2434721",
+      "size_bytes": 60387
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/040_aes_core.aig",
+      "sha256": "b370ee5cb917993d13e0a9937e21a47f7bb37ae3aee34cc7c6b36d5ad9fbcff9",
+      "size_bytes": 73316
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/041_des_area.aig",
+      "sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "size_bytes": 14468
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/043_ethernet.aig",
+      "sha256": "932fe878addedf82270be922ed94f0bdfc26a9ef1d038c7768b54a96afd8551e",
+      "size_bytes": 1378
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig",
+      "sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "size_bytes": 4083
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/045_mem_ctrl.aig",
+      "sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "size_bytes": 33985
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/047_pci_spoci_ctrl.aig",
+      "sha256": "75cd85360991810410f1ebf67ef07bbd49c0bbcf8f718850eae06c79762cd7fa",
+      "size_bytes": 4651
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/048_sasc.aig",
+      "sha256": "077472edfed3165407f2a53e15832e12ecfc7e6d252838ff16ff32783923c9f3",
+      "size_bytes": 3086
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/049_simple_spi.aig",
+      "sha256": "3f7776e07ef374e3ea62826dfa4450e8d48581ea5156bdb3082b8245ce42a529",
+      "size_bytes": 3849
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/050_spi.aig",
+      "sha256": "23c805bf4759569a27a83d8e721e7b8c14e0f974bfa07f94bd29169ffc7cd815",
+      "size_bytes": 14227
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/051_ss_pcm.aig",
+      "sha256": "693481e32c27acd64a6d1d974f90cb582c650854e780e03d9fb749cf60823605",
+      "size_bytes": 1837
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/052_steppermotordrive.aig",
+      "sha256": "011568ef15a599d0c9c455f5a306a92eaaf4955a614f354d33d294ca0637a939",
+      "size_bytes": 794
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/053_systemcaes.aig",
+      "sha256": "8bcf01b9f66b00f27a13428509064330e309f579a23740095f75897be893e76d",
+      "size_bytes": 44860
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/054_systemcdes.aig",
+      "sha256": "1c834305947e39a089c2160f17fe234651255334a4aaf558abf738f50f337be5",
+      "size_bytes": 9339
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/055_tv80.aig",
+      "sha256": "055ca168fea6d62c0c2b75543d3a58c4a6832926d75c09e64fbc98d2fe2c7fe4",
+      "size_bytes": 33581
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/057_usb_phy.aig",
+      "sha256": "1127935c4fd3d999b1f027808dbc1d13f54045b4a732f8ddcf32eaca6fb0bf40",
+      "size_bytes": 1950
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/first_seq/060_wb_dma.aig",
+      "sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "size_bytes": 14917
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/001_b01.aig",
+      "sha256": "565df34efdeb02ad1373c489b61c796135398025df73104a9fe47e50fb4513d3",
+      "size_bytes": 382
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/002_b01_opt.aig",
+      "sha256": "7c3eddc4c16db2348367b787a07d785e7c0ab30cff0edb060a7dac96ac4cc707",
+      "size_bytes": 385
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/003_b02.aig",
+      "sha256": "857262cfc30a7432a7cab14ef033c1613f88cdab807c1eba44bb66faf170d041",
+      "size_bytes": 338
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/004_b02_opt.aig",
+      "sha256": "7af56235e84e510be54c8f8c6796d51f3ecc8aca2d7fe092b83496446e5fe60b",
+      "size_bytes": 343
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/005_b03.aig",
+      "sha256": "0894aeea4f345562bb37f70006b3775e93e579588f174e528f9ee2e0d29a6e91",
+      "size_bytes": 703
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/006_b03_opt.aig",
+      "sha256": "ea525470ef8605fe9961edfb21394dbf84663b5bda7a53ad99d4175c0ecbfe70",
+      "size_bytes": 707
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/007_b04.aig",
+      "sha256": "78ac0d8868f34ac1400e55fd9163425d0e267267e23a35783982d04e2cc67aac",
+      "size_bytes": 2007
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/008_b04_opt.aig",
+      "sha256": "e3136f02e875f1196b4cc22972c2d2b4fb8134086ae23969e052cdea109c3d7c",
+      "size_bytes": 1978
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/009_b05.aig",
+      "sha256": "522289925e67aea92fb6fa613d240aa2abf51c666af4b447214bbc2dba73676a",
+      "size_bytes": 2594
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/010_b05_opt.aig",
+      "sha256": "1c0cb3167bebe9af0a616ba386a62c99f9c0e9651c9a6379ea3326cc9e930c14",
+      "size_bytes": 1843
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/011_b06.aig",
+      "sha256": "7e634ad138f29d01a05ca3b775e04212cdc2fa3280c337ba8d68fe0ba087d770",
+      "size_bytes": 412
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/012_b06_opt.aig",
+      "sha256": "7195fa5a54fe8ecc118a9932be6085c25c9f40466a3cfbf24b35859761e9c34a",
+      "size_bytes": 417
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/013_b07.aig",
+      "sha256": "22037b219287542aeead3842d897d17dc0bd041ac1fe1797b6e79b02efcc713c",
+      "size_bytes": 1398
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/014_b07_opt.aig",
+      "sha256": "58e6332bdc9b80b365242e30da66c066686494c61d923ccb011b1eb2f9cce9cb",
+      "size_bytes": 1397
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/015_b08.aig",
+      "sha256": "d15f0d1bb3a692b52f15f1962c91db91b5a0a5cca4133c5236f884de7550a926",
+      "size_bytes": 731
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/016_b08_opt.aig",
+      "sha256": "ca1eec403262ec1db35470c5ea58d5f162ead4eb1d0e2a99252278dc684ef23e",
+      "size_bytes": 720
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/017_b09.aig",
+      "sha256": "85f4d70785a5b021fd7ba5ea947dbd7af524ec2825d7232c4c473468761ee77c",
+      "size_bytes": 725
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/018_b09_opt.aig",
+      "sha256": "9002df6a23f206617cbdff09d3466d77a6538248f76b60448f611464c48528f9",
+      "size_bytes": 723
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/019_b10.aig",
+      "sha256": "5682ecca631c8f00a8500b3ed18796d19cbf77e66070bb1418f447ca9ac2ae8b",
+      "size_bytes": 802
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/020_b10_opt.aig",
+      "sha256": "890487c74b4e7912b5480a7f5f360ec42d4568c157c9b4129f8c5591fb68cebb",
+      "size_bytes": 784
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/021_b11.aig",
+      "sha256": "1375cb56b9216019723edeada55e7a8c3ac2677bb19027e01b08b44b0dc0e412",
+      "size_bytes": 2008
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/022_b11_opt.aig",
+      "sha256": "a89618cca902f4c7f77ccd695d8c567bde9fbf5387432bce2167f25bce23d905",
+      "size_bytes": 1822
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/023_b12.aig",
+      "sha256": "6e037abc5a260cb2f17f00ca5950f3f2e7791a8702f729cdad47eb3f5561dd4d",
+      "size_bytes": 3543
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/024_b12_opt.aig",
+      "sha256": "f42922c3ed798b8275da5b36b47bb0c72746c34c051022da8d7f713029f901e5",
+      "size_bytes": 3511
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/025_b13.aig",
+      "sha256": "854fefcd4edc4ff7aa47c4977972fa27fbf54e34fe7ffe5e746dd20fc8065018",
+      "size_bytes": 1212
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/026_b13_opt.aig",
+      "sha256": "23a8c7bdbcc1979f94c301f56755e187c1f8afc5c7ae2ad620d5cc7df4b71aaf",
+      "size_bytes": 1171
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/027_b14.aig",
+      "sha256": "a4f19e41a5bac24c5f404e6e6f61762e5b2a565d2e491a4bc443f55ec03404d4",
+      "size_bytes": 18615
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/028_b14_opt.aig",
+      "sha256": "30fa1b7dc18f92fac8fb60c0fc02efe8cfa626c92efffe51a5effc526a68e5db",
+      "size_bytes": 18100
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/029_b15.aig",
+      "sha256": "68562468ad00a063996f04e66e749500bed9609494ec873162399570f4e4eecf",
+      "size_bytes": 26481
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/030_b15_opt.aig",
+      "sha256": "d3aa3a8eabf33f8f84d5fde7fb288e0a174e5669672e0db525cbe9875862cd51",
+      "size_bytes": 26393
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/031_b17.aig",
+      "sha256": "f524163dab0ffd307524d61aa6ad54ef2849f99c3cf020ee966ac4c0c005fe91",
+      "size_bytes": 92009
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/032_b17_opt.aig",
+      "sha256": "ccb2e1d6397503da44bc6166c8e17ac9b735790ea9ecb9210a598d3da2f5eac6",
+      "size_bytes": 91767
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/033_b20.aig",
+      "sha256": "72c4f5ffd6e4569e16a693709c75d74c4264406d8b4b76703c83efb73f5a3eaa",
+      "size_bytes": 37105
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/034_b20_opt.aig",
+      "sha256": "9b7f605503f5a770271555ebdf7e397c6426059f0cf1812744704b53bb94e787",
+      "size_bytes": 40709
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/035_b21.aig",
+      "sha256": "48e4f15782d492a788499a2cdb2a6fce909b22d39ef34de1ab73e9ec070ec004",
+      "size_bytes": 38762
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/036_b21_opt.aig",
+      "sha256": "c4aa68286123b75be60ea533ad02d4648f143651705b9011be91446181f38f37",
+      "size_bytes": 40765
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/037_b22.aig",
+      "sha256": "4366a0749ebb8f9e8d7b590ff14115c029dcd975d8ce37aa9b296bea962c0a8b",
+      "size_bytes": 56767
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/038_b22_opt.aig",
+      "sha256": "8a8bbaaeecd49b2ddb71f0127cea5335b3a4ed9498e2cca0c7e3fa8e36bcc714",
+      "size_bytes": 58068
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/039_ac97_ctrl.aig",
+      "sha256": "9a1831b4d5950a96bba3f361dc995e05e426ddd0fa6859fb2a617038b0899850",
+      "size_bytes": 111111
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/040_aes_core.aig",
+      "sha256": "3b569aa93fd892ac489c2f2b527789845ae1b5b2cce58017c5014b7a2f5833d3",
+      "size_bytes": 138616
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/041_des_area.aig",
+      "sha256": "daf9c68baeea2843892436a32366a566ca172d110f0e813c90e9ba51845ca459",
+      "size_bytes": 27817
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/043_ethernet.aig",
+      "sha256": "108f24b772fc1277c243c8daa211b7ec3a457cd1c7610906eca2e396148c3505",
+      "size_bytes": 640601
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/044_i2c.aig",
+      "sha256": "a4baf8b9afd7fd75cad1c369b8e67ddbaef17e6e1525489f2c152f18f037fb30",
+      "size_bytes": 8397
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/045_mem_ctrl.aig",
+      "sha256": "cc527e58c9f3a7b6846a2143b324d839197b3dc410dc84389055d439b42e02b7",
+      "size_bytes": 103975
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/047_pci_spoci_ctrl.aig",
+      "sha256": "ccf0d8a9b324a67e0e9180b2e4c7d5b5a96ca9abf39c083447274ad965aa0b54",
+      "size_bytes": 9060
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/048_sasc.aig",
+      "sha256": "8286a4583ac3745e1e3932ba0c3f49a87c3c968bc9af49f771fec96aae60a273",
+      "size_bytes": 5242
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/049_simple_spi.aig",
+      "sha256": "ea429664fe495206333b25005c7fe6ad9930f40a7b0f2fb2287d85d194e03a71",
+      "size_bytes": 6703
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/050_spi.aig",
+      "sha256": "87dfe8396c5326c1f904823fa97e37d421e76495385852968e737e6bd75d3b8d",
+      "size_bytes": 25875
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/051_ss_pcm.aig",
+      "sha256": "4258eef77d4258faba4be428c4d236a42eb7b7cc4c9bd158d99851cfeb42ac7a",
+      "size_bytes": 3353
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/052_steppermotordrive.aig",
+      "sha256": "8b98f697de0ceaf539f54cc9a185e58863d0019e9718130778e139a6110ba85d",
+      "size_bytes": 1425
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/053_systemcaes.aig",
+      "sha256": "32b5de48dd3f24b8f5de0bbd23ad23fdd4e9ca6d489a580323a0f4370dd3bb4e",
+      "size_bytes": 81452
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/054_systemcdes.aig",
+      "sha256": "9ddc955545c19f468379be67ec3f636f2c9c11ca06bc07a4cdf07ff7ea02225f",
+      "size_bytes": 17036
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/055_tv80.aig",
+      "sha256": "b81b87cb84009eb0b504e87392007fb38d7ed0b98addf4b50189c0c99b0fc704",
+      "size_bytes": 63649
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/057_usb_phy.aig",
+      "sha256": "bd8a87176e19c0b9dd83a4fab4245f89045d6380a3d53d2077fcc6d5764c0e89",
+      "size_bytes": 3456
+    },
+    {
+      "path": "research/stran2-guide-20261002/inputs/loaded/060_wb_dma.aig",
+      "sha256": "8e90d3dfae0df1bbe4f245237370575693d2bd12f5a71153685183cd76f56380",
+      "size_bytes": 29639
+    },
+    {
+      "path": "research/stran2-guide-20261002/joint_cut_protocol_20261001.json",
+      "sha256": "697232eed6c5ab77fcd01c93d0cc2a0f46f2448c7a31772a9263eef40ecf41b6",
+      "size_bytes": 2963
+    },
+    {
+      "path": "research/stran2-guide-20261002/mem_ctrl_independent_review/certificate_transport.json",
+      "sha256": "06ed6dad59f02ac8426ab92692f5376b7de5ad573cfe8fefa14ce0ddc0a07534",
+      "size_bytes": 6708
+    },
+    {
+      "path": "research/stran2-guide-20261002/mem_ctrl_independent_review/review.json",
+      "sha256": "711ad9aca0addfacb079dfd164ff08632457d72523b97e0fbb7f5dc04d5b21d9",
+      "size_bytes": 496168
+    },
+    {
+      "path": "research/stran2-guide-20261002/new58_unified/all58_case_metrics.csv",
+      "sha256": "7c677615cb82db0ee6f2bb2877c1ce828db790964f0b89118cf28e4561a36036",
+      "size_bytes": 46816
+    },
+    {
+      "path": "research/stran2-guide-20261002/new58_unified/final_results.json",
+      "sha256": "836121917ff8bd594fa745b8a1d3ae8d35b29c497a181fa4d106ddf59b946f34",
+      "size_bytes": 186054
+    },
+    {
+      "path": "research/stran2-guide-20261002/run_cut_image.py",
+      "sha256": "89d0491b79417c28269a498ce819cc5796ab485ee0046544aac9034cb782d2bc",
+      "size_bytes": 1252
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/build_library.py",
+      "sha256": "c1eb6099775a961348c2ee86471b0b466d4835013163e107e327239800d6be2f",
+      "size_bytes": 3827
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/completion.py",
+      "sha256": "c10132fc945d646030383fb4f542d4fede7beb7e2ccad64672037c3035c56b11",
+      "size_bytes": 2423
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/diagnose.py",
+      "sha256": "6724ca1b3f4b159442a1626cacb6af7d5e97fcbc3c162b00804617bbfa1d48e8",
+      "size_bytes": 12005
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/final_results.json",
+      "sha256": "a99b5791fa392b601ed4d49b3c88b31990f9dd5ffd7ee39a49ace296f298f2ba",
+      "size_bytes": 440985
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/interaction/diagnose.py",
+      "sha256": "45c74b90fad8fdf0b52bef96d5bc1e2b873bc9d163f6cf58750ffa890fb5ac89",
+      "size_bytes": 12391
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/interaction/final_results.json",
+      "sha256": "e2aa898d7b0aefe35da3f7e13a4b1c8dbbf3b1c123dc62413c04d0fea478a54b",
+      "size_bytes": 190704
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/interaction/full_care.py",
+      "sha256": "06f92a7be9e20432f643bf2c929078a586e537e3dba559189f0b237a0451c87c",
+      "size_bytes": 2821
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/interaction/run.py",
+      "sha256": "7ccf763adc5aa70f7b1b6bd565a95290d364ccadeccfdb8c6c26945fd81164ec",
+      "size_bytes": 5087
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/interaction/summarize.py",
+      "sha256": "86c63bd0257e9db047adfca4657c0e89b9315cdd97d22bca3c4f53dfddb29bb7",
+      "size_bytes": 8494
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/library.json",
+      "sha256": "9e38d025a57c6cff8b6545d3a7c66eac43f88d79fe00b380c504047e465b785b",
+      "size_bytes": 1818181
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/mechanism/final_results.json",
+      "sha256": "749d4b8b2ce28369f8409e5ba6ae307832d0590485e7a4d0051ff688d798e3d4",
+      "size_bytes": 334613
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/novelty_attribution.json",
+      "sha256": "6b7942b09a96beb1154d5c7575a4877bdb4dbac4eb308aed17ed8a41d8f68cd4",
+      "size_bytes": 23468
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/run.py",
+      "sha256": "728f6414c327b6ecf6ae76dd3d42b4f7ba6fd58030f6240a94f4ce2f160a3e23",
+      "size_bytes": 5032
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_aig3_completion/summarize.py",
+      "sha256": "dd9fe5a08e63856c8f3a73ba4bf1bf69519d4d577fe7e08b68f3a8c72e793ba6",
+      "size_bytes": 5841
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_cut2/query_solver.c",
+      "sha256": "87c8ebc8669b1253c2edf1092bcb72e9829b547f80cc94653e5fda4cd501cdc1",
+      "size_bytes": 1228
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_synthesis/guide.py",
+      "sha256": "be5be2d861af4d5ef5105d17baf99d016e9ef55801b03909f9351cc26063c268",
+      "size_bytes": 24879
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_care_synthesis/scan_exact_care.py",
+      "sha256": "bb6abc7a08d1275c2567237c412c4284e8cc69a54f0315f393edcd5c19d88854",
+      "size_bytes": 8193
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/costs.json",
+      "sha256": "4d2f634935695c68b199b3d2b176209a4c8eff3750f854b76d1325f50616b765",
+      "size_bytes": 129651
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/diagnose.py",
+      "sha256": "6591e7ca66fbdaca907bb61102489c98052f2e602e20afd94ae4dfbbf3fb4b8f",
+      "size_bytes": 15777
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/final_results.csv",
+      "sha256": "ca8f554bf8ffcfdefc3453c54015bb68bdf3e504e46b4848f26563a0f9c7bdbc",
+      "size_bytes": 32105
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/final_results.json",
+      "sha256": "71327521b4c95170ee9e912a604ac2ad920dadd320c9fe098c3bb9828f11c721",
+      "size_bytes": 458650
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/run.py",
+      "sha256": "923842cca7f7885c9042c358aa90a6899012deb21204d65a3ff5616261ab11d5",
+      "size_bytes": 5177
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/run_full.py",
+      "sha256": "034b855ffab1c4e3edf940ee7d5b6ad42571841cfacb29e1a2dcdfc370aec859",
+      "size_bytes": 2659
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/selftest.py",
+      "sha256": "d880c060da966aef11ce1dc5e21866093d4f55e27fa468c56bbaf18bb7aa9585",
+      "size_bytes": 2817
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/source_compare.py",
+      "sha256": "a4ee453cfc812889e99c664ccdbe9a366d57e700393c83abf178edf60ae4e102",
+      "size_bytes": 3915
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/source_comparison.json",
+      "sha256": "db724cd3fdc6193891e792330c4fbd511db61fec741cc0d804c9f9460340abfd",
+      "size_bytes": 44564
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image/summarize.py",
+      "sha256": "a437326b069a221b677a9e016e12f4b5acb5ca43615af207554197b1dad15494",
+      "size_bytes": 5788
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image_independent/alias_audit/result.json",
+      "sha256": "34603caee8cc8ed30f02f0cd02520f704541310ba556326929505a937082b00f",
+      "size_bytes": 81616
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image_independent/full_comparison_review.json",
+      "sha256": "1532a4c1e9141cbf2e208fc0e148abb536611bf5e8a4e763c014c4c78bb83c97",
+      "size_bytes": 47790
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.source.tar.gz",
+      "sha256": "62b1b0c2a259ca68c2473d5c875fac6c321b840611cf024f99d177e79c5f4220",
+      "size_bytes": 7988479
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/status.json",
+      "sha256": "3f41b47b1cac259d5c4703d9fa4b8bcfb11449d950719cc2fcd05a9db87daf31",
+      "size_bytes": 2982
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image_runtime/paused_attempt.json",
+      "sha256": "033b1aba36651ec764cb64c097f1dfc138a11455a1c836631c959322a36ec2a9",
+      "size_bytes": 6475
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image_runtime/prepare.py",
+      "sha256": "f4f956750b681d7b691bbe63978b334e07cf28a3a53f11386a47830d4fdb9518",
+      "size_bytes": 9474
+    },
+    {
+      "path": "research/stran2-guide-20261002/seq_cut_image_runtime/source.patch",
+      "sha256": "2ba0754525513caa167f195b592fdf5b6a1bee67dd8962f5ee5562c9fbca878d",
+      "size_bytes": 9599
+    },
+    {
+      "path": "research/stran2-guide-20261002/teacher_adaptive_tools/teacher_bmc.py",
+      "sha256": "197bfab8b547e620c9eb9b7c8921f96b09b98fa10ddb01eacb9825ca343a0b60",
+      "size_bytes": 29440
+    },
+    {
+      "path": "STRAN2.md",
+      "sha256": "f5acac7969e9a45e1a88704173b5f4dc9191b66353c38d8abb4a3ecfa83a4584",
+      "size_bytes": 152734
+    },
+    {
+      "path": "AGENTS.md",
+      "sha256": "63359a21dea10307fcd38fcf31b6b341b2b41969caaa99649831de011ef7b19c",
+      "size_bytes": 1260
+    }
+  ],
+  "portable_case_count": 55,
+  "schema": 1,
+  "snapshot": "2026-10-02 Asia/Shanghai"
+}

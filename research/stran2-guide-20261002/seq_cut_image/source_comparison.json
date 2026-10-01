@@ -1,0 +1,1655 @@
+{
+  "cases": [
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "001_b01.aig",
+      "full_result_sha256": "1c9ca5675abd7c3f9e7cd51f2b13e3fe46560264901fb65521d39ec34a2f0093",
+      "last_saved_stage": "complete",
+      "loaded_AND": 40,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "36ccca704ba404497a4fbbef2e682541cb4edb386913367e2e083df7b133df2b"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "002_b01_opt.aig",
+      "full_result_sha256": "c110ee30fd250b2b445167b7d5916a951bc0893ed6417766edd2b1a7877ed2ea",
+      "last_saved_stage": "complete",
+      "loaded_AND": 39,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "9978b68068575b9a9b4fe54b9b74f175377d7ccbf805dc458bad513f8966a087"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "003_b02.aig",
+      "full_result_sha256": "c8f504707fc2e7209d3f140ace6091c422e76e4a14d29ebacbcb16f7f6951640",
+      "last_saved_stage": "complete",
+      "loaded_AND": 21,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "9f26af70ae2283bf3e9f1a8b70829dfe45f5c1c562a0cb69d1a924dfa0d5be84"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "004_b02_opt.aig",
+      "full_result_sha256": "499bb4d063abcb710c8de5a011ee701241ab131bfc654b8bc6f663dca76a0f36",
+      "last_saved_stage": "complete",
+      "loaded_AND": 21,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "85a4f123cb20fed3328e7151b0c26bac2f1aa06c7dae7ac6a126982331873914"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "005_b03.aig",
+      "full_result_sha256": "730d21b088294ac600223f56d1755e2b466cae4c541822cc4e9466139874d7b5",
+      "last_saved_stage": "complete",
+      "loaded_AND": 128,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 4,
+          "out": -8,
+          "recipe": [
+            47,
+            73,
+            43,
+            46,
+            -3,
+            -5,
+            89,
+            -6
+          ],
+          "root": 46
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 1,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 3
+      },
+      "prior_oracle_sha256": "0d8c0e748cc591e8fb13aae9dcdcec67ff87142b8b2a85e4c7b18c97792cc08c"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "006_b03_opt.aig",
+      "full_result_sha256": "b2b1b276c643d303fed9a021a78b5eab4160f2d2d243aca4c337d4572ac433ba",
+      "last_saved_stage": "complete",
+      "loaded_AND": 128,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 4,
+          "out": -8,
+          "recipe": [
+            45,
+            71,
+            41,
+            44,
+            -3,
+            -5,
+            87,
+            -6
+          ],
+          "root": 45
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 1,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 3
+      },
+      "prior_oracle_sha256": "b964f353fe08b2d05a1d35b2a46eb7d5d65ed81e1271e9dcba4238df076559d6"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "007_b04.aig",
+      "full_result_sha256": "9e31fd05d0498ef0b158f18b67a2353bb25c4ab791fa222b00863343beaab5f7",
+      "last_saved_stage": "complete",
+      "loaded_AND": 546,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 2,
+          "out": -5,
+          "recipe": [
+            25,
+            216,
+            8,
+            -3
+          ],
+          "root": 111
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 2,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "not-generated": 1,
+        "retained-free-SAT": 16
+      },
+      "prior_oracle_sha256": "71ef71985da5d698fbe7d40e7c1f4582f189b383174352cfecad57ff5f84e5ab"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "008_b04_opt.aig",
+      "full_result_sha256": "fd2ef846bf20bae55edf1521d60915c75ee3b615d84901da405a120ec9298ea0",
+      "last_saved_stage": "complete",
+      "loaded_AND": 524,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 2,
+          "out": -5,
+          "recipe": [
+            25,
+            216,
+            8,
+            -3
+          ],
+          "root": 111
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 2,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "not-generated": 1,
+        "retained-free-SAT": 16
+      },
+      "prior_oracle_sha256": "955ca616620d8b0df2489bf1853975422fd7eb06dea2c392481aa5fae303a297"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "009_b05.aig",
+      "full_result_sha256": "0daec1de590fae03d30928acfbf2d9a744056a6bb06583cb7d1239c2d2e38b8d",
+      "last_saved_stage": "complete",
+      "loaded_AND": 830,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            2,
+            66,
+            69,
+            -2,
+            63,
+            -5
+          ],
+          "root": 546
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 1,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 2
+      },
+      "prior_oracle_sha256": "b96b0cde3e29eb2a02c226d8beb07119084e740961af5702fa9cfcb5cd007afe"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "010_b05_opt.aig",
+      "full_result_sha256": "4f802b272b8429cf341e4a6e9c527698cc90444fce79146bf7e86bf618f3a9d1",
+      "last_saved_stage": "complete",
+      "loaded_AND": 507,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            2,
+            66,
+            69,
+            -2,
+            63,
+            -5
+          ],
+          "root": 496
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 1,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 2
+      },
+      "prior_oracle_sha256": "bd4a6a6cacd4fb08798e31cf4a819cdeecae0a2cc60a32efa5481ca7271b244b"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "011_b06.aig",
+      "full_result_sha256": "d742f8d3347dfe85b9576558e9741d84c68b60676d2d96e9f5aacf876b07a439",
+      "last_saved_stage": "complete",
+      "loaded_AND": 42,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "c20a71a436f0f54f93a58cbcf46f30d2f0c935e6e3a749e60be20e9ce14e08c5"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "012_b06_opt.aig",
+      "full_result_sha256": "ae7527b38211c738f70307012221a6ba20d18fa6e80240fe7d2766ea363d7169",
+      "last_saved_stage": "complete",
+      "loaded_AND": 42,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "d73195c32a753825d97dcd834085dbc5ddfd747fa0136dc4bdc93006aa9f4d34"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "013_b07.aig",
+      "full_result_sha256": "809c8591dc9d009666a01107812838b1690aee216204be9afb24eca7d503f16d",
+      "last_saved_stage": "complete",
+      "loaded_AND": 365,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "cdb33f20533e9821fa37670b6d9271f7adf731b39d46c335095856327e3708ae"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "014_b07_opt.aig",
+      "full_result_sha256": "e15c96874060dbcd7273310378a08ef23dc9c5f6c2b14048b5904330976daf4a",
+      "last_saved_stage": "complete",
+      "loaded_AND": 359,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "9687cdb3552c06dffd611d41d195ada1a968cefde0820045abe626c55598b5cc"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "015_b08.aig",
+      "full_result_sha256": "d28f99a55ccd3df4e1bc3cb849b5036d8edcae671e79eb405e9a6c276e94a6a7",
+      "last_saved_stage": "complete",
+      "loaded_AND": 155,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "cd0d6f9c31e455dc31eb5cd490b339a9b879ff62559030ae95f193438d6beafe"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "016_b08_opt.aig",
+      "full_result_sha256": "57432995731d00da7fe37ce84aa7797dc5c16eb3bb150a72a4aaeb9597e13114",
+      "last_saved_stage": "complete",
+      "loaded_AND": 147,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "d7fd5654b87fbfd58daa4580edda5456de0da591d973615f7ee7618e41f01560"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "017_b09.aig",
+      "full_result_sha256": "8cec6924ac7c953dba45aaa1a69f1479f3d80a37489799bf62afef1ef96467ec",
+      "last_saved_stage": "complete",
+      "loaded_AND": 136,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 3
+      },
+      "prior_oracle_sha256": "9628265d0b958b13fbaa8a8f76ceddec57c3b73c6a92e9bbac1323af22dd70bf"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "018_b09_opt.aig",
+      "full_result_sha256": "32ab949cea177aa79aea590d0d6b48f15d6d909dea62ae6f57c1fa7da318df7b",
+      "last_saved_stage": "complete",
+      "loaded_AND": 135,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 5
+      },
+      "prior_oracle_sha256": "822a92b5fc7e40bbb485f050204de26b8cd90f9ec00595f2015de376acaddd7e"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "019_b10.aig",
+      "full_result_sha256": "60f35000921779b3a67db0ad6ef3826119936a73d5d0a56539adda0d26400518",
+      "last_saved_stage": "complete",
+      "loaded_AND": 180,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "c260416152792f4ef820d3f04a30a0d0dd94c51fa0c7f81ceb772aa563f11599"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "020_b10_opt.aig",
+      "full_result_sha256": "4bc5e67a4743f810711ccda1dcde17a015f79c95696013ad85c6fcde6427a545",
+      "last_saved_stage": "complete",
+      "loaded_AND": 174,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 1,
+          "out": -2,
+          "recipe": [
+            27,
+            58
+          ],
+          "root": 109
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 1,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 1,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "1cc67f1a4abb0e6378f3bf33d3c8533820c5d4ca45459f5a3b1195b94d6ee569"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "021_b11.aig",
+      "full_result_sha256": "377c4c5f100ab854a8eea354e52420a9d18424c7667676beba3d0054918de7af",
+      "last_saved_stage": "complete",
+      "loaded_AND": 611,
+      "new_identity": [
+        {
+          "conservative_gain": 6,
+          "gates": 2,
+          "out": -4,
+          "recipe": [
+            311,
+            387,
+            404,
+            -2
+          ],
+          "root": 203
+        },
+        {
+          "conservative_gain": 5,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            75,
+            311,
+            387,
+            402,
+            -2,
+            -4
+          ],
+          "root": 203
+        },
+        {
+          "conservative_gain": 5,
+          "gates": 2,
+          "out": -4,
+          "recipe": [
+            25,
+            395,
+            404,
+            -2
+          ],
+          "root": 203
+        },
+        {
+          "conservative_gain": 4,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            25,
+            75,
+            395,
+            402,
+            -2,
+            -4
+          ],
+          "root": 203
+        },
+        {
+          "conservative_gain": 6,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            45,
+            587,
+            552,
+            -3,
+            42,
+            -4
+          ],
+          "root": 301
+        },
+        {
+          "conservative_gain": 5,
+          "gates": 4,
+          "out": -8,
+          "recipe": [
+            45,
+            587,
+            402,
+            -3,
+            42,
+            74,
+            -4,
+            -6
+          ],
+          "root": 301
+        },
+        {
+          "conservative_gain": 5,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            45,
+            587,
+            552,
+            592,
+            -3,
+            -4
+          ],
+          "root": 301
+        },
+        {
+          "conservative_gain": 4,
+          "gates": 4,
+          "out": -8,
+          "recipe": [
+            45,
+            587,
+            402,
+            592,
+            74,
+            -3,
+            -4,
+            -6
+          ],
+          "root": 301
+        },
+        {
+          "conservative_gain": 4,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            45,
+            587,
+            552,
+            -3,
+            595,
+            -4
+          ],
+          "root": 301
+        },
+        {
+          "conservative_gain": 3,
+          "gates": 4,
+          "out": -8,
+          "recipe": [
+            45,
+            587,
+            402,
+            -3,
+            74,
+            595,
+            -4,
+            -6
+          ],
+          "root": 301
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 10,
+          "out": -21,
+          "recipe": [
+            281,
+            553,
+            43,
+            553,
+            45,
+            281,
+            587,
+            -6,
+            43,
+            44,
+            43,
+            586,
+            -3,
+            -5,
+            -9,
+            -11,
+            -14,
+            -16,
+            -13,
+            -18
+          ],
+          "root": 302
+        },
+        {
+          "conservative_gain": 4,
+          "gates": 6,
+          "out": -12,
+          "recipe": [
+            42,
+            44,
+            552,
+            -2,
+            42,
+            552,
+            586,
+            -6,
+            551,
+            -5,
+            -9,
+            -10
+          ],
+          "root": 302
+        },
+        {
+          "conservative_gain": 3,
+          "gates": 6,
+          "out": -12,
+          "recipe": [
+            44,
+            552,
+            592,
+            -2,
+            552,
+            586,
+            592,
+            -6,
+            551,
+            -5,
+            -9,
+            -10
+          ],
+          "root": 302
+        },
+        {
+          "conservative_gain": 2,
+          "gates": 6,
+          "out": -12,
+          "recipe": [
+            44,
+            552,
+            595,
+            -2,
+            552,
+            586,
+            595,
+            -6,
+            551,
+            -5,
+            -9,
+            -10
+          ],
+          "root": 302
+        }
+      ],
+      "new_vs_old_three_source_union": 14,
+      "new_vs_pair": 14,
+      "new_vs_union_roots": 3,
+      "new_vs_union_selected": 2,
+      "pair_SAT_disposition": {
+        "not-generated": 4,
+        "retained-free-SAT": 4
+      },
+      "prior_oracle_sha256": "080311265f99ef655629aebfe1d1402fa6975dcd03287ed39ce8203f38c13017"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "022_b11_opt.aig",
+      "full_result_sha256": "42e0d3190caa8d5a21194a39f6178f6f3d507179c8bdfb4b756de363ae40a143",
+      "last_saved_stage": "complete",
+      "loaded_AND": 526,
+      "new_identity": [
+        {
+          "conservative_gain": 4,
+          "gates": 5,
+          "out": -10,
+          "recipe": [
+            323,
+            482,
+            24,
+            39,
+            482,
+            -4,
+            -3,
+            -7,
+            521,
+            -8
+          ],
+          "root": 261
+        },
+        {
+          "conservative_gain": 3,
+          "gates": 2,
+          "out": -4,
+          "recipe": [
+            325,
+            482,
+            521,
+            -3
+          ],
+          "root": 261
+        },
+        {
+          "conservative_gain": 4,
+          "gates": 7,
+          "out": -15,
+          "recipe": [
+            323,
+            482,
+            521,
+            -2,
+            24,
+            39,
+            482,
+            -6,
+            39,
+            520,
+            -5,
+            -9,
+            -11,
+            -12
+          ],
+          "root": 263
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 1,
+          "out": -2,
+          "recipe": [
+            338,
+            364
+          ],
+          "root": 451
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 1,
+          "out": -2,
+          "recipe": [
+            333,
+            364
+          ],
+          "root": 451
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 2,
+          "out": -4,
+          "recipe": [
+            338,
+            364,
+            905,
+            -3
+          ],
+          "root": 453
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            338,
+            364,
+            899,
+            -3,
+            905,
+            -4
+          ],
+          "root": 454
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 4,
+          "out": -8,
+          "recipe": [
+            338,
+            364,
+            885,
+            -3,
+            899,
+            905,
+            -4,
+            -6
+          ],
+          "root": 455
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 1,
+          "out": -2,
+          "recipe": [
+            54,
+            178
+          ],
+          "root": 512
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            54,
+            178,
+            66,
+            179,
+            -3,
+            -5
+          ],
+          "root": 513
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            66,
+            69,
+            54,
+            68,
+            -3,
+            -5
+          ],
+          "root": 513
+        }
+      ],
+      "new_vs_old_three_source_union": 11,
+      "new_vs_pair": 11,
+      "new_vs_union_roots": 8,
+      "new_vs_union_selected": 6,
+      "pair_SAT_disposition": {
+        "not-generated": 2,
+        "retained-free-SAT": 9
+      },
+      "prior_oracle_sha256": "049effc0d11f83fc91755687aa158f4cf47fd9c98f7328a5e071d7fdd72aaaf2"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "023_b12.aig",
+      "full_result_sha256": "d67d903f0a9fec88ad8e09b92fa8a4eaaeea3996c6b9fc2898a130cc47d2d200",
+      "last_saved_stage": "complete",
+      "loaded_AND": 1002,
+      "new_identity": [
+        {
+          "conservative_gain": 2,
+          "gates": 1,
+          "out": -3,
+          "recipe": [
+            850,
+            884
+          ],
+          "root": 1071
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 2,
+          "out": -5,
+          "recipe": [
+            801,
+            850,
+            859,
+            -2
+          ],
+          "root": 1071
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 2,
+          "out": -5,
+          "recipe": [
+            802,
+            804,
+            884,
+            -2
+          ],
+          "root": 1071
+        },
+        {
+          "conservative_gain": 2,
+          "gates": 2,
+          "out": -4,
+          "recipe": [
+            850,
+            884,
+            2137,
+            -3
+          ],
+          "root": 1072
+        },
+        {
+          "conservative_gain": 2,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            850,
+            884,
+            2116,
+            -3,
+            2137,
+            -4
+          ],
+          "root": 1073
+        }
+      ],
+      "new_vs_old_three_source_union": 5,
+      "new_vs_pair": 5,
+      "new_vs_union_roots": 3,
+      "new_vs_union_selected": 3,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "0b97e26d114da33f1f061df274f7278a099fc4e5d99e5ceef1c2027a3a01489d"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "024_b12_opt.aig",
+      "full_result_sha256": "b179568b13c8c6617f754c2727e4bd397456f30998d7ea28c56b77d165ae0e10",
+      "last_saved_stage": "complete",
+      "loaded_AND": 988,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "a6348207004ffa9d198ad523eb7c471b3138d64063b597fde77afcc22f65b74b"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "025_b13.aig",
+      "full_result_sha256": "7080706e1a6ec7622fb107115237d2a049f4e38ffccfa1da6e349d84daefb1fc",
+      "last_saved_stage": "complete",
+      "loaded_AND": 261,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "c2ffe2252048093cf76ae0bcdf344e330fce7450efc57228074c9eedfa4828c6"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "026_b13_opt.aig",
+      "full_result_sha256": "b6fe0100b9693c849560fe77d5d6e4df2e747ce54ee7c943d8dc458a41fd03ad",
+      "last_saved_stage": "complete",
+      "loaded_AND": 244,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "f257ce9019de4de9865293e2be5b26971034aa97f584c52fc182dae058476e0c"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "041_des_area.aig",
+      "full_result_sha256": "ed3b329dfb10a8df8223aa4ed0e952c82b28506694d707fc4e69c7eef0c0ec09",
+      "last_saved_stage": "complete",
+      "loaded_AND": 10133,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "d2768a352e7eea00ebf2a8e63b666051bc6960c74250f0b9df72175b217c4427"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "043_ethernet.aig",
+      "full_result_sha256": "50c527d09eee62863aa5946238609154b1f56f96f47f83d3d58161fbc111479f",
+      "last_saved_stage": "complete",
+      "loaded_AND": 195995,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "fc0f17a40ac9d3ac07eb9bacb6e424f8545f9034823c04cd77d836267e751bd0"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "044_i2c.aig",
+      "full_result_sha256": "b9bf536146d670f98468d1c0f3628f861678e7f184f1cb81f864143184f79ec1",
+      "last_saved_stage": "complete",
+      "loaded_AND": 2879,
+      "new_identity": [
+        {
+          "conservative_gain": 2,
+          "gates": 2,
+          "out": -4,
+          "recipe": [
+            85,
+            154,
+            1437,
+            -3
+          ],
+          "root": 723
+        },
+        {
+          "conservative_gain": 2,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            85,
+            154,
+            1434,
+            -3,
+            1437,
+            -4
+          ],
+          "root": 724
+        }
+      ],
+      "new_vs_old_three_source_union": 2,
+      "new_vs_pair": 2,
+      "new_vs_union_roots": 2,
+      "new_vs_union_selected": 2,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 19
+      },
+      "prior_oracle_sha256": "6cd66ca184c55852f7987f90ffed6743fcb11d31cca56d6aceb6e999b5af8609"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "048_sasc.aig",
+      "full_result_sha256": "9c4255f73e764129f986a2769fa181ccd9c2086a1f9c1b8a53faf054588b96f1",
+      "last_saved_stage": "complete",
+      "loaded_AND": 1757,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "b3cf3ad9aa4167355dc2fbe738c091e74ac3d9dba0c364d5f791275a15edc286"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "049_simple_spi.aig",
+      "full_result_sha256": "3fe656aad4f3386d0997eaa3866cbccf34bc50b7bd02593b05f3023d163bbaaa",
+      "last_saved_stage": "complete",
+      "loaded_AND": 2297,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 3
+      },
+      "prior_oracle_sha256": "837ed8619bbd9e0480026f496b56b468c5e502b36ebc7c6dfdbe94082322403d"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "051_ss_pcm.aig",
+      "full_result_sha256": "489f5809609798bcf6bf5fb2d3f60a4fae4121b500141e0cb86475ed2f63606b",
+      "last_saved_stage": "complete",
+      "loaded_AND": 993,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "a3f7b0a7ea10a8d2fc8ac3b0cbac068ce5c9858afa64f470d570df81516e5f10"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "052_steppermotordrive.aig",
+      "full_result_sha256": "bcdf2625d802d5abcebfc6b9f9c567d3c75e5453c7de48dcfea6d9126cf8eda5",
+      "last_saved_stage": "complete",
+      "loaded_AND": 414,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 4
+      },
+      "prior_oracle_sha256": "257fcc9ebafb2bc80850806991c7d0efa3fc45d744f246acf5db60d9f2954c3d"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "054_systemcdes.aig",
+      "full_result_sha256": "05c55e8a612c26ae125fbf23b5a7bcf924035d96a3b0bc7dc0d8ecf18bc33d32",
+      "last_saved_stage": "complete",
+      "loaded_AND": 6105,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "ae3aac225177d2316594c83f80e8646cb2d749936417b75a50950bb7e0a3618e"
+    },
+    {
+      "complete": true,
+      "family": "discovery",
+      "file": "057_usb_phy.aig",
+      "full_result_sha256": "cabbd8ea6db7a41924509cd56358394bc68f9a74120161865ab1c59563e1fc82",
+      "last_saved_stage": "complete",
+      "loaded_AND": 1063,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 5
+      },
+      "prior_oracle_sha256": "a1a8267444e1cd618fab99ee6aa0eb2e7eec23c3c5e54cc3e85edc9f4c0da2f1"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "027_b14.aig",
+      "full_result_sha256": "64926dc028d4757937a565bf8de7016f92bc1fd9f162a7fdd362fc74641b5585",
+      "last_saved_stage": "complete",
+      "loaded_AND": 6069,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "d1522f15ba9ee4be802e2b1994dd1201b24ae392a5fb80cb4871d1c1247a1041"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "028_b14_opt.aig",
+      "full_result_sha256": "55c8d4d4cefcf659658e478fcda6389f4d28b139c3bcff381461180fe432b2bf",
+      "last_saved_stage": "complete",
+      "loaded_AND": 5926,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "993e81f4a2a9d201ba9632e1993f9f398c247f887b5491f3a4918003275fa34b"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "029_b15.aig",
+      "full_result_sha256": "de95eb163dda8ca329e353cfbc8ae892f2f4825704f63d97f28869d608f9d51f",
+      "last_saved_stage": "complete",
+      "loaded_AND": 8432,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 1,
+          "out": -2,
+          "recipe": [
+            6719,
+            6769
+          ],
+          "root": 3386
+        }
+      ],
+      "new_vs_old_three_source_union": 1,
+      "new_vs_pair": 1,
+      "new_vs_union_roots": 1,
+      "new_vs_union_selected": 1,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "c17bbde5dc51e36d26db60420fd0a6910b4646352afc9a063c0aaaaffc6c30c1"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "030_b15_opt.aig",
+      "full_result_sha256": "dbf92f6d9a2ddeaf9d2f616fb91220ef47c004aa45145543580f7de602d6d90f",
+      "last_saved_stage": "complete",
+      "loaded_AND": 8417,
+      "new_identity": [
+        {
+          "conservative_gain": 1,
+          "gates": 2,
+          "out": -5,
+          "recipe": [
+            157,
+            2766,
+            159,
+            -3
+          ],
+          "root": 1386
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            157,
+            2766,
+            159,
+            2717,
+            -3,
+            -4
+          ],
+          "root": 1387
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 1,
+          "out": -2,
+          "recipe": [
+            896,
+            16010
+          ],
+          "root": 8008
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 3,
+          "out": -6,
+          "recipe": [
+            2726,
+            16011,
+            896,
+            16010,
+            -3,
+            -5
+          ],
+          "root": 8009
+        }
+      ],
+      "new_vs_old_three_source_union": 4,
+      "new_vs_pair": 9,
+      "new_vs_union_roots": 4,
+      "new_vs_union_selected": 2,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 7
+      },
+      "prior_oracle_sha256": "23f81c711f6c97d6a90c4d2bdf2d5539224cf9ddc3ce4af3820c064b8be015fc"
+    },
+    {
+      "complete": false,
+      "family": "holdout",
+      "file": "031_b17.aig",
+      "last_saved_stage": "full-image-SAT",
+      "loaded_AND": 27549,
+      "new_vs_old_three_source_union": null,
+      "new_vs_pair": null,
+      "new_vs_union_selected": null
+    },
+    {
+      "complete": false,
+      "family": "holdout",
+      "file": "032_b17_opt.aig",
+      "last_saved_stage": "full-image-SAT",
+      "loaded_AND": 27650,
+      "new_vs_old_three_source_union": null,
+      "new_vs_pair": null,
+      "new_vs_union_selected": null
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "033_b20.aig",
+      "full_result_sha256": "eb63511c52f6c9e9f4ddc2853aaeed4eca6e57681276b74f25ea5b424661aba6",
+      "last_saved_stage": "complete",
+      "loaded_AND": 12214,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "c65a6ba9bee0780f0eb73bc4e07bec9ca55def1d2ab63a62943ac56bfc50ab66"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "034_b20_opt.aig",
+      "full_result_sha256": "c6597bb9a7c6132623701836d4b41eaf95e4ffbba9b9e9c5c1196fa1f8def595",
+      "last_saved_stage": "complete",
+      "loaded_AND": 13440,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "659aad3e2d743be4f3e1097a64133db7d28be028d7e2633a5c87ca9f1eadfeb4"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "035_b21.aig",
+      "full_result_sha256": "77de3fc3067c5a83fa41c940e86ca26d7c8f14ce6ba14713b68bc8798435b40d",
+      "last_saved_stage": "complete",
+      "loaded_AND": 12776,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "6f5feebc8bc6b224e0db8647990076a61f5ca68c38b0ef14242b75c98a1a36fd"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "036_b21_opt.aig",
+      "full_result_sha256": "970a04ca3576949ed14d5e7e88358c43d419c429a16fb37fa5197168628f0d9c",
+      "last_saved_stage": "complete",
+      "loaded_AND": 13484,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "8be51e5085eac0adffc3316db841ad3ab153f2b7d128eb771f8ccc33ff9e5993"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "037_b22.aig",
+      "full_result_sha256": "0b9c9e55fae6ce25b07d16bb479713ee9ea6c145d5925b90551ec371813e6d68",
+      "last_saved_stage": "complete",
+      "loaded_AND": 18478,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 1
+      },
+      "prior_oracle_sha256": "c54df2b70559b53d7ff7905568052ed280cd603b2403710b2080c03941a9cc93"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "038_b22_opt.aig",
+      "full_result_sha256": "fcc433a90d16dace56442133a995c245764aec0ef05241a2725fbfc84bca1d61",
+      "last_saved_stage": "complete",
+      "loaded_AND": 19029,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "77693d2df318781666e6c67b01286e813c5eb22bb531b33c19e4a63ce9c37cd4"
+    },
+    {
+      "complete": false,
+      "family": "holdout",
+      "file": "039_ac97_ctrl.aig",
+      "last_saved_stage": "full-image-SAT",
+      "loaded_AND": 34300,
+      "new_vs_old_three_source_union": null,
+      "new_vs_pair": null,
+      "new_vs_union_selected": null
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "040_aes_core.aig",
+      "full_result_sha256": "827fe4cc399f0b6abd051e24645359526e4b559b3bb5de9395e98e4261a120e3",
+      "last_saved_stage": "complete",
+      "loaded_AND": 45779,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "286976a807534ee21488cb51a5ff5328847b937c4a181d7768bc92a3cf6b2885"
+    },
+    {
+      "complete": false,
+      "family": "holdout",
+      "file": "045_mem_ctrl.aig",
+      "last_saved_stage": "full-image-SAT",
+      "loaded_AND": 34059,
+      "new_vs_old_three_source_union": null,
+      "new_vs_pair": null,
+      "new_vs_union_selected": null
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "047_pci_spoci_ctrl.aig",
+      "full_result_sha256": "242e750a2e9c1e223a336ddf6435d6a103291fe3d5b77861edb2b4bd71ec2501",
+      "last_saved_stage": "complete",
+      "loaded_AND": 3319,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 1
+      },
+      "prior_oracle_sha256": "d51bfb07e8b5a33af187dc845ad8321c0bec0605c0e4363f06ea7a6a3ca2e323"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "050_spi.aig",
+      "full_result_sha256": "4c44dad597e9f438b9273733406729f83715d8d81e640dbe0e9b12db3e532407",
+      "last_saved_stage": "complete",
+      "loaded_AND": 9132,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {},
+      "prior_oracle_sha256": "f5a17512e98fc62e146a10aa77c2940733bf6dc90719b5849956391d0e6f43ee"
+    },
+    {
+      "complete": false,
+      "family": "holdout",
+      "file": "053_systemcaes.aig",
+      "last_saved_stage": "full-image-SAT",
+      "loaded_AND": 27879,
+      "new_vs_old_three_source_union": null,
+      "new_vs_pair": null,
+      "new_vs_union_selected": null
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "055_tv80.aig",
+      "full_result_sha256": "122915309b15c0c8cff3252f0ab220e3d3922a2aa2fe6c1a198674fa005eec88",
+      "last_saved_stage": "complete",
+      "loaded_AND": 22095,
+      "new_identity": [
+        {
+          "conservative_gain": 3,
+          "gates": 7,
+          "out": -14,
+          "recipe": [
+            5262,
+            13056,
+            13095,
+            -2,
+            5263,
+            13065,
+            13095,
+            -6,
+            13048,
+            13144,
+            -5,
+            -9,
+            -10,
+            -12
+          ],
+          "root": 6582
+        },
+        {
+          "conservative_gain": 2,
+          "gates": 4,
+          "out": -8,
+          "recipe": [
+            5262,
+            13056,
+            5263,
+            13065,
+            2160,
+            -3,
+            -5,
+            -6
+          ],
+          "root": 10828
+        },
+        {
+          "conservative_gain": 2,
+          "gates": 5,
+          "out": -10,
+          "recipe": [
+            5262,
+            13056,
+            5263,
+            13065,
+            2160,
+            -3,
+            21643,
+            -5,
+            -6,
+            -8
+          ],
+          "root": 10829
+        },
+        {
+          "conservative_gain": 1,
+          "gates": 6,
+          "out": -12,
+          "recipe": [
+            719,
+            12277,
+            5262,
+            13056,
+            5263,
+            13065,
+            2160,
+            -3,
+            -5,
+            -7,
+            -8,
+            -10
+          ],
+          "root": 10829
+        },
+        {
+          "conservative_gain": 2,
+          "gates": 6,
+          "out": -12,
+          "recipe": [
+            5262,
+            13056,
+            5263,
+            13065,
+            163,
+            2160,
+            21643,
+            -3,
+            -6,
+            -8,
+            -5,
+            -10
+          ],
+          "root": 10830
+        },
+        {
+          "conservative_gain": 3,
+          "gates": 7,
+          "out": -15,
+          "recipe": [
+            163,
+            2160,
+            5262,
+            13056,
+            -2,
+            -4,
+            5263,
+            13065,
+            -2,
+            -8,
+            21643,
+            -7,
+            -11,
+            -12
+          ],
+          "root": 10831
+        }
+      ],
+      "new_vs_old_three_source_union": 6,
+      "new_vs_pair": 6,
+      "new_vs_union_roots": 5,
+      "new_vs_union_selected": 5,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 1
+      },
+      "prior_oracle_sha256": "f184956daff496aa44ffa7ff053feb7f6a0d7ad93df9647bc65ca844d1898c5d"
+    },
+    {
+      "complete": true,
+      "family": "holdout",
+      "file": "060_wb_dma.aig",
+      "full_result_sha256": "b00dac08efc6a64ffa30f81166cf20526199b553a49b5f9ea824e17ecdfa8e45",
+      "last_saved_stage": "complete",
+      "loaded_AND": 9555,
+      "new_identity": [],
+      "new_vs_old_three_source_union": 0,
+      "new_vs_pair": 0,
+      "new_vs_union_roots": 0,
+      "new_vs_union_selected": 0,
+      "pair_SAT_disposition": {
+        "retained-free-SAT": 73
+      },
+      "prior_oracle_sha256": "e2c20101c49506a8873b35f841a43d1b762e7af5ddadd590bc27387d1f5394aa"
+    }
+  ],
+  "groups": {
+    "all55": {
+      "cases_with_new": [
+        "005_b03.aig",
+        "006_b03_opt.aig",
+        "007_b04.aig",
+        "008_b04_opt.aig",
+        "009_b05.aig",
+        "010_b05_opt.aig",
+        "020_b10_opt.aig",
+        "021_b11.aig",
+        "022_b11_opt.aig",
+        "023_b12.aig",
+        "044_i2c.aig",
+        "029_b15.aig",
+        "030_b15_opt.aig",
+        "055_tv80.aig"
+      ],
+      "complete": 50,
+      "new_vs_union": 50,
+      "planned": 55,
+      "selected_new_vs_union": 22,
+      "timeout_stages": {
+        "full-image-SAT": 5
+      }
+    },
+    "at_least10k": {
+      "cases_with_new": [
+        "055_tv80.aig"
+      ],
+      "complete": 10,
+      "new_vs_union": 6,
+      "planned": 15,
+      "selected_new_vs_union": 5,
+      "timeout_stages": {
+        "full-image-SAT": 5
+      }
+    },
+    "at_least10k_excluding_mem_b17": {
+      "cases_with_new": [
+        "055_tv80.aig"
+      ],
+      "complete": 10,
+      "new_vs_union": 6,
+      "planned": 12,
+      "selected_new_vs_union": 5,
+      "timeout_stages": {
+        "full-image-SAT": 2
+      }
+    }
+  },
+  "interpretation": "Exact syntax identity is bound to the same immutable original AIG. New recipe counts are opportunities only, not committed AND. The prior universe contains all original cut2/PDR3/GlobalRO exact recipes, not merely selected candidates. Absence here says nothing about native candidates never exported.",
+  "script_sha256": "a4ee453cfc812889e99c664ccdbe9a366d57e700393c83abf178edf60ae4e102",
+  "source_summary_sha256": "71327521b4c95170ee9e912a604ac2ad920dadd320c9fe098c3bb9828f11c721",
+  "status": "PASS"
+}

@@ -1,0 +1,637 @@
+{
+  "cases": 55,
+  "cases_with_exact_relation": 22,
+  "counts": {
+    "cut_roots": 113481,
+    "cuts": 838499,
+    "exact_checked": 1528,
+    "exact_cone_cap": 7879,
+    "exact_forbidden_patterns": 687,
+    "exact_ternary_relations": 634,
+    "sampled_distinct_triples": 495489
+  },
+  "hypothesis_cap_cases": 28,
+  "plan_sha256": "3ba98c30fae2da448b58ecee8fead263e7e8a8672a97208a7a86aa85803562c9",
+  "process_wall_sum_s": 44.54351930692792,
+  "results": [
+    {
+      "counts": {
+        "cut_roots": 15,
+        "cuts": 97,
+        "sampled_distinct_triples": 156
+      },
+      "file": "001_b01.aig",
+      "wall_s": 0.011696837842464447
+    },
+    {
+      "counts": {
+        "cut_roots": 17,
+        "cuts": 99,
+        "sampled_distinct_triples": 137
+      },
+      "file": "002_b01_opt.aig",
+      "wall_s": 0.010655976831912994
+    },
+    {
+      "counts": {
+        "cut_roots": 8,
+        "cuts": 40,
+        "exact_checked": 12,
+        "exact_forbidden_patterns": 12,
+        "exact_ternary_relations": 12,
+        "sampled_distinct_triples": 61
+      },
+      "file": "003_b02.aig",
+      "wall_s": 0.007903628051280975
+    },
+    {
+      "counts": {
+        "cut_roots": 8,
+        "cuts": 37,
+        "exact_checked": 10,
+        "exact_forbidden_patterns": 10,
+        "exact_ternary_relations": 10,
+        "sampled_distinct_triples": 60
+      },
+      "file": "004_b02_opt.aig",
+      "wall_s": 0.007501188665628433
+    },
+    {
+      "counts": {
+        "cut_roots": 36,
+        "cuts": 180,
+        "exact_checked": 62,
+        "exact_forbidden_patterns": 58,
+        "exact_ternary_relations": 53,
+        "sampled_distinct_triples": 687
+      },
+      "file": "005_b03.aig",
+      "wall_s": 0.14056113362312317
+    },
+    {
+      "counts": {
+        "cut_roots": 32,
+        "cuts": 157,
+        "exact_checked": 65,
+        "exact_forbidden_patterns": 55,
+        "exact_ternary_relations": 51,
+        "sampled_distinct_triples": 627
+      },
+      "file": "006_b03_opt.aig",
+      "wall_s": 0.13479071483016014
+    },
+    {
+      "counts": {
+        "cut_roots": 187,
+        "cuts": 1151,
+        "exact_checked": 55,
+        "exact_cone_cap": 86,
+        "exact_forbidden_patterns": 69,
+        "exact_ternary_relations": 55,
+        "sampled_distinct_triples": 4674
+      },
+      "file": "007_b04.aig",
+      "wall_s": 0.297806516289711
+    },
+    {
+      "counts": {
+        "cut_roots": 175,
+        "cuts": 1088,
+        "exact_checked": 55,
+        "exact_cone_cap": 38,
+        "exact_forbidden_patterns": 69,
+        "exact_ternary_relations": 55,
+        "sampled_distinct_triples": 4262
+      },
+      "file": "008_b04_opt.aig",
+      "wall_s": 0.26411471515893936
+    },
+    {
+      "counts": {
+        "cut_roots": 224,
+        "cuts": 1589,
+        "exact_checked": 70,
+        "exact_cone_cap": 85,
+        "exact_forbidden_patterns": 58,
+        "exact_ternary_relations": 58,
+        "sampled_distinct_triples": 6135
+      },
+      "file": "009_b05.aig",
+      "wall_s": 0.3737088181078434
+    },
+    {
+      "counts": {
+        "cut_roots": 206,
+        "cuts": 1453,
+        "exact_checked": 84,
+        "exact_cone_cap": 67,
+        "exact_forbidden_patterns": 65,
+        "exact_ternary_relations": 65,
+        "sampled_distinct_triples": 5919
+      },
+      "file": "010_b05_opt.aig",
+      "wall_s": 0.36403433606028557
+    },
+    {
+      "counts": {
+        "cut_roots": 15,
+        "cuts": 76,
+        "sampled_distinct_triples": 168
+      },
+      "file": "011_b06.aig",
+      "wall_s": 0.010483779013156891
+    },
+    {
+      "counts": {
+        "cut_roots": 15,
+        "cuts": 75,
+        "sampled_distinct_triples": 166
+      },
+      "file": "012_b06_opt.aig",
+      "wall_s": 0.026695527136325836
+    },
+    {
+      "counts": {
+        "cut_roots": 124,
+        "cuts": 903,
+        "exact_checked": 50,
+        "exact_cone_cap": 206,
+        "exact_forbidden_patterns": 38,
+        "exact_ternary_relations": 38,
+        "sampled_distinct_triples": 3743
+      },
+      "file": "013_b07.aig",
+      "wall_s": 0.25345832854509354
+    },
+    {
+      "counts": {
+        "cut_roots": 135,
+        "cuts": 933,
+        "exact_checked": 37,
+        "exact_cone_cap": 219,
+        "exact_forbidden_patterns": 25,
+        "exact_ternary_relations": 25,
+        "sampled_distinct_triples": 3813
+      },
+      "file": "014_b07_opt.aig",
+      "wall_s": 0.2508348599076271
+    },
+    {
+      "counts": {
+        "cut_roots": 56,
+        "cuts": 391,
+        "exact_checked": 1,
+        "exact_cone_cap": 16,
+        "sampled_distinct_triples": 1280
+      },
+      "file": "015_b08.aig",
+      "wall_s": 0.07198556140065193
+    },
+    {
+      "counts": {
+        "cut_roots": 58,
+        "cuts": 369,
+        "exact_checked": 4,
+        "exact_cone_cap": 14,
+        "sampled_distinct_triples": 1654
+      },
+      "file": "016_b08_opt.aig",
+      "wall_s": 0.09137256816029549
+    },
+    {
+      "counts": {
+        "cut_roots": 47,
+        "cuts": 325,
+        "exact_cone_cap": 153,
+        "sampled_distinct_triples": 1385
+      },
+      "file": "017_b09.aig",
+      "wall_s": 0.082940474152565
+    },
+    {
+      "counts": {
+        "cut_roots": 52,
+        "cuts": 344,
+        "exact_cone_cap": 138,
+        "sampled_distinct_triples": 1290
+      },
+      "file": "018_b09_opt.aig",
+      "wall_s": 0.07709347829222679
+    },
+    {
+      "counts": {
+        "cut_roots": 82,
+        "cuts": 504,
+        "exact_checked": 3,
+        "exact_cone_cap": 72,
+        "exact_forbidden_patterns": 3,
+        "exact_ternary_relations": 3,
+        "sampled_distinct_triples": 2222
+      },
+      "file": "019_b10.aig",
+      "wall_s": 0.1264735721051693
+    },
+    {
+      "counts": {
+        "cut_roots": 80,
+        "cuts": 522,
+        "exact_checked": 8,
+        "exact_cone_cap": 82,
+        "exact_forbidden_patterns": 8,
+        "exact_ternary_relations": 8,
+        "sampled_distinct_triples": 2483
+      },
+      "file": "020_b10_opt.aig",
+      "wall_s": 0.14243239164352417
+    },
+    {
+      "counts": {
+        "cut_roots": 215,
+        "cuts": 1432,
+        "exact_cone_cap": 162,
+        "sampled_distinct_triples": 5650
+      },
+      "file": "021_b11.aig",
+      "wall_s": 0.3219005651772022
+    },
+    {
+      "counts": {
+        "cut_roots": 235,
+        "cuts": 1531,
+        "exact_cone_cap": 169,
+        "sampled_distinct_triples": 5942
+      },
+      "file": "022_b11_opt.aig",
+      "wall_s": 0.3348705433309078
+    },
+    {
+      "counts": {
+        "cut_roots": 403,
+        "cuts": 2936,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 3534
+      },
+      "file": "023_b12.aig",
+      "wall_s": 0.25001270323991776
+    },
+    {
+      "counts": {
+        "cut_roots": 389,
+        "cuts": 2862,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 3742
+      },
+      "file": "024_b12_opt.aig",
+      "wall_s": 0.27227263152599335
+    },
+    {
+      "counts": {
+        "cut_roots": 83,
+        "cuts": 529,
+        "exact_checked": 54,
+        "exact_cone_cap": 11,
+        "exact_forbidden_patterns": 11,
+        "exact_ternary_relations": 10,
+        "sampled_distinct_triples": 1405
+      },
+      "file": "025_b13.aig",
+      "wall_s": 0.0900544561445713
+    },
+    {
+      "counts": {
+        "cut_roots": 81,
+        "cuts": 503,
+        "exact_checked": 57,
+        "exact_cone_cap": 11,
+        "exact_forbidden_patterns": 12,
+        "exact_ternary_relations": 9,
+        "sampled_distinct_triples": 1477
+      },
+      "file": "026_b13_opt.aig",
+      "wall_s": 0.16037246212363243
+    },
+    {
+      "counts": {
+        "cut_roots": 1002,
+        "cuts": 7558,
+        "exact_checked": 58,
+        "exact_cone_cap": 198,
+        "sampled_distinct_triples": 16585
+      },
+      "file": "041_des_area.aig",
+      "wall_s": 1.3940829671919346
+    },
+    {
+      "counts": {
+        "cut_roots": 95,
+        "cuts": 607,
+        "exact_checked": 62,
+        "exact_cone_cap": 9,
+        "sampled_distinct_triples": 2137
+      },
+      "file": "043_ethernet.aig",
+      "wall_s": 0.14268916472792625
+    },
+    {
+      "counts": {
+        "cut_roots": 609,
+        "cuts": 3898,
+        "exact_checked": 4,
+        "exact_cone_cap": 252,
+        "sampled_distinct_triples": 2029
+      },
+      "file": "044_i2c.aig",
+      "wall_s": 0.15562283992767334
+    },
+    {
+      "counts": {
+        "cut_roots": 363,
+        "cuts": 2650,
+        "exact_checked": 173,
+        "exact_cone_cap": 83,
+        "exact_forbidden_patterns": 14,
+        "exact_ternary_relations": 12,
+        "sampled_distinct_triples": 4185
+      },
+      "file": "048_sasc.aig",
+      "wall_s": 0.2875765711069107
+    },
+    {
+      "counts": {
+        "cut_roots": 513,
+        "cuts": 3667,
+        "exact_checked": 79,
+        "exact_cone_cap": 177,
+        "sampled_distinct_triples": 9906
+      },
+      "file": "049_simple_spi.aig",
+      "wall_s": 0.5601478479802608
+    },
+    {
+      "counts": {
+        "cut_roots": 194,
+        "cuts": 1212,
+        "exact_checked": 33,
+        "exact_cone_cap": 29,
+        "sampled_distinct_triples": 3462
+      },
+      "file": "051_ss_pcm.aig",
+      "wall_s": 0.19830813258886337
+    },
+    {
+      "counts": {
+        "cut_roots": 69,
+        "cuts": 460,
+        "exact_cone_cap": 55,
+        "sampled_distinct_triples": 1577
+      },
+      "file": "052_steppermotordrive.aig",
+      "wall_s": 0.0862339660525322
+    },
+    {
+      "counts": {
+        "cut_roots": 1407,
+        "cuts": 10196,
+        "exact_checked": 15,
+        "exact_cone_cap": 172,
+        "sampled_distinct_triples": 41780
+      },
+      "file": "054_systemcdes.aig",
+      "wall_s": 2.403493233025074
+    },
+    {
+      "counts": {
+        "cut_roots": 210,
+        "cuts": 1255,
+        "exact_checked": 130,
+        "exact_cone_cap": 90,
+        "exact_forbidden_patterns": 35,
+        "exact_ternary_relations": 25,
+        "sampled_distinct_triples": 4170
+      },
+      "file": "057_usb_phy.aig",
+      "wall_s": 0.25755732133984566
+    },
+    {
+      "counts": {
+        "cut_roots": 2207,
+        "cuts": 16729,
+        "exact_checked": 1,
+        "exact_cone_cap": 255,
+        "sampled_distinct_triples": 32320
+      },
+      "file": "027_b14.aig",
+      "wall_s": 2.106595229357481
+    },
+    {
+      "counts": {
+        "cut_roots": 2211,
+        "cuts": 16979,
+        "exact_checked": 1,
+        "exact_cone_cap": 255,
+        "sampled_distinct_triples": 19579
+      },
+      "file": "028_b14_opt.aig",
+      "wall_s": 1.4427995383739471
+    },
+    {
+      "counts": {
+        "cut_roots": 3345,
+        "cuts": 25393,
+        "exact_checked": 34,
+        "exact_cone_cap": 222,
+        "exact_forbidden_patterns": 34,
+        "exact_ternary_relations": 34,
+        "sampled_distinct_triples": 18634
+      },
+      "file": "029_b15.aig",
+      "wall_s": 1.5320328325033188
+    },
+    {
+      "counts": {
+        "cut_roots": 3405,
+        "cuts": 25866,
+        "exact_checked": 36,
+        "exact_cone_cap": 220,
+        "exact_forbidden_patterns": 36,
+        "exact_ternary_relations": 36,
+        "sampled_distinct_triples": 15310
+      },
+      "file": "030_b15_opt.aig",
+      "wall_s": 1.3839276172220707
+    },
+    {
+      "counts": {
+        "cut_roots": 11183,
+        "cuts": 85506,
+        "exact_checked": 34,
+        "exact_cone_cap": 222,
+        "exact_forbidden_patterns": 34,
+        "exact_ternary_relations": 34,
+        "sampled_distinct_triples": 18726
+      },
+      "file": "031_b17.aig",
+      "wall_s": 2.9143812842667103
+    },
+    {
+      "counts": {
+        "cut_roots": 11354,
+        "cuts": 85670,
+        "exact_checked": 34,
+        "exact_cone_cap": 222,
+        "exact_forbidden_patterns": 34,
+        "exact_ternary_relations": 34,
+        "sampled_distinct_triples": 17056
+      },
+      "file": "032_b17_opt.aig",
+      "wall_s": 2.847669791430235
+    },
+    {
+      "counts": {
+        "cut_roots": 4461,
+        "cuts": 33989,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 18143
+      },
+      "file": "033_b20.aig",
+      "wall_s": 1.8430030047893524
+    },
+    {
+      "counts": {
+        "cut_roots": 4895,
+        "cuts": 37490,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 22029
+      },
+      "file": "034_b20_opt.aig",
+      "wall_s": 2.0904510840773582
+    },
+    {
+      "counts": {
+        "cut_roots": 4484,
+        "cuts": 34002,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 18296
+      },
+      "file": "035_b21.aig",
+      "wall_s": 1.869926132261753
+    },
+    {
+      "counts": {
+        "cut_roots": 4822,
+        "cuts": 36807,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 22357
+      },
+      "file": "036_b21_opt.aig",
+      "wall_s": 2.114475216716528
+    },
+    {
+      "counts": {
+        "cut_roots": 6743,
+        "cuts": 51167,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 8725
+      },
+      "file": "037_b22.aig",
+      "wall_s": 1.825315598398447
+    },
+    {
+      "counts": {
+        "cut_roots": 6923,
+        "cuts": 52740,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 15398
+      },
+      "file": "038_b22_opt.aig",
+      "wall_s": 2.1688964441418648
+    },
+    {
+      "counts": {
+        "cut_roots": 6937,
+        "cuts": 50201,
+        "exact_checked": 149,
+        "exact_cone_cap": 107,
+        "sampled_distinct_triples": 1542
+      },
+      "file": "039_ac97_ctrl.aig",
+      "wall_s": 0.6800997667014599
+    },
+    {
+      "counts": {
+        "cut_roots": 11564,
+        "cuts": 80597,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 89634
+      },
+      "file": "040_aes_core.aig",
+      "wall_s": 5.7876445315778255
+    },
+    {
+      "counts": {
+        "cut_roots": 4356,
+        "cuts": 30537,
+        "exact_checked": 35,
+        "exact_cone_cap": 221,
+        "exact_forbidden_patterns": 6,
+        "exact_ternary_relations": 6,
+        "sampled_distinct_triples": 8700
+      },
+      "file": "045_mem_ctrl.aig",
+      "wall_s": 0.9533174969255924
+    },
+    {
+      "counts": {
+        "cut_roots": 796,
+        "cuts": 5440,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 3580
+      },
+      "file": "047_pci_spoci_ctrl.aig",
+      "wall_s": 0.27614329755306244
+    },
+    {
+      "counts": {
+        "cut_roots": 2404,
+        "cuts": 16162,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 3132
+      },
+      "file": "050_spi.aig",
+      "wall_s": 0.47919704020023346
+    },
+    {
+      "counts": {
+        "cut_roots": 6898,
+        "cuts": 50217,
+        "exact_checked": 23,
+        "exact_cone_cap": 233,
+        "exact_forbidden_patterns": 1,
+        "exact_ternary_relations": 1,
+        "sampled_distinct_triples": 3846
+      },
+      "file": "053_systemcaes.aig",
+      "wall_s": 1.037824746221304
+    },
+    {
+      "counts": {
+        "cut_roots": 5382,
+        "cuts": 39354,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 7969
+      },
+      "file": "055_tv80.aig",
+      "wall_s": 1.2226140908896923
+    },
+    {
+      "counts": {
+        "cut_roots": 1671,
+        "cuts": 12024,
+        "exact_cone_cap": 256,
+        "sampled_distinct_triples": 2010
+      },
+      "file": "060_wb_dma.aig",
+      "wall_s": 0.3054647520184517
+    }
+  ]
+}
