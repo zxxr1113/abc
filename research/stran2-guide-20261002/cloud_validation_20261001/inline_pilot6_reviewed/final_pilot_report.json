@@ -1,0 +1,185 @@
+{
+  "all_pair_raw_product_bytes_and_selected_identities_same": true,
+  "all_planned_command_exit_codes": 0,
+  "all_twelve_audit_stage_integrities": "PASS",
+  "all_twelve_transform_dual_dsec": "PASS",
+  "audit_query_unknowns": 0,
+  "corrected_metric": {
+    "cases": 6,
+    "delta_and": 0,
+    "equal_case_delta_pp": 0.0,
+    "helper_and": 202,
+    "helper_equal_case_percent": 0.6767833527141729,
+    "inline_and": 202,
+    "inline_equal_case_percent": 0.6767833527141729,
+    "weighted_delta_percent": 0.0
+  },
+  "evidence": {
+    "controller.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/controller.json",
+      "sha256": "0438e1d88ebf097e4383eb29a701af2f68c7dde1d14f77be8c472b790589bc8d"
+    },
+    "corrected_rows.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/corrected_rows.json",
+      "sha256": "d637b1f712b7dbffb6135010bc0da38ea544041a3db90770dbf9afebe3e3953a"
+    },
+    "corrected_summary.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/corrected_summary.json",
+      "sha256": "f70108ebd58f7d34a011710d3bc5b3334d42a5548d6fc8d8b2e6478823088a2c"
+    },
+    "executions.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/executions.json",
+      "sha256": "c9f8f6d6766ae31a552722b6d530c7b9347b5223f2fdc1502e35bb28a0ddfe1f"
+    },
+    "integrity.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/integrity.json",
+      "sha256": "7c2168385333d5a0bf8f016fc8cf12978a1dd0e49c7148c14d312cea16d8415e"
+    },
+    "proof_cost_accounting.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/proof_cost_accounting.json",
+      "sha256": "0e797d719aaf78553db1404971e2178ce5e20e38506542daed28cf6ae1095531"
+    },
+    "protocol.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/protocol.json",
+      "sha256": "ea8b019e807c8b7c2b2a28bf36492b52b73d7f7271a1368a7161eac6f5db89c2"
+    },
+    "results.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/results.json",
+      "sha256": "170642ee22069a8c4d2ac687968411eb178f426feadff13c972dc6f47797d75d"
+    },
+    "selected_product_comparison.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/selected_product_comparison.json",
+      "sha256": "43a05f5fece16066d09831c41c997ed190479967f204e16242cd74b126d276d7"
+    },
+    "timing_diagnosis.json": {
+      "path": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/timing_diagnosis.json",
+      "sha256": "da0b2755e09abfb1de67617cdf5df1a16f706c74083e7ddc25232833cc87ef24"
+    }
+  },
+  "executed_stages": {
+    "fresh_direct": 6,
+    "fresh_global_alias": 6,
+    "transforms": 6
+  },
+  "historical_audit_reuse": false,
+  "independent_review": {
+    "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-pilot6-independent-review/final_review.json",
+    "sha256": "3572ad1c24c0b20ed2164985b44e2f59d825b4b603318f18caf594d1df06491c"
+  },
+  "invocation_count_caveat": "Invocation-labelled fields in proof_cost_accounting.json count observed result files; one helper mem_ctrl result file is empty. Completed query-row counts are independently exact; do not interpret file observations as stronger process-invocation auditing.",
+  "main_conclusion": "All six corrected Build gains tie; duplicate model solves removed but no overall transform-time win demonstrated",
+  "outer_wave_timing_s": {
+    "helper": {
+      "direct": 78.45939863100648,
+      "global": 4.520489105005254,
+      "transform": 276.5953473609952
+    },
+    "inline": {
+      "direct": 77.65327269800036,
+      "global": 4.825476514000911,
+      "transform": 269.23834802199417
+    }
+  },
+  "per_case": [
+    {
+      "delta": 0,
+      "file": "005_b03.aig",
+      "helper": 3,
+      "inline": 3,
+      "loaded_and": 128,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "044_i2c.aig",
+      "helper": 7,
+      "inline": 7,
+      "loaded_and": 2879,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "041_des_area.aig",
+      "helper": 0,
+      "inline": 0,
+      "loaded_and": 10133,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "034_b20_opt.aig",
+      "helper": 75,
+      "inline": 75,
+      "loaded_and": 13440,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "045_mem_ctrl.aig",
+      "helper": 41,
+      "inline": 41,
+      "loaded_and": 34059,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "060_wb_dma.aig",
+      "helper": 76,
+      "inline": 76,
+      "loaded_and": 9555,
+      "no_direct_unknown": true
+    }
+  ],
+  "protocol_sha256": "ea8b019e807c8b7c2b2a28bf36492b52b73d7f7271a1368a7161eac6f5db89c2",
+  "query_cost_totals": {
+    "helper": {
+      "additional_helper_invocations_observed": 301,
+      "additional_helper_query_rows": 9388,
+      "cache_model_misses_in_complete_proof_chunks": 0,
+      "cases": 6,
+      "conflicts_observed": 81123,
+      "consumed_replayed_models": 9388,
+      "inline_projected_models": 0,
+      "ordinary_observed_query_rows": 22094,
+      "ordinary_solver_invocations_observed": 1012,
+      "statuses": {
+        "BUDGET_EXHAUSTED": 2,
+        "COMPLETE": 4
+      },
+      "sum_case_transform_wall_s": 339.78313806100414,
+      "total_observed_query_rows": 31482
+    },
+    "inline": {
+      "additional_helper_invocations_observed": 0,
+      "additional_helper_query_rows": 0,
+      "cache_model_misses_in_complete_proof_chunks": 0,
+      "cases": 6,
+      "conflicts_observed": 56985,
+      "consumed_replayed_models": 9059,
+      "inline_projected_models": 9117,
+      "ordinary_observed_query_rows": 21430,
+      "ordinary_solver_invocations_observed": 1013,
+      "statuses": {
+        "BUDGET_EXHAUSTED": 1,
+        "COMPLETE": 5
+      },
+      "sum_case_transform_wall_s": 345.53269260199886,
+      "total_observed_query_rows": 21430
+    }
+  },
+  "recommendation": "Keep opt-in experimental support; do not expand all55 solely on this evidence",
+  "schema": 1,
+  "status": "COMPLETE_INDEPENDENT_REVIEW_PASS",
+  "timing_caveat": "Different original SAT models change discovery trajectory; timeout prefixes are retained as partial results. Same six-case schedule is not a pure equal-work speed comparison.",
+  "transform_statuses_by_arm": {
+    "helper": {
+      "BUDGET_EXHAUSTED": 2,
+      "COMPLETE": 4
+    },
+    "inline": {
+      "BUDGET_EXHAUSTED": 1,
+      "COMPLETE": 5
+    }
+  },
+  "weighted_build_percent_each_arm": 0.28777388380773283
+}

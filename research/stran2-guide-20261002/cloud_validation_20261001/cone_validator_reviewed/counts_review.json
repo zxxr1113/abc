@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "source_design_sha256": "10013f2c40d66378d7dabc2cb43680beeda60afc6c0036623f1b18fdb23c8a82",
+  "source_summary_sha256": "7c28dd996b1fcd3899c4b04ea06d5962b39cd87f3efb967d2fb6567d2e5978fe",
+  "cnfs_independently_parsed": 410,
+  "raw_models_independently_counted": 9117,
+  "consumed_only": {
+    "models": 9059,
+    "full_compiled_nodes": 133018677,
+    "full_compiled_gates": 125245260,
+    "full_compiled_pis": 7773417,
+    "cone_nodes": 11272222,
+    "cone_gates": 10144012,
+    "cone_pis": 1128210,
+    "mandatory_original_aig_gate_evaluations": 117123740
+  },
+  "all_captured": {
+    "models": 9117,
+    "full_compiled_nodes": 134220785,
+    "full_compiled_gates": 126373128,
+    "full_compiled_pis": 7847657,
+    "cone_nodes": 11312640,
+    "cone_gates": 10179574,
+    "cone_pis": 1133066,
+    "mandatory_original_aig_gate_evaluations": 118217852
+  },
+  "compiled_gate_reduction_percent": 91.90068191003795,
+  "combined_gate_reduction_percent": 47.49008660348477,
+  "algorithm": "Independent canonical ternary-clause DAG reconstruction and reverse topological dependency scan for exact ordered assumption tuple",
+  "new_solver_queries": 0,
+  "new_DSEC_calls": 0,
+  "runtime_edits": 0,
+  "extra_review_wall_s": 48.41344866500003,
+  "scope": "Operation counts and proposal correctness only; no timing claim. Implementation and saved-model full-versus-cone differential remain required."
+}

@@ -1,0 +1,50 @@
+{
+  "scope": "Compact reviewed summaries only; full model/CNF/product records remain at their bound source paths, not embedded here.",
+  "files": [
+    {
+      "file": "protocol.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/protocol.json",
+      "sha256": "ea8b019e807c8b7c2b2a28bf36492b52b73d7f7271a1368a7161eac6f5db89c2"
+    },
+    {
+      "file": "final_pilot_report.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/final_pilot_report.json",
+      "sha256": "ff8e8a89977ed8fb9215201b6120fe2049dc4518d36d84cfd06625a131363925"
+    },
+    {
+      "file": "corrected_rows.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/corrected_rows.json",
+      "sha256": "d637b1f712b7dbffb6135010bc0da38ea544041a3db90770dbf9afebe3e3953a"
+    },
+    {
+      "file": "corrected_summary.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/corrected_summary.json",
+      "sha256": "f70108ebd58f7d34a011710d3bc5b3334d42a5548d6fc8d8b2e6478823088a2c"
+    },
+    {
+      "file": "proof_cost_accounting.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/proof_cost_accounting.json",
+      "sha256": "0e797d719aaf78553db1404971e2178ce5e20e38506542daed28cf6ae1095531"
+    },
+    {
+      "file": "timing_diagnosis.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/timing_diagnosis.json",
+      "sha256": "da0b2755e09abfb1de67617cdf5df1a16f706c74083e7ddc25232833cc87ef24"
+    },
+    {
+      "file": "selected_product_comparison.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/selected_product_comparison.json",
+      "sha256": "43a05f5fece16066d09831c41c997ed190479967f204e16242cd74b126d276d7"
+    },
+    {
+      "file": "integrity.json",
+      "source": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/integrity.json",
+      "sha256": "7c2168385333d5a0bf8f016fc8cf12978a1dd0e49c7148c14d312cea16d8415e"
+    },
+    {
+      "file": "independent_review.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-pilot6-independent-review/final_review.json",
+      "sha256": "3572ad1c24c0b20ed2164985b44e2f59d825b4b603318f18caf594d1df06491c"
+    }
+  ]
+}

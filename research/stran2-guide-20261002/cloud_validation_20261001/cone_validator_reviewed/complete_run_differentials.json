@@ -1,0 +1,468 @@
+{
+  "status": "PASS",
+  "comparisons": [
+    {
+      "label": "default_mode_unchanged",
+      "status": "PASS",
+      "left": "/workspace/shared/stran2-inline-model-prototype/b03-default-new-solver-final",
+      "right": "/workspace/shared/stran2-cone-validator-correctness-v1/b03-default",
+      "byte_identical": [
+        {
+          "file": "root_search.jsonl",
+          "sha256": "2944897cafa6e8ea016885b875c8cc3843fdcf05f32e43ad66159332c58d0e84"
+        },
+        {
+          "file": "chunks/chunk_00000/obligations.cnf",
+          "sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6"
+        },
+        {
+          "file": "chunks/chunk_00001/obligations.cnf",
+          "sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184"
+        },
+        {
+          "file": "chunks/chunk_00000/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00000/001_free.queries",
+          "sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.queries",
+          "sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed"
+        },
+        {
+          "file": "chunks/chunk_00001/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00001/001_free.queries",
+          "sha256": "bf3bd8eac743e74a1275d82e2e821cce9516f5bc11578bb86dbdc7b46c009626"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.queries",
+          "sha256": "3eec78754fb56c1d2c1c1e234bde5405c2f356ef3f4aa0d99cf7d78d068a3583"
+        },
+        {
+          "file": "chunks/chunk_00000/query_literals.json",
+          "sha256": "d64ee544fbaf946fe0f064104a3ce3427e0e755a30fc90db4f43aabf10f1810e"
+        },
+        {
+          "file": "chunks/chunk_00001/query_literals.json",
+          "sha256": "c7bf860251edace8ba3a9d749e7ac65a9460c6e325bec199d3646c90558092f6"
+        },
+        {
+          "file": "chunks/chunk_00000/candidates.unproved.json",
+          "sha256": "69d8411b0f0ddcf6b20bc71e96e37556c4e69aa3f521f639abcb4b0c924854a7"
+        },
+        {
+          "file": "chunks/chunk_00001/candidates.unproved.json",
+          "sha256": "609ce71c277b9890f37dcd7d6a3e507698174236329fce890f714c5f45a048cf"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/product.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/product.aig",
+          "sha256": "8f980cc32e4f8579bd2d6a7a6c6b04e12f822a28d267ed432de865ba1004a398"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/product.aig",
+          "sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        }
+      ],
+      "semantic_identical": [
+        "chunks/chunk_00001/candidates.json",
+        "chunks/chunk_00000/candidates.json",
+        "checkpoints/checkpoint_00000/selection.json",
+        "checkpoints/checkpoint_00001/selection.json",
+        "checkpoints/checkpoint_00002/selection.json",
+        "chunks/chunk_00001/001_free.results.csv",
+        "chunks/chunk_00001/000_reset.results.csv",
+        "chunks/chunk_00001/002_step.results.csv",
+        "chunks/chunk_00000/001_free.results.csv",
+        "chunks/chunk_00000/000_reset.results.csv",
+        "chunks/chunk_00000/002_step.results.csv"
+      ],
+      "nondeterministic_fields_excluded": "CSV wall times and their transitive results/manifest/provenance hashes; sources are separately bound",
+      "timing_claim": "NONE"
+    },
+    {
+      "label": "standalone_helper_unchanged",
+      "status": "PASS",
+      "left": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/runs/block_000/helper",
+      "right": "/workspace/shared/stran2-cone-validator-correctness-v1/b03-helper",
+      "byte_identical": [
+        {
+          "file": "root_search.jsonl",
+          "sha256": "61571311dc9713bce8f9640d9d6bafe475d9421f4ab9ea62b5ceb43c007639e3"
+        },
+        {
+          "file": "chunks/chunk_00000/obligations.cnf",
+          "sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6"
+        },
+        {
+          "file": "chunks/chunk_00001/obligations.cnf",
+          "sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184"
+        },
+        {
+          "file": "chunks/chunk_00000/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00000/001_free.queries",
+          "sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.queries",
+          "sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed"
+        },
+        {
+          "file": "chunks/chunk_00001/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00001/001_free.queries",
+          "sha256": "bf3bd8eac743e74a1275d82e2e821cce9516f5bc11578bb86dbdc7b46c009626"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.queries",
+          "sha256": "3eec78754fb56c1d2c1c1e234bde5405c2f356ef3f4aa0d99cf7d78d068a3583"
+        },
+        {
+          "file": "chunks/chunk_00000/query_literals.json",
+          "sha256": "d64ee544fbaf946fe0f064104a3ce3427e0e755a30fc90db4f43aabf10f1810e"
+        },
+        {
+          "file": "chunks/chunk_00001/query_literals.json",
+          "sha256": "c7bf860251edace8ba3a9d749e7ac65a9460c6e325bec199d3646c90558092f6"
+        },
+        {
+          "file": "chunks/chunk_00000/candidates.unproved.json",
+          "sha256": "8083e761fb1bbb9d4d0022b8a446c9372a66a5cbc69a1874d7ff61f0277bc353"
+        },
+        {
+          "file": "chunks/chunk_00001/candidates.unproved.json",
+          "sha256": "94c24984b774aec4c71ba145d2d939e29d79ef4d8bc31539fe63971370d7553c"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/product.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/product.aig",
+          "sha256": "8f980cc32e4f8579bd2d6a7a6c6b04e12f822a28d267ed432de865ba1004a398"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/product.aig",
+          "sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "image_guidance/round_00000/models.cnf",
+          "sha256": "38164df3c6429e4843ad81bd024f93e3f612887bf13632905fae2b613b8ed6bb"
+        },
+        {
+          "file": "image_guidance/round_00000/models.queries",
+          "sha256": "46bfed92e5aba20b16801eb1cac89e44d64d35e81f97cad5c8142b9c2ede5b31"
+        },
+        {
+          "file": "image_guidance/round_00000/models.variables",
+          "sha256": "6929adcaf2ff2f8d6441197209c015f23562525accc84c9786dd47d2f2a68e13"
+        },
+        {
+          "file": "image_guidance/round_00000/models.jsonl",
+          "sha256": "d4eca14a0dcf9701b2a005676141d893b4bc5cff491afc911884975662d2c676"
+        },
+        {
+          "file": "image_guidance/round_00000/root_search.jsonl",
+          "sha256": "02f5381570f9f7cdebd12fd9f4841185b77703480717ced223c11b3707a95a58"
+        }
+      ],
+      "semantic_identical": [
+        "chunks/chunk_00001/candidates.json",
+        "chunks/chunk_00000/candidates.json",
+        "checkpoints/checkpoint_00000/selection.json",
+        "checkpoints/checkpoint_00001/selection.json",
+        "checkpoints/checkpoint_00002/selection.json",
+        "image_guidance/round_00000/replayed_models.json",
+        "chunks/chunk_00001/001_free.results.csv",
+        "chunks/chunk_00001/000_reset.results.csv",
+        "chunks/chunk_00001/002_step.results.csv",
+        "chunks/chunk_00000/001_free.results.csv",
+        "chunks/chunk_00000/000_reset.results.csv",
+        "chunks/chunk_00000/002_step.results.csv",
+        "image_guidance/round_00000/results.csv",
+        "image_guidance/round_00000/refinement.json"
+      ],
+      "nondeterministic_fields_excluded": "CSV wall times and their transitive results/manifest/provenance hashes; sources are separately bound",
+      "timing_claim": "NONE"
+    },
+    {
+      "label": "inline_full_reference_unchanged",
+      "status": "PASS",
+      "left": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/runs/block_000/inline",
+      "right": "/workspace/shared/stran2-cone-validator-correctness-v1/b03-full",
+      "byte_identical": [
+        {
+          "file": "root_search.jsonl",
+          "sha256": "61571311dc9713bce8f9640d9d6bafe475d9421f4ab9ea62b5ceb43c007639e3"
+        },
+        {
+          "file": "chunks/chunk_00000/obligations.cnf",
+          "sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6"
+        },
+        {
+          "file": "chunks/chunk_00001/obligations.cnf",
+          "sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184"
+        },
+        {
+          "file": "chunks/chunk_00000/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00000/001_free.queries",
+          "sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.queries",
+          "sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed"
+        },
+        {
+          "file": "chunks/chunk_00001/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00001/001_free.queries",
+          "sha256": "bf3bd8eac743e74a1275d82e2e821cce9516f5bc11578bb86dbdc7b46c009626"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.queries",
+          "sha256": "3eec78754fb56c1d2c1c1e234bde5405c2f356ef3f4aa0d99cf7d78d068a3583"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.projection",
+          "sha256": "32c895364aab481559949435fb2c834138e102d21f6f15e5ff1bce0b9cf575f0"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.projection",
+          "sha256": "32c895364aab481559949435fb2c834138e102d21f6f15e5ff1bce0b9cf575f0"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.models.jsonl",
+          "sha256": "777109018079dcc97b777eaf49155f899d469ebc680ab9132968a83f4a548bf6"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.models.jsonl",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "chunks/chunk_00000/query_literals.json",
+          "sha256": "d64ee544fbaf946fe0f064104a3ce3427e0e755a30fc90db4f43aabf10f1810e"
+        },
+        {
+          "file": "chunks/chunk_00001/query_literals.json",
+          "sha256": "c7bf860251edace8ba3a9d749e7ac65a9460c6e325bec199d3646c90558092f6"
+        },
+        {
+          "file": "chunks/chunk_00000/candidates.unproved.json",
+          "sha256": "8083e761fb1bbb9d4d0022b8a446c9372a66a5cbc69a1874d7ff61f0277bc353"
+        },
+        {
+          "file": "chunks/chunk_00001/candidates.unproved.json",
+          "sha256": "94c24984b774aec4c71ba145d2d939e29d79ef4d8bc31539fe63971370d7553c"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/product.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/product.aig",
+          "sha256": "8f980cc32e4f8579bd2d6a7a6c6b04e12f822a28d267ed432de865ba1004a398"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/product.aig",
+          "sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "image_guidance/round_00000/root_search.jsonl",
+          "sha256": "65cbe52fa2636ecf9e4015ea095e9b7ec0ee21f5896056d6b97a093d934fa587"
+        }
+      ],
+      "semantic_identical": [
+        "chunks/chunk_00001/candidates.json",
+        "chunks/chunk_00000/candidates.json",
+        "checkpoints/checkpoint_00000/selection.json",
+        "checkpoints/checkpoint_00001/selection.json",
+        "checkpoints/checkpoint_00002/selection.json",
+        "image_guidance/round_00000/replayed_models.json",
+        "chunks/chunk_00001/001_free.results.csv",
+        "chunks/chunk_00001/000_reset.results.csv",
+        "chunks/chunk_00001/002_step.results.csv",
+        "chunks/chunk_00000/001_free.results.csv",
+        "chunks/chunk_00000/000_reset.results.csv",
+        "chunks/chunk_00000/002_step.results.csv",
+        "image_guidance/round_00000/refinement.json"
+      ],
+      "nondeterministic_fields_excluded": "CSV wall times and their transitive results/manifest/provenance hashes; sources are separately bound",
+      "timing_claim": "NONE"
+    },
+    {
+      "label": "inline_full_vs_cone_complete_discovery",
+      "status": "PASS",
+      "left": "/workspace/shared/stran2-cone-validator-correctness-v1/b03-full",
+      "right": "/workspace/shared/stran2-cone-validator-correctness-v1/b03-cone",
+      "byte_identical": [
+        {
+          "file": "root_search.jsonl",
+          "sha256": "61571311dc9713bce8f9640d9d6bafe475d9421f4ab9ea62b5ceb43c007639e3"
+        },
+        {
+          "file": "chunks/chunk_00000/obligations.cnf",
+          "sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6"
+        },
+        {
+          "file": "chunks/chunk_00001/obligations.cnf",
+          "sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184"
+        },
+        {
+          "file": "chunks/chunk_00000/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00000/001_free.queries",
+          "sha256": "002afaaae6de1f6e3e3908d2615d69460f8a907d5a75c63e67b732eb7628a1bf"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.queries",
+          "sha256": "4505ee55811c49f48f3c88b5aa939f62b84a35b5134ac1e12ad7c2ea2e75d7ed"
+        },
+        {
+          "file": "chunks/chunk_00001/000_reset.queries",
+          "sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0"
+        },
+        {
+          "file": "chunks/chunk_00001/001_free.queries",
+          "sha256": "bf3bd8eac743e74a1275d82e2e821cce9516f5bc11578bb86dbdc7b46c009626"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.queries",
+          "sha256": "3eec78754fb56c1d2c1c1e234bde5405c2f356ef3f4aa0d99cf7d78d068a3583"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.projection",
+          "sha256": "32c895364aab481559949435fb2c834138e102d21f6f15e5ff1bce0b9cf575f0"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.projection",
+          "sha256": "32c895364aab481559949435fb2c834138e102d21f6f15e5ff1bce0b9cf575f0"
+        },
+        {
+          "file": "chunks/chunk_00000/002_step.models.jsonl",
+          "sha256": "777109018079dcc97b777eaf49155f899d469ebc680ab9132968a83f4a548bf6"
+        },
+        {
+          "file": "chunks/chunk_00001/002_step.models.jsonl",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "file": "chunks/chunk_00000/query_literals.json",
+          "sha256": "d64ee544fbaf946fe0f064104a3ce3427e0e755a30fc90db4f43aabf10f1810e"
+        },
+        {
+          "file": "chunks/chunk_00001/query_literals.json",
+          "sha256": "c7bf860251edace8ba3a9d749e7ac65a9460c6e325bec199d3646c90558092f6"
+        },
+        {
+          "file": "chunks/chunk_00000/candidates.unproved.json",
+          "sha256": "8083e761fb1bbb9d4d0022b8a446c9372a66a5cbc69a1874d7ff61f0277bc353"
+        },
+        {
+          "file": "chunks/chunk_00001/candidates.unproved.json",
+          "sha256": "94c24984b774aec4c71ba145d2d939e29d79ef4d8bc31539fe63971370d7553c"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/product.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/product.aig",
+          "sha256": "8f980cc32e4f8579bd2d6a7a6c6b04e12f822a28d267ed432de865ba1004a398"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/product.aig",
+          "sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+        },
+        {
+          "file": "checkpoints/checkpoint_00000/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00001/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "checkpoints/checkpoint_00002/replay_without_build.aig",
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        {
+          "file": "image_guidance/round_00000/root_search.jsonl",
+          "sha256": "65cbe52fa2636ecf9e4015ea095e9b7ec0ee21f5896056d6b97a093d934fa587"
+        }
+      ],
+      "semantic_identical": [
+        "chunks/chunk_00001/candidates.json",
+        "chunks/chunk_00000/candidates.json",
+        "checkpoints/checkpoint_00000/selection.json",
+        "checkpoints/checkpoint_00001/selection.json",
+        "checkpoints/checkpoint_00002/selection.json",
+        "image_guidance/round_00000/replayed_models.json",
+        "chunks/chunk_00001/001_free.results.csv",
+        "chunks/chunk_00001/000_reset.results.csv",
+        "chunks/chunk_00001/002_step.results.csv",
+        "chunks/chunk_00000/001_free.results.csv",
+        "chunks/chunk_00000/000_reset.results.csv",
+        "chunks/chunk_00000/002_step.results.csv",
+        "image_guidance/round_00000/refinement.json"
+      ],
+      "nondeterministic_fields_excluded": "CSV wall times and their transitive results/manifest/provenance hashes; sources are separately bound",
+      "timing_claim": "NONE"
+    }
+  ]
+}

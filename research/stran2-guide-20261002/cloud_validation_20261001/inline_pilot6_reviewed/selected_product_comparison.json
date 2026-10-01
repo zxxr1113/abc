@@ -1,0 +1,80 @@
+[
+  {
+    "file": "005_b03.aig",
+    "raw_product_bytes_same": true,
+    "selected_candidate_identities_same": true,
+    "selected_counts": [
+      5,
+      5
+    ],
+    "recomputed_product_sha256_by_arm": {
+      "helper": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "inline": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+    }
+  },
+  {
+    "file": "044_i2c.aig",
+    "raw_product_bytes_same": true,
+    "selected_candidate_identities_same": true,
+    "selected_counts": [
+      7,
+      7
+    ],
+    "recomputed_product_sha256_by_arm": {
+      "helper": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+      "inline": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb"
+    }
+  },
+  {
+    "file": "041_des_area.aig",
+    "raw_product_bytes_same": true,
+    "selected_candidate_identities_same": true,
+    "selected_counts": [
+      0,
+      0
+    ],
+    "recomputed_product_sha256_by_arm": {
+      "helper": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "inline": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+    }
+  },
+  {
+    "file": "034_b20_opt.aig",
+    "raw_product_bytes_same": true,
+    "selected_candidate_identities_same": true,
+    "selected_counts": [
+      58,
+      58
+    ],
+    "recomputed_product_sha256_by_arm": {
+      "helper": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a",
+      "inline": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a"
+    }
+  },
+  {
+    "file": "045_mem_ctrl.aig",
+    "raw_product_bytes_same": true,
+    "selected_candidate_identities_same": true,
+    "selected_counts": [
+      30,
+      30
+    ],
+    "recomputed_product_sha256_by_arm": {
+      "helper": "2b8f4ef28259f222bb41b2071aae8baaa7799307761cba04a94312847c948822",
+      "inline": "2b8f4ef28259f222bb41b2071aae8baaa7799307761cba04a94312847c948822"
+    }
+  },
+  {
+    "file": "060_wb_dma.aig",
+    "raw_product_bytes_same": true,
+    "selected_candidate_identities_same": true,
+    "selected_counts": [
+      31,
+      31
+    ],
+    "recomputed_product_sha256_by_arm": {
+      "helper": "8452caa0ee78496f1d204a609d6412227779dca475c10a2afc00993e1bc19ed7",
+      "inline": "8452caa0ee78496f1d204a609d6412227779dca475c10a2afc00993e1bc19ed7"
+    }
+  }
+]

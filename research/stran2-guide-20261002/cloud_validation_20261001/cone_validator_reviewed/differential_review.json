@@ -1,0 +1,55 @@
+{
+  "status": "PASS",
+  "source_summary_sha256": "f0b2d2e183089b863475fe94dead191937b2dfb1dadc35a9d8b370a0c9b0115a",
+  "source_plan_sha256": "cde70576ad4614c9a2330dead6a68eba413caee09b27a4810ff2d0f26db84138",
+  "reviewed_source_hashes": {
+    "anytime.py": "16a97e32df1644143b35b6042433081561bd669d322d9fbe786e3107087ccff5",
+    "inline_models.py": "fd19c68f897d739ab6bd0f488b57917af40f7885655ab995abf4e8227173cd44",
+    "test_cone_models.py": "95de250eb6f430dfb77954a86b2a1f36a67399cb75eb62bb48633aec168c1744"
+  },
+  "models": 9059,
+  "rounds": 300,
+  "cases": [
+    {
+      "case": "005_b03.aig",
+      "rounds": 1,
+      "models": 3,
+      "status": "PASS"
+    },
+    {
+      "case": "044_i2c.aig",
+      "rounds": 31,
+      "models": 1120,
+      "status": "PASS"
+    },
+    {
+      "case": "041_des_area.aig",
+      "rounds": 12,
+      "models": 114,
+      "status": "PASS"
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "rounds": 119,
+      "models": 1705,
+      "status": "PASS"
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "rounds": 49,
+      "models": 2601,
+      "status": "PASS"
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "rounds": 88,
+      "models": 3516,
+      "status": "PASS"
+    }
+  ],
+  "actual_witness_files_equal_to_full_and_saved": true,
+  "source_files_and_provenance_bound": true,
+  "cone_evaluations_match_independent_counts": true,
+  "cone_gate_evaluations": 10144012,
+  "claim_scope": "Actual saved witness/receipt files independently compared; reviewed differential executes both validators, complete sample comparison, unchanged admission function and signature reconstruction. Initial pools/config/generator unchanged; full discovery is deterministic under equal signature histories. No timed cohort or new solver calls by this check."
+}

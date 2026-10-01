@@ -1,0 +1,54 @@
+{
+  "status": "PASS",
+  "final_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "frozen_source_files": 18,
+  "new_b03_cases": 4,
+  "new_b03_saved_DSEC_bindings": 8,
+  "differentials": [
+    {
+      "label": "default_mode_unchanged",
+      "byte_files": 19,
+      "semantic_files": 11,
+      "status": "PASS"
+    },
+    {
+      "label": "standalone_helper_unchanged",
+      "byte_files": 24,
+      "semantic_files": 14,
+      "status": "PASS"
+    },
+    {
+      "label": "inline_full_reference_unchanged",
+      "byte_files": 24,
+      "semantic_files": 13,
+      "status": "PASS"
+    },
+    {
+      "label": "inline_full_vs_cone_complete_discovery",
+      "byte_files": 24,
+      "semantic_files": 13,
+      "status": "PASS"
+    }
+  ],
+  "source_hashes": {
+    "image_cegar_diagnostic/build_model_solver.sh": "4e7902cb52a337758fe02b5593e36c701f9438d192c8dabd4f85f1543d437ee5",
+    "image_cegar_diagnostic/diagnostic.py": "72813095ab7a5b8db299a56c1549aba682bd876eaf98e7276ac49a81f2eb64a8",
+    "image_cegar_diagnostic/model_solver.c": "bdcef1e03911ba8126bf4bfb34442baad44697536f556ea35a8a206946679667",
+    "nonlinear_divisors/anytime.py": "16a97e32df1644143b35b6042433081561bd669d322d9fbe786e3107087ccff5",
+    "nonlinear_divisors/build_query_model_solver.sh": "c1196746e9306a3e63f4abb3c261d04aa3536efee2020ee97f82dd3cfbf8732d",
+    "nonlinear_divisors/image_guided.py": "71530b39fdbfe7d75722d5d3d6f6d47b2e397a91abb889a2422e9f2e5f0a6395",
+    "nonlinear_divisors/inline_models.py": "fd19c68f897d739ab6bd0f488b57917af40f7885655ab995abf4e8227173cd44",
+    "nonlinear_divisors/product.py": "97985c9dde8e8171ebe69e3452b7ae93ff6ec90d6a2d908e5931fa02187565bc",
+    "nonlinear_divisors/prototype.py": "a052a17c2a5c0c7816a4106c326543d8978deb37172fe6947003fda10b762f67",
+    "nonlinear_divisors/query_model_solver.c": "e8292abe31bc13990194c17d778abbab3b8dcaf2e15119de0a9dd4d340b437f0",
+    "nonlinear_divisors/test_anytime.py": "758a2c198e1e07b915d02c16d9843b3b23565a88da8dc62e8c3a0146f0da8ffb",
+    "nonlinear_divisors/test_anytime_supervisor.py": "c1e799ec914eb522ea78900d2918d1d32bcfe061486dd38f574cd6affbb6029f",
+    "nonlinear_divisors/test_cone_models.py": "95de250eb6f430dfb77954a86b2a1f36a67399cb75eb62bb48633aec168c1744",
+    "nonlinear_divisors/test_inline_models.py": "52365935de56875591181a540ca94a113326b99d826dad201f980a4a054ea218",
+    "seq_care_synthesis/guide.py": "22d372ca2a96044e2f16ac1e38b2113436518f79f21072cec3660dee51c60f71",
+    "seq_care_synthesis/scan_exact_care.py": "bb6abc7a08d1275c2567237c412c4284e8cc69a54f0315f393edcd5c19d88854",
+    "seq_cut_image/diagnose.py": "6591e7ca66fbdaca907bb61102489c98052f2e602e20afd94ae4dfbbf3fb4b8f",
+    "teacher_adaptive_tools/teacher_bmc.py": "197bfab8b547e620c9eb9b7c8921f96b09b98fa10ddb01eacb9825ca343a0b60"
+  },
+  "scope": "Final frozen implementation plus complete tiny/default/helper comparisons. Focused19 independently executed; full136 coverage is producer-run with bound logs (125 aggregate plus11 prerequisite tests separately). No new timed cohort or new DSEC from reviewer."
+}

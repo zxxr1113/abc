@@ -75,9 +75,9 @@ class ImageGuidance:
         self.free, self.free_mask = free, free_mask
         self.structure, self.config = structure, config
         self.job, self.deadline = job, deadline
-        self.helper = Path(job["image_model_solver"])
-        self.helper_identity = tuple(helper_identity)
-        self.helper_hash = job["image_model_solver_sha256"]
+        self.helper = Path(job["image_model_solver"]) if job.get("image_model_solver") else None
+        self.helper_identity = tuple(helper_identity) if helper_identity is not None else None
+        self.helper_hash = job.get("image_model_solver_sha256")
         self.version, self.round = 0, 0
         self.attempted, self.model_attempted = set(), set()
         self.seen_keys = {tuple((seq[node] >> lane) & 1 for node in range(1, 1 + a.ni + a.nl))
@@ -134,24 +134,10 @@ class ImageGuidance:
             p.require(identity not in self.attempted, "unchanged candidate proof retry")
             self.attempted.add(identity)
 
-    def refine(self, roots, candidates, out):
-        """Return untried same-pool candidates, or [] when no justified retry exists."""
+    def collect(self, sources, target):
+        """Standalone helper fallback; unchanged query/replay protocol."""
         from anytime import file_identity
-        self.deadline.remaining()
-        p.require(len({r["root"] for r in roots}) == len(roots), "duplicate refinement root")
-        for row in roots:
-            self.checked_cache(row)  # Bind the change decision to the actual prior search.
-        sources = [c for c in candidates if c["proof"]["reset"] == "UNSAT" and
-                   c["proof"]["free"] == "SAT" and c["proof"]["step"] == "SAT" and
-                   d.candidate_id(c) not in self.model_attempted]
-        if not sources:
-            self.metrics["no_new_image_sat_source"] += 1
-            return []
-        self.model_attempted.update(d.candidate_id(c) for c in sources)
         p.require(file_identity(self.helper) == self.helper_identity, "model executable identity changed")
-        start = time.monotonic()
-        target = out / "image_guidance" / f"round_{self.round:05d}"
-        target.parent.mkdir(exist_ok=True)
         clone = p.Graph()
         clone.gates, clone.hash = list(self.graph.gates), dict(self.graph.hash)
         samples, model_report = d.collect_models(p, self.a, clone, self.base, self.step, sources,
@@ -163,6 +149,25 @@ class ImageGuidance:
         p.require(file_identity(self.helper) == self.helper_identity, "model executable identity changed")
         provenance = json.loads((target / "provenance.json").read_text())
         p.require(provenance["helper_sha256"] == self.helper_hash, "model executable SHA mismatch")
+        return samples, model_report
+
+    def refine(self, roots, candidates, out):
+        """Return untried same-pool candidates, or [] when no justified retry exists."""
+        self.deadline.remaining()
+        p.require(len({r["root"] for r in roots}) == len(roots), "duplicate refinement root")
+        for row in roots:
+            self.checked_cache(row)  # Bind the change decision to the actual prior search.
+        sources = [c for c in candidates if c["proof"]["reset"] == "UNSAT" and
+                   c["proof"]["free"] == "SAT" and c["proof"]["step"] == "SAT" and
+                   d.candidate_id(c) not in self.model_attempted]
+        if not sources:
+            self.metrics["no_new_image_sat_source"] += 1
+            return []
+        self.model_attempted.update(d.candidate_id(c) for c in sources)
+        start = time.monotonic()
+        target = out / "image_guidance" / f"round_{self.round:05d}"
+        target.parent.mkdir(exist_ok=True)
+        samples, model_report = self.collect(sources, target)
         replayed = json.loads((target / "replayed_models.json").read_text())
         indexed = {}
         for row in replayed:
@@ -210,6 +215,10 @@ class ImageGuidance:
                         sort_keys=True) + "\n")
             self.annotate(found)
         self.metrics["model_queries"] += model_report["queries"]
+        if self.job.get("inline_image_models"):
+            self.metrics["model_cache_misses"] += model_report["model_cache_misses"]
+            self.metrics["eligible_step_sat_candidates"] += model_report["eligible_step_sat_candidates"]
+            self.metrics["additional_model_solver_queries"] += model_report["additional_solver_queries"]
         self.metrics["model_unknown_skipped"] += model_report["unknown_skipped"]
         self.metrics["independently_replayed_models"] += model_report["models"]
         self.metrics["accepted_image_samples"] += len(added)
@@ -234,7 +243,9 @@ class ImageGuidance:
             discovery_skipped_unchanged_projection_roots=skipped_roots, discovery_wall_s=discovery_wall_s,
             model_report=model_report,
             stopping_reason=None if found else "NO_UNTRIED_RETURNED_TOPK_CANDIDATE" if added else "NO_NEW_RELEVANT_IMAGE_CONSTRAINT",
-            ordinary_proofs_reused_as_model_proofs=False))
+            ordinary_proofs_reused_as_model_proofs=bool(self.job.get("inline_image_models") and model_report["models"]),
+            **(dict(model_source="original ordinary step-SAT receipt and projected model",
+                    additional_model_solver_queries=0) if self.job.get("inline_image_models") else {})))
         self.round += 1
         self.deadline.remaining()
         return found

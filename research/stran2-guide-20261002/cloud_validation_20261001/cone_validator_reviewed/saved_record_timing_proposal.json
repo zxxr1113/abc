@@ -1,0 +1,224 @@
+{
+  "arms": [
+    "full",
+    "cone"
+  ],
+  "cases": [
+    "005_b03.aig",
+    "044_i2c.aig",
+    "041_des_area.aig",
+    "034_b20_opt.aig",
+    "045_mem_ctrl.aig",
+    "060_wb_dma.aig"
+  ],
+  "component_instrumentation": "Use an identical timing harness around existing calls, without deleting guards or moving cone plan construction outside the measured path; label nested timers and do not double-count",
+  "environment": {
+    "LC_ALL": "C",
+    "MKL_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PYTHONHASHSEED": "0"
+  },
+  "excluded": [
+    "candidate discovery/grammar enumeration",
+    "new free/reset/step SAT solving",
+    "new countermodel emission",
+    "new DSEC",
+    "full transformation benchmark"
+  ],
+  "included": [
+    "Python startup, original AIG read/compile, initial signature setup and case-bound input/source/tool verification",
+    "All existing collector input/CNF/query/result/model/receipt/frame-role hashing and parsing, exact original proof-CNF reconstruction and comparison",
+    "Immutable graph capture, complete projected-PI schema checks, COLD cone-plan construction and evaluation; no prebuilt or cross-trial cone cache",
+    "Both full original-AIG passes, recipe replay, complete sample construction, deduplication, projection admission and signature append",
+    "Normal provenance/model/report JSON emission to fresh per-trial paths",
+    "Verification that returned samples, witnesses, admitted rows, decisions and final signatures match the existing correctness reference"
+  ],
+  "input_pilot": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1",
+  "input_protocol_sha256": "ea8b019e807c8b7c2b2a28bf36492b52b73d7f7271a1368a7161eac6f5db89c2",
+  "invariants": [
+    "no new models or reordered model sources",
+    "full evaluator remains reference",
+    "all semantic outputs identical",
+    "58 incomplete-chunk unused exports remain excluded",
+    "all raw failures retained; no automatic retry or case replacement"
+  ],
+  "models_per_sweep_per_arm": 9059,
+  "next_decision": "Only if full pipeline savings survive plan building, all bindings and original replay, consider a separately approved same-model end-to-end pilot; otherwise keep the full reference/default and stop this fast-path performance line.",
+  "objective": "Measure exact-cone validation on identical immutable saved model streams without changing SAT models or discovery work",
+  "primary_boundary": "monotonic direct-child wall, before launch through exit, for one case saved-record validation/admission pipeline",
+  "reporting": "Per-case and paired-sweep wall times and absolute differences; total time across the same six cases; component timing with explicit nesting/unmeasured residual. This measures the saved-record validation pipeline, not end-to-end transform speed or new area gain.",
+  "resources": {
+    "minimum_available_memory_bytes": 4294967296,
+    "output_estimate_bytes": 838860800,
+    "per_trial_timeout_seconds": 600,
+    "reserve_free_bytes": 4294967296,
+    "storage": "new workspace directory only; existing pilot and correctness outputs immutable",
+    "workers": 1
+  },
+  "rounds_per_sweep_per_arm": 300,
+  "scheduling": "one fresh worker process at a time; fixed case order; first arm alternates by case and reverses in sweep two; wait for unrelated heavy work to finish",
+  "schema": 1,
+  "separately_recorded_components": [
+    "upstream receipt-binding validation",
+    "case initialization",
+    "collector total inclusive of parsing/hashing/reconstruction",
+    "compiled validator including freeze/plan build",
+    "original AIG/recipe replay",
+    "admission/signature update",
+    "output emission and other/unassigned overhead"
+  ],
+  "source_correctness_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "source_package": "/workspace/shared/stran2-cone-validator-correctness-v1/source",
+  "status": "PROPOSED_ONLY_REQUIRES_PARENT_GO_AFTER_CODE_REVIEW",
+  "stopping": "Finish the 24 preregistered trials, or stop on identity/semantic/capacity/timeout failure and report it without retuning/retrying. No new timed cohort or all55 launch is authorized by this proposal.",
+  "sweeps": 2,
+  "trials": [
+    {
+      "case": "005_b03.aig",
+      "sweep": 0,
+      "trial": 0,
+      "validator": "full"
+    },
+    {
+      "case": "005_b03.aig",
+      "sweep": 0,
+      "trial": 1,
+      "validator": "cone"
+    },
+    {
+      "case": "044_i2c.aig",
+      "sweep": 0,
+      "trial": 2,
+      "validator": "cone"
+    },
+    {
+      "case": "044_i2c.aig",
+      "sweep": 0,
+      "trial": 3,
+      "validator": "full"
+    },
+    {
+      "case": "041_des_area.aig",
+      "sweep": 0,
+      "trial": 4,
+      "validator": "full"
+    },
+    {
+      "case": "041_des_area.aig",
+      "sweep": 0,
+      "trial": 5,
+      "validator": "cone"
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "sweep": 0,
+      "trial": 6,
+      "validator": "cone"
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "sweep": 0,
+      "trial": 7,
+      "validator": "full"
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "sweep": 0,
+      "trial": 8,
+      "validator": "full"
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "sweep": 0,
+      "trial": 9,
+      "validator": "cone"
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "sweep": 0,
+      "trial": 10,
+      "validator": "cone"
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "sweep": 0,
+      "trial": 11,
+      "validator": "full"
+    },
+    {
+      "case": "005_b03.aig",
+      "sweep": 1,
+      "trial": 12,
+      "validator": "cone"
+    },
+    {
+      "case": "005_b03.aig",
+      "sweep": 1,
+      "trial": 13,
+      "validator": "full"
+    },
+    {
+      "case": "044_i2c.aig",
+      "sweep": 1,
+      "trial": 14,
+      "validator": "full"
+    },
+    {
+      "case": "044_i2c.aig",
+      "sweep": 1,
+      "trial": 15,
+      "validator": "cone"
+    },
+    {
+      "case": "041_des_area.aig",
+      "sweep": 1,
+      "trial": 16,
+      "validator": "cone"
+    },
+    {
+      "case": "041_des_area.aig",
+      "sweep": 1,
+      "trial": 17,
+      "validator": "full"
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "sweep": 1,
+      "trial": 18,
+      "validator": "full"
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "sweep": 1,
+      "trial": 19,
+      "validator": "cone"
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "sweep": 1,
+      "trial": 20,
+      "validator": "cone"
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "sweep": 1,
+      "trial": 21,
+      "validator": "full"
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "sweep": 1,
+      "trial": 22,
+      "validator": "full"
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "sweep": 1,
+      "trial": 23,
+      "validator": "cone"
+    }
+  ],
+  "unchanged_upstream_binding_cost": "Additionally replay the two upstream model-bearing batch binding validations (_batch and solve layers) before each corresponding collection, using the same recorded artifacts in both arms; include their cost in the primary boundary and report it separately. No solver is invoked."
+}

@@ -1,0 +1,145 @@
+{
+  "status": "PASS",
+  "source_root": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1",
+  "protocol_sha256": "ea8b019e807c8b7c2b2a28bf36492b52b73d7f7271a1368a7161eac6f5db89c2",
+  "primary_result": {
+    "pairs": 6,
+    "helper_AND": 202,
+    "inline_AND": 202,
+    "equal_case_percent": 0.6767833527141729,
+    "per_case": [
+      3,
+      7,
+      0,
+      75,
+      41,
+      76
+    ],
+    "positive": 0,
+    "negative": 0,
+    "tied": 6,
+    "no_missing_pairs": true,
+    "no_Direct_UNKNOWN": true
+  },
+  "retained_products": {
+    "selected_free_witnesses": 262,
+    "exact_replays": 108,
+    "saved_DSEC_bindings": 108,
+    "source_proof_chunks": 144,
+    "source_candidates": 5440,
+    "direct_candidates": 13812,
+    "direct_receipt_obligations": 41436,
+    "attribution_free_witnesses": 13534
+  },
+  "inline_models": {
+    "cases": [
+      {
+        "case": "005_b03",
+        "status": "PASS",
+        "reconstructed_proof_CNFs": 2,
+        "raw_inline_SAT_models": 3,
+        "independent_candidate_image_replays": 3,
+        "guidance_consumed_models": 3,
+        "model_cache_misses": 0,
+        "new_solver_queries": 0
+      },
+      {
+        "case": "044_i2c",
+        "status": "PASS",
+        "reconstructed_proof_CNFs": 38,
+        "raw_inline_SAT_models": 1120,
+        "independent_candidate_image_replays": 1120,
+        "guidance_consumed_models": 1120,
+        "model_cache_misses": 0,
+        "new_solver_queries": 0
+      },
+      {
+        "case": "041_des_area",
+        "status": "PASS",
+        "reconstructed_proof_CNFs": 37,
+        "raw_inline_SAT_models": 114,
+        "independent_candidate_image_replays": 114,
+        "guidance_consumed_models": 114,
+        "model_cache_misses": 0,
+        "new_solver_queries": 0
+      },
+      {
+        "case": "034_b20_opt",
+        "status": "PASS",
+        "reconstructed_proof_CNFs": 176,
+        "raw_inline_SAT_models": 1705,
+        "independent_candidate_image_replays": 1705,
+        "guidance_consumed_models": 1705,
+        "model_cache_misses": 0,
+        "new_solver_queries": 0
+      },
+      {
+        "case": "045_mem_ctrl",
+        "status": "PASS",
+        "reconstructed_proof_CNFs": 57,
+        "raw_inline_SAT_models": 2601,
+        "independent_candidate_image_replays": 2601,
+        "guidance_consumed_models": 2601,
+        "model_cache_misses": 0,
+        "new_solver_queries": 0
+      },
+      {
+        "case": "060_wb_dma",
+        "status": "PASS",
+        "reconstructed_proof_CNFs": 99,
+        "raw_inline_SAT_models": 3516,
+        "independent_candidate_image_replays": 3516,
+        "guidance_consumed_models": 3516,
+        "model_cache_misses": 0,
+        "new_solver_queries": 0
+      }
+    ],
+    "completed_source_CNFs": 409,
+    "consumed_original_AIG_replays": 9059,
+    "complete_chunk_model_misses": 0,
+    "unused_raw_exports": 58,
+    "unused_export_location": "runs/block_002/inline/045_mem_ctrl/chunks/chunk_00057",
+    "unused_export_scope": "Incomplete proof chunk; cost observation only, no completed certificate or consumed teacher"
+  },
+  "cost": {
+    "helper_completed_query_rows": 31482,
+    "inline_completed_query_rows": 21430,
+    "helper_secondary_queries": 9388,
+    "inline_secondary_queries": 0,
+    "helper_sum_case_wall_s": 339.78313806100414,
+    "inline_sum_case_wall_s": 345.53269260199886,
+    "cost_file_caveat": "One helper mem_ctrl step results file is empty; solver invocation counters are observed result-file counts. Every nonempty result file is newline complete and all completed rows bind to ordered requested queries. In-flight work without a flushed row is not counted."
+  },
+  "reviewer_new_solver_queries": 0,
+  "reviewer_new_DSEC_calls": 0,
+  "reviewer_new_benchmark_runs": 0,
+  "scope": "Frozen exploratory six, exact bounded-Direct/global-structural corrected marginal, all planned pairs. Equal corrected area and fewer observed query rows. Changed countermodels/search trajectories, incomplete-budget coverage, and two-worker scheduling preclude a pure equal-work speed claim. No native recipe novelty or exhaustive Boolean Direct claim.",
+  "artifact_hashes": {
+    "review.json": "26021c000e1fb41593177e43742362a39fe72ba844fb454c41866cc988f89232",
+    "cost_review.json": "e6843409e7bd7ac535de8c2e9357a25173abc09f7c3fee4c6b78bc8edef7a411",
+    "review.py": "d85aca67fda403fd7cb59d73f0977467ef6186cd9811f90b78bc317d28b11f4f",
+    "cost.py": "78a8974456a963d1a6f8458433785672783b97c8d5fa8e601b12e0de4076ea19",
+    "models_000/review.json": "54c0387fb47bd4dd0c055d6a683379902c8b292b93c96ef12db470d7015742e6",
+    "models_001/review.json": "e3b857497ca8ee18802728b1bc1925cec56150a75c435f73ab5e1185b251cfdf",
+    "models_002/review.json": "80545d887d79145ad765604de54f4541e57a4f6ee6f7be7b39cd31c4df06bf0c",
+    "paired_raw_identity_review.json": "f50c8ee865bf8cf3a1117deade79b321eff9ce944cb854fdd29a13256c7156a4"
+  },
+  "reused_independent_checker_hashes": {
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/full55-independent-review/review.py": "f4c840e0eae5f80af574dcaa61688adc15a73468ac4b749a715ce8bf25d7b98f",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/full55-independent-review/attribution.py": "4e80a573b7334447606163eb5bc4101f60e4c30c236b8307e9ac6cbd5caf3afe",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/full55-independent-review/raw_decoder.py": "3abfb86d0e3aee5c586ceea2dc2d61f53466f276dbfec4c2cee496a752dc4310",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-model-independent-review/review_models.py": "90d696f3cf07abca4592b72e4fda511a203b0d976a4423eba746e95eb6611cee"
+  },
+  "source_result_hashes": {
+    "protocol.json": "ea8b019e807c8b7c2b2a28bf36492b52b73d7f7271a1368a7161eac6f5db89c2",
+    "controller.json": "0438e1d88ebf097e4383eb29a701af2f68c7dde1d14f77be8c472b790589bc8d",
+    "executions.json": "c9f8f6d6766ae31a552722b6d530c7b9347b5223f2fdc1502e35bb28a0ddfe1f",
+    "results.json": "170642ee22069a8c4d2ac687968411eb178f426feadff13c972dc6f47797d75d",
+    "corrected_rows.json": "d637b1f712b7dbffb6135010bc0da38ea544041a3db90770dbf9afebe3e3953a",
+    "corrected_summary.json": "f70108ebd58f7d34a011710d3bc5b3334d42a5548d6fc8d8b2e6478823088a2c",
+    "proof_cost_accounting.json": "0e797d719aaf78553db1404971e2178ce5e20e38506542daed28cf6ae1095531",
+    "timing_diagnosis.json": "da0b2755e09abfb1de67617cdf5df1a16f706c74083e7ddc25232833cc87ef24",
+    "integrity.json": "7c2168385333d5a0bf8f016fc8cf12978a1dd0e49c7148c14d312cea16d8415e"
+  },
+  "paired_raw_products_and_candidate_identities_equal": true
+}

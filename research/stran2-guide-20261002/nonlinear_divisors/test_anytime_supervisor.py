@@ -189,9 +189,24 @@ class SupervisorTests(unittest.TestCase):
     def process_is_live(pid):
         try:
             state = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()[0]
-        except FileNotFoundError:
+        except (FileNotFoundError, ProcessLookupError):
+            # /proc can vanish at open (ENOENT) or after open, during read
+            # (ESRCH). Both mean the process is already gone; keep other errors.
             return False
         return state not in ("Z", "X")
+
+    def test_process_liveness_handles_exit_during_proc_read(self):
+        for error in (FileNotFoundError(errno.ENOENT, "gone before open"),
+                      ProcessLookupError(errno.ESRCH, "gone during read")):
+            with self.subTest(error=type(error).__name__), mock.patch.object(Path, "read_text", side_effect=error):
+                self.assertFalse(self.process_is_live(12345))
+
+    def test_process_liveness_preserves_other_proc_errors(self):
+        for error in (PermissionError(errno.EACCES, "access denied"), OSError(errno.EIO, "read failure")):
+            with self.subTest(error=type(error).__name__), mock.patch.object(Path, "read_text", side_effect=error):
+                with self.assertRaises(type(error)) as caught:
+                    self.process_is_live(12345)
+                self.assertIs(caught.exception, error)
 
     def test_log_open_enospc_does_not_spawn_and_preserves_fallback(self):
         for explicit_fallback in (False, True):

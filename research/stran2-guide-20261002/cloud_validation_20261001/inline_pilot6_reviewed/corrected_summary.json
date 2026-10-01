@@ -1,0 +1,96 @@
+{
+  "audit_cost": "separate; see executions.json",
+  "excluded_cases": [],
+  "excluding_largest_positive_delta": {
+    "cases": 6,
+    "delta_and": 0,
+    "equal_case_delta_pp": 0.0,
+    "helper_and": 202,
+    "helper_equal_case_percent": 0.6767833527141729,
+    "inline_and": 202,
+    "inline_equal_case_percent": 0.6767833527141729,
+    "weighted_delta_percent": 0.0
+  },
+  "missing_data_are_zero": false,
+  "native_recipe_novelty": "NOT_CHECKED",
+  "no_direct_unknown_sensitivity": {
+    "cases": 6,
+    "delta_and": 0,
+    "equal_case_delta_pp": 0.0,
+    "helper_and": 202,
+    "helper_equal_case_percent": 0.6767833527141729,
+    "inline_and": 202,
+    "inline_equal_case_percent": 0.6767833527141729,
+    "weighted_delta_percent": 0.0
+  },
+  "no_pure_speedup_claim": true,
+  "paired": {
+    "cases": 6,
+    "delta_and": 0,
+    "equal_case_delta_pp": 0.0,
+    "helper_and": 202,
+    "helper_equal_case_percent": 0.6767833527141729,
+    "inline_and": 202,
+    "inline_equal_case_percent": 0.6767833527141729,
+    "weighted_delta_percent": 0.0
+  },
+  "paired_rows": [
+    {
+      "delta": 0,
+      "file": "005_b03.aig",
+      "helper": 3,
+      "inline": 3,
+      "loaded_and": 128,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "044_i2c.aig",
+      "helper": 7,
+      "inline": 7,
+      "loaded_and": 2879,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "041_des_area.aig",
+      "helper": 0,
+      "inline": 0,
+      "loaded_and": 10133,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "034_b20_opt.aig",
+      "helper": 75,
+      "inline": 75,
+      "loaded_and": 13440,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "045_mem_ctrl.aig",
+      "helper": 41,
+      "inline": 41,
+      "loaded_and": 34059,
+      "no_direct_unknown": true
+    },
+    {
+      "delta": 0,
+      "file": "060_wb_dma.aig",
+      "helper": 76,
+      "inline": 76,
+      "loaded_and": 9555,
+      "no_direct_unknown": true
+    }
+  ],
+  "planned_case_arms": 12,
+  "planned_cases": 6,
+  "quality_and_work_trajectory_can_differ": true,
+  "schema": 1,
+  "scope": "paired global_hash_corrected_conditional_build_marginal / original loaded_AND; equal-case mean and total AND, weighted and excluding-largest sensitivity",
+  "transform_statuses": {
+    "BUDGET_EXHAUSTED": 3,
+    "COMPLETE": 9
+  }
+}

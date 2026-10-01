@@ -254,6 +254,38 @@ b20重新进行3138个有界Direct候选审计，9414个逻辑查询、6278个�
 
 56个串行波次的外层wall合计2853.919s（47.57min，含controller及变换后DSEC）；变换worker wall求和普通2504.821s、image2192.847s，是带上限的覆盖计数，不作为正式加速倍率。逐例Direct归因额外wall合计488.305s，全图alias归因18.740s，独立复核还另有成本。结果表 `corrected_rows.json` 保留所有110行及各阶段状态，`corrected_summary.json` 与独立 `evidence-preserved/full55-independent-review/aggregate_review.json` 给出配对、尺寸分层和敏感性。模型/teacher域全量独立回放也已PASS：55个image案例的1802个完整轮次、47069份保存模型、9541条接受约束、51939个完整候选签名版本及22492次投影跳过全部复核，57297条两臂共有pool记录一致。3个末尾未完成引导轮和4个未完成proof chunk明确排除，未进入任何保留产物。此只读回放额外328.764s，无新solver/DSEC调用；归因producer实际执行101292个Direct查询和36个新DSEC调用，不能将复用证书计成新运行。索引为 `evidence-preserved/full55-independent-review/review.json`。
 
+### 直接导出普通证明模型：完整六例配对的负结果与覆盖改善
+
+另实现 opt-in `inline_models.py` 与独立 `query_model_solver.c`，直接导出普通 step-phase SAT 查询的 PI/RO 模型，避免为同一反馈另跑 model helper。UNSAT/UNKNOWN 不导出模型；缓存只有 free/reset 结果而没有 step 模型时标为 `MODEL_CACHE_MISS`，不得推测或偷偷补解。模型须绑定完整 CNF、精确有序 assumptions、solver/source 身份，并通过原始 AIG 和 recipe 独立回放。默认 helper 路径及生产实现未替换；这只是实验后端。
+
+六例重新按冻结协议配对，两臂使用同一个新 proof solver（helper 臂仅取 status）、相同 Python 源码、120s/C1000/两 worker/两例一块反序运行；各自重新做 Direct 和全原图 alias 审计，不借用历史较好结果。协议 SHA256 `ea8b019e807c8b7c2b2a28bf36492b52b73d7f7271a1368a7161eac6f5db89c2`，完整证据在 `/workspace/shared/stran2-inline-model-pilot6-prepared-v1`，便携汇总在 `cloud_validation_20261001/inline_pilot6_reviewed/`。
+
+六例两臂修正 Build 均为 **3/7/0/75/41/76，共202 AND**，选中配方和原始产品字节逐例完全相同，面积增量为0。12个产品均双 DSEC PASS，所有归因审计完成且 Direct UNKNOWN 为0。完整查询结果行 **31,482→21,430**，额外 helper 查询 **9,388→0**；这些是查询结果行计数，不能把结果文件数量当作完全审计的进程启动次数（helper mem 有一个空结果文件）。独立复核了9,059个被消费模型的原图回放、409份源 CNF、41,436个 Direct 收据义务，以及108次产品重放/DSEC绑定；末尾未完成 proof chunk 中58份未使用模型没有进入反馈或产物。
+
+搜索完成覆盖4/6→5/6：inline b20在114.35s完成，helper触及120s；mem两臂仍触顶。**变换 worker wall 求和339.78→345.53s，未体现总计算时间改善**。另一方面，串行两-worker波次的外层 wall（包含每波检查及变换后DSEC）为276.60→269.24s，因为关键路径不同；两种边界必须同时保留，不能择优称统一加速。普通 SAT 内部时间27.61→27.47s，去掉的 helper SAT 时间12.11s，但总时间中其他搜索/验证及未分摊开销抵消了这部分节约；hash、解析、回放和I/O未分别计时，不能进一步确定各自原因。wb 单例慢12.22s，且模型不同使搜索轨迹变化：signature hits656,830→986,419、positive candidates223,525→304,698、proof chunks93→99，最终 qualified仍426；所以这也不是严格同工作量的 solver 微基准。
+
+结论：保留为可选实验能力，**不凭查询数减少就替换v3推荐配置或扩展重跑55例**。117项唯一测试通过（主套件106通过/11个深度测试跳过，后者另行11通过）；首次套件中测试读取退出进程 `/proc/.../stat` 遇到ESRCH的失败保留，修复仅将既有ENOENT退出容错扩展到ProcessLookupError，未改变证明或运行时算法。后续若改进模型验证成本，须保持独立原图回放及完整来源绑定，并重新做匹配实验。
+
+### 精确 assumption cone 验证：正确性完成，时间效果待测
+
+inline 可选后端新增更窄的模型验证 fast path：只有逐字节绑定到纯AND Tseitin定义DAG、固定false常量且没有其他限制子句的CNF，才允许只计算**全部有序assumptions的fanin并集**。完整PI赋值唯一决定DAG剩余节点，锥外定义能唯一扩展，因此这个shortcut只减少SAT见证的compiled-miter检查，不是UNSAT证明替代。图用嵌套不可变tuple冻结，plan绑定完整图/CNF及有序assumption；不能仅凭literal ID复用。完整PI schema检查、所有源/receipt哈希、两次完整原始AIG转移回放及recipe检查仍保留；full validator继续默认，helper及非inline模式不启用它。
+
+全410份实际CNF的独立解析确认符合此条件。9059个已消费模型的compiled AND求值数从125,245,260降到10,144,012（−91.9007%）；加上不变的117,123,740次原图AND求值，算术操作量下降47.4901%。这**不包含plan构建、hash、schema及lookup成本，不能据此声称wall加速**。所有9059模型/300轮的full/cone/saved witness、完整样本、投影决定及签名历史一致；58个未完成chunk的额外模型仍排除。19项针对性测试和四组小型完成运行对照通过，八份DSEC绑定复核；聚合125项执行通过加另进程11项冻结前提测试，总136项唯一执行通过。
+
+正确性冻结源manifest为 `a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2`，紧凑证据在 `cloud_validation_20261001/cone_validator_reviewed/`。云环境恢复后全部冻结文件和复核索引再次校验一致，无需重复已完成运行。下一步只允许相同保存模型的两轮反序单worker计时，完整包含冷plan、三层绑定、原图回放、admission及输出成本；未完成该计时前不扩大正式cohort或改变推荐配置。
+
+### 自由域漏筛诊断：前态反馈发现一个真实但很小的增量
+
+固定最早已保存的 mem_ctrl/wb_dma/b20_opt/des_area 四个 first32-root chunk，所有臂使用**第一次 image refinement 后完全相同的 seq 签名、root顺序和冻结 pool**，不再做反馈轮。A为初始256个free样本，B追加已独立回放模型的 `(previous PI, previous RO)`，C追加 `(current PI, previous RO)`；任意这些状态/输入只允许用于free差异见证，绝不当成可达或image等式teacher。每臂最多256个去重追加world，随机对照用固定种子2026100213及相同实际新增数；取模型发生在successor去重之前。脚本、协议和汇总在 `free_domain_diagnostic/`，原始记录在其被Git忽略的 `runs/`。
+
+实际新增 B/C world 分别为 mem14/14、wb24/25、b20 0/0、des7/7。mem的B/C都找到19个初始free签名完全无差异的新保留配方，其中同一root1263的3个通过新跑free-SAT/reset-UNSAT/image-UNSAT及原图见证回放；匹配随机对照没有新保留配方。wb新增1个但image证明失败，b20仍空，des无新保留配方。`no_sampled_free_witness`位于成本、nonlinear与top-k检查之前，因此降低此计数本身不等于Build收益。
+
+额外成本产品审计得到 mem **raw Build-only22→23 AND**；在两臂共有的有界Direct池与相同选择规则下，mixed产品27→28 AND，其中真正fresh Build同集合移除边际 **2→3 AND**。所以这次配对净改善是 **+1 AND**；B中单独移除新配方损失3 AND不能写成配对+3。全原图结构hash未发现新配方的旧输出alias；312个Direct候选含12个grammar hash补充，10个positive proved Direct，7个不同图的新DSEC均PASS。C配方集合与B相同，产品复用明确记录；两者free签名并非相同。此Direct池局限于各臂Build选择root的共同union，不是全图布尔Direct穷尽。
+
+四例准备、搜索和新配方证明实际wall17.25/3.73/2.71/3.43s；120s限制是合作式Deadline检查，**不是外层硬终止supervisor**。产品/Direct/DSEC另花46.61s，其中非DSEC12.96s，不纳入既有主变换120s结果。独立只读复核重放14个不同arm搜索、420个源image模型、1381个保留配方见证、60个新diagnostic义务、156个fresh Build义务、936个Direct义务，以及12个产品重放和7个DSEC绑定，全部PASS；10项测试通过，复核不新增solver/DSEC。紧凑复核为 `free_domain_diagnostic/independent_review.json`。
+
+这是自由差异样本不足会漏掉有效配方的实证，但只证明一个固定小窗口的+1 AND，不是在线算法或全55改善。单轮B保留51个qualified，A原49个加3个新配方的在线累计union应为52个：B的top-k挤掉一个已证明旧配方，在线实现必须保留它，不能拿51配方诊断产品直接替代52配方累计产品。另行52配方累计union检查已完成并独立复核：49旧+3新全部保留，选择root、312个共同Direct及最终产品与B逐字节相同，四个图复用精确input/product/ABC/log绑定的DSEC收据，无新solver/DSEC；额外wall4.86s，配对仍只改善1AND。首个检查因tuple/JSON-list元数据比较不一致在产品生成前中止，失败记录保留，第二次仅修正规范化比较。进一步集成仍须分离free/seq版本、双域投影缓存、追加见证的稳定lane与完整赋值及outer-anytime自由签名同步。 独立的默认关闭 `free_state.py` 已实现256全局追加上限、批次原子验证、稳定lane、双域投影及图身份绑定；32项测试通过，另独立覆盖20个随机600-model流/四种分批、14类原子拒绝、420个真实源模型和281个B候选见证。模型receipt文件的不可变身份认证仍由调用者负责，模块自身不接管已证明候选集合；目前没有接入运行时，不能据此声称在线面积或速度。
+
 ### 先行工作校准与待证明贡献
 
 本轮检索后的结论是：reset/image 证明原理及反例反馈均有明确先行工作，不能作为新理论宣称。

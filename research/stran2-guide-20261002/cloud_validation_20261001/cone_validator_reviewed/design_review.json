@@ -1,0 +1,20 @@
+{
+  "status": "DESIGN_SOUND_IMPLEMENTATION_REVIEW_PENDING",
+  "design_sha256": "10013f2c40d66378d7dabc2cb43680beeda60afc6c0036623f1b18fdb23c8a82",
+  "counts_review_sha256": "d7128f4696dd576c3ed877d07827b1637d09853e5f889870484501670971e123",
+  "proof": "Complete projected PI values and fixed variable zero uniquely extend to every internal variable of the checked topological AND-equivalence DAG. Every assumption value is determined by its transitive fanin; all other gate definitions are satisfiable by that unique extension. This shortcut validates saved SAT assignments only and supplies neither an UNSAT result nor a reachability claim.",
+  "required_invariants": [
+    "Exact source CNF equals the reconstructed graph serialization and contains no extra constraints",
+    "Every projected bit is validated, including unused inputs; roles stay complete and independent",
+    "Plan owns immutable graph metadata or revalidates graph identity before reuse; key includes exact CNF and ordered assumption literals",
+    "Constants, complements, duplicated and multiple assumptions are checked exactly",
+    "Both full original AIG passes and recipe mismatch independently remain mandatory; they supply all sample values",
+    "All receipt/model/source/tool binding, cache-miss and UNKNOWN semantics retained",
+    "Planning is deadline-bound and cache lifetime is limited to immutable chunks/collection",
+    "Full-versus-cone frozen-record differential includes exact samples, ordering, keys, admission decisions, signature versions, and products; defaults retain behavior"
+  ],
+  "cost_scope": "Only AND-evaluation counts were independently confirmed; planning, complete PI validation, artifact binding, parsing and memory costs remain unmeasured.",
+  "parent_implementation_go_received": true,
+  "timed_cohort_authorized": false,
+  "runtime_review_pending": true
+}

@@ -1,0 +1,61 @@
+{
+  "status": "PASS_FROZEN_CONE_CORRECTNESS_REVIEW",
+  "correctness_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "frozen_source": "/workspace/shared/stran2-cone-validator-correctness-v1/source",
+  "runtime_hashes": {
+    "nonlinear_divisors/inline_models.py": "fd19c68f897d739ab6bd0f488b57917af40f7885655ab995abf4e8227173cd44",
+    "nonlinear_divisors/anytime.py": "16a97e32df1644143b35b6042433081561bd669d322d9fbe786e3107087ccff5"
+  },
+  "implementation_boundary": "Explicit inline-only cone flag; exact immutable pure-definitional DAG binding, complete PI validation, ordered assumptions, source receipts and both full original-AIG passes preserved; full/default/helper paths preserved.",
+  "independent_validation": {
+    "cnfs_recounted": 410,
+    "raw_models_recounted": 9117,
+    "consumed_models": 9059,
+    "full_cone_admission_rounds": 300,
+    "focused_tests_passed": 19,
+    "focused_skips": 0,
+    "complete_run_comparisons": 4,
+    "saved_DSEC_bindings": 8,
+    "frozen_source_files": 18
+  },
+  "producer_tests": {
+    "aggregate_executed": 125,
+    "aggregate_prerequisite_skips": 11,
+    "prerequisite_passed_separate_process": 11,
+    "unique_executed": 136
+  },
+  "operation_counts": {
+    "full_compiled_ANDs": 125245260,
+    "cone_compiled_ANDs": 10144012,
+    "mandatory_original_AIG_ANDs": 117123740,
+    "compiled_gate_reduction_percent": 91.90068191003795,
+    "combined_gate_reduction_percent": 47.49008660348477
+  },
+  "timing_proposal": {
+    "status": "REVIEWED_SCOPE_APPROPRIATE_PARENT_GO_REQUIRED",
+    "sha256": "76774d2fa3f1c4cf1702d16b9f8eefbf5e29864bb5985ed5c12b8b36f431f16e",
+    "requirements": [
+      "Frozen single-worker harness and sources",
+      "All guards, cold plan creation, two original-AIG passes, sample admission and output I/O included",
+      "Identical 9059 immutable model records with300 completed rounds; exclude58 incomplete exports",
+      "Two sweeps with reversed first-arm order; retain every planned trial and failure",
+      "Report direct-child wall plus nested component timers without double-counting",
+      "No end-to-end transform, area, native novelty or full55 claim from saved-record timing"
+    ]
+  },
+  "new_runtime_edits_by_reviewer": 0,
+  "new_benchmark_runs_by_reviewer": 0,
+  "new_DSEC_calls_by_reviewer": 0,
+  "focused_test_solver_calls": "Small real-solver fixture tests only; no new cohort/search benchmark",
+  "review_artifacts": {
+    "counts_review.json": "d7128f4696dd576c3ed877d07827b1637d09853e5f889870484501670971e123",
+    "design_review.json": "cc67dd72b1ee0394cc57905b9c37e3251053e0748d382051cc106694ea9388f0",
+    "differential_review.json": "928174bf644bb0db60533089861c56c4ed923cdaf30c11f4ce16ee6e3bb7f065",
+    "complete_run_review.json": "b7c9e0445c6ca5ae70871d68eb97613c10746622dcfe68c96088c9c7a5d6df9b",
+    "focused19.log": "f5677b460fb92cac2e8cb9c42b9933c68b0400654e304688cfd6993a2dc2ed40",
+    "review_counts.py": "eb6dc98de098fbcec2900184daa406dc15890ab336b62dfbc917d9bddd99de7a",
+    "check_differential.py": "0dce5086a553663a96682e7ed0bdf90b675a5114ab1e0fe751da9d9f042a138b",
+    "check_final.py": "597412afb83b0366925f3318c50a7206af6ffaac833cf1941fdc1c20d5d4d5c5"
+  },
+  "scope": "Correctness approval for exact frozen code only; no runtime timing or production recommendation inferred. Parent controls further experiment authorization."
+}

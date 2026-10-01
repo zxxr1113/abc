@@ -11,6 +11,8 @@ Independent baseline/product DSEC run afterward with separately reported budgets
 A retained product never changes BUDGET_EXHAUSTED into exhaustive COMPLETE.
 
 --image-model-solver explicitly enables replay-checked image-domain feedback.
+--inline-image-models instead captures models from original ordinary step queries
+with a separate model-capable --solver, avoiding the helper's duplicate solve.
 Pool/ranking/aliases and per-root top-k remain at the initial policy; only recipe
 construction signatures grow. These image models are not reachable teachers or
 proof certificates. Build-only products require a separately timed selected-root
@@ -197,7 +199,7 @@ class FrozenQueries:
 
 
 def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, deadline, input_hash,
-                expected_solver_identity=None):
+                expected_solver_identity=None, inline_model_context=None):
     """Freeze all candidate miters before issuing any phase or reusing an answer."""
     out.mkdir(parents=True, exist_ok=False)
     graph = Graph()
@@ -213,7 +215,13 @@ def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, dead
         literals.append(row)
     write_json(out / "candidates.unproved.json", candidates)
     write_json(out / "query_literals.json", literals)
-    broker = FrozenQueries(graph, out, solver, deadline, expected_solver_identity)
+    if inline_model_context is None:
+        broker = FrozenQueries(graph, out, solver, deadline, expected_solver_identity)
+    else:
+        from inline_models import InlineFrozenQueries, d
+        roles, variables = d.projected_pis(graph, mappings["free"], mappings["step"], a)
+        broker = InlineFrozenQueries(graph, out, solver, deadline, expected_solver_identity,
+            context=dict(inline_model_context, roles=roles, variables=variables))
     records = [dict(free="NOT_RUN", reset="NOT_RUN", step="NOT_RUN") for _ in candidates]
     receipts = [{} for _ in candidates]
 
@@ -288,6 +296,8 @@ def transform(job):
     case, config = job["case"], Config(**job["config"])
     config.validate()
     require(job["chunk_roots"] > 0, "chunk_roots must be positive")
+    require(not job.get("inline_cone_check") or job.get("inline_image_models"),
+            "cone validation requires inline image models")
     deadline = Budget(job["start"], job["end"])
     source, out, solver = Path(case["input"]), Path(job["out"]), Path(job["solver"])
     input_hash = sha(source)
@@ -326,8 +336,12 @@ def transform(job):
     # The optional feedback lane never changes the pool/rank/alias view.
     pool_seq, pool_seq_mask = seq, seq_mask
     guidance = None
-    if job.get("image_model_solver"):
-        from image_guided import ImageGuidance
+    if job.get("image_model_solver") or job.get("inline_image_models"):
+        if job.get("inline_image_models"):
+            require(not job.get("image_model_solver"), "choose inline capture or standalone helper")
+            from inline_models import InlineImageGuidance as ImageGuidance
+        else:
+            from image_guided import ImageGuidance
         guidance = ImageGuidance(a, graph, base, step, seq, seq_mask, free, free_mask,
             structure, config, job, deadline, model_identity)
     pending, roots_in_chunk, chunk_roots = [], 0, []
@@ -341,12 +355,18 @@ def transform(job):
             if guidance:
                 guidance.mark_attempted(pending)
             accepted, report = prove_chunk(a, graph, dict(free=base, reset=reset, step=step),
-                free, pending, chunk_dir, solver, deadline, input_hash, solver_identity)
+                free, pending, chunk_dir, solver, deadline, input_hash, solver_identity,
+                inline_model_context=(dict(input_sha256=input_hash, source_hashes=job["source_hashes"],
+                    solver_sha256=solver_hash) if job.get("inline_image_models") else None))
             timing["proof_wall_s"] += time.monotonic() - chunk_start
             for key in ("requested_queries", "actual_queries", "conclusive_cache_hits", "unknown_not_cached",
                         "reset_sat", "reset_unknown", "reset_reject_skipped_free_and_step",
                         "theoretical_unfiltered_queries", "solver_conflicts", "solver_process_wall_s"):
                 metrics[key] += report.get(key, 0)
+            if job.get("inline_image_models"):
+                for key in ("inline_models_emitted", "additional_model_solver_queries", "step_sat_requests",
+                            "step_sat_model_available_requests", "step_sat_model_cache_misses"):
+                    metrics[key] += report.get(key, 0)
             qualified.extend(accepted)
             progress.update(stage="checkpoint", proof_completed_chunks=chunk_index + 1,
                             qualified_candidates=len(qualified))
@@ -409,7 +429,8 @@ def transform(job):
     require(sha(source) == input_hash, "input changed during transform")
     bind_executable(solver, job["solver_sha256"], solver_identity)
     if guidance:
-        bind_executable(job["image_model_solver"], job["image_model_solver_sha256"], model_identity)
+        if job.get("image_model_solver"):
+            bind_executable(job["image_model_solver"], job["image_model_solver_sha256"], model_identity)
         progress["image_guidance"] = guidance.report()
     deadline.remaining()
     result = dict(schema=1, status="COMPLETE", search_complete=True, **progress,
@@ -622,6 +643,10 @@ def run_case(case, out, source_dir, plan, config, solver, abc, chunk_roots, dsec
     if plan.get("image_model_solver"):
         for key in ("image_model_solver", "image_model_solver_sha256", "image_model_solver_identity"):
             job[key] = plan[key]
+    if plan.get("inline_image_models"):
+        job["inline_image_models"] = True
+    if plan.get("inline_cone_check"):
+        job["inline_cone_check"] = True
     write_json(out / "job.json", job)
     command = [sys.executable, "-B", str(source_dir / "nonlinear_divisors/anytime.py"),
                "--worker-job", str(out / "job.json")]
@@ -644,6 +669,7 @@ def run_case(case, out, source_dir, plan, config, solver, abc, chunk_roots, dsec
     bind_executable(solver, plan["solver_sha256"], plan["solver_identity"])
     if plan.get("image_model_solver"):
         bind_executable(plan["image_model_solver"], plan["image_model_solver_sha256"], plan["image_model_solver_identity"])
+    if plan.get("image_model_solver") or plan.get("inline_image_models"):
         result["image_guidance_attribution"] = "Build-only checkpoint; separately timed selected-root Direct sensitivity audit REQUIRED"
     require(all(sha(source_dir / name) == digest for name, digest in plan["runtime_source_hashes"].items()),
             "frozen source changed during transform")
@@ -708,7 +734,12 @@ def main():
     selection.add_argument("--cases", nargs="+")
     parser.add_argument("--solver", type=Path, required=True)
     parser.add_argument("--abc", type=Path)
-    parser.add_argument("--image-model-solver", type=Path,
+    parser.add_argument("--inline-cone-check", action="store_true",
+                        help="opt-in exact assumption-cone validation; requires --inline-image-models")
+    guidance_mode = parser.add_mutually_exclusive_group()
+    guidance_mode.add_argument("--inline-image-models", action="store_true",
+                        help="capture original ordinary step-SAT models with the separate model-capable --solver; never re-solve")
+    guidance_mode.add_argument("--image-model-solver", type=Path,
                         help="opt-in image-only guidance with frozen initial pools; requires separate Direct sensitivity audit")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--workers", type=int, default=1)
@@ -718,6 +749,7 @@ def main():
         parser.add_argument("--" + key.replace("_", "-"), type=type(value), default=value)
     args = parser.parse_args()
     require(args.workers > 0 and args.chunk_roots > 0 and args.dsec_seconds > 0, "positive execution bounds required")
+    require(not args.inline_cone_check or args.inline_image_models, "cone validation requires inline image models")
     config = Config(**{key: getattr(args, key) for key in asdict(Config())})
     config.validate()
     manifest = json.loads((PACKAGE / "cases.json").read_text())
@@ -729,9 +761,12 @@ def main():
     args.out.mkdir(parents=True, exist_ok=False)
     source_dir = args.out / "source"
     runtime = list(RUNTIME)
-    if args.image_model_solver:
+    if args.image_model_solver or args.inline_image_models:
         from image_guided import RUNTIME as IMAGE_RUNTIME
         runtime.extend(IMAGE_RUNTIME)
+    if args.inline_image_models:
+        from inline_models import RUNTIME as INLINE_RUNTIME
+        runtime.extend(INLINE_RUNTIME)
     for name in runtime:
         target = source_dir / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -756,6 +791,18 @@ def main():
             construction_policy="append independently replayed unrestricted-one-step-image constraints; restart changed-projection roots in current chunk",
             unchanged_projection_policy="skip discovery only when complete target+frozen-pool projection set is unchanged; retain every accepted global sample",
             reachable_teacher=False, direct_sensitivity_audit="REQUIRED; outside transform, separately timed")
+    if args.inline_image_models:
+        plan.update(algorithm="anytime_inline_image_models_v1", inline_image_models=True,
+            pool_policy="immutable initial signatures, ranks and aliases",
+            construction_policy="append replayed models from original ordinary step-SAT queries",
+            model_cache_miss_policy="retain proof SAT; skip feedback as MODEL_CACHE_MISS; never re-solve",
+            trajectory_policy="original-query models and model-less cache hits may change quality from helper v3",
+            reachable_teacher=False, additional_model_solver_queries=0,
+            direct_sensitivity_audit="REQUIRED; outside transform, separately timed")
+    if args.inline_cone_check:
+        plan.update(algorithm="anytime_inline_image_models_cone_v1", inline_cone_check=True,
+            compiled_model_validator="exact_assumption_cone_on_immutable_verified_Tseitin_DAG",
+            original_aig_and_recipe_replay="UNCHANGED; both full original-AIG passes remain mandatory")
     write_json(args.out / "plan.json", plan)
     results = []
     def work(name):
@@ -776,7 +823,7 @@ def main():
             results.sort(key=lambda r: names.index(r["file"]))
             write_json(args.out / "results.json", results)
             summary = aggregate(results)
-            if args.image_model_solver:
+            if args.image_model_solver or args.inline_image_models:
                 summary.update(gain_attribution="raw Build-only checkpoint before selected-root Direct sensitivity",
                     main_metric_status="NOT_ESTABLISHED_UNTIL_SEPARATE_DIRECT_SENSITIVITY_AUDIT",
                     direct_sensitivity_audit="REQUIRED; outside transform, separately timed")
