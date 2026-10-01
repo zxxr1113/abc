@@ -1,0 +1,58 @@
+{
+  "attempted": 6,
+  "by_loaded_size": {
+    "10k_to_100k": {
+      "and_gain": 37,
+      "cases": 3,
+      "equal_case_percent": 0.09176587301587302,
+      "weighted_percent": 0.06420044419766796
+    },
+    "1k_to_10k": {
+      "and_gain": 12,
+      "cases": 2,
+      "equal_case_percent": 0.18413713843674642,
+      "weighted_percent": 0.09650957053241113
+    },
+    "ge100k": {
+      "and_gain": 0,
+      "cases": 0,
+      "equal_case_percent": null,
+      "weighted_percent": null
+    },
+    "lt1k": {
+      "and_gain": 5,
+      "cases": 1,
+      "equal_case_percent": 3.90625,
+      "weighted_percent": 3.90625
+    }
+  },
+  "checkpoint_products": 6,
+  "excluding_largest_contributor": {
+    "and_gain": 17,
+    "cases": 5,
+    "equal_case_percent": 0.8549048553746985,
+    "weighted_percent": 0.029953835852979525
+  },
+  "independently_validated": {
+    "and_gain": 54,
+    "cases": 6,
+    "equal_case_percent": 0.7583036493201853,
+    "weighted_percent": 0.07692965210701769
+  },
+  "largest_contributor": "034_b20_opt.aig",
+  "missing_data_are_zero": false,
+  "partial_search_is_complete": false,
+  "positive_validated_cases": [
+    "005_b03.aig",
+    "044_i2c.aig",
+    "034_b20_opt.aig",
+    "060_wb_dma.aig"
+  ],
+  "scope": "standalone reset-image products; native novelty/production comparison NOT_RUN",
+  "search_complete": 3,
+  "statuses": {
+    "BUDGET_EXHAUSTED": 3,
+    "COMPLETE": 3
+  },
+  "validated_checkpoint_but_error_cases": []
+}

@@ -118,6 +118,49 @@ python3 research/stran2-guide-20261002/nonlinear_divisors/audit_partial.py \
 新输出目录必须尚不存在。先复现六例及缺失状态，再决定是否用 `--all` 替换 `--pilot`；不要把超时作零分，也不要把仅有关系证明、未有实际重放与 DSEC 的候选计入主指标。全55对照、与原生配方逐项比较及生产集成尚未完成。
 
 
+### 第二轮：预算内保存完整证明与产物的 anytime 流程
+
+新增显式 opt-in `nonlinear_divisors/anytime.py`，原 standalone 入口及其 v3 证据不变。固定每32个 eligible root 为一块，在同一不可变原图上搜索、先检查 reset，再检查自由态/一步像；只对同一冻结 CNF 和完全相同的 assumptions 复用 SAT/UNSAT，不缓存 UNKNOWN 为成功。每份查询原始收据、候选、选择集合和产品写入独立不可变 generation，全部写完后才发布 checkpoint。supervisor 只接纳在本例120秒 transform deadline之前实际收到的完整 checkpoint，终止整个 owned worker/solver 进程组；不得在 deadline后补证明或重建。若后来选择效果下降，保留之前更好的完整产物。截断搜索返回 `BUDGET_EXHAUSTED`，绝不伪装为完整穷尽。
+
+28项新增回归覆盖中断写入、伪造/缺失证书文件、deadline实际收件时间、完整子进程组清理、UNKNOWN排除、旧checkpoint保留、CNF cache 身份、solver替换及保留mtime的修改检测，全部通过；原30项基础回归仍通过。独立复核重放了所有69份自由态 witness、768组任意 PI/RO 的全部 CO，并逐字节重建六份产物，原始证明收据及DSEC日志身份一致。
+
+首版 anytime v1 暴露一个通用热路径开销：每个证明阶段前后重复 hash 152MB 的 solver 可执行文件。v2 在 case/控制器边界保留完整 SHA256，阶段内使用固定的 device/inode/size/mtime_ns/ctime_ns 身份并在调用前后检查；不更新中途基准、不改 solver 字节，检测漂移即失败。129个共同 proof chunk 的候选语义、CNF和query一致，26份共同产品逐字节相同。这是完整性检查的机械优化，不是放宽证书条件。
+
+同一预固定六例、相同 pool/搜索规则、chunk32、2 workers及120秒transform预算：
+
+| 案例 | anytime v1 精确 Build AND | anytime v2 精确 Build AND | v2 搜索状态 |
+|---|---:|---:|---|
+| b03 | 5 | 5 | COMPLETE |
+| i2c | 10 | 10 | COMPLETE |
+| des_area | 0 | 0 | COMPLETE |
+| b20_opt | 37 | 74 | BUDGET_EXHAUSTED |
+| mem_ctrl | 0 | 0 | BUDGET_EXHAUSTED |
+| wb_dma | 2 | 2 | BUDGET_EXHAUSTED |
+
+两版各六个 incumbent 均通过原图到空选择及原图到产物的双DSEC；**仍只有3/6完成全部搜索**。mem_ctrl 的0只是预算内保留的空选择基线，不能推断全设计没有机会。这里 b03 的5是一步像主流程，不包括前述额外两步证明得到的3 AND。
+
+b20_opt 的 v1 37-AND产物在67.903s收到，与原额外成本审计的24个配方及产物逐字节相同；v2 的57个 Build 产物在119.013s收到，实际 **11270→11196，减74 AND**，其 checkpoint 已完成136个proof chunk/4352个eligible root，仍未穷尽全设计。120秒只覆盖 worker启动、签名、搜索、形式证明及完整checkpoint构建；控制器之后的只读收据/hash审计另计0.21–0.52s/例，两个独立DSEC亦另计。b20_opt 本次总wall约122.20s，不能把端到端时间写成120s。未改变此前 v3 的 TIMEOUT，也未证明相对原生算法的新颖性。
+
+剩余瓶颈有明确漏斗：mem_ctrl 仅搜索267/4418个eligible root，1474个完成形式检查的候选均reset通过而image失败；完成块的搜索/证明成本约108.40/9.86s。wb_dma 搜索872/1671根，4910个候选仅4个关系证明，搜索/证明约102.71/13.57s。b20_opt 搜索4384/4895根，5212个候选中134个关系证明，搜索/证明/checkpoint成本约62.81/51.09/4.31s。计数应区分已搜索、已完成证明块及选中最佳checkpoint，不能混用。下一步应解释无效候选的样本泛化和构造开销，而不是盲目增加证明深度或案例预算。
+
+**Direct 替代敏感性检查。**为了避免把可由零门替代取得的收益解释为必须构造新表达式，对69个已选根，仅检查常量和原记录pool/已用divisor的正反相，共3352个literal；签名匹配只是必要筛选，剩余11个候选均重新做自由态/reset/image查询。10条Direct关系获证，覆盖b03的2个根及i2c的4个根，全部自由态SAT；每根在保持其它选择不变的精确重放中都比原Build多省1 AND。b20_opt的57根及wb_dma的1根，在这个有限pool内没有获证Direct替代，不能外推为全图不存在替代。
+
+对这两个小例另做完整敏感性产物：b03两条Direct单独减4 AND，保持另3个原Build后混合减7 AND，故在这些Direct之后剩余Build精确贡献3 AND；i2c四条Direct单独减11 AND，保持另2个Build后混合减14 AND，剩余Build贡献3 AND。五个保留Build的输出仍确为新建且存活；8次独立DSEC全部PASS，额外重放/验证wall约3.26s。原anytime的5/10及总91 AND是实际原选中产品的定义指标，未被改写；但不能把它们全解释为没有Direct替代的构造贡献。这个局部对照也不是全图Direct饱和基线，不能简单将91扣减成新的正式全体指标。两步像额外b03关系不在这次一阶段Direct检查范围内。
+
+复现（在v1补丁之上应用v2增量补丁）：
+
+```sh
+STRAN2_SOLVER=/tmp/stran2-query-solver STRAN2_ABC="$PWD/abc" \
+  python3 -B -m unittest discover \
+  -s research/stran2-guide-20261002/nonlinear_divisors -p 'test_anytime*.py' -v
+python3 research/stran2-guide-20261002/nonlinear_divisors/anytime.py \
+  --pilot --solver /tmp/stran2-query-solver --abc "$PWD/abc" \
+  --workers 2 --chunk-roots 32 --wall-seconds 120 \
+  --out /tmp/stran2-anytime-user
+```
+
+证据摘要、独立复核及共同前缀差分保存在 `research/stran2-guide-20261002/anytime_validation_20261001/`；原始chunk证书、generation产品、失败/预算状态、冻结源文件随v2实验归档交付。不得把“6份已验证incumbent”写成“6份已完整搜索的结果”。
+
 ## 2026-10-01 并行时序 Guide 研究（已暂停，等待新的算法方向）
 
 用户要求继承此前会话，将组合与时序 Guide 分开，以较大的可达样本及压缩改善时序 Build，并明确授权本轮“额度不限，深入探索”。质量先以超过已验证的 Fast35 联合稳定基线后 **0.28169% / 35 AND / 29 Build / 8 例**，且扩展到更多和更大电路为检查点；未承诺必然达到的数值提升。只统计上述独立自由状态 SAT、完整 SEQ 和精确提交重放同时满足的 Build。总 Build、总 SEQ、Direct 以及 CBS-only 整流程差均另列。时间暂不是放弃有质量价值方向的理由，但必须记录工作量、覆盖和超时。

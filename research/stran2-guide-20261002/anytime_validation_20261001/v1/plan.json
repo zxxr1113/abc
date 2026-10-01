@@ -1,0 +1,46 @@
+{
+  "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+  "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+  "algorithm": "anytime_reset_image_v1",
+  "cases": [
+    "005_b03.aig",
+    "044_i2c.aig",
+    "041_des_area.aig",
+    "034_b20_opt.aig",
+    "045_mem_ctrl.aig",
+    "060_wb_dma.aig"
+  ],
+  "chunk_roots": 32,
+  "config": {
+    "alias_cap": 8,
+    "candidates_per_root": 8,
+    "lanes": 256,
+    "max_gates": 2,
+    "peer_hops": 1,
+    "pool_cap": 24,
+    "reservoir_cap": 128,
+    "seed": 2026100201,
+    "tfi_depth": 6,
+    "wall_seconds": 120.0
+  },
+  "dsec_boundary": "two independent checks after transform; each has its own limit",
+  "dsec_seconds": 120.0,
+  "host": "646b6c00dc87",
+  "manifest_sha256": "7241e1bb55ebdc82e3bd6d6ad581b11d38d3117cc1042cb1c9d355e88d1045dc",
+  "native_recipe_novelty": "NOT_CHECKED",
+  "original_mode_and_evidence": "UNCHANGED",
+  "runtime_source_hashes": {
+    "nonlinear_divisors/anytime.py": "f2b9e47fb70be2707e6a7341fbc8b151eb5974f321aa8f9d97da8f246364d372",
+    "nonlinear_divisors/product.py": "97985c9dde8e8171ebe69e3452b7ae93ff6ec90d6a2d908e5931fa02187565bc",
+    "nonlinear_divisors/prototype.py": "a052a17c2a5c0c7816a4106c326543d8978deb37172fe6947003fda10b762f67",
+    "seq_care_synthesis/guide.py": "22d372ca2a96044e2f16ac1e38b2113436518f79f21072cec3660dee51c60f71",
+    "seq_care_synthesis/scan_exact_care.py": "bb6abc7a08d1275c2567237c412c4284e8cc69a54f0315f393edcd5c19d88854",
+    "seq_cut_image/diagnose.py": "6591e7ca66fbdaca907bb61102489c98052f2e602e20afd94ae4dfbbf3fb4b8f",
+    "teacher_adaptive_tools/teacher_bmc.py": "197bfab8b547e620c9eb9b7c8921f96b09b98fa10ddb01eacb9825ca343a0b60"
+  },
+  "schema": 1,
+  "solver": "/tmp/stran2-query-solver",
+  "solver_sha256": "abee9775876dfa6cac0f1888dd6ec4182779a7e2e68601575a52838c634ab507",
+  "transform_budget_boundary": "before each worker launch through exit/kill; includes all checkpoint products",
+  "workers": 2
+}

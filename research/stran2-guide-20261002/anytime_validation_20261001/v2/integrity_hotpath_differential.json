@@ -1,0 +1,1067 @@
+{
+  "status": "PASS",
+  "note": "Only executable integrity guard changed; wall-time fields/result-file hashes excluded. Common completed prefix only; not equal total timeout coverage.",
+  "rows": [
+    {
+      "file": "005_b03.aig",
+      "common_root_prefix_equal": true,
+      "old_v3_root_prefix_equal": true,
+      "common_completed_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "candidates": 39,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00001",
+          "candidates": 7,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        }
+      ],
+      "common_products": [
+        {
+          "checkpoint": "checkpoint_00000",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00001",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00002",
+          "product_bytes_equal": true
+        }
+      ]
+    },
+    {
+      "file": "044_i2c.aig",
+      "common_root_prefix_equal": true,
+      "old_v3_root_prefix_equal": true,
+      "common_completed_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "candidates": 164,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00001",
+          "candidates": 233,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00002",
+          "candidates": 234,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00003",
+          "candidates": 205,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00004",
+          "candidates": 28,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00005",
+          "candidates": 113,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00006",
+          "candidates": 108,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00007",
+          "candidates": 182,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00008",
+          "candidates": 182,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00009",
+          "candidates": 221,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00010",
+          "candidates": 165,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00011",
+          "candidates": 202,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00012",
+          "candidates": 217,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00013",
+          "candidates": 167,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00014",
+          "candidates": 51,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00015",
+          "candidates": 117,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00016",
+          "candidates": 159,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00017",
+          "candidates": 127,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00018",
+          "candidates": 41,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00019",
+          "candidates": 4,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        }
+      ],
+      "common_products": [
+        {
+          "checkpoint": "checkpoint_00000",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00001",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00002",
+          "product_bytes_equal": true
+        }
+      ]
+    },
+    {
+      "file": "041_des_area.aig",
+      "common_root_prefix_equal": true,
+      "old_v3_root_prefix_equal": true,
+      "common_completed_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "candidates": 54,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00001",
+          "candidates": 24,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00002",
+          "candidates": 38,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00003",
+          "candidates": 32,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00004",
+          "candidates": 91,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00005",
+          "candidates": 20,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00006",
+          "candidates": 58,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00007",
+          "candidates": 76,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00008",
+          "candidates": 53,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00009",
+          "candidates": 51,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00010",
+          "candidates": 13,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00011",
+          "candidates": 17,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00012",
+          "candidates": 48,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00013",
+          "candidates": 24,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00014",
+          "candidates": 40,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00015",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00016",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00017",
+          "candidates": 8,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00018",
+          "candidates": 20,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00019",
+          "candidates": 9,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00020",
+          "candidates": 8,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00021",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00022",
+          "candidates": 15,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00023",
+          "candidates": 34,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00024",
+          "candidates": 8,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00025",
+          "candidates": 30,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00026",
+          "candidates": 33,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00027",
+          "candidates": 0,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00028",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00029",
+          "candidates": 32,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00030",
+          "candidates": 28,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00031",
+          "candidates": 8,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        }
+      ],
+      "common_products": [
+        {
+          "checkpoint": "checkpoint_00000",
+          "product_bytes_equal": true
+        }
+      ]
+    },
+    {
+      "file": "034_b20_opt.aig",
+      "common_root_prefix_equal": true,
+      "old_v3_root_prefix_equal": true,
+      "common_completed_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "candidates": 0,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00001",
+          "candidates": 0,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00002",
+          "candidates": 0,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00003",
+          "candidates": 11,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00004",
+          "candidates": 27,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00005",
+          "candidates": 33,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00006",
+          "candidates": 5,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00007",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00008",
+          "candidates": 24,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00009",
+          "candidates": 24,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00010",
+          "candidates": 21,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00011",
+          "candidates": 58,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00012",
+          "candidates": 36,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00013",
+          "candidates": 87,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00014",
+          "candidates": 0,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00015",
+          "candidates": 17,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00016",
+          "candidates": 14,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00017",
+          "candidates": 12,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00018",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00019",
+          "candidates": 7,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00020",
+          "candidates": 10,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00021",
+          "candidates": 6,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00022",
+          "candidates": 11,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00023",
+          "candidates": 9,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00024",
+          "candidates": 17,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00025",
+          "candidates": 36,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00026",
+          "candidates": 33,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00027",
+          "candidates": 3,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00028",
+          "candidates": 21,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00029",
+          "candidates": 20,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00030",
+          "candidates": 13,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00031",
+          "candidates": 6,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00032",
+          "candidates": 18,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00033",
+          "candidates": 29,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00034",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00035",
+          "candidates": 21,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00036",
+          "candidates": 8,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00037",
+          "candidates": 12,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00038",
+          "candidates": 24,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00039",
+          "candidates": 16,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00040",
+          "candidates": 9,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00041",
+          "candidates": 24,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00042",
+          "candidates": 17,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00043",
+          "candidates": 140,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00044",
+          "candidates": 195,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00045",
+          "candidates": 234,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00046",
+          "candidates": 227,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        }
+      ],
+      "common_products": [
+        {
+          "checkpoint": "checkpoint_00000",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00001",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00002",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00003",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00004",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00005",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00006",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00007",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00008",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00009",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00010",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00011",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00012",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00013",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00014",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00015",
+          "product_bytes_equal": true
+        }
+      ]
+    },
+    {
+      "file": "045_mem_ctrl.aig",
+      "common_root_prefix_equal": true,
+      "old_v3_root_prefix_equal": true,
+      "common_completed_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "candidates": 232,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00001",
+          "candidates": 224,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00002",
+          "candidates": 196,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00003",
+          "candidates": 142,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00004",
+          "candidates": 24,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00005",
+          "candidates": 200,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00006",
+          "candidates": 240,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        }
+      ],
+      "common_products": [
+        {
+          "checkpoint": "checkpoint_00000",
+          "product_bytes_equal": true
+        }
+      ]
+    },
+    {
+      "file": "060_wb_dma.aig",
+      "common_root_prefix_equal": true,
+      "old_v3_root_prefix_equal": true,
+      "common_completed_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "candidates": 177,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00001",
+          "candidates": 185,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00002",
+          "candidates": 138,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00003",
+          "candidates": 96,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00004",
+          "candidates": 48,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00005",
+          "candidates": 1,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00006",
+          "candidates": 0,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00007",
+          "candidates": 0,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00008",
+          "candidates": 176,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00009",
+          "candidates": 152,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00010",
+          "candidates": 168,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00011",
+          "candidates": 224,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00012",
+          "candidates": 200,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00013",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00014",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00015",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00016",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00017",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00018",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00019",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        },
+        {
+          "chunk": "chunk_00020",
+          "candidates": 256,
+          "semantic_candidate_equal": true,
+          "cnf_equal": true,
+          "queries_equal": true
+        }
+      ],
+      "common_products": [
+        {
+          "checkpoint": "checkpoint_00000",
+          "product_bytes_equal": true
+        },
+        {
+          "checkpoint": "checkpoint_00001",
+          "product_bytes_equal": true
+        }
+      ]
+    }
+  ]
+}

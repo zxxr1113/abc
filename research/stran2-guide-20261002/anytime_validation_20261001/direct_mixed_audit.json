@@ -1,0 +1,536 @@
+{
+  "additional_wall_s": 3.2579839440004434,
+  "all_eight_DSEC_checks": "PASS",
+  "bounded_scope": "selected b03/i2c roots only; no search or depth2 expansion",
+  "cases": [
+    {
+      "additional_wall_s": 1.2350248759994429,
+      "direct_literal_by_root": {
+        "102": 47,
+        "110": 55
+      },
+      "direct_only_gain": 4,
+      "direct_roots": [
+        102,
+        110
+      ],
+      "exact_remaining_build_gain_after_direct": 3,
+      "file": "005_b03.aig",
+      "mixed_improvement_vs_original_build_product": 2,
+      "mixed_total_gain": 7,
+      "original_build_gain": 5,
+      "original_results_and_defined_metric_unchanged": true,
+      "original_selected_build_count": 5,
+      "products": {
+        "baseline": {
+          "and": 84,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-selected-direct-mixed-audit/005_b03/baseline.aig",
+            "exit_code": 0,
+            "log_sha256": "1e11ea32e2b3033f89905d0a18839754693a779c1267c20cb783e3bace8546e7",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.2712891560004209
+          },
+          "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+          "realization": [],
+          "selected_roots": [],
+          "sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2"
+        },
+        "direct_only": {
+          "and": 80,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-selected-direct-mixed-audit/005_b03/direct_only.aig",
+            "exit_code": 0,
+            "log_sha256": "c9098407e6849f88afe9557d4507cf86426ce58f169c5ba49dc838fdbfa8a4a2",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.35828737399970123
+          },
+          "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+          "realization": [
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 47,
+              "root": 102
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 55,
+              "root": 110
+            }
+          ],
+          "selected_roots": [
+            102,
+            110
+          ],
+          "sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78"
+        },
+        "mixed_fixed_selection": {
+          "and": 77,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-selected-direct-mixed-audit/005_b03/mixed_fixed_selection.aig",
+            "exit_code": 0,
+            "log_sha256": "dcb11924433049562bad232baff72713e7243d028ad79be39c3c48cc06d1545c",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.27568410499952734
+          },
+          "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+          "realization": [
+            {
+              "actually_created_gates": 2,
+              "created_nodes": [
+                51,
+                52
+              ],
+              "live_created_gates": 2,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 105,
+              "root": 51
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                57
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 114,
+              "root": 56
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                62
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 124,
+              "root": 61
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 47,
+              "root": 102
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 55,
+              "root": 110
+            }
+          ],
+          "selected_roots": [
+            51,
+            56,
+            61,
+            102,
+            110
+          ],
+          "sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052"
+        },
+        "original_build_reference": {
+          "and": 79,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-selected-direct-mixed-audit/005_b03/original_build_reference.aig",
+            "exit_code": 0,
+            "log_sha256": "743f7f33b1ccaa294e0b8a0d6eac2de4813de466a0519d6c178b1926c4dfc89d",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.32548248100101773
+          },
+          "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+          "realization": [
+            {
+              "actually_created_gates": 2,
+              "created_nodes": [
+                51,
+                52
+              ],
+              "live_created_gates": 2,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 105,
+              "root": 51
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                57
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 114,
+              "root": 56
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                62
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 124,
+              "root": 61
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                103
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 207,
+              "root": 102
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                111
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 223,
+              "root": 110
+            }
+          ],
+          "selected_roots": [
+            51,
+            56,
+            61,
+            102,
+            110
+          ],
+          "sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+        }
+      },
+      "remaining_build_selection_unchanged": true,
+      "remaining_builds_still_fresh_and_live": 3,
+      "remaining_selected_build_count": 3,
+      "sensitivity_only_not_new_algorithm_run": true,
+      "source_input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "status": "PASS"
+    },
+    {
+      "additional_wall_s": 1.257791220999934,
+      "direct_literal_by_root": {
+        "153": 144,
+        "157": 150,
+        "161": 146,
+        "722": 1438
+      },
+      "direct_only_gain": 11,
+      "direct_roots": [
+        153,
+        157,
+        161,
+        722
+      ],
+      "exact_remaining_build_gain_after_direct": 3,
+      "file": "044_i2c.aig",
+      "mixed_improvement_vs_original_build_product": 4,
+      "mixed_total_gain": 14,
+      "original_build_gain": 10,
+      "original_results_and_defined_metric_unchanged": true,
+      "original_selected_build_count": 6,
+      "products": {
+        "baseline": {
+          "and": 1118,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig /tmp/nonlinear-selected-direct-mixed-audit/044_i2c/baseline.aig",
+            "exit_code": 0,
+            "log_sha256": "aa30e4c8234f78d4e153028d88b2a698530d59446939c4acc0991b5104173274",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.27362648400048784
+          },
+          "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+          "realization": [],
+          "selected_roots": [],
+          "sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3"
+        },
+        "direct_only": {
+          "and": 1107,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig /tmp/nonlinear-selected-direct-mixed-audit/044_i2c/direct_only.aig",
+            "exit_code": 0,
+            "log_sha256": "d056298c7b23d5f9b92aed6b74da32fc46404448b3981d7e75619e8ea6368410",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.315199295999264
+          },
+          "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+          "realization": [
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 144,
+              "root": 153
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 150,
+              "root": 157
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 146,
+              "root": 161
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 1432,
+              "root": 722
+            }
+          ],
+          "selected_roots": [
+            153,
+            157,
+            161,
+            722
+          ],
+          "sha256": "01635cd01540ca9ad76e633538156ae196f96ffe966f277e30a6d5c5013f187f"
+        },
+        "mixed_fixed_selection": {
+          "and": 1104,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig /tmp/nonlinear-selected-direct-mixed-audit/044_i2c/mixed_fixed_selection.aig",
+            "exit_code": 0,
+            "log_sha256": "9469405024836ccaa10b1931ec77c8fba8969810e6624731592208d00c1a14f1",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.3275407559995074
+          },
+          "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+          "realization": [
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 144,
+              "root": 153
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 150,
+              "root": 157
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 146,
+              "root": 161
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                159
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 318,
+              "root": 162
+            },
+            {
+              "actually_created_gates": 0,
+              "created_nodes": [],
+              "live_created_gates": 0,
+              "output_is_live": true,
+              "output_is_new": false,
+              "output_literal": 1432,
+              "root": 722
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                726
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 1452,
+              "root": 731
+            }
+          ],
+          "selected_roots": [
+            153,
+            157,
+            161,
+            162,
+            722,
+            731
+          ],
+          "sha256": "adb284f08b744b83cb7ec716c2edbbb77995a633eb13dd835a1be07a3c2a8793"
+        },
+        "original_build_reference": {
+          "and": 1108,
+          "independent_dsec": {
+            "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+            "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+            "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig /tmp/nonlinear-selected-direct-mixed-audit/044_i2c/original_build_reference.aig",
+            "exit_code": 0,
+            "log_sha256": "a42db6c58f8f5c2fb20c8b18a65c602da14790a2ef49e0d00121001cd0f93e02",
+            "status": "PASS",
+            "timeout_seconds": 120,
+            "wall_s": 0.3196660720004729
+          },
+          "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+          "realization": [
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                153
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 306,
+              "root": 153
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                157
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 314,
+              "root": 157
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                161
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 322,
+              "root": 161
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                162
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 324,
+              "root": 162
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                722
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 1444,
+              "root": 722
+            },
+            {
+              "actually_created_gates": 1,
+              "created_nodes": [
+                731
+              ],
+              "live_created_gates": 1,
+              "output_is_live": true,
+              "output_is_new": true,
+              "output_literal": 1462,
+              "root": 731
+            }
+          ],
+          "selected_roots": [
+            153,
+            157,
+            161,
+            162,
+            722,
+            731
+          ],
+          "sha256": "13299d06de34479b0f419f12bacdfaba9c7dff61b6f72fd11812c04c075fdf9e"
+        }
+      },
+      "remaining_build_selection_unchanged": true,
+      "remaining_builds_still_fresh_and_live": 2,
+      "remaining_selected_build_count": 2,
+      "sensitivity_only_not_new_algorithm_run": true,
+      "source_input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "status": "PASS"
+    }
+  ],
+  "direct_dominated_roots": 6,
+  "direct_only_gain_sum": 15,
+  "exact_remaining_build_gain_after_direct_sum": 6,
+  "mixed_total_gain_sum": 21,
+  "original_build_gain_sum": 15,
+  "original_defined_metric_unchanged": true,
+  "script_sha256": "702a61e49c68120dc16663fd6fcacdb3ab524aee43fb5b4c3d11d5f5e12c6b4f",
+  "source_sensitivity_summary_sha256": "3e64aed551a256a476a05b8297617a22f98974fdb58a4bc2c2685a4e0606c065",
+  "status": "PASS"
+}

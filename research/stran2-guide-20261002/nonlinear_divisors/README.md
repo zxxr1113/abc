@@ -132,3 +132,61 @@ the default `product.py` and frozen pilot results remain unchanged. The bridge
 reports new-only, old-only, and union products, plus the exact marginal of
 removing only depth-two entries from the same union-selected set. All extra work
 is separately timed; it does not improve the original same-budget cohort result.
+
+## Optional anytime search/proof/product mode
+
+The original `prototype.py` / `run_batch.py` mode is unchanged. To retain proved
+products when discovery or proof reaches its budget, run the separate entry point:
+
+```sh
+python3 -B research/stran2-guide-20261002/nonlinear_divisors/anytime.py \
+  --pilot --workers 2 --solver /tmp/stran2-query-solver --abc "$PWD/abc" \
+  --out /tmp/nonlinear-anytime-pilot
+
+STRAN2_SOLVER=/tmp/stran2-query-solver python3 -B -m unittest discover \
+  -s research/stran2-guide-20261002/nonlinear_divisors -p 'test_anytime*.py' -v
+```
+
+Use `--case` for one packaged case or `--cases` for an explicit cohort. A fresh
+output directory is required. Default discovery rules remain identical to the
+original Config. The universal `--chunk-roots 32` changes scheduling, not the
+per-case candidate caps, divisor pool, templates, ordering, or proof theorem.
+
+Each completed chunk freezes its CNF before formal queries. Reset SAT/UNKNOWN
+rejects the candidate before free-state and image-step queries. Query reuse is
+limited to already completed SAT/UNSAT results with identical immutable CNF and
+exact assumptions; duplicate UNKNOWN requests are queried separately. Query order
+and chunk CNFs differ from the original all-at-once solver, so conflict-limited
+proof coverage is not guaranteed to be identical. No UNKNOWN authorizes a product.
+
+After a chunk adds complete free-SAT/reset-UNSAT/image-UNSAT certificates, the
+cumulative set is selected and rebuilt through the existing exact product code.
+A checkpoint contains closed, hashed, generation-specific product, baseline,
+selection and certificate artifacts. Its notice must reach the supervisor before
+the shared 120-second deadline. The supervisor retains the highest actual-gain
+checkpoint, with earliest winning ties; it never merges checkpoint products.
+Worker startup, input processing, search, formal proof and all reconstruction
+are inside that budget. The entire worker/solver process group is killed at the
+boundary. No checkpoint is rebuilt or repaired afterward.
+
+The controller then performs a separately timed read-only input/source/solver and
+raw-receipt integrity audit, followed by independent baseline/product DSEC, each
+with its own default 120-second limit. Full solver SHA checks bind case entry and
+exit/controller validation. Before/after every phase and cache-only call, a
+single SHA-anchored device/inode/size/mtime/ctime identity detects executable drift
+without repeatedly reading the 152-MB solver binary. This per-call guard is
+metadata-based; full SHA checks remain authoritative at the case boundaries.
+
+`BUDGET_EXHAUSTED` remains incomplete discovery even if its incumbent passes both
+DSEC checks. `selected_checkpoint.progress` describes the chosen product prefix;
+`last_completed_chunk` and the root log describe later work. A zero-gain empty
+replay is explicitly labeled and does not establish absence of opportunities in
+unsearched roots. Without any admitted checkpoint there is no fallback product.
+Errors, missing products and failed/unknown DSEC are not filled with zero gains.
+
+The frozen six-case v2 pilot produced validated standalone gains of
+5/10/0/74/0/2 AND for b03/i2c/des_area/b20_opt/mem_ctrl/wb_dma. Only the first three
+completed discovery; all six incumbents passed both DSEC checks. These results
+close the lost-certificate/product gap, but do not establish native novelty,
+production integration or broad large-design gains. See `STRAN2.md` for the
+measurements, unchanged original timeouts and remaining discovery/proof limits.

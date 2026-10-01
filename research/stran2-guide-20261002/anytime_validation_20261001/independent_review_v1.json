@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "frozen_source_hashes": 7,
+  "cases": [
+    {
+      "file": "005_b03.aig",
+      "status": "COMPLETE",
+      "selected_builds": 5,
+      "gain": 5,
+      "admitted_elapsed_s": 3.856868389999363,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "044_i2c.aig",
+      "status": "COMPLETE",
+      "selected_builds": 6,
+      "gain": 10,
+      "admitted_elapsed_s": 57.16063546300029,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "041_des_area.aig",
+      "status": "COMPLETE",
+      "selected_builds": 0,
+      "gain": 0,
+      "admitted_elapsed_s": 0.5720257080010924,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "034_b20_opt.aig",
+      "status": "BUDGET_EXHAUSTED",
+      "selected_builds": 24,
+      "gain": 37,
+      "admitted_elapsed_s": 67.90341882999928,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "045_mem_ctrl.aig",
+      "status": "BUDGET_EXHAUSTED",
+      "selected_builds": 0,
+      "gain": 0,
+      "admitted_elapsed_s": 0.6139703449989611,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    },
+    {
+      "file": "060_wb_dma.aig",
+      "status": "BUDGET_EXHAUSTED",
+      "selected_builds": 1,
+      "gain": 2,
+      "admitted_elapsed_s": 3.7884405979984876,
+      "raw_decoder_CO_worlds": 128,
+      "all_witnesses_replayed": true,
+      "fixed_selected_product_bytes": "IDENTICAL"
+    }
+  ],
+  "total_witnesses": 36,
+  "sum_gain": 54,
+  "additional_independent_DSEC_case": "034_b20_opt.aig",
+  "additional_independent_DSEC": {
+    "status": "PASS",
+    "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/034_b20_opt.aig /tmp/nonlinear-anytime-pilot-v1/034_b20_opt/checkpoints/checkpoint_00015/product.aig",
+    "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+    "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+    "timeout_seconds": 120,
+    "exit_code": 0,
+    "wall_s": 2.0283242860004975,
+    "log_sha256": "da15a99d903869a14675c8a06b628ba3c752bc1686966f00c6df134aca4aa112"
+  },
+  "budget_exhaustion_not_relabelled_complete": true
+}

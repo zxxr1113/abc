@@ -1,0 +1,1199 @@
+[
+  {
+    "checkpoint_hash_audit_wall_s": 0.21182115800002066,
+    "driver": {
+      "boundary": "before worker launch through worker exit/kill",
+      "exit_code": 0,
+      "hard_transform_budget_s": 120.0,
+      "observed_checkpoints": [
+        {
+          "directory": "checkpoint_00000",
+          "event": "checkpoint",
+          "gain": 0,
+          "manifest_sha256": "db0f1839446f7cf50a9bd56c2478f1def42e3bf63e312d6bd9ddbec29212b193",
+          "selected_builds": 0,
+          "supervisor_observed_elapsed_s": 0.47143725699970673
+        },
+        {
+          "directory": "checkpoint_00001",
+          "event": "checkpoint",
+          "gain": 4,
+          "manifest_sha256": "a71e8fbc0bc044dada02a48f84f33651abb2b2345b53a498d6454fbc9242bca6",
+          "selected_builds": 4,
+          "supervisor_observed_elapsed_s": 0.67702925499907
+        },
+        {
+          "directory": "checkpoint_00002",
+          "event": "checkpoint",
+          "gain": 5,
+          "manifest_sha256": "493a58d769c4df87a419a1ac6997a724167c8563ec326846923572529e73439a",
+          "selected_builds": 5,
+          "supervisor_observed_elapsed_s": 0.729744636999385
+        }
+      ],
+      "status": "COMPLETE",
+      "transform_process_wall_s": 0.9886367500002962
+    },
+    "family": "discovery",
+    "file": "005_b03.aig",
+    "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+    "last_completed_chunk": {
+      "discovered_candidates": 46,
+      "last_completed_root": 112,
+      "metrics": {
+        "actual_queries": 94,
+        "candidate_cap_dropped": 1,
+        "conclusive_cache_hits": 44,
+        "eligible_roots": 36,
+        "no_sampled_free_witness": 1335,
+        "nonpositive_retention_gain": 2442,
+        "positive_sampled_candidates": 47,
+        "requested_queries": 138,
+        "reset_reject_skipped_free_and_step": 0,
+        "reset_sat": 0,
+        "reset_unknown": 0,
+        "searched_roots": 36,
+        "signature_hits": 3915,
+        "solver_conflicts": 178,
+        "solver_process_wall_s": 0.06976180799938447,
+        "theoretical_unfiltered_queries": 138,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 2,
+      "qualified_candidates": 43,
+      "searched_roots": 36,
+      "stage": "checkpoint",
+      "timing": {
+        "checkpoint_wall_s": 0.014454217000093195,
+        "initialization_wall_s": 0.003209839000192005,
+        "proof_wall_s": 0.08850679799797945,
+        "search_wall_s": 0.15224860900707426
+      },
+      "transform_elapsed_s": 0.7296785229991656
+    },
+    "loaded_and": 128,
+    "measured_seq_build_gain": null,
+    "native_recipe_novelty": "NOT_CHECKED",
+    "product": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-anytime-pilot-v2/005_b03/checkpoints/checkpoint_00002/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "966674bc6f8011bf22d2cb0c62e737ec2dd6ec250153f775a8afbe40594d18a2",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.2687127480003255
+      },
+      "conservative_selected_gain_sum": 5,
+      "exact_same_selected_set_build_gain": 5,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-anytime-pilot-v2/005_b03/checkpoints/checkpoint_00002/product.aig",
+        "exit_code": 0,
+        "log_sha256": "98ea92fc8256ba53fb67a96dde48b157fe50dfc27bd18a7777477079b1356e8e",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.29184064400033094
+      },
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 84,
+      "product_and": 79,
+      "product_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 84,
+      "replay_without_build_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "selected_builds": 5,
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 5
+    },
+    "production_integration": "NOT_RUN",
+    "schema": 1,
+    "search_complete": true,
+    "selected_checkpoint": {
+      "directory": "/tmp/nonlinear-anytime-pilot-v2/005_b03/checkpoints/checkpoint_00002",
+      "gain": 5,
+      "kind": "POSITIVE_BUILD_PRODUCT",
+      "progress": {
+        "discovered_candidates": 46,
+        "last_completed_root": 112,
+        "proof_completed_chunks": 2,
+        "qualified_candidates": 43,
+        "searched_roots": 36,
+        "stage": "checkpoint"
+      },
+      "supervisor_observed_elapsed_s": 0.729744636999385
+    },
+    "status": "COMPLETE",
+    "total_wall_s_including_dsec_and_audit": 1.7618863269999565,
+    "transform": {
+      "discovered_candidates": 46,
+      "last_completed_root": 112,
+      "metrics": {
+        "actual_queries": 94,
+        "candidate_cap_dropped": 1,
+        "conclusive_cache_hits": 44,
+        "eligible_roots": 36,
+        "no_sampled_free_witness": 1335,
+        "nonpositive_retention_gain": 2442,
+        "positive_sampled_candidates": 47,
+        "requested_queries": 138,
+        "reset_reject_skipped_free_and_step": 0,
+        "reset_sat": 0,
+        "reset_unknown": 0,
+        "searched_roots": 36,
+        "signature_hits": 3915,
+        "solver_conflicts": 178,
+        "solver_process_wall_s": 0.06976180799938447,
+        "theoretical_unfiltered_queries": 138,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 2,
+      "qualified_candidates": 43,
+      "schema": 1,
+      "search_complete": true,
+      "searched_roots": 36,
+      "stage": "checkpoint",
+      "status": "COMPLETE",
+      "timing": {
+        "checkpoint_wall_s": 0.014454217000093195,
+        "initialization_wall_s": 0.003209839000192005,
+        "proof_wall_s": 0.08850679799797945,
+        "search_wall_s": 0.15224860900707426
+      },
+      "transform_elapsed_s": 0.9733203649993811
+    }
+  },
+  {
+    "checkpoint_hash_audit_wall_s": 0.21618181700068817,
+    "driver": {
+      "boundary": "before worker launch through worker exit/kill",
+      "exit_code": 0,
+      "hard_transform_budget_s": 120.0,
+      "observed_checkpoints": [
+        {
+          "directory": "checkpoint_00000",
+          "event": "checkpoint",
+          "gain": 0,
+          "manifest_sha256": "dec94dd7ca3286a3ba1d82870108e74f7b7ae29c2fdcbb83327f80b41a8293af",
+          "selected_builds": 0,
+          "supervisor_observed_elapsed_s": 0.4846392889994604
+        },
+        {
+          "directory": "checkpoint_00001",
+          "event": "checkpoint",
+          "gain": 6,
+          "manifest_sha256": "ea753188208dbac31b0c8a97e9c210702eff9237c1a3dab1c4831a7086bfa6e4",
+          "selected_builds": 4,
+          "supervisor_observed_elapsed_s": 2.8067799269992975
+        },
+        {
+          "directory": "checkpoint_00002",
+          "event": "checkpoint",
+          "gain": 10,
+          "manifest_sha256": "f0524049fac97a37e0d951bdf04ee8168884d02b6ecdc40af292b095509374bb",
+          "selected_builds": 6,
+          "supervisor_observed_elapsed_s": 44.57832555300047
+        }
+      ],
+      "status": "COMPLETE",
+      "transform_process_wall_s": 53.69680007500028
+    },
+    "family": "discovery",
+    "file": "044_i2c.aig",
+    "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+    "last_completed_chunk": {
+      "discovered_candidates": 2920,
+      "last_completed_root": 1263,
+      "metrics": {
+        "actual_queries": 4951,
+        "candidate_cap_dropped": 1852249,
+        "ci_only_recipe": 5291,
+        "conclusive_cache_hits": 2745,
+        "direct_after_hash": 1222,
+        "eligible_roots": 609,
+        "no_sampled_free_witness": 1091285,
+        "nonpositive_retention_gain": 1057306,
+        "positive_sampled_candidates": 1855169,
+        "requested_queries": 7696,
+        "reset_reject_skipped_free_and_step": 532,
+        "reset_sat": 532,
+        "reset_unknown": 0,
+        "searched_roots": 609,
+        "signature_hits": 4025705,
+        "solver_conflicts": 2251,
+        "solver_process_wall_s": 2.243034722001539,
+        "theoretical_unfiltered_queries": 8760,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 20,
+      "qualified_candidates": 40,
+      "searched_roots": 609,
+      "stage": "checkpoint",
+      "timing": {
+        "checkpoint_wall_s": 0.04342320999967342,
+        "initialization_wall_s": 0.008084842000243952,
+        "proof_wall_s": 3.6673661340028048,
+        "search_wall_s": 49.21487234399501
+      },
+      "transform_elapsed_s": 53.46909323999898
+    },
+    "loaded_and": 2879,
+    "measured_seq_build_gain": null,
+    "native_recipe_novelty": "NOT_CHECKED",
+    "product": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig /tmp/nonlinear-anytime-pilot-v2/044_i2c/checkpoints/checkpoint_00002/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "2d108de69e4cb0911b77d8b28bf9b2fa3aa15f88f94a2a88f5520c3ebe9c7c94",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.2790263170008984
+      },
+      "conservative_selected_gain_sum": 9,
+      "exact_same_selected_set_build_gain": 10,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/044_i2c.aig /tmp/nonlinear-anytime-pilot-v2/044_i2c/checkpoints/checkpoint_00002/product.aig",
+        "exit_code": 0,
+        "log_sha256": "898ec256908a964f232df0716203f1fbe88aa2304683850b157cb630622bf295",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.32928367600106867
+      },
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 1118,
+      "product_and": 1108,
+      "product_sha256": "13299d06de34479b0f419f12bacdfaba9c7dff61b6f72fd11812c04c075fdf9e",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 1118,
+      "replay_without_build_sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+      "selected_builds": 6,
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 10
+    },
+    "production_integration": "NOT_RUN",
+    "schema": 1,
+    "search_complete": true,
+    "selected_checkpoint": {
+      "directory": "/tmp/nonlinear-anytime-pilot-v2/044_i2c/checkpoints/checkpoint_00002",
+      "gain": 10,
+      "kind": "POSITIVE_BUILD_PRODUCT",
+      "progress": {
+        "discovered_candidates": 1670,
+        "last_completed_root": 738,
+        "proof_completed_chunks": 10,
+        "qualified_candidates": 40,
+        "searched_roots": 320,
+        "stage": "checkpoint"
+      },
+      "supervisor_observed_elapsed_s": 44.57832555300047
+    },
+    "status": "COMPLETE",
+    "total_wall_s_including_dsec_and_audit": 54.52208296800018,
+    "transform": {
+      "discovered_candidates": 2920,
+      "last_completed_root": 1263,
+      "metrics": {
+        "actual_queries": 4951,
+        "candidate_cap_dropped": 1852249,
+        "ci_only_recipe": 5291,
+        "conclusive_cache_hits": 2745,
+        "direct_after_hash": 1222,
+        "eligible_roots": 609,
+        "no_sampled_free_witness": 1091285,
+        "nonpositive_retention_gain": 1057306,
+        "positive_sampled_candidates": 1855169,
+        "requested_queries": 7696,
+        "reset_reject_skipped_free_and_step": 532,
+        "reset_sat": 532,
+        "reset_unknown": 0,
+        "searched_roots": 609,
+        "signature_hits": 4025705,
+        "solver_conflicts": 2251,
+        "solver_process_wall_s": 2.243034722001539,
+        "theoretical_unfiltered_queries": 8760,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 20,
+      "qualified_candidates": 40,
+      "schema": 1,
+      "search_complete": true,
+      "searched_roots": 609,
+      "stage": "checkpoint",
+      "status": "COMPLETE",
+      "timing": {
+        "checkpoint_wall_s": 0.04342320999967342,
+        "initialization_wall_s": 0.008084842000243952,
+        "proof_wall_s": 3.6673661340028048,
+        "search_wall_s": 49.21487234399501
+      },
+      "transform_elapsed_s": 53.684377913999924
+    }
+  },
+  {
+    "checkpoint_hash_audit_wall_s": 0.46471028400083014,
+    "driver": {
+      "boundary": "before worker launch through worker exit/kill",
+      "exit_code": 0,
+      "hard_transform_budget_s": 120.0,
+      "observed_checkpoints": [
+        {
+          "directory": "checkpoint_00000",
+          "event": "checkpoint",
+          "gain": 0,
+          "manifest_sha256": "ac0c75dd9a5994a24619f035d8e418d907c864f211824a5b228c52b5ed854365",
+          "selected_builds": 0,
+          "supervisor_observed_elapsed_s": 0.3642835750015365
+        }
+      ],
+      "status": "COMPLETE",
+      "transform_process_wall_s": 11.658648571001322
+    },
+    "family": "discovery",
+    "file": "041_des_area.aig",
+    "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+    "last_completed_chunk": {
+      "discovered_candidates": 936,
+      "last_completed_root": 5056,
+      "metrics": {
+        "actual_queries": 1117,
+        "candidate_cap_dropped": 37061,
+        "conclusive_cache_hits": 493,
+        "direct_after_hash": 240,
+        "eligible_roots": 1004,
+        "no_sampled_free_witness": 32475,
+        "nonpositive_retention_gain": 103667,
+        "positive_sampled_candidates": 37997,
+        "requested_queries": 1610,
+        "reset_reject_skipped_free_and_step": 599,
+        "reset_sat": 599,
+        "reset_unknown": 0,
+        "searched_roots": 1004,
+        "signature_hits": 176377,
+        "solver_conflicts": 3419,
+        "solver_process_wall_s": 3.2193771850033954,
+        "theoretical_unfiltered_queries": 2808,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 32,
+      "qualified_candidates": 0,
+      "searched_roots": 1004,
+      "stage": "checkpoint",
+      "timing": {
+        "checkpoint_wall_s": 0.04510942399974738,
+        "initialization_wall_s": 0.0240699259993562,
+        "proof_wall_s": 4.576001401997928,
+        "search_wall_s": 6.361227814004451
+      },
+      "transform_elapsed_s": 11.429992293000396
+    },
+    "loaded_and": 10133,
+    "measured_seq_build_gain": null,
+    "native_recipe_novelty": "NOT_CHECKED",
+    "product": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/041_des_area.aig /tmp/nonlinear-anytime-pilot-v2/041_des_area/checkpoints/checkpoint_00000/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "9de76961d06ddeb475789f2ebfcdd9df31eb7cff3a8e1f5097526c6e0ae42939",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.4671564260006562
+      },
+      "conservative_selected_gain_sum": 0,
+      "exact_same_selected_set_build_gain": 0,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/041_des_area.aig /tmp/nonlinear-anytime-pilot-v2/041_des_area/checkpoints/checkpoint_00000/product.aig",
+        "exit_code": 0,
+        "log_sha256": "035b6042e462d6363176c35f3e10360d009fbdaf868aa896ac4dff00bfdfa142",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.3332618829990679
+      },
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 4752,
+      "product_and": 4752,
+      "product_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 4752,
+      "replay_without_build_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "selected_builds": 0,
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 0
+    },
+    "production_integration": "NOT_RUN",
+    "schema": 1,
+    "search_complete": true,
+    "selected_checkpoint": {
+      "directory": "/tmp/nonlinear-anytime-pilot-v2/041_des_area/checkpoints/checkpoint_00000",
+      "gain": 0,
+      "kind": "EMPTY_REPLAY_BASELINE",
+      "progress": {
+        "discovered_candidates": 0,
+        "proof_completed_chunks": 0,
+        "qualified_candidates": 0,
+        "searched_roots": 0,
+        "stage": "baseline_checkpoint"
+      },
+      "supervisor_observed_elapsed_s": 0.3642835750015365
+    },
+    "status": "COMPLETE",
+    "total_wall_s_including_dsec_and_audit": 12.924669625001115,
+    "transform": {
+      "discovered_candidates": 936,
+      "last_completed_root": 5056,
+      "metrics": {
+        "actual_queries": 1117,
+        "candidate_cap_dropped": 37061,
+        "conclusive_cache_hits": 493,
+        "direct_after_hash": 240,
+        "eligible_roots": 1004,
+        "no_sampled_free_witness": 32475,
+        "nonpositive_retention_gain": 103667,
+        "positive_sampled_candidates": 37997,
+        "requested_queries": 1610,
+        "reset_reject_skipped_free_and_step": 599,
+        "reset_sat": 599,
+        "reset_unknown": 0,
+        "searched_roots": 1004,
+        "signature_hits": 176377,
+        "solver_conflicts": 3419,
+        "solver_process_wall_s": 3.2193771850033954,
+        "theoretical_unfiltered_queries": 2808,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 32,
+      "qualified_candidates": 0,
+      "schema": 1,
+      "search_complete": true,
+      "searched_roots": 1004,
+      "stage": "checkpoint",
+      "status": "COMPLETE",
+      "timing": {
+        "checkpoint_wall_s": 0.04510942399974738,
+        "initialization_wall_s": 0.0240699259993562,
+        "proof_wall_s": 4.576001401997928,
+        "search_wall_s": 6.361227814004451
+      },
+      "transform_elapsed_s": 11.64484145500137
+    }
+  },
+  {
+    "checkpoint_hash_audit_wall_s": 0.523920553001517,
+    "driver": {
+      "boundary": "before worker launch through worker exit/kill",
+      "exit_code": -9,
+      "hard_transform_budget_s": 120.0,
+      "observed_checkpoints": [
+        {
+          "directory": "checkpoint_00000",
+          "event": "checkpoint",
+          "gain": 0,
+          "manifest_sha256": "b9a3c0679c733628fac0fdefcfe1e4f53d9d22af51bb1f77bdfd03b5c80b0723",
+          "selected_builds": 0,
+          "supervisor_observed_elapsed_s": 0.436801154000932
+        },
+        {
+          "directory": "checkpoint_00001",
+          "event": "checkpoint",
+          "gain": 16,
+          "manifest_sha256": "0af3ca0d77dd5939774b6656eb8dc749ae5201d41fd47382010e5071f1fef118",
+          "selected_builds": 9,
+          "supervisor_observed_elapsed_s": 10.03493208799955
+        },
+        {
+          "directory": "checkpoint_00002",
+          "event": "checkpoint",
+          "gain": 18,
+          "manifest_sha256": "73181460cf2bb60130e6d3efea91ba49dc52fc0d562324f2ec272aa8a6b96f8c",
+          "selected_builds": 10,
+          "supervisor_observed_elapsed_s": 10.615389012000378
+        },
+        {
+          "directory": "checkpoint_00003",
+          "event": "checkpoint",
+          "gain": 19,
+          "manifest_sha256": "4bee07276744f4eef90de115a6bb4876e4455f55f63d7b281a764251af79c235",
+          "selected_builds": 11,
+          "supervisor_observed_elapsed_s": 11.027441362999525
+        },
+        {
+          "directory": "checkpoint_00004",
+          "event": "checkpoint",
+          "gain": 20,
+          "manifest_sha256": "fa953248611b05ecf41c68ac6320084612b023d506cbe5ca260d40d2c5d9c8f8",
+          "selected_builds": 12,
+          "supervisor_observed_elapsed_s": 11.471986561000449
+        },
+        {
+          "directory": "checkpoint_00005",
+          "event": "checkpoint",
+          "gain": 22,
+          "manifest_sha256": "b33248c3e663f8bffe113de8ac149cf82b47387ea50b3ae77b5798fdd97b15de",
+          "selected_builds": 13,
+          "supervisor_observed_elapsed_s": 12.010101599000336
+        },
+        {
+          "directory": "checkpoint_00006",
+          "event": "checkpoint",
+          "gain": 25,
+          "manifest_sha256": "02f9a31ac4073072ad8e7361317a41d0551eff49790ea54f65e935892557b29a",
+          "selected_builds": 15,
+          "supervisor_observed_elapsed_s": 12.429456457000924
+        },
+        {
+          "directory": "checkpoint_00007",
+          "event": "checkpoint",
+          "gain": 26,
+          "manifest_sha256": "6f907cf66af9d96086921e3be893252a87f6ba780ee3fc5f7d9608148721db46",
+          "selected_builds": 16,
+          "supervisor_observed_elapsed_s": 12.872239928999988
+        },
+        {
+          "directory": "checkpoint_00008",
+          "event": "checkpoint",
+          "gain": 27,
+          "manifest_sha256": "c84c0f23a560ae4e6a9a2468ee320a4885ae23a6d13e6ae8c2fc09b04ebfb256",
+          "selected_builds": 17,
+          "supervisor_observed_elapsed_s": 13.271344504000808
+        },
+        {
+          "directory": "checkpoint_00009",
+          "event": "checkpoint",
+          "gain": 28,
+          "manifest_sha256": "964882799045873b73881f29e1bd959f8f138063ee91f2837ac3d8f60a3fe647",
+          "selected_builds": 18,
+          "supervisor_observed_elapsed_s": 13.973144027000671
+        },
+        {
+          "directory": "checkpoint_00010",
+          "event": "checkpoint",
+          "gain": 29,
+          "manifest_sha256": "21abca6efb510c5aef12dddf3e69d94cddcc2ef3863ec242bbf4e04820f96264",
+          "selected_builds": 19,
+          "supervisor_observed_elapsed_s": 14.43366376999984
+        },
+        {
+          "directory": "checkpoint_00011",
+          "event": "checkpoint",
+          "gain": 30,
+          "manifest_sha256": "29ba730d875159eec7a4c95b02d03ece8fbc5ae0dc13a1d542bd7e53bb7f3be7",
+          "selected_builds": 20,
+          "supervisor_observed_elapsed_s": 14.91383861400027
+        },
+        {
+          "directory": "checkpoint_00012",
+          "event": "checkpoint",
+          "gain": 32,
+          "manifest_sha256": "4f44833a20ac190b23e1d7f504a1ed6e01d34f73187e44f7dd575b57a615b0f3",
+          "selected_builds": 21,
+          "supervisor_observed_elapsed_s": 15.60793402300078
+        },
+        {
+          "directory": "checkpoint_00013",
+          "event": "checkpoint",
+          "gain": 33,
+          "manifest_sha256": "8cdf4113088836ac13e13e7a935cf10f9399bf50353c84ef76a3ec0b65e7371e",
+          "selected_builds": 22,
+          "supervisor_observed_elapsed_s": 16.502652979999766
+        },
+        {
+          "directory": "checkpoint_00014",
+          "event": "checkpoint",
+          "gain": 35,
+          "manifest_sha256": "fcc1f9912c11331519d3bf312bcd933723462b288a74a65745368e853217b4ca",
+          "selected_builds": 23,
+          "supervisor_observed_elapsed_s": 17.422872346000077
+        },
+        {
+          "directory": "checkpoint_00015",
+          "event": "checkpoint",
+          "gain": 37,
+          "manifest_sha256": "1f8006353ba4e93692850c20166de0650d3849862ccf6af2b204d046c015acff",
+          "selected_builds": 24,
+          "supervisor_observed_elapsed_s": 17.977452967999852
+        },
+        {
+          "directory": "checkpoint_00016",
+          "event": "checkpoint",
+          "gain": 38,
+          "manifest_sha256": "6096f709be773da67441e86c6638e575758c145a6c72d9e7ac671718a525f31c",
+          "selected_builds": 25,
+          "supervisor_observed_elapsed_s": 55.317447735000314
+        },
+        {
+          "directory": "checkpoint_00017",
+          "event": "checkpoint",
+          "gain": 45,
+          "manifest_sha256": "46cfc85adeae158492e3942b5dc4c97b9c93d58090bfba011c5465101048a1ef",
+          "selected_builds": 31,
+          "supervisor_observed_elapsed_s": 80.36506229600127
+        },
+        {
+          "directory": "checkpoint_00018",
+          "event": "checkpoint",
+          "gain": 49,
+          "manifest_sha256": "b407c66a474fed895e50f3c81b831a2ac196bec6109cf8a2d461c8bd9fb5e2c8",
+          "selected_builds": 34,
+          "supervisor_observed_elapsed_s": 80.91252914899997
+        },
+        {
+          "directory": "checkpoint_00019",
+          "event": "checkpoint",
+          "gain": 51,
+          "manifest_sha256": "13999ca6ae652dc959c6de34cc71377996e1d2435635a90942fbc8800c7580d2",
+          "selected_builds": 35,
+          "supervisor_observed_elapsed_s": 82.35700608700063
+        },
+        {
+          "directory": "checkpoint_00020",
+          "event": "checkpoint",
+          "gain": 52,
+          "manifest_sha256": "807dfdb01796b8d14ed682e999a060696d923eba2d2b7497bbaa1e50cfb24116",
+          "selected_builds": 36,
+          "supervisor_observed_elapsed_s": 82.7854818249998
+        },
+        {
+          "directory": "checkpoint_00021",
+          "event": "checkpoint",
+          "gain": 54,
+          "manifest_sha256": "197fbe8cacf656ea16796fc1a040fd301a1dd07b3e179ba2eee7b314d3974d4c",
+          "selected_builds": 38,
+          "supervisor_observed_elapsed_s": 83.24927114000093
+        },
+        {
+          "directory": "checkpoint_00022",
+          "event": "checkpoint",
+          "gain": 55,
+          "manifest_sha256": "238fb5dec21db10c5370ee4c8a06c67f6da5d7ca35df9673d8c3b89398e64242",
+          "selected_builds": 39,
+          "supervisor_observed_elapsed_s": 83.80086829600077
+        },
+        {
+          "directory": "checkpoint_00023",
+          "event": "checkpoint",
+          "gain": 56,
+          "manifest_sha256": "85240649070bd162817624762ff9f49297a7777ed8fbba49194ba84d38729856",
+          "selected_builds": 40,
+          "supervisor_observed_elapsed_s": 84.37075446800009
+        },
+        {
+          "directory": "checkpoint_00024",
+          "event": "checkpoint",
+          "gain": 57,
+          "manifest_sha256": "8aa55379bbead6ae554a53f0343653f6c7ea7ff74f2a256e4f720af3f9f42115",
+          "selected_builds": 41,
+          "supervisor_observed_elapsed_s": 84.92144976199961
+        },
+        {
+          "directory": "checkpoint_00025",
+          "event": "checkpoint",
+          "gain": 59,
+          "manifest_sha256": "141f5cc2d725beb593769adcde1daabeacf9c86baf3aa7cac9d17795270179b9",
+          "selected_builds": 42,
+          "supervisor_observed_elapsed_s": 85.81634001900056
+        },
+        {
+          "directory": "checkpoint_00026",
+          "event": "checkpoint",
+          "gain": 60,
+          "manifest_sha256": "38acd1dc1a4647dcb6e0702bfd5f93bf6f94162722ebda3b5da3af11acea67ae",
+          "selected_builds": 43,
+          "supervisor_observed_elapsed_s": 86.32882245600013
+        },
+        {
+          "directory": "checkpoint_00027",
+          "event": "checkpoint",
+          "gain": 61,
+          "manifest_sha256": "f6598177cf2a5723ee1a9b17c26a141df529023815370378fa25d8e8260a8dc1",
+          "selected_builds": 44,
+          "supervisor_observed_elapsed_s": 87.07487745300023
+        },
+        {
+          "directory": "checkpoint_00028",
+          "event": "checkpoint",
+          "gain": 62,
+          "manifest_sha256": "a5d69d5cae4b867325965c747faca9e2ed1af6552cd11b13a2df813fceb97993",
+          "selected_builds": 45,
+          "supervisor_observed_elapsed_s": 88.35960788500051
+        },
+        {
+          "directory": "checkpoint_00029",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "953bb429d96a39cc633f64520839173a84a3f5b5a2027b21e92384f7e92c4636",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 89.12017441100033
+        },
+        {
+          "directory": "checkpoint_00030",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "2b24dd9c5dbb79163872b5294eed668ae55a66904766d2cb36ff883830f13b44",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 112.82361860700075
+        },
+        {
+          "directory": "checkpoint_00031",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "56bb30572d80190988ff27b3714195ba8b5fca2e969a9c853c3789a633157580",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 113.43793606300096
+        },
+        {
+          "directory": "checkpoint_00032",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "bef0c0ab1cfcc95ea31c778603d094bdc1a7840b29130f4897fc688812c3c226",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 113.90150038499996
+        },
+        {
+          "directory": "checkpoint_00033",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "a565c6bb7eecc0db1085700dec0e111fbaea9f11b9050a4c146965b9f8cef971",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 114.36571573699985
+        },
+        {
+          "directory": "checkpoint_00034",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "006e669c4e44e62df4bd5f67f544730c16dd6e0dd7abde6f8fa2228560a177d1",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 115.01479525000104
+        },
+        {
+          "directory": "checkpoint_00035",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "20fbc70656b7fb01f8289c9f87993127cd6d68bac6fb2f00e164cb1bfdad6b67",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 115.58932956799981
+        },
+        {
+          "directory": "checkpoint_00036",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "4bc6f2ddbd830be7dcfffcb0d635a4287d4688f5d36e64ce6a4eb86b33723105",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 116.17902324700117
+        },
+        {
+          "directory": "checkpoint_00037",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "d7e2c5f6e365bf6aa1d1f825dcd492d5f6e78fdeec4f7dac4668e1333aec6e19",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 117.04437488300027
+        },
+        {
+          "directory": "checkpoint_00038",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "ebe9d207210e88703564aa8ba8ccd6e7378451780ad523854f764e892967f00f",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 117.51469803100008
+        },
+        {
+          "directory": "checkpoint_00039",
+          "event": "checkpoint",
+          "gain": 64,
+          "manifest_sha256": "e3d25d6e84c38f0924727352d9a7a4975b9dadaff0244c54ea0a6f045e6d2507",
+          "selected_builds": 46,
+          "supervisor_observed_elapsed_s": 118.1965492140007
+        },
+        {
+          "directory": "checkpoint_00040",
+          "event": "checkpoint",
+          "gain": 74,
+          "manifest_sha256": "3d2ff93e27826a51819bcb24cbea39b9b9ddafef665e80e00b5f5e63e39730cb",
+          "selected_builds": 57,
+          "supervisor_observed_elapsed_s": 119.01300066300064
+        }
+      ],
+      "status": "BUDGET_EXHAUSTED",
+      "transform_process_wall_s": 120.00694698000007
+    },
+    "family": "holdout",
+    "file": "034_b20_opt.aig",
+    "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+    "last_completed_chunk": {
+      "discovered_candidates": 5212,
+      "last_completed_root": 10544,
+      "metrics": {
+        "actual_queries": 10545,
+        "candidate_cap_dropped": 1284133,
+        "ci_only_recipe": 142,
+        "conclusive_cache_hits": 5091,
+        "direct_after_hash": 872,
+        "eligible_roots": 4352,
+        "no_sampled_free_witness": 2218452,
+        "nonpositive_retention_gain": 1187852,
+        "positive_sampled_candidates": 1289345,
+        "requested_queries": 15636,
+        "reset_reject_skipped_free_and_step": 0,
+        "reset_sat": 0,
+        "reset_unknown": 0,
+        "searched_roots": 4352,
+        "signature_hits": 4709530,
+        "solver_conflicts": 32108,
+        "solver_process_wall_s": 37.18678376500429,
+        "theoretical_unfiltered_queries": 15636,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 136,
+      "qualified_candidates": 134,
+      "searched_roots": 4352,
+      "stage": "checkpoint",
+      "timing": {
+        "checkpoint_wall_s": 4.306113902994184,
+        "initialization_wall_s": 0.05841030000010505,
+        "proof_wall_s": 51.09105222799917,
+        "search_wall_s": 62.808268721075365
+      },
+      "transform_elapsed_s": 119.01292867200027
+    },
+    "loaded_and": 13440,
+    "measured_seq_build_gain": null,
+    "native_recipe_novelty": "NOT_CHECKED",
+    "product": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/034_b20_opt.aig /tmp/nonlinear-anytime-pilot-v2/034_b20_opt/checkpoints/checkpoint_00040/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "224e96ff5cf1302f0c81d99d8ac4214541a7f529522a29af1e9ba29e75706ec8",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.43045851299939386
+      },
+      "conservative_selected_gain_sum": 74,
+      "exact_same_selected_set_build_gain": 74,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/034_b20_opt.aig /tmp/nonlinear-anytime-pilot-v2/034_b20_opt/checkpoints/checkpoint_00040/product.aig",
+        "exit_code": 0,
+        "log_sha256": "8231b41aa156d85ef17092cb5718f5249f2d3aa72e1d4fe4e54e1e6c3a70f54e",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 1.2371679870011576
+      },
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 11270,
+      "product_and": 11196,
+      "product_sha256": "a7eb2991213c8ce5d1ef7436444d84ccb04ce5bae43449047752f26cdb895fe7",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 11270,
+      "replay_without_build_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "selected_builds": 57,
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 74
+    },
+    "production_integration": "NOT_RUN",
+    "schema": 1,
+    "search_complete": false,
+    "selected_checkpoint": {
+      "directory": "/tmp/nonlinear-anytime-pilot-v2/034_b20_opt/checkpoints/checkpoint_00040",
+      "gain": 74,
+      "kind": "POSITIVE_BUILD_PRODUCT",
+      "progress": {
+        "discovered_candidates": 5212,
+        "last_completed_root": 10544,
+        "proof_completed_chunks": 136,
+        "qualified_candidates": 134,
+        "searched_roots": 4352,
+        "stage": "checkpoint"
+      },
+      "supervisor_observed_elapsed_s": 119.01300066300064
+    },
+    "status": "BUDGET_EXHAUSTED",
+    "total_wall_s_including_dsec_and_audit": 122.20169208900006
+  },
+  {
+    "checkpoint_hash_audit_wall_s": 0.40326553600061743,
+    "driver": {
+      "boundary": "before worker launch through worker exit/kill",
+      "exit_code": -9,
+      "hard_transform_budget_s": 120.0,
+      "observed_checkpoints": [
+        {
+          "directory": "checkpoint_00000",
+          "event": "checkpoint",
+          "gain": 0,
+          "manifest_sha256": "737200d54b981a393fe9833884a5e26ac5adeb352fe7ac80cc78301ba7b07f46",
+          "selected_builds": 0,
+          "supervisor_observed_elapsed_s": 0.3941486089988757
+        }
+      ],
+      "status": "BUDGET_EXHAUSTED",
+      "transform_process_wall_s": 120.01142798999899
+    },
+    "family": "holdout",
+    "file": "045_mem_ctrl.aig",
+    "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+    "last_completed_chunk": {
+      "discovered_candidates": 1474,
+      "last_completed_root": 1795,
+      "metrics": {
+        "actual_queries": 2956,
+        "candidate_cap_dropped": 4324745,
+        "ci_only_recipe": 204988,
+        "conclusive_cache_hits": 1466,
+        "direct_after_hash": 3822,
+        "eligible_roots": 256,
+        "no_sampled_free_witness": 2719187,
+        "nonpositive_retention_gain": 3033175,
+        "positive_sampled_candidates": 4326219,
+        "requested_queries": 4422,
+        "reset_reject_skipped_free_and_step": 0,
+        "reset_sat": 0,
+        "reset_unknown": 0,
+        "searched_roots": 256,
+        "signature_hits": 10337726,
+        "solver_conflicts": 3600,
+        "solver_process_wall_s": 6.230290833998879,
+        "theoretical_unfiltered_queries": 4422,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 8,
+      "qualified_candidates": 0,
+      "searched_roots": 256,
+      "stage": "checkpoint",
+      "timing": {
+        "checkpoint_wall_s": 0.07958947100087244,
+        "initialization_wall_s": 0.0444287099999201,
+        "proof_wall_s": 9.858061095999801,
+        "search_wall_s": 108.39968455400776
+      },
+      "transform_elapsed_s": 118.73923858299895
+    },
+    "loaded_and": 34059,
+    "measured_seq_build_gain": null,
+    "native_recipe_novelty": "NOT_CHECKED",
+    "product": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/045_mem_ctrl.aig /tmp/nonlinear-anytime-pilot-v2/045_mem_ctrl/checkpoints/checkpoint_00000/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "556de0911c09080e2abae80bc9123036837894fc5893d2828da4cd6f4b492698",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.8056190469997091
+      },
+      "conservative_selected_gain_sum": 0,
+      "exact_same_selected_set_build_gain": 0,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/045_mem_ctrl.aig /tmp/nonlinear-anytime-pilot-v2/045_mem_ctrl/checkpoints/checkpoint_00000/product.aig",
+        "exit_code": 0,
+        "log_sha256": "b6ceaa364c491ca7e620515887c4035d6c5fb747eadf4cc0e700b61fc8e0335e",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.47752418399977614
+      },
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 9432,
+      "product_and": 9432,
+      "product_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 9432,
+      "replay_without_build_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "selected_builds": 0,
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 0
+    },
+    "production_integration": "NOT_RUN",
+    "schema": 1,
+    "search_complete": false,
+    "selected_checkpoint": {
+      "directory": "/tmp/nonlinear-anytime-pilot-v2/045_mem_ctrl/checkpoints/checkpoint_00000",
+      "gain": 0,
+      "kind": "EMPTY_REPLAY_BASELINE",
+      "progress": {
+        "discovered_candidates": 0,
+        "proof_completed_chunks": 0,
+        "qualified_candidates": 0,
+        "searched_roots": 0,
+        "stage": "baseline_checkpoint"
+      },
+      "supervisor_observed_elapsed_s": 0.3941486089988757
+    },
+    "status": "BUDGET_EXHAUSTED",
+    "total_wall_s_including_dsec_and_audit": 121.69989605299997,
+    "transform": {
+      "error": "TimeoutError('total anytime transform budget exhausted')",
+      "schema": 1,
+      "search_complete": false,
+      "status": "BUDGET_EXHAUSTED",
+      "transform_elapsed_s": 120.0054668419998
+    }
+  },
+  {
+    "checkpoint_hash_audit_wall_s": 0.23995456400007242,
+    "driver": {
+      "boundary": "before worker launch through worker exit/kill",
+      "exit_code": -9,
+      "hard_transform_budget_s": 120.0,
+      "observed_checkpoints": [
+        {
+          "directory": "checkpoint_00000",
+          "event": "checkpoint",
+          "gain": 0,
+          "manifest_sha256": "f5a98328c07f62a7b749707853a8a03eb600c5d1e102830d0ac8597c393dcacc",
+          "selected_builds": 0,
+          "supervisor_observed_elapsed_s": 0.40944804399987333
+        },
+        {
+          "directory": "checkpoint_00001",
+          "event": "checkpoint",
+          "gain": 2,
+          "manifest_sha256": "8da673a333d5792bb7598520684434cb49021b5f949965db7276d18fecc2d0af",
+          "selected_builds": 1,
+          "supervisor_observed_elapsed_s": 1.3284751840001263
+        }
+      ],
+      "status": "BUDGET_EXHAUSTED",
+      "transform_process_wall_s": 120.0230044330001
+    },
+    "family": "holdout",
+    "file": "060_wb_dma.aig",
+    "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+    "last_completed_chunk": {
+      "discovered_candidates": 4910,
+      "last_completed_root": 2656,
+      "metrics": {
+        "actual_queries": 9845,
+        "candidate_cap_dropped": 5812509,
+        "ci_only_recipe": 60402,
+        "conclusive_cache_hits": 4885,
+        "direct_after_hash": 3990,
+        "eligible_roots": 864,
+        "no_sampled_free_witness": 515836,
+        "nonpositive_retention_gain": 2409258,
+        "positive_sampled_candidates": 5817419,
+        "requested_queries": 14730,
+        "reset_reject_skipped_free_and_step": 0,
+        "reset_sat": 0,
+        "reset_unknown": 0,
+        "searched_roots": 864,
+        "signature_hits": 8850966,
+        "solver_conflicts": 2365,
+        "solver_process_wall_s": 7.27654037900902,
+        "theoretical_unfiltered_queries": 14730,
+        "unknown_not_cached": 0
+      },
+      "proof_completed_chunks": 27,
+      "qualified_candidates": 4,
+      "searched_roots": 864,
+      "stage": "checkpoint",
+      "timing": {
+        "checkpoint_wall_s": 0.06793126599950483,
+        "initialization_wall_s": 0.014915931000359706,
+        "proof_wall_s": 13.569873708003797,
+        "search_wall_s": 102.71303004799847
+      },
+      "transform_elapsed_s": 116.85544525500154
+    },
+    "loaded_and": 9555,
+    "measured_seq_build_gain": null,
+    "native_recipe_novelty": "NOT_CHECKED",
+    "product": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/060_wb_dma.aig /tmp/nonlinear-anytime-pilot-v2/060_wb_dma/checkpoints/checkpoint_00001/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "2d8c142e68dab221b95697968a8629b1ac616aae010a5a0971cf637c9a15a198",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.3377193910000642
+      },
+      "conservative_selected_gain_sum": 1,
+      "exact_same_selected_set_build_gain": 2,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/060_wb_dma.aig /tmp/nonlinear-anytime-pilot-v2/060_wb_dma/checkpoints/checkpoint_00001/product.aig",
+        "exit_code": 0,
+        "log_sha256": "b35e03f6dfbd23732593bc1ff6cde182af3a4ef71ec2a450e0462bb48e5f8caa",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.372588440999607
+      },
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 3703,
+      "product_and": 3701,
+      "product_sha256": "dbee5e8260e5068c5e5fb23f951c72dd3dd66f2ae3f8109acc83e55b2f55cd54",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 3703,
+      "replay_without_build_sha256": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+      "selected_builds": 1,
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 2
+    },
+    "production_integration": "NOT_RUN",
+    "schema": 1,
+    "search_complete": false,
+    "selected_checkpoint": {
+      "directory": "/tmp/nonlinear-anytime-pilot-v2/060_wb_dma/checkpoints/checkpoint_00001",
+      "gain": 2,
+      "kind": "POSITIVE_BUILD_PRODUCT",
+      "progress": {
+        "discovered_candidates": 177,
+        "last_completed_root": 833,
+        "proof_completed_chunks": 1,
+        "qualified_candidates": 4,
+        "searched_roots": 32,
+        "stage": "checkpoint"
+      },
+      "supervisor_observed_elapsed_s": 1.3284751840001263
+    },
+    "status": "BUDGET_EXHAUSTED",
+    "total_wall_s_including_dsec_and_audit": 120.97421981800107,
+    "transform": {
+      "error": "TimeoutError('total anytime transform budget exhausted')",
+      "schema": 1,
+      "search_complete": false,
+      "status": "BUDGET_EXHAUSTED",
+      "transform_elapsed_s": 120.01786886100126
+    }
+  }
+]
