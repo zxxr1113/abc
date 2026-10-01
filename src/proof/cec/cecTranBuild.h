@@ -986,10 +986,23 @@ static int Cec_TranCandFromDependency( Cec_TranSim_t * pSim,
     return 1;
 }
 
-static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
+// -1 preserves the ordinary positive raw-gate bound.  An explicit nonnegative
+// budget is for callers which separately price the recipe in the frozen DAG:
+// raw gates may then exceed MFFC-1 because some gates already exist.  The
+// user's N limit still applies, and malformed negative overrides fail closed.
+static int Cec_TranDependencyGateLimit( Cec_ParTran_t const * pPars,
+    Cec_TranRoot_t const * pRoot, int nRawBudget )
+{
+    if ( !pPars->fUseConstr || nRawBudget < -1 )
+        return 0;
+    return Abc_MinInt( pPars->nDepNodesMax,
+        nRawBudget == -1 ? pRoot->nMffc - 1 : nRawBudget );
+}
+
+static void * Cec_TranDependencyIteratorStartWithRawBudget( Cec_TranSim_t * pSim,
     Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
     Vec_Int_t * vPool, word * pCare, Cec_TranDepScratch_t * pScratch,
-    int * pCursor, void ** ppRootCache )
+    int * pCursor, void ** ppRootCache, int nRawBudget )
 {
     Vec_Ptr_t * vDivs = pScratch->vDivs;
     word Target, Care;
@@ -1006,16 +1019,24 @@ static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
     Vec_PtrPushTwo( vDivs, pScratch->pOff, pScratch->pOn );
     Vec_IntForEachEntry( vPool, iObj, i )
         Vec_PtrPush( vDivs, Cec_TranSimObj(pSim, iObj) );
-    // A profitable Build must use strictly fewer gates than the removable
-    // cone.  Keep the iterator inside that positive-gain budget instead of
-    // constructing recipes that will be rejected with Gain == 0.
-    nLimit = pPars->fUseConstr ?
-        Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc - 1 ) : 0;
+    // Ordinary callers retain the original syntactic positive-gain budget.
+    // Cost-aware callers may explicitly widen it, without changing the real
+    // MFFC or granting any proof/commit authority to the constructed recipe.
+    nLimit = Cec_TranDependencyGateLimit( pPars, pRoot, nRawBudget );
     return Abc_ResubIteratorResumeStart( Vec_PtrArray(vDivs),
         Vec_PtrSize(vDivs), pSim->nSlots, nLimit, Vec_IntSize(vPool),
         0, 0, pPars->fUseSolvSched, pPars->nStage5Paths,
         pPars->fProfile, pCursor,
         ppRootCache );
+}
+
+static void * Cec_TranDependencyIteratorStart( Cec_TranSim_t * pSim,
+    Cec_ParTran_t * pPars, Cec_TranRoot_t const * pRoot,
+    Vec_Int_t * vPool, word * pCare, Cec_TranDepScratch_t * pScratch,
+    int * pCursor, void ** ppRootCache )
+{
+    return Cec_TranDependencyIteratorStartWithRawBudget( pSim, pPars, pRoot,
+        vPool, pCare, pScratch, pCursor, ppRootCache, -1 );
 }
 
 static int Cec_TranDependencyIteratorNext( Cec_TranSim_t * pSim,

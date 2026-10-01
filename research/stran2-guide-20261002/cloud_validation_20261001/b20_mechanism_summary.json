@@ -1,0 +1,65 @@
+{
+  "selected": 24,
+  "roles": {
+    "peer": 12,
+    "tfi": 30,
+    "alias": 12
+  },
+  "cost_classes": [
+    {
+      "fresh": 1,
+      "mffc": 3,
+      "retained": 1,
+      "gain": 1,
+      "count": 11
+    },
+    {
+      "fresh": 1,
+      "mffc": 4,
+      "retained": 1,
+      "gain": 2,
+      "count": 5
+    },
+    {
+      "fresh": 1,
+      "mffc": 5,
+      "retained": 2,
+      "gain": 2,
+      "count": 2
+    },
+    {
+      "fresh": 2,
+      "mffc": 4,
+      "retained": 0,
+      "gain": 2,
+      "count": 6
+    }
+  ],
+  "recipes_with_divisor_outside_original_root_tfi": 24,
+  "root_ids": [
+    1532,
+    1536,
+    1539,
+    1569,
+    1573,
+    1578,
+    1582,
+    1599,
+    1603,
+    1727,
+    1839,
+    1897,
+    1976,
+    2037,
+    2105,
+    2165,
+    2234,
+    2315,
+    2377,
+    2459,
+    2531,
+    2600,
+    2761,
+    2844
+  ]
+}

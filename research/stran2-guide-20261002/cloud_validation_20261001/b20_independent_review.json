@@ -1,0 +1,23 @@
+{
+  "status": "PASS",
+  "original_timeout_preserved": true,
+  "complete_prefix_rows": 4142,
+  "complete_certified_triples": 74,
+  "candidate_count": 5886,
+  "fresh_queries_verified": 222,
+  "independent_free_witnesses_replayed": 74,
+  "selected_builds": 24,
+  "exact_gain": 37,
+  "independent_all_CO_free_assignment_checks": 128,
+  "selected_set_replay_bytes": "IDENTICAL",
+  "independent_DSEC": {
+    "status": "PASS",
+    "command": "dsec /tmp/nonlinear-b20-partial-audit/audit_input.aig /tmp/nonlinear-b20-partial-audit/product.aig",
+    "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+    "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+    "timeout_seconds": 120,
+    "exit_code": 0,
+    "wall_s": 1.3466684489994805,
+    "log_sha256": "931bf35a92987204e18be9cf8454d23b441147dbdf0e1d1244ce2256138bddef"
+  }
+}

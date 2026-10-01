@@ -18,6 +18,106 @@
 
 还须在明确参数下让普通 `&scorr` 与匹配组合搜索达到联合稳定后评估。`&scorr` 本身也有时序证明能力；新方法的待验证贡献是发现并实现它未取得的新表达式缩减，不能仅凭“使用归纳”判定独有性。此前的起点是 Fast35 联合基线后的 **0.28169% / 35 AND / 29 个 Build / 8 个受益案例**；该具体替换的非组合性已证实，尚不构成任意组合优化算法最优面积的下界。2026-10-01进一步在同一Fast35提高至80 AND，但较大独立集的质量/覆盖仍弱；详见下一节。用户于 2026-10-01 在后继会话明确继续并行 Guide 研究；执行约定见下节。
 
+## 2026-10-01 云端接续：可复用非线性输入基与实际门成本
+
+本节接续用户对上述暂停任务的**重新启动授权**：优先理论分析和代码实现，在便携环境完成可负担的正确性验证，再由用户运行较大实验。基线为 `112d8e9f3781ceb6aba65e9953dceb6e49e0acab`；55 个 `first_seq` 输入 SHA256 已全部核对。以下独立 Python 原型不是生产 `&stran2` 集成，也没有复原包外原始日志。本节不改变旧实验的失败、超时和归因结论。
+
+### 理论与实现边界
+
+此前 cut-leaf 的下界约束提示应改变输入基，但**原生算法本来就支持非线性 divisor 和一/两门 recipe**，不能把这两点作为新贡献。新研究入口 `research/stran2-guide-20261002/nonlinear_divisors/` 用固定的 TFI、局部 peer、reset/image 签名 alias 池，枚举一/两门表达式，按规范化及保留依赖后的保守新增 AND 代价筛选，再逐候选独立证明；精确实现成本只由最终选择集合重建确定。需要检验的变化是输入池及其截断、pair frontier、证明获得方式；相对 native 的逐配方新颖性仍为 `NOT_CHECKED`。
+
+令原转移为 `T(s,u)`，旧根与新表达式差为 `D(s,x)`。原型要求分别证明：
+
+- `D(0,x)=0`，对任意当前 PI `x`；
+- `D(T(s,u),x)=0`，对任意前态 `s`、前一拍 PI `u` 与独立的当前 PI `x`。
+
+二者成立即覆盖 reset 时刻及所有后续可达状态，因为任意后续状态都是原转移的一步像。此处没有借用其他候选作假设，也不是“有限 BMC 未发现反例”。它是**充分而不完备的完整时序关系证明**：例如 reset 为 0 且 `q'=q` 时，`q=0` 在可达域成立，却无法由 unrestricted image 证明。SAT/UNKNOWN 不得计为成功，也不能将任意前态的 SAT 模型误作为真实可达 teacher。
+
+所有计入的候选须另有自由 PI/RO SAT 及完整赋值独立回放。recipe 只引用编号小于 root 的原节点，保持组合无环；重建按原拓扑顺序进行，支持值等价可逐节点归纳，因而保持 PO/RI 及后续状态轨迹。选择器保守排除删除区域重叠与 divisor 依赖冲突。最终收益来自同一选择集合的 `replay_without_build.aig` 与 `product.aig` 的精确结构哈希/cleanup 差，另存原输入到空选择重放的 cleanup 差，避免把无关 cleanup 记为 Build。
+
+表达式哈希成旧节点、常量或仅产生死的新门时必须降为 Direct，不能按语法 gate 数计 Build。独立审查实际捕获并修复了“死中间门使常量替换被误记 Build”的问题，并补充反例测试。产物要求输出确为新构造节点且新门在最终图中存活；原输入到空选择、原输入到产物分别运行独立 DSEC。解析器拒绝不支持的非零/未知 reset 及扩展 typed AIGER 接口。
+
+### 两项工程修正
+
+1. 旧便携入口 `run_cut_image.py` 间接导入 `guide.py` 时立即读取原服务器 `/mnt/.../joint_baseline/manifest.json`，在新主机真实失败。现在仅在调用旧服务器 runner 时延迟加载该配置，不伪造命令或环境。四项便携回归通过；旧 cut 合成自测 96 个查询通过，b03 full-cut 的 4 配方、2 根、2 AND 重叠潜力及查询计数与打包历史一致。
+2. `cecTranBuild.h` 新增显式 raw-budget 入口，默认入口仍使用原 `min(N,MFFC−1)`。仅 cost-aware TraceBuild 请求已有用户 N 上限，之后仍必须通过 frozen-hash、真实 MFFC 保留、完整证明及正 cleanup。原来这个 lane 的实际成本判断在枚举之后，无法发现语法门数超过旧上界、但哈希后只有少量新门的配方。新增真实 iterator 自测以 `(a&c)&b` 与池外已有共享 `a&b` 为例，证实默认 1 门枚举不可得、显式 2 门预算可发现实际只新增 1 门且净减 1 门的表达式。没有修改 root 的真实 MFFC。完整 `&stran_resub_test` 通过。此修正针对实验 TraceBuild 的生成边界；其 output-boundary/mode27 语义**不能冒充本课题 Strict root Build 的新面积贡献**。
+
+### 固定六例短批次与一次机制迭代
+
+预先固定不同设计来源的 b03、i2c、des_area、b20_opt、mem_ctrl、wb_dma 六例，不按结果替换案例。参数统一为 pool 24 / reservoir_cap 参数 128（分别作用于 TFI/peer/alias 收集，不是合并池总数上界）/ TFI depth 6 / peer hops 1 / aliases 8 / 1–2 raw AND / 每根最多 8 配方 / 256 lanes / seed 2026100201；每例搜索、证明和重建总预算 120 秒，两个独立 DSEC 各 120 秒、另计成本。solver 的每查询 1000-conflict 边界未改。使用 2 workers，不作正式单机性能宣称。
+
+首版 v2 的三个完整例为 b03 5 AND、i2c 10 AND、des_area 0；其余三例超时。剖析发现候选命中时重复计算 MFFC/依赖保留，随后改为每根 protected-mask 缓存和精确 top-k，保留下来的配方再做独立引用计数核验。缓存单独消融在三个完整例保持配方、成本、free witness、证明状态一致，CNF、query 和两份重放 AIG 均逐字节相同。再修复两门原始表达式在 MFFC=2 时被过早排除的捷径，让实际 fresh-gate 代价决定收益。i2c 因此有 32 条新保留配方、挤掉 28 条旧配方，但新配方均未通过 step 证明；最终已证集合与产品没有改善，不把该语法修正宣称为涨分。
+
+冻结 v3 的结果：
+
+| 案例 | 搜索/证明状态 | 已证关系数 | 实际选中 Build | 首 SEQ 输入→产物 AND | 精确非组合 Build AND |
+|---|---|---:|---:|---:|---:|
+| b03 | 完成，双 DSEC PASS | 43 | 5 | 84→79 | 5 |
+| i2c | 完成，双 DSEC PASS | 40 | 6 | 1118→1108 | 10 |
+| des_area | 完成，双 DSEC PASS | 0 | 0 | 4752→4752 | 0 |
+| b20_opt | 120s TIMEOUT | 完整运行缺失 | — | — | 缺失 |
+| mem_ctrl | 120s TIMEOUT | 完整运行缺失 | — | — | 缺失 |
+| wb_dma | 120s TIMEOUT | 完整运行缺失 | — | — | 缺失 |
+
+三例有效集合的 15 AND 是该独立原型在冻结前缀上的真实缩减，**不是**相对所有既有 native/Guide 运行的新增贡献。等例百分比以各自原 loaded AND 为分母；结果聚合文件给出 1.417864%，但其被 b03 的小分母主导，且六例仅三例完成，不能据此声称大电路普遍改善或推广到全55。
+
+des_area 并非没有候选：936 条正成本、自由态 SAT 配方中，599 条 reset 与 step 均失败，337 条 reset 通过而 step 失败。由此把下一次诊断指向候选泛化和 image 证明限制，而不是无依据继续扩大 cut 完成器。b20_opt 在超时前有完整证明三元组，但尚未获得正式完整批次产物；任何后续部分证书审计必须另开输出目录、记录额外成本，不能改写原 TIMEOUT。
+
+证据索引：`research/stran2-guide-20261002/cloud_validation_20261001/` 保存输入哈希、自测、缓存差分及 v2/v3 计划和聚合结果；随补丁交付的实验归档保留原始查询、候选、产物、DSEC 日志及冻结源文件。最终源文件与测试入口位于 `nonlinear_divisors/`。
+
+### 额外成本的部分证书审计与两步像诊断
+
+b20_opt 的 v3 原运行维持 **120s TIMEOUT**。另启 `audit_partial.py`，对已经刷盘的连续 4,142 行查询结果只采用完整三元组；末候选只有两行，明确排除。重建全部 5,886 个原候选的 CNF/query 与原文件逐字节相同，全部自由赋值与成本重新回放，再对 74 个原已完成的正证书执行 222 次新查询，全部为 SAT/UNSAT/UNSAT。选择 24 个无冲突 Build，实际从 **11,270 降为 11,233 AND，精确减 37 AND**；空选择及产物 DSEC 均 PASS。额外审计总 wall 15.76s，其中约 13.81s 非 DSEC；这不是同 120s 预算下的完整成功，不能修改原六例覆盖率或合并进正式完整批次均值。独立复审另以单独 AIGER 解码器回放 74 份自由 witness、128 组任意 PI/RO 的全部 PO/RI，按保存的 24 配方重建得到逐字节相同产物，并重跑 DSEC PASS。
+
+这是此前 cut-only 方向零候选的较大设计上的真实独立原型产品信号，值得交给用户扩大验证；它仍不是相对全部 native 流程的新颖性或跨大设计普遍收益证据。`audit_partial.py` 不扩大候选发现，只审计完整、来源绑定的已有查询前缀，原 TIMEOUT 文件保持不可变。
+
+另以同一冻结候选做 `deeper_image.py` 诊断：必须同时证明 reset 第 0、1 帧，以及任意前态经两次转移后的像；各拍 PI 独立，不省略中间 reset 帧，也不把 image SAT 当可达反例。三个完整案例共额外 11,457 查询、16.953s，没有 UNKNOWN 或超时。des_area 原 337 个 reset 通过/step 失败的候选全部在真实 reset 第1帧 SAT，故它们是错误候选而非单纯证明器不够深；这里未导出并回放 SAT 轨迹，不称为已验证 teacher 反例库，不能靠增加 image 深度救回。i2c 的 2,880 个 step-SAT 配方中，532 个 reset0 SAT、另352个 reset1 SAT，其余1,996个两步像 SAT（后者不代表已证可达），无新增证明。b03 有3个新增完整关系证明，原一步 step-SAT 状态保留。显式 depth2 证书产品审计另外重新核9个查询后，旧43关系参考产品减5 AND、新3关系单独产品减3 AND、合并集合选8个 Build 实际减8 AND（84→76）；从同一合并选中集合移除 depth2 候选后减5 AND，因此深度2的精确边际为3 AND。四种重放的8次 baseline/product DSEC 均 PASS。独立复核确认联合集合减去 depth2 后的选择身份未变，8份 free witness、512组任意 PI/RO 的全部 CO 与四份产物重建均通过，再独立重跑联合产物 DSEC PASS。这些仍是额外诊断/审计成本下的独立原型结果，不改写原120秒六例矩阵。
+
+### 用户侧复现入口
+
+在上述冻结分支应用补丁后：
+
+```sh
+bash research/stran2-guide-20261002/build_query_solver.sh /tmp/stran2-query-solver
+make ABC_USE_NO_READLINE=1 -j8 abc
+./abc -c '&stran_resub_test'
+python3 -B research/stran2-guide-20261002/test_portable_imports.py
+STRAN2_SOLVER=/tmp/stran2-query-solver STRAN2_ABC="$PWD/abc" \
+  python3 -B -m unittest discover \
+  -s research/stran2-guide-20261002/nonlinear_divisors -p 'test*.py' -v
+python3 research/stran2-guide-20261002/nonlinear_divisors/run_batch.py \
+  --pilot --solver /tmp/stran2-query-solver --abc "$PWD/abc" \
+  --workers 2 --out /tmp/stran2-nonlinear-pilot-user
+```
+
+补充深度测试单独在新 Python 进程运行，避免混合当前与冻结模块；未设置 `STRAN2_FROZEN_PACKAGE` 时这些测试会明确跳过，不能报为通过：
+
+```sh
+STRAN2_FROZEN_PACKAGE=/tmp/stran2-nonlinear-pilot-user/source \
+STRAN2_SOLVER=/tmp/stran2-query-solver \
+  python3 -B research/stran2-guide-20261002/nonlinear_divisors/test_deeper_image.py
+python3 research/stran2-guide-20261002/nonlinear_divisors/deeper_image.py \
+  --run /tmp/stran2-nonlinear-pilot-user --case 005_b03 \
+  --solver /tmp/stran2-query-solver --out /tmp/stran2-b03-depth2-user
+python3 research/stran2-guide-20261002/nonlinear_divisors/audit_depth2_product.py \
+  --source-case /tmp/stran2-nonlinear-pilot-user/005_b03 \
+  --proof-dir /tmp/stran2-b03-depth2-user \
+  --solver /tmp/stran2-query-solver --abc "$PWD/abc" \
+  --out /tmp/stran2-b03-depth2-product-user
+```
+
+若 b20_opt 原运行确为 TIMEOUT 且存在完整证明前缀，可另做额外成本审计：
+
+```sh
+python3 research/stran2-guide-20261002/nonlinear_divisors/audit_partial.py \
+  --attempt /tmp/stran2-nonlinear-pilot-user/034_b20_opt \
+  --solver /tmp/stran2-query-solver --abc "$PWD/abc" \
+  --out /tmp/stran2-b20-partial-user
+```
+
+新输出目录必须尚不存在。先复现六例及缺失状态，再决定是否用 `--all` 替换 `--pilot`；不要把超时作零分，也不要把仅有关系证明、未有实际重放与 DSEC 的候选计入主指标。全55对照、与原生配方逐项比较及生产集成尚未完成。
+
+
 ## 2026-10-01 并行时序 Guide 研究（已暂停，等待新的算法方向）
 
 用户要求继承此前会话，将组合与时序 Guide 分开，以较大的可达样本及压缩改善时序 Build，并明确授权本轮“额度不限，深入探索”。质量先以超过已验证的 Fast35 联合稳定基线后 **0.28169% / 35 AND / 29 Build / 8 例**，且扩展到更多和更大电路为检查点；未承诺必然达到的数值提升。只统计上述独立自由状态 SAT、完整 SEQ 和精确提交重放同时满足的 Build。总 Build、总 SEQ、Direct 以及 CBS-only 整流程差均另列。时间暂不是放弃有质量价值方向的理由，但必须记录工作量、覆盖和超时。

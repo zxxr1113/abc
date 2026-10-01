@@ -1,0 +1,54 @@
+{
+  "attempted": 6,
+  "benefited_cases": [
+    "005_b03.aig",
+    "044_i2c.aig"
+  ],
+  "by_loaded_size": {
+    "10k_to_100k": {
+      "and_gain": 0,
+      "cases": 1,
+      "equal_case_percent": 0.0,
+      "weighted_percent": 0.0
+    },
+    "1k_to_10k": {
+      "and_gain": 10,
+      "cases": 1,
+      "equal_case_percent": 0.3473428273706148,
+      "weighted_percent": 0.3473428273706148
+    },
+    "ge100k": {
+      "and_gain": 0,
+      "cases": 0,
+      "equal_case_percent": null,
+      "weighted_percent": null
+    },
+    "lt1k": {
+      "and_gain": 5,
+      "cases": 1,
+      "equal_case_percent": 3.90625,
+      "weighted_percent": 3.90625
+    }
+  },
+  "completed": 3,
+  "excluding_largest_contributor": {
+    "and_gain": 5,
+    "cases": 2,
+    "equal_case_percent": 1.953125,
+    "weighted_percent": 0.04872819413312543
+  },
+  "largest_contributor": "044_i2c.aig",
+  "missing_data_are_zero": false,
+  "scope": "standalone reset-image proof products; production/native comparison NOT_RUN",
+  "standalone_product": {
+    "and_gain": 15,
+    "cases": 3,
+    "equal_case_percent": 1.417864275790205,
+    "weighted_percent": 0.1141552511415525
+  },
+  "statuses": {
+    "COMPLETE": 3,
+    "TIMEOUT": 3
+  },
+  "validated": 3
+}

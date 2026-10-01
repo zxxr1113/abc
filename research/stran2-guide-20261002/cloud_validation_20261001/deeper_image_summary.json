@@ -1,0 +1,171 @@
+{
+  "cases": [
+    {
+      "depth": 2,
+      "file": "005_b03.aig",
+      "frozen_evidence_unchanged": true,
+      "groups": [
+        {
+          "count": 3,
+          "image_2": "UNSAT",
+          "reset_0": "UNSAT",
+          "reset_1": "UNSAT"
+        }
+      ],
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "measured_seq_build_gain": null,
+      "newly_proved_candidates": 3,
+      "newly_proved_roots": 3,
+      "overlapping_one_per_root_conservative_potential": 3,
+      "potential_is_additive": false,
+      "product_selection": "NOT_RUN",
+      "proof_queries": {
+        "clauses": 835,
+        "cnf_sha256": "bb66706455bce767e05cb98a72b82b301a6ec86cd0a49a830eae153013b897b6",
+        "conflicts": 14,
+        "conflicts_per_query": 1000,
+        "queries": 9,
+        "queries_sha256": "c973b97edb6595f71b93e49d9b7f024ac276314a510179eed430138d135b6a8f",
+        "results_sha256": "e57ba2157dfea4a5922df8f37794219b3134f187e3a6dd4f29c927dfc9bcb809",
+        "solver_process_wall_s": 0.008075660000031348,
+        "solver_reported_wall_s": 8.0509e-05,
+        "statuses": {
+          "-1": 9
+        },
+        "variables": 323
+      },
+      "rechecked_step_sat_candidates": 3,
+      "schema": 1,
+      "source_candidate_count": 46,
+      "source_reset_unsat_step_sat": 3,
+      "status": "COMPLETE",
+      "wall_s": 0.8340325129993289
+    },
+    {
+      "depth": 2,
+      "file": "041_des_area.aig",
+      "frozen_evidence_unchanged": true,
+      "groups": [
+        {
+          "count": 599,
+          "image_2": "SAT",
+          "reset_0": "SAT",
+          "reset_1": "SAT"
+        },
+        {
+          "count": 337,
+          "image_2": "SAT",
+          "reset_0": "UNSAT",
+          "reset_1": "SAT"
+        }
+      ],
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "measured_seq_build_gain": null,
+      "newly_proved_candidates": 0,
+      "newly_proved_roots": 0,
+      "overlapping_one_per_root_conservative_potential": 0,
+      "potential_is_additive": false,
+      "product_selection": "NOT_RUN",
+      "proof_queries": {
+        "clauses": 97558,
+        "cnf_sha256": "947d5fb30e0b18ae926efa6345a5e497d526b37f089d317f905ef78f5713ccc4",
+        "conflicts": 1194,
+        "conflicts_per_query": 1000,
+        "queries": 2808,
+        "queries_sha256": "45b40394048fdb3ee6f56e03a35a7ed76b92b25bb8a24154e9b03e233218b3b0",
+        "results_sha256": "61f1562d96fbf45b7f86b15ff482af0927d601b14e249e7965dfa23a4b5d6c05",
+        "solver_process_wall_s": 6.491715303000092,
+        "solver_reported_wall_s": 6.408442215,
+        "statuses": {
+          "-1": 337,
+          "1": 2471
+        },
+        "variables": 33784
+      },
+      "rechecked_step_sat_candidates": 936,
+      "schema": 1,
+      "source_candidate_count": 936,
+      "source_reset_unsat_step_sat": 337,
+      "status": "COMPLETE",
+      "wall_s": 9.04845650199968
+    },
+    {
+      "depth": 2,
+      "file": "044_i2c.aig",
+      "frozen_evidence_unchanged": true,
+      "groups": [
+        {
+          "count": 532,
+          "image_2": "SAT",
+          "reset_0": "SAT",
+          "reset_1": "SAT"
+        },
+        {
+          "count": 352,
+          "image_2": "SAT",
+          "reset_0": "UNSAT",
+          "reset_1": "SAT"
+        },
+        {
+          "count": 1996,
+          "image_2": "SAT",
+          "reset_0": "UNSAT",
+          "reset_1": "UNSAT"
+        }
+      ],
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "measured_seq_build_gain": null,
+      "newly_proved_candidates": 0,
+      "newly_proved_roots": 0,
+      "overlapping_one_per_root_conservative_potential": 0,
+      "potential_is_additive": false,
+      "product_selection": "NOT_RUN",
+      "proof_queries": {
+        "clauses": 55042,
+        "cnf_sha256": "709b8baf0c2d354d3aa3dfd88bfe69c2e04637a3437ac409acbc6374ecffa5db",
+        "conflicts": 1342,
+        "conflicts_per_query": 1000,
+        "queries": 8640,
+        "queries_sha256": "17fdf5bce7a46c75c09b02be299ee0668957b8a27c1f210a9d8e49fb7f310f95",
+        "results_sha256": "add0ee995a9541dad495e0f12bbddaffb7c740df8c357cacfc8dcfb0fa7a967e",
+        "solver_process_wall_s": 5.066687291000562,
+        "solver_reported_wall_s": 4.94698923,
+        "statuses": {
+          "-1": 4344,
+          "1": 4296
+        },
+        "variables": 18569
+      },
+      "rechecked_step_sat_candidates": 2880,
+      "schema": 1,
+      "source_candidate_count": 2920,
+      "source_reset_unsat_step_sat": 2348,
+      "status": "COMPLETE",
+      "wall_s": 7.070142525000847
+    }
+  ],
+  "conflicts_per_query": 1000,
+  "depth": 2,
+  "interpretation": {
+    "b03": "3 new complete sufficient certificates; product selection and DSEC required before any area claim.",
+    "des_area": "All337 prior resetUNSAT/stepSAT recipes are refuted at actual reset-derived frame1; none rescued. Individual SAT traces are not exported by this solver.",
+    "i2c": "532 reset0SAT,352 additional reset1SAT;1996 reset0/reset1UNSAT but image2SAT remain unproved, not classified as reachable failures."
+  },
+  "measured_seq_build_gain": null,
+  "product_selection": "NOT_RUN",
+  "proof_boundary": "reset frames0 and1 plus unrestricted predecessor image at frame2, independent PI each frame",
+  "schema": 1,
+  "source_run": "/tmp/nonlinear-pilot-v3",
+  "source_search_rerun": false,
+  "test_count": 11,
+  "test_log": "/tmp/stran2-deeper-image/test.log",
+  "test_log_sha256": "eb1e6a5f91430b05415236b696776b9ebd28205f34995bfd9c4763bf3ed085ec",
+  "test_sha256": "22a064a827def37de4b11c1fd8e7a822e66121fb8dd038949f337ab0582f0ee8",
+  "test_status": "PASS",
+  "tool_sha256": "c842dba4256d9571480ae589399c257b5bb925df2305a0191074560e3cb36e9d",
+  "total_new_candidates": 3,
+  "total_queries": 11457,
+  "total_supplemental_wall_s": 16.952631539999857,
+  "unknown_queries": 0,
+  "wall_limit_per_case_s": 120
+}

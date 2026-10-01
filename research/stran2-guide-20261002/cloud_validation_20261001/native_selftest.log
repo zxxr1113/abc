@@ -1,0 +1,83 @@
+======== ABC command line "&stran_resub_test"
+stran polarity exhaustive: mode=0 compatible-one-AND=520 missing=228
+stran polarity exhaustive: mode=1 compatible-one-AND=520 missing=0
+stran complete-native cache word/options/collision/prefix/resume/ordered-stream self-test: PASS
+stran care-aware ISF/core mask regression: PASS
+stran ODC L1 sparse-root-care overflow/selected-lanes/multiframe/cache/source/pool regression: PASS
+Stopped signal correspondence after BMC.
+stran ODC fanout proof/composition/polarity/helper-endpoint self-test: PASS
+stran spatial-window exhaustive care/reconvergence/CO/composition/proof self-test: PASS
+stran-root ODC boundary engine: schema=1 mode=comb-only candidates=1 proved=0 selected=0.
+stran-root ODC fanout round: schema=1 round=1 candidates=1 obligations=1 full-care=0 proved-obligations=0 proved-candidates=0 composition-conflicts=0 selected=0 proof-batches=1 comb-unknown=0 seq-incomplete=0 bmc-unknown=0 ind-unknown=0 proof-sec=0.000024.
+stran-root commit selection: policy=commit-wave-root-loss-gwmin initial-proved=1 initial-positive=1 initial-max-gain=1 first-gain=1 rounds=1 gain-evals=1 graph-vertices=1 graph-edges=0 selected-weight=1 refreshes=1.
+stran-root ODC fanout round: schema=1 round=1 candidates=1 obligations=1 full-care=0 proved-obligations=1 proved-candidates=1 composition-conflicts=0 selected=1 proof-batches=1 comb-unknown=0 seq-incomplete=0 bmc-unknown=0 ind-unknown=0 proof-sec=0.000012.
+stran ODC MFFC1 Direct/care-only/polarity/ordered-kind attribution self-test: PASS
+Strict CEX reset/replay/dedup/induction/horizon/PI-transfer self-test: PASS
+Strict CEX bounded active SAT / both solvers / exhaustive reachable vs free-state self-test: PASS
+Strict auxiliary signature preservation / free-state semantics / sequential exclusion self-test: PASS
+relobs-proof id=1 tag=root status=0 frame=-1 cex-frame=0 regs=2 pos=1 seconds=0.013000
+relobs-proof id=2 tag=window status=0 frame=-1 cex-frame=0 regs=2 pos=1 seconds=0.010184
+relobs-proof id=3 tag=witness-product status=1 frame=1 cex-frame=-1 regs=4 pos=1 seconds=0.014144
+relobs-proof id=4 tag=state status=0 frame=0 cex-frame=1 regs=4 pos=2 seconds=0.010212
+relobs-witness build=0 legacy-whole=1
+relobs-discovery round=0 roots=2 candidates=2 words=4 frames=8 B=16 q=1 N=20 constant=0 existing=2 build=0 material=4
+relobs-proof id=5 tag=product status=1 frame=1 cex-frame=-1 regs=4 pos=1 seconds=0.011284
+relobs-proof id=6 tag=root status=0 frame=-1 cex-frame=0 regs=2 pos=1 seconds=0.010935
+relobs-proof id=7 tag=window status=0 frame=-1 cex-frame=0 regs=2 pos=1 seconds=0.010026
+relobs-proof id=8 tag=state status=0 frame=0 cex-frame=1 regs=4 pos=2 seconds=0.011739
+relobs-commit round=0 proof=5 root=5 kind=1 gates=0 out=4 gain=1 root-status=0 window-status=0 state-status=0 recipe=
+relobs-round round=0 tried=1 sat=0 unknown=0 committed=1 gain=1 replay=0 bank=0
+stran-root experiment-time profile: schema=8 phase=seq scope=relobs total-sec=0.044087 sim-sec=0 root-refresh-sec=0 direct-discovery-sec=0 divisor-discovery-sec=0 resub-init-sec=0 resub-enum-sec=0 cbs-graph-sec=0 cbs-screen-sec=0 cbs-solve-sec=0 scorr-graph-sec=0 scorr-bmc-sec=0 scorr-induction-sec=0 scorr-resim-sec=0 scorr-other-sec=0 selection-repair-sec=0 bundle-sec=0 cleanup-sec=0 exact-audit-sec=0.044065 shadow-sec=0 unprofiled-sec=0.000022
+stran-root experiment-summary profile: schema=8 phase=seq scope=relobs selected-roots=1 marginal-and=1 final-and-gain=1 final-reg-gain=0 and-before=2 and-after=1 reg-before=2 reg-after=2
+stran-root experiment-commit profile: schema=8 phase=seq kind=constant selected=0 marginal-and=0 marginal-reg=0
+stran-root experiment-commit profile: schema=8 phase=seq kind=existing selected=1 marginal-and=1 marginal-reg=0
+stran-root experiment-commit profile: schema=8 phase=seq kind=build selected=0 marginal-and=0 marginal-reg=0
+relobs-discovery round=1 roots=1 candidates=0 words=4 frames=8 B=16 q=1 N=20 constant=0 existing=0 build=0 material=2
+relobs-round round=1 tried=0 sat=0 unknown=0 committed=0 gain=0 replay=0 bank=0
+stran-root experiment-time profile: schema=8 phase=seq scope=relobs total-sec=0.000010 sim-sec=0 root-refresh-sec=0 direct-discovery-sec=0 divisor-discovery-sec=0 resub-init-sec=0 resub-enum-sec=0 cbs-graph-sec=0 cbs-screen-sec=0 cbs-solve-sec=0 scorr-graph-sec=0 scorr-bmc-sec=0 scorr-induction-sec=0 scorr-resim-sec=0 scorr-other-sec=0 selection-repair-sec=0 bundle-sec=0 cleanup-sec=0 exact-audit-sec=0.000000 shadow-sec=0 unprofiled-sec=0.000010
+stran-root experiment-summary profile: schema=8 phase=seq scope=relobs selected-roots=0 marginal-and=0 final-and-gain=0 final-reg-gain=0 and-before=1 and-after=1 reg-before=2 reg-after=2
+stran-root experiment-commit profile: schema=8 phase=seq kind=constant selected=0 marginal-and=0 marginal-reg=0
+stran-root experiment-commit profile: schema=8 phase=seq kind=existing selected=0 marginal-and=0 marginal-reg=0
+stran-root experiment-commit profile: schema=8 phase=seq kind=build selected=0 marginal-and=0 marginal-reg=0
+relobs-summary mode=6 commits=1 gain=1
+relobs-proof id=9 tag=state status=0 frame=0 cex-frame=1 regs=4 pos=2 seconds=0.010138
+relobs-proof id=10 tag=root status=0 frame=-1 cex-frame=0 regs=2 pos=1 seconds=0.010967
+relobs-proof id=11 tag=window status=0 frame=-1 cex-frame=0 regs=2 pos=1 seconds=0.012870
+relobs-proof id=12 tag=witness-product status=1 frame=1 cex-frame=-1 regs=4 pos=1 seconds=0.009635
+relobs-proof id=13 tag=state status=0 frame=0 cex-frame=1 regs=4 pos=2 seconds=0.012061
+relobs-witness build=1 legacy-whole=1
+relobs-proof id=14 tag=delayed-negative status=0 frame=1 cex-frame=10 regs=22 pos=1 seconds=0.015562
+relobs-selftest PASS: native Build, divergent states, permanent PO proof, delayed negative
+relobs-proof id=15 tag=tracebuild-product status=0 frame=0 cex-frame=1 regs=4 pos=1 seconds=0.013144
+tracebuild-pattern root=7 row=0 values=111
+tracebuild-pattern root=7 row=1 values=000
+tracebuild-cone-slice root=7 clause=0 bad-object=9 frames=2 selected-time-pattern-value=0:0:1
+tracebuild-clause root=7 id=0 boundary=output bad-frame=1 terms=0:1
+relobs-proof id=16 tag=tracebuild-product status=0 frame=0 cex-frame=1 regs=4 pos=1 seconds=0.016673
+tracebuild-pattern root=7 row=2 values=101
+tracebuild-cone-slice root=7 clause=1 bad-object=9 frames=2 selected-time-pattern-value=0:2:0
+tracebuild-clause root=7 id=1 boundary=output bad-frame=1 terms=2:0
+tracebuild-cone-slice root=7 clause=2 bad-object=9 frames=2 selected-time-pattern-value=0:2:0
+tracebuild-clause root=7 id=2 boundary=output bad-frame=1 terms=2:0
+tracebuild-cone-slice root=7 clause=3 bad-object=9 frames=2 selected-time-pattern-value=0:0:1
+tracebuild-clause root=7 id=3 boundary=output bad-frame=1 terms=0:1
+relobs-proof id=17 tag=tracebuild-product status=0 frame=0 cex-frame=1 regs=4 pos=1 seconds=0.011228
+tracebuild-pattern root=7 row=3 values=110
+tracebuild-cone-slice root=7 clause=4 bad-object=9 frames=2 selected-time-pattern-value=0:3:0
+tracebuild-clause root=7 id=4 boundary=output bad-frame=1 terms=3:0
+tracebuild-cone-slice root=7 clause=5 bad-object=9 frames=2 selected-time-pattern-value=0:0:1
+tracebuild-clause root=7 id=5 boundary=output bad-frame=1 terms=0:1
+tracebuild-cone-slice root=7 clause=6 bad-object=9 frames=2 selected-time-pattern-value=0:2:0
+tracebuild-clause root=7 id=6 boundary=output bad-frame=1 terms=2:0
+tracebuild-cone-slice root=7 clause=7 bad-object=9 frames=2 selected-time-pattern-value=0:0:1
+tracebuild-clause root=7 id=7 boundary=output bad-frame=1 terms=0:1
+tracebuild-proposal root=7 index=1 branch=1 clauses=8 out=-2 recipe=4,6
+relobs-proof id=18 tag=tracebuild-product status=1 frame=1 cex-frame=-1 regs=4 pos=1 seconds=0.012150
+relobs-proof id=19 tag=state status=0 frame=0 cex-frame=1 regs=4 pos=2 seconds=0.012333
+relobs-proof id=20 tag=tracebuild-window status=0 frame=-1 cex-frame=0 regs=4 pos=1 seconds=0.009832
+tracebuild-pattern root=7 row=4 values=011
+tracebuild-cone-slice root=7 clause=8 bad-object=7 frames=1 selected-time-pattern-value=0:4:0
+tracebuild-clause root=7 id=8 boundary=window bad-frame=0 terms=4:0
+tracebuild-selftest disjoint clauses, native temporal-cone construction, structural cuts and actual-cost bound PASS
+stran resub iterator/polarity/canonicalization/MFFC self-test: PASS
+stran ranked-reservoir/TFI-Existing/helper-remap-HO/all-helper-switch/positive-gain/temp-AIG self-test: PASS

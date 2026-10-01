@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "defaults": {
+    "pool_cap": 24,
+    "reservoir_cap": 128,
+    "tfi_depth": 6,
+    "peer_hops": 1,
+    "alias_cap": 8,
+    "max_gates": 2,
+    "candidates_per_root": 8,
+    "lanes": 256,
+    "seed": 2026100201,
+    "wall_seconds": 120.0
+  },
+  "pilot_cases": [
+    "005_b03.aig",
+    "044_i2c.aig",
+    "041_des_area.aig",
+    "034_b20_opt.aig",
+    "045_mem_ctrl.aig",
+    "060_wb_dma.aig"
+  ],
+  "hypothesis": "Reused nonlinear basis nodes plus complete bounded pair frontier and candidate-local reset/image proof can realize positive non-combinational Build after the frozen prefix.",
+  "candidate_proof": "free SAT with replayed sampled witness; reset and unrestricted one-step XOR UNSAT",
+  "main_product_metric": "empty selected-set replay AND minus selected Build replay AND; require independent baseline and product DSEC PASS",
+  "unknown_policy": "UNKNOWN and timeout never establish proof or zero gain",
+  "native_novelty": "not established; native already has nonlinear divisors and 1-2 gate templates",
+  "stop_rule": "short uniform pilot before expanded matrices; retain all attempted cases and explain construction/proof/selection bottlenecks"
+}

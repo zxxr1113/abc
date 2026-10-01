@@ -10,6 +10,7 @@ import collections
 import concurrent.futures
 import csv
 import datetime
+import functools
 import hashlib
 import json
 import os
@@ -25,11 +26,38 @@ OLD = Path('/mnt/home/zhaoxiran/script2/experiment_reports/20260930T171612Z_seed
 TIMEOUT = 120
 SAT_TIMEOUT = 30
 AUDIT_SCHEMA = 2
-COMMAND = json.loads((OLD / 'joint_baseline/manifest.json').read_text())['command']
-ENV = {k: v for k, v in os.environ.items()
-       if not k.startswith(('ABC_STRICT_', 'ABC_STRAN_', 'ABC_CEX_', 'ABC_WINDOW_'))}
-ENV.update(json.loads((OLD / 'joint_baseline/manifest.json').read_text())['prefix_env'])
-ENV.update(ABC_STRAN_PAPER_SKIP_SEQ='0', ABC_STRICT_GUIDE='0')
+_CLEAN_ENV = {k: v for k, v in os.environ.items()
+              if not k.startswith(('ABC_STRICT_', 'ABC_STRAN_', 'ABC_CEX_', 'ABC_WINDOW_'))}
+
+
+@functools.lru_cache(maxsize=1)
+def _legacy_context():
+    """Load original-host experiment settings only when its runner is used.
+
+    Portable diagnostics import the graph, hashing, JSON, and checker-parsing
+    helpers from this module. They must not need the unbundled historical
+    experiment directory. There is deliberately no substitute experiment
+    command or prefix environment when that directory is unavailable.
+    """
+    path = OLD / 'joint_baseline/manifest.json'
+    try:
+        manifest = json.loads(path.read_text())
+    except FileNotFoundError as error:
+        raise FileNotFoundError(
+            f'Original-host experiment manifest required for the legacy guide '
+            f'runner: {path}. Portable cut-image diagnostics do not require it.'
+        ) from error
+    env = {**_CLEAN_ENV, **manifest['prefix_env']}
+    env.update(ABC_STRAN_PAPER_SKIP_SEQ='0', ABC_STRICT_GUIDE='0')
+    return manifest['command'], env
+
+
+def __getattr__(name):
+    # Preserve explicit imports/accesses used by original-host callers without
+    # making imports of the portable helpers touch that host's filesystem.
+    if name in ('COMMAND', 'ENV'):
+        return _legacy_context()[0 if name == 'COMMAND' else 1]
+    raise AttributeError(f'module {__name__!r} has no attribute {name!r}')
 
 
 def sha(path):
@@ -148,6 +176,7 @@ def dsec_answer(proof, text):
 
 
 def cases():
+    _legacy_context()
     rows = []
     for c in json.loads((OLD / 'joint_baseline/manifest.json').read_text())['cases']:
         pre = json.loads((OLD / 'joint_baseline/prefix' / Path(c['file']).stem / 'result.json').read_text())
@@ -241,6 +270,7 @@ def simulate_candidate_witness(before, candidate, witness):
 
 
 def check_miter(checker, miter, before, candidate):
+    _, ENV = _legacy_context()
     log, witness = miter.with_suffix('.sat.log'), miter.with_suffix('.cex')
     cmd = f'read_aiger {miter}; sat -C 1000000; write_cex {witness}'
     row = runproc(checker, cmd, log, ENV, SAT_TIMEOUT)
@@ -281,6 +311,7 @@ def commit_phases(log):
 
 
 def audit_case(directory, checker):
+    _, ENV = _legacy_context()
     phases = commit_phases(directory / 'transform.log')
     audit = directory / 'audit'
     log_records = {}
@@ -373,6 +404,7 @@ def audit_case(directory, checker):
 
 
 def execute(task):
+    COMMAND, ENV = _legacy_context()
     c, name, arm, checker, out = task
     d = out / name / Path(c['file']).stem
     d.mkdir(parents=True, exist_ok=False)
@@ -487,6 +519,7 @@ def main():
     if args.analyze:
         summary(args.out, args.baseline)
         return
+    COMMAND, ENV = _legacy_context()
     assert 1 <= args.workers <= 200
     config = json.loads(args.config.read_text())
     cohort = [c for c in cases() if args.files is None or c['file'] in args.files]

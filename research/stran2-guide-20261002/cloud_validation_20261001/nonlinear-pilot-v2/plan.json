@@ -1,0 +1,36 @@
+{
+  "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+  "cases": [
+    "005_b03.aig",
+    "044_i2c.aig",
+    "041_des_area.aig",
+    "034_b20_opt.aig",
+    "045_mem_ctrl.aig",
+    "060_wb_dma.aig"
+  ],
+  "config": {
+    "alias_cap": 8,
+    "candidates_per_root": 8,
+    "lanes": 256,
+    "max_gates": 2,
+    "peer_hops": 1,
+    "pool_cap": 24,
+    "reservoir_cap": 128,
+    "seed": 2026100201,
+    "tfi_depth": 6,
+    "wall_seconds": 120.0
+  },
+  "dsec_seconds": 120.0,
+  "manifest_sha256": "7241e1bb55ebdc82e3bd6d6ad581b11d38d3117cc1042cb1c9d355e88d1045dc",
+  "schema": 1,
+  "solver": "/tmp/stran2-query-solver",
+  "solver_sha256": "abee9775876dfa6cac0f1888dd6ec4182779a7e2e68601575a52838c634ab507",
+  "source_hashes": {
+    "product.py": "e4a0b953f7128510f6166b045791a87490e39a2a2a3ba8b675bd65d9686f48d2",
+    "prototype.py": "b8a299bc2b26b7091d8d9ac8973691d6ed3023b5f422acf2731b12f842e82288",
+    "run_batch.py": "9c501b22635aaea31ee30c2fa1c0525958ce3c542766e1d709eb7b6f78a4f9ef",
+    "test_independent_review.py": "c4bfc530a1763b6b5612010f74fe68e5336fb8a2a09f06b1db16d639c415f2dc",
+    "test_prototype.py": "f83a834de0fd7c4c20b7af02703e7ec6703ea3a67f203786cbbe72ea0436a7d5"
+  },
+  "workers": 2
+}

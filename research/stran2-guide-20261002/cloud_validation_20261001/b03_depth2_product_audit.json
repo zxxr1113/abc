@@ -1,0 +1,213 @@
+{
+  "candidate_search": "NOT_RERUN",
+  "exact_depth2_same_selected_set_marginal": 3,
+  "extra_query_stats": {
+    "clauses": 835,
+    "cnf_sha256": "bb66706455bce767e05cb98a72b82b301a6ec86cd0a49a830eae153013b897b6",
+    "conflicts": 14,
+    "conflicts_per_query": 1000,
+    "queries": 9,
+    "queries_sha256": "c973b97edb6595f71b93e49d9b7f024ac276314a510179eed430138d135b6a8f",
+    "results_sha256": "e47ca11ebc6603871f586cb0e1fa031de9f4bcf7ec9b42b9dcd92dba411c0813",
+    "solver_process_wall_s": 0.01837574299861444,
+    "solver_reported_wall_s": 7.0308e-05,
+    "statuses": {
+      "-1": 9
+    },
+    "variables": 323
+  },
+  "extra_total_wall_s": 4.368212457000482,
+  "fixed_subset_identity_verified": true,
+  "native_recipe_novelty": "NOT_CHECKED",
+  "newly_certified_candidates": 3,
+  "original_120s_cohort_result_unchanged": true,
+  "production_integration": "NOT_RUN",
+  "products": {
+    "depth1_reference": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/depth1_reference/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "8076a670f8b34bfadef7cbac0d4bc4f89fa7472267a10a5da23c09e9579d1df5",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.29430871000113257
+      },
+      "conservative_selected_gain_sum": 5,
+      "exact_same_selected_set_build_gain": 5,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/depth1_reference/product.aig",
+        "exit_code": 0,
+        "log_sha256": "f7e949f05f7f3714d7334f81a2d91893cb88be200aca593dc9198fd58e2d9d31",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.29773856999963755
+      },
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 84,
+      "product_and": 79,
+      "product_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 84,
+      "replay_without_build_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "selected_builds": 5,
+      "selected_certificate_kinds": {
+        "102": "RESET_IMAGE_1",
+        "110": "RESET_IMAGE_1",
+        "51": "RESET_IMAGE_1",
+        "56": "RESET_IMAGE_1",
+        "61": "RESET_IMAGE_1"
+      },
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 5
+    },
+    "depth2_only": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/depth2_only/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "5f8d5f54a3901ae19d4dece1dc0b7da43582452ed5248deb227fe87b97c1df46",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.3323999759995786
+      },
+      "conservative_selected_gain_sum": 3,
+      "exact_same_selected_set_build_gain": 3,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/depth2_only/product.aig",
+        "exit_code": 0,
+        "log_sha256": "c3be7374d76701ce94cdf5b8a3fc32f1f16e3ee379af2f195779fcdb895e3f15",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.3401588710003125
+      },
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 84,
+      "product_and": 81,
+      "product_sha256": "4f2197ac6c701e1184e3e1b35afd5c04d8ee4850c14bb753313f8f2277f25a6e",
+      "production_integration": "NOT_RUN",
+      "proof": "EXPLICIT_ORIGINAL_RESET_PREFIX_IMAGE_CERTIFICATES",
+      "replay_without_build_and": 84,
+      "replay_without_build_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "selected_builds": 3,
+      "selected_certificate_kinds": {
+        "88": "RESET_PREFIX_IMAGE_2",
+        "91": "RESET_PREFIX_IMAGE_2",
+        "94": "RESET_PREFIX_IMAGE_2"
+      },
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 3
+    },
+    "union": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/union/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "009e77dd81db49775ce27db68fe6d9e764b3b42bf09f4b75a3484a6d50a64b95",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.5709508919990185
+      },
+      "conservative_selected_gain_sum": 8,
+      "exact_same_selected_set_build_gain": 8,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/union/product.aig",
+        "exit_code": 0,
+        "log_sha256": "f4d7863d009b5c11504c21070742789e551377ebb7dc056c29767afdd5758ead",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.3272922069991182
+      },
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 84,
+      "product_and": 76,
+      "product_sha256": "00bfec25a674f4797b1740d28f007a5d388924d370e921f45b7dfd93de331fcd",
+      "production_integration": "NOT_RUN",
+      "proof": "EXPLICIT_ORIGINAL_RESET_PREFIX_IMAGE_CERTIFICATES",
+      "replay_without_build_and": 84,
+      "replay_without_build_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "selected_builds": 8,
+      "selected_certificate_kinds": {
+        "102": "RESET_IMAGE_1",
+        "110": "RESET_IMAGE_1",
+        "51": "RESET_IMAGE_1",
+        "56": "RESET_IMAGE_1",
+        "61": "RESET_IMAGE_1",
+        "88": "RESET_PREFIX_IMAGE_2",
+        "91": "RESET_PREFIX_IMAGE_2",
+        "94": "RESET_PREFIX_IMAGE_2"
+      },
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 8
+    },
+    "union_without_depth2": {
+      "all_selected_free_sat_witness_replayed": true,
+      "baseline_cleanup_delta": 0,
+      "baseline_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/union_without_depth2/replay_without_build.aig",
+        "exit_code": 0,
+        "log_sha256": "2396b3d8008c87011ad559df356b18a2aed664fa2c71417d848bc74a56f41681",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.6536614109991206
+      },
+      "conservative_selected_gain_sum": 5,
+      "exact_same_selected_set_build_gain": 5,
+      "independent_dsec": {
+        "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+        "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+        "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/union_without_depth2/product.aig",
+        "exit_code": 0,
+        "log_sha256": "4e3f9009175bc2181e5a745fc127ed7b7aa374c37bc0fa632306ff89eeb391e4",
+        "status": "PASS",
+        "timeout_seconds": 120.0,
+        "wall_s": 0.321479112999441
+      },
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "native_recipe_novelty": "NOT_CHECKED",
+      "original_and": 84,
+      "product_and": 79,
+      "product_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "production_integration": "NOT_RUN",
+      "proof": "ORIGINAL_RESET_AND_UNRESTRICTED_ONE_STEP_UNSAT",
+      "replay_without_build_and": 84,
+      "replay_without_build_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "selected_builds": 5,
+      "selected_certificate_kinds": {
+        "102": "RESET_IMAGE_1",
+        "110": "RESET_IMAGE_1",
+        "51": "RESET_IMAGE_1",
+        "56": "RESET_IMAGE_1",
+        "61": "RESET_IMAGE_1"
+      },
+      "status": "BUILT",
+      "validated_standalone_noncomb_build_gain": 5
+    }
+  },
+  "schema": 1,
+  "source_statuses_unchanged": true,
+  "status": "DEPTH2_PRODUCT_AUDIT_COMPLETE",
+  "union_gain_minus_depth1_reference_gain": 3,
+  "validated_depth2_same_selected_set_marginal": 3
+}

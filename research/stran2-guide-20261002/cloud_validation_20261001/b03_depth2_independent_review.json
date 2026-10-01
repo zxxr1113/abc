@@ -1,0 +1,24 @@
+{
+  "status": "PASS",
+  "source_shallow_SAT_preserved": true,
+  "new_depth2_certificates": 3,
+  "fresh_UNSAT_queries": 9,
+  "same_selected_set_identity_verified": true,
+  "selected_union_builds": 8,
+  "independent_free_witnesses": 8,
+  "raw_decoder_all_CO_checks": 512,
+  "all_four_products_replayed_byte_identically": true,
+  "all_eight_saved_DSEC_verdicts_verified": true,
+  "union_gain": 8,
+  "depth2_same_set_marginal": 3,
+  "new_independent_union_DSEC": {
+    "status": "PASS",
+    "command": "dsec /workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig /tmp/nonlinear-depth2-b03-product-v2/union/product.aig",
+    "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+    "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+    "timeout_seconds": 120,
+    "exit_code": 0,
+    "wall_s": 0.27633031199911784,
+    "log_sha256": "f4d7863d009b5c11504c21070742789e551377ebb7dc056c29767afdd5758ead"
+  }
+}

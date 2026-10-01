@@ -513,8 +513,11 @@ static Gia_Man_t * Cec_TranTbSearch( Cec_TranTb_t * b, Cec_ParTran_t * pars,
         ++b->branchCount;
         Abc_ResubPrepareManager(sim->nSlots);
         Cec_TranDepScratchStart(&dep,sim->nSlots,Vec_IntSize(b->pool),1);
-        it=Cec_TranDependencyIteratorStart(sim,pars,root,b->pool,care,
-            &dep,cursor,&cache);
+        // The actual-cost lane prices new physical nodes after frozen hashing.
+        // Keep the true MFFC for that accounting, but let its native iterator
+        // use the existing N syntax budget rather than the raw MFFC-1 bound.
+        it=Cec_TranDependencyIteratorStartWithRawBudget(sim,pars,root,b->pool,
+            care,&dep,cursor,&cache,b->costAware?pars->nDepNodesMax:-1);
         while ( b->proposals<b->budget )
         {
             status=Cec_TranDependencyIteratorNext(sim,root,b->pool,care,0,&dep,it,&cand,
@@ -887,6 +890,93 @@ static int Cec_TranTraceBuildSelfTest()
         gain=Cec_TranCandFrozenGainWithRefs(p,&hash,&cand,NULL,NULL,pRefs,
             pMffc,vMffc,vBoundary);
         assert(cand.nGates >= cand.nMffc && nNew==1 && gain==1);
+        // Exercise actual native discovery, not just the manual cost witness.
+        // The shared a&b node is deliberately absent from the iterator pool:
+        // with it present, a one-raw-gate recipe could hide the old bound bug.
+        // This tests fixed-support discovery, not novelty versus other pools.
+        {
+            Cec_TranSim_t Sim={0};
+            Cec_TranDepScratch_t Dep;
+            Cec_TranRoot_t Root={0};
+            Cec_ParTran_t Pars;
+            Vec_Int_t * vPool=Vec_IntAlloc(3);
+            Gia_Obj_t * pObj;
+            int Mode,Obj,Found[4]={0},Positive[4]={0};
+            Cec_ManTranSetDefaultParams(&Pars);
+            Pars.fUseConstr=1; Pars.nDepNodesMax=2;
+            Root.iObj=rootId; Root.nMffc=Gia_NodeMffcSize(p,Gia_ManObj(p,rootId));
+            assert(Root.nMffc==2);
+            assert(Cec_TranDependencyGateLimit(&Pars,&Root,-1)==1);
+            assert(Cec_TranDependencyGateLimit(&Pars,&Root,-2)==0);
+            assert(Cec_TranDependencyGateLimit(&Pars,&Root,0)==0);
+            assert(Cec_TranDependencyGateLimit(&Pars,&Root,1)==1);
+            assert(Cec_TranDependencyGateLimit(&Pars,&Root,2)==2);
+            assert(Cec_TranDependencyGateLimit(&Pars,&Root,100)==2);
+            Pars.fUseConstr=0;
+            assert(Cec_TranDependencyGateLimit(&Pars,&Root,2)==0);
+            Pars.fUseConstr=1;
+            Sim.pGia=p; Sim.nSlots=Sim.nWords=Sim.nFrames=1;
+            Sim.pSims=ABC_CALLOC(word,Gia_ManObjNum(p));
+            Cec_TranSimObj(&Sim,Abc_Lit2Var(a))[0]=ABC_CONST(0xaaaaaaaaaaaaaaaa);
+            Cec_TranSimObj(&Sim,Abc_Lit2Var(bLit))[0]=ABC_CONST(0xcccccccccccccccc);
+            Cec_TranSimObj(&Sim,Abc_Lit2Var(c))[0]=ABC_CONST(0xf0f0f0f0f0f0f0f0);
+            Gia_ManForEachAnd(p,pObj,Obj)
+                Cec_TranSimObj(&Sim,Obj)[0]=
+                    Cec_TranSimLit(&Sim,Gia_ObjFaninLit0p(p,pObj),0) &
+                    Cec_TranSimLit(&Sim,Gia_ObjFaninLit1p(p,pObj),0);
+            Vec_IntPush(vPool,Abc_Lit2Var(a));
+            Vec_IntPush(vPool,Abc_Lit2Var(bLit));
+            Vec_IntPush(vPool,Abc_Lit2Var(c));
+            assert(Vec_IntFind(vPool,Abc_Lit2Var(x))<0);
+            Cec_TranDepScratchStart(&Dep,1,Vec_IntSize(vPool),1);
+            Abc_ResubPrepareManager(1);
+            for ( Mode=0; Mode<4; ++Mode )
+            {
+                int Cursor[6]={0},Exhausted=0,Attempt,Raw,Status,Calls=0;
+                void * Cache=NULL,* Iter;
+                abctime Time=0;
+                Cec_TranCand_t Native;
+                // Default and explicit one-gate modes must remain equal;
+                // budget 100 must still be capped by the user's N=2.
+                Iter=Mode==0 ? Cec_TranDependencyIteratorStart(&Sim,&Pars,
+                    &Root,vPool,NULL,&Dep,Cursor,&Cache) :
+                    Cec_TranDependencyIteratorStartWithRawBudget(&Sim,&Pars,
+                        &Root,vPool,NULL,&Dep,Cursor,&Cache,Mode==3?100:Mode);
+                while ( !Exhausted )
+                {
+                    assert(++Calls<64);
+                    Status=Cec_TranDependencyIteratorNext(&Sim,&Root,vPool,
+                        NULL,1,&Dep,Iter,&Native,&Attempt,&Exhausted,NULL,&Raw,&Time);
+                    if ( Status<=0 ) continue;
+                    assert(Native.nGates<=Pars.nDepNodesMax);
+                    assert(Cec_TranRecipeMatchesRoot(&Sim,&Native,NULL));
+                    ++Found[Mode];
+                    if ( Native.nGates>=Root.nMffc )
+                    {
+                        Vec_IntClear(vBoundary);
+                        nNew=Cec_TranFrozenRecipeCost(p,&hash,&Native,NULL,vBoundary);
+                        gain=Cec_TranCandFrozenGainWithRefs(p,&hash,&Native,
+                            NULL,NULL,pRefs,pMffc,vMffc,vBoundary);
+                        if ( gain>0 )
+                        {
+                            assert(nNew==1 && gain==1);
+                            ++Positive[Mode];
+                        }
+                    }
+                    Cec_TranCandRecipeRelease(&Native);
+                }
+                Abc_ResubIteratorResumeStop(Iter,Cursor);
+                if ( Cache ) Abc_ResubRootCacheStop(Cache);
+                assert(Root.nMffc==2);
+            }
+            assert(Found[0]==0 && Found[1]==0);
+            assert(Positive[2]>0 && Positive[2]==Positive[3]);
+            assert(Found[2]==Found[3]);
+            Abc_ResubPrepareManager(0);
+            Cec_TranDepScratchStop(&Dep);
+            Vec_IntFree(vPool); ABC_FREE(Sim.pSims);
+            Abc_Print(1,"tracebuild-raw-budget-selftest: PASS default=1 explicit-N=2 native-over-bound-positive=%d shared-divisor-absent=1 invalid-closed=1\n",Positive[2]);
+        }
         memset(&b,0,sizeof(b)); b.p=p; b.budget=320; b.cutMulti=1;
         {
             Vec_Ptr_t * vCuts=Cec_TranTbCuts(&b,rootId);

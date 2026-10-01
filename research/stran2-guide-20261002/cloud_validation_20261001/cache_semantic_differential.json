@@ -1,0 +1,32 @@
+[
+  {
+    "case": "005_b03",
+    "candidates_identical": true,
+    "count_before": 46,
+    "count_after": 46,
+    "obligations.cnf_identical": true,
+    "obligations.queries_identical": true,
+    "product.aig_identical": true,
+    "replay_without_build.aig_identical": true
+  },
+  {
+    "case": "044_i2c",
+    "candidates_identical": true,
+    "count_before": 2916,
+    "count_after": 2916,
+    "obligations.cnf_identical": true,
+    "obligations.queries_identical": true,
+    "product.aig_identical": true,
+    "replay_without_build.aig_identical": true
+  },
+  {
+    "case": "041_des_area",
+    "candidates_identical": true,
+    "count_before": 936,
+    "count_after": 936,
+    "obligations.cnf_identical": true,
+    "obligations.queries_identical": true,
+    "product.aig_identical": true,
+    "replay_without_build.aig_identical": true
+  }
+]

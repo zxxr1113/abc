@@ -1,0 +1,238 @@
+{
+  "candidates": [
+    {
+      "care": "250",
+      "conservative_gain": 1,
+      "free_sat": 1,
+      "gates": 1,
+      "leaves": [
+        5,
+        23,
+        36
+      ],
+      "original_mffc": 9,
+      "out": -2,
+      "recipe": [
+        47,
+        73
+      ],
+      "removable": 2,
+      "retained_mffc_nodes": 7,
+      "root": 38,
+      "root_ci_support": 8,
+      "truth": "2"
+    },
+    {
+      "care": "1090562986",
+      "conservative_gain": 1,
+      "free_sat": 1,
+      "gates": 4,
+      "leaves": [
+        5,
+        21,
+        23,
+        36,
+        44
+      ],
+      "original_mffc": 12,
+      "out": -8,
+      "recipe": [
+        47,
+        73,
+        43,
+        46,
+        -3,
+        -5,
+        89,
+        -6
+      ],
+      "removable": 5,
+      "retained_mffc_nodes": 7,
+      "root": 46,
+      "root_ci_support": 10,
+      "truth": "57301"
+    },
+    {
+      "care": "71472545180586",
+      "conservative_gain": 1,
+      "free_sat": 1,
+      "gates": 4,
+      "leaves": [
+        5,
+        21,
+        23,
+        36,
+        39,
+        44
+      ],
+      "original_mffc": 12,
+      "out": -8,
+      "recipe": [
+        47,
+        73,
+        43,
+        78,
+        -3,
+        -5,
+        89,
+        -6
+      ],
+      "removable": 5,
+      "retained_mffc_nodes": 7,
+      "root": 46,
+      "root_ci_support": 10,
+      "truth": "3435462645"
+    },
+    {
+      "care": "47832",
+      "conservative_gain": 1,
+      "free_sat": 1,
+      "gates": 2,
+      "leaves": [
+        5,
+        23,
+        36,
+        45
+      ],
+      "original_mffc": 12,
+      "out": -4,
+      "recipe": [
+        47,
+        73,
+        90,
+        -3
+      ],
+      "removable": 3,
+      "retained_mffc_nodes": 9,
+      "root": 46,
+      "root_ci_support": 10,
+      "truth": "64768"
+    }
+  ],
+  "metrics": {
+    "care_queries": {
+      "clauses": 505,
+      "conflicts": 5,
+      "process_wall_s": 0.005332418000762118,
+      "queries": 50,
+      "solve_wall_s": 7.0101e-05,
+      "statuses": {
+        "-1": 50
+      },
+      "variables": 201
+    },
+    "constrained_cuts": 67,
+    "constrained_roots": 14,
+    "cut_prepare_wall_s": 0.004474579000088852,
+    "cut_roots": 36,
+    "cuts": 180,
+    "file": "005_b03.aig",
+    "free_queries": {
+      "clauses": 562,
+      "conflicts": 0,
+      "process_wall_s": 0.004479709999941406,
+      "queries": 4,
+      "solve_wall_s": 5.207e-05,
+      "statuses": {
+        "1": 4
+      },
+      "variables": 220
+    },
+    "full_proved_cuts": 43,
+    "full_proved_patterns": 160,
+    "full_queries": {
+      "clauses": 505,
+      "conflicts": 3,
+      "process_wall_s": 0.008833695999783231,
+      "queries": 540,
+      "solve_wall_s": 0.00168381,
+      "statuses": {
+        "-1": 430,
+        "1": 110
+      },
+      "variables": 201
+    },
+    "full_target_prepare_wall_s": 0.007935595999697398,
+    "full_targeted_patterns": 270,
+    "full_unique_cuts": 168,
+    "input": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/inputs/first_seq/005_b03.aig",
+    "input_and": 84,
+    "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+    "loaded_and": 128,
+    "mode": "full",
+    "noncomb_positive_recipes": 4,
+    "old_full_ci6_roots": 16,
+    "overlapping_gain_potential": 2,
+    "overlapping_mffc_sum": 134,
+    "pair_checks": 1537,
+    "phase_statuses": {
+      "reset": {
+        "-1": 25
+      },
+      "step": {
+        "-1": 25
+      }
+    },
+    "positive_recipes": 4,
+    "positive_roots": 2,
+    "proved_pair_constraints": 25,
+    "root_count": 84,
+    "roots_mffc2_with_state": 36,
+    "selected_beyond_old_ci6": 2,
+    "selected_roots": 2,
+    "status": "complete",
+    "synthesis_trials": 67,
+    "targeted_pairs": 25,
+    "targeted_patterns": 25,
+    "wall_s": 0.089445985000566
+  },
+  "selected": [
+    {
+      "care": "250",
+      "conservative_gain": 1,
+      "free_sat": 1,
+      "gates": 1,
+      "leaves": [
+        5,
+        23,
+        36
+      ],
+      "original_mffc": 9,
+      "out": -2,
+      "recipe": [
+        47,
+        73
+      ],
+      "removable": 2,
+      "retained_mffc_nodes": 7,
+      "root": 38,
+      "root_ci_support": 8,
+      "truth": "2"
+    },
+    {
+      "care": "47832",
+      "conservative_gain": 1,
+      "free_sat": 1,
+      "gates": 2,
+      "leaves": [
+        5,
+        23,
+        36,
+        45
+      ],
+      "original_mffc": 12,
+      "out": -4,
+      "recipe": [
+        47,
+        73,
+        90,
+        -3
+      ],
+      "removable": 3,
+      "retained_mffc_nodes": 9,
+      "root": 46,
+      "root_ci_support": 10,
+      "truth": "64768"
+    }
+  ]
+}

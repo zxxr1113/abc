@@ -1,0 +1,27 @@
+test_dead_created_intermediate_is_not_build (test_independent_review.IndependentReview.test_dead_created_intermediate_is_not_build) ... ok
+test_dsec_parser_requires_clean_single_verdict (test_independent_review.IndependentReview.test_dsec_parser_requires_clean_single_verdict) ... ok
+test_malformed_and_cyclic_references_fail_closed (test_independent_review.IndependentReview.test_malformed_and_cyclic_references_fail_closed) ... ok
+test_normalization_and_retention_exhaustively (test_independent_review.IndependentReview.test_normalization_and_retention_exhaustively) ... ok
+test_product_import_is_order_independent (test_independent_review.IndependentReview.test_product_import_is_order_independent) ... ok
+test_rebuild_and_binary_serialization (test_independent_review.IndependentReview.test_rebuild_and_binary_serialization) ... ok
+test_unknown_or_sat_relation_never_enters_product (test_independent_review.IndependentReview.test_unknown_or_sat_relation_never_enters_product) ... ok
+test_image_only_is_insufficient (test_prototype.IntegrationTests.test_image_only_is_insufficient) ... ok
+test_independent_current_pi (test_prototype.IntegrationTests.test_independent_current_pi) ... ok
+test_reset_only_is_insufficient (test_prototype.IntegrationTests.test_reset_only_is_insufficient) ... ok
+test_valid_nonlinear_fixture_product (test_prototype.IntegrationTests.test_valid_nonlinear_fixture_product) ... ok
+test_binary_roundtrip_and_empty_replay (test_prototype.UnitTests.test_binary_roundtrip_and_empty_replay) ... ok
+test_conflicting_selected_dependencies (test_prototype.UnitTests.test_conflicting_selected_dependencies) ... ok
+test_hash_demotes_direct (test_prototype.UnitTests.test_hash_demotes_direct) ... ok
+test_no_dead_fresh_gates_and_normalization_truth (test_prototype.UnitTests.test_no_dead_fresh_gates_and_normalization_truth) ... ok
+test_packed_complement_and_references (test_prototype.UnitTests.test_packed_complement_and_references) ... ok
+test_product_binds_input_hash_and_deadline (test_prototype.UnitTests.test_product_binds_input_hash_and_deadline) ... ok
+test_random_normalization_truth (test_prototype.UnitTests.test_random_normalization_truth) ... ok
+test_raw_two_gate_template_can_cost_one_gate (test_prototype.UnitTests.test_raw_two_gate_template_can_cost_one_gate) ... ok
+test_reject_unsupported_interfaces_and_reset (test_prototype.UnitTests.test_reject_unsupported_interfaces_and_reset) ... ok
+test_retained_dependency_chain (test_prototype.UnitTests.test_retained_dependency_chain) ... ok
+test_retained_internal_divisor_cost (test_prototype.UnitTests.test_retained_internal_divisor_cost) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 2.016s
+
+OK
