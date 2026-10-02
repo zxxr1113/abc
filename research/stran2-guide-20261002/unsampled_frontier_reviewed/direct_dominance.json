@@ -1,0 +1,748 @@
+{
+  "old49_mixed": [
+    {
+      "alternatives": [],
+      "best_cheaper_direct_validated": null,
+      "build_identity": [
+        1263,
+        [
+          393,
+          2503,
+          -3,
+          2523
+        ],
+        -4
+      ],
+      "full_selected_and": 9405,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1263
+    }
+  ],
+  "old49_raw": [
+    {
+      "alternatives": [
+        {
+          "and_count": 9409,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1926,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            1926
+          ]
+        },
+        {
+          "and_count": 9410,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": 0,
+          "literal": 2460,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            2460
+          ]
+        },
+        {
+          "and_count": 9411,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": -1,
+          "literal": 2462,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            2462
+          ]
+        },
+        {
+          "and_count": 9412,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": -2,
+          "literal": 2478,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            2478
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9409,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 4.861788688998786,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1242_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1242_best_direct/dsec.log",
+          "log_sha256": "abf59917380c2bcceb58b70d6f34782bd646ac7f0d863ca1d3a002a6ce5373c5",
+          "product_sha256": "9448d2b62381d71140eccb68e598c88613ad38e576d0106f105c6fc45a64a05d",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 4.861788688998786
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "9448d2b62381d71140eccb68e598c88613ad38e576d0106f105c6fc45a64a05d",
+        "selected": 6
+      },
+      "build_identity": [
+        1242,
+        [
+          1926,
+          2464
+        ],
+        -2
+      ],
+      "full_selected_and": 9410,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1242
+    },
+    {
+      "alternatives": [],
+      "best_cheaper_direct_validated": null,
+      "build_identity": [
+        1263,
+        [
+          393,
+          2503,
+          -3,
+          2523
+        ],
+        -4
+      ],
+      "full_selected_and": 9410,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1263
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9409,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 2552,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1282,
+            [],
+            2552
+          ]
+        },
+        {
+          "and_count": 9414,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": -4,
+          "literal": 2562,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1282,
+            [],
+            2562
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9409,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 4.7546354759979295,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1282_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1282_best_direct/dsec.log",
+          "log_sha256": "89157212978c6bf87cff2f690f976cf7b24133f9b9e2a37b95475804a09eb2b6",
+          "product_sha256": "1939f84af96dc293d1a65f5bb28c4eb0d26eab3d2440d16af09b5b9533cc379b",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 4.7546354759979295
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "1939f84af96dc293d1a65f5bb28c4eb0d26eab3d2440d16af09b5b9533cc379b",
+        "selected": 6
+      },
+      "build_identity": [
+        1282,
+        [
+          393,
+          2552
+        ],
+        -2
+      ],
+      "full_selected_and": 9410,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1282
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9409,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1912,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1292,
+            [],
+            1912
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9409,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 4.907999425005983,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1292_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1292_best_direct/dsec.log",
+          "log_sha256": "bc3dbe58e65bd20d9345416b4407c8344489d9b7eb76beccf5ca192986d2334c",
+          "product_sha256": "76e0d905b4435eb988436e17c3046db96ff1b5cd9024758ea6067111dc811c69",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 4.907999425005983
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "76e0d905b4435eb988436e17c3046db96ff1b5cd9024758ea6067111dc811c69",
+        "selected": 6
+      },
+      "build_identity": [
+        1292,
+        [
+          1912,
+          2368
+        ],
+        -2
+      ],
+      "full_selected_and": 9410,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1292
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9409,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1940,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1298,
+            [],
+            1940
+          ]
+        },
+        {
+          "and_count": 9410,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": 0,
+          "literal": 2594,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1298,
+            [],
+            2594
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9409,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 4.843204415003129,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1298_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1298_best_direct/dsec.log",
+          "log_sha256": "bf05e9c862cba04c63ac53c4a0f4548811f47fe6be6314a6f2d32ec78ed9ea8d",
+          "product_sha256": "d1388b41154b3a454b3c2466cf967d478f94a9469d1c17f7ddebf0dfcbbbdc00",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 4.843204415003129
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "d1388b41154b3a454b3c2466cf967d478f94a9469d1c17f7ddebf0dfcbbbdc00",
+        "selected": 6
+      },
+      "build_identity": [
+        1298,
+        [
+          1935,
+          2457
+        ],
+        -2
+      ],
+      "full_selected_and": 9410,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1298
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9409,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1890,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1305,
+            [],
+            1890
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9409,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 4.926542814995628,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1305_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/old49/raw/root_1305_best_direct/dsec.log",
+          "log_sha256": "de1a2b7e7e5accdb3e9612260ec0b774e8ad7c589bcc956833f64cf2d534c2fd",
+          "product_sha256": "567058f1a5a6c801a26d50d5336a88ca89fe8bec9c83c24be5f3731a0ebae6ac",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 4.926542814995628
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "567058f1a5a6c801a26d50d5336a88ca89fe8bec9c83c24be5f3731a0ebae6ac",
+        "selected": 6
+      },
+      "build_identity": [
+        1305,
+        [
+          1890,
+          2368
+        ],
+        -2
+      ],
+      "full_selected_and": 9410,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1305
+    }
+  ],
+  "union104_mixed": [
+    {
+      "alternatives": [],
+      "best_cheaper_direct_validated": null,
+      "build_identity": [
+        1263,
+        [
+          393,
+          2502,
+          -2,
+          2516
+        ],
+        -4
+      ],
+      "full_selected_and": 9404,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1263
+    }
+  ],
+  "union104_raw": [
+    {
+      "alternatives": [
+        {
+          "and_count": 9408,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1926,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            1926
+          ]
+        },
+        {
+          "and_count": 9409,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": 0,
+          "literal": 2460,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            2460
+          ]
+        },
+        {
+          "and_count": 9410,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": -1,
+          "literal": 2462,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            2462
+          ]
+        },
+        {
+          "and_count": 9411,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": -2,
+          "literal": 2478,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1242,
+            [],
+            2478
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9408,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 4.703308217001904,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1242_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1242_best_direct/dsec.log",
+          "log_sha256": "f8a154ca94b6a14d943e37899b168f15a72f5e1c35977bf299cf12adc66353db",
+          "product_sha256": "7864af487558e8770b6c8ffdfdaaaa44c567ea65e9f3697e4b37810757aa6bcf",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 4.703308217001904
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "7864af487558e8770b6c8ffdfdaaaa44c567ea65e9f3697e4b37810757aa6bcf",
+        "selected": 6
+      },
+      "build_identity": [
+        1242,
+        [
+          1926,
+          2416
+        ],
+        -2
+      ],
+      "full_selected_and": 9409,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1242
+    },
+    {
+      "alternatives": [],
+      "best_cheaper_direct_validated": null,
+      "build_identity": [
+        1263,
+        [
+          393,
+          2502,
+          -2,
+          2516
+        ],
+        -4
+      ],
+      "full_selected_and": 9409,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1263
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9408,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 2552,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1282,
+            [],
+            2552
+          ]
+        },
+        {
+          "and_count": 9413,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": -4,
+          "literal": 2562,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1282,
+            [],
+            2562
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9408,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 4.815993554002489,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1282_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1282_best_direct/dsec.log",
+          "log_sha256": "c452f5e342409270ae28a3e4a599481166501ff24765b80ec99e026ff9bc5fc3",
+          "product_sha256": "c131d8a9d55aa21f42f52e520e9af0b2a0a8c8ab97d239c3568ac78264760b3d",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 4.815993554002489
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "c131d8a9d55aa21f42f52e520e9af0b2a0a8c8ab97d239c3568ac78264760b3d",
+        "selected": 6
+      },
+      "build_identity": [
+        1282,
+        [
+          393,
+          2552
+        ],
+        -2
+      ],
+      "full_selected_and": 9409,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1282
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9408,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1912,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1292,
+            [],
+            1912
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9408,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 5.257581593003124,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1292_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1292_best_direct/dsec.log",
+          "log_sha256": "0023e328cb4c3bd4ed678bed092687c480a5e3a558ec2f8051f487f127271288",
+          "product_sha256": "e317a4cc84cecc929a4a88294eff124bc3a37d88e9bdc65dee76c18880c1be4c",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 5.257581593003124
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "e317a4cc84cecc929a4a88294eff124bc3a37d88e9bdc65dee76c18880c1be4c",
+        "selected": 6
+      },
+      "build_identity": [
+        1292,
+        [
+          1912,
+          2368
+        ],
+        -2
+      ],
+      "full_selected_and": 9409,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1292
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9408,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1940,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1298,
+            [],
+            1940
+          ]
+        },
+        {
+          "and_count": 9409,
+          "dsec": "NOT_RUN",
+          "improvement_over_fixed_other_choices": 0,
+          "literal": 2594,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1298,
+            [],
+            2594
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9408,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 5.17826008299744,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1298_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1298_best_direct/dsec.log",
+          "log_sha256": "0bc5bb9a9429d942727361d71c96d6fec4b58a4203ab27edd8a9c87a2c65ad83",
+          "product_sha256": "843715836bb32c92fbd2f117c72a2f56daaa5ed5635b5644ae1d5705f6f2a081",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 5.17826008299744
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "843715836bb32c92fbd2f117c72a2f56daaa5ed5635b5644ae1d5705f6f2a081",
+        "selected": 6
+      },
+      "build_identity": [
+        1298,
+        [
+          1935,
+          2457
+        ],
+        -2
+      ],
+      "full_selected_and": 9409,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1298
+    },
+    {
+      "alternatives": [
+        {
+          "and_count": 9408,
+          "dsec": "PASS",
+          "improvement_over_fixed_other_choices": 1,
+          "literal": 1890,
+          "selector_compatible": true,
+          "selector_conflict": null,
+          "source_direct_identity": [
+            1305,
+            [],
+            1890
+          ]
+        }
+      ],
+      "best_cheaper_direct_validated": {
+        "and_count": 9408,
+        "dsec": {
+          "abc": "/workspace/scratch/7e0c7273599c/abc-stran2/abc",
+          "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+          "charged_new_wall_s": 5.747229341999628,
+          "command": "dsec /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/input.aig /workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1305_best_direct/product.aig",
+          "exit_code": 0,
+          "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+          "log_path": "/workspace/scratch/7e0c7273599c/unsampled-frontier-mem-attribution-v1/work/dominance/union104/raw/root_1305_best_direct/dsec.log",
+          "log_sha256": "8a8bc7e5fbe46549bf7a62162279718df84ec9bd7903373625184ca1353194ca",
+          "product_sha256": "1a627b1a22ba2da9f90748df2b5ebf40ed0ad266990e177cc9afbe042d5ebb28",
+          "reused_exact_graph_dsec": false,
+          "status": "PASS",
+          "timeout_seconds": 120,
+          "wall_s": 5.747229341999628
+        },
+        "independent_product_replay": {
+          "all_PO_RI": true,
+          "comparison": "Exact original-node substitutions versus decoded product; not original/product unrestricted equality",
+          "status": "PASS",
+          "worlds": 128
+        },
+        "product_sha256": "1a627b1a22ba2da9f90748df2b5ebf40ed0ad266990e177cc9afbe042d5ebb28",
+        "selected": 6
+      },
+      "build_identity": [
+        1305,
+        [
+          1890,
+          2368
+        ],
+        -2
+      ],
+      "full_selected_and": 9409,
+      "interpretation": "Other selected choices are unchanged. Non-best alternatives are structure-only diagnostics, not DSEC-validated products",
+      "root": 1305
+    }
+  ]
+}

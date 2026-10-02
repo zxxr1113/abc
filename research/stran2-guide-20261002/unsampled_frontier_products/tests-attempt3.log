@@ -1,0 +1,24 @@
+test_alias_removed_by_new_identity_but_kept_in_no_genuine (test_audit.AuditTests.test_alias_removed_by_new_identity_but_kept_in_no_genuine) ... ok
+test_candidate_cost_and_full_witness_checks (test_audit.AuditTests.test_candidate_cost_and_full_witness_checks) ... ok
+test_dominance_holds_other_choices_and_dsec_best (test_audit.AuditTests.test_dominance_holds_other_choices_and_dsec_best) ... ok
+test_dsec_product_mutation_rejected (test_audit.AuditTests.test_dsec_product_mutation_rejected) ... ok
+test_dsec_reuse_binds_every_product_and_selection (test_audit.AuditTests.test_dsec_reuse_binds_every_product_and_selection) ... ok
+test_duplicate_roots_and_dependency_conflicts_rejected (test_audit.AuditTests.test_duplicate_roots_and_dependency_conflicts_rejected) ... ok
+test_emitted_product_result_is_immutable (test_audit.AuditTests.test_emitted_product_result_is_immutable) ... ok
+test_exact_old_subset_cumulative_changes (test_audit.AuditTests.test_exact_old_subset_cumulative_changes) ... ok
+test_fresh_build_and_direct_proofs_on_tiny_graph (test_audit.AuditTests.test_fresh_build_and_direct_proofs_on_tiny_graph) ... ok
+test_fresh_unknown_build_rejected_no_retry (test_audit.AuditTests.test_fresh_unknown_build_rejected_no_retry) ... ok
+test_gate_without_parent_go_does_not_execute (test_audit.AuditTests.test_gate_without_parent_go_does_not_execute) ... ok
+test_genuine_requires_every_live_new_condition (test_audit.AuditTests.test_genuine_requires_every_live_new_condition) ... ok
+test_independent_dependency_cycle_rejected (test_audit.AuditTests.test_independent_dependency_cycle_rejected) ... ok
+test_later_dsec_cannot_mutate_prior_log (test_audit.AuditTests.test_later_dsec_cannot_mutate_prior_log) ... ok
+test_removal_never_reselects (test_audit.AuditTests.test_removal_never_reselects) ... ok
+test_shared_direct_scope_and_full_grammar_extras (test_audit.AuditTests.test_shared_direct_scope_and_full_grammar_extras) ... ok
+test_terminal_review_extra_file_rejected (test_audit.AuditTests.test_terminal_review_extra_file_rejected) ... ok
+test_terminal_review_old_hash_rejects_current_rehash (test_audit.AuditTests.test_terminal_review_old_hash_rejects_current_rehash) ... ok
+test_whole_original_later_alias_demoted (test_audit.AuditTests.test_whole_original_later_alias_demoted) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 1.253s
+
+OK

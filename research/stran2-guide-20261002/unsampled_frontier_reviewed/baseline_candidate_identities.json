@@ -1,0 +1,3471 @@
+{
+  "034_b20_opt": [],
+  "041_des_area": [
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "ac9191858fb23fd31589135c53c711dfea1f08a3058b4c6b9f1d7a567f5ece62",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        653,
+        659,
+        -3,
+        637
+      ],
+      "root": 332,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "af91297e052393bea0aa50f0e7ad5338aad7445bf98df331830aee746cac21c7",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        637,
+        1278
+      ],
+      "root": 642,
+      "witness_lane": 41
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        663,
+        1278
+      ],
+      "root": 642,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "07f8f64a9e5d9f45e935cf9a72a010d6c67aa48fdaa1f745f145c1d0f1ca0c42",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        663,
+        1279
+      ],
+      "root": 642,
+      "witness_lane": 91
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1101,
+        1279
+      ],
+      "root": 642,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1115,
+        1279
+      ],
+      "root": 642,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1275,
+        1278
+      ],
+      "root": 642,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1277,
+        1278
+      ],
+      "root": 642,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        512,
+        1276,
+        -3,
+        1275
+      ],
+      "root": 642,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        659,
+        1297
+      ],
+      "root": 651,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1115,
+        1297
+      ],
+      "root": 651,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 2,
+      "out": -5,
+      "recipe": [
+        659,
+        1294,
+        -3,
+        1293
+      ],
+      "root": 651,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 2,
+      "out": -5,
+      "recipe": [
+        1115,
+        1294,
+        -3,
+        1293
+      ],
+      "root": 651,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        659,
+        1299
+      ],
+      "root": 651,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "633e4b80fc660a6ee421c192a046b966600cb4f717ce57136998f00ee16af3f3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        497,
+        658,
+        -3,
+        1297
+      ],
+      "root": 651,
+      "witness_lane": 91
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        497,
+        1114,
+        -3,
+        1297
+      ],
+      "root": 651,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "7b8ee78ae44956fa6e09b76fc36ba107511a967f47f883132fc6e0850a50fb28",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        523,
+        658,
+        -3,
+        1297
+      ],
+      "root": 651,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        637,
+        1661
+      ],
+      "root": 833,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        663,
+        1660
+      ],
+      "root": 833,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        663,
+        1661
+      ],
+      "root": 833,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1115,
+        1660
+      ],
+      "root": 833,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1275,
+        1661
+      ],
+      "root": 833,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1283,
+        1660
+      ],
+      "root": 833,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1283,
+        1661
+      ],
+      "root": 833,
+      "witness_lane": 31
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "f49a47451c83fd398651eb83321d923a94023a48d4b7b9b74ab53070a88d6a0e",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1657,
+        1660
+      ],
+      "root": 833,
+      "witness_lane": 31
+    }
+  ],
+  "045_mem_ctrl": [
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9cb56441b004b90d9b9c9a3ef9564c62f9dd82ab0eb74942f5ca7e45965cbea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1843,
+        2368
+      ],
+      "root": 1192,
+      "witness_lane": 214
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9cb56441b004b90d9b9c9a3ef9564c62f9dd82ab0eb74942f5ca7e45965cbea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2368,
+        2380
+      ],
+      "root": 1192,
+      "witness_lane": 214
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b2b91a1461204711af0e24be191ed1c4318fc3f44905309ae185dac9f5045eb5",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1847,
+        2406
+      ],
+      "root": 1207,
+      "witness_lane": 38
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1847,
+        2407
+      ],
+      "root": 1207,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "1b29d7a43805bdd096f9d57066e7c56af59725fbd0f9407b450bf583832b9c99",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1847,
+        2410
+      ],
+      "root": 1207,
+      "witness_lane": 113
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1847,
+        2411
+      ],
+      "root": 1207,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "3f036a6a4e540316c50080bb80bcac35cc61d33280538cf15ad2eb0cd8fdb177",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1849,
+        2406
+      ],
+      "root": 1207,
+      "witness_lane": 13
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1849,
+        2407
+      ],
+      "root": 1207,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "daebfc671f90e2a69c61b3dbb5e42b60f5f001134d7a909d3a005b67f225dd92",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1849,
+        2410
+      ],
+      "root": 1207,
+      "witness_lane": 46
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1849,
+        2411
+      ],
+      "root": 1207,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "76301da0a35683aca98f9edc85b9091ade74f3ab14ed57096d2807f2f4d76a85",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1905,
+        2422
+      ],
+      "root": 1224,
+      "witness_lane": 14
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "76301da0a35683aca98f9edc85b9091ade74f3ab14ed57096d2807f2f4d76a85",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1905,
+        2424
+      ],
+      "root": 1224,
+      "witness_lane": 14
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "76301da0a35683aca98f9edc85b9091ade74f3ab14ed57096d2807f2f4d76a85",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2422,
+        2434
+      ],
+      "root": 1224,
+      "witness_lane": 14
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "cecd31df09b11b185184dc9bfb7941bfb5954f8c666608dc7352b4f6bdf37359",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2422,
+        2438
+      ],
+      "root": 1224,
+      "witness_lane": 47
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "76301da0a35683aca98f9edc85b9091ade74f3ab14ed57096d2807f2f4d76a85",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2424,
+        2434
+      ],
+      "root": 1224,
+      "witness_lane": 14
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "5ae53be880811b4e046ad41674d56d3459de675abd453421e2f914673d2e7331",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2368
+      ],
+      "root": 1231,
+      "witness_lane": 20
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6d3151f203a4e34df4d5214ea128130000809b30d8f072860474e1a4418c55fd",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2398
+      ],
+      "root": 1231,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "76301da0a35683aca98f9edc85b9091ade74f3ab14ed57096d2807f2f4d76a85",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2454
+      ],
+      "root": 1231,
+      "witness_lane": 14
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "76301da0a35683aca98f9edc85b9091ade74f3ab14ed57096d2807f2f4d76a85",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2456
+      ],
+      "root": 1231,
+      "witness_lane": 14
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1927,
+        2398
+      ],
+      "root": 1231,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1927,
+        2454
+      ],
+      "root": 1231,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "9afda9f25120fe09bdc977b54d55486359d1581c59267963ff9b8809f0ed3eb5",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2464
+      ],
+      "root": 1239,
+      "witness_lane": 11
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2466
+      ],
+      "root": 1239,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "5754d3b37f436ed6b34b132230f410dc75fae3b1f268c4405ad0bf41511eebdf",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2468
+      ],
+      "root": 1239,
+      "witness_lane": 49
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "a4ade0934ca88098587b8cb8ae2eeb17b611f3c0a623b68668ebf93fa223472c",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2470
+      ],
+      "root": 1239,
+      "witness_lane": 10
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "da322b7b56b743fb16b1307ab66cc285ffbb0c9985b661b998baaf4169697fab",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2472
+      ],
+      "root": 1239,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "da322b7b56b743fb16b1307ab66cc285ffbb0c9985b661b998baaf4169697fab",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2474
+      ],
+      "root": 1239,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "209d883d5584597371b2f27afaef1497c4f97539f743f71c96dcc9fecdd1c209",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2476
+      ],
+      "root": 1239,
+      "witness_lane": 133
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1927,
+        2466
+      ],
+      "root": 1239,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "9afda9f25120fe09bdc977b54d55486359d1581c59267963ff9b8809f0ed3eb5",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2464
+      ],
+      "root": 1242,
+      "witness_lane": 11
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2466
+      ],
+      "root": 1242,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "5754d3b37f436ed6b34b132230f410dc75fae3b1f268c4405ad0bf41511eebdf",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2468
+      ],
+      "root": 1242,
+      "witness_lane": 49
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "a4ade0934ca88098587b8cb8ae2eeb17b611f3c0a623b68668ebf93fa223472c",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2470
+      ],
+      "root": 1242,
+      "witness_lane": 10
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "da322b7b56b743fb16b1307ab66cc285ffbb0c9985b661b998baaf4169697fab",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2472
+      ],
+      "root": 1242,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "da322b7b56b743fb16b1307ab66cc285ffbb0c9985b661b998baaf4169697fab",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2474
+      ],
+      "root": 1242,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "209d883d5584597371b2f27afaef1497c4f97539f743f71c96dcc9fecdd1c209",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2476
+      ],
+      "root": 1242,
+      "witness_lane": 133
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "79f6a54498ad97238f5f85d8441554bbd20d02a0f99e7c9d4ce2467f62ea38ed",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1926,
+        2480
+      ],
+      "root": 1242,
+      "witness_lane": 7
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "70fe4e7315bb626cf0f6b107e2809323ee2543cf79e1502b2f3ed36cce265eb7",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1795,
+        2460
+      ],
+      "root": 1247,
+      "witness_lane": 18
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2502,
+        2516
+      ],
+      "root": 1262,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2502,
+        2523
+      ],
+      "root": 1262,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2516,
+        2521
+      ],
+      "root": 1262,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        393,
+        2502,
+        -2,
+        2516
+      ],
+      "root": 1262,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        393,
+        2503,
+        -3,
+        2516
+      ],
+      "root": 1262,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        393,
+        2516,
+        -2,
+        2502
+      ],
+      "root": 1262,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1746,
+        2503,
+        -3,
+        2516
+      ],
+      "root": 1262,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6cfe86091cd00de2169c8f5fc6bcb619b830dda8001798b9341db25c502b219d",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1748,
+        2368,
+        -3,
+        1979
+      ],
+      "root": 1262,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1748,
+        2368,
+        -3,
+        1979
+      ],
+      "root": 1263,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 2,
+      "out": -5,
+      "recipe": [
+        1979,
+        2369,
+        -3,
+        1748
+      ],
+      "root": 1263,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 2,
+      "out": -5,
+      "recipe": [
+        2369,
+        2502,
+        -3,
+        1748
+      ],
+      "root": 1263,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 2,
+      "out": -5,
+      "recipe": [
+        2502,
+        2516,
+        -3,
+        1748
+      ],
+      "root": 1263,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 2,
+      "out": -5,
+      "recipe": [
+        2502,
+        2516,
+        -3,
+        2378
+      ],
+      "root": 1263,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "58724d49c7d05fb1c6c03928d81648f2f8fe2b5504428e31cfab76220bddeaea",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        393,
+        2503,
+        -3,
+        2523
+      ],
+      "root": 1263,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1746,
+        2503,
+        -3,
+        2523
+      ],
+      "root": 1263,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1748,
+        2368,
+        -3,
+        2521
+      ],
+      "root": 1263,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "223ce57adcc960f131df3cb2c5d4d043a6632aa2a716367f7bb70a92d6ab001b",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2524
+      ],
+      "root": 1267,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2526
+      ],
+      "root": 1267,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "8c423f93ad9490976b434829931627a90e9ee01cbab3d2f04d39fe911b761bb0",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1748,
+        2525
+      ],
+      "root": 1267,
+      "witness_lane": 42
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1748,
+        2527
+      ],
+      "root": 1267,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "6cfe86091cd00de2169c8f5fc6bcb619b830dda8001798b9341db25c502b219d",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1811,
+        2524
+      ],
+      "root": 1267,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1811,
+        2526
+      ],
+      "root": 1267,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "703ad9476b590b8d20b888be0ed7f14bb2736cd82a509a7aa2ef316d8bb37b19",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1975,
+        2524
+      ],
+      "root": 1267,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1975,
+        2526
+      ],
+      "root": 1267,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2524
+      ],
+      "root": 1268,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1748,
+        2525
+      ],
+      "root": 1268,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1748,
+        2527
+      ],
+      "root": 1268,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1811,
+        2524
+      ],
+      "root": 1268,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1975,
+        2524
+      ],
+      "root": 1268,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1977,
+        2524
+      ],
+      "root": 1268,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1979,
+        2524
+      ],
+      "root": 1268,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "8c423f93ad9490976b434829931627a90e9ee01cbab3d2f04d39fe911b761bb0",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2374,
+        2524
+      ],
+      "root": 1268,
+      "witness_lane": 42
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2524
+      ],
+      "root": 1269,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1748,
+        2360
+      ],
+      "root": 1269,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1748,
+        2525
+      ],
+      "root": 1269,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1748,
+        2527
+      ],
+      "root": 1269,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1811,
+        2524
+      ],
+      "root": 1269,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1825,
+        2524
+      ],
+      "root": 1269,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1825,
+        2525
+      ],
+      "root": 1269,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1825,
+        2527
+      ],
+      "root": 1269,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1827,
+        2498
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1827,
+        2543
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2356,
+        2498
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2356,
+        2543
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2360,
+        2498
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2360,
+        2543
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        393,
+        2546
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "15371627056f6d96507f302955115a678782afca05c2abb17ca255ee663da138",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1746,
+        2546
+      ],
+      "root": 1274,
+      "witness_lane": 72
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2357
+      ],
+      "root": 1275,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2361
+      ],
+      "root": 1275,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2357
+      ],
+      "root": 1275,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2361
+      ],
+      "root": 1275,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2357
+      ],
+      "root": 1275,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2361
+      ],
+      "root": 1275,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2357
+      ],
+      "root": 1275,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2361
+      ],
+      "root": 1275,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1933,
+        2384
+      ],
+      "root": 1280,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1933,
+        2555
+      ],
+      "root": 1280,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2384,
+        2480
+      ],
+      "root": 1280,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2480,
+        2555
+      ],
+      "root": 1280,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2553,
+        2555
+      ],
+      "root": 1280,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2557
+      ],
+      "root": 1280,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2557
+      ],
+      "root": 1280,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6cfe86091cd00de2169c8f5fc6bcb619b830dda8001798b9341db25c502b219d",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2557
+      ],
+      "root": 1280,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2481
+      ],
+      "root": 1281,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2552
+      ],
+      "root": 1281,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2481
+      ],
+      "root": 1281,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2552
+      ],
+      "root": 1281,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2481
+      ],
+      "root": 1281,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "9afda9f25120fe09bdc977b54d55486359d1581c59267963ff9b8809f0ed3eb5",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2552
+      ],
+      "root": 1281,
+      "witness_lane": 11
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2481
+      ],
+      "root": 1281,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "3e6728fe0f84774e241b39d43d2be80de5bd13556169b42073626070397807ff",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2552
+      ],
+      "root": 1281,
+      "witness_lane": 21
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2481
+      ],
+      "root": 1282,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2552
+      ],
+      "root": 1282,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2481
+      ],
+      "root": 1282,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "e69751188e576db7cd622d1a2b265694dd41b9e3fbd2b0a29cac19098eb0f174",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2552
+      ],
+      "root": 1282,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2481
+      ],
+      "root": 1282,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "9afda9f25120fe09bdc977b54d55486359d1581c59267963ff9b8809f0ed3eb5",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2552
+      ],
+      "root": 1282,
+      "witness_lane": 11
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2481
+      ],
+      "root": 1282,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 5,
+      "free_witness_sha256": "3e6728fe0f84774e241b39d43d2be80de5bd13556169b42073626070397807ff",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2552
+      ],
+      "root": 1282,
+      "witness_lane": 21
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2481
+      ],
+      "root": 1286,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2483
+      ],
+      "root": 1286,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2481
+      ],
+      "root": 1286,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2483
+      ],
+      "root": 1286,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2481
+      ],
+      "root": 1286,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2483
+      ],
+      "root": 1286,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2481
+      ],
+      "root": 1286,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 8,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2483
+      ],
+      "root": 1286,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1913,
+        2577
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2452,
+        2464
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2452,
+        2504
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2464,
+        2577
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        2504,
+        2577
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        393,
+        2578
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2579
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1811,
+        2578
+      ],
+      "root": 1291,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2465
+      ],
+      "root": 1292,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2465
+      ],
+      "root": 1292,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2465
+      ],
+      "root": 1292,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2465
+      ],
+      "root": 1292,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1813,
+        2464
+      ],
+      "root": 1292,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1813,
+        2465
+      ],
+      "root": 1292,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "5d92e2ca681faedae8cc7036f4bc46ff0c6f4dd3ce29ad3f0ca761df1e6af072",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1912,
+        2368
+      ],
+      "root": 1292,
+      "witness_lane": 23
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1912,
+        2463
+      ],
+      "root": 1292,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1747,
+        2577
+      ],
+      "root": 1296,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "58724d49c7d05fb1c6c03928d81648f2f8fe2b5504428e31cfab76220bddeaea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1747,
+        2457
+      ],
+      "root": 1298,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1747,
+        2459
+      ],
+      "root": 1298,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1747,
+        2511
+      ],
+      "root": 1298,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "98d5ec82f5ddd7153f1fe4eee38d85c0712ec15e3c65ee52b818ccee294e672d",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1935,
+        2457
+      ],
+      "root": 1298,
+      "witness_lane": 4
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1935,
+        2459
+      ],
+      "root": 1298,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "58724d49c7d05fb1c6c03928d81648f2f8fe2b5504428e31cfab76220bddeaea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1940,
+        2457
+      ],
+      "root": 1298,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "58724d49c7d05fb1c6c03928d81648f2f8fe2b5504428e31cfab76220bddeaea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1940,
+        2459
+      ],
+      "root": 1298,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "58724d49c7d05fb1c6c03928d81648f2f8fe2b5504428e31cfab76220bddeaea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1940,
+        2461
+      ],
+      "root": 1298,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1913,
+        2595
+      ],
+      "root": 1299,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1913,
+        2597
+      ],
+      "root": 1299,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "223ce57adcc960f131df3cb2c5d4d043a6632aa2a716367f7bb70a92d6ab001b",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1941,
+        2585
+      ],
+      "root": 1299,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "223ce57adcc960f131df3cb2c5d4d043a6632aa2a716367f7bb70a92d6ab001b",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        2585,
+        2595
+      ],
+      "root": 1299,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1891,
+        2603
+      ],
+      "root": 1304,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1979,
+        2600
+      ],
+      "root": 1304,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 2,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1979,
+        2603
+      ],
+      "root": 1304,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        393,
+        2604
+      ],
+      "root": 1304,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "703ad9476b590b8d20b888be0ed7f14bb2736cd82a509a7aa2ef316d8bb37b19",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2605
+      ],
+      "root": 1304,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1811,
+        2604
+      ],
+      "root": 1304,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1891,
+        2604
+      ],
+      "root": 1304,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -3,
+      "recipe": [
+        1975,
+        2604
+      ],
+      "root": 1304,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        393,
+        2423
+      ],
+      "root": 1305,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1746,
+        2423
+      ],
+      "root": 1305,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "b9a600daf725704efe28a6bc92474252d047e4c4778681d182dba0cf23c0f126",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1748,
+        2423
+      ],
+      "root": 1305,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1750,
+        2423
+      ],
+      "root": 1305,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "5ae53be880811b4e046ad41674d56d3459de675abd453421e2f914673d2e7331",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1890,
+        2368
+      ],
+      "root": 1305,
+      "witness_lane": 20
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "6d3151f203a4e34df4d5214ea128130000809b30d8f072860474e1a4418c55fd",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1890,
+        2398
+      ],
+      "root": 1305,
+      "witness_lane": 58
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1890,
+        2423
+      ],
+      "root": 1305,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 4,
+      "free_witness_sha256": "fca1110c802abcd9a048950b61d87af1be81724ad1a4c4dd681240cf936cae32",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1890,
+        2461
+      ],
+      "root": 1305,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        1941,
+        -2,
+        2464
+      ],
+      "root": 1306,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6cfe86091cd00de2169c8f5fc6bcb619b830dda8001798b9341db25c502b219d",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        1941,
+        -2,
+        2585
+      ],
+      "root": 1306,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        2464,
+        -2,
+        1941
+      ],
+      "root": 1306,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        2464,
+        -2,
+        2595
+      ],
+      "root": 1306,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "a68e9fdd22dcc3b5e8d32ca3856f19f869515c07061167549105b7e5b503ae74",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        2464,
+        -2,
+        2597
+      ],
+      "root": 1306,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6cfe86091cd00de2169c8f5fc6bcb619b830dda8001798b9341db25c502b219d",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        2585,
+        -2,
+        1941
+      ],
+      "root": 1306,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6cfe86091cd00de2169c8f5fc6bcb619b830dda8001798b9341db25c502b219d",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        2585,
+        -2,
+        2595
+      ],
+      "root": 1306,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6cfe86091cd00de2169c8f5fc6bcb619b830dda8001798b9341db25c502b219d",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1891,
+        2585,
+        -2,
+        2597
+      ],
+      "root": 1306,
+      "witness_lane": 1
+    }
+  ],
+  "060_wb_dma": [
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "68d5e1fb454d4bea440c173eda474084f7ec1c5cffebd08bda3be206825f3eea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1144,
+        1508
+      ],
+      "root": 759,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "68d5e1fb454d4bea440c173eda474084f7ec1c5cffebd08bda3be206825f3eea",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1144,
+        1510
+      ],
+      "root": 759,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6b8bd11b5b4f1ee62387737995c6dc31b8d95da8f8e8c2c5e2b639fb8283db7d",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1144,
+        1512
+      ],
+      "root": 759,
+      "witness_lane": 137
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "6b8bd11b5b4f1ee62387737995c6dc31b8d95da8f8e8c2c5e2b639fb8283db7d",
+      "fresh_gates": 1,
+      "out": -2,
+      "recipe": [
+        1144,
+        1514
+      ],
+      "root": 759,
+      "witness_lane": 137
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "bb889576314515db2618def2bb6fa9955f66e0f80b680559fda25472a6350167",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        738,
+        1144,
+        -3,
+        1499
+      ],
+      "root": 760,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "bb889576314515db2618def2bb6fa9955f66e0f80b680559fda25472a6350167",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1129,
+        1144,
+        -3,
+        1499
+      ],
+      "root": 760,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "51dcd2f84e96ea604fd811101c0b8d2a7df60166ea7bf5638d24e210e14a20d2",
+      "fresh_gates": 2,
+      "out": -5,
+      "recipe": [
+        1133,
+        1145,
+        -3,
+        1508
+      ],
+      "root": 760,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1144,
+        1508,
+        -3,
+        1133
+      ],
+      "root": 760,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "61c78a2ff27a64940de170b81f5f755ee226877e9d5779879ca0dd61dfd76502",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1144,
+        1508,
+        -3,
+        1499
+      ],
+      "root": 760,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1144,
+        1510,
+        -3,
+        1133
+      ],
+      "root": 760,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "61c78a2ff27a64940de170b81f5f755ee226877e9d5779879ca0dd61dfd76502",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1144,
+        1510,
+        -3,
+        1499
+      ],
+      "root": 760,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1144,
+        1512,
+        -3,
+        1133
+      ],
+      "root": 760,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "1efdc43cab6667fb77ebab506770c4c8122be28e7b6ccbeaf4f88fcdf229b655",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1492,
+        -2,
+        1520
+      ],
+      "root": 765,
+      "witness_lane": 9
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "4ab6d900ef5698f17fc9d2358a777eac152df7c9bf5d8763e7cba52f45e9d373",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1493,
+        -3,
+        1520
+      ],
+      "root": 765,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "1efdc43cab6667fb77ebab506770c4c8122be28e7b6ccbeaf4f88fcdf229b655",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1520,
+        -2,
+        1492
+      ],
+      "root": 765,
+      "witness_lane": 9
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "e6fa1242f58ae75e366c0730c09b2ca6b80a4ec43e57dde476a1c41717e0db8d",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1129,
+        1521,
+        -3,
+        1492
+      ],
+      "root": 765,
+      "witness_lane": 59
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "8da0d442159fdcaa7ac785e152371ccd07707d83ad23822a64c68db263021eec",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1492,
+        -2,
+        1519
+      ],
+      "root": 765,
+      "witness_lane": 27
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "8da0d442159fdcaa7ac785e152371ccd07707d83ad23822a64c68db263021eec",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1492,
+        -2,
+        1520
+      ],
+      "root": 765,
+      "witness_lane": 27
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "afd1cd23864f3b887cbb9d045d068bfd48ee9b6fe17f7cc719d7977157d6e019",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1493,
+        -3,
+        1520
+      ],
+      "root": 765,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "8da0d442159fdcaa7ac785e152371ccd07707d83ad23822a64c68db263021eec",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1519,
+        -2,
+        1492
+      ],
+      "root": 765,
+      "witness_lane": 27
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "1efdc43cab6667fb77ebab506770c4c8122be28e7b6ccbeaf4f88fcdf229b655",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1520,
+        -2,
+        1542
+      ],
+      "root": 776,
+      "witness_lane": 9
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "1efdc43cab6667fb77ebab506770c4c8122be28e7b6ccbeaf4f88fcdf229b655",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1542,
+        -2,
+        1520
+      ],
+      "root": 776,
+      "witness_lane": 9
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "4ab6d900ef5698f17fc9d2358a777eac152df7c9bf5d8763e7cba52f45e9d373",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1543,
+        -3,
+        1520
+      ],
+      "root": 776,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "d624fc962b1e076392af6c254b08803e5ad306baae32acc9bfe4fad4ab2e8612",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1129,
+        1521,
+        -3,
+        1542
+      ],
+      "root": 776,
+      "witness_lane": 42
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "1e71c94b4386a74cc1342cb93cfc2bd03c0acccc781a724137f44f9ff67ee0ed",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1145,
+        -2,
+        1542
+      ],
+      "root": 776,
+      "witness_lane": 17
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "97863c410b3fa818e4afe1d01b965a0c2467fc7c53a21c36f7b24241fa207289",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1519,
+        -2,
+        1542
+      ],
+      "root": 776,
+      "witness_lane": 32
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "97863c410b3fa818e4afe1d01b965a0c2467fc7c53a21c36f7b24241fa207289",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1520,
+        -2,
+        1542
+      ],
+      "root": 776,
+      "witness_lane": 32
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "97863c410b3fa818e4afe1d01b965a0c2467fc7c53a21c36f7b24241fa207289",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1523,
+        -2,
+        1542
+      ],
+      "root": 776,
+      "witness_lane": 32
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "51dcd2f84e96ea604fd811101c0b8d2a7df60166ea7bf5638d24e210e14a20d2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1520,
+        -2,
+        1564
+      ],
+      "root": 787,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "51dcd2f84e96ea604fd811101c0b8d2a7df60166ea7bf5638d24e210e14a20d2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1564,
+        -2,
+        1520
+      ],
+      "root": 787,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "e0ad419931b4632446ecf7facc7c7ac541d66d4298b77d804ed5f617f3c97817",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1565,
+        -3,
+        1520
+      ],
+      "root": 787,
+      "witness_lane": 7
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "d624fc962b1e076392af6c254b08803e5ad306baae32acc9bfe4fad4ab2e8612",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1129,
+        1521,
+        -3,
+        1564
+      ],
+      "root": 787,
+      "witness_lane": 42
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1519,
+        -2,
+        1564
+      ],
+      "root": 787,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1520,
+        -2,
+        1564
+      ],
+      "root": 787,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1545,
+        -2,
+        1564
+      ],
+      "root": 787,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1564,
+        -2,
+        1519
+      ],
+      "root": 787,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 1,
+      "free_witness_sha256": "b606d0739c05932ca4327ddf1da11c5f85d4577a549b4e7d92cbd7c3890c8a60",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1523,
+        1572,
+        -3,
+        1577
+      ],
+      "root": 789,
+      "witness_lane": 24
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "61c78a2ff27a64940de170b81f5f755ee226877e9d5779879ca0dd61dfd76502",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1520,
+        -2,
+        1586
+      ],
+      "root": 798,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "61c78a2ff27a64940de170b81f5f755ee226877e9d5779879ca0dd61dfd76502",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1586,
+        -2,
+        1520
+      ],
+      "root": 798,
+      "witness_lane": 22
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "4ab6d900ef5698f17fc9d2358a777eac152df7c9bf5d8763e7cba52f45e9d373",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1587,
+        -3,
+        1520
+      ],
+      "root": 798,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "d624fc962b1e076392af6c254b08803e5ad306baae32acc9bfe4fad4ab2e8612",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1129,
+        1521,
+        -3,
+        1586
+      ],
+      "root": 798,
+      "witness_lane": 42
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1519,
+        -2,
+        1586
+      ],
+      "root": 798,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1520,
+        -2,
+        1586
+      ],
+      "root": 798,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1545,
+        -2,
+        1586
+      ],
+      "root": 798,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1586,
+        -2,
+        1519
+      ],
+      "root": 798,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "51dcd2f84e96ea604fd811101c0b8d2a7df60166ea7bf5638d24e210e14a20d2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1520,
+        -2,
+        1608
+      ],
+      "root": 809,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "51dcd2f84e96ea604fd811101c0b8d2a7df60166ea7bf5638d24e210e14a20d2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1608,
+        -2,
+        1520
+      ],
+      "root": 809,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "e0ad419931b4632446ecf7facc7c7ac541d66d4298b77d804ed5f617f3c97817",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1609,
+        -3,
+        1520
+      ],
+      "root": 809,
+      "witness_lane": 7
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "a8d5c088fcf6944be41f4e76e16bdaa1a6311aef790f0938d28fc3ebe3a23dab",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1129,
+        1521,
+        -3,
+        1608
+      ],
+      "root": 809,
+      "witness_lane": 66
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1520,
+        -2,
+        1608
+      ],
+      "root": 809,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1608,
+        -2,
+        1520
+      ],
+      "root": 809,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "8b0f92c6a5dae1d1319c0a952cfd8b70ac46c3f1c23d059cb8d208a0eb0aac6a",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1609,
+        -3,
+        1520
+      ],
+      "root": 809,
+      "witness_lane": 4
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "bb889576314515db2618def2bb6fa9955f66e0f80b680559fda25472a6350167",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1147,
+        1520,
+        -2,
+        1608
+      ],
+      "root": 809,
+      "witness_lane": 1
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "1e71c94b4386a74cc1342cb93cfc2bd03c0acccc781a724137f44f9ff67ee0ed",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1520,
+        -2,
+        1630
+      ],
+      "root": 820,
+      "witness_lane": 17
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "1e71c94b4386a74cc1342cb93cfc2bd03c0acccc781a724137f44f9ff67ee0ed",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1630,
+        -2,
+        1520
+      ],
+      "root": 820,
+      "witness_lane": 17
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "4ab6d900ef5698f17fc9d2358a777eac152df7c9bf5d8763e7cba52f45e9d373",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1631,
+        -3,
+        1520
+      ],
+      "root": 820,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "d624fc962b1e076392af6c254b08803e5ad306baae32acc9bfe4fad4ab2e8612",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1129,
+        1521,
+        -3,
+        1630
+      ],
+      "root": 820,
+      "witness_lane": 42
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1520,
+        -2,
+        1630
+      ],
+      "root": 820,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "b2304d1b8a25ec35084dda6b00898d86b9e5abd413e612c50174e6805f193bf3",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1630,
+        -2,
+        1520
+      ],
+      "root": 820,
+      "witness_lane": 2
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "4ab6d900ef5698f17fc9d2358a777eac152df7c9bf5d8763e7cba52f45e9d373",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1631,
+        -3,
+        1520
+      ],
+      "root": 820,
+      "witness_lane": 3
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "75b6cf15ef22280e606b9e21ece9ae26d25065da0577d6642efd96717044ba7a",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1147,
+        1520,
+        -2,
+        1630
+      ],
+      "root": 820,
+      "witness_lane": 0
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "bc2ed2b480aa459002ae80c2935ae95213bfbdb2482375955e437a345b584dd2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1133,
+        -2,
+        1652
+      ],
+      "root": 831,
+      "witness_lane": 8
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "bc2ed2b480aa459002ae80c2935ae95213bfbdb2482375955e437a345b584dd2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1499,
+        -2,
+        1652
+      ],
+      "root": 831,
+      "witness_lane": 8
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "bc2ed2b480aa459002ae80c2935ae95213bfbdb2482375955e437a345b584dd2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1652,
+        -2,
+        1133
+      ],
+      "root": 831,
+      "witness_lane": 8
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "bc2ed2b480aa459002ae80c2935ae95213bfbdb2482375955e437a345b584dd2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        977,
+        1652,
+        -2,
+        1499
+      ],
+      "root": 831,
+      "witness_lane": 8
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "8da0d442159fdcaa7ac785e152371ccd07707d83ad23822a64c68db263021eec",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1527,
+        -2,
+        1652
+      ],
+      "root": 831,
+      "witness_lane": 27
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "8da0d442159fdcaa7ac785e152371ccd07707d83ad23822a64c68db263021eec",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1571,
+        -2,
+        1652
+      ],
+      "root": 831,
+      "witness_lane": 27
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "bc2ed2b480aa459002ae80c2935ae95213bfbdb2482375955e437a345b584dd2",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1652,
+        -2,
+        977
+      ],
+      "root": 831,
+      "witness_lane": 8
+    },
+    {
+      "conservative_gain": 3,
+      "free_witness_sha256": "8da0d442159fdcaa7ac785e152371ccd07707d83ad23822a64c68db263021eec",
+      "fresh_gates": 2,
+      "out": -4,
+      "recipe": [
+        1133,
+        1652,
+        -2,
+        1527
+      ],
+      "root": 831,
+      "witness_lane": 27
+    }
+  ]
+}

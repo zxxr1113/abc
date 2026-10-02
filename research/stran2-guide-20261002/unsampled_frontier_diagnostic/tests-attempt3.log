@@ -1,0 +1,42 @@
+test_changed_or_missing_binding (test_frontier.GuardTests.test_changed_or_missing_binding) ... ok
+test_completion_hash_chain_rejects_report_result_union_tampering (test_frontier.GuardTests.test_completion_hash_chain_rejects_report_result_union_tampering) ... ok
+test_completion_missing_or_duplicate_notice_rejected (test_frontier.GuardTests.test_completion_missing_or_duplicate_notice_rejected) ... ok
+test_exclusive_outputs (test_frontier.GuardTests.test_exclusive_outputs) ... ok
+test_execution_gate_rejects_no_review (test_frontier.GuardTests.test_execution_gate_rejects_no_review) ... ok
+test_no_post_deadline_acceptance_even_zero_exit (test_frontier.GuardTests.test_no_post_deadline_acceptance_even_zero_exit) ... ok
+test_supervisor_kills_child_and_grandchild (test_frontier.GuardTests.test_supervisor_kills_child_and_grandchild) ... ok
+test_supervisor_terminates_owned_descendant (test_frontier.GuardTests.test_supervisor_terminates_owned_descendant) ... ok
+test_symlink_binding_rejected (test_frontier.GuardTests.test_symlink_binding_rejected) ... ok
+test_zero_exit_observed_after_deadline_is_rejected (test_frontier.GuardTests.test_zero_exit_observed_after_deadline_is_rejected) ... ok
+test_full_original_replay (test_frontier.ModelTests.test_full_original_replay) ... ok
+test_missing_model_bit (test_frontier.ModelTests.test_missing_model_bit) ... ok
+test_nonboolean_and_bool_rejected (test_frontier.ModelTests.test_nonboolean_and_bool_rejected) ... ok
+test_unsatisfied_assumption (test_frontier.ModelTests.test_unsatisfied_assumption) ... ok
+test_wrong_candidate (test_frontier.ModelTests.test_wrong_candidate) ... ok
+test_wrong_projection_order (test_frontier.ModelTests.test_wrong_projection_order) ... ok
+test_cap_cannot_be_tuned (test_frontier.SearchTests.test_cap_cannot_be_tuned) ... ok
+test_deadline_prevents_search (test_frontier.SearchTests.test_deadline_prevents_search) ... ok
+test_full_truth_bruteforce_eligibility_and_rank (test_frontier.SearchTests.test_full_truth_bruteforce_eligibility_and_rank) ... ok
+test_no_baseline_mutation_and_disjoint (test_frontier.SearchTests.test_no_baseline_mutation_and_disjoint) ... ok
+test_passive_rank_does_not_inject (test_frontier.SearchTests.test_passive_rank_does_not_inject) ... ok
+test_top8_separate_positive_normalized (test_frontier.SearchTests.test_top8_separate_positive_normalized) ... ok
+test_comb_unsat_no_later_queries (test_frontier.SolverTests.test_comb_unsat_no_later_queries) ... ok
+test_duplicate_candidates_rejected (test_frontier.SolverTests.test_duplicate_candidates_rejected) ... ok
+test_extra_candidate_cap (test_frontier.SolverTests.test_extra_candidate_cap) ... ok
+test_fabricated_lane_rejected (test_frontier.SolverTests.test_fabricated_lane_rejected) ... ok
+test_free_unknown_no_retry_or_backfill (test_frontier.SolverTests.test_free_unknown_no_retry_or_backfill) ... ok
+test_fresh_triple_and_persisted_replay (test_frontier.SolverTests.test_fresh_triple_and_persisted_replay) ... ok
+test_image_sat_reject (test_frontier.SolverTests.test_image_sat_reject) ... ok
+test_missing_reordered_and_non_boolean_model_records (test_frontier.SolverTests.test_missing_reordered_and_non_boolean_model_records) ... ok
+test_passed_candidate_cost_metadata_rejected (test_frontier.SolverTests.test_passed_candidate_cost_metadata_rejected) ... ok
+test_raw_query_cnf_result_projection_bindings (test_frontier.SolverTests.test_raw_query_cnf_result_projection_bindings) ... ok
+test_reset_and_image_unknown_never_qualify (test_frontier.SolverTests.test_reset_and_image_unknown_never_qualify) ... ok
+test_reset_sat_skips_image (test_frontier.SolverTests.test_reset_sat_skips_image) ... ok
+test_tamper_model_rejected (test_frontier.SolverTests.test_tamper_model_rejected) ... ok
+test_tamper_source_rejected (test_frontier.SolverTests.test_tamper_source_rejected) ... ok
+test_tamper_status_rejected (test_frontier.SolverTests.test_tamper_status_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 25.830s
+
+OK

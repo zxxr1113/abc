@@ -1,0 +1,76 @@
+{
+  "checks": {
+    "diagnostic": "128 root frontiers,4 CNFs,579 recorded obligations,159 full free models independently reviewed",
+    "products": "104 full Build witnesses,1248 proof obligations,1285056 Direct grammar recipes,28 byte-identical products,3584 all-CO worlds,17 fresh+11 reused DSEC receipts,20 Direct counterfactuals independently reviewed"
+  },
+  "conclusion": "55 additional mem recipe identities recover only the previously known local paired+1 AND; no online/full-cohort extension",
+  "diagnostic": {
+    "UNKNOWN": 0,
+    "cases": 4,
+    "complete": 4,
+    "hard_case_wall_sum_s": 57.2920754509978,
+    "independent_review_extra_wall_s": 42.55846442199254,
+    "new_qualified": [
+      55,
+      0,
+      0,
+      0
+    ],
+    "post_case_validation_wall_sum_s": 6.248345514984976,
+    "proof_queries": 579
+  },
+  "historical_product_hashes": {
+    "historical_A_mixed": "6ac4c7f8f18438a8950359841b283911f52d136507a177c00374f23a27a9ae4e",
+    "historical_A_raw": "c961682f66cf9074194d3d1af862bc51bdf4ee39209bd374ab6b1089a516786e",
+    "historical_B_mixed": "f331eeaa9e0422c2b26bb123bae8794e80231ef552632f2067062eef45e5b60c",
+    "historical_B_raw": "2d6da2ca771169fd73ff50f45d82b84346a20f50e025c40b4590dd0d155e4305",
+    "historical_union52_mixed": "f331eeaa9e0422c2b26bb123bae8794e80231ef552632f2067062eef45e5b60c"
+  },
+  "historical_raw_product_changed": true,
+  "historical_same_mixed_product": true,
+  "limits": [
+    "No native-search novelty,global Boolean-Direct exhaustion or new strong-baseline replay claim",
+    "Removal marginals7/3 are not paired gains",
+    "No performance comparison from unequal work or concurrent tests",
+    "All audit/review costs additional; DSEC subset times overlap total audit wall"
+  ],
+  "mem_audit": {
+    "Build_queries": 312,
+    "DSEC_reuses": 11,
+    "DSEC_wall_s": 81.522531446004,
+    "Direct_candidates": 312,
+    "Direct_proved_positive": 10,
+    "Direct_queries": 936,
+    "fresh_DSEC": 17,
+    "hard_audit_wall_s": 182.46905362099642,
+    "hash_extra_literals": 12,
+    "independent_review_extra_wall_s": 22.427557613002136,
+    "new_added": 55,
+    "new_original_output_aliases": 0,
+    "old_retained": 49,
+    "post_acceptance_wall_s": 3.063958382997953,
+    "primary_scope_roots": 6,
+    "products": 28,
+    "union": 104
+  },
+  "metrics": {
+    "mixed_new_identity_removal_AND": 3,
+    "old_genuine_Build_marginal": 2,
+    "old_mixed_gain": 27,
+    "old_raw_gain": 22,
+    "paired_genuine_Build_AND": 1,
+    "paired_mixed_AND": 1,
+    "paired_raw_AND": 1,
+    "raw_new_identity_removal_AND": 7,
+    "union_genuine_Build_marginal": 3,
+    "union_mixed_gain": 28,
+    "union_raw_gain": 23
+  },
+  "policy_stopped": true,
+  "scope": "Fixed four-case first32 discovery plus separately costed mem-only attribution",
+  "sources": {
+    "diagnostic_review_sha256": "24d75480c0b260235ac65465ee4c05aacfb7bc020fa6a07fdcf775455f319fab",
+    "product_review_sha256": "43d3002bdf81c22856c7563be96073ad1e810938cc048b3b3fa69103f8b1725b"
+  },
+  "status": "INDEPENDENT_PASS"
+}

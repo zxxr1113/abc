@@ -1,0 +1,53 @@
+{
+  "aggregate": {
+    "UNKNOWN": 0,
+    "additional_qualified_recipe_identities": 55,
+    "additional_qualified_roots": 11,
+    "baseline_witnesses": 273,
+    "cases": 4,
+    "full_free_models": 159,
+    "initial_worlds": 1024,
+    "original_image_models": 420,
+    "recorded_queries_authenticated": 579,
+    "retained_extra_candidates": 261,
+    "root_frontiers_reenumerated": 128
+  },
+  "benchmark_reruns": 0,
+  "case_qualified": [
+    {
+      "case": "045_mem_ctrl",
+      "qualified": 55
+    },
+    {
+      "case": "060_wb_dma",
+      "qualified": 0
+    },
+    {
+      "case": "034_b20_opt",
+      "qualified": 0
+    },
+    {
+      "case": "041_des_area",
+      "qualified": 0
+    }
+  ],
+  "evidence": {
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/review_terminal.py": "985ae260b02aa8d7da251c4629a975d71fcb8769ca92efbe8ed41a7e15190a66",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/terminal-v1/final_crosschecks.json": "b67d04ddef8baac98106d38073055fc40d05ddadcbb5ecac64e103b4a82063bb",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/terminal-v1/review.json": "e69b8b1271003626f594987d9a14029db2ef6dfb041882151cc101283c58b3b9"
+  },
+  "extra_review_wall_s": 42.55846442199254,
+  "interpretation": "55 additional qualifying recipe identities relative to the original witnessed frontier; includes three previously known sentinels. Not55 Boolean functions or55 fresh Build opportunities; no product/area/novelty claim.",
+  "new_dsec_calls": 0,
+  "new_solver_calls": 0,
+  "new_solver_queries": 0,
+  "product_audit": "NOT_RUN; separate authorization and exact selected-set/Direct/whole-original-alias/DSEC review required",
+  "run": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1",
+  "sentinel_ranks": [
+    4,
+    5,
+    6
+  ],
+  "source_manifest_sha256": "41873dc02c17f47ee53d417bdce922404d5a8fedac342f0476bb60d193cab5df",
+  "status": "PASS"
+}

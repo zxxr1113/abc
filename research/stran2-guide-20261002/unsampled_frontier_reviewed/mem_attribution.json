@@ -1,0 +1,153 @@
+{
+  "accounting": "All extra cost outside fixed32 diagnostic. Removal marginals are not paired gains. No relative-speed claim.",
+  "all_dsec": "PASS",
+  "arms": {
+    "old49": {
+      "mixed_AND": 9405,
+      "mixed_all_genuine_Build_marginal": 2,
+      "mixed_gain": 27,
+      "mixed_genuine_ids": [
+        [
+          1263,
+          [
+            393,
+            2503,
+            -3,
+            2523
+          ],
+          -4
+        ]
+      ],
+      "mixed_new_genuine_Build_marginal": 0,
+      "mixed_new_identity_removal_marginal": 0,
+      "qualified_candidates": 49,
+      "raw_AND": 9410,
+      "raw_gain": 22,
+      "raw_new_identity_removal_marginal": 0
+    },
+    "union104": {
+      "mixed_AND": 9404,
+      "mixed_all_genuine_Build_marginal": 3,
+      "mixed_gain": 28,
+      "mixed_genuine_ids": [
+        [
+          1263,
+          [
+            393,
+            2502,
+            -2,
+            2516
+          ],
+          -4
+        ]
+      ],
+      "mixed_new_genuine_Build_marginal": 3,
+      "mixed_new_identity_removal_marginal": 3,
+      "qualified_candidates": 104,
+      "raw_AND": 9409,
+      "raw_gain": 23,
+      "raw_new_identity_removal_marginal": 7
+    }
+  },
+  "candidate_preservation": {
+    "new_added": 55,
+    "old_retained": 49,
+    "removed": 0
+  },
+  "conclusion": "Additional55 relation identities reproduce only the known local+1 AND. Stop this single-design policy; no online/full-cohort run.",
+  "direct_scope": {
+    "candidates": 312,
+    "direct_only_AND": 9407,
+    "hash_extras": 12,
+    "no_bounded_positive_Direct_at_root1263": true,
+    "positive_proved": 10
+  },
+  "dsec_exact_graph_reuses": 11,
+  "dsec_wall_s": 81.522531446004,
+  "fresh_dsec_calls": 17,
+  "hard_audit_wall_s": 182.46905362099642,
+  "independent_terminal_review": "REQUESTED, PENDING",
+  "native_novelty": "NOT_CHECKED",
+  "new55_original_output_aliases": 0,
+  "paired_genuine_Build_marginal_AND": 1,
+  "paired_mixed_AND": 1,
+  "paired_raw_AND": 1,
+  "post_acceptance_wall_s": 3.063958382997953,
+  "products": 28,
+  "proof_queries": {
+    "Build": 312,
+    "Direct": 936,
+    "UNKNOWN": 0
+  },
+  "result_sha256": "dfcf3c1f2f9e86d135f64e22efcbfc46c13dcf78c5c9ecde1450365358fac774",
+  "schema": 1,
+  "selected_recipe_changes": {
+    "mixed_added": [
+      [
+        1263,
+        [
+          393,
+          2502,
+          -2,
+          2516
+        ],
+        -4
+      ]
+    ],
+    "mixed_removed": [
+      [
+        1263,
+        [
+          393,
+          2503,
+          -3,
+          2523
+        ],
+        -4
+      ]
+    ],
+    "raw_added": [
+      [
+        1242,
+        [
+          1926,
+          2416
+        ],
+        -2
+      ],
+      [
+        1263,
+        [
+          393,
+          2502,
+          -2,
+          2516
+        ],
+        -4
+      ]
+    ],
+    "raw_removed": [
+      [
+        1242,
+        [
+          1926,
+          2464
+        ],
+        -2
+      ],
+      [
+        1263,
+        [
+          393,
+          2503,
+          -3,
+          2523
+        ],
+        -4
+      ]
+    ]
+  },
+  "start_utc": "2026-10-02T05:12:29.027808+00:00",
+  "status": "COMPLETE",
+  "supervisor_sha256": "e878ffbebcdf4524c07dc5ea6bed4b5b81f419018883f109bee56f169396e2dd"
+}

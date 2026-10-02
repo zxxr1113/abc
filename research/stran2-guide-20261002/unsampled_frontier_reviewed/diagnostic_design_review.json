@@ -1,0 +1,114 @@
+{
+  "evidence": {
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/unsampled_frontier_diagnostic/evidence/preparation-replay.json": "915b95dba2b4c29fea126411edfcb6ca08c38e7bb1c32a3f0e24582a17cb9463",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/authentication.json": "bd217bbd31c4f75cf123528f5d3d5abbd2090fb80a01a1d8eabd5c5c347fa094",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/check_enumeration.py": "ed064527f8b7b9de421437dd1327c3345cc2390ca0980cdc4f6c4615eb959582",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/check_persisted_fixture.py": "49fa1846637c2a806791938522bc7bce617df4f2bce107470d401a6ef0c8c2b4",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/enumeration-v2/review.json": "1771d796ecde386640c5fcd888b878c028722be0989a29cab4130e953bf7d111",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/frozen-suite-v2/review.json": "f6e18cc0f5c93f68aef438eec8aec0717a2600230268aa85744355f8eb90f781",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/frozen-suite-v2/tests.log": "d905e7803b2422104448f59baddfef10c813007f6462df374dc711d090ba86f3",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/persisted-final-fixture-v3/review.json": "cf8861f2702c8ddaecf4c9c607427672480eb9a34d12c8315b017f79069dda3d",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/report-binding-gap/demonstration.json": "7ff90113f88a7493606be2fde734e98001653995b0bdbf949e903bf185ab52ca",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/run_owner_tests.py": "3b44b718ef48cc6d7ec25a9608f2755971e6fb1f5c752db7ffff8a82f5e73ead"
+  },
+  "final_source_checks": {
+    "errors": 0,
+    "failures": 0,
+    "independent_random_aig_enumerations": 24,
+    "independently_enumerated_free_reset_image_worlds": {
+      "free": 16,
+      "image": 64,
+      "reset": 4
+    },
+    "skips": 0,
+    "solver_build_bound_files": 98,
+    "synthetic_tests": 39
+  },
+  "four_case_execution": "NOT_RUN",
+  "frozen_source_directory": "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/frozen-source",
+  "historical_authentication": [
+    {
+      "baseline_candidates": 179,
+      "bound_files": 52,
+      "case": "045_mem_ctrl",
+      "status": "PASS"
+    },
+    {
+      "baseline_candidates": 69,
+      "bound_files": 52,
+      "case": "060_wb_dma",
+      "status": "PASS"
+    },
+    {
+      "baseline_candidates": 0,
+      "bound_files": 46,
+      "case": "034_b20_opt",
+      "status": "PASS"
+    },
+    {
+      "baseline_candidates": 25,
+      "bound_files": 52,
+      "case": "041_des_area",
+      "status": "PASS"
+    }
+  ],
+  "limitations": [
+    "PASS covers review and synthetic correctness, not four-case benchmark outcome or timing/area quality",
+    "Independent enumeration deliberately shares authenticated frozen normalization; Boolean evaluation and reference-count cost checks use separate paths",
+    "Only a separate parent GO authorizes the four-case experiment; successful additional relations would still require separately reviewed product/Direct/whole-original-alias/same-selected-set/DSEC attribution"
+  ],
+  "original_historical_review_sha256": "98615417a23ad6e634a195bf742081cee4d277b094d1f56ec9dfc0cb5bb34cca",
+  "parent_go": "STILL_REQUIRED",
+  "preserved_semantics": [
+    "Normal witnessed top8 source unchanged, full ordered candidate/cost/witness/per-root counter match required before extra proof",
+    "Separate existing-key top8 from zero-initial256-difference positive-gain nonlinear normalized candidates; no backfill or cap tuning",
+    "Root1263 sentinels only observe natural eligibility/rank and never alter admission",
+    "Free-SAT complete graph-PI model with compiled assumption and independent all-original-node/root-recipe replay precedes reset-UNSAT and unrestricted-image-UNSAT",
+    "COMB-UNSAT and every UNKNOWN rejected; candidate-local witnesses never appended to global samples or labeled reachable teachers",
+    "Original source evidence unavailable or drifting causes rejection; historical baseline proof references are reuse, not new proofs",
+    "Supervisor owns and terminates complete process group; launch-through-exit exceeds120s means TIMEOUT; post-case acceptance separately costed",
+    "At most256 extra candidate free queries and768 total new proof obligations per case; no product/Direct/global-alias/DSEC/area claim"
+  ],
+  "protocol_sha256": "237ce7ea22780dcb03caf8bbd911b0c6d9b56ebcf9784bddbc80184462654cb3",
+  "resolved_findings": [
+    "Completed result digest now checked against externally captured worker notice; every result artifact is hash-bound and aggregate counts cross-checked",
+    "Exact persisted candidate metadata and original unproved identity/cost metadata checked, not identities alone",
+    "Reviewed solver and schema2 pre/post build record bound to the gate and worker; transitive headers/toolchain/static archive authenticated",
+    "Optimized Python execution rejected before worker work, preserving all assertion checks",
+    "Only top-level result.json excluded from artifact-tree comparison; unexpected nested result.json rejected"
+  ],
+  "reviewer_work_accounting": {
+    "dsec_calls": 0,
+    "final_frozen_source_real_solver_invocations": 39,
+    "final_frozen_source_real_solver_queries": 39,
+    "four_case_proof_queries": 0,
+    "four_case_searches": 0,
+    "historical_status_authentication_new_solver_calls": 0,
+    "mock_solver_responses_not_counted_as_real": true,
+    "superseded_fixture_real_solver_invocations": 45,
+    "superseded_fixture_real_solver_queries": 45,
+    "total_real_solver_invocations": 84,
+    "total_real_solver_queries": 84
+  },
+  "schema": 1,
+  "scope": "Exact-source/protocol review for fixed four-case first32 unsampled-frontier diagnostic; NOT experiment execution authorization",
+  "solver": "/tmp/unsampled-free-model-solver-v2",
+  "solver_build_sha256": "629e68b05df02e7fa3535a28ad3ca854f9d49107916d6743e8dd44da16a440dd",
+  "solver_sha256": "973f9768c8e5521c4f3377a218b301894d2331400ff66e0bdf7f4af391769fd1",
+  "source_manifest": {
+    "README.md": "38010dd10ea45f54f4e0f5cfdc44da7ff830e0debdee4749300f077c3632b035",
+    "authenticate.py": "b862a4dad1101af00752bc8501a8ae613daa74b09a9352e036986df7083bf540",
+    "build_solver.py": "405125d3fb6793bd147a231a57aa27fb2edda5a1caa908073c601da9aaadb895",
+    "build_solver.sh": "409528fbf72458b0ca11d5933ee6defa3564750eea9e54d11cbfb8217a7d0a94",
+    "common.py": "1abb9ac801e00ee6475f22248e89bacc57c8886d61f67fdf3044e9cf82da286b",
+    "free_model_solver.c": "4328ee67e094ed24e5b9021077c4cffbcc73b5e3555a431383100e180c949ac3",
+    "independent_aig.py": "cd1610200221c44e6caf02750823de81fe89169b46be59b335e99d964432e8b0",
+    "proof.py": "66a26bb0f1006a4687d4e9f6edefb11edc5d88126f1897279a58c7a7949c06b9",
+    "protocol.json": "237ce7ea22780dcb03caf8bbd911b0c6d9b56ebcf9784bddbc80184462654cb3",
+    "run.py": "fc78579e4fc15fdefa8134fcc6afc1e0e2c4dc9379cecd87a9103bbff675a27e",
+    "search.py": "54a563886c483a841aab821e85684f4eb1323c5dcf3a62647046209a99f3aebb",
+    "test_frontier.py": "f4dd97b6a0457807866e5b54975f9c716e9847ac5f9de2b17a1a6d6f040b3bbf"
+  },
+  "source_manifest_sha256": "41873dc02c17f47ee53d417bdce922404d5a8fedac342f0476bb60d193cab5df",
+  "status": "PASS"
+}

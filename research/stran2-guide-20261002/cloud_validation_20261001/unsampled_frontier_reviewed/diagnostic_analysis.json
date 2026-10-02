@@ -1,0 +1,283 @@
+{
+  "all_four_complete": true,
+  "baseline_reproduction": "PASS every candidate/cost/witness/root counter",
+  "cases": [
+    {
+      "baseline_candidates": 179,
+      "baseline_qualified": 49,
+      "case": "045_mem_ctrl",
+      "ci_only": 0,
+      "free_queries": 155,
+      "new_qualified": 55,
+      "new_roots": {
+        "1231": 6,
+        "1239": 6,
+        "1242": 8,
+        "1263": 3,
+        "1281": 5,
+        "1282": 4,
+        "1291": 4,
+        "1292": 7,
+        "1298": 4,
+        "1304": 3,
+        "1305": 5
+      },
+      "no_sampled_free_witness": 36425,
+      "nonpositive": 21793,
+      "phases": {
+        "free": {
+          "queries": 155,
+          "statuses": {
+            "SAT": 147,
+            "UNKNOWN": 0,
+            "UNSAT": 8
+          }
+        },
+        "image": {
+          "queries": 147,
+          "statuses": {
+            "SAT": 92,
+            "UNKNOWN": 0,
+            "UNSAT": 55
+          }
+        },
+        "reset": {
+          "queries": 147,
+          "statuses": {
+            "SAT": 0,
+            "UNKNOWN": 0,
+            "UNSAT": 147
+          }
+        }
+      },
+      "positive_unsampled": 14632,
+      "post_validation_wall_s": 1.5163110049979878,
+      "proof_queries": 449,
+      "retained": 155,
+      "sentinel_ranks": [
+        {
+          "candidate_id": [
+            1263,
+            [
+              393,
+              2502,
+              -2,
+              2516
+            ],
+            -4
+          ],
+          "eligible": true,
+          "injected": false,
+          "rank": 4,
+          "retained": true
+        },
+        {
+          "candidate_id": [
+            1263,
+            [
+              393,
+              2503,
+              -3,
+              2516
+            ],
+            -4
+          ],
+          "eligible": true,
+          "injected": false,
+          "rank": 5,
+          "retained": true
+        },
+        {
+          "candidate_id": [
+            1263,
+            [
+              393,
+              2516,
+              -2,
+              2502
+            ],
+            -4
+          ],
+          "eligible": true,
+          "injected": false,
+          "rank": 6,
+          "retained": true
+        }
+      ],
+      "status": "COMPLETE",
+      "supervisor_wall_s": 20.58440410100593,
+      "timing": {
+        "baseline_search_and_witness_wall_s": 2.1705808420010726,
+        "preparation_wall_s": 3.1248317689969554,
+        "proof_and_binding_wall_s": 7.970355077995919,
+        "unsampled_search_wall_s": 1.625556045997655
+      },
+      "topk_dropped": 14477
+    },
+    {
+      "baseline_candidates": 69,
+      "baseline_qualified": 13,
+      "case": "060_wb_dma",
+      "ci_only": 0,
+      "free_queries": 103,
+      "new_qualified": 0,
+      "new_roots": {},
+      "no_sampled_free_witness": 2480,
+      "nonpositive": 1477,
+      "phases": {
+        "free": {
+          "queries": 103,
+          "statuses": {
+            "SAT": 10,
+            "UNKNOWN": 0,
+            "UNSAT": 93
+          }
+        },
+        "image": {
+          "queries": 10,
+          "statuses": {
+            "SAT": 10,
+            "UNKNOWN": 0,
+            "UNSAT": 0
+          }
+        },
+        "reset": {
+          "queries": 10,
+          "statuses": {
+            "SAT": 0,
+            "UNKNOWN": 0,
+            "UNSAT": 10
+          }
+        }
+      },
+      "positive_unsampled": 1003,
+      "post_validation_wall_s": 1.8477087629944435,
+      "proof_queries": 123,
+      "retained": 103,
+      "sentinel_ranks": [],
+      "status": "COMPLETE",
+      "supervisor_wall_s": 12.984921083996596,
+      "timing": {
+        "baseline_search_and_witness_wall_s": 0.21174070100096287,
+        "preparation_wall_s": 1.8674666009974317,
+        "proof_and_binding_wall_s": 6.106042979998165,
+        "unsampled_search_wall_s": 0.1430077440018067
+      },
+      "topk_dropped": 900
+    },
+    {
+      "baseline_candidates": 0,
+      "baseline_qualified": 0,
+      "case": "034_b20_opt",
+      "ci_only": 0,
+      "free_queries": 0,
+      "new_qualified": 0,
+      "new_roots": {},
+      "no_sampled_free_witness": 384,
+      "nonpositive": 384,
+      "phases": {
+        "free": {
+          "queries": 0,
+          "statuses": {
+            "SAT": 0,
+            "UNKNOWN": 0,
+            "UNSAT": 0
+          }
+        },
+        "image": {
+          "queries": 0,
+          "statuses": {
+            "SAT": 0,
+            "UNKNOWN": 0,
+            "UNSAT": 0
+          }
+        },
+        "reset": {
+          "queries": 0,
+          "statuses": {
+            "SAT": 0,
+            "UNKNOWN": 0,
+            "UNSAT": 0
+          }
+        }
+      },
+      "positive_unsampled": 0,
+      "post_validation_wall_s": 1.4461441659950651,
+      "proof_queries": 0,
+      "retained": 0,
+      "sentinel_ranks": [],
+      "status": "COMPLETE",
+      "supervisor_wall_s": 12.162133588994038,
+      "timing": {
+        "baseline_search_and_witness_wall_s": 0.014092008997977246,
+        "preparation_wall_s": 2.214461666000716,
+        "proof_and_binding_wall_s": 5.775400516002264,
+        "unsampled_search_wall_s": 0.03673688499839045
+      },
+      "topk_dropped": 0
+    },
+    {
+      "baseline_candidates": 25,
+      "baseline_qualified": 0,
+      "case": "041_des_area",
+      "ci_only": 0,
+      "free_queries": 3,
+      "new_qualified": 0,
+      "new_roots": {},
+      "no_sampled_free_witness": 854,
+      "nonpositive": 851,
+      "phases": {
+        "free": {
+          "queries": 3,
+          "statuses": {
+            "SAT": 2,
+            "UNKNOWN": 0,
+            "UNSAT": 1
+          }
+        },
+        "image": {
+          "queries": 2,
+          "statuses": {
+            "SAT": 2,
+            "UNKNOWN": 0,
+            "UNSAT": 0
+          }
+        },
+        "reset": {
+          "queries": 2,
+          "statuses": {
+            "SAT": 0,
+            "UNKNOWN": 0,
+            "UNSAT": 2
+          }
+        }
+      },
+      "positive_unsampled": 3,
+      "post_validation_wall_s": 1.4381815809974796,
+      "proof_queries": 7,
+      "retained": 3,
+      "sentinel_ranks": [],
+      "status": "COMPLETE",
+      "supervisor_wall_s": 11.560616677001235,
+      "timing": {
+        "baseline_search_and_witness_wall_s": 0.1509616180046578,
+        "preparation_wall_s": 1.5723415870015742,
+        "proof_and_binding_wall_s": 5.998764149000635,
+        "unsampled_search_wall_s": 0.11951408100139815
+      },
+      "topk_dropped": 0
+    }
+  ],
+  "interpretation": "Fixed-worklist discovery/proof diagnostic only. No comparative speed, actual area, global structural novelty, independent benchmark generalization, or online claim.",
+  "main_metric_and": null,
+  "native_novelty": "NOT_CHECKED",
+  "new_identities_file": "newly_qualified_identities.json",
+  "products_dsec_run": false,
+  "schema": 1,
+  "start_utc": "2026-10-02T04:46:24.219850+00:00",
+  "summary_sha256": "7b78d58884ad3c853238d9bd909c0366635608af762da8791478e9cf5c6434c0",
+  "total_case_wall_s": 57.2920754509978,
+  "total_new_qualified": 55,
+  "total_post_validation_wall_s": 6.248345514984976,
+  "total_proof_queries": 579
+}

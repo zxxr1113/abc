@@ -1,0 +1,88 @@
+{
+  "audit_source_manifest_sha256": "010ed4932e00829da008d5672acfb83bcece4c44bf12f8897d30b311e66eba16",
+  "case": "045_mem_ctrl",
+  "claim_limits": [
+    "Recipe identities are not unique Boolean functions",
+    "Bounded Direct audit is not global Boolean Direct exhaustion",
+    "No native novelty or online/full-cohort effectiveness claim",
+    "Raw7 and mixed3 same-set removal marginals are not paired+7 or+3"
+  ],
+  "costs": {
+    "extra_review_wall_s": 22.427557613002136,
+    "new_reviewer_DSEC_calls": 0,
+    "new_reviewer_solver_calls": 0,
+    "new_reviewer_solver_queries": 0,
+    "recorded_fresh_DSEC_wall_s": 81.522531446004,
+    "recorded_hard_supervisor_wall_s": 182.46905362099642,
+    "recorded_post_acceptance_wall_s": 3.063958382997953,
+    "recorded_solver_process_wall_s": {
+      "Build": 0.2659322980034631,
+      "Direct": 1.9406166810003924
+    },
+    "recorded_worker_wall_s": 182.18054365400167
+  },
+  "cumulative": {
+    "genuine_Build_same_mixed_set_AND": 3,
+    "mixed_gain_AND": 28,
+    "new": 55,
+    "old_retained": 49,
+    "qualified_identities": 104,
+    "raw_gain_AND": 23
+  },
+  "evidence": {
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-terminal-v1/compact_metrics.csv": "da5dab7c5f59a97b4e1f34345be784e1a8b441d7147a122f4703e789555e5113",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-terminal-v1/historical_authentication.json": "63a1c54bf50f4d18f546083c7b42cc9d92ad4b2e311dff491cab68be9002d8a2",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-terminal-v1/review.json": "43d3002bdf81c22856c7563be96073ad1e810938cc048b3b3fa69103f8b1725b",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/review_product_terminal.py": "44334ca5c620fb9b9fcfa01c8c86c4dfc62b4a5ecf21265ed7261a56b4796f12"
+  },
+  "exact_paired_deltas": {
+    "all_genuine_Build_same_mixed_set_AND": 1,
+    "mixed_product_AND": 1,
+    "raw_product_AND": 1
+  },
+  "historical": {
+    "conclusion": "Recovers the already-known local+1 AND corrected mixed/genuine-Build result; no new area gain beyond it",
+    "cumulative_mixed_identical_to_known_B_and_union52": true,
+    "cumulative_raw_differs_from_known_B_but_same_AND_gain": true,
+    "mixed_product_sha256": "f331eeaa9e0422c2b26bb123bae8794e80231ef552632f2067062eef45e5b60c",
+    "old_A_products_identical": true,
+    "reference_review_sha256": "98615417a23ad6e634a195bf742081cee4d277b094d1f56ec9dfc0cb5bb34cca"
+  },
+  "old": {
+    "genuine_Build_same_mixed_set_AND": 2,
+    "mixed_gain_AND": 27,
+    "qualified_identities": 49,
+    "raw_gain_AND": 22
+  },
+  "policy_status": "STOPPED after this single-design attribution audit; no further solver/online/full-cohort run",
+  "removal_marginals": {
+    "cumulative_new_identity_same_mixed_set_AND": 3,
+    "cumulative_new_identity_same_raw_set_AND": 7,
+    "paired_gain_AND": 1
+  },
+  "shared_Direct": {
+    "candidates": 312,
+    "grammar_hash_extras": 12,
+    "positive_proved": 10,
+    "raw_Build_roots_each_arm": 6,
+    "raw_grammar_recipes_independently_enumerated": 1285056,
+    "raw_roots_with_cheaper_Direct_each_arm": 5,
+    "roots": 6,
+    "sole_genuine_mixed_Build_root": 1263
+  },
+  "status": "PASS",
+  "verification": {
+    "Build_queries": 312,
+    "Direct_counterfactuals_reconstructed": 20,
+    "Direct_queries": 936,
+    "UNKNOWN": 0,
+    "all_CO_substitution_worlds": 3584,
+    "complete_witnesses_replayed": 363,
+    "exact_graph_DSEC_reuses_authenticated": 11,
+    "exact_products_independently_rebuilt": 28,
+    "fresh_DSEC_records_authenticated": 17,
+    "new_output_aliases": 0,
+    "recorded_proof_queries_authenticated": 1248,
+    "whole_original_candidates": 104
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+  "attribution_requirements_confirmed": [
+    "Old49 and new55 identities are disjoint; all49 old identities remain in exact cumulative104 without backfill or search",
+    "All104 Build triples are freshly queried; each must be SAT/UNSAT/UNSAT with complete replayed source witness or the audit stops",
+    "Both raw selections use unchanged frozen selector; both mixed selections use the same bounded Direct set over union of the raw-selected roots, saved pools, used divisors, and exact connected one/two-AND zero-fresh extras",
+    "Directs require reset/image UNSAT and positive gain; free UNKNOWN is separately reported and is not a non-combinational Build certificate",
+    "Genuine classification combines whole-original safe aliases and canonical live-new gate count with actual selected-set live/new realization; future aliases are not substituted into product topology",
+    "Every raw/mixed no-new-identities, no-all-genuine, and no-new-genuine product removes candidates from that exact same full selection without reselection",
+    "Every distinct audit product requires its own original-input DSEC; only exact input/product/ABC duplicate hashes may reuse a PASS from this audit",
+    "Same-root Direct dominance keeps all other selected choices fixed, reports selector compatibility, and only marks the deterministic best cheaper alternative validated after DSEC",
+    "Paired full-product gain, same-set identity marginal, same-set genuine-Build marginal, and conservative candidate gains remain distinct"
+  ],
+  "dependencies": {
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/global_expression_review/review.py": "456659d79acfcabcadbd6d04c69202204f4040d092eb1157b8697f15d12c666a",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/nonlinear_divisors/hash_direct_audit.py": "c3116812d28f1fafd1e98b71f3f4c7fb2d9e877029f4bd6d9eef8697954a5251"
+  },
+  "diagnostic_review_sha256": "24d75480c0b260235ac65465ee4c05aacfb7bc020fa6a07fdcf775455f319fab",
+  "evidence": {
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/check_product_rebuild.py": "3162770bc18ae19680b2372c40817ee6971df90ad46a3f85a9bc06037b296e70",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-rebuild-v1/review.json": "4d2181de0dbd20ff20d2032933c57771555824f8bad7e68a7b7ad556c87b16bf",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-suite-v1/review.json": "90a066aefbfe936261de9c4d471fe49e3f4e52005c3e951bcae4a978637980a6",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-suite-v1/tests.log": "7aa782793165cd79c125bfda62ec30f8b12ae58ebca8ac4f5600e765a9453d1d",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/run_product_tests.py": "444e65d8d5de0576ce43014a099594cf54ea8b89f7657a84e3269dd4dc56c416"
+  },
+  "frozen_source_directory": "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-frozen-source",
+  "parent_go": "STILL_REQUIRED",
+  "policy_stops_after_single_design_audit": true,
+  "protocol_sha256": "a1405d188aa27d39ea893861be735ba64c33efcc916af1106dee9c0cd36e3ecc",
+  "real_work_accounting": {
+    "finished_diagnostic_reruns": 0,
+    "fresh_tiny_solver_calls": 2,
+    "fresh_tiny_solver_queries": 6,
+    "mem_product_audit_executed": false,
+    "real_DSEC_calls": 0
+  },
+  "remaining_limits": [
+    "No product execution, actual mem DSEC, area result, Boolean-uniqueness claim, or native novelty established by this gate",
+    "Bounded shared Direct alternatives are not exhaustive whole-graph Boolean Direct search",
+    "Structural-only non-best Direct counterfactuals are not DSEC-validated products",
+    "One mem-only audit and its independent result review are the stopping boundary regardless of outcome; no online/full-cohort policy run"
+  ],
+  "resolved_findings": [
+    "Terminal independent review now anchors the exact130 original run files and rejects changed or additional files, rather than merely hashing current bytes",
+    "Every emitted product, selection, fresh DSEC log/receipt, and per-product result is immutable across subsequent fresh or reused DSEC operations and final acceptance",
+    "Persisted fresh-proof reports must equal completion report content; full result digest and artifact tree remain anchored to the captured worker completion",
+    "Immutable proof artifact/tool hashes are cached once per batch after full source checks, eliminating repeated159MB solver hashing inside each receipt",
+    "Per-operation120s limits are correctly described as child-process timeouts; the whole audit retains a hard600s launch-through-exit deadline"
+  ],
+  "runtime_bound_to": "Previously reviewed frozen nonlinear runtime and its original manifest; no production change",
+  "schema": 1,
+  "scope": "Exact-source/protocol gate for one separately costed mem_ctrl attribution audit; parent GO still required",
+  "solver_build_sha256": "629e68b05df02e7fa3535a28ad3ca854f9d49107916d6743e8dd44da16a440dd",
+  "solver_sha256": "973f9768c8e5521c4f3377a218b301894d2331400ff66e0bdf7f4af391769fd1",
+  "source_manifest": {
+    "README.md": "4cdddd2012f3005ae57449b9192a07e385058e0f9c5ec3f25cec399c7430b827",
+    "audit.py": "821dc021294773969c14c8173872f1c068f835cc81e988d5ece01c961dbc74d8",
+    "certificates.py": "bbdd007c90bc1bb92bc0adca8d828a96314d2a228e3a9a1268f5bf31c462e5e1",
+    "products.py": "58b28f1c79b97937380f6897fedcf10c9322389770169eba9fb61ebacf9a88da",
+    "proofs.py": "7638141715820588b0aa7cb2b7542dbef67d1ef35f72ada9a4e41a325e8cccfb",
+    "protocol.json": "a1405d188aa27d39ea893861be735ba64c33efcc916af1106dee9c0cd36e3ecc",
+    "support.py": "dd1544c0bd9fc3cddb5b3bf1515fc4fda2e1480dd3bcae01fadc515f02f0deb5",
+    "test_audit.py": "95391b887e125fed1cbb6d6f597ea1e2cd22eec17a07120f40f02143a1d7ffa2"
+  },
+  "source_manifest_sha256": "010ed4932e00829da008d5672acfb83bcece4c44bf12f8897d30b311e66eba16",
+  "status": "PASS",
+  "test_results": {
+    "errors": 0,
+    "exhaustive_substitution_all_co_worlds": 1280,
+    "failures": 0,
+    "independent_exact_byte_rebuilds": 40,
+    "reviewed_terminal_run_files": 130,
+    "skips": 0,
+    "synthetic_tests": 19
+  }
+}

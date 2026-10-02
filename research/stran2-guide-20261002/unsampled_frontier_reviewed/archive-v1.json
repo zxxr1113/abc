@@ -1,0 +1,16 @@
+{
+  "archive": "/workspace/scratch/7e0c7273599c/stran2-unsampled-frontier-final-packet-v1.tar.gz",
+  "bytes": 7685342,
+  "compact_directory": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/unsampled_frontier_reviewed",
+  "exported_original_files": 425,
+  "fresh_DSEC_logs": 17,
+  "independent_product_review_sha256": "43d3002bdf81c22856c7563be96073ad1e810938cc048b3b3fa69103f8b1725b",
+  "new_DSEC_calls": 0,
+  "new_solver_calls": 0,
+  "packet_directory": "/workspace/scratch/7e0c7273599c/stran2-unsampled-frontier-final-packet-v1",
+  "policy_stopped": true,
+  "portable_primary_pairs": 18,
+  "sha256": "846c0a97ee3af7c33f978119bae5c38bd5f0c098cd18cdf551beae3ce4e5ff54",
+  "total_products": 28,
+  "uncompressed_files": 516
+}

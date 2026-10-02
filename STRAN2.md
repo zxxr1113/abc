@@ -356,6 +356,39 @@ RSS采样器改用owned PPid/start-token关系，已验证nested worker/child及
 
 **结论：结束本轮全局前态free/cache调优支线，不扩展55例、不替换推荐v3配置。**缓存是正确且局部有用的工程能力，但当前前态free搜索在固定预算下不占优。后续仅做独立、小规模的候选补充诊断：把无采样差异视为“未知”而非已证组合等价，用候选局部free-SAT模型分类，保持正常候选池与证明边界，不再默认增长全局free域；是否有额外收益仍待实验，不能提前宣称。
 
+### 独立无采样差异候选frontier：55个额外配方证明，仍只恢复已知局部+1 AND
+
+为避免全局free域增长，另建完全隔离的 `unsampled_frontier_diagnostic/`：冻结mem_ctrl/wb_dma/b20_opt/des_area的四个历史first32窗口、第一次image refinement后的seq域及初始256free域，原witnessed top8搜索逐条/逐counter复现，额外保留每root固定top8正保守gain且使用非线性divisor、但初始free样本无差异的规范化配方。使用原candidate_key排序，无backfill或case调参；已知root1263三配方只旁观排名、不注入。先做独立free-SAT并完整回放candidate-local PI/RO模型，再reset-UNSAT和unrestricted-image-UNSAT；COMB-UNSAT/UNKNOWN不计成功，模型不追加到全局签名，也不当成reachable teacher。
+
+原型实现需要新free-model证书路径，不能给旧 `witness_lane` 伪造一个lane。source/CNF/有序queries/receipt/model及worker completion/report/union字节链全部绑定；审查捕获并修复completion摘要忽略、未绑定report/union的缺口，追加拒绝Python -O和意外nested结果文件。最终39项synthetic测试、24个独立小图穷举枚举/rank/cost对照，以及原图free/reset/image truth oracle通过后，才运行冻结协议 `237ce7ea22780dcb03caf8bbd911b0c6d9b56ebcf9784bddbc80184462654cb3`（源manifest `41873dc02c17f47ee53d417bdce922404d5a8fedac342f0476bb60d193cab5df`）。单worker，每case硬120s包含准备、原搜索、补充搜索、证明、完整性与写结果；后置接受校验额外计时，不使迟到产物成为有效结果。
+
+| first32案例 | 正gain unsampled身份 | 额外top8保留 | free-SAT | reset/image均通过 |
+|---|---:|---:|---:|---:|
+| mem_ctrl | 14632 | 155 | 147 | 55 |
+| wb_dma | 1003 | 103 | 10 | 0 |
+| b20_opt | 0 | 0 | 0 | 0 |
+| des_area | 3 | 3 | 2 | 0 |
+
+四例均完成，原273个baseline配方/见证及所有domain不变，无UNKNOWN。mem三个已知sentinel自然排第4/5/6且通过；55个额外qualified分布11roots，但只是相对原候选集合的**配方身份**，不是55个唯一布尔函数、新颖Build或面积机会。实际579查询；四case硬wall合计57.29s（20.58/12.98/12.16/11.56），后置接受6.25s；没有与旧方法严格同工作量的速度对照。独立复核额外42.56s，重新枚举128个frontier、还原1024初始world/420原image模型、重建四个CNF及579义务，回放159完整free模型；无新solver/DSEC。
+
+只对有新增关系的mem做单独、额外成本归因，协议 `a1405d188aa27d39ea893861be735ba64c33efcc916af1106dee9c0cd36e3ecc`：完整保留old49和union104（49+55），重证104组三义务、完整原图结构hash/依赖/live-gate检查；raw选择root共同union仍为6个，用同一312项Direct池（含12个零fresh grammar hash补充）公平比较。10项Direct positive，无UNKNOWN。两臂6个raw-selected root各有5个存在DSEC确认的更便宜Direct，mixed集合里唯一真正Build都是root1263。
+
+结果为 **raw22→23 AND，mixed27→28 AND，genuine Build同mixed-set边际2→3 AND，配对只改善+1 AND**。union中去除所有新配方的raw同集合边际是7，mixed同集合边际是3，二者都不是配对+7/+3。新增55配方无原图output结构alias，但Direct替代覆盖两臂实际选中raw roots的5/6。union104最终mixed图SHA `f331eeaa9e0422c2b26bb123bae8794e80231ef552632f2067062eef45e5b60c` 与此前B/union52的mixed图逐字节完全相同；old49产品也与历史A相同。因此它仅恢复**已经知道的局部+1 AND**，没有额外新产品收益。
+
+该归因硬wall182.469s、后置接受3.064s，1248查询（Build312/Direct936），17次fresh DSEC及11次exact-graph复用，fresh DSEC wall81.523s。独立审计额外22.428s，无新solver/DSEC，重建28产品，以每产品128个固定种子随机PI/RO赋值回放全部PO/RI，共3584次world检查，独立枚举1285056个raw grammar recipes确认共同Direct边界与20个Direct反事实。审查前捕获的product/DSEC字节保护及历史run-ledger认证缺口已修复并完成19项synthetic测试及40图/1280world独立对照，之后才执行实际归因。完整原始记录在scratch的 `unsampled-frontier-fixed32-v1/` 与 `unsampled-frontier-mem-attribution-v1/`；紧凑证据在 `cloud_validation_20261001/unsampled_frontier_reviewed/`。
+
+**按原定停止标准结束该单设计策略**：四个固定窗口只有mem有新增proved，最终仅恢复已知收益，不再提高top-k围绕sentinel调参，不进入online/full55。这个结果证明free样本无差异不应被解释成已证组合等价，但也说明更多可证配方可被更便宜Direct支配；尚不足以支持新的有效全流程优化或native-search novelty主张。下一步优先补全原生强前缀的精确配置/验证证据，而非继续无界堆搜索分支。
+
+### 强原生前缀的来源核对：不是普通单次scorr，精确重放仍缺配置记录
+
+重新只读核对当前实际110份图（55 first_seq +55 loaded）均与 `cases.json` SHA相同；每个first_seq的SHA及first_seq/loaded AND又与保存的 `seq_cut_image/final_results.json` metrics逐例一致。其35条输入来源指向Fast35 `joint_baseline/prefix/.../round-NN-scorr.aig`，20条指向 `20261001T0704_shuguang_new58_holdout_joint/.../round-NN-scorr.aig`；b20_opt/mem_ctrl/wb_dma分别记录为round07/03/05。因此当前55输入继承的是**原报告中增强COMB+scorr联合稳定前缀的历史来源**，不能把它们说成仅一次普通scorr之后的输入；这项hash对照也不是今天重新执行了稳定性/SEC链。原报告描述Guide-on与Guide-off的匹配CBS-only COMB、集成scorr和独立F1/C1000 scorr，按decoded graph identity反复，16轮及各命令120s上限；精确runner/环境开关仍以原manifest为准。
+
+原生增强COMB源码并非全部缺失：包内 `seq_cut_image_runtime/builds/20261001T162338Z_shuguang_554899/seq_cut_image_runtime.source.tar.gz` 为7,988,479 bytes，SHA `62b1b0c2a259ca68c2473d5c875fac6c321b840611cf024f99d177e79c5f4220` 已核验；2541个成员位于source/下，`.gitcommit`为75ae0910ee100ba6162e333b1fab42b7d2f42dda。只stream-read相关文件确认 `ABC_STRAN_PAPER_COMB_MODE`（mode2按实际AND下降重复）、COMB_Q/TFO/NO_CEX、SKIP_SEQ、SEQ_CBS_ONLY等控制存在，增强COMB能使用Guide、active CEX、TFO及配置q/j且保留CBS-only证明。当前live `cecTrans.c`没有这些PAPER hook，只做q4单次COMB，不能拿它或泛化resub代替已记录的匹配控制。此次未展开源码树、编译或运行。
+
+该archive是较晚的seq_cut_image研究runtime，不等于原prefix生成器的完整身份。其目录清单不含joint/holdout manifest、prefix runner、每轮结果或build JSON，归档STRAN2早于联合前缀叙述；附带strict-guide脚本虽有q20/j5/F1/C1000相似配置，却未启用PAPER控制/联合loop，不得猜作原命令。`seq_care_synthesis/guide.py`也明确从原joint manifest读取command/prefix_env，不提供默认替代。精确重放最小仍需：Fast35 joint manifest与holdout manifest/runner（保留命令、prefix_env、Guide/CEX及停止规则）；原prefix source/build身份用于与现有archive比较；先取固定六例的final prefix result、最后稳定周期component图/log与loaded→prefix SEC记录。无需先要求另一个源码archive，除非身份无法对齐，或比较后确需补充原版本/补丁。
+
+v3全55 Python源可由本地Git精确取回：e738c06与ab743c4均匹配 `full_cohort_validation/protocol.json`（SHA22dcbbd…8e2）的17个源hash；当前HEAD三个相关文件已变，不应把当前版本运行叫作exact-v3。上述缺口不否定既有非组合free-SAT/时序证明及图收益，只限制新的强原生对照复现和更宽的native-search novelty结论；也没有证明任意COMB优化的全局最优下界。后续应先补这几份配置/证据，再在同host对六个既有prefix重放确切联合cycle，保留变化/失败，再评估v3残余，避免继续盲目叠加搜索支线。
+
 ### 先行工作校准与待证明贡献
 
 本轮检索后的结论是：reset/image 证明原理及反例反馈均有明确先行工作，不能作为新理论宣称。

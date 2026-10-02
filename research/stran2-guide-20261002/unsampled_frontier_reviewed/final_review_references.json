@@ -1,0 +1,12 @@
+{
+  "policy_stopped": true,
+  "references": {
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-terminal-v1/final_review.json": "a26384de8f9b57384adf3fe8ec3d1902d52b1f584ce6a10bcfcb4d85d9b0bddc",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-terminal-v1/historical_authentication.json": "63a1c54bf50f4d18f546083c7b42cc9d92ad4b2e311dff491cab68be9002d8a2",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product-terminal-v1/review.json": "43d3002bdf81c22856c7563be96073ad1e810938cc048b3b3fa69103f8b1725b",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/product_gate_review.json": "f988cd84fed774bc9d2035940c1ec9f88fc8dd65e17deae577ccf8fc077dc8ff",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/review.json": "d80586f5e1dda91ce6e7ebb73a75fcc44de46f2bd08395b6619a0a58d22bb246",
+    "/workspace/scratch/7e0c7273599c/unsampled-frontier-review/terminal-v1/final_review.json": "24d75480c0b260235ac65465ee4c05aacfb7bc020fa6a07fdcf775455f319fab"
+  },
+  "status": "PASS"
+}

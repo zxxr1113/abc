@@ -1,0 +1,50 @@
+[
+  {
+    "candidate_id": [
+      1263,
+      [
+        393,
+        2502,
+        -2,
+        2516
+      ],
+      -4
+    ],
+    "eligible": true,
+    "injected": false,
+    "rank": 4,
+    "retained": true
+  },
+  {
+    "candidate_id": [
+      1263,
+      [
+        393,
+        2503,
+        -3,
+        2516
+      ],
+      -4
+    ],
+    "eligible": true,
+    "injected": false,
+    "rank": 5,
+    "retained": true
+  },
+  {
+    "candidate_id": [
+      1263,
+      [
+        393,
+        2516,
+        -2,
+        2502
+      ],
+      -4
+    ],
+    "eligible": true,
+    "injected": false,
+    "rank": 6,
+    "retained": true
+  }
+]

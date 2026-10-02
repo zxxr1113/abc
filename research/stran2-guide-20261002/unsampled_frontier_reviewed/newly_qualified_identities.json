@@ -1,0 +1,694 @@
+[
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2382
+    ],
+    "root": 1231
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2384
+    ],
+    "root": 1231
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2412
+    ],
+    "root": 1231
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2414
+    ],
+    "root": 1231
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2416
+    ],
+    "root": 1231
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2448
+    ],
+    "root": 1231
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 2,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2416
+    ],
+    "root": 1239
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2416,
+      2460
+    ],
+    "root": 1239
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2460,
+      2468
+    ],
+    "root": 1239
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2460,
+      2476
+    ],
+    "root": 1239
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      1926,
+      -2,
+      2416
+    ],
+    "root": 1239
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      2416,
+      -2,
+      1926
+    ],
+    "root": 1239
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1926,
+      2416
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1933,
+      2460
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2416,
+      2460
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2460,
+      2468
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2460,
+      2476
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2460,
+      2480
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      1926,
+      -2,
+      2416
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      2416,
+      -2,
+      1926
+    ],
+    "root": 1242
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      2502,
+      -2,
+      2516
+    ],
+    "root": 1263
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      2503,
+      -3,
+      2516
+    ],
+    "root": 1263
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      2516,
+      -2,
+      2502
+    ],
+    "root": 1263
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1932,
+      2382
+    ],
+    "root": 1281
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1932,
+      2384
+    ],
+    "root": 1281
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1932,
+      2416
+    ],
+    "root": 1281
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1932,
+      2502
+    ],
+    "root": 1281
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2382,
+      2552
+    ],
+    "root": 1281
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 5,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2384,
+      2552
+    ],
+    "root": 1282
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 5,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2416,
+      2552
+    ],
+    "root": 1282
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 5,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2440,
+      2552
+    ],
+    "root": 1282
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 5,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2448,
+      2552
+    ],
+    "root": 1282
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -5,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2384,
+      -3,
+      2577
+    ],
+    "root": 1291
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -5,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2414,
+      -3,
+      2577
+    ],
+    "root": 1291
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -5,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2416,
+      -3,
+      2577
+    ],
+    "root": 1291
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -5,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2450,
+      -3,
+      2577
+    ],
+    "root": 1291
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2382
+    ],
+    "root": 1292
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2384
+    ],
+    "root": 1292
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2414
+    ],
+    "root": 1292
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2416
+    ],
+    "root": 1292
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2448
+    ],
+    "root": 1292
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2502
+    ],
+    "root": 1292
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1912,
+      2556
+    ],
+    "root": 1292
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 3,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1940,
+      2416
+    ],
+    "root": 1298
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 2,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      2416,
+      2594
+    ],
+    "root": 1298
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 2,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      1940,
+      -2,
+      2416
+    ],
+    "root": 1298
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 2,
+    "out": -4,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      393,
+      2416,
+      -2,
+      1940
+    ],
+    "root": 1298
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -5,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2384,
+      -3,
+      2603
+    ],
+    "root": 1304
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -5,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2416,
+      -3,
+      2603
+    ],
+    "root": 1304
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 1,
+    "out": -5,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2512,
+      -3,
+      2603
+    ],
+    "root": 1304
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2382
+    ],
+    "root": 1305
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2384
+    ],
+    "root": 1305
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2414
+    ],
+    "root": 1305
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2416
+    ],
+    "root": 1305
+  },
+  {
+    "case": "045_mem_ctrl",
+    "conservative_gain": 4,
+    "out": -2,
+    "proof_source": "/workspace/scratch/7e0c7273599c/unsampled-frontier-fixed32-v1/045_mem_ctrl/work/proof/candidates.json",
+    "proof_source_sha256": "54bc0deeffcdce81a01bc29d7b348533312a38035a9ce468f11cb444e559f83b",
+    "recipe": [
+      1890,
+      2502
+    ],
+    "root": 1305
+  }
+]

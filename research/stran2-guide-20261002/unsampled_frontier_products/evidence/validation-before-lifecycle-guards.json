@@ -1,0 +1,25 @@
+{
+  "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+  "dependencies": {
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/global_expression_review/review.py": "456659d79acfcabcadbd6d04c69202204f4040d092eb1157b8697f15d12c666a",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/nonlinear_divisors/hash_direct_audit.py": "c3116812d28f1fafd1e98b71f3f4c7fb2d9e877029f4bd6d9eef8697954a5251"
+  },
+  "diagnostic_review_sha256": "24d75480c0b260235ac65465ee4c05aacfb7bc020fa6a07fdcf775455f319fab",
+  "diagnostic_source_manifest_sha256": "41873dc02c17f47ee53d417bdce922404d5a8fedac342f0476bb60d193cab5df",
+  "execution_requires_parent_go": true,
+  "policy_stops_after_single_design_audit": true,
+  "protocol_sha256": "d9d8b886a1968e77c7b719b1594d94eb3de29c243d044d76093e6fc24f1ad9a6",
+  "real_dsec_calls": 0,
+  "real_mem_product_audit_executed": false,
+  "real_tiny_solver_calls": 2,
+  "real_tiny_solver_queries": 6,
+  "solver_build_sha256": "629e68b05df02e7fa3535a28ad3ca854f9d49107916d6743e8dd44da16a440dd",
+  "solver_sha256": "973f9768c8e5521c4f3377a218b301894d2331400ff66e0bdf7f4af391769fd1",
+  "source_manifest_sha256": "57b4f127345d7d26f1a3493980bbda407d0849347f4653d0995f18949fdc2a8b",
+  "source_review_pending": true,
+  "status": "PASS",
+  "synthetic_only": true,
+  "test_log_sha256": "f517a8eaba13fa7ec7d55fa31b86a9c6be458b6741ee2fbf3328755182fccba8",
+  "test_source_sha256": "ca667a32212bd29019c55198b4e5704b3982d0ce4ef5ac87e638c11119e6a6f7",
+  "tests": 17
+}

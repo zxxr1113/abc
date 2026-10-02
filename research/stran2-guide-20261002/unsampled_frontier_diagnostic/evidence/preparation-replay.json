@@ -1,0 +1,42 @@
+{
+  "boundary": "Historical domain and saved proof-reference replay only; no candidate search or solver execution",
+  "cases": [
+    {
+      "baseline_qualified_references": 49,
+      "case": "045_mem_ctrl",
+      "free_lanes": 256,
+      "searches": 0,
+      "sequence_sha256": "a2dd2106e0a185b17c2af7882c0def6e0ec45236885ce0f497c63c2e838eff0a",
+      "solver_calls": 0,
+      "status": "PASS"
+    },
+    {
+      "baseline_qualified_references": 13,
+      "case": "060_wb_dma",
+      "free_lanes": 256,
+      "searches": 0,
+      "sequence_sha256": "2da6284f18b6f18ac8ef750f29fe2d1a2ccc6e70d5f5fb42fa6b6edeccea4a8b",
+      "solver_calls": 0,
+      "status": "PASS"
+    },
+    {
+      "baseline_qualified_references": 0,
+      "case": "034_b20_opt",
+      "free_lanes": 256,
+      "searches": 0,
+      "sequence_sha256": "dcb97d724cbb83caa494ae72fc082b40741710f5a0790495322cefe48dca15e5",
+      "solver_calls": 0,
+      "status": "PASS"
+    },
+    {
+      "baseline_qualified_references": 0,
+      "case": "041_des_area",
+      "free_lanes": 256,
+      "searches": 0,
+      "sequence_sha256": "4a7a951cc2c3bc4a60a03e4615d9fd1d46835d3605a084bcc6c05cf21da49f7e",
+      "solver_calls": 0,
+      "status": "PASS"
+    }
+  ],
+  "original_evidence_modified": false
+}

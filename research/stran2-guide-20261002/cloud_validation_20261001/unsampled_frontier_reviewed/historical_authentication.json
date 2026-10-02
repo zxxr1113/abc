@@ -1,0 +1,13 @@
+{
+  "historical_graphs": {
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/products-v1/A/build_only/product.aig": "c961682f66cf9074194d3d1af862bc51bdf4ee39209bd374ab6b1089a516786e",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/products-v1/A/mixed/product.aig": "6ac4c7f8f18438a8950359841b283911f52d136507a177c00374f23a27a9ae4e",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/products-v1/B/build_only/product.aig": "2d6da2ca771169fd73ff50f45d82b84346a20f50e025c40b4590dd0d155e4305",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/runs/products-v1/B/mixed/product.aig": "f331eeaa9e0422c2b26bb123bae8794e80231ef552632f2067062eef45e5b60c"
+  },
+  "interpretation": "New mixed product exactly equals the independently reviewed historical B graph; old49 products exactly equal historical A. Historical source hashes authenticated, not re-proved.",
+  "new_DSEC_calls": 0,
+  "new_solver_calls": 0,
+  "prior_review_sha256": "98615417a23ad6e634a195bf742081cee4d277b094d1f56ec9dfc0cb5bb34cca",
+  "status": "PASS"
+}
