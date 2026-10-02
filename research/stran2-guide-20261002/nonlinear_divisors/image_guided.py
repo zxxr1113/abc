@@ -85,6 +85,12 @@ class ImageGuidance:
         self.metrics = Counter()
         self.search_cache = {}
         self.initial_hash = signature_hash(seq, mask)
+        self.free_guidance = None
+        self.free_only_revisited = set()
+        if job.get("predecessor_free"):
+            from free_guided import PredecessorFreeDomain
+            self.free_guidance = PredecessorFreeDomain(a, graph, base, step, free, free_mask,
+                                                       job, config, deadline)
 
     def annotate(self, candidates):
         for candidate in candidates:
@@ -94,6 +100,8 @@ class ImageGuidance:
                 added_domain=DOMAIN, reachable_teacher=False,
                 proof_class="reset_zero_plus_unrestricted_one_step_image",
                 proof_source="independent ordinary solver on immutable original transition")
+        if self.free_guidance:
+            self.free_guidance.annotate(candidates)
 
     def remember_search(self, root, pool, pool_info, candidates, stats):
         """Remember an exact completed top-k result for this immutable pool."""
@@ -106,6 +114,9 @@ class ImageGuidance:
             p.require(old["key"] == key and old["pool_info"] == pool_info, "frozen root/pool mismatch")
         self.search_cache[root] = dict(key=key, pool_info=copy.deepcopy(pool_info),
             candidates=copy.deepcopy(candidates), stats=dict(stats), teacher_version=self.version)
+        if self.free_guidance:
+            row = dict(root=root, pool=pool)
+            self.search_cache[root]["dual_projection"] = self.free_guidance.projection(row, self.seq, self.mask, self.version)
 
     def checked_cache(self, row):
         p.require(row["root"] in self.search_cache, "unregistered frozen root/pool")
@@ -118,6 +129,9 @@ class ImageGuidance:
 
     def cached_search(self, row):
         old = self.checked_cache(row)
+        if self.free_guidance:
+            current = self.free_guidance.projection(row, self.seq, self.mask, self.version)
+            p.require(current.can_reuse_search(old["dual_projection"]), "free/sequence projection changed before cached search")
         return copy.deepcopy(old["candidates"]), Counter(old["stats"])
 
     def search_again(self, row, changed):
@@ -127,6 +141,15 @@ class ImageGuidance:
             self.seq, self.mask, self.free, self.free_mask, self.config, self.deadline)
         self.remember_search(row["root"], row["pool"], row["pool_info"], cs, stats)
         return cs, stats
+
+    def finish_chunk(self, roots):
+        if self.free_guidance:
+            # Past roots are never revisited by this fixed-prefix controller.
+            # Keep dual-domain row sets bounded to the active chunk; proved
+            # candidates live in anytime's separate cumulative qualified list.
+            for row in roots:
+                self.search_cache.pop(row["root"], None)
+            self.free_only_revisited.discard(tuple(row["root"] for row in roots))
 
     def mark_attempted(self, candidates):
         for candidate in candidates:
@@ -169,6 +192,13 @@ class ImageGuidance:
         target.parent.mkdir(exist_ok=True)
         samples, model_report = self.collect(sources, target)
         replayed = json.loads((target / "replayed_models.json").read_text())
+        free_admission = None
+        if self.free_guidance:
+            # Consume all authenticated rows BEFORE successor/projection dedup.
+            free_admission = self.free_guidance.admit(sources, target, model_report, replayed)
+            snapshot = self.free_guidance.state.snapshot()
+            self.free, self.free_mask = snapshot.signatures, snapshot.mask
+            p.write_json(target / "free_admission.json", free_admission)
         indexed = {}
         for row in replayed:
             p.require(row["domain"] == DOMAIN and row["reachable_teacher"] is False and row["replay"] == "PASS",
@@ -185,6 +215,25 @@ class ImageGuidance:
         if added:
             self.seq, self.mask = d.append_samples(self.seq, self.mask, added)
             self.version += 1
+        free_changed_roots, free_only_capped = set(), False
+        if self.free_guidance:
+            changed_roots = set()
+            for row in roots:
+                previous = self.checked_cache(row)["dual_projection"]
+                current = self.free_guidance.projection(row, self.seq, self.mask, self.version)
+                if current.free_rows != previous.free_rows:
+                    free_changed_roots.add(row["root"])
+                if not current.can_reuse_search(previous):
+                    changed_roots.add(row["root"])
+            # Bound only additional free-only revisits. New worlds still apply
+            # to later initial roots, and no existing proof is discarded.
+            chunk_key = tuple(row["root"] for row in roots)
+            if not added and free_changed_roots:
+                free_only_capped = chunk_key in self.free_only_revisited
+                if not free_only_capped:
+                    self.free_only_revisited.add(chunk_key)
+        perform_search = bool(added or free_changed_roots) and not free_only_capped
+        if perform_search:
             # Pair/frontier/signature iterator state is local to search_root and
             # recreated completely. Frozen root pools never see learned rows.
             with (target / "root_search.jsonl").open("w", buffering=1) as log:
@@ -196,9 +245,9 @@ class ImageGuidance:
                         executed_stats.update(stats)
                         searched_roots += 1
                     else:
-                        # Every appended row duplicates an existing complete
-                        # (target, frozen pool) valuation. All grammar predicates,
-                        # canonicalization, costs and top-k keys are unchanged.
+                        # Complete target/pool rows are unchanged in every
+                        # active discovery domain; cached_search checks both
+                        # explicitly when predecessor-free is enabled.
                         cs, stats = self.search_again(row, changed=False)
                         skipped_roots += 1
                     discovery_wall_s += time.monotonic() - start_search
@@ -211,7 +260,11 @@ class ImageGuidance:
                         pool_signature_version=0, teacher_version=self.version,
                         search=dict(stats), candidates=len(cs), untried_candidates=len(fresh),
                         discovery_executed=row["root"] in changed_roots,
-                        skip_reason=None if row["root"] in changed_roots else "UNCHANGED_COMPLETE_TARGET_POOL_PROJECTION"),
+                        skip_reason=None if row["root"] in changed_roots else "UNCHANGED_COMPLETE_TARGET_POOL_PROJECTION",
+                        **(dict(free_version=self.free_guidance.state.snapshot().version,
+                               free_signature_bits=self.free_mask.bit_length(),
+                               changed_free_projection=row["root"] in free_changed_roots,
+                               cache_domains="sequence_and_free") if self.free_guidance else {})),
                         sort_keys=True) + "\n")
             self.annotate(found)
         self.metrics["model_queries"] += model_report["queries"]
@@ -222,7 +275,7 @@ class ImageGuidance:
         self.metrics["model_unknown_skipped"] += model_report["unknown_skipped"]
         self.metrics["independently_replayed_models"] += model_report["models"]
         self.metrics["accepted_image_samples"] += len(added)
-        self.metrics["refinement_searches"] += int(bool(added))
+        self.metrics["refinement_searches"] += int(perform_search)
         self.metrics["refinement_candidates"] += len(found)
         for key, value in executed_stats.items():
             self.metrics["refinement_" + key] += value
@@ -232,6 +285,10 @@ class ImageGuidance:
         self.metrics["discovery_skipped_unchanged_projection_roots"] += skipped_roots
         self.metrics["discovery_wall_s"] += discovery_wall_s
         self.metrics["guidance_wall_s"] += time.monotonic() - start
+        if self.free_guidance:
+            self.metrics["accepted_predecessor_free_worlds"] += free_admission["added"]
+            self.metrics["free_only_revisit_cap_stops"] += int(free_only_capped)
+            self.metrics["free_only_search_rounds"] += int(perform_search and not added)
         p.write_json(target / "refinement.json", dict(schema=1, teacher_version_before=before,
             teacher_version_after=self.version, added_domain=DOMAIN, reachable_teacher=False,
             construction_signature_bits=self.mask.bit_length(), construction_signature_sha256=signature_hash(self.seq, self.mask),
@@ -242,7 +299,12 @@ class ImageGuidance:
             executed_search=dict(executed_stats), discovery_executed_roots=searched_roots,
             discovery_skipped_unchanged_projection_roots=skipped_roots, discovery_wall_s=discovery_wall_s,
             model_report=model_report,
-            stopping_reason=None if found else "NO_UNTRIED_RETURNED_TOPK_CANDIDATE" if added else "NO_NEW_RELEVANT_IMAGE_CONSTRAINT",
+            stopping_reason=(None if found else "FREE_ONLY_REVISIT_CAP" if free_only_capped else
+                "NO_UNTRIED_RETURNED_TOPK_CANDIDATE" if perform_search else
+                "NO_NEW_RELEVANT_DOMAIN_PROJECTION" if self.free_guidance else "NO_NEW_RELEVANT_IMAGE_CONSTRAINT"),
+            **(dict(free_domain=self.free_guidance.report(), free_admission=free_admission,
+                    free_changed_roots=sorted(free_changed_roots), free_only_revisit_cap_per_chunk=1,
+                    projection_domains="sequence_and_free") if self.free_guidance else {}),
             ordinary_proofs_reused_as_model_proofs=bool(self.job.get("inline_image_models") and model_report["models"]),
             **(dict(model_source="original ordinary step-SAT receipt and projected model",
                     additional_model_solver_queries=0) if self.job.get("inline_image_models") else {})))
@@ -256,4 +318,6 @@ class ImageGuidance:
                     pool_signature_sha256=self.initial_hash,
                     candidate_retry_policy="all attempted identities excluded after unchanged per-root top-k, including UNKNOWN",
                     topk_exhaustion_is_recipe_space_exhaustion=False,
-                    attribution="Build-only product; selected-root Direct sensitivity audit required separately")
+                    attribution="Build-only product; selected-root Direct sensitivity audit required separately",
+                    **(dict(free_domain=self.free_guidance.report(), free_only_revisit_cap_per_chunk=1,
+                            cache_domains="sequence_and_free") if self.free_guidance else {}))

@@ -47,10 +47,69 @@ def selected_notice(result):
     return notice
 
 
+
+def validate_appended_free_witnesses(p,a,s,initial_free,graph,base,step,selected,source,job,out,bound):
+    """Extra-cost full-domain reconstruction and original-model authentication."""
+    import free_guided as fg
+    import inline_models as im
+    runtime=Path(p.__file__).resolve().parent
+    require(Path(fg.__file__).resolve()==runtime/'free_guided.py' and Path(im.__file__).resolve()==runtime/'inline_models.py',
+            'wrong frozen free/inline audit module')
+    cache={};origins={};records_by_root={};reconstructed=[]
+    for c in selected:
+        require('free_domain' in c,'enabled selected candidate lost free provenance')
+        reference=c['free_domain']['manifest'];key=(reference['file'],reference['sha256'])
+        if key not in cache:
+            # Bound memory independently of the number of selected versions.
+            if len(cache)>=2:cache.pop(next(iter(cache)))
+            cache[key]=fg.reconstruct_free_manifest(a,source,reference,job['case']['input_sha256'],initial_free)
+            reconstructed.append(dict(file=reference['file'],sha256=reference['sha256'],free_version=reference['free_version']))
+            bind_files(bound,[source/'free_domains'/reference['file']])
+        free,manifest=cache[key]
+        fg.verify_witness_annotation(a,c,c['free_witness'],source,job['case']['input_sha256'])
+        check_candidate(p,a,s,c,free)
+        if c['witness_lane']<256:continue
+        record=manifest['records'][c['witness_lane']-256];origin=json.loads(record['provenance_json'])
+        chunk=im.artifact(source/'chunks',origin['source_chunk']);index=origin['source_candidate_index']
+        candidates=json.loads((chunk/'candidates.json').read_text())
+        require(type(index)is int and 0<=index<len(candidates),'free origin source index differs')
+        original=candidates[index];identity=[original['root'],original['recipe'],original['out']]
+        require(identity==origin['candidate_id'] and original['anytime_certificate']['candidate_index']==index and
+                original['anytime_certificate']['receipts']['step']['inline_image_model']==origin['model_manifest'],
+                'free witness original candidate/model binding differs')
+        manifest_path=im.artifact(chunk,origin['model_manifest']['manifest_file'])
+        batch=json.loads(manifest_path.read_text())
+        require(batch['artifacts']['models']['sha256']==origin['models_sha256'],'free origin model-file hash differs')
+        bind_files(bound,[chunk/'candidates.json',manifest_path]+[im.artifact(chunk,x['file']) for x in batch['artifacts'].values()])
+        identity_key=(origin['source_chunk'],index)
+        if identity_key in origins:require(origins[identity_key]==original,'conflicting free origin source rows')
+        origins[identity_key]=original;records_by_root[c['root']]=(identity_key,record)
+    replay_count=0
+    if origins:
+        # Existing full/cone collector authenticates raw bytes, reconstructs the
+        # exact old CNF and independently replays every source transition/miter.
+        sources=[origins[key] for key in sorted(origins)]
+        target=out/'appended_free_source_replay'
+        _,report=im.collect_inline_models(a,graph,base,step,sources,target,job,p.Deadline(120),
+                                         dict(audit_purpose='selected appended free-witness origins'))
+        replayed=json.loads((target/'replayed_models.json').read_text())
+        by_source={(r['source_chunk'],r['source_proof_candidate_index']):r for r in replayed}
+        require(set(by_source)==set(origins),'selected free origin model unavailable')
+        for key,record in records_by_root.values():
+            row=by_source[key]
+            require(row['previous_inputs']==record['inputs'] and row['previous_state']==record['state'],
+                    'selected free world differs from authenticated original model predecessor')
+        replay_count=report['models']
+    return dict(status='PASS',domain_reconstructions=reconstructed,selected_appended_witnesses=len(records_by_root),
+                authenticated_distinct_source_models=replay_count,additional_solver_queries=0,
+                witness_policy='complete saved free vectors reconstructed and hashed; original inline source models re-authenticated')
+
+
 def validate_selected(p,product,anytime,source,result,job,input_path,out,bound):
     """Bind raw receipts and reconstruct the precise CNF/literals before reuse."""
     notice=selected_notice(result)
-    checkpoint,metadata=anytime.verify_checkpoint(source,notice,job['case']['input_sha256'])
+    checkpoint,metadata=(anytime.verify_checkpoint(source,notice,job['case']['input_sha256'],free_domain_required=True)
+                         if job.get('predecessor_free') else anytime.verify_checkpoint(source,notice,job['case']['input_sha256']))
     require(checkpoint.resolve()==Path(result['selected_checkpoint']['directory']).resolve(),'checkpoint path mismatch')
     bind_files(bound,[checkpoint/'checkpoint.json']+[checkpoint/k for k in metadata['artifacts']])
     selected=json.loads((checkpoint/'selection.json').read_text())['selected']
@@ -58,8 +117,11 @@ def validate_selected(p,product,anytime,source,result,job,input_path,out,bound):
     graph,base,step,reset=p.compile_graph(a)
     (free,_,_),_=p.signatures(graph,[base,step,reset],cfg)
     groups=defaultdict(list)
+    free_validation=None
+    if job.get('predecessor_free'):
+        free_validation=validate_appended_free_witnesses(p,a,s,free,graph,base,step,selected,source,job,out,bound)
     for c in selected:
-        check_candidate(p,a,s,c,free)
+        if not job.get('predecessor_free'):check_candidate(p,a,s,c,free)
         groups[c['anytime_certificate']['chunk']].append(c)
     reconstructed=out/'source_proof_reconstruction';reconstructed.mkdir()
     reports=[]
@@ -90,7 +152,8 @@ def validate_selected(p,product,anytime,source,result,job,input_path,out,bound):
     write_json(out/'selected_builds.json',selected)
     write_json(out/'source_proof_validation.json',dict(status='PASS',selected_builds=len(selected),
         reused_verified_build_triples=len(selected),selected_free_witnesses_replayed=len(selected),chunks=reports,
-        proof_reuse_scope='exact reconstructed immutable CNF and exact raw receipt assumptions; no cross-CNF reuse'))
+        proof_reuse_scope='exact reconstructed immutable CNF and exact raw receipt assumptions; no cross-CNF reuse',
+        **(dict(free_domain_validation=free_validation) if free_validation is not None else {})))
     return a,s,cfg,selected,checkpoint,len(baseline['gates']),len(rebuilt['gates'])
 
 

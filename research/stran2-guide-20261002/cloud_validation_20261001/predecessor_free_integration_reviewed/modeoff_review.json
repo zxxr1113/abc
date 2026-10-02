@@ -1,0 +1,49 @@
+{
+  "base_commit": "c0d1262",
+  "base_manifest_sha256": "c610246554c181514befc65f529e552eac3de61b5fe9217a6241dd1ac3adf740",
+  "current_manifest_sha256": "108ab6fb227a2144574b2c12f40ed0eab66484e1f069db7bd2533adee17305dc",
+  "identity_difference_note": "Runtime source hashes, paths and measured times intentionally differ; exact CNF/queries/models/AIGs and candidate/proof/search semantics compared",
+  "results": {
+    "feedback": {
+      "artifact_file_set_identical": true,
+      "byte_identical_files": [
+        "chunks/chunk_00000/000_reset.queries",
+        "chunks/chunk_00000/001_free.queries",
+        "chunks/chunk_00000/002_step.models.jsonl",
+        "chunks/chunk_00000/002_step.queries",
+        "chunks/chunk_00000/obligations.cnf",
+        "chunks/chunk_00000/query_literals.json",
+        "image_guidance/round_00000/root_search.jsonl"
+      ],
+      "candidate_records_checked": 16,
+      "free_metadata_and_artifacts_absent": true,
+      "raw_status_rows_checked": 10,
+      "solver_invocations_per_version": 3,
+      "status": "PASS"
+    },
+    "worker": {
+      "artifact_file_set_identical": true,
+      "byte_identical_files": [
+        "checkpoints/checkpoint_00000/product.aig",
+        "checkpoints/checkpoint_00000/replay_without_build.aig",
+        "checkpoints/checkpoint_00001/product.aig",
+        "checkpoints/checkpoint_00001/replay_without_build.aig",
+        "chunks/chunk_00000/000_reset.queries",
+        "chunks/chunk_00000/001_free.queries",
+        "chunks/chunk_00000/002_step.models.jsonl",
+        "chunks/chunk_00000/002_step.queries",
+        "chunks/chunk_00000/obligations.cnf",
+        "chunks/chunk_00000/query_literals.json",
+        "root_search.jsonl"
+      ],
+      "candidate_records_checked": 4,
+      "free_metadata_and_artifacts_absent": true,
+      "raw_status_rows_checked": 5,
+      "solver_invocations_per_version": 3,
+      "status": "PASS"
+    }
+  },
+  "reviewer_solver_invocations": 12,
+  "scope": "Two bounded synthetic mode-off differential fixtures, including complete worker/checkpoint and active image refinement; not a timed benchmark or pilot",
+  "status": "PASS"
+}

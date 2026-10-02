@@ -199,7 +199,7 @@ class FrozenQueries:
 
 
 def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, deadline, input_hash,
-                expected_solver_identity=None, inline_model_context=None):
+                expected_solver_identity=None, inline_model_context=None, free_domain_required=False):
     """Freeze all candidate miters before issuing any phase or reusing an answer."""
     out.mkdir(parents=True, exist_ok=False)
     graph = Graph()
@@ -207,7 +207,12 @@ def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, dead
     literals = []
     for candidate in candidates:
         deadline.remaining()
+        require(not free_domain_required or "free_domain" in candidate, "enabled free-domain candidate lost provenance")
         candidate["free_witness"] = witness(a, candidate, free)
+        if "free_domain" in candidate:
+            from free_guided import verify_witness_annotation
+            verify_witness_annotation(a, candidate, candidate["free_witness"], out.parent.parent, input_hash)
+            deadline.remaining()
         row = {}
         for phase, mapping in mappings.items():
             new = graph_recipe(graph, mapping, candidate["recipe"], candidate["out"])
@@ -253,6 +258,9 @@ def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, dead
             chunk=out.name, cnf_sha256=broker.fingerprint, candidate_index=i,
             miter_literals=literals[i], root=candidate["root"],
             recipe=list(candidate["recipe"]), out=candidate["out"], receipts=receipts[i])
+        if "free_domain" in candidate:
+            from free_guided import fs
+            candidate["anytime_certificate"]["free_domain_annotation_sha256"] = fs.digest(candidate["free_domain"])
         if good:
             require(all(receipts[i][p]["result"] == record[p] for p in ("free", "reset", "step")),
                     "certificate status mismatch")
@@ -298,6 +306,9 @@ def transform(job):
     require(job["chunk_roots"] > 0, "chunk_roots must be positive")
     require(not job.get("inline_cone_check") or job.get("inline_image_models"),
             "cone validation requires inline image models")
+    if job.get("predecessor_free"):
+        from free_guided import validate_mode
+        validate_mode(job, config, job["chunk_roots"])
     deadline = Budget(job["start"], job["end"])
     source, out, solver = Path(case["input"]), Path(job["out"]), Path(job["solver"])
     input_hash = sha(source)
@@ -342,12 +353,15 @@ def transform(job):
             from inline_models import InlineImageGuidance as ImageGuidance
         else:
             from image_guided import ImageGuidance
+        guidance_start = time.monotonic() if job.get("predecessor_free") else None
         guidance = ImageGuidance(a, graph, base, step, seq, seq_mask, free, free_mask,
             structure, config, job, deadline, model_identity)
+        if guidance_start is not None:
+            timing["free_domain_initialization_wall_s"] += time.monotonic() - guidance_start
     pending, roots_in_chunk, chunk_roots = [], 0, []
 
     def flush():
-        nonlocal pending, roots_in_chunk, chunk_roots, checkpoint, chunk_index, seq, seq_mask
+        nonlocal pending, roots_in_chunk, chunk_roots, checkpoint, chunk_index, seq, seq_mask, free, free_mask
         while True:
             deadline.remaining()
             chunk_start = time.monotonic()
@@ -357,7 +371,8 @@ def transform(job):
             accepted, report = prove_chunk(a, graph, dict(free=base, reset=reset, step=step),
                 free, pending, chunk_dir, solver, deadline, input_hash, solver_identity,
                 inline_model_context=(dict(input_sha256=input_hash, source_hashes=job["source_hashes"],
-                    solver_sha256=solver_hash) if job.get("inline_image_models") else None))
+                    solver_sha256=solver_hash) if job.get("inline_image_models") else None),
+                free_domain_required=bool(job.get("predecessor_free")))
             timing["proof_wall_s"] += time.monotonic() - chunk_start
             for key in ("requested_queries", "actual_queries", "conclusive_cache_hits", "unknown_not_cached",
                         "reset_sat", "reset_unknown", "reset_reject_skipped_free_and_step",
@@ -384,12 +399,17 @@ def transform(job):
                 break
             pending = guidance.refine(chunk_roots, pending, out)
             seq, seq_mask = guidance.seq, guidance.mask
+            # Synchronize even when refine returns no untried top-k candidate;
+            # future initial roots and the next proof must see appended lanes.
+            free, free_mask = guidance.free, guidance.free_mask
             progress["image_guidance"] = guidance.report()
             progress["discovered_candidates"] += len(pending)
             write_json(out / "progress.json", dict(**progress, metrics=dict(metrics), timing=dict(timing),
                        transform_elapsed_s=time.monotonic() - deadline.start))
             if not pending:
                 break
+        if guidance and job.get("predecessor_free"):
+            guidance.finish_chunk(chunk_roots)
         pending, roots_in_chunk, chunk_roots = [], 0, []
 
     with (out / "root_search.jsonl").open("w", buffering=1) as rootlog:
@@ -570,7 +590,7 @@ def supervise(command, out, start, seconds, failure_dir=None):
                 hard_transform_budget_s=seconds, boundary="before worker launch through worker exit/kill")
 
 
-def verify_checkpoint(out, notice, input_hash):
+def verify_checkpoint(out, notice, input_hash, free_domain_required=False):
     name = notice["directory"]
     require(name.startswith("checkpoint_") and name[11:].isdigit(), "invalid checkpoint path")
     path = out / "checkpoints" / name
@@ -592,11 +612,13 @@ def verify_checkpoint(out, notice, input_hash):
     selection = json.loads((path / "selection.json").read_text())
     require(len(selection["selected"]) == product["selected_builds"], "selected Build count mismatch")
     checked_files, parsed_queries, parsed_results = {}, {}, {}
+    free_original = None
     def checked(path, expected):
         if path not in checked_files:
             checked_files[path] = sha(path)
         require(checked_files[path] == expected, "proof artifact hash mismatch")
     for candidate in selection["selected"]:
+        require(not free_domain_required or "free_domain" in candidate, "enabled checkpoint lost free-domain provenance")
         proof, certificate = candidate["proof"], candidate["anytime_certificate"]
         require(candidate["qualified_offline_opportunity"] and proof["free"] == "SAT" and
                 proof["reset"] == proof["step"] == "UNSAT" and proof["free_witness_replayed"],
@@ -604,6 +626,18 @@ def verify_checkpoint(out, notice, input_hash):
         require(certificate["input_sha256"] == input_hash and certificate["root"] == candidate["root"] and
                 certificate["recipe"] == candidate["recipe"] and certificate["out"] == candidate["out"],
                 "certificate candidate binding mismatch")
+        if "free_domain" in candidate:
+            from free_guided import verify_witness_annotation, fs
+            require(certificate.get("free_domain_annotation_sha256") == fs.digest(candidate["free_domain"]),
+                    "checkpoint free witness annotation changed")
+            if free_original is None:
+                job = json.loads((out / "job.json").read_text())
+                require(job.get("predecessor_free") and job["case"]["input_sha256"] == input_hash and
+                        sha(job["case"]["input"]) == input_hash, "checkpoint free-domain original binding differs")
+                free_original = Aiger(job["case"]["input"])
+            verify_witness_annotation(free_original, candidate, candidate["free_witness"], out, input_hash)
+        else:
+            require("free_domain_annotation_sha256" not in certificate, "checkpoint lost free witness annotation")
         chunk_name = certificate["chunk"]
         require(Path(chunk_name).name == chunk_name and chunk_name not in (".", ".."), "invalid proof chunk path")
         chunk = out / "chunks" / chunk_name
@@ -647,6 +681,8 @@ def run_case(case, out, source_dir, plan, config, solver, abc, chunk_roots, dsec
         job["inline_image_models"] = True
     if plan.get("inline_cone_check"):
         job["inline_cone_check"] = True
+    if plan.get("predecessor_free"):
+        job["predecessor_free"] = True
     write_json(out / "job.json", job)
     command = [sys.executable, "-B", str(source_dir / "nonlinear_divisors/anytime.py"),
                "--worker-job", str(out / "job.json")]
@@ -677,7 +713,8 @@ def run_case(case, out, source_dir, plan, config, solver, abc, chunk_roots, dsec
         # Earliest wins ties. Later global greedy selection may be worse, so
         # retain the measured best immutable artifact, never merge checkpoints.
         notice = max(driver["observed_checkpoints"], key=lambda x: x["gain"])
-        path, metadata = verify_checkpoint(out, notice, case["input_sha256"])
+        path, metadata = verify_checkpoint(out, notice, case["input_sha256"],
+                                           free_domain_required=bool(plan.get("predecessor_free")))
         product = dict(metadata["product"])
         result["selected_checkpoint"] = dict(directory=str(path),
             supervisor_observed_elapsed_s=notice["supervisor_observed_elapsed_s"],
@@ -736,6 +773,8 @@ def main():
     parser.add_argument("--abc", type=Path)
     parser.add_argument("--inline-cone-check", action="store_true",
                         help="opt-in exact assumption-cone validation; requires --inline-image-models")
+    parser.add_argument("--predecessor-free", action="store_true",
+                        help="opt-in predecessor-only free witnesses; requires inline models,256 initial lanes, <=256 candidates/chunk")
     guidance_mode = parser.add_mutually_exclusive_group()
     guidance_mode.add_argument("--inline-image-models", action="store_true",
                         help="capture original ordinary step-SAT models with the separate model-capable --solver; never re-solve")
@@ -752,6 +791,10 @@ def main():
     require(not args.inline_cone_check or args.inline_image_models, "cone validation requires inline image models")
     config = Config(**{key: getattr(args, key) for key in asdict(Config())})
     config.validate()
+    if args.predecessor_free:
+        from free_guided import validate_mode
+        validate_mode(dict(predecessor_free=True, inline_image_models=args.inline_image_models,
+                           image_model_solver=args.image_model_solver), config, args.chunk_roots)
     manifest = json.loads((PACKAGE / "cases.json").read_text())
     names = PILOT if args.pilot else args.cases or [args.case]
     require(len(set(names)) == len(names), "duplicate cases")
@@ -767,6 +810,9 @@ def main():
     if args.inline_image_models:
         from inline_models import RUNTIME as INLINE_RUNTIME
         runtime.extend(INLINE_RUNTIME)
+    if args.predecessor_free:
+        from free_guided import RUNTIME as FREE_RUNTIME
+        runtime.extend(FREE_RUNTIME)
     for name in runtime:
         target = source_dir / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -803,6 +849,12 @@ def main():
         plan.update(algorithm="anytime_inline_image_models_cone_v1", inline_cone_check=True,
             compiled_model_validator="exact_assumption_cone_on_immutable_verified_Tseitin_DAG",
             original_aig_and_recipe_replay="UNCHANGED; both full original-AIG passes remain mandatory")
+    if args.predecessor_free:
+        plan.update(algorithm=plan["algorithm"]+"_predecessor_free_v1", predecessor_free=True,
+            free_domain_policy="authenticated previous PI plus previous RO only; append-only original256 plus at most256 global worlds",
+            free_only_revisit_cap_per_chunk=1, free_source_policy="original inline receipts and all replayed rows before successor dedup",
+            unchanged_projection_policy="reuse only unchanged complete target+ordered-pool sets in BOTH sequence and free domains",
+            qualified_retention_policy="cumulative proved union, never replaced by latest top-k")
     write_json(args.out / "plan.json", plan)
     results = []
     def work(name):

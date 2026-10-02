@@ -1,0 +1,15 @@
+{
+  "additional_dsec_runs": 0,
+  "additional_solver_runs": 0,
+  "appended_lane": 256,
+  "dsec_graph_log_ABC_binding": "PASS",
+  "independent_all_CO_substitution_worlds": 512,
+  "new_live_gate_count": 1,
+  "original256_lanes_have_no_difference": true,
+  "predecessor_frame_and_source_image_refutation_replayed": true,
+  "prior_runtime_differential_still_applies": true,
+  "product_AND_reduction": 1,
+  "status": "PASS",
+  "target_free_witness_replayed": true,
+  "whole_original_output_alias": false
+}

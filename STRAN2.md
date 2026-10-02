@@ -286,6 +286,14 @@ inline 可选后端新增更窄的模型验证 fast path：只有逐字节绑定
 
 这是自由差异样本不足会漏掉有效配方的实证，但只证明一个固定小窗口的+1 AND，不是在线算法或全55改善。单轮B保留51个qualified，A原49个加3个新配方的在线累计union应为52个：B的top-k挤掉一个已证明旧配方，在线实现必须保留它，不能拿51配方诊断产品直接替代52配方累计产品。另行52配方累计union检查已完成并独立复核：49旧+3新全部保留，选择root、312个共同Direct及最终产品与B逐字节相同，四个图复用精确input/product/ABC/log绑定的DSEC收据，无新solver/DSEC；额外wall4.86s，配对仍只改善1AND。首个检查因tuple/JSON-list元数据比较不一致在产品生成前中止，失败记录保留，第二次仅修正规范化比较。进一步集成仍须分离free/seq版本、双域投影缓存、追加见证的稳定lane与完整赋值及outer-anytime自由签名同步。 独立的默认关闭 `free_state.py` 已实现256全局追加上限、批次原子验证、稳定lane、双域投影及图身份绑定；32项测试通过，另独立覆盖20个随机600-model流/四种分批、14类原子拒绝、420个真实源模型和281个B候选见证。模型receipt文件的不可变身份认证仍由调用者负责，模块自身不接管已证明候选集合；目前没有接入运行时，不能据此声称在线面积或速度。
 
+### 前态 free 反馈在线集成：正确性通过，正式六例结果待测
+
+在独立state模块之后，新增默认关闭的 `nonlinear_divisors/free_guided.py`，仅允许inline原始step模型作为来源；先重新认证model/receipt/query/result等原始字节，再把 `(previous PI, previous RO)` 追加为free见证。全局最多256个新world，每个chunk最多一次额外free-only revisit；保持seq/free独立版本、完整双域projection检查、初始lane不变与绝对lane来源，且在空结果或cap触发时也同步outer `free/free_mask`。已证明集合累积保留，attempted/UNKNOWN与原top-k语义未改，完成chunk后仅释放projection缓存。此集成未启用current-PI交叉重组，也不改变reset/image证明域。
+
+产品审计已扩展到重建完整free域和每个保存版本hash，并对选中追加见证的原inline模型独立重新认证，不再默认只重建初始256 lane。未选lane损坏、旧model文件、缺失来源和越期发布均有拒绝测试。两组小型mode-off对照相对c0d1262的CNF、queries、raw models、root日志及四个checkpoint AIG逐字节相同（源身份、路径和时间应不同）。独立冻结review执行82个唯一测试通过，含127次小fixture solver调用及1次DSEC，不混作正式pilot或生产结果。
+
+专门的固定种子20-PI功能fixture中，最初256个free lane确实漏掉差异；经认证的image反例提供前态lane256后，新表达式通过fresh free-SAT/reset-UNSAT/image-UNSAT，checkpoint实际少1AND。完整追加域审计、源model重新认证、512个独立all-CO替换world及DSEC均PASS，输出不存在原图结构alias；这是功能测试，不是额外benchmark收益。复核索引在 `cloud_validation_20261001/predecessor_free_integration_reviewed/`。下一步六例比较必须冻结两臂相同源/池/时间，仅改变free反馈，保持full validator默认，并重新进行全部产品、Direct及全原图alias归因；目前尚无这次在线配对的面积结论。
+
 ### 先行工作校准与待证明贡献
 
 本轮检索后的结论是：reset/image 证明原理及反例反馈均有明确先行工作，不能作为新理论宣称。

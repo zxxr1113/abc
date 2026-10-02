@@ -1,0 +1,43 @@
+{
+  "auditor_complete_free_domain": true,
+  "authenticated_source_model": true,
+  "dsec": {
+    "abc": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/abc",
+    "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+    "command": "dsec /workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v2/positive_fixture/input.aig /workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v2/positive_fixture/checkpoints/checkpoint_00000/product.aig",
+    "exit_code": 0,
+    "log_sha256": "ae548cc46998ce77931db5073f026eed4e2735d6a1a80fcdb9c44bc3083c534c",
+    "status": "PASS",
+    "timeout_seconds": 30,
+    "wall_s": 0.7138525609989301
+  },
+  "exact_build_gain": 1,
+  "formal_pilot": false,
+  "initial_lanes": 256,
+  "input_sha256": "e8e60ea223c0122102840ee66d909e562df89bd289210cc7ba396a0233236a5e",
+  "note": "synthetic functionality fixture; no area-generalization or main-budget performance claim",
+  "qualified": 1,
+  "selected_witness_lane": 256,
+  "solver_sha256": "cf05cee69987954083b8522658885a342d94b739e70b7fd9bf61f0327f6afdec",
+  "source_hashes": {
+    "free_domain_diagnostic/free_state.py": "9277ba808c52407631b9968e5a1c41790435ecc3d8efa266f87cfa6671a2a7a4",
+    "free_domain_diagnostic/independent.py": "cd1610200221c44e6caf02750823de81fe89169b46be59b335e99d964432e8b0",
+    "image_cegar_diagnostic/build_model_solver.sh": "4e7902cb52a337758fe02b5593e36c701f9438d192c8dabd4f85f1543d437ee5",
+    "image_cegar_diagnostic/diagnostic.py": "72813095ab7a5b8db299a56c1549aba682bd876eaf98e7276ac49a81f2eb64a8",
+    "image_cegar_diagnostic/model_solver.c": "bdcef1e03911ba8126bf4bfb34442baad44697536f556ea35a8a206946679667",
+    "nonlinear_divisors/anytime.py": "83fbe133d59dcd36e28dfad727cfbf617d21c3422bf477c7437e45397669a3d0",
+    "nonlinear_divisors/build_query_model_solver.sh": "c1196746e9306a3e63f4abb3c261d04aa3536efee2020ee97f82dd3cfbf8732d",
+    "nonlinear_divisors/free_guided.py": "9f4f5e2e6940842d0b9a51f52d05f1745e52add381fe05519e46f94d99f58768",
+    "nonlinear_divisors/image_guided.py": "8b3659a808316c014e24ae4867b9b082c1cec08d076487d78dbb1b0006c3047c",
+    "nonlinear_divisors/inline_models.py": "fd19c68f897d739ab6bd0f488b57917af40f7885655ab995abf4e8227173cd44",
+    "nonlinear_divisors/product.py": "97985c9dde8e8171ebe69e3452b7ae93ff6ec90d6a2d908e5931fa02187565bc",
+    "nonlinear_divisors/prototype.py": "a052a17c2a5c0c7816a4106c326543d8978deb37172fe6947003fda10b762f67",
+    "nonlinear_divisors/query_model_solver.c": "e8292abe31bc13990194c17d778abbab3b8dcaf2e15119de0a9dd4d340b437f0",
+    "seq_care_synthesis/guide.py": "22d372ca2a96044e2f16ac1e38b2113436518f79f21072cec3660dee51c60f71",
+    "seq_care_synthesis/scan_exact_care.py": "bb6abc7a08d1275c2567237c412c4284e8cc69a54f0315f393edcd5c19d88854",
+    "seq_cut_image/diagnose.py": "6591e7ca66fbdaca907bb61102489c98052f2e602e20afd94ae4dfbbf3fb4b8f",
+    "teacher_adaptive_tools/teacher_bmc.py": "197bfab8b547e620c9eb9b7c8921f96b09b98fa10ddb01eacb9825ca343a0b60"
+  },
+  "stale_raw_model_rejected": true,
+  "status": "PASS"
+}

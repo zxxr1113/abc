@@ -1,0 +1,755 @@
+{
+  "elapsed_s": 3.2792154910021054,
+  "errors": 0,
+  "failures": 0,
+  "formal_pilot": false,
+  "producer_solver_invocations": "separate owner evidence",
+  "reviewer_solver_invocations": 52,
+  "skipped": [],
+  "solver": "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+  "solver_calls": [
+    {
+      "cnf_sha256": "4593e26e71b8214c550917967d486de2a15233fe434010770097bc14bc0f6cb4",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "1c9922a421803c79df6250c7c8ef40fdc6f8e7f18344324bfcff727eaa8397c8",
+      "returncode": 0,
+      "wall_s": 0.007837436998670455
+    },
+    {
+      "cnf_sha256": "4593e26e71b8214c550917967d486de2a15233fe434010770097bc14bc0f6cb4",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "3dcf41d88000757138ead74d64593e3a8cc6a2ac693ea0e38e32a8f685810873",
+      "returncode": 0,
+      "wall_s": 0.007745585997326998
+    },
+    {
+      "cnf_sha256": "4593e26e71b8214c550917967d486de2a15233fe434010770097bc14bc0f6cb4",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmp9rhjopd3/chunks/chunk_00000/002_step.results.csv"
+      ],
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "e5b43ce0a62453dbda9206ea357c9dd11e30200bfba76fbfd956df2a06af8cca",
+      "returncode": 0,
+      "wall_s": 0.007631534001120599
+    },
+    {
+      "cnf_sha256": "21c1767f21bdcb612a6db9354907c929840361f67b1e875463a4f51b3b6dfda8",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmph55z05k7/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmph55z05k7/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmph55z05k7/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "24e43f0498502b4390241eac83d3bc617cdeb2801a7fd8bcfb8df4add43de900",
+      "results_sha256": "5f5a42de9412920d16bb539044f4cd0518bbd6af6ea7188a08eda16ff7d9518e",
+      "returncode": 0,
+      "wall_s": 0.007796940000844188
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "fa27794060c134b6ba20be89dc2a689bc12a70cfb5a5d23fa06ccbd3588de9dd",
+      "returncode": 0,
+      "wall_s": 0.007828138997865608
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "2662ade0df2f10c7be51f96e48991f363b64f47eec3a6eccaf163c8dc4af6420",
+      "returncode": 0,
+      "wall_s": 0.0077180320004117675
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmp0cij2fnm/chunks/chunk_00000/002_step.results.csv"
+      ],
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "9cdc009c79cad1c24a9d48b3fb5511a8abcdf20732eec91d4afdb8c34a61e48a",
+      "returncode": 0,
+      "wall_s": 0.008787941002083244
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "f5b5a27365a8f1a55b1ddc0fd8428dae2bbbeb531330e2a7495932cb9a45708a",
+      "returncode": 0,
+      "wall_s": 0.007982012000866234
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "45abf7b74e0f2dcfaf781d145c0c0b35230eee46fa833d9c90a5b03f27767196",
+      "returncode": 0,
+      "wall_s": 0.008733382001082646
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmpty6ttz7m/chunks/chunk_00000/002_step.results.csv"
+      ],
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "af12b7b6839cb15c16b99570e09b241f097543815b90c41d2d0979d1f59763a0",
+      "returncode": 0,
+      "wall_s": 0.007629652001924114
+    },
+    {
+      "cnf_sha256": "eb482e4405a369cd40d5bb8693aa83d2bcec3180f5b1b24eea940b9b9d76020f",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/image_model_solver",
+        "/tmp/tmp8k6px85_/image_guidance/round_00000/models.cnf",
+        "/tmp/tmp8k6px85_/image_guidance/round_00000/models.queries",
+        "/tmp/tmp8k6px85_/image_guidance/round_00000/models.variables",
+        "/tmp/tmp8k6px85_/image_guidance/round_00000/results.csv",
+        "/tmp/tmp8k6px85_/image_guidance/round_00000/models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "bc78f743b8bf0273a7672e684eb0f730a3c466a0909251dcf972d9cd8de7744c",
+      "returncode": 0,
+      "wall_s": 0.008057957002165494
+    },
+    {
+      "cnf_sha256": "eb482e4405a369cd40d5bb8693aa83d2bcec3180f5b1b24eea940b9b9d76020f",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/image_model_solver",
+        "/tmp/tmp8k6px85_/only_seen/image_guidance/round_00000/models.cnf",
+        "/tmp/tmp8k6px85_/only_seen/image_guidance/round_00000/models.queries",
+        "/tmp/tmp8k6px85_/only_seen/image_guidance/round_00000/models.variables",
+        "/tmp/tmp8k6px85_/only_seen/image_guidance/round_00000/results.csv",
+        "/tmp/tmp8k6px85_/only_seen/image_guidance/round_00000/models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "bc78f743b8bf0273a7672e684eb0f730a3c466a0909251dcf972d9cd8de7744c",
+      "returncode": 0,
+      "wall_s": 0.007643143999302993
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpjzgg5asj/broker/obligations.cnf",
+        "/tmp/tmpjzgg5asj/broker/000_step.queries",
+        "/tmp/tmpjzgg5asj/broker/000_step.results.csv",
+        "/tmp/tmpjzgg5asj/broker/000_step.projection",
+        "/tmp/tmpjzgg5asj/broker/000_step.models.jsonl"
+      ],
+      "models_sha256": "96a73d3e816a0894d0ef739be888c36c9a6df29d156990ded04d9b1f57e49ba4",
+      "queries_sha256": "64a42fba41514ed7614e186c854b8c181d6147aacff6ec9f0987091e110a3d7e",
+      "results_sha256": "a98e349d18f6bddd049123fb2e653a917aaa1d65c597a073e20b2d9bd8c819ac",
+      "returncode": 0,
+      "wall_s": 0.007816134999302449
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpwcd779tr/broker/obligations.cnf",
+        "/tmp/tmpwcd779tr/broker/000_step.queries",
+        "/tmp/tmpwcd779tr/broker/000_step.results.csv",
+        "/tmp/tmpwcd779tr/broker/000_step.projection",
+        "/tmp/tmpwcd779tr/broker/000_step.models.jsonl"
+      ],
+      "models_sha256": "41b0db2c7aa74767c2777e0b15f3b31be588edc5af37165ba56b760cfc1a2bf9",
+      "queries_sha256": "c69f922ed854c855b710d638f7cda939eaccc6fd0628278934fc5dcc5cf3cd31",
+      "results_sha256": "4763043b52fa4e1b904cf67208c994acbb58819d1ad78468adb6cdbfab6283b6",
+      "returncode": 0,
+      "wall_s": 0.008232639000198105
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpapbz53jz/broker/obligations.cnf",
+        "/tmp/tmpapbz53jz/broker/000_step.queries",
+        "/tmp/tmpapbz53jz/broker/000_step.results.csv",
+        "/tmp/tmpapbz53jz/broker/000_step.projection",
+        "/tmp/tmpapbz53jz/broker/000_step.models.jsonl"
+      ],
+      "models_sha256": "3a9bd7eea2f96c65439cca8aad09d477a5ce989315698b73f2057200fa3d90cf",
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "32bd63df5be34954c688d8372df358ae8c32c5ef1d125fbedf3911f74a909485",
+      "returncode": 0,
+      "wall_s": 0.007641157997568371
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp2i_38hge/broker/obligations.cnf",
+        "/tmp/tmp2i_38hge/broker/000_free.queries",
+        "/tmp/tmp2i_38hge/broker/000_free.results.csv"
+      ],
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "052b6093ee2b1807aefa1ce58ef28682560537b31aeec4b6e64225563f611c9d",
+      "returncode": 0,
+      "wall_s": 0.007643409000593238
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "5ec62eb98efd51223c4d03414450e9121b7c79773f5e7c9fff82701beb70fd6b",
+      "returncode": 0,
+      "wall_s": 0.0077763730005244724
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "3ef7c7a4995e14b93e5a852c11c5930b5b9e624919e37f68b650f4696a004416",
+      "returncode": 0,
+      "wall_s": 0.007799270999385044
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/002_step.results.csv",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/002_step.projection",
+        "/tmp/tmpz1l5289x/chunks/chunk_00000/002_step.models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "7e8cf11f2cad2ae7a817082d931759991bc6c221523605a10576742b1168cdd6",
+      "returncode": 0,
+      "wall_s": 0.0037202769999566954
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "54b1b73926422e462112ba2e6cb3715529238c61b85639527403a6e7c167e294",
+      "returncode": 0,
+      "wall_s": 0.0076219030015636235
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "9150b39a6d21d0b5acd9f461ee7b2495d92f9c8c3102b4ab088d98e1207d005b",
+      "returncode": 0,
+      "wall_s": 0.007620929998665815
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/002_step.results.csv",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/002_step.projection",
+        "/tmp/tmpkxsbs9ph/chunks/chunk_00000/002_step.models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "347e957522b7a405342c84d63b5b18843d1d150eb676e542caed560bee687a11",
+      "returncode": 0,
+      "wall_s": 0.003551496000000043
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "a30c1942ef4cfd1d73b8aeb5915e71d6289544560e99275bb446b36eee1167e9",
+      "returncode": 0,
+      "wall_s": 0.016117933999339584
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "0d6fa510efb2553bc4ce1de336c161eac87d5e428eb47338717bb1404c5f7da3",
+      "returncode": 0,
+      "wall_s": 0.007551620998128783
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/002_step.results.csv",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/002_step.projection",
+        "/tmp/tmpe2pg0zpm/chunks/chunk_00000/002_step.models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "fc3a0e30f09229a0cbacf314eb89147f34b75233eb824979286a9f290ba754b0",
+      "returncode": 0,
+      "wall_s": 0.0035904450014641043
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp7bqjhuia/broker/obligations.cnf",
+        "/tmp/tmp7bqjhuia/broker/000_step.queries",
+        "/tmp/tmp7bqjhuia/broker/000_step.results.csv",
+        "/tmp/tmp7bqjhuia/broker/000_step.projection",
+        "/tmp/tmp7bqjhuia/broker/000_step.models.jsonl"
+      ],
+      "models_sha256": "7fada57f65c445d03208ab9a16067ce530b18a76dc6c8a750ef90a9d0dbcaa98",
+      "queries_sha256": "e715aeabd2bbd4400260a9e83d40821516c1d1f492dae128c150630a3c60d5e1",
+      "results_sha256": "747542260e61b8d809ab8fa3c4772aeb8386434711853119492cc76c630440e0",
+      "returncode": 0,
+      "wall_s": 0.007624441997904796
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp5apxjikc/broker/obligations.cnf",
+        "/tmp/tmp5apxjikc/broker/000_step.queries",
+        "/tmp/tmp5apxjikc/broker/000_step.results.csv",
+        "/tmp/tmp5apxjikc/broker/000_step.projection",
+        "/tmp/tmp5apxjikc/broker/000_step.models.jsonl"
+      ],
+      "models_sha256": "3a9bd7eea2f96c65439cca8aad09d477a5ce989315698b73f2057200fa3d90cf",
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "d8a382be1e6cb12915b2399b573785bfe16aebc8628fdab30aaa7c9b95962249",
+      "returncode": 0,
+      "wall_s": 0.007601889003126416
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpnbjhq141/broker/obligations.cnf",
+        "/tmp/tmpnbjhq141/broker/000_step.queries",
+        "/tmp/tmpnbjhq141/broker/000_step.results.csv",
+        "/tmp/tmpnbjhq141/broker/000_step.projection",
+        "/tmp/tmpnbjhq141/broker/000_step.models.jsonl"
+      ],
+      "models_sha256": "3a9bd7eea2f96c65439cca8aad09d477a5ce989315698b73f2057200fa3d90cf",
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "f1a950a822065903556bbb94b65070dba5eca018a62c7294612f6e2abdb7a0db",
+      "returncode": 0,
+      "wall_s": 0.007861423000576906
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp6bsksip6/broker/obligations.cnf",
+        "/tmp/tmp6bsksip6/broker/000_reset.queries",
+        "/tmp/tmp6bsksip6/broker/000_reset.results.csv"
+      ],
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "6d7570ce8408b099fee7ecd8399216c79156edd72e1142b178ad3a9a9a49247b",
+      "returncode": 0,
+      "wall_s": 0.00786408199928701
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp6bsksip6/broker/obligations.cnf",
+        "/tmp/tmp6bsksip6/broker/001_free.queries",
+        "/tmp/tmp6bsksip6/broker/001_free.results.csv"
+      ],
+      "queries_sha256": "08f02ddfe328386f0f710110a01e82ccf31e88e8e21b67c2565af3171b5b47ad",
+      "results_sha256": "e43b2f8ad15a6f0fac562e701921c4e878f21f393b801ec4eb9baff31147f9a4",
+      "returncode": 0,
+      "wall_s": 0.008153766997565981
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "a30c1942ef4cfd1d73b8aeb5915e71d6289544560e99275bb446b36eee1167e9",
+      "returncode": 0,
+      "wall_s": 0.007559293000667822
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "00b7380b3d446a77157895e081e5f533751afc55ded8a7db3cff6a0b55722138",
+      "returncode": 0,
+      "wall_s": 0.007576416999654612
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/002_step.results.csv",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/002_step.projection",
+        "/tmp/tmpygb2co5u/chunks/chunk_00000/002_step.models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "09a7812569cf3dc21f7c732726445b01934241c0ad44990bb16f554ebffe9db4",
+      "returncode": 0,
+      "wall_s": 0.007668196998565691
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "226d1d4bd217a11878f101ed1d19c5fd2a3cb81f5d4751bd9d698fc7d8511d51",
+      "returncode": 0,
+      "wall_s": 0.004583807000017259
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "fc7d24f59080b1c641b38a75f2bb8209f921b3cbace772edf53b492263ce736d",
+      "returncode": 0,
+      "wall_s": 0.007703630002652062
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/002_step.results.csv",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/002_step.projection",
+        "/tmp/tmpsc8pulcs/chunks/chunk_00000/002_step.models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "faa677044c962eb2216eafe321b6f68e6414a0dae133b0633486a77d275a7f72",
+      "returncode": 0,
+      "wall_s": 0.003500587001326494
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpyz0yhkmu/broker/obligations.cnf",
+        "/tmp/tmpyz0yhkmu/broker/000_step.queries",
+        "/tmp/tmpyz0yhkmu/broker/000_step.results.csv",
+        "/tmp/tmpyz0yhkmu/broker/000_step.projection",
+        "/tmp/tmpyz0yhkmu/broker/000_step.models.jsonl"
+      ],
+      "models_sha256": "3a9bd7eea2f96c65439cca8aad09d477a5ce989315698b73f2057200fa3d90cf",
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "2166929f4f1693e6010bfda059979349e81c7df87601defbf9ecadaba7baddec",
+      "returncode": 0,
+      "wall_s": 0.007561786998849129
+    },
+    {
+      "cnf_sha256": "d539706f38d341cb14386bd3849ba455d8fff877e62254d9c61251825aeb9070",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpcovffduw/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpcovffduw/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpcovffduw/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "c3e6b4b0bf274435029195b79441d09e0cc4d31bb63421de2b8ead2f950a32b4",
+      "returncode": 0,
+      "wall_s": 0.007658647999051027
+    },
+    {
+      "cnf_sha256": "d539706f38d341cb14386bd3849ba455d8fff877e62254d9c61251825aeb9070",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpcovffduw/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpcovffduw/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpcovffduw/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "cfd387192b6f79dedc20fbd6f4d63ce4a2fdfd74559baa4547f82f7ef72b5602",
+      "returncode": 0,
+      "wall_s": 0.008482708002702566
+    },
+    {
+      "cnf_sha256": "54b4695843ed0fa8d8f8bdffd893fc4a277b6db3d6e5b24bad605ff4fec94a18",
+      "command": [
+        "/tmp/stran2-query-solver",
+        "/tmp/tmpte2jwzfe/php.cnf",
+        "/tmp/tmpte2jwzfe/php.queries",
+        "/tmp/tmpte2jwzfe/old.csv"
+      ],
+      "queries_sha256": "33ee4f1ddda8ec0d748feaf531f3ccf40effa68bbf4ae01e5736e92bbd99cdb9",
+      "results_sha256": "937283330d0570c3af8f7baaa134a2a6b29ecf4f145c829ea8d988bab5268cdf",
+      "returncode": 0,
+      "wall_s": 0.011560840997844934
+    },
+    {
+      "cnf_sha256": "54b4695843ed0fa8d8f8bdffd893fc4a277b6db3d6e5b24bad605ff4fec94a18",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpte2jwzfe/php.cnf",
+        "/tmp/tmpte2jwzfe/php.queries",
+        "/tmp/tmpte2jwzfe/new.csv"
+      ],
+      "queries_sha256": "33ee4f1ddda8ec0d748feaf531f3ccf40effa68bbf4ae01e5736e92bbd99cdb9",
+      "results_sha256": "99c69b12921aa81f96e2574a0b1688eccc6afb3e33eda04b35ed9e3c1a95f44b",
+      "returncode": 0,
+      "wall_s": 0.013821193999319803
+    },
+    {
+      "cnf_sha256": "54b4695843ed0fa8d8f8bdffd893fc4a277b6db3d6e5b24bad605ff4fec94a18",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpte2jwzfe/php.cnf",
+        "/tmp/tmpte2jwzfe/php.queries",
+        "/tmp/tmpte2jwzfe/capture.csv",
+        "/tmp/tmpte2jwzfe/php.projection",
+        "/tmp/tmpte2jwzfe/php.models.jsonl"
+      ],
+      "models_sha256": "014cc3045af31f136ab222c979716c8b458bf4b26f1a85c98abf91e545ebbe7b",
+      "queries_sha256": "33ee4f1ddda8ec0d748feaf531f3ccf40effa68bbf4ae01e5736e92bbd99cdb9",
+      "results_sha256": "c0983cf4cf34efb3f93247c5b28428a507febffa8487a506b0f419d45d9392bb",
+      "returncode": 0,
+      "wall_s": 0.010632578003423987
+    },
+    {
+      "cnf_sha256": "d539706f38d341cb14386bd3849ba455d8fff877e62254d9c61251825aeb9070",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp3d0h1il5/bad.cnf",
+        "/tmp/tmp3d0h1il5/bad.queries",
+        "/tmp/tmp3d0h1il5/bad.csv",
+        "/tmp/tmp3d0h1il5/bad.projection",
+        "/tmp/tmp3d0h1il5/bad.models.jsonl"
+      ],
+      "models_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "queries_sha256": "52f6d5968becb7630bb2590b5e493d7d66326d872ca6c16e79f3c37860559b7c",
+      "results_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "returncode": 2,
+      "wall_s": 0.0032951950015558396
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "f3ad31299ce14fa3869e9b3bfa5d55828fcd8fad052a3cfae1fdb931c5fb6a49",
+      "returncode": 0,
+      "wall_s": 0.0076293839993013535
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "8d5da924fc9a066c81ee5832810b65af1cdc50a80eaa8e8b62623a10ddc548a7",
+      "returncode": 0,
+      "wall_s": 0.003720325999893248
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/002_step.results.csv",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/002_step.projection",
+        "/tmp/tmp8b7fbki7/chunks/chunk_00000/002_step.models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "b52d85139511d6c9f3e140b7404ab3273917ce51858f33f334c1a0aa76436732",
+      "returncode": 0,
+      "wall_s": 0.01564045900158817
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/000_reset.queries",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/000_reset.results.csv"
+      ],
+      "queries_sha256": "d9189c7950c8817d2d0bd436b14419debfb1b777298144d7e7b29819e706cae0",
+      "results_sha256": "aaa7197f60e6d94a704a0c0e6ff6a42e66cf6c961d3c637a95e5a1fc18d55fba",
+      "returncode": 0,
+      "wall_s": 0.007688069999858271
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/001_free.queries",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/001_free.results.csv"
+      ],
+      "queries_sha256": "c4613dd79f16689d24f201740d2392107de5898bc2499fcecaf535c0b2e43a69",
+      "results_sha256": "0d8e54edb24453cc1327b5c586376edeae6878e53fd76cc2dea4b0b344ac1cad",
+      "returncode": 0,
+      "wall_s": 0.007738648000668036
+    },
+    {
+      "cnf_sha256": "4ca652bd00a437592e23b97e3d020d9d72dee54f2bce95f634aa34352d9e4001",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/obligations.cnf",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/002_step.queries",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/002_step.results.csv",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/002_step.projection",
+        "/tmp/tmpj7krmvgf/chunks/chunk_00000/002_step.models.jsonl"
+      ],
+      "models_sha256": "9a48c1141910fcc4f535c9bd3a140be2871fed2583f2cc360b346c47dd18b050",
+      "queries_sha256": "02ac87b10e622eb69e5e14103a0a3bbdc1549394ec704be9156a9628badb37b5",
+      "results_sha256": "58a97911d563ade94796dfbe4796478ba699adb00645b1fba322d77554d5d265",
+      "returncode": 0,
+      "wall_s": 0.007632516000739997
+    },
+    {
+      "cnf_sha256": "d539706f38d341cb14386bd3849ba455d8fff877e62254d9c61251825aeb9070",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpkpz3d1u5/roles_0_1/obligations.cnf",
+        "/tmp/tmpkpz3d1u5/roles_0_1/000_step.queries",
+        "/tmp/tmpkpz3d1u5/roles_0_1/000_step.results.csv",
+        "/tmp/tmpkpz3d1u5/roles_0_1/000_step.projection",
+        "/tmp/tmpkpz3d1u5/roles_0_1/000_step.models.jsonl"
+      ],
+      "models_sha256": "24d67ae7981d245d53f93e8f076e496ff12e0982cc02007ad1277c6fe1622582",
+      "queries_sha256": "24e43f0498502b4390241eac83d3bc617cdeb2801a7fd8bcfb8df4add43de900",
+      "results_sha256": "3417db7549f46a8adee9292bfb0f7f7fb7066209e105428e94d3a34d8d7884e0",
+      "returncode": 0,
+      "wall_s": 0.017362913000397384
+    },
+    {
+      "cnf_sha256": "808462f2957b931e9d6458969ba3cd481c19a1150a30280f4ce730ea169a3deb",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpkpz3d1u5/roles_1_0/obligations.cnf",
+        "/tmp/tmpkpz3d1u5/roles_1_0/000_step.queries",
+        "/tmp/tmpkpz3d1u5/roles_1_0/000_step.results.csv",
+        "/tmp/tmpkpz3d1u5/roles_1_0/000_step.projection",
+        "/tmp/tmpkpz3d1u5/roles_1_0/000_step.models.jsonl"
+      ],
+      "models_sha256": "7593838cd6cbe4add0e18b5daadc7215a357254923ca8624f1c7be100725adac",
+      "queries_sha256": "24e43f0498502b4390241eac83d3bc617cdeb2801a7fd8bcfb8df4add43de900",
+      "results_sha256": "d6104cd337563fe47ad944cbd1492a147aeb79ea70831f02ee60820a07122a04",
+      "returncode": 0,
+      "wall_s": 0.008202148997952463
+    },
+    {
+      "cnf_sha256": "f5c5e583808c61ef64c7c606dbd9f107efadadc78ef231dae68662e333a2d573",
+      "command": [
+        "/workspace/shared/stran2-inline-model-pilot6-prepared-v1/tools/solver",
+        "/tmp/tmpkpz3d1u5/roles_0_0/obligations.cnf",
+        "/tmp/tmpkpz3d1u5/roles_0_0/000_step.queries",
+        "/tmp/tmpkpz3d1u5/roles_0_0/000_step.results.csv",
+        "/tmp/tmpkpz3d1u5/roles_0_0/000_step.projection",
+        "/tmp/tmpkpz3d1u5/roles_0_0/000_step.models.jsonl"
+      ],
+      "models_sha256": "1dd94c4930e6467fc9797853ca1e3f31a62b9006ec9fcc833133a812ddd4868b",
+      "queries_sha256": "24e43f0498502b4390241eac83d3bc617cdeb2801a7fd8bcfb8df4add43de900",
+      "results_sha256": "6db9cc8d2251e76ad729e08be7716cdfa9892b59d5ba45463734050836be081f",
+      "returncode": 0,
+      "wall_s": 0.00387700200008112
+    }
+  ],
+  "solver_sha256": "cf05cee69987954083b8522658885a342d94b739e70b7fd9bf61f0327f6afdec",
+  "source_integrity": "PASS",
+  "status": "PASS",
+  "tests": 57
+}

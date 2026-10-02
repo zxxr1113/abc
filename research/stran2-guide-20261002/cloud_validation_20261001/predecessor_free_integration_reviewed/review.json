@@ -1,0 +1,121 @@
+{
+  "audit_boundaries": [
+    "Every frozen free lane reconstructed; initial seed/config and whole-domain hash checked",
+    "Original source models for selected appended witnesses independently re-authenticated without solving",
+    "Unselected-lane corruption and stale raw model files rejected",
+    "Direct proof scope and complete free/reset/image obligations unchanged"
+  ],
+  "base_commit": "c0d1262",
+  "cone_default": "off/full validator remains recommendation",
+  "evidence_files": {
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v1/modeoff_review.json": "488078e3007db18dee70be9248f27653454811191c27a874cc191eee01dbf2cc",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v1/regression_tests.json": "83ff48805010dae2b30e761865e89c99cc56880be69efeace1c037031ad7571a",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v2/audit_regression_tests.log": "fcf8a3f948c21c3f1b3df8e9b8650d141130aeedaa4d2463e62faf15ef81938a",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v2/focused_tests.json": "28efde5d759911c3477d7274883485c29bb11a265f3242b15db701e7d4de7736",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v2/positive_artifact_review.json": "3c82a1fda3ab85910077a1ad541104573a5122374bdd5cc90d2b3c501b3c0881",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v2/positive_fixture/fixture_result.json": "c98fef38348eb1a1d071dab427affab9a796105c7659b95ba3baee8624702422"
+  },
+  "focused_and_positive_tests": 17,
+  "formal_pilot": false,
+  "modeoff_differential": {
+    "base_commit": "c0d1262",
+    "base_manifest_sha256": "c610246554c181514befc65f529e552eac3de61b5fe9217a6241dd1ac3adf740",
+    "current_manifest_sha256": "108ab6fb227a2144574b2c12f40ed0eab66484e1f069db7bd2533adee17305dc",
+    "identity_difference_note": "Runtime source hashes, paths and measured times intentionally differ; exact CNF/queries/models/AIGs and candidate/proof/search semantics compared",
+    "results": {
+      "feedback": {
+        "artifact_file_set_identical": true,
+        "byte_identical_files": [
+          "chunks/chunk_00000/000_reset.queries",
+          "chunks/chunk_00000/001_free.queries",
+          "chunks/chunk_00000/002_step.models.jsonl",
+          "chunks/chunk_00000/002_step.queries",
+          "chunks/chunk_00000/obligations.cnf",
+          "chunks/chunk_00000/query_literals.json",
+          "image_guidance/round_00000/root_search.jsonl"
+        ],
+        "candidate_records_checked": 16,
+        "free_metadata_and_artifacts_absent": true,
+        "raw_status_rows_checked": 10,
+        "solver_invocations_per_version": 3,
+        "status": "PASS"
+      },
+      "worker": {
+        "artifact_file_set_identical": true,
+        "byte_identical_files": [
+          "checkpoints/checkpoint_00000/product.aig",
+          "checkpoints/checkpoint_00000/replay_without_build.aig",
+          "checkpoints/checkpoint_00001/product.aig",
+          "checkpoints/checkpoint_00001/replay_without_build.aig",
+          "chunks/chunk_00000/000_reset.queries",
+          "chunks/chunk_00000/001_free.queries",
+          "chunks/chunk_00000/002_step.models.jsonl",
+          "chunks/chunk_00000/002_step.queries",
+          "chunks/chunk_00000/obligations.cnf",
+          "chunks/chunk_00000/query_literals.json",
+          "root_search.jsonl"
+        ],
+        "candidate_records_checked": 4,
+        "free_metadata_and_artifacts_absent": true,
+        "raw_status_rows_checked": 5,
+        "solver_invocations_per_version": 3,
+        "status": "PASS"
+      }
+    },
+    "reviewer_solver_invocations": 12,
+    "scope": "Two bounded synthetic mode-off differential fixtures, including complete worker/checkpoint and active image refinement; not a timed benchmark or pilot",
+    "status": "PASS"
+  },
+  "positive_fixture_independent_replay": {
+    "additional_dsec_runs": 0,
+    "additional_solver_runs": 0,
+    "appended_lane": 256,
+    "dsec_graph_log_ABC_binding": "PASS",
+    "independent_all_CO_substitution_worlds": 512,
+    "new_live_gate_count": 1,
+    "original256_lanes_have_no_difference": true,
+    "predecessor_frame_and_source_image_refutation_replayed": true,
+    "prior_runtime_differential_still_applies": true,
+    "product_AND_reduction": 1,
+    "status": "PASS",
+    "target_free_witness_replayed": true,
+    "whole_original_output_alias": false
+  },
+  "prior_auditor_regressions": 8,
+  "prior_controller_image_inline_regressions": 57,
+  "producer_runs": "Separate owner validation; its first test-only signature-width assertion failure is preserved there",
+  "review_scope": "Opt-in predecessor-free integration and appended-witness auditor compatibility",
+  "reviewer_dsec_invocations": 1,
+  "reviewer_first_failures": 0,
+  "reviewer_solver_invocations": {
+    "final_focused_and_positive": 39,
+    "initial_focused": 24,
+    "modeoff_differential": 12,
+    "prior_regressions": 52,
+    "total": 127
+  },
+  "runtime_boundaries": [
+    "Flag requires original inline image models; helper mode rejected",
+    "Exact immutable receipt/model bytes authenticated before free append",
+    "Previous PI/RO only, independent of unchanged sequence proof domain",
+    "Complete sequence AND free projections govern cache reuse",
+    "One extra free-only revisit per root chunk; cap stops still retain new worlds for later roots",
+    "Outer free signatures/mask synchronized even with no new pending candidate",
+    "Absolute lane/full PI-RO witness bound to immutable free-version manifest",
+    "Attempted identities retain UNKNOWN no-retry policy; qualified union accumulates",
+    "Enabled proof/checkpoint paths require preserved witness provenance",
+    "Deadline checks surround extra work and existing hard supervisor remains authoritative"
+  ],
+  "scientific_claim": "Synthetic functionality demonstrated; no new benchmark area or timing conclusion",
+  "source_hashes": {
+    "free_domain_diagnostic/free_state.py": "9277ba808c52407631b9968e5a1c41790435ecc3d8efa266f87cfa6671a2a7a4",
+    "free_domain_diagnostic/independent.py": "cd1610200221c44e6caf02750823de81fe89169b46be59b335e99d964432e8b0",
+    "image_cegar_diagnostic/audit_online_products.py": "187b68b3adbfc597919d5a865f9124ca90cb6e855efe87a5a1bc80d3b815e5d7",
+    "nonlinear_divisors/anytime.py": "83fbe133d59dcd36e28dfad727cfbf617d21c3422bf477c7437e45397669a3d0",
+    "nonlinear_divisors/free_guided.py": "9f4f5e2e6940842d0b9a51f52d05f1745e52add381fe05519e46f94d99f58768",
+    "nonlinear_divisors/image_guided.py": "8b3659a808316c014e24ae4867b9b082c1cec08d076487d78dbb1b0006c3047c",
+    "nonlinear_divisors/inline_models.py": "fd19c68f897d739ab6bd0f488b57917af40f7885655ab995abf4e8227173cd44"
+  },
+  "status": "PASS",
+  "unique_tests": 82
+}
