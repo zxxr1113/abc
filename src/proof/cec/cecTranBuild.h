@@ -651,7 +651,8 @@ static int Cec_TranRootIsfGateCost( Cec_TranSim_t * pSim,
     Vec_Int_t * vMemory = Vec_IntAlloc( 0 );
     Vec_Int_t * vBdc = NULL;
     Kit_Graph_t * pGraph;
-    int i, nGates, nLimit = Abc_MinInt(
+    int i, nGates, nLimit = Cec_TranQualityActualCost() ?
+        pPars->nDepNodesMax : Abc_MinInt(
         pPars->nDepNodesMax, pRoot->nMffc - 1 );
     int Best = 0x3fffffff;
     Cec_TranProjectRootIsfRaw( pSim, pRoot, vPool, vCoreRanks,
@@ -751,7 +752,8 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
         assert( pGraph->nLeaves == nCore );
         nGates = Kit_GraphNodeNum( pGraph );
     }
-    nLimit = Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc - 1 );
+    nLimit = Cec_TranQualityActualCost() ? pPars->nDepNodesMax :
+        Abc_MinInt( pPars->nDepNodesMax, pRoot->nMffc - 1 );
     if ( nGates <= 0 || nGates > nLimit ||
          nGates > CEC_TRAN_RECIPE_NODES_MAX )
         goto cleanup;
@@ -799,7 +801,9 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
         Cec_TranCandRecipeRelease( &Cand );
         goto cleanup;
     }
-    Cand.Gain = Cand.nMffc - Cand.nGates;
+    Cand.Gain = Cec_TranQualityActualCost() ?
+        Cec_TranQualityCostGainOne(pSim->pGia, &Cand, NULL, NULL, NULL) :
+        Cand.nMffc - Cand.nGates;
     Cand.nDiscoveryGain = Cand.Gain;
     if ( fBdc )
         pProf->nRootBdcSynthesized++;
@@ -825,7 +829,7 @@ static void Cec_TranCollectRootIsfCandidate( Cec_TranSim_t * pSim,
             break;
         }
     }
-    if ( !Cec_TranCandVecContains(pKnown, &Cand) &&
+    if ( Cand.Gain > 0 && !Cec_TranCandVecContains(pKnown, &Cand) &&
          !Cec_TranCandVecContains(pExist, &Cand) &&
          !Cec_TranCandVecContains(pBuild, &Cand) )
     {
@@ -1252,6 +1256,9 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     Cec_TranDiscStat_t * pStat, Cec_TranProf_t * pProf )
 {
     int i, iAttempt, fExhausted = 0, fUnlimited;
+    int fActualCost = Cec_TranQualityActualCost();
+    long long nActualRescued = 0;
+    Cec_TranQualityCost_t QualityCost;
     int nCiHash = 128, nCiMask;
     int IterStatus, fAccepted, iMffcBin, RawGates;
     abctime IterTime = 0, EnumTimeStart;
@@ -1288,6 +1295,7 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         Vec_IntFree( vCandSupport );
         return;
     }
+    if ( fActualCost ) Cec_TranQualityCostStart( p, pCovered, &QualityCost );
     assert( pRanks != NULL );
     iMffcBin = Cec_TranBuildMffcBin( pRoot->nMffc );
     EnumTimeStart = pProf->timeRootDepSearch;
@@ -1316,9 +1324,9 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     pProf->timeRootDivPool += timePart;
     pProf->timeRootDivHash += timePart;
     clk = Abc_Clock();
-    pIter = Cec_TranDependencyIteratorStart( pSim,
+    pIter = Cec_TranDependencyIteratorStartWithRawBudget( pSim,
         pPars, pRoot, vPool, pCare, pDep, pCursor->State,
-        &pCursor->pBuildCache );
+        &pCursor->pBuildCache, fActualCost ? pPars->nDepNodesMax : -1 );
     pCursor->nPages++;
     timePart = Abc_Clock() - clk;
     pProf->timeRootDepInit += timePart;
@@ -1383,7 +1391,11 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         Cand.fDivRescue = 0;
         Cand.fPrimaryFrontier = pCursor->nBuildYield == 1;
         Cand.nWave = iWave;
-        Cand.Gain = Cand.nMffc - Cand.nGates;
+        Cand.Gain = fActualCost ?
+            Cec_TranQualityCostGain(p, &Cand, pCovered, pUsed, &QualityCost) :
+            Cand.nMffc - Cand.nGates;
+        nActualRescued += fActualCost && Cand.Gain > 0 &&
+            Cand.nMffc - Cand.nGates <= 0;
         Cand.nDiagDiscoveryMffc = pRoot->nMffc;
         Cand.nDiagDiscoveryPhase = pProf->DiagPhase;
         Cand.nDiscoveryGain = Cand.Gain;
@@ -1480,6 +1492,13 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
     }
     if ( pCursor->fExpConflict )
         assert( pCursor->nBuildAccepted == 0 );
+    if ( fActualCost )
+    {
+        if ( nActualRescued )
+            Abc_Print( 1, "stran-quality actual-cost-gate-positive: phase=%d root=%d recipes=%lld (genuine-build-unclassified).\n",
+                pProf->DiagPhase, pRoot->iObj, nActualRescued );
+        Cec_TranQualityCostStop( &QualityCost );
+    }
     ABC_FREE( pCiKeys );
     ABC_FREE( pCiScores );
     ABC_FREE( pDivRanks );
@@ -2087,6 +2106,8 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
     int r, i, k, iObj, Gain, fSupportFreed;
     int fFirstFrontier = pProf->nRootFrontCalls++ == 0;
     int * pRefs = NULL;
+    int fActualCost = Cec_TranQualityActualCost();
+    Cec_TranFrozenHash_t QualityHash = {0};
     Vec_Int_t * vHeads, * vNext;
     abctime clk, clkLoop;
     Cec_TranCandVecClear( pSeq );
@@ -2158,8 +2179,13 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
             // dereference/reference traversals restore them for the next one.
             if ( pRefs == NULL )
                 pRefs = Cec_TranMffcRefsStart( p, pCovered );
-            Gain = Cec_TranCandDynamicGainWithRefs( p, &Cand, pCovered,
-                pUsed, pRefs, pMffc, vMffc, vSupport );
+            if ( fActualCost && QualityHash.pHash == NULL )
+                Cec_TranFrozenHashStart( p, &QualityHash );
+            Gain = fActualCost ?
+                Cec_TranCandFrozenGainWithRefs( p, &QualityHash, &Cand,
+                    pCovered, pUsed, pRefs, pMffc, vMffc, vSupport ) :
+                Cec_TranCandDynamicGainWithRefs( p, &Cand, pCovered,
+                    pUsed, pRefs, pMffc, vMffc, vSupport );
             pProf->timeRootFrontGain += Abc_Clock() - clk;
             if ( Gain <= 0 )
             {
@@ -2173,6 +2199,7 @@ static void Cec_TranRootPrepareSeqFrontier( Gia_Man_t * p,
             Cec_TranCandVecPush( pSeq, Cand );
         }
     }
+    if ( fActualCost ) Cec_TranFrozenHashStop( &QualityHash );
     ABC_FREE( pRefs );
     Vec_IntFree( vHeads );
     Vec_IntFree( vNext );

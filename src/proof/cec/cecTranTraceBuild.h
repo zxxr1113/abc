@@ -890,6 +890,27 @@ static int Cec_TranTraceBuildSelfTest()
         gain=Cec_TranCandFrozenGainWithRefs(p,&hash,&cand,NULL,NULL,pRefs,
             pMffc,vMffc,vBoundary);
         assert(cand.nGates >= cand.nMffc && nNew==1 && gain==1);
+        // Exercise the discovery helper and the downstream pre-proof filter.
+        // The shared-node recipe must survive only in actual-cost mode.
+        {
+            Cec_TranCandVec_t Candidates={0}, Frontier={0};
+            Cec_TranRoot_t Root={0};
+            Cec_TranProf_t * Prof=ABC_CALLOC(Cec_TranProf_t,1);
+            char * Covered=ABC_CALLOC(char,Gia_ManObjNum(p));
+            char * Used=ABC_CALLOC(char,Gia_ManObjNum(p));
+            int nMffc=-1;
+            assert(Cec_TranQualityCostGainOne(p,&cand,NULL,NULL,&nMffc)==1);
+            assert(nMffc==2);
+            Root.iObj=rootId; Root.nMffc=2;
+            cand.nStatus=CEC_TRAN_STATE_CANDIDATE;
+            Cec_TranCandVecPush(&Candidates,cand);
+            Cec_TranRootPrepareSeqFrontier(p,&Root,1,&Candidates,Covered,
+                Used,pMffc,vMffc,vBoundary,0,&Frontier,Prof);
+            assert(Frontier.nSize==(Cec_TranQualityActualCost()?1:0));
+            if(Frontier.nSize) assert(Frontier.pArray[0].Gain==1);
+            Cec_TranCandVecStop(&Candidates); Cec_TranCandVecStop(&Frontier);
+            ABC_FREE(Covered); ABC_FREE(Used); ABC_FREE(Prof);
+        }
         // Exercise actual native discovery, not just the manual cost witness.
         // The shared a&b node is deliberately absent from the iterator pool:
         // with it present, a one-raw-gate recipe could hide the old bound bug.
@@ -972,6 +993,27 @@ static int Cec_TranTraceBuildSelfTest()
             assert(Found[0]==0 && Found[1]==0);
             assert(Positive[2]>0 && Positive[2]==Positive[3]);
             assert(Found[2]==Found[3]);
+            // Use the real candidate collector, including its cost gate.
+            {
+                Cec_TranCandVec_t Empty={0}, Build={0};
+                Cec_TranRootCursor_t Cursor={0};
+                Cec_TranDiscStat_t Stat={0};
+                Cec_TranProf_t * Prof=ABC_CALLOC(Cec_TranProf_t,1);
+                Cec_TranDivRank_t Ranks[3];
+                int k;
+                memset(Ranks,0,sizeof(Ranks));
+                for(k=0;k<3;k++) Ranks[k].iPos=k;
+                Pars.nRootConstrTop=Pars.nRootProofBatch=0;
+                Cec_TranCollectRootConstructedIter(p,&Sim,&Pars,&Root,&Cursor,
+                    0,&Empty,NULL,NULL,pMffc,vMffc,vPool,NULL,1,Ranks,
+                    &Empty,&Build,&Dep,&Stat,Prof);
+                assert((Build.nSize>0)==Cec_TranQualityActualCost());
+                for(k=0;k<Build.nSize;k++) assert(Build.pArray[k].Gain>0);
+                Cec_TranCandVecStop(&Build);
+                Cec_TranRootCursorCacheStop(&Cursor);
+                ABC_FREE(Prof);
+                Abc_Print(1,"stran-quality-native-cost-selftest: PASS actual=%d discovery-and-frontier=1\n",Cec_TranQualityActualCost());
+            }
             Abc_ResubPrepareManager(0);
             Cec_TranDepScratchStop(&Dep);
             Vec_IntFree(vPool); ABC_FREE(Sim.pSims);

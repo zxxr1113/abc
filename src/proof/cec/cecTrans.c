@@ -117,6 +117,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Cec_TranCandVec_t * pHistory, Cec_TranPatDb_t * pSharedDb,
     int fRootBatch, Cec_TranStrictCex_t * pStrictCex )
 {
+    Cec_ParTran_t QualityPars;
     Cec_TranProf_t Prof = {0};
     Cec_TranDiscStat_t Disc = {0};
     Cec_TranCandVec_t Known = {0}, RootCands = {0}, Page = {0};
@@ -158,6 +159,15 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     int fOwnDb = pSharedDb == NULL;
     int nAndBefore = Gia_ManAndNum( p ), nRegBefore = Gia_ManRegNum( p );
     abctime clkTotal = Abc_Clock(), clk;
+    if ( Abc_ResubQualityNoTruncation() )
+    {
+        QualityPars = *pPars;
+        QualityPars.nConstrMax = QualityPars.nConstrBaseMax = 0;
+        QualityPars.nRootConstrTop = QualityPars.nRootProofBatch = 0;
+        pPars = &QualityPars;
+        nTfoMax = 0;
+        fMicroBatch = 0;
+    }
     Prof.DiagPhase = iPhase;
     Prof.pStrictCex = !fCombOnly && pStrictCex && pStrictCex->Mode <= 3 ? pStrictCex : NULL;
     pDb = fOwnDb ? Cec_TranPatDbStart( p, 0 ) : pSharedDb;
@@ -230,7 +240,8 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         pPars->fUseMffcDivs ? "on" : "off" );
     if ( fUseTfoDivs )
         Abc_Print( 1, "stran-root complete-fanin TFO: mode=shell added-cap=%s%d membership=complete-depth-K-TFI topology=fanin-id<root.\n",
-            nTfoMax ? "" : "auto/", nTfoMax );
+            Abc_ResubQualityNoTruncation() ? "unlimited/" :
+                (nTfoMax ? "" : "auto/"), nTfoMax );
     if ( pPars->nKitCoreMax )
         Abc_Print( 1, "stran-root Kit portfolio: core-max=%d proof-policy=unchanged exact-bundle-audit=on.\n",
             pPars->nKitCoreMax );
@@ -258,10 +269,13 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         Cand.nProofStage = pHistory->pArray[i].nProofStage;
         Cand.nStatus = Cand.nProofStage == 1 ?
             CEC_TRAN_STATE_PROVED_COMB : CEC_TRAN_STATE_PROVED_SEQ;
-        Gain = Cec_TranCandDynamicGain( p, &Cand, pCovered, pUsed,
-            pMffc, vMffc, vSupport );
+        Gain = Cec_TranQualityActualCost() ?
+            Cec_TranQualityCostGainOne(p, &Cand, pCovered, pUsed, &Cand.nMffc) :
+            Cec_TranCandDynamicGain( p, &Cand, pCovered, pUsed,
+                pMffc, vMffc, vSupport );
         Cand.Gain = Gain;
-        Cand.nMffc = Vec_IntSize( vMffc );
+        if ( !Cec_TranQualityActualCost() )
+            Cand.nMffc = Vec_IntSize( vMffc );
         if ( !Cec_TranCandVecContains(&HistoryLive, &Cand) )
             Cec_TranCandVecPush( &HistoryLive, Cand );
         if ( !Cec_TranCandVecContains(&Known, &Cand) )
@@ -651,7 +665,17 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     Cec_TranStrictCex_t * pStrictCex = Cec_TranStrictCexStart( pGia, pPars );
     if ( StrictPars.nStrictSteps >= -1 ) StrictPars.nStepsMax = StrictPars.nStrictSteps;
     if ( StrictPars.nStrictWaves >= 0 ) StrictPars.nRootWaves = StrictPars.nStrictWaves;
+    if ( Abc_ResubQualityNoTruncation() )
+    {
+        StrictPars.nConstrMax = StrictPars.nConstrBaseMax = 0;
+        StrictPars.nRootConstrTop = StrictPars.nRootProofBatch = 0;
+        StrictPars.nRootWaves = 0;
+    }
     pPars = &StrictPars;
+    if ( Abc_ResubQualityNoTruncation() || Cec_TranQualityActualCost() )
+        Abc_Print(1, "stran-quality options: no-truncation=%d actual-cost=%d N=%d T=%d D=%d; finite grammar, unchanged proof/commit.\n",
+            Abc_ResubQualityNoTruncation(), Cec_TranQualityActualCost(),
+            pPars->nDepNodesMax, pPars->nKitCoreMax, pPars->fBdcPortfolio);
     Abc_Print(1,"stran-strict options: S=%d w=%d.\n",pPars->nStepsMax,pPars->nRootWaves);
     // Run arbitrary-state combinational proof exactly once on the initial
     // graph.  COM owns a fixed q=4 frontier, ignores the SEQ proof micro-batch

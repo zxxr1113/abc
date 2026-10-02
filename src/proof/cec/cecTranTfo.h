@@ -93,6 +93,58 @@ static int Cec_TranCandFrozenGainWithRefs( Gia_Man_t * p,
     return Vec_IntSize(vMffc) - nNew;
 }
 
+// Isolated scratch for the optional frozen-graph discovery gate.  This prices
+// existing hash nodes and protected support; it gives no proof/commit right.
+typedef struct Cec_TranQualityCost_t_
+{
+    Cec_TranFrozenHash_t Hash;
+    int * pRefs;
+    char * pMffc;
+    Vec_Int_t * vMffc, * vBoundary;
+} Cec_TranQualityCost_t;
+
+static void Cec_TranQualityCostStart( Gia_Man_t * p,
+    char const * pCovered, Cec_TranQualityCost_t * pCost )
+{
+    memset( pCost, 0, sizeof(*pCost) );
+    Cec_TranFrozenHashStart( p, &pCost->Hash );
+    pCost->pRefs = Cec_TranMffcRefsStart( p, pCovered );
+    pCost->pMffc = ABC_CALLOC( char, Gia_ManObjNum(p) );
+    pCost->vMffc = Vec_IntAlloc( 64 );
+    pCost->vBoundary = Vec_IntAlloc( 32 );
+}
+
+static int Cec_TranQualityCostGain( Gia_Man_t * p,
+    Cec_TranCand_t const * pCand, char const * pCovered,
+    char const * pUsed, Cec_TranQualityCost_t * pCost )
+{
+    return Cec_TranCandFrozenGainWithRefs( p, &pCost->Hash, pCand,
+        pCovered, pUsed, pCost->pRefs, pCost->pMffc,
+        pCost->vMffc, pCost->vBoundary );
+}
+
+static void Cec_TranQualityCostStop( Cec_TranQualityCost_t * pCost )
+{
+    Cec_TranFrozenHashStop( &pCost->Hash );
+    ABC_FREE( pCost->pRefs );
+    ABC_FREE( pCost->pMffc );
+    Vec_IntFreeP( &pCost->vMffc );
+    Vec_IntFreeP( &pCost->vBoundary );
+}
+
+static int Cec_TranQualityCostGainOne( Gia_Man_t * p,
+    Cec_TranCand_t const * pCand, char const * pCovered,
+    char const * pUsed, int * pnMffc )
+{
+    Cec_TranQualityCost_t Cost;
+    int Gain;
+    Cec_TranQualityCostStart( p, pCovered, &Cost );
+    Gain = Cec_TranQualityCostGain( p, pCand, pCovered, pUsed, &Cost );
+    if ( pnMffc ) *pnMffc = Vec_IntSize(Cost.vMffc);
+    Cec_TranQualityCostStop( &Cost );
+    return Gain;
+}
+
 // Collect physical divisor nodes by increasing TFI distance.  The routing mask
 // skips only the initial exclusive tree; reconvergent nodes deeper inside the
 // exact MFFC remain legal because replacement support keeps them alive.  Exact
@@ -177,8 +229,8 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
     if ( fUseTfoDivs )
     {
         int nSeedSize = Vec_IntSize( vSeeds );
-        int nTfoLimit = nTfoMax ? nTfoMax :
-            (nNodesMax ? nNodesMax : 256);
+        int nTfoLimit = Abc_ResubQualityNoTruncation() ? 0 :
+            (nTfoMax ? nTfoMax : (nNodesMax ? nNodesMax : 256));
         clkTfo = Abc_Clock();
         for ( i = 0; i < nSeedSize; i++ )
         {
@@ -208,14 +260,14 @@ static Vec_Int_t * Cec_TranCollectDivPool( Gia_Man_t * p, int iTarget,
                 Vec_IntPush( vTfo, iFan );
                 if ( pTfoStats )
                     pTfoStats->nAdded++;
-                if ( Vec_IntSize(vTfo) >= nTfoLimit )
+                if ( nTfoLimit && Vec_IntSize(vTfo) >= nTfoLimit )
                 {
                     if ( pTfoStats )
                         pTfoStats->fLimit = 1;
                     break;
                 }
             }
-            if ( Vec_IntSize(vTfo) >= nTfoLimit )
+            if ( nTfoLimit && Vec_IntSize(vTfo) >= nTfoLimit )
                 break;
         }
         Vec_IntAppend( vPool, vTfo );

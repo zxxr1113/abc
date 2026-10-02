@@ -286,6 +286,37 @@ Abc_PrintTime( 1, "Time", Abc_Clock() - clkStart );
   SeeAlso     []
 
 ***********************************************************************/
+// Research quality controls are process-local opt-ins.  Invalid values fail
+// explicitly rather than silently enabling a different experiment.
+int Abc_ResubQualityOption( char const * pName )
+{
+    char const * pValue = getenv( pName );
+    if ( pValue == NULL || !strcmp(pValue, "0") ) return 0;
+    if ( !strcmp(pValue, "1") ) return 1;
+    fprintf( stderr, "stran-quality-invalid-option: %s=%s (expected 0 or 1)\n", pName, pValue );
+    exit( 2 );
+    return 0;
+}
+
+int Abc_ResubQualityNoTruncation( void )
+{
+    return Abc_ResubQualityOption( "ABC_STRAN_QUALITY_NO_TRUNCATION" );
+}
+
+// The pair encoding stores two 15-bit literals.  Unlimited search must never
+// masquerade as a quality result after representation overflow.
+static int s_ResbQualityNoTruncation = 0;
+static int Gia_ResbQualityPackPair( int Lo, int Hi, int Compl )
+{
+    if ( s_ResbQualityNoTruncation &&
+         (Lo < 0 || Hi < 0 || Lo > 0x7fff || Hi > 0x7fff) )
+    {
+        fprintf( stderr, "stran-quality-unsupported: pair-literal-width lo=%d hi=%d max=32767\n", Lo, Hi );
+        exit( 3 );
+    }
+    return Abc_Var2Lit((Hi << 15) | Lo, Compl);
+}
+
 typedef struct Gia_ResbMan_t_ Gia_ResbMan_t;
 typedef struct Gia_ResbRootCache_t_ Gia_ResbRootCache_t;
 struct Gia_ResbRootCache_t_
@@ -294,6 +325,7 @@ struct Gia_ResbRootCache_t_
     int         nDivs;
     int         nLimit;
     int         nDivsMax;
+    int         fQualityNoTruncation;
     int         fUseZero;
     int         fUseXor;
     int         nStage5Paths;
@@ -312,6 +344,7 @@ struct Gia_ResbMan_t_
     int         nWords;
     int         nLimit;
     int         nDivsMax;
+    int         fQualityNoTruncation;
     int         iChoice;
     int         fChoiceSelected;
     int         fSkipTemplates;
@@ -479,6 +512,13 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     assert( p->nWords == nWords );
     p->nLimit       = nLimit;
     p->nDivsMax     = nDivsMax;
+    p->fQualityNoTruncation = Abc_ResubQualityNoTruncation();
+    s_ResbQualityNoTruncation = p->fQualityNoTruncation;
+    if ( p->fQualityNoTruncation && Vec_PtrSize(vDivs) > 16384 )
+    {
+        fprintf( stderr, "stran-quality-unsupported: divisor-pool=%d max=16382 (15-bit pair literals)\n", Vec_PtrSize(vDivs)-2 );
+        exit( 3 );
+    }
     p->iChoice      = iChoice;
     p->fChoiceSelected = 0;
     p->fSkipTemplates = 0;
@@ -669,6 +709,7 @@ static Gia_ResbRootCache_t * Gia_ResbRootCacheAlloc( Gia_ResbMan_t * p )
     pCache->nDivs = Vec_PtrSize(p->vDivs);
     pCache->nLimit = p->nLimit;
     pCache->nDivsMax = p->nDivsMax;
+    pCache->fQualityNoTruncation = p->fQualityNoTruncation;
     pCache->fUseZero = p->fUseZero;
     pCache->fUseXor = p->fUseXor;
     pCache->nStage5Paths = p->nStage5Paths;
@@ -702,7 +743,8 @@ static int Gia_ResbRootCacheCompatible( Gia_ResbRootCache_t * pCache,
     if ( pCache->nWords != nWords || pCache->nDivs != Vec_PtrSize(vDivs) ||
          pCache->nLimit != nLimit || pCache->nDivsMax != nDivsMax ||
          pCache->fUseZero != fUseZero || pCache->fUseXor != fUseXor ||
-         pCache->nStage5Paths != nStage5Paths )
+         pCache->nStage5Paths != nStage5Paths ||
+         pCache->fQualityNoTruncation != Abc_ResubQualityNoTruncation() )
         return 0;
     if ( memcmp(pSets, Vec_PtrEntry(vDivs, 0), sizeof(word) * nWords) ||
          memcmp(pSets + nWords, Vec_PtrEntry(vDivs, 1),
@@ -1596,7 +1638,7 @@ int Gia_ManFindTwoUnateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWor
             if ( Gia_ManDivCover(pOff, pOn, pDiv1, Abc_LitIsCompl(iDiv1), pDiv0, Abc_LitIsCompl(iDiv0), nWords) )
             {
                 if ( *piChoice == 0 )
-                    return Abc_Var2Lit((Abc_LitNot(iDiv1) << 15) | Abc_LitNot(iDiv0), 1);
+                    return Gia_ResbQualityPackPair(Abc_LitNot(iDiv0), Abc_LitNot(iDiv1), 1);
                 (*piChoice)--;
             }
         }
@@ -1630,9 +1672,9 @@ void Gia_ManFindXorInt( word * pOff, word * pOn, Vec_Int_t * vBinate, Vec_Ptr_t 
         word * pDiv0 = (word *)Vec_PtrEntry(vDivs, iDiv0);
         word * pDiv1 = (word *)Vec_PtrEntry(vDivs, iDiv1);
         if ( !Abc_TtIntersectXor( pOff, 0, pDiv0, pDiv1, 0, nWords ) )
-            Vec_IntPush( vUnatePairs, Abc_Var2Lit((Abc_Var2Lit(iDiv0, 0) << 15) | Abc_Var2Lit(iDiv1, 0), 0) );
+            Vec_IntPush( vUnatePairs, Gia_ResbQualityPackPair(Abc_Var2Lit(iDiv1, 0), Abc_Var2Lit(iDiv0, 0), 0) );
         else if ( !Abc_TtIntersectXor( pOff, 0, pDiv0, pDiv1, 1, nWords ) )
-            Vec_IntPush( vUnatePairs, Abc_Var2Lit((Abc_Var2Lit(iDiv0, 0) << 15) | Abc_Var2Lit(iDiv1, 0), 1) );
+            Vec_IntPush( vUnatePairs, Gia_ResbQualityPackPair(Abc_Var2Lit(iDiv1, 0), Abc_Var2Lit(iDiv0, 0), 1) );
     }
 }
 int Gia_ManFindXor( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Int_t * vUnatePairs[2], int fVerbose, int * piChoice )
@@ -1665,7 +1707,7 @@ void Gia_ManFindUnatePairsInt( word * pOff, word * pOn, Vec_Int_t * vBinate, Vec
             int iLit1 = Abc_Var2Lit( iDiv1, n>>1 );
             //if ( !Abc_TtIntersectTwo( pOff, 0, pDiv1, n>>1, pDiv0, n&1, nWords ) )
             if ( !Abc_TtIntersectTwo( pOff, 0, pDiv1, n>>1, pDiv0, n&1, nWords ) && Abc_TtIntersectTwo( pOn, 0, pDiv1, n>>1, pDiv0, n&1, nWords ) )
-                Vec_IntPush( vUnatePairs, Abc_Var2Lit((iLit1 << 15) | iLit0, 0) );
+                Vec_IntPush( vUnatePairs, Gia_ResbQualityPackPair(iLit0, iLit1, 0) );
         }
     }
 }
@@ -1723,7 +1765,7 @@ int Gia_ManFindDivGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWord
             if ( Gia_ManDivCover(pOff, pOn, pDiv0, Abc_LitIsCompl(iDiv0), pDivTemp, fComp1, nWords) )
             {
                 if ( *piChoice == 0 )
-                    return Abc_Var2Lit((Abc_Var2Lit(k, 1) << 15) | Abc_LitNot(iDiv0), 1);
+                    return Gia_ResbQualityPackPair(Abc_LitNot(iDiv0), Abc_Var2Lit(k, 1), 1);
                 (*piChoice)--;
             }
         }
@@ -1761,7 +1803,7 @@ int Gia_ManFindGateGateInt( word * pOff, word * pOn, Vec_Ptr_t * vDivs, int nWor
             if ( Gia_ManDivCover(pOff, pOn, pDivTempA, fCompA, pDivTempB, fCompB, nWords) )
             {
                 if ( *piChoice == 0 )
-                    return Abc_Var2Lit((Abc_Var2Lit(i, 1) << 15) | Abc_Var2Lit(k, 1), 1);
+                    return Gia_ResbQualityPackPair(Abc_Var2Lit(k, 1), Abc_Var2Lit(i, 1), 1);
                 (*piChoice)--;
             }
         }
@@ -1884,8 +1926,8 @@ static void Gia_ResbBuildTopFrontier( Gia_ResbMan_t * p, int fUseOr,
 {
     Vec_Int_t * vPivots = fPair ? p->vUnatePairs[!fUseOr] :
         p->vUnateLits[!fUseOr];
-    int i, k, w, iPivot, nFrontier = Abc_MinInt(Vec_IntSize(vPivots),
-        p->nDivsMax);
+    int i, k, w, iPivot, nFrontier = p->fQualityNoTruncation ? Vec_IntSize(vPivots) :
+        Abc_MinInt(Vec_IntSize(vPivots), p->nDivsMax);
     Vec_IntClear( p->vTopPivotNovel );
     Vec_IntClear( p->vTopPivotDuplicate );
     Vec_WrdFill( p->vTopPivotCovers, nFrontier * p->nWords, 0 );
@@ -1992,7 +2034,8 @@ static int Gia_ResbSecondDiverseChoice( Gia_ResbMan_t * p, int fUseOr,
 {
     Vec_Int_t * vPivots = fPair ? p->vUnatePairs[!fUseOr] :
         p->vUnateLits[!fUseOr];
-    int nPivots = Abc_MinInt(Vec_IntSize(vPivots), p->nDivsMax);
+    int nPivots = p->fQualityNoTruncation ? Vec_IntSize(vPivots) :
+        Abc_MinInt(Vec_IntSize(vPivots), p->nDivsMax);
     int Slot, i, k, w, iPivot, iBest;
     int BestNew = -1, BestSym = -1, BestCover = -1;
     assert( PathIndex >= 2 && PathIndex <= 4 );
@@ -2552,7 +2595,7 @@ static int Gia_ManResubPerform_rec_int( Gia_ResbMan_t * p, int nLimit,
             p->vNotUnateVars[1], p->vBinateVars );
         if ( Depth )
             return Gia_ManResubPerformMux_rec( p, nLimit, Depth );
-        if ( Vec_IntSize(p->vBinateVars) > p->nDivsMax )
+        if ( !p->fQualityNoTruncation && Vec_IntSize(p->vBinateVars) > p->nDivsMax )
             Vec_IntShrink( p->vBinateVars, p->nDivsMax );
         if ( p->fVerbose )
             printf( "  B = %3d", Vec_IntSize(p->vBinateVars) );
@@ -2609,7 +2652,7 @@ static int Gia_ManResubPerform_rec_int( Gia_ResbMan_t * p, int nLimit,
         {
             int n;
             for ( n = 0; n < 2; n++ )
-                if ( Vec_IntSize(p->vUnatePairs[n]) > p->nDivsMax )
+                if ( !p->fQualityNoTruncation && Vec_IntSize(p->vUnatePairs[n]) > p->nDivsMax )
                 {
                     Vec_IntShrink( p->vUnatePairs[n], p->nDivsMax );
                     Vec_IntShrink( p->vUnatePairsW[n], p->nDivsMax );
@@ -2706,7 +2749,8 @@ static int Gia_ManResubPerform_rec_int( Gia_ResbMan_t * p, int nLimit,
             if ( fTop && p->fProfilePivots )
                 Gia_ResbProfileTopChoice( p, fUseOr, 0, iChoice );
             if ( fTop && p->fSkipTemplates )
-                p->nStage5TopFrontier = Abc_MinInt(
+                p->nStage5TopFrontier = p->fQualityNoTruncation ?
+                    Vec_IntSize(p->vUnateLits[!fUseOr]) : Abc_MinInt(
                     Vec_IntSize(p->vUnateLits[!fUseOr]), p->nDivsMax);
             if ( !fTop && p->nSecondPath > 1 )
                 iChoice = Gia_ResbSecondDiverseChoice( p, fUseOr, 0,
@@ -2769,7 +2813,8 @@ static int Gia_ManResubPerform_rec_int( Gia_ResbMan_t * p, int nLimit,
             if ( fTop && p->fProfilePivots )
                 Gia_ResbProfileTopChoice( p, fUseOr, 1, iChoice );
             if ( fTop && p->fSkipTemplates )
-                p->nStage5TopFrontier = Abc_MinInt(
+                p->nStage5TopFrontier = p->fQualityNoTruncation ?
+                    Vec_IntSize(p->vUnatePairs[!fUseOr]) : Abc_MinInt(
                     Vec_IntSize(p->vUnatePairs[!fUseOr]), p->nDivsMax);
             if ( !fTop && p->nSecondPath > 1 )
                 iChoice = Gia_ResbSecondDiverseChoice( p, fUseOr, 1,
@@ -3212,7 +3257,7 @@ static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
     Gia_ResbIterPrepareUnates( pIt );
     Vec_IntTwoFindCommon( p->vNotUnateVars[0], p->vNotUnateVars[1],
         p->vBinateVars );
-    if ( Vec_IntSize(p->vBinateVars) > p->nDivsMax )
+    if ( !p->fQualityNoTruncation && Vec_IntSize(p->vBinateVars) > p->nDivsMax )
         Vec_IntShrink( p->vBinateVars, p->nDivsMax );
     Gia_ManSortBinate( p->pSets, p->vDivs, p->nWords,
         p->vBinateVars, p->vSorter );
@@ -3227,7 +3272,7 @@ static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
     // finite universe lazily; root discovery stops calling Next as soon as its
     // q canonical candidates have been retained.
     for ( n = 0; n < 2; n++ )
-        if ( Vec_IntSize(p->vUnatePairs[n]) > p->nDivsMax )
+        if ( !p->fQualityNoTruncation && Vec_IntSize(p->vUnatePairs[n]) > p->nDivsMax )
         {
             Vec_IntShrink( p->vUnatePairs[n], p->nDivsMax );
             Vec_IntShrink( p->vUnatePairsW[n], p->nDivsMax );
@@ -3463,7 +3508,9 @@ void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
         pIt->n = pIt->i = 0;
         pIt->k = 1;
     }
-    Gia_ResbMemoBind(pIt,ppDivs,nDivs,nWords,nLimit,nDivsMax,fUseZero,
+    // The historical whole-iterator memo key has no quality mode field.
+    if ( !pIt->p->fQualityNoTruncation )
+        Gia_ResbMemoBind(pIt,ppDivs,nDivs,nWords,nLimit,nDivsMax,fUseZero,
         fUseXor,fUseSolvSched,nStage5Paths,fProfilePivots,pCursor,ppRootCache);
     return pIt;
 }
@@ -3495,10 +3542,14 @@ void Abc_ResubIteratorResumeStop( void * pVoid, int * pCursor )
 
 static int Gia_ResbIterStage5ScheduleSize( Gia_ResbMan_t * p )
 {
-    int nFrontier = p->nStage5Paths > 1 && p->nStage5TopFrontier ?
-        p->nStage5TopFrontier : p->nDivsMax;
-    int nEligible = Abc_MinInt(GIA_RESUB_MULTIPATH_TOP_MAX,
-        nFrontier);
+    // One bootstrap attempt learns the finite actual pivot frontier.  Never
+    // substitute INT_MAX, which would schedule empty work after exhaustion.
+    int nFrontier = p->fQualityNoTruncation ?
+        Abc_MaxInt(1, p->nStage5TopFrontier) :
+        (p->nStage5Paths > 1 && p->nStage5TopFrontier ?
+            p->nStage5TopFrontier : p->nDivsMax);
+    int nEligible = p->fQualityNoTruncation ? nFrontier :
+        Abc_MinInt(GIA_RESUB_MULTIPATH_TOP_MAX, nFrontier);
     return nFrontier + nEligible * (p->nStage5Paths - 1);
 }
 
@@ -3509,10 +3560,14 @@ static int Gia_ResbIterStage5ScheduleSize( Gia_ResbMan_t * p )
 static void Gia_ResbIterStage5Decode( Gia_ResbMan_t * p, int Slot,
     int * pTopChoice, int * pPathIndex )
 {
-    int nFrontier = p->nStage5Paths > 1 && p->nStage5TopFrontier ?
-        p->nStage5TopFrontier : p->nDivsMax;
-    int nEligible = Abc_MinInt(GIA_RESUB_MULTIPATH_TOP_MAX,
-        nFrontier);
+    // One bootstrap attempt learns the finite actual pivot frontier.  Never
+    // substitute INT_MAX, which would schedule empty work after exhaustion.
+    int nFrontier = p->fQualityNoTruncation ?
+        Abc_MaxInt(1, p->nStage5TopFrontier) :
+        (p->nStage5Paths > 1 && p->nStage5TopFrontier ?
+            p->nStage5TopFrontier : p->nDivsMax);
+    int nEligible = p->fQualityNoTruncation ? nFrontier :
+        Abc_MinInt(GIA_RESUB_MULTIPATH_TOP_MAX, nFrontier);
     if ( p->nStage5Paths == 1 || Slot < nEligible )
     {
         *pTopChoice = Slot;
@@ -3770,6 +3825,33 @@ static void Gia_ResbIteratorCompareModes( void ** ppDivs, int nDivs,
                 Hits[i][k] += pItB->p->nResidualCacheHits[i][k];
     Abc_ResubIteratorStop( pItA );
     Abc_ResubIteratorStop( pItB );
+}
+
+static void Gia_ResbQualityScheduleSelfTest()
+{
+    Gia_ResbMan_t * p = Gia_ResbAlloc( 1 );
+    int Paths, Slot, Rank, Path, i, k, Seen[12][4];
+    p->nDivsMax = 2;
+    p->fQualityNoTruncation = 1;
+    p->nStage5Paths = 1;
+    assert( Gia_ResbIterStage5ScheduleSize(p) == 1 );
+    p->nStage5TopFrontier = 12;
+    for ( Paths = 1; Paths <= 4; Paths *= 2 )
+    {
+        memset( Seen, 0, sizeof(Seen) );
+        p->nStage5Paths = Paths;
+        assert( Gia_ResbIterStage5ScheduleSize(p) == 12 * Paths );
+        for ( Slot = 0; Slot < 12 * Paths; Slot++ )
+        {
+            Gia_ResbIterStage5Decode( p, Slot, &Rank, &Path );
+            assert( Rank >= 0 && Rank < 12 && Path >= 1 && Path <= Paths );
+            assert( !Seen[Rank][Path-1]++ );
+        }
+        for ( i = 0; i < 12; i++ )
+            for ( k = 0; k < Paths; k++ ) assert( Seen[i][k] == 1 );
+    }
+    Gia_ResbFree( p );
+    Abc_Print(1, "stran-quality-schedule-selftest: PASS finite-bootstrap=1 actual-frontier=12 cap=2 paths=1,2,4 all-pivots=1\n");
 }
 
 static void Gia_ResbMultiPathScheduleSelfTest()
@@ -4084,6 +4166,7 @@ static void Gia_ResbResidualCacheSelfTest()
     int nVariants = 0;
     word Target, Remainder;
 
+    Gia_ResbQualityScheduleSelfTest();
     Gia_ResbMultiPathScheduleSelfTest();
     // Duplicate pivots share a literal success or an XOR residual which
     // genuinely cannot fit in one AND gate (a B&C residual now can).
@@ -4376,6 +4459,20 @@ static void Gia_ResbProblemCacheSelfTest()
         Data[0][w]=~Target; Data[1][w]=Target;
     }
     Abc_ResubProblemCacheStart(0);
+    if ( Abc_ResubQualityNoTruncation() )
+    {
+        // Quality mode intentionally does not bind the legacy memo.  Still
+        // verify the full stream and cursor-resume equality for each case.
+        for ( Words=1; Words<=2; Words++ ) for ( Limit=2; Limit<=3; Limit++ )
+        {
+            Gia_ResbProblemCacheCompare(Divs,Words,Limit,0);
+            Gia_ResbProblemCacheCompare(Divs,Words,Limit,1);
+            assert(s_pResbMemo->nHits==0);
+            assert(Vec_PtrSize(s_pResbMemo->vEntries)==0);
+        }
+        Abc_ResubProblemCacheStop(0);
+        return;
+    }
     for ( Words=1; Words<=2; Words++ ) for ( Limit=2; Limit<=3; Limit++ )
     {
         Hits=s_pResbMemo->nHits;

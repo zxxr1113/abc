@@ -97,8 +97,12 @@ static int Cec_TranFrontierGainSelfTest()
                 if ( Cand.iTarget != Roots[r].iObj ||
                      Cand.nStatus != CEC_TRAN_STATE_CANDIDATE )
                     continue;
-                Cand.Gain = Cec_TranCandDynamicGain( p, &Cand,
-                    pCovered, pUsed, pOracle, vOracle, vSupport );
+                // Preserve the historical raw oracle by default; the
+                // explicit actual-cost arm must use the frozen-DAG oracle.
+                Cand.Gain = Cec_TranQualityActualCost() ?
+                    Cec_TranQualityCostGainOne(p, &Cand, pCovered, pUsed, NULL) :
+                    Cec_TranCandDynamicGain( p, &Cand,
+                        pCovered, pUsed, pOracle, vOracle, vSupport );
                 if ( Cand.Gain <= 0 )
                     continue;
                 Cand.nMffc = Roots[r].nMffc;

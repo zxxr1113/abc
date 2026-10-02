@@ -5,6 +5,13 @@
 // state certificates do not use retained induction helpers, so COM submits
 // one modest frontier and commits it immediately instead of accumulating
 // proof micro-batches on the initial graph.
+extern int Abc_ResubQualityOption( char const * pName );
+extern int Abc_ResubQualityNoTruncation( void );
+static int Cec_TranQualityActualCost( void )
+{
+    return Abc_ResubQualityOption( "ABC_STRAN_QUALITY_ACTUAL_COST" );
+}
+
 #define CEC_TRAN_COMB_BUILD_Q 4
 #define CEC_TRAN_BUILD_OUTCOMES 3
 #define CEC_TRAN_BUILD_RANK_BINS 8
