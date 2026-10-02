@@ -1,0 +1,11 @@
+{
+  "audit_only": true,
+  "every_original_frozen_file_unchanged": true,
+  "finished_unix": 1790903340.3211756,
+  "jobs": 12,
+  "plan_sha256": "e8ad3c6cfd0fe2dd9ec3212075652a798c40f08382cbe150a69a0609421c3c74",
+  "started_unix": 1790903245.8750803,
+  "status": "FINISHED",
+  "transform_reruns": 0,
+  "validated": 12
+}

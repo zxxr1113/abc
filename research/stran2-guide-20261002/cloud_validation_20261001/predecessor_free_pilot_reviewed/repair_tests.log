@@ -1,0 +1,10 @@
+test_actual_cli_two_source_roots_with_enabled_checkpoint (test_audit_runtime_binding.ActualCliTests.test_actual_cli_two_source_roots_with_enabled_checkpoint) ... ok
+test_changed_run_module_rejects_before_execution (test_audit_runtime_binding.BindingTests.test_changed_run_module_rejects_before_execution) ... ok
+test_distinct_source_inline_import_preserves_audit_globals (test_audit_runtime_binding.BindingTests.test_distinct_source_inline_import_preserves_audit_globals) ... ok
+test_spoofed_target_path_is_not_an_authenticated_module (test_audit_runtime_binding.BindingTests.test_spoofed_target_path_is_not_an_authenticated_module) ... ok
+test_unrelated_cached_module_rejects_without_replacement (test_audit_runtime_binding.BindingTests.test_unrelated_cached_module_rejects_without_replacement) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 6.137s
+
+OK

@@ -1,0 +1,33 @@
+{
+  "actual_distinct_source_cli_pass": true,
+  "artifacts": {
+    "cli_fixture/fixture_result.json": "df3fffe1dadf6bd0916c7a866582262ac51ee4ea214a9bc67561b850375c8bb2",
+    "repair_plan_review.json": "847816359dd53b28348f13965239f2e22967c969be3cb7d4385779342dccb2c6",
+    "source_delta.json": "77d1dee98ee41f92b10b6c1e06967fe11b211b281c0fb975bdf0d53855697101",
+    "source_manifest.json": "d35cafcc36404ba8c7e9ad020e39e7b34e4a12ae8a9496f6ecfc8f82e09f50c0",
+    "terminal_bound.json": "cbad888644ad487dfe8a5ffef207649097708433fc7d02653482e879331c816f",
+    "terminal_review.json": "e7f46a296dc51b1746da1126ae07f8634793ca4cb649fbf28ab79738ef48b026",
+    "tests-first.log": "64ce9323280adee44f7687b1809936985e4694be88e51aaa99dc0f2a68615030"
+  },
+  "baseline_corrected_total": 202,
+  "original_dsec_bindings": 24,
+  "original_files_modified": false,
+  "original_pilot_transform_reruns": 0,
+  "original_valid_pairs": 0,
+  "plan_bound_source_import_before_execution": true,
+  "preexisting_proof_validation_functions_unchanged": true,
+  "producer_tests_separate": true,
+  "rejects_unrelated_and_spoofed_cached_modules": true,
+  "reviewer_small_fixture_transform_runs": 1,
+  "reviewer_test_wall_s": 6.137,
+  "rss_missing_all_12": true,
+  "scope": "Import repair, independent small fixture tests, frozen terminal ledger/provenance; repaired six-case product/proof review follows after producer completes",
+  "source_auditor_sha256": "af8817abc0792bb72343794aa9382965dbd47be04d69058105d57e5d12e6c707",
+  "status": "PASS_IMPORT_REPAIR_AND_TERMINAL_LEDGER",
+  "strict_runtime_path_guard_preserved": true,
+  "terminal_bindings": 1199,
+  "test_failures": 0,
+  "test_skips": 0,
+  "tests": 5,
+  "treatment_marginals_missing": true
+}

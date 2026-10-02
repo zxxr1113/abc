@@ -19,10 +19,12 @@ import sys
 import time
 import traceback
 
+import diagnostic as audit_diagnostic
 from diagnostic import load_runtime, require, sha, write_json
 from audit_products import append_triples, check_candidate, validate_output
 
 HERE=Path(__file__).resolve().parent
+_bound_runtime_diagnostic=None
 
 
 def verify_bound(bound):
@@ -34,6 +36,46 @@ def bind_files(bound,paths):
         path=Path(path).resolve();digest=sha(path)
         require(str(path) not in bound or bound[str(path)]==digest,'artifact changed before binding')
         bound[str(path)]=digest
+
+
+def bind_runtime_model_replay(source,source_hashes,bound):
+    """Bind the authenticated run-local replay module before inline imports.
+
+    The CLI's audit helpers intentionally keep their original function globals.
+    Only the conventional ``diagnostic`` import name is rebound, so the frozen
+    runtime's strict same-source path guard remains effective. A third-party
+    cached module is rejected rather than silently replaced.
+    """
+    global _bound_runtime_diagnostic
+    source=Path(source).resolve();name='image_cegar_diagnostic/diagnostic.py'
+    target=source/name;expected=source_hashes.get(name)
+    require(type(expected)is str and len(expected)==64,'missing frozen model replay hash')
+    require(target.resolve()==target,'frozen model replay path is not canonical')
+    require(sha(target)==expected,'frozen model replay hash mismatch before import')
+    bind_files(bound,[target])
+    cached=sys.modules.get('diagnostic')
+    require(cached is audit_diagnostic or
+            (cached is not None and cached is _bound_runtime_diagnostic and Path(cached.__file__).resolve()==target),
+            'unrelated cached model replay module')
+    if cached is not None and Path(cached.__file__).resolve()==target:
+        module=cached
+    else:
+        spec=importlib.util.spec_from_file_location('diagnostic',target)
+        require(spec is not None and spec.loader is not None,'model replay module cannot be loaded')
+        module=importlib.util.module_from_spec(spec)
+        sys.modules['diagnostic']=module
+        try:spec.loader.exec_module(module)
+        except BaseException:
+            sys.modules['diagnostic']=cached
+            raise
+    require(Path(module.__file__).resolve()==target,'wrong bound model replay module')
+    require(sha(target)==expected,'frozen model replay changed during import')
+    require(load_runtime is audit_diagnostic.load_runtime and require is audit_diagnostic.require and
+            sha is audit_diagnostic.sha and write_json is audit_diagnostic.write_json,
+            'audit helper globals changed during runtime module binding')
+    _bound_runtime_diagnostic=module
+    return dict(file=str(target),sha256=expected,audit_helper_file=str(Path(audit_diagnostic.__file__).resolve()),
+                audit_helpers_preserved=True,strict_runtime_path_guard_unchanged=True)
 
 
 def selected_notice(result):
@@ -423,6 +465,9 @@ def main():
     bind_files(bound,[run/'plan.json',run/'source_integrity.json',Path(__file__),HERE/'diagnostic.py',HERE/'audit_products.py'])
     require(sha(args.solver)==plan['solver_sha256'] and sha(args.abc)==plan['abc_sha256'],'solver/ABC mismatch')
     bound[str(args.solver)]=plan['solver_sha256'];bound[str(args.abc)]=plan['abc_sha256']
+    verify_bound(bound)
+    replay_binding=(bind_runtime_model_replay(run/'source',plan['runtime_source_hashes'],bound)
+                    if plan.get('predecessor_free') else None)
     p=load_runtime(run/'source');product=importlib.import_module('product');anytime=importlib.import_module('anytime')
     args.solver_identity,_=anytime.bind_executable(args.solver,plan['solver_sha256'])
     if args.reuse_audit:
@@ -443,7 +488,8 @@ def main():
     require(set(selected)<={Path(name).stem for name in plan['cases']},'unknown case')
     write_json(args.out/'plan.json',dict(source_run=str(run),cases=selected,source_and_tool_sha256=bound,
         query_policy='all direct free/reset/image; conclusive memoization on same immutable CNF and assumptions only',
-        original_evidence_read_only=True,additional_audit_cost=True))
+        original_evidence_read_only=True,additional_audit_cost=True,
+        **(dict(model_replay_module_binding=replay_binding) if replay_binding else {})))
     rows=[]
     for name in selected:
         try:r=case_audit(p,product,anytime,hash_direct,run,name,args.out/name,args,plan)

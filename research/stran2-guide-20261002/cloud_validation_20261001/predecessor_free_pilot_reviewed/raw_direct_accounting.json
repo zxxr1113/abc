@@ -1,0 +1,104 @@
+{
+  "main_review_sha256": "4190d3b9b777f08b850e179cd8f43718b9448526f137740d338868fae1f40a60",
+  "new_solver_dsec_transform_calls": 0,
+  "rows": [
+    {
+      "arm": "baseline",
+      "case": "005_b03.aig",
+      "direct_corrected_gain": 3,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 5,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "predecessor_free",
+      "case": "005_b03.aig",
+      "direct_corrected_gain": 3,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 5,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "predecessor_free",
+      "case": "044_i2c.aig",
+      "direct_corrected_gain": 7,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 13,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "baseline",
+      "case": "044_i2c.aig",
+      "direct_corrected_gain": 7,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 13,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "baseline",
+      "case": "041_des_area.aig",
+      "direct_corrected_gain": 0,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 0,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "predecessor_free",
+      "case": "041_des_area.aig",
+      "direct_corrected_gain": 0,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 0,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "predecessor_free",
+      "case": "034_b20_opt.aig",
+      "direct_corrected_gain": 38,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 38,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "baseline",
+      "case": "034_b20_opt.aig",
+      "direct_corrected_gain": 75,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 75,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "baseline",
+      "case": "045_mem_ctrl.aig",
+      "direct_corrected_gain": 41,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 136,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "predecessor_free",
+      "case": "045_mem_ctrl.aig",
+      "direct_corrected_gain": 26,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 88,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "predecessor_free",
+      "case": "060_wb_dma.aig",
+      "direct_corrected_gain": 59,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 60,
+      "raw_checkpoint_hash_and_arithmetic": true
+    },
+    {
+      "arm": "baseline",
+      "case": "060_wb_dma.aig",
+      "direct_corrected_gain": 76,
+      "exact_direct_ablation_preserves_selected_objects": true,
+      "raw_build_gain": 83,
+      "raw_checkpoint_hash_and_arithmetic": true
+    }
+  ],
+  "script_sha256": "16b7e460493338d5efec002e9e9ea8e6fe88e2eca5c589c3fd13e69e9cddc6e3",
+  "status": "PASS"
+}

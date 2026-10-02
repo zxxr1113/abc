@@ -286,13 +286,35 @@ inline 可选后端新增更窄的模型验证 fast path：只有逐字节绑定
 
 这是自由差异样本不足会漏掉有效配方的实证，但只证明一个固定小窗口的+1 AND，不是在线算法或全55改善。单轮B保留51个qualified，A原49个加3个新配方的在线累计union应为52个：B的top-k挤掉一个已证明旧配方，在线实现必须保留它，不能拿51配方诊断产品直接替代52配方累计产品。另行52配方累计union检查已完成并独立复核：49旧+3新全部保留，选择root、312个共同Direct及最终产品与B逐字节相同，四个图复用精确input/product/ABC/log绑定的DSEC收据，无新solver/DSEC；额外wall4.86s，配对仍只改善1AND。首个检查因tuple/JSON-list元数据比较不一致在产品生成前中止，失败记录保留，第二次仅修正规范化比较。进一步集成仍须分离free/seq版本、双域投影缓存、追加见证的稳定lane与完整赋值及outer-anytime自由签名同步。 独立的默认关闭 `free_state.py` 已实现256全局追加上限、批次原子验证、稳定lane、双域投影及图身份绑定；32项测试通过，另独立覆盖20个随机600-model流/四种分批、14类原子拒绝、420个真实源模型和281个B候选见证。模型receipt文件的不可变身份认证仍由调用者负责，模块自身不接管已证明候选集合；目前没有接入运行时，不能据此声称在线面积或速度。
 
-### 前态 free 反馈在线集成：正确性通过，正式六例结果待测
+### 前态 free 反馈在线集成：正确性通过，正式六例结果为负
 
 在独立state模块之后，新增默认关闭的 `nonlinear_divisors/free_guided.py`，仅允许inline原始step模型作为来源；先重新认证model/receipt/query/result等原始字节，再把 `(previous PI, previous RO)` 追加为free见证。全局最多256个新world，每个chunk最多一次额外free-only revisit；保持seq/free独立版本、完整双域projection检查、初始lane不变与绝对lane来源，且在空结果或cap触发时也同步outer `free/free_mask`。已证明集合累积保留，attempted/UNKNOWN与原top-k语义未改，完成chunk后仅释放projection缓存。此集成未启用current-PI交叉重组，也不改变reset/image证明域。
 
 产品审计已扩展到重建完整free域和每个保存版本hash，并对选中追加见证的原inline模型独立重新认证，不再默认只重建初始256 lane。未选lane损坏、旧model文件、缺失来源和越期发布均有拒绝测试。两组小型mode-off对照相对c0d1262的CNF、queries、raw models、root日志及四个checkpoint AIG逐字节相同（源身份、路径和时间应不同）。独立冻结review执行82个唯一测试通过，含127次小fixture solver调用及1次DSEC，不混作正式pilot或生产结果。
 
-专门的固定种子20-PI功能fixture中，最初256个free lane确实漏掉差异；经认证的image反例提供前态lane256后，新表达式通过fresh free-SAT/reset-UNSAT/image-UNSAT，checkpoint实际少1AND。完整追加域审计、源model重新认证、512个独立all-CO替换world及DSEC均PASS，输出不存在原图结构alias；这是功能测试，不是额外benchmark收益。复核索引在 `cloud_validation_20261001/predecessor_free_integration_reviewed/`。下一步六例比较必须冻结两臂相同源/池/时间，仅改变free反馈，保持full validator默认，并重新进行全部产品、Direct及全原图alias归因；目前尚无这次在线配对的面积结论。
+专门的固定种子20-PI功能fixture中，最初256个free lane确实漏掉差异；经认证的image反例提供前态lane256后，新表达式通过fresh free-SAT/reset-UNSAT/image-UNSAT，checkpoint实际少1AND。完整追加域审计、源model重新认证、512个独立all-CO替换world及DSEC均PASS，输出不存在原图结构alias；这是功能测试，不是额外benchmark收益。复核索引在 `cloud_validation_20261001/predecessor_free_integration_reviewed/`。随后六例已按相同源/池/120s时间预算、full validator、单worker反序臂顺序完成；详见下节负结果。
+
+### 前态 free 在线六例：覆盖损失压过新机会，202→133 AND
+
+冻结协议 `680c902e98cc7b4aeaaf402f6694dd72555451a5cc619d8eedc15bfd80de296a` 于2026-10-02 00:45:16–01:01:06 UTC执行全部12个计划任务各一次：相同inline/full validator、pool/top8/初始256签名、C1000、每臂120s、一个worker，逐例交替先后臂。仅 treatment 开启前态free反馈（全局新增≤256、每chunk额外free-only revisit≤1），qualified累积保留。变换wall求和775.958s；baseline5/6搜索完成，treatment3/6完成。所有transform-specific RSS采样均缺失，保留null，不声称内存改善。
+
+首次正式CLI暴露了小fixture未覆盖的两source路径导入冲突：auditor先缓存自己的 `diagnostic.py`，随后加载每run冻结的inline模块；两文件SHA相同但路径不同，严格路径guard正确拒绝。因此最初6个treatment Direct审计失败，**原始ledger与summary仍为0有效配对/paired gain=null**。独立确认导入冲突后，仅新增plan-bound模块认证及显式绑定每run来源，旧proof/product validation函数未变；严格guard、raw receipt、原图回放均保留。五项独立CLI/篡改回归通过。修复协议 `e8ad3c6cfd0fe2dd9ec3212075652a798c40f08382cbe150a69a0609421c3c74` 只重新执行6个treatment的fresh Direct/global审计，额外75.533s，使用同一次v3运行的完整绑定baseline审计；**没有重新变换、换case或调参**。全部13,384个原始文件在修复前后重新哈希一致。
+
+| 固定六例 | baseline genuine Build AND | predecessor-free | 配对差 |
+|---|---:|---:|---:|
+| b03 | 3 | 3 | 0 |
+| i2c | 7 | 7 | 0 |
+| des_area | 0 | 0 | 0 |
+| b20_opt | 75 | 38 | −37 |
+| mem_ctrl | 41 | 26 | −15 |
+| wb_dma | 76 | 59 | −17 |
+| 合计 | **202** | **133** | **−69** |
+
+逐例原loaded AND归一化后等例差为 **−0.0828760271 pp**，0好3平3差。baseline只mem触顶，treatment b20/mem/wb均触顶。mem确有62个新qualified身份在初始256free lane完全无差异，其中2个新选中root为1327/1431；但在固定预算下覆盖下降，最终配对仍少15AND。这个在线结果不推翻first32诊断的+1AND，却说明局部机会不能直接转成全流程实用收益。当前继续推荐v3 image配置，不建议默认开启前态free。
+
+独立复核全部12臂proof/product：106份Build源CNF和12份Direct CNF重建，8945条Build/21914条Direct原始记录认证，127个free版本与937个追加world完整重建，4769份原始image模型独立回放，每次去重/cap/顺序和稳定lane复现。77个selected记录与60个额外追加qualified见证通过，84个产品图逐字节重建，完整原图hash无Build降级；所有DSEC来源绑定通过，无新reviewer proof solves或benchmark重跑。reviewer首次字典断言误以为proof只含三个字段，改为显式检查三种status，失败记录保留，原证据未动。紧凑结果、配对CSV、原失败与修复协议及复核在 `cloud_validation_20261001/predecessor_free_pilot_reviewed/`，70MiB大ledger仅保留hash引用，原件仍在云盘。
+
+保存记录另显示可定位的工程浪费，但不是新的计时因果证明：完整i2c有666次persist调用、644次同版本重复，其中415空候选批；重复manifest逻辑读0.898GiB，1609次preproof检查再读1.787GiB。wb至少820次persist/797重复/520空批，重复逻辑读2.820GiB，preproof再读5.443GiB。它们是API字节量，**非物理磁盘I/O**。完整i2c solver进程wall 2.044→2.183s而总变换22.171→55.440s；des查询410→407却12.813→26.340s，说明不能仅用更多SAT解释回归。persist本身未单独计时。后续仅评估不可变版本缓存与chunk入口/出口full hash、逐见证身份和原图回放，保持该负pilot不变；在固定记录等价/篡改测试和完整case计时通过前，不再次扩跑或声称面积改善。
 
 ### 先行工作校准与待证明贡献
 

@@ -1,0 +1,7 @@
+case,loaded_AND,baseline_genuine_Build_AND,predecessor_free_genuine_Build_AND,delta,baseline_status,free_status
+005_b03.aig,128,3,3,0,COMPLETE,COMPLETE
+044_i2c.aig,2879,7,7,0,COMPLETE,COMPLETE
+041_des_area.aig,10133,0,0,0,COMPLETE,COMPLETE
+034_b20_opt.aig,13440,75,38,-37,COMPLETE,BUDGET_EXHAUSTED
+045_mem_ctrl.aig,34059,41,26,-15,BUDGET_EXHAUSTED,BUDGET_EXHAUSTED
+060_wb_dma.aig,9555,76,59,-17,COMPLETE,BUDGET_EXHAUSTED

@@ -1,0 +1,36 @@
+{
+  "status": "PASS",
+  "unchanged_bound_source_files": [
+    "free_domain_diagnostic/free_state.py",
+    "free_domain_diagnostic/independent.py",
+    "image_cegar_diagnostic/audit_global_alias_products.py",
+    "image_cegar_diagnostic/audit_products.py",
+    "image_cegar_diagnostic/build_model_solver.sh",
+    "image_cegar_diagnostic/compare_attribution.py",
+    "image_cegar_diagnostic/diagnostic.py",
+    "image_cegar_diagnostic/model_solver.c",
+    "nonlinear_divisors/anytime.py",
+    "nonlinear_divisors/build_query_model_solver.sh",
+    "nonlinear_divisors/free_guided.py",
+    "nonlinear_divisors/hash_direct_audit.py",
+    "nonlinear_divisors/image_guided.py",
+    "nonlinear_divisors/inline_models.py",
+    "nonlinear_divisors/product.py",
+    "nonlinear_divisors/prototype.py",
+    "nonlinear_divisors/query_model_solver.c",
+    "seq_care_synthesis/guide.py",
+    "seq_care_synthesis/scan_exact_care.py",
+    "seq_cut_image/diagnose.py",
+    "teacher_adaptive_tools/teacher_bmc.py"
+  ],
+  "changed_bound_source_files": [
+    "image_cegar_diagnostic/audit_online_products.py"
+  ],
+  "changed_definitions": [
+    "main"
+  ],
+  "added_definitions": [
+    "bind_runtime_model_replay"
+  ],
+  "all_preexisting_proof_and_product_definitions_unchanged": true
+}

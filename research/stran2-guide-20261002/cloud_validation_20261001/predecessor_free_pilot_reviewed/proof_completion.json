@@ -1,0 +1,15 @@
+{
+  "bound_unique_files": 2157,
+  "complete_final_rehash": "PASS",
+  "final_rehash_wall_s": 1.0036443960052566,
+  "main_replay_wall_s": 46.79954718999943,
+  "new_DSEC_runs": 0,
+  "new_solver_queries": 0,
+  "review_json_sha256": "a9783fdf8a12ebddaed943a681ed8efc495cfa374477b3ef50a54c1b7195f5ef",
+  "scope": "12 arm selected Build proof chunks, bounded Direct proofs and selected Direct/mixed/ablation products",
+  "scope_details_sha256": "093bc5343902af7d609cb74a7f01d3e7af5c34e1144af2e359e149f4bcd8708e",
+  "status": "PASS",
+  "supplementary_scope_check_wall_s": 0.6033933260041522,
+  "total_measured_execution_wall_s": 48.40658491200884,
+  "transform_runs": 0
+}

@@ -1,0 +1,953 @@
+{
+  "audit_only_correction": {
+    "added_audit_driver_wall_s": 75.53252166900347,
+    "all_original_files_unchanged": 13384,
+    "auditor": {
+      "bytes": 35011,
+      "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/source/image_cegar_diagnostic/audit_online_products.py",
+      "sha256": "af8817abc0792bb72343794aa9382965dbd47be04d69058105d57e5d12e6c707"
+    },
+    "baseline_audits_retained_exactly_from_same_v3": 6,
+    "command": {
+      "bytes": 593,
+      "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/approval_gate.json",
+      "sha256": "77cf927d1d607ac82800df51b0d4fc37ad09f729825d0665b2e308e810511213"
+    },
+    "controller": {
+      "bytes": 5571,
+      "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/run_repaired_audits.py",
+      "sha256": "edd72483935b683cf4e8f6467f14fa9c4147adb06a7f678c1e4b44ecda5891b5"
+    },
+    "execution": {
+      "bytes": 317,
+      "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/execution.json",
+      "sha256": "c298ddcf016d4b8f42a6268894a4ec129d1b2072e2c776a2a4db90685261399e"
+    },
+    "fresh_treatment_DSEC_calls": 9,
+    "fresh_treatment_Direct_actual_queries": 8082,
+    "fresh_treatment_Direct_global_audits": 6,
+    "ledger": {
+      "bytes": 73307484,
+      "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/ledger.json",
+      "sha256": "5f905c41917b67594c56414d5cd26688ad8eb81bf2c7d94d46d2369afd7fa83c"
+    },
+    "plan": {
+      "bytes": 2876128,
+      "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/plan.json",
+      "sha256": "e8ad3c6cfd0fe2dd9ec3212075652a798c40f08382cbe150a69a0609421c3c74"
+    },
+    "repair": "Authenticated exact per-run replay module before inline imports; strict guard unchanged",
+    "summary": {
+      "bytes": 264165,
+      "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/summary.json",
+      "sha256": "694dd9373ea882af5ad74be95aae8deaed5a8ddbbdc5b41232310a6dd3e0c8be"
+    },
+    "transform_reruns": 0,
+    "wrapper_wall_including_full_file_hash_checks_s": 94.44609522819519
+  },
+  "cases": [
+    {
+      "arms": {
+        "baseline": {
+          "added_worlds": 0,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/005_b03/baseline/direct/005_b03",
+          "direct_audit": {
+            "bytes": 6500,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/005_b03/baseline/direct/005_b03/result.json",
+            "sha256": "17e4ad729bf2cadcdb9675ad6ed8843f8b90c5640e5314a26c387c796335e8af"
+          },
+          "free_domains_directory": null,
+          "fresh_direct_actual_queries": 530,
+          "genuine_build_and": 3,
+          "global_audit": {
+            "bytes": 5974,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/005_b03/baseline/global/005_b03/result.json",
+            "sha256": "f3ac88c7351595086163006a3a450ed0be465505f68011cc08bed8973664befe"
+          },
+          "new_direct_dsec_calls": 2,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 347,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/baseline/005_b03/checkpoints/checkpoint_00002/product.aig",
+            "sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/baseline/005_b03/chunks",
+          "qualified": 43,
+          "raw_and": 5,
+          "selected": 5,
+          "selected_checkpoint": {
+            "bytes": 3294,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/baseline/005_b03/checkpoints/checkpoint_00002/checkpoint.json",
+            "sha256": "1193f7f35e75fc1b1311b1cde4d4ed3bc7fe2680fb0014f9c444098fc7272b00"
+          },
+          "selection": {
+            "bytes": 29694,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/baseline/005_b03/checkpoints/checkpoint_00002/selection.json",
+            "sha256": "4f702bfd187868390b88924db1e72075168a8676dba3075b0cf06df8dd88348b"
+          },
+          "source_plan": {
+            "bytes": 3391,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/baseline/plan.json",
+            "sha256": "3b5ca0fe3661c1bf7690627ed024663b8875eabfec438b14804480a8b7a15841"
+          },
+          "transform_result": {
+            "bytes": 11997,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/baseline/005_b03/result.json",
+            "sha256": "7391a025e933eea13216474e32fad125fe039e7311e3c670ca6d512c3be23cde"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 0.9220220839997637,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/005_b03/baseline/global/005_b03"
+        },
+        "predecessor_free": {
+          "added_worlds": 3,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/005_b03/predecessor_free/direct/005_b03",
+          "direct_audit": {
+            "bytes": 6637,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/005_b03/predecessor_free/direct/005_b03/result.json",
+            "sha256": "78f2ae8fccfd386a64cff6c79626e198d19307a3b7dd43a77d5550f77f19ed63"
+          },
+          "free_domains_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free/005_b03/free_domains",
+          "fresh_direct_actual_queries": 530,
+          "genuine_build_and": 3,
+          "global_audit": {
+            "bytes": 6093,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/005_b03/predecessor_free/global/005_b03/result.json",
+            "sha256": "ce08fd259857db1162c29460925beae85985cd7f4cc0470f2f7beb285bc93484"
+          },
+          "new_direct_dsec_calls": 2,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 347,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free/005_b03/checkpoints/checkpoint_00002/product.aig",
+            "sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free/005_b03/chunks",
+          "qualified": 43,
+          "raw_and": 5,
+          "selected": 5,
+          "selected_checkpoint": {
+            "bytes": 3872,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free/005_b03/checkpoints/checkpoint_00002/checkpoint.json",
+            "sha256": "2170e8bb49556d9c716c14675bb9abc226a3760aa7c95039d703407db8742f1c"
+          },
+          "selection": {
+            "bytes": 38407,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free/005_b03/checkpoints/checkpoint_00002/selection.json",
+            "sha256": "1f1c12579d9d216c91213b462aab3415bae9598fee58fff18a1aa17185ea657d"
+          },
+          "source_plan": {
+            "bytes": 4256,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free/plan.json",
+            "sha256": "eeac806a00b055bdafabbab992d908cfd2ad8c7201365afd40b57ac9ef439326"
+          },
+          "transform_result": {
+            "bytes": 13914,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free/005_b03/result.json",
+            "sha256": "c593fd3913b2b8c3267706451e9d391f77073d7d8cc3085aeb8406980bdffbf4"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 1.1507005820021732,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/005_b03/predecessor_free/global/005_b03"
+        }
+      },
+      "case": "005_b03.aig",
+      "common_completed_roots": 36,
+      "common_root_pool_identity": "PASS",
+      "genuine_build_and": {
+        "baseline": 3,
+        "predecessor_free": 3
+      },
+      "initial_pool_signature_identity": "PASS",
+      "loaded_and": 128,
+      "missing_or_failed_arms": [],
+      "new_qualified_count": 0,
+      "new_retained_count": 0,
+      "new_selected_count": 0,
+      "paired_and_difference": 0,
+      "source_status": {
+        "baseline": "COMPLETE",
+        "predecessor_free": "COMPLETE"
+      }
+    },
+    {
+      "arms": {
+        "baseline": {
+          "added_worlds": 0,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/044_i2c/baseline/direct/044_i2c",
+          "direct_audit": {
+            "bytes": 7169,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/044_i2c/baseline/direct/044_i2c/result.json",
+            "sha256": "735d4cb40ff0282a62122b3b3541224443238618398864266ff1f0e86a4bb148"
+          },
+          "free_domains_directory": null,
+          "fresh_direct_actual_queries": 638,
+          "genuine_build_and": 7,
+          "global_audit": {
+            "bytes": 6026,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/044_i2c/baseline/global/044_i2c/result.json",
+            "sha256": "1b9158f8159b22fdf3c2681d55da53d1f25097fb721717b17a4f6c2119efd60b"
+          },
+          "new_direct_dsec_calls": 2,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 3796,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/baseline/044_i2c/checkpoints/checkpoint_00006/product.aig",
+            "sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/baseline/044_i2c/chunks",
+          "qualified": 79,
+          "raw_and": 13,
+          "selected": 7,
+          "selected_checkpoint": {
+            "bytes": 3553,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/baseline/044_i2c/checkpoints/checkpoint_00006/checkpoint.json",
+            "sha256": "d32764bb46b3715a468c7148e42c4fded47368268e79a87bff991dc8a6afec6d"
+          },
+          "selection": {
+            "bytes": 54919,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/baseline/044_i2c/checkpoints/checkpoint_00006/selection.json",
+            "sha256": "ab49092a37ee02af79cb83f34ca7a328dbd566cb895f59b6fb17ab59092f3f12"
+          },
+          "source_plan": {
+            "bytes": 3391,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/baseline/plan.json",
+            "sha256": "005ebb075c057a38f6f7d31a3ead480d39c0fb0c75b5b1facb907eedcbf708e3"
+          },
+          "transform_result": {
+            "bytes": 14066,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/baseline/044_i2c/result.json",
+            "sha256": "df13b6c2877394c8611e56297c379522e52b6794071c32d97b69df73aaf2dbcf"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 22.171307452998008,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/044_i2c/baseline/global/044_i2c"
+        },
+        "predecessor_free": {
+          "added_worlds": 256,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/044_i2c/predecessor_free/direct/044_i2c",
+          "direct_audit": {
+            "bytes": 7312,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/044_i2c/predecessor_free/direct/044_i2c/result.json",
+            "sha256": "b4c6be443202a0d03582d87f7a901f365e0a8055ce3a50a1e60d506a2d7fe6ca"
+          },
+          "free_domains_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free/044_i2c/free_domains",
+          "fresh_direct_actual_queries": 638,
+          "genuine_build_and": 7,
+          "global_audit": {
+            "bytes": 6149,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/044_i2c/predecessor_free/global/044_i2c/result.json",
+            "sha256": "4ea03f496ed2f1c7aa7588b5d9bc0f591e6ea14e2d030d0586996cb4a7fac6bf"
+          },
+          "new_direct_dsec_calls": 2,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 3796,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free/044_i2c/checkpoints/checkpoint_00006/product.aig",
+            "sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free/044_i2c/chunks",
+          "qualified": 79,
+          "raw_and": 13,
+          "selected": 7,
+          "selected_checkpoint": {
+            "bytes": 4137,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free/044_i2c/checkpoints/checkpoint_00006/checkpoint.json",
+            "sha256": "c0672b57aa37e907b5714a8ca3bc92448209c96a1a4a1c2794cf3b3de277b39b"
+          },
+          "selection": {
+            "bytes": 79384,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free/044_i2c/checkpoints/checkpoint_00006/selection.json",
+            "sha256": "72cad82fc3f97ff5f60f0ea3bbc79a60eafe15ced35e324a4bf2df5909cf36f4"
+          },
+          "source_plan": {
+            "bytes": 4256,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free/plan.json",
+            "sha256": "8e5081eb029aec8f3c5a7708825484c060a7a2fcdf8a63d8b9c3e471416c1155"
+          },
+          "transform_result": {
+            "bytes": 15996,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free/044_i2c/result.json",
+            "sha256": "8748945d2ee5aa2dbaa77350e5bb46c46ded3c48d43b21ac9f247437b7826536"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 55.440050978002546,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/044_i2c/predecessor_free/global/044_i2c"
+        }
+      },
+      "case": "044_i2c.aig",
+      "common_completed_roots": 609,
+      "common_root_pool_identity": "PASS",
+      "genuine_build_and": {
+        "baseline": 7,
+        "predecessor_free": 7
+      },
+      "initial_pool_signature_identity": "PASS",
+      "loaded_and": 2879,
+      "missing_or_failed_arms": [],
+      "new_qualified_count": 0,
+      "new_retained_count": 962,
+      "new_selected_count": 0,
+      "paired_and_difference": 0,
+      "source_status": {
+        "baseline": "COMPLETE",
+        "predecessor_free": "COMPLETE"
+      }
+    },
+    {
+      "arms": {
+        "baseline": {
+          "added_worlds": 0,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/041_des_area/baseline/direct/041_des_area",
+          "direct_audit": {
+            "bytes": 5363,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/041_des_area/baseline/direct/041_des_area/result.json",
+            "sha256": "de28ea557c5b5c6f17603a87b8dede68c06439d4d3674cdd90c535b75abfee62"
+          },
+          "free_domains_directory": null,
+          "fresh_direct_actual_queries": 0,
+          "genuine_build_and": 0,
+          "global_audit": {
+            "bytes": 5912,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/041_des_area/baseline/global/041_des_area/result.json",
+            "sha256": "690f8d65aa4c1e522a7bf35cccb995f974dd9b96d04682b5624b84e946070847"
+          },
+          "new_direct_dsec_calls": 0,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 14211,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/baseline/041_des_area/checkpoints/checkpoint_00000/product.aig",
+            "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/baseline/041_des_area/chunks",
+          "qualified": 0,
+          "raw_and": 0,
+          "selected": 0,
+          "selected_checkpoint": {
+            "bytes": 1644,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/baseline/041_des_area/checkpoints/checkpoint_00000/checkpoint.json",
+            "sha256": "ad5659c0f85dc911c694881acc1deb7d0fe344ad5cd92daed9f9d40f81a44b2b"
+          },
+          "selection": {
+            "bytes": 60,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/baseline/041_des_area/checkpoints/checkpoint_00000/selection.json",
+            "sha256": "c6e3bd35c74358bea6b4a7721f8aac1ff07acb3fc0227730432aa41df4d63be6"
+          },
+          "source_plan": {
+            "bytes": 3396,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/baseline/plan.json",
+            "sha256": "18e1fc9cb9ba54fb3a75d23e51ffb69ec43405ef3fdc425612007139ddd264ea"
+          },
+          "transform_result": {
+            "bytes": 10081,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/baseline/041_des_area/result.json",
+            "sha256": "bd85b042291a3dcc37db8af77f66128f47206819350b882c63d60203b247d35e"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 12.812722283997573,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/041_des_area/baseline/global/041_des_area"
+        },
+        "predecessor_free": {
+          "added_worlds": 29,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/041_des_area/predecessor_free/direct/041_des_area",
+          "direct_audit": {
+            "bytes": 5415,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/041_des_area/predecessor_free/direct/041_des_area/result.json",
+            "sha256": "1c955de7936d132f54534467324b3e15bdc8095ac44b6a627dfcc56b546549d7"
+          },
+          "free_domains_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free/041_des_area/free_domains",
+          "fresh_direct_actual_queries": 0,
+          "genuine_build_and": 0,
+          "global_audit": {
+            "bytes": 5976,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/041_des_area/predecessor_free/global/041_des_area/result.json",
+            "sha256": "090e5ee585a1a7fb54c0a342aaf1277de62fdad0cefa62ac34669b6e16d19cc9"
+          },
+          "new_direct_dsec_calls": 0,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 14211,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free/041_des_area/checkpoints/checkpoint_00000/product.aig",
+            "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free/041_des_area/chunks",
+          "qualified": 0,
+          "raw_and": 0,
+          "selected": 0,
+          "selected_checkpoint": {
+            "bytes": 1644,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free/041_des_area/checkpoints/checkpoint_00000/checkpoint.json",
+            "sha256": "eb0d491cf33bcd00f89b65fd7ad8fea35c88e62da1fd6b88bf89dbb9d4c11423"
+          },
+          "selection": {
+            "bytes": 60,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free/041_des_area/checkpoints/checkpoint_00000/selection.json",
+            "sha256": "c6e3bd35c74358bea6b4a7721f8aac1ff07acb3fc0227730432aa41df4d63be6"
+          },
+          "source_plan": {
+            "bytes": 4261,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free/plan.json",
+            "sha256": "1ecd2f2d98a9e61047c00b804227510eafe572455bd7f5c86d49f1fd841ca8a7"
+          },
+          "transform_result": {
+            "bytes": 11391,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free/041_des_area/result.json",
+            "sha256": "687f1c3707345193beaae3df06cbd348e9c1b58c6881912e908116f6c06b7ccd"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 26.339653892006027,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/041_des_area/predecessor_free/global/041_des_area"
+        }
+      },
+      "case": "041_des_area.aig",
+      "common_completed_roots": 1004,
+      "common_root_pool_identity": "PASS",
+      "genuine_build_and": {
+        "baseline": 0,
+        "predecessor_free": 0
+      },
+      "initial_pool_signature_identity": "PASS",
+      "loaded_and": 10133,
+      "missing_or_failed_arms": [],
+      "new_qualified_count": 0,
+      "new_retained_count": 58,
+      "new_selected_count": 0,
+      "paired_and_difference": 0,
+      "source_status": {
+        "baseline": "COMPLETE",
+        "predecessor_free": "COMPLETE"
+      }
+    },
+    {
+      "arms": {
+        "baseline": {
+          "added_worlds": 0,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/034_b20_opt/baseline/direct/034_b20_opt",
+          "direct_audit": {
+            "bytes": 6195,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/034_b20_opt/baseline/direct/034_b20_opt/result.json",
+            "sha256": "8bf250a2cf2613791647dfd601ccaa293eb7196e818387b49ffd83426cb345a9"
+          },
+          "free_domains_directory": null,
+          "fresh_direct_actual_queries": 6278,
+          "genuine_build_and": 75,
+          "global_audit": {
+            "bytes": 7620,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/034_b20_opt/baseline/global/034_b20_opt/result.json",
+            "sha256": "2f3d5498c4e89cf940b7cf1f448475953040c480788d62fde87689510f78640a"
+          },
+          "new_direct_dsec_calls": 0,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 33554,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/baseline/034_b20_opt/checkpoints/checkpoint_00050/product.aig",
+            "sha256": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/baseline/034_b20_opt/chunks",
+          "qualified": 231,
+          "raw_and": 75,
+          "selected": 58,
+          "selected_checkpoint": {
+            "bytes": 3476,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/baseline/034_b20_opt/checkpoints/checkpoint_00050/checkpoint.json",
+            "sha256": "1bff240d3c757fe30101802a4d3a8f94c33bcc7d531da0dc96f38f0108ce479b"
+          },
+          "selection": {
+            "bytes": 635155,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/baseline/034_b20_opt/checkpoints/checkpoint_00050/selection.json",
+            "sha256": "fde3a91cecfdb76b718df7dc9a281d893ac2abacb1d0b25bff6b73bc5a0a1d09"
+          },
+          "source_plan": {
+            "bytes": 3395,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/baseline/plan.json",
+            "sha256": "2c5c0f6266600cdf5eb256f7dcb1e07b5faeba4e79a763e73610ce029eaa0ad9"
+          },
+          "transform_result": {
+            "bytes": 27379,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/baseline/034_b20_opt/result.json",
+            "sha256": "83219b5532cdb82d617e1172584bb19518722ec6e161a8a22b0f35f814f24213"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 110.28623128899926,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/034_b20_opt/baseline/global/034_b20_opt"
+        },
+        "predecessor_free": {
+          "added_worlds": 219,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/034_b20_opt/predecessor_free/direct/034_b20_opt",
+          "direct_audit": {
+            "bytes": 6254,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/034_b20_opt/predecessor_free/direct/034_b20_opt/result.json",
+            "sha256": "0e3dd616ba7ac9b6a050af59cf2439c7685b00294e37ca6d4d7953ca15b74a4c"
+          },
+          "free_domains_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free/034_b20_opt/free_domains",
+          "fresh_direct_actual_queries": 2742,
+          "genuine_build_and": 38,
+          "global_audit": {
+            "bytes": 6730,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/034_b20_opt/predecessor_free/global/034_b20_opt/result.json",
+            "sha256": "ed96f10e95b8e264c743f35d32cfa2aab75dc4d7e23e39fca58b26aa5284cc4c"
+          },
+          "new_direct_dsec_calls": 0,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 33645,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free/034_b20_opt/checkpoints/checkpoint_00020/product.aig",
+            "sha256": "9df10bc3308721d047f74a85b441296bc9b5a77d5dfbaf067b4bc521266681de"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free/034_b20_opt/chunks",
+          "qualified": 137,
+          "raw_and": 38,
+          "selected": 25,
+          "selected_checkpoint": {
+            "bytes": 4039,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free/034_b20_opt/checkpoints/checkpoint_00020/checkpoint.json",
+            "sha256": "5e5f3764a0f65586297a6c7da66ef4846d50509e996dea2635c3a1d08ca96d65"
+          },
+          "selection": {
+            "bytes": 485823,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free/034_b20_opt/checkpoints/checkpoint_00020/selection.json",
+            "sha256": "f615eb4b3e6c13da570289fc13c579c5ec14491c3f261edb03ef7a879b5c5532"
+          },
+          "source_plan": {
+            "bytes": 4260,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free/plan.json",
+            "sha256": "f84678e46137df432ab0d876ffd6ad1a831b23f6fd26e7b94dfe92ca3d2659fa"
+          },
+          "transform_result": {
+            "bytes": 16517,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free/034_b20_opt/result.json",
+            "sha256": "5a021a08d0bc18666e582d842239b8289160ff959064469501eea56b2d004ab0"
+          },
+          "transform_status": "BUDGET_EXHAUSTED",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 120.03348893599468,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/034_b20_opt/predecessor_free/global/034_b20_opt"
+        }
+      },
+      "case": "034_b20_opt.aig",
+      "common_completed_roots": 1504,
+      "common_root_pool_identity": "PASS",
+      "genuine_build_and": {
+        "baseline": 75,
+        "predecessor_free": 38
+      },
+      "initial_pool_signature_identity": "PASS",
+      "loaded_and": 13440,
+      "missing_or_failed_arms": [],
+      "new_qualified_count": 0,
+      "new_retained_count": 107,
+      "new_selected_count": 0,
+      "paired_and_difference": -37,
+      "source_status": {
+        "baseline": "COMPLETE",
+        "predecessor_free": "BUDGET_EXHAUSTED"
+      }
+    },
+    {
+      "arms": {
+        "baseline": {
+          "added_worlds": 0,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/045_mem_ctrl/baseline/direct/045_mem_ctrl",
+          "direct_audit": {
+            "bytes": 14464,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/045_mem_ctrl/baseline/direct/045_mem_ctrl/result.json",
+            "sha256": "dad96f39a08ea3204316d79ad95a46d912e024c9b80f63d1659c6d8960e4da37"
+          },
+          "free_domains_directory": null,
+          "fresh_direct_actual_queries": 3100,
+          "genuine_build_and": 41,
+          "global_audit": {
+            "bytes": 6632,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/045_mem_ctrl/baseline/global/045_mem_ctrl/result.json",
+            "sha256": "d2f4d1a0eb59abd29a06a29945c2eac649bb9774871e432fbefc84169c56290e"
+          },
+          "new_direct_dsec_calls": 3,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 33238,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/baseline/045_mem_ctrl/checkpoints/checkpoint_00023/product.aig",
+            "sha256": "2b8f4ef28259f222bb41b2071aae8baaa7799307761cba04a94312847c948822"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/baseline/045_mem_ctrl/chunks",
+          "qualified": 510,
+          "raw_and": 136,
+          "selected": 30,
+          "selected_checkpoint": {
+            "bytes": 3576,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/baseline/045_mem_ctrl/checkpoints/checkpoint_00023/checkpoint.json",
+            "sha256": "bf3d7498353477341495ac8c7079ecc433bf9ec9e3a746102d70a7659a1bcbaa"
+          },
+          "selection": {
+            "bytes": 661887,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/baseline/045_mem_ctrl/checkpoints/checkpoint_00023/selection.json",
+            "sha256": "b542ebfde20ad875a5db22d6a9cbad412ee6042afdb958afd3a2a7d8be9396f6"
+          },
+          "source_plan": {
+            "bytes": 3396,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/baseline/plan.json",
+            "sha256": "13e2d1db01b9dd2dd3af10c33b28a817a0f850fdd6a81129791b642b2a20c9c9"
+          },
+          "transform_result": {
+            "bytes": 16556,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/baseline/045_mem_ctrl/result.json",
+            "sha256": "197ecc83170bcec19ffe3a28f2c3b23452d2eb5b9f5d478c40b1149435032581"
+          },
+          "transform_status": "BUDGET_EXHAUSTED",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 120.0101122269989,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/045_mem_ctrl/baseline/global/045_mem_ctrl"
+        },
+        "predecessor_free": {
+          "added_worlds": 174,
+          "appended_qualified": 62,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/045_mem_ctrl/predecessor_free/direct/045_mem_ctrl",
+          "direct_audit": {
+            "bytes": 12356,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/045_mem_ctrl/predecessor_free/direct/045_mem_ctrl/result.json",
+            "sha256": "fedd0712f1b6459f8fe38cbd9252b0d9b2ee11106f80835f177e428b3bca8af7"
+          },
+          "free_domains_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free/045_mem_ctrl/free_domains",
+          "fresh_direct_actual_queries": 1980,
+          "genuine_build_and": 26,
+          "global_audit": {
+            "bytes": 6527,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/045_mem_ctrl/predecessor_free/global/045_mem_ctrl/result.json",
+            "sha256": "5ce76490a4a9c404d21f163d8466bbf7c39b43a63c21a298659311f630fb9de1"
+          },
+          "new_direct_dsec_calls": 3,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 33409,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free/045_mem_ctrl/checkpoints/checkpoint_00012/product.aig",
+            "sha256": "6230af3fbe2c47963f0993888f4e1ba4a41ba168d8c2343cdfb9dc034d1022f5"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free/045_mem_ctrl/chunks",
+          "qualified": 374,
+          "raw_and": 88,
+          "selected": 19,
+          "selected_checkpoint": {
+            "bytes": 4153,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free/045_mem_ctrl/checkpoints/checkpoint_00012/checkpoint.json",
+            "sha256": "e1b24926598a3b300bab03f3c4616e5e9bb0132e05d9f5fdcd39b13ad90507f4"
+          },
+          "selection": {
+            "bytes": 789691,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free/045_mem_ctrl/checkpoints/checkpoint_00012/selection.json",
+            "sha256": "d4d1ba4eedff335a2c1fbf21b29da821dedc266559670973ad9f70b4d96fadee"
+          },
+          "source_plan": {
+            "bytes": 4261,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free/plan.json",
+            "sha256": "020bd3be97043b71d9e2efde25963a6250a4d4ac8127159fd5c5b527ab617443"
+          },
+          "transform_result": {
+            "bytes": 14691,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free/045_mem_ctrl/result.json",
+            "sha256": "a450757be0ab518b680b0b5c0f16a9c00e8b0cd8c1e4fac5ad90bc7ef50b7c80"
+          },
+          "transform_status": "BUDGET_EXHAUSTED",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 120.16699311499542,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/045_mem_ctrl/predecessor_free/global/045_mem_ctrl"
+        }
+      },
+      "case": "045_mem_ctrl.aig",
+      "common_completed_roots": 222,
+      "common_root_pool_identity": "PASS",
+      "genuine_build_and": {
+        "baseline": 41,
+        "predecessor_free": 26
+      },
+      "initial_pool_signature_identity": "PASS",
+      "loaded_and": 34059,
+      "missing_or_failed_arms": [],
+      "new_qualified_count": 62,
+      "new_retained_count": 311,
+      "new_selected_count": 2,
+      "paired_and_difference": -15,
+      "source_status": {
+        "baseline": "BUDGET_EXHAUSTED",
+        "predecessor_free": "BUDGET_EXHAUSTED"
+      }
+    },
+    {
+      "arms": {
+        "baseline": {
+          "added_worlds": 0,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/060_wb_dma/baseline/direct/060_wb_dma",
+          "direct_audit": {
+            "bytes": 6999,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/060_wb_dma/baseline/direct/060_wb_dma/result.json",
+            "sha256": "d5e407925b49fec61d0a1012506b7e3a181962ce7c235aab84efefc7fb0c6931"
+          },
+          "free_domains_directory": null,
+          "fresh_direct_actual_queries": 3286,
+          "genuine_build_and": 76,
+          "global_audit": {
+            "bytes": 6749,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/060_wb_dma/baseline/global/060_wb_dma/result.json",
+            "sha256": "e9870e83e29bcefabe1e7954e4a9b311b75d63992db8684d74e17187786ab9e4"
+          },
+          "new_direct_dsec_calls": 2,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 14466,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/baseline/060_wb_dma/checkpoints/checkpoint_00029/product.aig",
+            "sha256": "8452caa0ee78496f1d204a609d6412227779dca475c10a2afc00993e1bc19ed7"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/baseline/060_wb_dma/chunks",
+          "qualified": 426,
+          "raw_and": 83,
+          "selected": 31,
+          "selected_checkpoint": {
+            "bytes": 3565,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/baseline/060_wb_dma/checkpoints/checkpoint_00029/checkpoint.json",
+            "sha256": "d5563f3be0965446a5de06783d15dc9d929cfb2fbdb878bf05c2b5c2696c2f09"
+          },
+          "selection": {
+            "bytes": 507363,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/baseline/060_wb_dma/checkpoints/checkpoint_00029/selection.json",
+            "sha256": "fd244e78522d67089b3816c468ca19938dd6880258643b0bb59fa4be48ad99d0"
+          },
+          "source_plan": {
+            "bytes": 3394,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/baseline/plan.json",
+            "sha256": "5a54436b92f399056dc354b94cf2a804a10f09d13ca72188eccf854f4500d389"
+          },
+          "transform_result": {
+            "bytes": 20888,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/baseline/060_wb_dma/result.json",
+            "sha256": "c4f06d7b7a36a0898ea6c0700b2724806ba77233703e7338a7d7d4e8cde237bd"
+          },
+          "transform_status": "COMPLETE",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 66.61211281499709,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/060_wb_dma/baseline/global/060_wb_dma"
+        },
+        "predecessor_free": {
+          "added_worlds": 256,
+          "appended_qualified": 0,
+          "direct_and_product_evidence_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/060_wb_dma/predecessor_free/direct/060_wb_dma",
+          "direct_audit": {
+            "bytes": 6562,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/060_wb_dma/predecessor_free/direct/060_wb_dma/result.json",
+            "sha256": "721898bbb2e82f8d17d62ebbb3bc9fd4111a8fa802bdd4be52dc96eb828b1e94"
+          },
+          "free_domains_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free/060_wb_dma/free_domains",
+          "fresh_direct_actual_queries": 2192,
+          "genuine_build_and": 59,
+          "global_audit": {
+            "bytes": 6620,
+            "path": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/060_wb_dma/predecessor_free/global/060_wb_dma/result.json",
+            "sha256": "175903c1a000905fdf81761d898321072bf8eaeb09be57243bf82ca0ae6f44b3"
+          },
+          "new_direct_dsec_calls": 2,
+          "new_global_dsec_calls": 0,
+          "product": {
+            "bytes": 14527,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free/060_wb_dma/checkpoints/checkpoint_00010/product.aig",
+            "sha256": "d8dd9061006c34404f2381672b9e1563329e8ea5ec074ee7e0b529b2f1301158"
+          },
+          "proof_chunks_directory": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free/060_wb_dma/chunks",
+          "qualified": 147,
+          "raw_and": 60,
+          "selected": 21,
+          "selected_checkpoint": {
+            "bytes": 4089,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free/060_wb_dma/checkpoints/checkpoint_00010/checkpoint.json",
+            "sha256": "adeda23d939f9aa1c0783a81c3e147eb8e787c13b2511246fb0b4acbcc04a2a0"
+          },
+          "selection": {
+            "bytes": 581976,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free/060_wb_dma/checkpoints/checkpoint_00010/selection.json",
+            "sha256": "de50129846758543382a22723da64bbcb0abb2a335d935bfe7886c6a20f75ee4"
+          },
+          "source_plan": {
+            "bytes": 4259,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free/plan.json",
+            "sha256": "286ef0f145ca004677493d87600137abcabe58c0199e74d98d0a796b5b38bbff"
+          },
+          "transform_result": {
+            "bytes": 13372,
+            "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free/060_wb_dma/result.json",
+            "sha256": "32901a6d0544e0050b1513b0178c1ca8cf3a6c7f4eb7b9e1b99786127943c405"
+          },
+          "transform_status": "BUDGET_EXHAUSTED",
+          "transform_tree_peak_rss": null,
+          "transform_wall_s": 120.01262682300148,
+          "whole_original_alias_products_directory": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/060_wb_dma/predecessor_free/global/060_wb_dma"
+        }
+      },
+      "case": "060_wb_dma.aig",
+      "common_completed_roots": 761,
+      "common_root_pool_identity": "PASS",
+      "genuine_build_and": {
+        "baseline": 76,
+        "predecessor_free": 59
+      },
+      "initial_pool_signature_identity": "PASS",
+      "loaded_and": 9555,
+      "missing_or_failed_arms": [],
+      "new_qualified_count": 0,
+      "new_retained_count": 471,
+      "new_selected_count": 0,
+      "paired_and_difference": -17,
+      "source_status": {
+        "baseline": "COMPLETE",
+        "predecessor_free": "BUDGET_EXHAUSTED"
+      }
+    }
+  ],
+  "independent_review_boundary": "Artifact/CNF/receipt/witness/product/DSEC-binding replay; no new reviewer solver, DSEC or transform calls in final product review",
+  "independent_reviews": {
+    "final_index": {
+      "bytes": 3440,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-final-independent-review/index.json",
+      "sha256": "89a44f08814ed1f80f3e304c2bf4440161d353a37706087f4093e4b1f1d288d5"
+    },
+    "final_review": {
+      "bytes": 4448,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-final-independent-review/review.json",
+      "sha256": "823ae60f7811bb56654b085c478897e0f61a1ee425f87003cc18709c53005cbe"
+    },
+    "predecessor-free-audit-binding-independent-review-v1": {
+      "bytes": 1717,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-audit-binding-independent-review-v1/review.json",
+      "sha256": "84e8809aa2b0200a0c5645ee03b7f0853339e0f7ac4d46d5a37080483efb3d54"
+    },
+    "predecessor-free-global-accounting-independent-review": {
+      "bytes": 463193,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-global-accounting-independent-review/review.json",
+      "sha256": "4190d3b9b777f08b850e179cd8f43718b9448526f137740d338868fae1f40a60"
+    },
+    "predecessor-free-integration-review-v2": {
+      "bytes": 6886,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-integration-review-v2/review.json",
+      "sha256": "a64f2daef23d85faf89a0508d4240d81c4f3c7f111f8e998a2e697b62048d5ac"
+    },
+    "predecessor-free-proof-products-independent-review": {
+      "bytes": 66999,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-proof-products-independent-review/review.json",
+      "sha256": "a9783fdf8a12ebddaed943a681ed8efc495cfa374477b3ef50a54c1b7195f5ef"
+    },
+    "predecessor-free-protocol-independent-review-v3": {
+      "bytes": 1786,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-protocol-independent-review-v3/review.json",
+      "sha256": "f9ff5e12e0ade9e15b1bb5776f95d85f04da0d50188145e002d95e00e03ce6a0"
+    },
+    "predecessor-free-worlds-independent-review": {
+      "bytes": 6355,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-worlds-independent-review/review.json",
+      "sha256": "ec01cfc40abe775887830bd257e0cb2e0cbbdced68416caeaa878de24bc7dbdf"
+    }
+  },
+  "original_failure": {
+    "execution": {
+      "bytes": 222,
+      "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/execution.json",
+      "sha256": "267300026d453c5fac18d89f9ff36a40639e2af0ce522531970adf9037a24136"
+    },
+    "failed_treatment_audits": 6,
+    "first_trace": {
+      "bytes": 2055,
+      "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/005_b03/predecessor_free/direct/005_b03/error.log",
+      "sha256": "bd6b09881f9e8abc1fa33c79d84dcb2a2217bdab34c25b1e454ca9dac8936c8c"
+    },
+    "ledger": {
+      "bytes": 73209263,
+      "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/ledger.json",
+      "sha256": "b40dc4dbfa8d9d959836489208c627dcc695835fabdc5859b891c4af95ba6e7d"
+    },
+    "paired_marginal": null,
+    "plan": {
+      "bytes": 27391,
+      "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/plan.json",
+      "sha256": "680c902e98cc7b4aeaaf402f6694dd72555451a5cc619d8eedc15bfd80de296a"
+    },
+    "reason": "audit CLI cached diagnostic module from outer source; strict per-run path guard rejected import",
+    "summary": {
+      "bytes": 1274,
+      "path": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/summary.json",
+      "sha256": "d9985326200755000cf1a93ca5471917c6f6f1dd7680268db074aef5d4a77196"
+    },
+    "valid_pairs": 0
+  },
+  "overhead_accounting": {
+    "caveat": "Logical API byte counts; COMPLETE exact counts and timeout lower bounds. No persist-only elapsed timer or physical disk-I/O claim.",
+    "first_metadata_cap_refusal": {
+      "bytes": 1308,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-pilot-overhead-v1/first.log",
+      "sha256": "41dc66fa4aa50600fa5843852e39919b3f994e818bcd4c0d2f10760cdc19827e"
+    },
+    "result": {
+      "bytes": 240990,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-pilot-overhead-v1/accounting.json",
+      "sha256": "dc5351c6c64d48301a2847bf66299da127a98f7cf02270aa0957dd06005d5dbf"
+    },
+    "script": {
+      "bytes": 9648,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/analyze_saved_overhead.py",
+      "sha256": "805ac265c561bb1e58e8bd27caea5bf4c862349c3498cfc3a53fa7af61d945a5"
+    }
+  },
+  "recommendation": "Keep predecessor-free default disabled. Engineering overhead is a supported narrow hypothesis; cache design awaits review and explicit implementation GO.",
+  "repair_tests": {
+    "focused_unique_tests": 5,
+    "independent_same_five_test_repeat": "PASS; separate review evidence, not five additional unique tests",
+    "real_two_source_CLI_fixture": {
+      "bytes": 665,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-audit-binding-repair-v1/cli_fixture/fixture_result.json",
+      "sha256": "45c56dc7bb270c30bbb6880693e25fdc5b78c23143f458e262269e15101ec3ed"
+    },
+    "worker_first_log": {
+      "bytes": 901,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-audit-binding-repair-v1/focused-first.log",
+      "sha256": "ab3bcc138b6a7912cd489e03667e6edc81e97e8447455f92c79029bc88852e14"
+    }
+  },
+  "result": {
+    "baseline_genuine_build_and": 202,
+    "both_complete_paired_and": 0,
+    "both_searches_complete_pairs": 3,
+    "equal_case_percentage_point_difference": -0.08287602706773693,
+    "paired_and": -69,
+    "treatment_genuine_build_and": 133,
+    "valid_pairs": 6
+  },
+  "runtime_commit": "9eff9866352993e14f8f65fdd28b0997a351a82d",
+  "schema": 1,
+  "scope": {
+    "arms": 2,
+    "cases": 6,
+    "extra_free_only_revisit_cap_per_chunk": 1,
+    "free_additions_cap": 256,
+    "full55_expansion": false,
+    "global_boolean_direct_exhaustion": false,
+    "inline_validator": "FULL",
+    "native_novelty": "NOT_CHECKED",
+    "transform_seconds_per_job": 120,
+    "workers": 1
+  },
+  "status": "REVIEWED_NEGATIVE_PAIRED_PILOT",
+  "timing": {
+    "sum_transform_wall_s": 775.9580224779929,
+    "transform_specific_RSS": "UNAVAILABLE_ALL_12; never imputed from driver-plus-DSEC tree"
+  }
+}

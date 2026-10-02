@@ -1,0 +1,54 @@
+{
+  "cases": [
+    {
+      "case": "005_b03.aig",
+      "loaded_and": 128,
+      "missing_or_failed_arms": [
+        "predecessor_free"
+      ]
+    },
+    {
+      "case": "044_i2c.aig",
+      "loaded_and": 2879,
+      "missing_or_failed_arms": [
+        "predecessor_free"
+      ]
+    },
+    {
+      "case": "041_des_area.aig",
+      "loaded_and": 10133,
+      "missing_or_failed_arms": [
+        "predecessor_free"
+      ]
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "loaded_and": 13440,
+      "missing_or_failed_arms": [
+        "predecessor_free"
+      ]
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "loaded_and": 34059,
+      "missing_or_failed_arms": [
+        "predecessor_free"
+      ]
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "loaded_and": 9555,
+      "missing_or_failed_arms": [
+        "predecessor_free"
+      ]
+    }
+  ],
+  "fixed_cases": 6,
+  "interpretation": "Paired whole-original/selected-root-bounded-Direct-corrected genuine Build marginals; new IDs alone are not area gains. Missing arms are not zeros.",
+  "native_novelty": "NOT_CHECKED",
+  "no_automatic_full55": true,
+  "paired_and_difference": null,
+  "status": "INCOMPLETE_PAIRED_COVERAGE",
+  "valid_pair_equal_case_percentage_point_difference": null,
+  "valid_pairs": 0
+}

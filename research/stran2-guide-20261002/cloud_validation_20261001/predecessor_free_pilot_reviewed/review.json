@@ -1,0 +1,134 @@
+{
+  "additional_producer_repair_audit_wall_s": 75.53252166900347,
+  "auditor_repair_sha256": "af8817abc0792bb72343794aa9382965dbd47be04d69058105d57e5d12e6c707",
+  "baseline_genuine_build_and": [
+    3,
+    7,
+    0,
+    75,
+    41,
+    76
+  ],
+  "baseline_search_complete": 5,
+  "baseline_total": 202,
+  "both_complete_and_delta": 0,
+  "both_searches_complete": 3,
+  "equal_case_percentage_point_delta": -0.08287602706773693,
+  "every_leave_one_out_delta_negative": true,
+  "final_review_new_dsec_runs": 0,
+  "final_review_new_solver_queries": 0,
+  "fixed_case_order": [
+    "005_b03",
+    "044_i2c",
+    "041_des_area",
+    "034_b20_opt",
+    "045_mem_ctrl",
+    "060_wb_dma"
+  ],
+  "free_world_review": {
+    "appended_qualified_records": 62,
+    "authenticated_and_full_compiled_replayed_models": 4769,
+    "authenticated_raw_model_batches": 149,
+    "bound_files": 2862,
+    "final_added_worlds": 937,
+    "raw_receipt_checks": 14493,
+    "reconstructed_free_versions": 127,
+    "replayed_admission_rounds": 149,
+    "selected_and_appended_qualified_targets": 137,
+    "selected_appended_records": 2,
+    "selected_records": 77,
+    "source_cnf_reconstructions": 150,
+    "wall_s": 20.424098845003755
+  },
+  "global_review": {
+    "direct_products": 36,
+    "global_products": 48,
+    "output_alias_existing_original": 44,
+    "selected_recipe_classifications": 416,
+    "structurally_novel_output_entirely_new_gates": 372
+  },
+  "limits": [
+    "Saved proof statuses/DSEC receipts authenticated, not re-proved with fresh solver or DRAT",
+    "Selected-root bounded Direct policy and whole-original structural alias correction; no global Boolean Direct exhaustion or native novelty",
+    "No causal attribution of the lost coverage to a particular runtime component; logical byte accounting is not elapsed-time attribution",
+    "No additional formal pilot, transform rerun, full55 expansion or performance edit was conducted by this review"
+  ],
+  "loaded_and_sum": 70194,
+  "mem_new_qualified_ids": 62,
+  "mem_new_selected_ids": 2,
+  "missing_transform_rss": "ALL_12_MISSING; no replacement with all-process RSS",
+  "new_selected_roots": [
+    1327,
+    1431
+  ],
+  "original_file_rehash": {
+    "all_bound_files": 13392,
+    "bytes_hashed": 1906773263,
+    "original_files": 13384,
+    "original_frozen_files_unchanged": true,
+    "source_plan_sha256": "e8ad3c6cfd0fe2dd9ec3212075652a798c40f08382cbe150a69a0609421c3c74",
+    "status": "PASS",
+    "wall_s": 4.924839142004203
+  },
+  "original_plan_sha256": "680c902e98cc7b4aeaaf402f6694dd72555451a5cc619d8eedc15bfd80de296a",
+  "original_transform_reruns": 0,
+  "original_zero_pair_summary_preserved": true,
+  "paired_and_delta": -69,
+  "paired_win_tie_loss": [
+    0,
+    3,
+    3
+  ],
+  "proof_review": {
+    "appended_build_chunk_witnesses": 188,
+    "arms": 12,
+    "build_chunk_full_witnesses": 4418,
+    "build_raw_rows": 8945,
+    "direct_cnfs": 12,
+    "direct_full_witnesses": 10506,
+    "direct_raw_rows": 21914,
+    "grammar_witnesses": 2726,
+    "logical_obligations": 46068,
+    "max_appended_lane": 455,
+    "positive_direct_free_status": "SAT_ALL",
+    "positive_directs": 88,
+    "raw_unknowns": 0,
+    "saved_dsec_certificate_references": 36,
+    "source_and_audit_exact_product_rebuilds": 60,
+    "source_build_cnfs": 106
+  },
+  "repair_plan_sha256": "e8ad3c6cfd0fe2dd9ec3212075652a798c40f08382cbe150a69a0609421c3c74",
+  "repair_tests": {
+    "all_pass": true,
+    "independent_tests": 5,
+    "no_skips": true,
+    "separate_from_final_read_only_review": true,
+    "small_fixture_has_fresh_solver_and_DSEC": true,
+    "wall_s": 6.137
+  },
+  "review_execution_wall_s": {
+    "complete_original_rehash": 4.924839142004203,
+    "global_accounting": 39.39234114000283,
+    "note": "Review scopes overlap and some ran concurrently; do not sum into pilot transform cost",
+    "proof_products": 48.40658491200884,
+    "worlds": 20.424098845003755
+  },
+  "reviewer_first_failure_preserved": {
+    "file": "045_mem_ctrl-first.log",
+    "preserved": true,
+    "production_evidence_issue": false,
+    "reason": "Reviewer compared complete proof metadata dictionary against just three statuses; corrected to project free/reset/step fields"
+  },
+  "runtime_and_proof_semantics_unchanged": true,
+  "status": "PASS_COMPLETE_INDEPENDENT_REVIEW",
+  "treatment_genuine_build_and": [
+    3,
+    7,
+    0,
+    38,
+    26,
+    59
+  ],
+  "treatment_search_complete": 3,
+  "treatment_total": 133
+}

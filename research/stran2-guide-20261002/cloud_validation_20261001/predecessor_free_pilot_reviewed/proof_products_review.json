@@ -1,0 +1,2152 @@
+{
+  "arms": 12,
+  "cases": 6,
+  "limitations": [
+    "No new solver/DSEC run: saved SAT/UNSAT/UNKNOWN receipts and existing graph-bound DSEC logs are authenticated, not independently re-proved with a solver or DRAT checker.",
+    "Product byte replay uses each arm own frozen product helper; full CO evaluations and all saved PI/RO witnesses use the separate raw decoder/evaluator.",
+    "Scope is selected roots, constants, saved pools, used divisors, and exact zero-fresh connected 1/2-AND grammar. Global original aliases and final aggregate arithmetic are reviewed separately.",
+    "128 arbitrary full PI/RO worlds per product are structural replay checks, not exhaustive equivalence."
+  ],
+  "new_DSEC_runs": 0,
+  "new_solver_queries": 0,
+  "raw_helper_sha256": "5ef8b672548e857cb9df296e8ac7bc9b0861d3c707fe3789c8cedd2b6108fe2a",
+  "retained_baseline_files": 455,
+  "retained_baseline_hashes": "PASS",
+  "reviewer_sha256": "3b79fe8ad5ac898520dbe16e6c6f59cb65beacf2ae36eabc111818beb4cca772",
+  "rows": [
+    {
+      "arm": "baseline",
+      "audit": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/005_b03/baseline/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 83,
+      "build_raw_statuses": {
+        "SAT": 49,
+        "UNSAT": 45
+      },
+      "case": "005_b03",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 46,
+        "build_chunk_witnesses": 46,
+        "build_chunks": 2,
+        "build_logical_receipts": 138,
+        "build_raw_rows": 94,
+        "direct_candidates": 266,
+        "direct_logical_receipts": 798,
+        "direct_raw_rows": 530,
+        "direct_witnesses": 266,
+        "mixed_prefix_fresh_builds": 3,
+        "positive_directs": 2,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 5,
+        "selected_witnesses_replayed": 5,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 527,
+        "UNSAT": 3
+      },
+      "earlier_id_conditional_AND": 3,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 2,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 80,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 2,
+          "sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78"
+        },
+        {
+          "AND": 77,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 5,
+          "sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052"
+        },
+        {
+          "AND": 80,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 2,
+          "sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/baseline",
+      "selected_max_witness_lane": 7,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "logical_receipt_references": 117,
+          "raw_rows": 79,
+          "raw_statuses": {
+            "SAT": 42,
+            "UNSAT": 37
+          },
+          "selected": 4,
+          "source_candidates": 39
+        },
+        {
+          "chunk": "chunk_00001",
+          "cnf_sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184",
+          "logical_receipt_references": 21,
+          "raw_rows": 15,
+          "raw_statuses": {
+            "SAT": 7,
+            "UNSAT": 8
+          },
+          "selected": 1,
+          "source_candidates": 7
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 1.3242487159950542
+    },
+    {
+      "arm": "predecessor_free",
+      "audit": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/005_b03/predecessor_free/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 88,
+      "build_raw_statuses": {
+        "SAT": 49,
+        "UNSAT": 45
+      },
+      "case": "005_b03",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 46,
+        "build_chunk_witnesses": 46,
+        "build_chunks": 2,
+        "build_logical_receipts": 138,
+        "build_raw_rows": 94,
+        "direct_candidates": 266,
+        "direct_logical_receipts": 798,
+        "direct_raw_rows": 530,
+        "direct_witnesses": 266,
+        "mixed_prefix_fresh_builds": 3,
+        "positive_directs": 2,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 5,
+        "selected_witnesses_replayed": 5,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 527,
+        "UNSAT": 3
+      },
+      "earlier_id_conditional_AND": 3,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 2,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 80,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 2,
+          "sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78"
+        },
+        {
+          "AND": 77,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 5,
+          "sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052"
+        },
+        {
+          "AND": 80,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 2,
+          "sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/005_b03/predecessor_free",
+      "selected_max_witness_lane": 7,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "cnf_sha256": "a704006794238a14b26e691ff5e4ad27049a7191144d1675dd30a3e372ca2ae6",
+          "logical_receipt_references": 117,
+          "raw_rows": 79,
+          "raw_statuses": {
+            "SAT": 42,
+            "UNSAT": 37
+          },
+          "selected": 4,
+          "source_candidates": 39
+        },
+        {
+          "chunk": "chunk_00001",
+          "cnf_sha256": "7dc4c6c433fc5754a936c4387032cbafb107a1e2bb9afa8038db2db8f66b1184",
+          "logical_receipt_references": 21,
+          "raw_rows": 15,
+          "raw_statuses": {
+            "SAT": 7,
+            "UNSAT": 8
+          },
+          "selected": 1,
+          "source_candidates": 7
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 0.792545087999315
+    },
+    {
+      "arm": "baseline",
+      "audit": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/044_i2c/baseline/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 94,
+      "build_raw_statuses": {
+        "SAT": 530,
+        "UNSAT": 71
+      },
+      "case": "044_i2c",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 298,
+        "build_chunk_witnesses": 298,
+        "build_chunks": 3,
+        "build_logical_receipts": 894,
+        "build_raw_rows": 601,
+        "direct_candidates": 318,
+        "direct_logical_receipts": 954,
+        "direct_raw_rows": 638,
+        "direct_witnesses": 318,
+        "mixed_prefix_fresh_builds": 4,
+        "positive_directs": 5,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 7,
+        "selected_witnesses_replayed": 7,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 632,
+        "UNSAT": 6
+      },
+      "earlier_id_conditional_AND": 7,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 5,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 1109,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 3,
+          "sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd"
+        },
+        {
+          "AND": 1102,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 7,
+          "sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f"
+        },
+        {
+          "AND": 1109,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 3,
+          "sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/baseline",
+      "selected_max_witness_lane": 5,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "cnf_sha256": "548625e1deb9c82afdb39a40cb4d210e03cce76d33ec7027149882b2a3a05ab2",
+          "logical_receipt_references": 492,
+          "raw_rows": 330,
+          "raw_statuses": {
+            "SAT": 297,
+            "UNSAT": 33
+          },
+          "selected": 3,
+          "source_candidates": 164
+        },
+        {
+          "chunk": "chunk_00018",
+          "cnf_sha256": "11141337deac6ee22e72ae7e8edac1e684f4bacd5b15adf83063c5ed16edadca",
+          "logical_receipt_references": 228,
+          "raw_rows": 153,
+          "raw_statuses": {
+            "SAT": 118,
+            "UNSAT": 35
+          },
+          "selected": 3,
+          "source_candidates": 76
+        },
+        {
+          "chunk": "chunk_00021",
+          "cnf_sha256": "318e8707172d1c0d56ff5a020d37bc2d4d3ae9f73b4776d5503fe0a65ba977c9",
+          "logical_receipt_references": 174,
+          "raw_rows": 118,
+          "raw_statuses": {
+            "SAT": 115,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 58
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 1.0332397570018657
+    },
+    {
+      "arm": "predecessor_free",
+      "audit": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/044_i2c/predecessor_free/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 100,
+      "build_raw_statuses": {
+        "SAT": 518,
+        "UNSAT": 74
+      },
+      "case": "044_i2c",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 294,
+        "build_chunk_witnesses": 294,
+        "build_chunks": 3,
+        "build_logical_receipts": 882,
+        "build_raw_rows": 592,
+        "direct_candidates": 318,
+        "direct_logical_receipts": 954,
+        "direct_raw_rows": 638,
+        "direct_witnesses": 318,
+        "mixed_prefix_fresh_builds": 4,
+        "positive_directs": 5,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 7,
+        "selected_witnesses_replayed": 7,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 632,
+        "UNSAT": 6
+      },
+      "earlier_id_conditional_AND": 7,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 5,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 1109,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 3,
+          "sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd"
+        },
+        {
+          "AND": 1102,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 7,
+          "sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f"
+        },
+        {
+          "AND": 1109,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 3,
+          "sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/044_i2c/predecessor_free",
+      "selected_max_witness_lane": 5,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00000",
+          "cnf_sha256": "548625e1deb9c82afdb39a40cb4d210e03cce76d33ec7027149882b2a3a05ab2",
+          "logical_receipt_references": 492,
+          "raw_rows": 330,
+          "raw_statuses": {
+            "SAT": 297,
+            "UNSAT": 33
+          },
+          "selected": 3,
+          "source_candidates": 164
+        },
+        {
+          "chunk": "chunk_00020",
+          "cnf_sha256": "d2457d5b2fe3eb069f7042fce72624326328382750ecc1da451ed461483a552a",
+          "logical_receipt_references": 252,
+          "raw_rows": 169,
+          "raw_statuses": {
+            "SAT": 130,
+            "UNSAT": 39
+          },
+          "selected": 3,
+          "source_candidates": 84
+        },
+        {
+          "chunk": "chunk_00023",
+          "cnf_sha256": "cd5d0158f90e72de44d18f6cfefa83b6a22c07f3fff1cc316dc15a7c2e1e49ff",
+          "logical_receipt_references": 138,
+          "raw_rows": 93,
+          "raw_statuses": {
+            "SAT": 91,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 46
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 1.5930109760010964
+    },
+    {
+      "arm": "baseline",
+      "audit": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/041_des_area/baseline/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 57,
+      "build_raw_statuses": {},
+      "case": "041_des_area",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "direct_candidates": 0,
+        "direct_logical_receipts": 0,
+        "direct_raw_rows": 0,
+        "direct_witnesses": 0,
+        "mixed_prefix_fresh_builds": 0,
+        "positive_directs": 0,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 0,
+        "selected_witnesses_replayed": 0,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {},
+      "earlier_id_conditional_AND": 0,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 0,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 4752,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 0,
+          "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+        },
+        {
+          "AND": 4752,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 0,
+          "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+        },
+        {
+          "AND": 4752,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 0,
+          "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/baseline",
+      "selected_max_witness_lane": null,
+      "source_chunks": [],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 0.8732320109993452
+    },
+    {
+      "arm": "predecessor_free",
+      "audit": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/041_des_area/predecessor_free/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 60,
+      "build_raw_statuses": {},
+      "case": "041_des_area",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "direct_candidates": 0,
+        "direct_logical_receipts": 0,
+        "direct_raw_rows": 0,
+        "direct_witnesses": 0,
+        "mixed_prefix_fresh_builds": 0,
+        "positive_directs": 0,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 0,
+        "selected_witnesses_replayed": 0,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {},
+      "earlier_id_conditional_AND": 0,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 0,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 4752,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 0,
+          "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+        },
+        {
+          "AND": 4752,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 0,
+          "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+        },
+        {
+          "AND": 4752,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 0,
+          "sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/041_des_area/predecessor_free",
+      "selected_max_witness_lane": null,
+      "source_chunks": [],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 0.8685812120020273
+    },
+    {
+      "arm": "baseline",
+      "audit": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/034_b20_opt/baseline/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 488,
+      "build_raw_statuses": {
+        "SAT": 578,
+        "UNSAT": 201
+      },
+      "case": "034_b20_opt",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 370,
+        "build_chunk_witnesses": 370,
+        "build_chunks": 39,
+        "build_logical_receipts": 1110,
+        "build_raw_rows": 779,
+        "direct_candidates": 3138,
+        "direct_logical_receipts": 9414,
+        "direct_raw_rows": 6278,
+        "direct_witnesses": 3138,
+        "mixed_prefix_fresh_builds": 58,
+        "positive_directs": 0,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 58,
+        "selected_witnesses_replayed": 58,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 6277,
+        "UNSAT": 1
+      },
+      "earlier_id_conditional_AND": 75,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 0,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 11270,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 0,
+          "sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae"
+        },
+        {
+          "AND": 11195,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 58,
+          "sha256": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a"
+        },
+        {
+          "AND": 11270,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 0,
+          "sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/baseline",
+      "selected_max_witness_lane": 42,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00014",
+          "cnf_sha256": "d2824d9707dfa7f48af14b4e44a16137ab8c24c8945ec101c30e4b91c3a4aecb",
+          "logical_receipt_references": 219,
+          "raw_rows": 147,
+          "raw_statuses": {
+            "SAT": 106,
+            "UNSAT": 41
+          },
+          "selected": 10,
+          "source_candidates": 73
+        },
+        {
+          "chunk": "chunk_00018",
+          "cnf_sha256": "c9ddb7c2a8c5cf6857ea50f4910b84e1e2d7b510d93dba41c887dd3b02c1e7d9",
+          "logical_receipt_references": 48,
+          "raw_rows": 33,
+          "raw_statuses": {
+            "SAT": 16,
+            "UNSAT": 17
+          },
+          "selected": 1,
+          "source_candidates": 16
+        },
+        {
+          "chunk": "chunk_00019",
+          "cnf_sha256": "888efb4092344b5d546ffc7b083767131871a9bf9a5fda8ce3ce2fdf374d7868",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 7,
+            "UNSAT": 4
+          },
+          "selected": 1,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00020",
+          "cnf_sha256": "d0ae67276c577e2a1aa6fce1bfb95d3623455774348640098b0b760f2337f7f9",
+          "logical_receipt_references": 12,
+          "raw_rows": 9,
+          "raw_statuses": {
+            "SAT": 7,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 4
+        },
+        {
+          "chunk": "chunk_00021",
+          "cnf_sha256": "7a3faa3a7dd42ea8d3e2efec799f00333c7632f8d62e9ff7cffa45f1c703d264",
+          "logical_receipt_references": 48,
+          "raw_rows": 33,
+          "raw_statuses": {
+            "SAT": 26,
+            "UNSAT": 7
+          },
+          "selected": 1,
+          "source_candidates": 16
+        },
+        {
+          "chunk": "chunk_00023",
+          "cnf_sha256": "7cb41c78437d1803e49982cd847b433c7d5e01c751c6c4f643b9a948a05ee385",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 5,
+            "UNSAT": 6
+          },
+          "selected": 2,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00024",
+          "cnf_sha256": "ee357b5b2d807f7411fafa00db0ec50a817711b51b1dbf0d6c884e9a4655e499",
+          "logical_receipt_references": 6,
+          "raw_rows": 5,
+          "raw_statuses": {
+            "SAT": 2,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 2
+        },
+        {
+          "chunk": "chunk_00025",
+          "cnf_sha256": "5d9e8dd909859abe649e233c66b6b68a4ed08cab37b2b084e6b6c49b8e89a0c1",
+          "logical_receipt_references": 12,
+          "raw_rows": 9,
+          "raw_statuses": {
+            "SAT": 6,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 4
+        },
+        {
+          "chunk": "chunk_00026",
+          "cnf_sha256": "c749b06e6bda8efa5eeb0ff42fdf35940b23a32d60ca2a10104f485a75d6d712",
+          "logical_receipt_references": 6,
+          "raw_rows": 5,
+          "raw_statuses": {
+            "SAT": 2,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 2
+        },
+        {
+          "chunk": "chunk_00027",
+          "cnf_sha256": "3cc78854e9911808ec3dd81509668faa91907f5f563d306d0abb74516485c405",
+          "logical_receipt_references": 18,
+          "raw_rows": 13,
+          "raw_statuses": {
+            "SAT": 11,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 6
+        },
+        {
+          "chunk": "chunk_00028",
+          "cnf_sha256": "f8dbcbe3a43efdd2932e481caf583dc01d3ebd0345a9f7140dc884b98ac896af",
+          "logical_receipt_references": 21,
+          "raw_rows": 15,
+          "raw_statuses": {
+            "SAT": 13,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 7
+        },
+        {
+          "chunk": "chunk_00029",
+          "cnf_sha256": "1071b0daacd030e61976b2f34413644be820a1a58b6dd8f748658ab2154daf32",
+          "logical_receipt_references": 72,
+          "raw_rows": 49,
+          "raw_statuses": {
+            "SAT": 42,
+            "UNSAT": 7
+          },
+          "selected": 1,
+          "source_candidates": 24
+        },
+        {
+          "chunk": "chunk_00032",
+          "cnf_sha256": "9dbf6f755fb0b6424b9e5206e0eff64cfcf7464482f07df26ac13bb240ca2ecb",
+          "logical_receipt_references": 51,
+          "raw_rows": 35,
+          "raw_statuses": {
+            "SAT": 33,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 17
+        },
+        {
+          "chunk": "chunk_00034",
+          "cnf_sha256": "2a44734382a4a4e23f6cbc679bc199cd861a76b258eaa0830ee18a8f446c18e1",
+          "logical_receipt_references": 39,
+          "raw_rows": 27,
+          "raw_statuses": {
+            "SAT": 23,
+            "UNSAT": 4
+          },
+          "selected": 1,
+          "source_candidates": 13
+        },
+        {
+          "chunk": "chunk_00035",
+          "cnf_sha256": "d10f9a202ac941845769bd96ca8aead2c9e8ee34fcfc711368bd244c0bc1d403",
+          "logical_receipt_references": 30,
+          "raw_rows": 21,
+          "raw_statuses": {
+            "SAT": 13,
+            "UNSAT": 8
+          },
+          "selected": 1,
+          "source_candidates": 10
+        },
+        {
+          "chunk": "chunk_00058",
+          "cnf_sha256": "a7a2b85952f9007d4fc8a0f647305536b98f7bbaf0b8d93cb36253703b778b68",
+          "logical_receipt_references": 48,
+          "raw_rows": 33,
+          "raw_statuses": {
+            "SAT": 31,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 16
+        },
+        {
+          "chunk": "chunk_00095",
+          "cnf_sha256": "61804267d4ab30b9bca9c89b1f447b8059215e8b0ab521b3d6feb3f84c31d426",
+          "logical_receipt_references": 81,
+          "raw_rows": 55,
+          "raw_statuses": {
+            "SAT": 36,
+            "UNSAT": 19
+          },
+          "selected": 2,
+          "source_candidates": 27
+        },
+        {
+          "chunk": "chunk_00102",
+          "cnf_sha256": "c94d6d386fa7091b1fb737c696b5411bf7d93537335be3794192e52c78fa1101",
+          "logical_receipt_references": 9,
+          "raw_rows": 7,
+          "raw_statuses": {
+            "SAT": 3,
+            "UNSAT": 4
+          },
+          "selected": 1,
+          "source_candidates": 3
+        },
+        {
+          "chunk": "chunk_00103",
+          "cnf_sha256": "2d8d735f3936bb96f1d87faef869d1d7e8fff5f07a3a59085644b4beb022d08d",
+          "logical_receipt_references": 3,
+          "raw_rows": 3,
+          "raw_statuses": {
+            "SAT": 1,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 1
+        },
+        {
+          "chunk": "chunk_00104",
+          "cnf_sha256": "d76e88d66862c309fc26787c7e874ba61482839421502be58e0e6dac17131037",
+          "logical_receipt_references": 12,
+          "raw_rows": 9,
+          "raw_statuses": {
+            "SAT": 4,
+            "UNSAT": 5
+          },
+          "selected": 2,
+          "source_candidates": 4
+        },
+        {
+          "chunk": "chunk_00105",
+          "cnf_sha256": "5adffcfd56bc78e37167505b5ac1efbdcbabe861b30c3a922a810d2eea67bad2",
+          "logical_receipt_references": 18,
+          "raw_rows": 13,
+          "raw_statuses": {
+            "SAT": 11,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 6
+        },
+        {
+          "chunk": "chunk_00106",
+          "cnf_sha256": "1df1e8ee0e5ac52b4ad977fc47fe2ff20f87d2c90073ca6b8d5846ed4d857a40",
+          "logical_receipt_references": 18,
+          "raw_rows": 13,
+          "raw_statuses": {
+            "SAT": 9,
+            "UNSAT": 4
+          },
+          "selected": 1,
+          "source_candidates": 6
+        },
+        {
+          "chunk": "chunk_00107",
+          "cnf_sha256": "d5c8b239d0525f3c65dea149f7fc8feadf123d57af6f0acd6847b5488ef63fd5",
+          "logical_receipt_references": 9,
+          "raw_rows": 7,
+          "raw_statuses": {
+            "SAT": 5,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 3
+        },
+        {
+          "chunk": "chunk_00108",
+          "cnf_sha256": "ff21e2b7463ad18bfd2c9be47a195c2af3ea483f4eae8eb196a006999322720d",
+          "logical_receipt_references": 42,
+          "raw_rows": 29,
+          "raw_statuses": {
+            "SAT": 21,
+            "UNSAT": 8
+          },
+          "selected": 1,
+          "source_candidates": 14
+        },
+        {
+          "chunk": "chunk_00111",
+          "cnf_sha256": "1397104c08cb3a213c0bba4aa5dcd796acb7c7427aae313f0772588e6009561f",
+          "logical_receipt_references": 12,
+          "raw_rows": 9,
+          "raw_statuses": {
+            "SAT": 7,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 4
+        },
+        {
+          "chunk": "chunk_00112",
+          "cnf_sha256": "880ac65687d5bab6926cbe8c2fa8ac8f594b9ccb277362f0269290611e550924",
+          "logical_receipt_references": 3,
+          "raw_rows": 3,
+          "raw_statuses": {
+            "SAT": 1,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 1
+        },
+        {
+          "chunk": "chunk_00114",
+          "cnf_sha256": "6e2ad464e7a462ad2db9dd4827f315628dc47388869fbc3ef97753967d7b274d",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 8,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00115",
+          "cnf_sha256": "0838f42b98fea210f287a023e27093e2935330e24fc6dd820afa5f0fc5d1878f",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 8,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00140",
+          "cnf_sha256": "ac83926e02de86a36213792484febb096524d091a19e1b9afb1dc5c4bd161626",
+          "logical_receipt_references": 3,
+          "raw_rows": 3,
+          "raw_statuses": {
+            "SAT": 1,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 1
+        },
+        {
+          "chunk": "chunk_00142",
+          "cnf_sha256": "bc0174575856a1f98c0ff5243371d7799c8bc9e2ff244cc00a3a501f2d5a22b8",
+          "logical_receipt_references": 60,
+          "raw_rows": 41,
+          "raw_statuses": {
+            "SAT": 38,
+            "UNSAT": 3
+          },
+          "selected": 2,
+          "source_candidates": 20
+        },
+        {
+          "chunk": "chunk_00144",
+          "cnf_sha256": "e40719a833a7c29b3244cc02fcab51d0b65307b131e32841615e303db6c3d55c",
+          "logical_receipt_references": 24,
+          "raw_rows": 17,
+          "raw_statuses": {
+            "SAT": 15,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 8
+        },
+        {
+          "chunk": "chunk_00145",
+          "cnf_sha256": "2626f9f8993a8baf848cfe60d171921ba14882df07ebe275d649ae2a1b7283a6",
+          "logical_receipt_references": 9,
+          "raw_rows": 7,
+          "raw_statuses": {
+            "SAT": 4,
+            "UNSAT": 3
+          },
+          "selected": 2,
+          "source_candidates": 3
+        },
+        {
+          "chunk": "chunk_00146",
+          "cnf_sha256": "76754801d6a60b906805129a344fbf5e24a4436d0bab501a11c25731f18d05a9",
+          "logical_receipt_references": 30,
+          "raw_rows": 21,
+          "raw_statuses": {
+            "SAT": 18,
+            "UNSAT": 3
+          },
+          "selected": 2,
+          "source_candidates": 10
+        },
+        {
+          "chunk": "chunk_00147",
+          "cnf_sha256": "a73af6a5185e62574eae10e5cac597b488b6c5662255ec98172d6e55fbf9efa6",
+          "logical_receipt_references": 18,
+          "raw_rows": 13,
+          "raw_statuses": {
+            "SAT": 10,
+            "UNSAT": 3
+          },
+          "selected": 2,
+          "source_candidates": 6
+        },
+        {
+          "chunk": "chunk_00148",
+          "cnf_sha256": "e28eec5dd706d5e7d86b9ad32bb00c970406e28c0c0f41005f87c579e29d37b4",
+          "logical_receipt_references": 21,
+          "raw_rows": 15,
+          "raw_statuses": {
+            "SAT": 12,
+            "UNSAT": 3
+          },
+          "selected": 2,
+          "source_candidates": 7
+        },
+        {
+          "chunk": "chunk_00149",
+          "cnf_sha256": "8ee090ac2f775dee22f321f1d39a847e98c531f8811e92ab426e51e51a44f78e",
+          "logical_receipt_references": 9,
+          "raw_rows": 7,
+          "raw_statuses": {
+            "SAT": 3,
+            "UNSAT": 4
+          },
+          "selected": 3,
+          "source_candidates": 3
+        },
+        {
+          "chunk": "chunk_00150",
+          "cnf_sha256": "709b8632e1e989f4fde69cb90423b6f22a8cc13cfcb6c683b16a8981431a6bbd",
+          "logical_receipt_references": 9,
+          "raw_rows": 7,
+          "raw_statuses": {
+            "SAT": 5,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 3
+        },
+        {
+          "chunk": "chunk_00151",
+          "cnf_sha256": "75467b0705be5744b99a23e129698df0acaefad9e9d32cf9aaaf4b4c9d3d1767",
+          "logical_receipt_references": 3,
+          "raw_rows": 3,
+          "raw_statuses": {
+            "SAT": 1,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 1
+        },
+        {
+          "chunk": "chunk_00152",
+          "cnf_sha256": "210279de7fac8cb9e03bb8e17fde0d2de7b88d2f75b86198602649f621bdc075",
+          "logical_receipt_references": 27,
+          "raw_rows": 19,
+          "raw_statuses": {
+            "SAT": 14,
+            "UNSAT": 5
+          },
+          "selected": 1,
+          "source_candidates": 9
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 6.510211396001978
+    },
+    {
+      "arm": "predecessor_free",
+      "audit": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/034_b20_opt/predecessor_free/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 239,
+      "build_raw_statuses": {
+        "SAT": 358,
+        "UNSAT": 111
+      },
+      "case": "034_b20_opt",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 227,
+        "build_chunk_witnesses": 227,
+        "build_chunks": 15,
+        "build_logical_receipts": 681,
+        "build_raw_rows": 469,
+        "direct_candidates": 1370,
+        "direct_logical_receipts": 4110,
+        "direct_raw_rows": 2742,
+        "direct_witnesses": 1370,
+        "mixed_prefix_fresh_builds": 25,
+        "positive_directs": 0,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 25,
+        "selected_witnesses_replayed": 25,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 2741,
+        "UNSAT": 1
+      },
+      "earlier_id_conditional_AND": 38,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 0,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 11270,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 0,
+          "sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae"
+        },
+        {
+          "AND": 11232,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 25,
+          "sha256": "9df10bc3308721d047f74a85b441296bc9b5a77d5dfbaf067b4bc521266681de"
+        },
+        {
+          "AND": 11270,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 0,
+          "sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/034_b20_opt/predecessor_free",
+      "selected_max_witness_lane": 36,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00013",
+          "cnf_sha256": "e37221e7d6ab91932c2f898e75357251ac7bc516b9427bfc82cd04dad5fbe4db",
+          "logical_receipt_references": 216,
+          "raw_rows": 145,
+          "raw_statuses": {
+            "SAT": 104,
+            "UNSAT": 41
+          },
+          "selected": 10,
+          "source_candidates": 72
+        },
+        {
+          "chunk": "chunk_00017",
+          "cnf_sha256": "c9ddb7c2a8c5cf6857ea50f4910b84e1e2d7b510d93dba41c887dd3b02c1e7d9",
+          "logical_receipt_references": 48,
+          "raw_rows": 33,
+          "raw_statuses": {
+            "SAT": 16,
+            "UNSAT": 17
+          },
+          "selected": 1,
+          "source_candidates": 16
+        },
+        {
+          "chunk": "chunk_00018",
+          "cnf_sha256": "888efb4092344b5d546ffc7b083767131871a9bf9a5fda8ce3ce2fdf374d7868",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 7,
+            "UNSAT": 4
+          },
+          "selected": 1,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00019",
+          "cnf_sha256": "8f4733065e690739d99a32520dea070e2f63e8899fa86effe4232510fc88e3f5",
+          "logical_receipt_references": 9,
+          "raw_rows": 7,
+          "raw_statuses": {
+            "SAT": 5,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 3
+        },
+        {
+          "chunk": "chunk_00020",
+          "cnf_sha256": "5224eb98dcd9de02ea921ac593eabb2d82d7b9ac817af9cce87b4f1c82cb8cbb",
+          "logical_receipt_references": 48,
+          "raw_rows": 33,
+          "raw_statuses": {
+            "SAT": 26,
+            "UNSAT": 7
+          },
+          "selected": 1,
+          "source_candidates": 16
+        },
+        {
+          "chunk": "chunk_00022",
+          "cnf_sha256": "7cb41c78437d1803e49982cd847b433c7d5e01c751c6c4f643b9a948a05ee385",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 5,
+            "UNSAT": 6
+          },
+          "selected": 2,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00023",
+          "cnf_sha256": "ee357b5b2d807f7411fafa00db0ec50a817711b51b1dbf0d6c884e9a4655e499",
+          "logical_receipt_references": 6,
+          "raw_rows": 5,
+          "raw_statuses": {
+            "SAT": 2,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 2
+        },
+        {
+          "chunk": "chunk_00024",
+          "cnf_sha256": "19d540258e0e8e034bcb996fc3b80ff48065452ae32b7843034c437c2aa37d3d",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 8,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00025",
+          "cnf_sha256": "47fc7b20609f1f62662f73c038680bfcf0618de3ed76731737277d504a3c5823",
+          "logical_receipt_references": 27,
+          "raw_rows": 19,
+          "raw_statuses": {
+            "SAT": 16,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 9
+        },
+        {
+          "chunk": "chunk_00026",
+          "cnf_sha256": "63c138d84219e0de05caed9e658250fb58a08ade4576818ae3d0bb77f8b93ef7",
+          "logical_receipt_references": 15,
+          "raw_rows": 11,
+          "raw_statuses": {
+            "SAT": 9,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 5
+        },
+        {
+          "chunk": "chunk_00027",
+          "cnf_sha256": "4ab89e924417dbf12e5f278017b1b3c7238718fd9955d52f8f867f74b7db4791",
+          "logical_receipt_references": 27,
+          "raw_rows": 19,
+          "raw_statuses": {
+            "SAT": 17,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 9
+        },
+        {
+          "chunk": "chunk_00028",
+          "cnf_sha256": "aa138b7efa46622e755337ff4fed7957d6927cf45897162ac2377a773b4da9d8",
+          "logical_receipt_references": 114,
+          "raw_rows": 77,
+          "raw_statuses": {
+            "SAT": 70,
+            "UNSAT": 7
+          },
+          "selected": 1,
+          "source_candidates": 38
+        },
+        {
+          "chunk": "chunk_00031",
+          "cnf_sha256": "6cd4e99681673979f498be9a041f7b3cd93c8f7ef0e7a1f2ed969a1603c255dc",
+          "logical_receipt_references": 75,
+          "raw_rows": 51,
+          "raw_statuses": {
+            "SAT": 49,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 25
+        },
+        {
+          "chunk": "chunk_00033",
+          "cnf_sha256": "056a898d8c22761659e846070442d483a2d47337b5e7c0fc5bf683f0bcb5a377",
+          "logical_receipt_references": 21,
+          "raw_rows": 15,
+          "raw_statuses": {
+            "SAT": 11,
+            "UNSAT": 4
+          },
+          "selected": 1,
+          "source_candidates": 7
+        },
+        {
+          "chunk": "chunk_00034",
+          "cnf_sha256": "d10f9a202ac941845769bd96ca8aead2c9e8ee34fcfc711368bd244c0bc1d403",
+          "logical_receipt_references": 30,
+          "raw_rows": 21,
+          "raw_statuses": {
+            "SAT": 13,
+            "UNSAT": 8
+          },
+          "selected": 1,
+          "source_candidates": 10
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 3.6269591619929997
+    },
+    {
+      "arm": "baseline",
+      "audit": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/045_mem_ctrl/baseline/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 205,
+      "build_raw_statuses": {
+        "SAT": 1809,
+        "UNSAT": 418
+      },
+      "case": "045_mem_ctrl",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 1107,
+        "build_chunk_witnesses": 1107,
+        "build_chunks": 13,
+        "build_logical_receipts": 3321,
+        "build_raw_rows": 2227,
+        "direct_candidates": 1548,
+        "direct_logical_receipts": 4644,
+        "direct_raw_rows": 3100,
+        "direct_witnesses": 1294,
+        "mixed_prefix_fresh_builds": 12,
+        "positive_directs": 40,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 30,
+        "selected_witnesses_replayed": 30,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 3059,
+        "UNSAT": 41
+      },
+      "earlier_id_conditional_AND": 41,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 40,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 9309,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 21,
+          "sha256": "fe182c8db682ac5ae94b07245c2de6a3539dd577d22a34b8934be3dc8e3bf412"
+        },
+        {
+          "AND": 9276,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 30,
+          "sha256": "04ef66dc0e326a01cabd527f0e7cd73b270ea46db7c831145abb4cb88a1852b3"
+        },
+        {
+          "AND": 9317,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 18,
+          "sha256": "1ce74f7a8f1c40c14e1dc81bdc7585ffc60fd3a0e3a181e6cf60473737a2cfe5"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/baseline",
+      "selected_max_witness_lane": 183,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00001",
+          "cnf_sha256": "b72a7f06d199f20a3678929b4c1efdab7d53655c6851ff71eeca832b30669204",
+          "logical_receipt_references": 522,
+          "raw_rows": 349,
+          "raw_statuses": {
+            "SAT": 291,
+            "UNSAT": 58
+          },
+          "selected": 4,
+          "source_candidates": 174
+        },
+        {
+          "chunk": "chunk_00002",
+          "cnf_sha256": "d5160998e89b22251f75f8a4b96ccb3c1295e34298265a7cf1784837ad175f76",
+          "logical_receipt_references": 255,
+          "raw_rows": 171,
+          "raw_statuses": {
+            "SAT": 126,
+            "UNSAT": 45
+          },
+          "selected": 2,
+          "source_candidates": 85
+        },
+        {
+          "chunk": "chunk_00004",
+          "cnf_sha256": "35cda3db24e25f61cad7b5c315a8decb818172bee340f5f5e9a73dff9a11e5b5",
+          "logical_receipt_references": 27,
+          "raw_rows": 19,
+          "raw_statuses": {
+            "SAT": 10,
+            "UNSAT": 9
+          },
+          "selected": 1,
+          "source_candidates": 9
+        },
+        {
+          "chunk": "chunk_00007",
+          "cnf_sha256": "47b785a6ee27ee6c6050b1460d4e1be22ffb6f3c89e17a20f73bf9979d909a89",
+          "logical_receipt_references": 492,
+          "raw_rows": 329,
+          "raw_statuses": {
+            "SAT": 289,
+            "UNSAT": 40
+          },
+          "selected": 3,
+          "source_candidates": 164
+        },
+        {
+          "chunk": "chunk_00008",
+          "cnf_sha256": "95c5e6dac95046754aabc083607dd108853e49bf206b77e0228186bf35916210",
+          "logical_receipt_references": 273,
+          "raw_rows": 183,
+          "raw_statuses": {
+            "SAT": 119,
+            "UNSAT": 64
+          },
+          "selected": 3,
+          "source_candidates": 91
+        },
+        {
+          "chunk": "chunk_00010",
+          "cnf_sha256": "919041495c1f27343c538d23b6cefbed59105ee5e055973e9fa4bbab3d439a73",
+          "logical_receipt_references": 312,
+          "raw_rows": 209,
+          "raw_statuses": {
+            "SAT": 144,
+            "UNSAT": 65
+          },
+          "selected": 4,
+          "source_candidates": 104
+        },
+        {
+          "chunk": "chunk_00013",
+          "cnf_sha256": "cb6680e17bcaeb071a1e95fccc320cdf345509243d7dbdb713073ff7d12c6017",
+          "logical_receipt_references": 264,
+          "raw_rows": 177,
+          "raw_statuses": {
+            "SAT": 169,
+            "UNSAT": 8
+          },
+          "selected": 2,
+          "source_candidates": 88
+        },
+        {
+          "chunk": "chunk_00015",
+          "cnf_sha256": "66fe5340e62d9e04e4005f54bb08d964581437580ef3e96360d75fdaf477dfb1",
+          "logical_receipt_references": 24,
+          "raw_rows": 17,
+          "raw_statuses": {
+            "SAT": 8,
+            "UNSAT": 9
+          },
+          "selected": 1,
+          "source_candidates": 8
+        },
+        {
+          "chunk": "chunk_00020",
+          "cnf_sha256": "23570a22d70ce0d4987dff2d3bcaca975f97f931d43b3b29342b64cbe1e6a84b",
+          "logical_receipt_references": 372,
+          "raw_rows": 249,
+          "raw_statuses": {
+            "SAT": 182,
+            "UNSAT": 67
+          },
+          "selected": 5,
+          "source_candidates": 124
+        },
+        {
+          "chunk": "chunk_00022",
+          "cnf_sha256": "a50a5a80e03ea8b550c933a4778c3070017eee83b0ef1077fb5c33c0991d62c5",
+          "logical_receipt_references": 423,
+          "raw_rows": 283,
+          "raw_statuses": {
+            "SAT": 271,
+            "UNSAT": 12
+          },
+          "selected": 1,
+          "source_candidates": 141
+        },
+        {
+          "chunk": "chunk_00023",
+          "cnf_sha256": "2a9093a50bd53b462b169321bbf053096a97bdf012eaa005d98decf90ee1c672",
+          "logical_receipt_references": 234,
+          "raw_rows": 157,
+          "raw_statuses": {
+            "SAT": 121,
+            "UNSAT": 36
+          },
+          "selected": 2,
+          "source_candidates": 78
+        },
+        {
+          "chunk": "chunk_00025",
+          "cnf_sha256": "90dd742e19afe3d80473aaf20bbec23c27f6d072e38a1148ba1193e666fe9d61",
+          "logical_receipt_references": 24,
+          "raw_rows": 17,
+          "raw_statuses": {
+            "SAT": 14,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 8
+        },
+        {
+          "chunk": "chunk_00032",
+          "cnf_sha256": "e358618268f9c7439bfa997aa46a6c30815f47472732d7e7cc1eb510ebaf5c6a",
+          "logical_receipt_references": 99,
+          "raw_rows": 67,
+          "raw_statuses": {
+            "SAT": 65,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 33
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 11.725396955996985
+    },
+    {
+      "arm": "predecessor_free",
+      "audit": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/045_mem_ctrl/predecessor_free/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 155,
+      "build_raw_statuses": {
+        "SAT": 1160,
+        "UNSAT": 321
+      },
+      "case": "045_mem_ctrl",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 737,
+        "build_chunk_witnesses": 737,
+        "build_chunks": 7,
+        "build_logical_receipts": 2211,
+        "build_raw_rows": 1481,
+        "direct_candidates": 988,
+        "direct_logical_receipts": 2964,
+        "direct_raw_rows": 1980,
+        "direct_witnesses": 827,
+        "mixed_prefix_fresh_builds": 7,
+        "positive_directs": 29,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 2,
+        "selected_builds": 19,
+        "selected_witnesses_replayed": 19,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 1950,
+        "UNSAT": 30
+      },
+      "earlier_id_conditional_AND": 26,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 29,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 9348,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 15,
+          "sha256": "30c1a3c9bc5e67c92db5205d354e3b8e493c59ee4f9d8ce82a99621c15d3e0fe"
+        },
+        {
+          "AND": 9330,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 19,
+          "sha256": "c4de9c0b96678a5976e7734b9290a96623a5f07d0cb0da0de482165c9e9afa28"
+        },
+        {
+          "AND": 9356,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 12,
+          "sha256": "af9bb99e724c605a91e7927c23ea3dd18d0255ec2adb86246592182083852623"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/045_mem_ctrl/predecessor_free",
+      "selected_max_witness_lane": 319,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00001",
+          "cnf_sha256": "e6d411647936ae7e35c430a0da02ef710382b659e528b0cca1a133fc4fe656c5",
+          "logical_receipt_references": 546,
+          "raw_rows": 365,
+          "raw_statuses": {
+            "SAT": 307,
+            "UNSAT": 58
+          },
+          "selected": 4,
+          "source_candidates": 182
+        },
+        {
+          "chunk": "chunk_00002",
+          "cnf_sha256": "94168d92d5adcc56ccc9e3501cd51db6d5f61dbb9c63b12495e634646d9deea8",
+          "logical_receipt_references": 276,
+          "raw_rows": 185,
+          "raw_statuses": {
+            "SAT": 133,
+            "UNSAT": 52
+          },
+          "selected": 2,
+          "source_candidates": 92
+        },
+        {
+          "chunk": "chunk_00004",
+          "cnf_sha256": "0c0293efc75ffde3d4cc2a46f6c50fffdcafc68de1ee963c350e880553066d8b",
+          "logical_receipt_references": 24,
+          "raw_rows": 17,
+          "raw_statuses": {
+            "SAT": 9,
+            "UNSAT": 8
+          },
+          "selected": 1,
+          "source_candidates": 8
+        },
+        {
+          "chunk": "chunk_00006",
+          "cnf_sha256": "e8c879c0d9cbe453f6db92cf46be8016d880b573b7abf883d6af37b8206d8e53",
+          "logical_receipt_references": 465,
+          "raw_rows": 311,
+          "raw_statuses": {
+            "SAT": 259,
+            "UNSAT": 52
+          },
+          "selected": 3,
+          "source_candidates": 155
+        },
+        {
+          "chunk": "chunk_00007",
+          "cnf_sha256": "d4f07da593609baac4182a695ea67c5676010d05d110a74602c987a47e964c50",
+          "logical_receipt_references": 231,
+          "raw_rows": 155,
+          "raw_statuses": {
+            "SAT": 98,
+            "UNSAT": 57
+          },
+          "selected": 3,
+          "source_candidates": 77
+        },
+        {
+          "chunk": "chunk_00009",
+          "cnf_sha256": "9421228abf932769d0f12b434d3df22085f4e88c0bbf9ec679c0a938e493afee",
+          "logical_receipt_references": 354,
+          "raw_rows": 237,
+          "raw_statuses": {
+            "SAT": 162,
+            "UNSAT": 75
+          },
+          "selected": 4,
+          "source_candidates": 118
+        },
+        {
+          "chunk": "chunk_00013",
+          "cnf_sha256": "e0c472c6428c107778097a819627a0692747496152757e091c558a00d390415b",
+          "logical_receipt_references": 315,
+          "raw_rows": 211,
+          "raw_statuses": {
+            "SAT": 192,
+            "UNSAT": 19
+          },
+          "selected": 2,
+          "source_candidates": 105
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 7.39792656100326
+    },
+    {
+      "arm": "baseline",
+      "audit": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/audits/060_wb_dma/baseline/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 215,
+      "build_raw_statuses": {
+        "SAT": 1424,
+        "UNSAT": 264
+      },
+      "case": "060_wb_dma",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 837,
+        "build_chunk_witnesses": 837,
+        "build_chunks": 14,
+        "build_logical_receipts": 2511,
+        "build_raw_rows": 1688,
+        "direct_candidates": 1636,
+        "direct_logical_receipts": 4908,
+        "direct_raw_rows": 3286,
+        "direct_witnesses": 1620,
+        "mixed_prefix_fresh_builds": 28,
+        "positive_directs": 4,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 31,
+        "selected_witnesses_replayed": 31,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 3281,
+        "UNSAT": 5
+      },
+      "earlier_id_conditional_AND": 76,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 4,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 3693,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 3,
+          "sha256": "de86102b2255860df4be2337ca4a9e59509d8e77922dda8be001f22b3b2933fd"
+        },
+        {
+          "AND": 3617,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 31,
+          "sha256": "e09c6a1212659a7072be030cdf7fb20a5648eb22f0f4a4d62a102d4c0c8c7a40"
+        },
+        {
+          "AND": 3693,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 3,
+          "sha256": "de86102b2255860df4be2337ca4a9e59509d8e77922dda8be001f22b3b2933fd"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/baseline",
+      "selected_max_witness_lane": 66,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00001",
+          "cnf_sha256": "e6241829871e97e50ca06df8d6c15cf3cc378169ac6211669ab561bb368c348f",
+          "logical_receipt_references": 216,
+          "raw_rows": 145,
+          "raw_statuses": {
+            "SAT": 136,
+            "UNSAT": 9
+          },
+          "selected": 4,
+          "source_candidates": 72
+        },
+        {
+          "chunk": "chunk_00002",
+          "cnf_sha256": "0210fe725ece2d0c764e1d77304546a1c5a98c9c32e7c73972e48952d007b61f",
+          "logical_receipt_references": 165,
+          "raw_rows": 111,
+          "raw_statuses": {
+            "SAT": 95,
+            "UNSAT": 16
+          },
+          "selected": 2,
+          "source_candidates": 55
+        },
+        {
+          "chunk": "chunk_00003",
+          "cnf_sha256": "27ad24eb8c865625e7839599c6ba5d4c17bcc1d67a183a06f9a7980d49ef05ce",
+          "logical_receipt_references": 117,
+          "raw_rows": 79,
+          "raw_statuses": {
+            "SAT": 41,
+            "UNSAT": 38
+          },
+          "selected": 1,
+          "source_candidates": 39
+        },
+        {
+          "chunk": "chunk_00004",
+          "cnf_sha256": "da252673254253dc8bbf8f5f6d2f3bcc5f1b5b37a15c9b9d7c75e2da64485796",
+          "logical_receipt_references": 273,
+          "raw_rows": 183,
+          "raw_statuses": {
+            "SAT": 169,
+            "UNSAT": 14
+          },
+          "selected": 2,
+          "source_candidates": 91
+        },
+        {
+          "chunk": "chunk_00005",
+          "cnf_sha256": "25c03d8376645c73017b8ac74945bb9c052e25d44c28f50aa43e2b4a1fb29caa",
+          "logical_receipt_references": 135,
+          "raw_rows": 91,
+          "raw_statuses": {
+            "SAT": 65,
+            "UNSAT": 26
+          },
+          "selected": 5,
+          "source_candidates": 45
+        },
+        {
+          "chunk": "chunk_00006",
+          "cnf_sha256": "b18485cddade0453979481bf0d1c349c78401c7ded5183aae25ceabef151867e",
+          "logical_receipt_references": 33,
+          "raw_rows": 23,
+          "raw_statuses": {
+            "SAT": 14,
+            "UNSAT": 9
+          },
+          "selected": 1,
+          "source_candidates": 11
+        },
+        {
+          "chunk": "chunk_00008",
+          "cnf_sha256": "fdc659de829ae4c52193c619d588a4a3f53332fda7478cb27a16e3459733c930",
+          "logical_receipt_references": 132,
+          "raw_rows": 89,
+          "raw_statuses": {
+            "SAT": 69,
+            "UNSAT": 20
+          },
+          "selected": 5,
+          "source_candidates": 44
+        },
+        {
+          "chunk": "chunk_00025",
+          "cnf_sha256": "4c35ce2d28ea11d0b7ed9038882da80c4f4081550f9d3f1c97c666bce72fa2a9",
+          "logical_receipt_references": 273,
+          "raw_rows": 183,
+          "raw_statuses": {
+            "SAT": 174,
+            "UNSAT": 9
+          },
+          "selected": 1,
+          "source_candidates": 91
+        },
+        {
+          "chunk": "chunk_00042",
+          "cnf_sha256": "4c276d587a47d96b64d5483ff361f4b7f773fd799b6837dff2205fd99d1d5aa1",
+          "logical_receipt_references": 435,
+          "raw_rows": 291,
+          "raw_statuses": {
+            "SAT": 274,
+            "UNSAT": 17
+          },
+          "selected": 1,
+          "source_candidates": 145
+        },
+        {
+          "chunk": "chunk_00045",
+          "cnf_sha256": "f1ff8234967590fa5e3a444e1ca7664c2c154531ccdfd14902c92715ccef8a74",
+          "logical_receipt_references": 177,
+          "raw_rows": 119,
+          "raw_statuses": {
+            "SAT": 117,
+            "UNSAT": 2
+          },
+          "selected": 1,
+          "source_candidates": 59
+        },
+        {
+          "chunk": "chunk_00058",
+          "cnf_sha256": "97736d50e8c9616683de29310b72eea718404b5b6b7878d99d183d8ab32352a3",
+          "logical_receipt_references": 24,
+          "raw_rows": 17,
+          "raw_statuses": {
+            "SAT": 10,
+            "UNSAT": 7
+          },
+          "selected": 1,
+          "source_candidates": 8
+        },
+        {
+          "chunk": "chunk_00076",
+          "cnf_sha256": "c73f4fd59d5282fbc0fb937278ac32d3178319f311e8271e55c3f56b9a50d36d",
+          "logical_receipt_references": 336,
+          "raw_rows": 225,
+          "raw_statuses": {
+            "SAT": 165,
+            "UNSAT": 60
+          },
+          "selected": 3,
+          "source_candidates": 112
+        },
+        {
+          "chunk": "chunk_00088",
+          "cnf_sha256": "66cfedd8758f33785c21872c3d6333fb56c0ab90d8b23d77418d167b135bcbce",
+          "logical_receipt_references": 147,
+          "raw_rows": 99,
+          "raw_statuses": {
+            "SAT": 65,
+            "UNSAT": 34
+          },
+          "selected": 3,
+          "source_candidates": 49
+        },
+        {
+          "chunk": "chunk_00093",
+          "cnf_sha256": "75748d294b8086d83bb08180e5ef1a8cfd5164c0c95777a7a3e2469e7592a566",
+          "logical_receipt_references": 48,
+          "raw_rows": 33,
+          "raw_statuses": {
+            "SAT": 30,
+            "UNSAT": 3
+          },
+          "selected": 1,
+          "source_candidates": 16
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 5.696345324002323
+    },
+    {
+      "arm": "predecessor_free",
+      "audit": "/workspace/shared/stran2-predecessor-free-audit-repair-prepared-v2/audits/060_wb_dma/predecessor_free/direct",
+      "before_after_hashes": "PASS",
+      "bound_files": 159,
+      "build_raw_statuses": {
+        "SAT": 776,
+        "UNSAT": 144
+      },
+      "case": "060_wb_dma",
+      "counts": {
+        "audit_products_rebuilt": 3,
+        "build_chunk_candidates": 456,
+        "build_chunk_witnesses": 456,
+        "build_chunks": 8,
+        "build_logical_receipts": 1368,
+        "build_raw_rows": 920,
+        "direct_candidates": 1090,
+        "direct_logical_receipts": 3270,
+        "direct_raw_rows": 2192,
+        "direct_witnesses": 1089,
+        "mixed_prefix_fresh_builds": 20,
+        "positive_directs": 1,
+        "saved_DSEC_certificates_verified": 3,
+        "selected_appended_witnesses": 0,
+        "selected_builds": 21,
+        "selected_witnesses_replayed": 21,
+        "source_checkpoint_products_rebuilt": 2
+      },
+      "direct_raw_statuses": {
+        "SAT": 2190,
+        "UNSAT": 2
+      },
+      "earlier_id_conditional_AND": 59,
+      "new_DSEC_runs": 0,
+      "new_solver_queries": 0,
+      "positive_direct_free_classes": {
+        "SAT": 1,
+        "UNKNOWN": 0,
+        "UNSAT": 0
+      },
+      "products": [
+        {
+          "AND": 3700,
+          "independent_raw_CO_worlds": 128,
+          "name": "direct_only",
+          "selected": 1,
+          "sha256": "d04707fd8cf35ca40f640ae4164853594f3bb97a9b08a630d2dc75c995bcd37b"
+        },
+        {
+          "AND": 3641,
+          "independent_raw_CO_worlds": 128,
+          "name": "mixed",
+          "selected": 21,
+          "sha256": "6e97f8b4ca110ddf55ea5b895e51592a579b2a948bceec0bd2a0224a79321490"
+        },
+        {
+          "AND": 3700,
+          "independent_raw_CO_worlds": 128,
+          "name": "same_mixed_set_without_build",
+          "selected": 1,
+          "sha256": "d04707fd8cf35ca40f640ae4164853594f3bb97a9b08a630d2dc75c995bcd37b"
+        }
+      ],
+      "run": "/workspace/shared/stran2-predecessor-free-pilot-prepared-v3/runs/060_wb_dma/predecessor_free",
+      "selected_max_witness_lane": 66,
+      "source_chunks": [
+        {
+          "chunk": "chunk_00001",
+          "cnf_sha256": "e6241829871e97e50ca06df8d6c15cf3cc378169ac6211669ab561bb368c348f",
+          "logical_receipt_references": 216,
+          "raw_rows": 145,
+          "raw_statuses": {
+            "SAT": 136,
+            "UNSAT": 9
+          },
+          "selected": 4,
+          "source_candidates": 72
+        },
+        {
+          "chunk": "chunk_00002",
+          "cnf_sha256": "0210fe725ece2d0c764e1d77304546a1c5a98c9c32e7c73972e48952d007b61f",
+          "logical_receipt_references": 165,
+          "raw_rows": 111,
+          "raw_statuses": {
+            "SAT": 95,
+            "UNSAT": 16
+          },
+          "selected": 2,
+          "source_candidates": 55
+        },
+        {
+          "chunk": "chunk_00003",
+          "cnf_sha256": "27ad24eb8c865625e7839599c6ba5d4c17bcc1d67a183a06f9a7980d49ef05ce",
+          "logical_receipt_references": 117,
+          "raw_rows": 79,
+          "raw_statuses": {
+            "SAT": 41,
+            "UNSAT": 38
+          },
+          "selected": 1,
+          "source_candidates": 39
+        },
+        {
+          "chunk": "chunk_00004",
+          "cnf_sha256": "7e1b273170e0622920287d84ba73c7540d2153cd33f810e2919232f684367b3f",
+          "logical_receipt_references": 282,
+          "raw_rows": 189,
+          "raw_statuses": {
+            "SAT": 175,
+            "UNSAT": 14
+          },
+          "selected": 2,
+          "source_candidates": 94
+        },
+        {
+          "chunk": "chunk_00005",
+          "cnf_sha256": "31feccdb578a6bc5f86216af8a35bd0babea65c9becbe789b2e29bea4b5216c9",
+          "logical_receipt_references": 135,
+          "raw_rows": 91,
+          "raw_statuses": {
+            "SAT": 65,
+            "UNSAT": 26
+          },
+          "selected": 5,
+          "source_candidates": 45
+        },
+        {
+          "chunk": "chunk_00006",
+          "cnf_sha256": "f1035b73baa6c15f5eaaef0f8b889b006cc50bb2b0f549bfab767a7b5123c5e6",
+          "logical_receipt_references": 33,
+          "raw_rows": 23,
+          "raw_statuses": {
+            "SAT": 11,
+            "UNSAT": 12
+          },
+          "selected": 1,
+          "source_candidates": 11
+        },
+        {
+          "chunk": "chunk_00007",
+          "cnf_sha256": "a1c6813ce9829e046920564b31057b77e61fb630add571aa1bec4fa40bf5611d",
+          "logical_receipt_references": 135,
+          "raw_rows": 91,
+          "raw_statuses": {
+            "SAT": 71,
+            "UNSAT": 20
+          },
+          "selected": 5,
+          "source_candidates": 45
+        },
+        {
+          "chunk": "chunk_00024",
+          "cnf_sha256": "9ac6cd3bb5a13fd685182376e8d1b01302c4a2c1628c47a14ef4eb89faecc784",
+          "logical_receipt_references": 285,
+          "raw_rows": 191,
+          "raw_statuses": {
+            "SAT": 182,
+            "UNSAT": 9
+          },
+          "selected": 1,
+          "source_candidates": 95
+        }
+      ],
+      "status": "PASS",
+      "transform_runs": 0,
+      "wall_s": 3.625339079000696
+    }
+  ],
+  "status": "PASS",
+  "totals": {
+    "audit_products_rebuilt": 36,
+    "build_chunk_candidates": 4418,
+    "build_chunk_witnesses": 4418,
+    "build_chunks": 106,
+    "build_logical_receipts": 13254,
+    "build_raw_rows": 8945,
+    "direct_candidates": 10938,
+    "direct_logical_receipts": 32814,
+    "direct_raw_rows": 21914,
+    "direct_witnesses": 10506,
+    "mixed_prefix_fresh_builds": 164,
+    "positive_directs": 88,
+    "saved_DSEC_certificates_verified": 36,
+    "selected_appended_witnesses": 2,
+    "selected_builds": 208,
+    "selected_witnesses_replayed": 208,
+    "source_checkpoint_products_rebuilt": 24
+  },
+  "transform_runs": 0,
+  "wall_s": 46.79954718999943
+}

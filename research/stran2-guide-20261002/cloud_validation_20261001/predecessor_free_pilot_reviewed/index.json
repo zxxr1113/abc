@@ -1,0 +1,66 @@
+{
+  "directory": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-final-independent-review",
+  "files": {
+    "global_accounting_review.json": {
+      "bytes": 463193,
+      "sha256": "4190d3b9b777f08b850e179cd8f43718b9448526f137740d338868fae1f40a60"
+    },
+    "original_integrity_recheck.json": {
+      "bytes": 274,
+      "sha256": "7aafcd86c6127431e84b45376dc2b7dacf7aa3b62e0f1985a67c3a434269e6a3"
+    },
+    "proof_completion.json": {
+      "bytes": 664,
+      "sha256": "c7323e55bc38ac4715f15a03f89b2eecf471ff4cb48d4ced66a8cc6932c360a1"
+    },
+    "proof_products_review.json": {
+      "bytes": 66999,
+      "sha256": "a9783fdf8a12ebddaed943a681ed8efc495cfa374477b3ef50a54c1b7195f5ef"
+    },
+    "proof_scope_details.json": {
+      "bytes": 28093,
+      "sha256": "093bc5343902af7d609cb74a7f01d3e7af5c34e1144af2e359e149f4bcd8708e"
+    },
+    "raw_direct_accounting.json": {
+      "bytes": 3247,
+      "sha256": "0598e668cba820909f291b2851da9e5c2679a7a36d43ba852ea5f734ee47c0fa"
+    },
+    "repair_and_terminal_review.json": {
+      "bytes": 1717,
+      "sha256": "84e8809aa2b0200a0c5645ee03b7f0853339e0f7ac4d46d5a37080483efb3d54"
+    },
+    "repair_source_delta.json": {
+      "bytes": 1265,
+      "sha256": "77d1dee98ee41f92b10b6c1e06967fe11b211b281c0fb975bdf0d53855697101"
+    },
+    "repair_tests.log": {
+      "bytes": 901,
+      "sha256": "64ce9323280adee44f7687b1809936985e4694be88e51aaa99dc0f2a68615030"
+    },
+    "review.json": {
+      "bytes": 4448,
+      "sha256": "823ae60f7811bb56654b085c478897e0f61a1ee425f87003cc18709c53005cbe"
+    },
+    "terminal_review.json": {
+      "bytes": 5245,
+      "sha256": "e7f46a296dc51b1746da1126ae07f8634793ca4cb649fbf28ab79738ef48b026"
+    },
+    "world_review.json": {
+      "bytes": 6355,
+      "sha256": "ec01cfc40abe775887830bd257e0cb2e0cbbdced68416caeaa878de24bc7dbdf"
+    }
+  },
+  "source_reports": {
+    "global_accounting_review.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-global-accounting-independent-review/review.json",
+    "proof_completion.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-proof-products-independent-review/completion.json",
+    "proof_products_review.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-proof-products-independent-review/review.json",
+    "proof_scope_details.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-proof-products-independent-review/scope_details.json",
+    "raw_direct_accounting.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-global-accounting-independent-review/raw_and_direct_check.json",
+    "repair_and_terminal_review.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-audit-binding-independent-review-v1/review.json",
+    "repair_source_delta.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-audit-binding-independent-review-v1/source_delta.json",
+    "repair_tests.log": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-audit-binding-independent-review-v1/tests-first.log",
+    "terminal_review.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-audit-binding-independent-review-v1/terminal_review.json",
+    "world_review.json": "/workspace/scratch/7e0c7273599c/evidence-preserved/predecessor-free-worlds-independent-review/review.json"
+  },
+  "status": "PASS"
+}

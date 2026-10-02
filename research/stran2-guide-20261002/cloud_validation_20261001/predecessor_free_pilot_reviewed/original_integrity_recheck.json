@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "original_files": 13384,
+  "all_bound_files": 13392,
+  "bytes_hashed": 1906773263,
+  "wall_s": 4.924839142004203,
+  "source_plan_sha256": "e8ad3c6cfd0fe2dd9ec3212075652a798c40f08382cbe150a69a0609421c3c74",
+  "original_frozen_files_unchanged": true
+}
