@@ -199,7 +199,19 @@ class FrozenQueries:
 
 
 def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, deadline, input_hash,
-                expected_solver_identity=None, inline_model_context=None, free_domain_required=False):
+                expected_solver_identity=None, inline_model_context=None, free_domain_required=False,
+                free_manifest_cache=None):
+    if free_manifest_cache is not None:
+        require(free_domain_required,'manifest cache requires free-domain proofs')
+        with free_manifest_cache.proof_boundary(candidates):
+            return _prove_chunk(a,original_graph,mappings,free,candidates,out,solver,deadline,input_hash,
+                                expected_solver_identity,inline_model_context,free_domain_required,free_manifest_cache)
+    return _prove_chunk(a,original_graph,mappings,free,candidates,out,solver,deadline,input_hash,
+                        expected_solver_identity,inline_model_context,free_domain_required,None)
+
+
+def _prove_chunk(a, original_graph, mappings, free, candidates, out, solver, deadline, input_hash,
+                expected_solver_identity, inline_model_context, free_domain_required, free_manifest_cache):
     """Freeze all candidate miters before issuing any phase or reusing an answer."""
     out.mkdir(parents=True, exist_ok=False)
     graph = Graph()
@@ -211,7 +223,7 @@ def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, dead
         candidate["free_witness"] = witness(a, candidate, free)
         if "free_domain" in candidate:
             from free_guided import verify_witness_annotation
-            verify_witness_annotation(a, candidate, candidate["free_witness"], out.parent.parent, input_hash)
+            verify_witness_annotation(a, candidate, candidate["free_witness"], out.parent.parent, input_hash,free_manifest_cache)
             deadline.remaining()
         row = {}
         for phase, mapping in mappings.items():
@@ -277,7 +289,14 @@ def prove_chunk(a, original_graph, mappings, free, candidates, out, solver, dead
     return qualified, report
 
 
-def publish_checkpoint(source, qualified, out, number, deadline, input_hash, progress):
+def publish_checkpoint(source, qualified, out, number, deadline, input_hash, progress, free_manifest_cache=None):
+    try:return _publish_checkpoint(source,qualified,out,number,deadline,input_hash,progress,free_manifest_cache)
+    except BaseException:
+        if free_manifest_cache is not None:free_manifest_cache.close()
+        raise
+
+
+def _publish_checkpoint(source, qualified, out, number, deadline, input_hash, progress, free_manifest_cache):
     """Publish only a fully materialized exact product; no DSEC in this budget."""
     pending = out / "checkpoints" / f"pending_{number:05d}"
     pending.mkdir(parents=True, exist_ok=False)
@@ -291,6 +310,10 @@ def publish_checkpoint(source, qualified, out, number, deadline, input_hash, pro
     deadline.remaining()
     target = pending.with_name(f"checkpoint_{number:05d}")
     pending.rename(target)
+    if free_manifest_cache is not None:
+        selected=json.loads((target/'selection.json').read_text())['selected']
+        free_manifest_cache.authenticate([c['free_domain']['manifest']for c in selected])
+        deadline.remaining()
     # The supervisor's actual receipt time, not this child's claimed timestamp,
     # determines whether publication was inside the total transform budget.
     emit(dict(event="checkpoint", directory=target.name,
@@ -301,11 +324,20 @@ def publish_checkpoint(source, qualified, out, number, deadline, input_hash, pro
 
 
 def transform(job):
+    resources=[]
+    try:return _transform(job,resources)
+    finally:
+        for resource in resources:resource.close()
+
+
+def _transform(job,resources):
     case, config = job["case"], Config(**job["config"])
     config.validate()
     require(job["chunk_roots"] > 0, "chunk_roots must be positive")
     require(not job.get("inline_cone_check") or job.get("inline_image_models"),
             "cone validation requires inline image models")
+    require(not job.get('free_manifest_cache') or job.get('predecessor_free'),
+            'manifest cache requires predecessor-free')
     if job.get("predecessor_free"):
         from free_guided import validate_mode
         validate_mode(job, config, job["chunk_roots"])
@@ -347,6 +379,7 @@ def transform(job):
     # The optional feedback lane never changes the pool/rank/alias view.
     pool_seq, pool_seq_mask = seq, seq_mask
     guidance = None
+    manifest_cache = None
     if job.get("image_model_solver") or job.get("inline_image_models"):
         if job.get("inline_image_models"):
             require(not job.get("image_model_solver"), "choose inline capture or standalone helper")
@@ -356,6 +389,10 @@ def transform(job):
         guidance_start = time.monotonic() if job.get("predecessor_free") else None
         guidance = ImageGuidance(a, graph, base, step, seq, seq_mask, free, free_mask,
             structure, config, job, deadline, model_identity)
+        if job.get('free_manifest_cache'):
+            manifest_cache=guidance.free_guidance.manifest_cache
+            require(manifest_cache is not None,'enabled manifest cache was not initialized')
+            resources.append(manifest_cache)
         if guidance_start is not None:
             timing["free_domain_initialization_wall_s"] += time.monotonic() - guidance_start
     pending, roots_in_chunk, chunk_roots = [], 0, []
@@ -372,7 +409,7 @@ def transform(job):
                 free, pending, chunk_dir, solver, deadline, input_hash, solver_identity,
                 inline_model_context=(dict(input_sha256=input_hash, source_hashes=job["source_hashes"],
                     solver_sha256=solver_hash) if job.get("inline_image_models") else None),
-                free_domain_required=bool(job.get("predecessor_free")))
+                free_domain_required=bool(job.get("predecessor_free")),free_manifest_cache=manifest_cache)
             timing["proof_wall_s"] += time.monotonic() - chunk_start
             for key in ("requested_queries", "actual_queries", "conclusive_cache_hits", "unknown_not_cached",
                         "reset_sat", "reset_unknown", "reset_reject_skipped_free_and_step",
@@ -389,7 +426,7 @@ def transform(job):
                 progress["image_guidance"] = guidance.report()
             if accepted:
                 start = time.monotonic()
-                publish_checkpoint(source, qualified, out, checkpoint, deadline, input_hash, progress)
+                publish_checkpoint(source, qualified, out, checkpoint, deadline, input_hash, progress,manifest_cache)
                 timing["checkpoint_wall_s"] += time.monotonic() - start
                 checkpoint += 1
             write_json(out / "progress.json", dict(**progress, metrics=dict(metrics), timing=dict(timing),
@@ -453,6 +490,12 @@ def transform(job):
             bind_executable(job["image_model_solver"], job["image_model_solver_sha256"], model_identity)
         progress["image_guidance"] = guidance.report()
     deadline.remaining()
+    if manifest_cache is not None:
+        manifest_cache.verify_all()
+        manifest_cache.close()
+        write_json(out/'free_manifest_cache.json',dict(**manifest_cache.report(),all_created_verified=True,
+                   original_proof_source_hashes=job['source_hashes']))
+        deadline.remaining()
     result = dict(schema=1, status="COMPLETE", search_complete=True, **progress,
                   metrics=dict(metrics), timing=dict(timing),
                   transform_elapsed_s=time.monotonic() - deadline.start)
@@ -683,6 +726,8 @@ def run_case(case, out, source_dir, plan, config, solver, abc, chunk_roots, dsec
         job["inline_cone_check"] = True
     if plan.get("predecessor_free"):
         job["predecessor_free"] = True
+    if plan.get('free_manifest_cache'):
+        job['free_manifest_cache']=True
     write_json(out / "job.json", job)
     command = [sys.executable, "-B", str(source_dir / "nonlinear_divisors/anytime.py"),
                "--worker-job", str(out / "job.json")]
@@ -775,6 +820,8 @@ def main():
                         help="opt-in exact assumption-cone validation; requires --inline-image-models")
     parser.add_argument("--predecessor-free", action="store_true",
                         help="opt-in predecessor-only free witnesses; requires inline models,256 initial lanes, <=256 candidates/chunk")
+    parser.add_argument('--free-manifest-cache',action='store_true',
+                        help='opt-in immutable manifest IO cache; requires predecessor-free; old path remains default')
     guidance_mode = parser.add_mutually_exclusive_group()
     guidance_mode.add_argument("--inline-image-models", action="store_true",
                         help="capture original ordinary step-SAT models with the separate model-capable --solver; never re-solve")
@@ -789,6 +836,7 @@ def main():
     args = parser.parse_args()
     require(args.workers > 0 and args.chunk_roots > 0 and args.dsec_seconds > 0, "positive execution bounds required")
     require(not args.inline_cone_check or args.inline_image_models, "cone validation requires inline image models")
+    require(not args.free_manifest_cache or args.predecessor_free,'manifest cache requires predecessor-free')
     config = Config(**{key: getattr(args, key) for key in asdict(Config())})
     config.validate()
     if args.predecessor_free:
@@ -813,6 +861,9 @@ def main():
     if args.predecessor_free:
         from free_guided import RUNTIME as FREE_RUNTIME
         runtime.extend(FREE_RUNTIME)
+    if args.free_manifest_cache:
+        from free_manifest_cache import RUNTIME as CACHE_RUNTIME
+        runtime.extend(CACHE_RUNTIME)
     for name in runtime:
         target = source_dir / name
         target.parent.mkdir(parents=True, exist_ok=True)
@@ -855,6 +906,9 @@ def main():
             free_only_revisit_cap_per_chunk=1, free_source_policy="original inline receipts and all replayed rows before successor dedup",
             unchanged_projection_policy="reuse only unchanged complete target+ordered-pool sets in BOTH sequence and free domains",
             qualified_retention_policy="cumulative proved union, never replaced by latest top-k")
+    if args.free_manifest_cache:
+        plan.update(free_manifest_cache=True,free_manifest_cache_policy='immutable_free_manifest_cache_v1',
+                    manifest_cache_capacity=2,manifest_cache_guards='anchored identity plus full entry/exit/checkpoint/final hashes')
     write_json(args.out / "plan.json", plan)
     results = []
     def work(name):

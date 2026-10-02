@@ -1,0 +1,81 @@
+{
+  "DSEC_calls": 0,
+  "boundary": "Whole saved-worklist subprocess lifetime, including imports, source/evidence checks, full initialization, annotation/persist, original-model admission, exact CNF and witness replay, product/checkpoint and final guards, reloads/stat/descriptors/serialization, and shared semantic-oracle work. Per-job controller source verification and result validation also consume the cumulative case budget. Global preflight/final binding checks and process cleanup are separately reported. This is not pure-persist timing or an optimizer budget.",
+  "cap_note": "Per-case work stops at cumulative120s; deadline checks bracket1MiB hash reads. Scheduling/read overrun and process cleanup are explicit, never silently called work inside the cap.",
+  "cases": [
+    {
+      "cache_minus_default_mean_s": 0.025726850999490125,
+      "case": "005_b03",
+      "charged_case_wall_s": 1.2416816789991572,
+      "complete": true,
+      "mean_process_wall_s": {
+        "default_old": 0.26472711650058045,
+        "optin_cache": 0.2904539675000706
+      },
+      "process_wall_s": {
+        "default_old": [
+          0.26462429099774454,
+          0.26482994200341636
+        ],
+        "optin_cache": [
+          0.31592153100064024,
+          0.2649864039995009
+        ]
+      },
+      "ratio_of_means": 1.0971825302204496
+    },
+    {
+      "cache_minus_default_mean_s": -16.0149489045034,
+      "case": "044_i2c",
+      "charged_case_wall_s": 68.7009259500046,
+      "complete": true,
+      "mean_process_wall_s": {
+        "default_old": 25.090082679500483,
+        "optin_cache": 9.075133774997084
+      },
+      "process_wall_s": {
+        "default_old": [
+          25.384779097999854,
+          24.795386261001113
+        ],
+        "optin_cache": [
+          9.305574264995812,
+          8.844693284998357
+        ]
+      },
+      "ratio_of_means": 0.36170202748721114
+    },
+    {
+      "cache_minus_default_mean_s": -4.930046105000656,
+      "case": "041_des_area",
+      "charged_case_wall_s": 26.86944919799862,
+      "complete": true,
+      "mean_process_wall_s": {
+        "default_old": 9.131266903499636,
+        "optin_cache": 4.20122079849898
+      },
+      "process_wall_s": {
+        "default_old": [
+          8.349194330003229,
+          9.913339476996043
+        ],
+        "optin_cache": [
+          4.079192015000444,
+          4.323249581997516
+        ]
+      },
+      "ratio_of_means": 0.4600917750951761
+    }
+  ],
+  "filesystem_cold": "NOT_CLAIMED",
+  "logical_cache": "COLD_FRESH_PROCESS_EVERY_JOB",
+  "no_area_gain_claim": true,
+  "optimizer_transform_runs": 0,
+  "repetitions": "two prespecified opposite-order pairs per case; no statistical generalization",
+  "search_runs": 0,
+  "separate_controller_final_hash_s": 0.2882619590018294,
+  "separate_controller_preflight_hash_s": 0.15789159500127425,
+  "separate_process_cleanup_s": 0.0,
+  "solver_calls": 0,
+  "status": "COMPLETE"
+}

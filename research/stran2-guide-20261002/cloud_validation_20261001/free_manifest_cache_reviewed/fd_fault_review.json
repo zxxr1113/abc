@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "cases": [
+    {
+      "case": "read_failure",
+      "status": "PASS",
+      "actual_peak_owned_descriptors": 2,
+      "opens": 2,
+      "actual_descriptors_restored": true
+    },
+    {
+      "case": "failure_after_open",
+      "status": "PASS",
+      "actual_peak_owned_descriptors": 1,
+      "opens": 1,
+      "actual_descriptors_restored": true
+    },
+    {
+      "case": "writer_parent_failure",
+      "status": "PASS",
+      "actual_peak_owned_descriptors": 1,
+      "opens": 1,
+      "actual_descriptors_restored": true
+    },
+    {
+      "case": "proof_exit_deadline",
+      "status": "PASS",
+      "actual_peak_owned_descriptors": 2,
+      "opens": 2,
+      "actual_descriptors_restored": true
+    },
+    {
+      "case": "writer_evicts_before_open",
+      "status": "PASS",
+      "actual_peak_owned_descriptors": 2,
+      "opens": 4,
+      "actual_descriptors_restored": true
+    }
+  ],
+  "measurement": "Actual /proc/self/fd identities plus fstat after failure/close, not cache-reported counters",
+  "new_solver_calls": 0,
+  "new_dsec_calls": 0,
+  "no_performance_measurement": true
+}

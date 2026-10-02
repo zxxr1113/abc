@@ -1,0 +1,10 @@
+{
+  "finished_unix": 1790907925.0830665,
+  "frozen_bindings_unchanged": true,
+  "jobs": 12,
+  "original_evidence_unchanged": true,
+  "passed": 12,
+  "plan_sha256": "89b5304a2306b1426061726e3668de008b01fa59528801650a8ace9267f515fe",
+  "started_unix": 1790907827.965822,
+  "status": "FINISHED"
+}

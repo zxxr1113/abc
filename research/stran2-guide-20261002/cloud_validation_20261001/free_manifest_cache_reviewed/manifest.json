@@ -1,0 +1,66 @@
+{
+  "scope": "Compact correctness and saved-worklist timing records; raw fixed inputs and replay files remain at their source locations.",
+  "files": [
+    {
+      "file": "correctness_review.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-independent-review-v1/review.json",
+      "sha256": "7b7e7f15d48c98cad16da01d59bdea3e90ef04bb456fd61b9ca6489ba3388e9d"
+    },
+    {
+      "file": "fd_fault_review.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-independent-review-v1/fd_fault_review.json",
+      "sha256": "c47b3d9ef8b1d0cf0366a868a5b666f5152918405884d2c455d6b3db17bae189"
+    },
+    {
+      "file": "correctness_manifest.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/correctness_manifest.json",
+      "sha256": "3b63ea561a0a5a479d82f5918eddfc71d086361d8eba8effbbf6c667b872c1e9"
+    },
+    {
+      "file": "ordered_semantics_summary.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/ordered-semantics-v4/summary.json",
+      "sha256": "43161d83c872533de55133ce486d66dc6d9c6af4b36dfa4b5bd6cf9bac185c87"
+    },
+    {
+      "file": "six_case_preproof_summary.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-final/summary.json",
+      "sha256": "8f7a3d153e4633e53b921791ee8a1bc403512f2e2d5ea2c42e094a8e507a3132"
+    },
+    {
+      "file": "timing_review.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-timing-independent-review-v1/review.json",
+      "sha256": "d41f9eacfea56e712ad2489588d4d43d10458c52e4b088e85e1c37c87bc5d92b"
+    },
+    {
+      "file": "timing_plan_review.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-independent-review-v1/timing_plan_review.json",
+      "sha256": "d7d6026a55781b0efc95539ec1d9eb0bc60a8ef1140dd194d6118c956d2360fd"
+    },
+    {
+      "file": "timing_plan.json",
+      "source": "/workspace/shared/stran2-free-manifest-cache-saved-timing-prepared-v1/plan.json",
+      "sha256": "89b5304a2306b1426061726e3668de008b01fa59528801650a8ace9267f515fe"
+    },
+    {
+      "file": "timing_summary.json",
+      "source": "/workspace/shared/stran2-free-manifest-cache-saved-timing-prepared-v1/summary.json",
+      "sha256": "25c72d971089d28d674d78244bc5b451c13b0f868ecd8bc61ad215036ada347a"
+    },
+    {
+      "file": "timing_ledger.json",
+      "source": "/workspace/shared/stran2-free-manifest-cache-saved-timing-prepared-v1/ledger.json",
+      "sha256": "23d59da5f818df4f0e6b64c42f41dc1c8d95e63e24bcfd2b11264f99c0dc3268"
+    },
+    {
+      "file": "timing_execution.json",
+      "source": "/workspace/shared/stran2-free-manifest-cache-saved-timing-prepared-v1/execution.json",
+      "sha256": "4463259738d40f85b7e510bf61e118af8b87156b83b2a6582b5164a86c385073"
+    },
+    {
+      "file": "correctness_manifest.worker.json",
+      "source": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/correctness_manifest.worker.json",
+      "sha256": "d9e47b81800de702f3b5ec67bcf9dc45659f9a85d3ca4292a7d1460583b4ddb1"
+    }
+  ],
+  "metadata_revision_note": "correctness_review.json binds preserved correctness_manifest.worker.json (d9e47b81...). correctness_manifest.json (3b63ea56...) is the later metadata-only status/review-reference update; source/test/numerical/evidence fields are unchanged."
+}

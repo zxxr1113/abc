@@ -1,0 +1,110 @@
+{
+  "combined_saved_coverage": {
+    "cases": 6,
+    "checkpoints": 59,
+    "domains": 127,
+    "includes_actual_mem_selected_appended_witnesses": true,
+    "witnesses": 6106
+  },
+  "core_source_sha256": {
+    "nonlinear_divisors/anytime.py": "b5f4f83ddedbd69c128eedc25bc163b720292635bd39bbba2fedace608e2d2bd",
+    "nonlinear_divisors/free_guided.py": "f7d27a76934ee2c95b9b0ea36bf6d875a6bb38123e8b874446e3ac70885ad45a",
+    "nonlinear_divisors/free_manifest_cache.py": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551"
+  },
+  "default": "OLD_PATH",
+  "holdout_saved_semantics": {
+    "cases": [
+      {
+        "case": "034_b20_opt",
+        "checkpoints": 22,
+        "domains": 46,
+        "semantic_sha256": "0cc97c31acb020121fb384dd22f4332eb7b7df58b2adf20c4978f29529da9b8c",
+        "status": "PASS",
+        "witnesses": 987
+      },
+      {
+        "case": "045_mem_ctrl",
+        "checkpoints": 15,
+        "domains": 19,
+        "semantic_sha256": "de877bc736aa8d57f0657b4119e5d31273d75ec15ecef139ce4fcb7664472e22",
+        "status": "PASS",
+        "witnesses": 1284
+      },
+      {
+        "case": "060_wb_dma",
+        "checkpoints": 11,
+        "domains": 23,
+        "semantic_sha256": "98e1fedd071b2b43de1f208d397f97502e5889582b962019100d497558736038",
+        "status": "PASS",
+        "witnesses": 1825
+      }
+    ],
+    "scope": "Three timed-out cases, saved domains/preproof witness/CNF/checkpoint subset only; no claim of complete ordered tail replay"
+  },
+  "implementation_review_notes": [
+    "Tuple/list payload defect fixed and actual appended-world regression passed",
+    "Publication TOCTOU fixed with exclusive descriptor-relative temp and no-replace link from open descriptor",
+    "Each proof return is withheld until full exit hash/identity check passes",
+    "Current default tiny artifacts match pre-cache; timeout retains independently verified earlier checkpoint",
+    "Complete outer checkpoint and external domain/provenance validators preserved"
+  ],
+  "independent_tests": {
+    "actual_owned_descriptors_peak": 2,
+    "additional_actual_fd_fault_checks": 5,
+    "all_pass": true,
+    "benchmark_runs": 0,
+    "descriptor_leaks": 0,
+    "failures": 0,
+    "focused_and_worker": 31,
+    "focused_execution_wall_s": 9.486,
+    "skipped": 0,
+    "small_actual_solver_fixtures": true
+  },
+  "new_helper_identity_separate": true,
+  "no_new_pilot": true,
+  "no_new_semantic_replay_solver_or_dsec_calls": true,
+  "no_original_evidence_edits": true,
+  "no_timing_comparison": true,
+  "optin": "--predecessor-free --free-manifest-cache",
+  "ordered_semantics": {
+    "appended_lane_annotations_regenerated": 293,
+    "cases": [
+      {
+        "case": "005_b03",
+        "events": 45,
+        "events_sha256": "da5082cc1d613e48bd022e4c26ebd8aac52f3ca6529596b5914d8f5e9b564308",
+        "status": "PASS"
+      },
+      {
+        "case": "044_i2c",
+        "events": 726,
+        "events_sha256": "debbcb764c0760d0cc1084fe0f7c053b194a3c0195f8a08293b6fcf6ac29dc76",
+        "status": "PASS"
+      },
+      {
+        "case": "041_des_area",
+        "events": 1073,
+        "events_sha256": "5321f04a5feb210d6ecadffab947fe6034fd85e2fc6a95bec72f5e5c205de947",
+        "status": "PASS"
+      }
+    ],
+    "event_counts": {
+      "ADMIT": 50,
+      "ANNOTATE": 1699,
+      "CHECKPOINT": 11,
+      "FINAL": 3,
+      "INIT": 3,
+      "PROOF": 78
+    },
+    "independent_execution": "current default and opt-in, both compared with hash-bound producer pre-cache oracle",
+    "old_current_default_optin_identical": true,
+    "scope": "Three complete cases, original chronological annotation/admission/proof/checkpoint sequence; saved annotation removed before regeneration",
+    "total_events": 1844,
+    "versions": 39
+  },
+  "producer_correctness_manifest_sha256": "d9e47b81800de702f3b5ec67bcf9dc45659f9a85d3ca4292a7d1460583b4ddb1",
+  "proof_source_identity_preserved": true,
+  "remaining_gate": "Separate frozen timing protocol approval and run; correctness does not establish speed or area gain",
+  "source_snapshot_manifest_sha256": "ec9572c6acdf33901d79981f04f47eefa8defbd54a344495282a70a0e8f51fed",
+  "status": "PASS_IMPLEMENTATION_CORRECTNESS_NO_TIMING_AUTHORIZATION"
+}

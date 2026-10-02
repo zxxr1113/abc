@@ -1,0 +1,85 @@
+{
+  "case_order": [
+    "005_b03",
+    "044_i2c",
+    "041_des_area"
+  ],
+  "cleanup_and_controller_pre_post_costs_separate": true,
+  "code_metadata_bindings": 79,
+  "cumulative_case_work_cap_s": 120,
+  "execution_absent_at_review": true,
+  "exhausted_case_skips_before_hash": true,
+  "filesystem_coldness_claim": false,
+  "hash_checks_deadline_bracketed": true,
+  "jobs": 12,
+  "jobs_per_case": 4,
+  "launched_by_reviewer": false,
+  "logical_cache_cold_each_fresh_process": true,
+  "mode_order": {
+    "005_b03": [
+      [
+        0,
+        "default_old"
+      ],
+      [
+        0,
+        "optin_cache"
+      ],
+      [
+        1,
+        "optin_cache"
+      ],
+      [
+        1,
+        "default_old"
+      ]
+    ],
+    "041_des_area": [
+      [
+        0,
+        "default_old"
+      ],
+      [
+        0,
+        "optin_cache"
+      ],
+      [
+        1,
+        "optin_cache"
+      ],
+      [
+        1,
+        "default_old"
+      ]
+    ],
+    "044_i2c": [
+      [
+        0,
+        "optin_cache"
+      ],
+      [
+        0,
+        "default_old"
+      ],
+      [
+        1,
+        "default_old"
+      ],
+      [
+        1,
+        "optin_cache"
+      ]
+    ]
+  },
+  "opposite_order_pairs_per_case": 2,
+  "original_evidence_bindings": 1528,
+  "plan": "/workspace/shared/stran2-free-manifest-cache-saved-timing-prepared-v1/plan.json",
+  "plan_sha256": "89b5304a2306b1426061726e3668de008b01fa59528801650a8ace9267f515fe",
+  "review_hash_wall_s": 0.5789430510048987,
+  "runner_sha256": "7302b8d0a86d70ae90aa5a8f011f78c0639b2c5218b64bf7b99ae139e0254eb1",
+  "same_current_runtime_both_modes": true,
+  "scope": "Whole saved-worklist subprocess lifetime including evidence/oracle work; ordered3complete cases only; no search/solver/DSEC/optimizer transform, pure-persist claim, area claim or automatic pilot",
+  "source_manifest_sha256": "ec9572c6acdf33901d79981f04f47eefa8defbd54a344495282a70a0e8f51fed",
+  "status": "PASS_READY_FOR_PARENT_TIMING_GO",
+  "workers": 1
+}

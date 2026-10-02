@@ -1,0 +1,134 @@
+{
+  "all_expected_ordered_semantics_identical": true,
+  "all_source_and_original_evidence_unchanged": true,
+  "b03_resolution_caveat": "Popen.wait(timeout) on this frozen Python polls with sleeps up to50ms; the observed+25.7ms mean is comparable to observer granularity and is not a reliable small-case slowdown estimate. Scheduling can add further delay.",
+  "cases": [
+    {
+      "cache_minus_default_mean_s": 0.025726850999490125,
+      "case": "005_b03",
+      "charged_case_wall_s": 1.2416816789991572,
+      "mean_observed_process_wall_s": {
+        "default_old": 0.26472711650058045,
+        "optin_cache": 0.2904539675000706
+      },
+      "opposite_order_pairs": [
+        {
+          "cache_minus_default_s": 0.051297240002895705,
+          "mode_order": [
+            "default_old",
+            "optin_cache"
+          ],
+          "ratio": 1.1938493242985502,
+          "round": 0
+        },
+        {
+          "cache_minus_default_s": 0.0001564619960845448,
+          "mode_order": [
+            "optin_cache",
+            "default_old"
+          ],
+          "ratio": 1.0005908017609373,
+          "round": 1
+        }
+      ],
+      "ratio_of_means": 1.0971825302204496,
+      "relative_change_percent": 9.718253022044966
+    },
+    {
+      "cache_minus_default_mean_s": -16.0149489045034,
+      "case": "044_i2c",
+      "charged_case_wall_s": 68.7009259500046,
+      "mean_observed_process_wall_s": {
+        "default_old": 25.090082679500483,
+        "optin_cache": 9.075133774997084
+      },
+      "opposite_order_pairs": [
+        {
+          "cache_minus_default_s": -16.07920483300404,
+          "mode_order": [
+            "optin_cache",
+            "default_old"
+          ],
+          "ratio": 0.36658086442552607,
+          "round": 0
+        },
+        {
+          "cache_minus_default_s": -15.950692976002756,
+          "mode_order": [
+            "default_old",
+            "optin_cache"
+          ],
+          "ratio": 0.35670721931481025,
+          "round": 1
+        }
+      ],
+      "ratio_of_means": 0.36170202748721114,
+      "relative_change_percent": -63.82979725127888
+    },
+    {
+      "cache_minus_default_mean_s": -4.930046105000656,
+      "case": "041_des_area",
+      "charged_case_wall_s": 26.86944919799862,
+      "mean_observed_process_wall_s": {
+        "default_old": 9.131266903499636,
+        "optin_cache": 4.20122079849898
+      },
+      "opposite_order_pairs": [
+        {
+          "cache_minus_default_s": -4.270002315002785,
+          "mode_order": [
+            "default_old",
+            "optin_cache"
+          ],
+          "ratio": 0.4885731309836295,
+          "round": 0
+        },
+        {
+          "cache_minus_default_s": -5.590089894998528,
+          "mode_order": [
+            "optin_cache",
+            "default_old"
+          ],
+          "ratio": 0.4361042605299293,
+          "round": 1
+        }
+      ],
+      "ratio_of_means": 0.4600917750951761,
+      "relative_change_percent": -53.990822490482394
+    }
+  ],
+  "combined_observed_relative_change_percent": -60.66004069058815,
+  "complete_cases": 3,
+  "controller_costs": {
+    "cleanup_s": 0.0,
+    "final_s": 0.2882619590018294,
+    "preflight_s": 0.15789159500127425
+  },
+  "descriptors_bounded_and_closed": true,
+  "limits": [
+    "Three complete saved worklists only; no optimizer search, solver or DSEC was rerun",
+    "Whole observed subprocess wall includes common evidence/oracle work and polling observation delay; not pure persist/cache timing",
+    "Fresh logical state, no verified OS/page-cache coldness",
+    "Two opposite-order pairs per case, no statistical or broad runtime generalization",
+    "The original202 to133AND pilot result remains unchanged; this timing gives no area-gain evidence or automatic new-pilot permission"
+  ],
+  "new_review_solver_dsec_or_transform_calls": 0,
+  "new_review_timing_runs": 0,
+  "no_case_cap_overrun": true,
+  "observed_process_time_boundary": "Whole saved-worklist subprocess lifetime, including imports, source/evidence checks, full initialization, annotation/persist, original-model admission, exact CNF and witness replay, product/checkpoint and final guards, reloads/stat/descriptors/serialization, and shared semantic-oracle work. Per-job controller source verification and result validation also consume the cumulative case budget. Global preflight/final binding checks and process cleanup are separately reported. This is not pure-persist timing or an optimizer budget.",
+  "original_evidence_bindings": 1528,
+  "plan_sha256": "89b5304a2306b1426061726e3668de008b01fa59528801650a8ace9267f515fe",
+  "regenerated_manifest_files_verified": 156,
+  "replayed_event_receipts": 7376,
+  "review_wall_s": 0.7812766630013357,
+  "runner_sha256": "7302b8d0a86d70ae90aa5a8f011f78c0639b2c5218b64bf7b99ae139e0254eb1",
+  "source_and_result_bindings": 1807,
+  "source_cache_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+  "status": "PASS_ALL_12_TIMING_RECORDS",
+  "sum_of_case_means_s": {
+    "default_old": 34.4860766995007,
+    "optin_cache": 13.566808540996135
+  },
+  "trials": 12,
+  "workers": 1
+}

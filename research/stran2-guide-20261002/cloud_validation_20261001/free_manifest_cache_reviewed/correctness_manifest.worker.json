@@ -1,0 +1,144 @@
+{
+  "approved_design_sha256": "1d2ba6b5706f8acab455819ba345d7165356e9c5c5239e94eb78b61907952330",
+  "base_commit": "000b99850daea43b53eac6694d23361251cf1327",
+  "default": "OLD_PATH",
+  "implementation_source_separate_from_original_proof_identity": true,
+  "independent_review": "PENDING_FINAL_COMBINED_REPORT",
+  "negative_pilot_unchanged": true,
+  "new_pilot": "NOT_RUN",
+  "opt_in": "--predecessor-free --free-manifest-cache",
+  "ordered_differential": {
+    "annotation_field_removed_before_regeneration": true,
+    "annotations": 1699,
+    "cases": [
+      "005_b03",
+      "044_i2c",
+      "041_des_area"
+    ],
+    "checker": {
+      "bytes": 11769,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/ordered-semantics-v4/checker.py",
+      "sha256": "047ecd506fd36a02745a7fd1ee23497a1d7c726674b23a1cae6655b88d2372e6"
+    },
+    "empty_annotations": 1392,
+    "events": 1844,
+    "modes": [
+      "precache",
+      "current_default",
+      "current_cache"
+    ],
+    "original_model_admissions": 50,
+    "proof_boundaries": 78,
+    "result": {
+      "bytes": 3096,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/ordered-semantics-v4/summary.json",
+      "sha256": "43161d83c872533de55133ce486d66dc6d9c6af4b36dfa4b5bd6cf9bac185c87"
+    },
+    "scope": "exact ordered saved complete-case annotation/admission/proof/checkpoint worklist; no candidate search or model re-solve",
+    "versions": 39
+  },
+  "performance_comparison": "NOT_RUN",
+  "preserved_first_issues": [
+    {
+      "bytes": 602,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/first-review-defect.txt",
+      "sha256": "44f60bc1536fa0811cd939ab3c15f197db4ce620950c35ced828be6dbeb816cc"
+    },
+    {
+      "bytes": 4356,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/real-append-first.log",
+      "sha256": "092b05b2e270cb77b28d9fea9cea5dbb0153cb4f77cdf71ceb1a6fb902d940ad"
+    },
+    {
+      "bytes": 6589,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/publication-races-first.log",
+      "sha256": "de48850c31aa6b754e4ff5e3054e86ce5e1ec380879318d9f942e50771afcf1d"
+    },
+    {
+      "bytes": 207,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/prior-launch-failure.txt",
+      "sha256": "333a550a68afe44799d78aa4d8d6079b6a9f87bfe2ea5af02052894c19220201"
+    },
+    {
+      "bytes": 528,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/ordered-semantics-v1/005_b03-old.log",
+      "sha256": "5bb8d9f293f670e6c05e9a20ea041e29363f45f3910496416b19fa673113ac6c"
+    },
+    {
+      "bytes": 598,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/ordered-semantics-v2/005_b03-old.log",
+      "sha256": "3ea077a6e93f9381c84be24734c1e360c2774fcb205419b95b181084c54b0a0a"
+    }
+  ],
+  "provenance_rewriting": false,
+  "runtime_snapshot": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/final_source",
+  "runtime_snapshot_manifest": {
+    "bytes": 7852,
+    "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/final_source_manifest.json",
+    "sha256": "ec9572c6acdf33901d79981f04f47eefa8defbd54a344495282a70a0e8f51fed"
+  },
+  "saved_preproof_differential": {
+    "cases": 6,
+    "checkpoints": 59,
+    "domains": 127,
+    "result": {
+      "bytes": 7152,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-final/summary.json",
+      "sha256": "8f7a3d153e4633e53b921791ee8a1bc403512f2e2d5ea2c42e094a8e507a3132"
+    },
+    "scope": "preproof witness/cache/exact CNF/assumptions/checkpoint bytes; old results reused only with unchanged original bound files",
+    "witnesses": 6106
+  },
+  "source": {
+    "free_domain_diagnostic/check_saved_annotation_sequence.py": {
+      "bytes": 11769,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/check_saved_annotation_sequence.py",
+      "sha256": "047ecd506fd36a02745a7fd1ee23497a1d7c726674b23a1cae6655b88d2372e6"
+    },
+    "free_domain_diagnostic/check_saved_cache_equivalence.py": {
+      "bytes": 7101,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/check_saved_cache_equivalence.py",
+      "sha256": "bd7df4750a734007f8ed256360eb5532624e018e96dfae18be476e7f2029dfc5"
+    },
+    "nonlinear_divisors/anytime.py": {
+      "bytes": 55267,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/nonlinear_divisors/anytime.py",
+      "sha256": "b5f4f83ddedbd69c128eedc25bc163b720292635bd39bbba2fedace608e2d2bd"
+    },
+    "nonlinear_divisors/free_guided.py": {
+      "bytes": 19624,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/nonlinear_divisors/free_guided.py",
+      "sha256": "f7d27a76934ee2c95b9b0ea36bf6d875a6bb38123e8b874446e3ac70885ad45a"
+    },
+    "nonlinear_divisors/free_manifest_cache.py": {
+      "bytes": 15216,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/nonlinear_divisors/free_manifest_cache.py",
+      "sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551"
+    },
+    "nonlinear_divisors/test_free_manifest_cache.py": {
+      "bytes": 18802,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/nonlinear_divisors/test_free_manifest_cache.py",
+      "sha256": "7f12a314ad02afdab9cb3cedfa983b53d37753876ee6961ef7b35bd1bedad086"
+    },
+    "nonlinear_divisors/test_free_manifest_cache_worker.py": {
+      "bytes": 8525,
+      "path": "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/nonlinear_divisors/test_free_manifest_cache_worker.py",
+      "sha256": "b05f8c734bec9969fb298264c410925642d98ebb28a976634efb9b5fa8f56c13"
+    }
+  },
+  "status": "WORKER_CORRECTNESS_PASS_AWAITING_FINAL_INDEPENDENT_REVIEW",
+  "tests": {
+    "first_final_log": {
+      "bytes": 16442,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/final-targeted-first.log",
+      "sha256": "6a1b14504d7b517f490e88be69cee37ba1b7050842e9c5b910c0cdd98567473b"
+    },
+    "new_cache_adversaries": 29,
+    "new_worker_fixtures": 2,
+    "passed": 105,
+    "prior_regressions": 74,
+    "skipped": 0,
+    "unique_executed": 105,
+    "worker_fixtures_directory": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/worker-fixtures-v2"
+  }
+}

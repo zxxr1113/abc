@@ -1,0 +1,188 @@
+{
+  "DSEC_calls": 0,
+  "cases": [
+    {
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 2,
+          "descriptor_opens": 2,
+          "full_hash_bytes": 61975,
+          "full_hash_checks": 11,
+          "identity_checks": 173,
+          "payload_parses": 2,
+          "peak_open_descriptors": 2,
+          "registered_versions": 2
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 2
+      },
+      "case": "005_b03",
+      "checkpoints": 3,
+      "domains": 2,
+      "old_result": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-v1/005_b03-old/result.json",
+      "old_result_sha256": "d7e8e309a856f7add33aa382a9eed3ded678258a56641ee2c5b149d7eda83c74",
+      "semantic_sha256": "da892878bbf02a8d46acc3cdfc387a95728bf1e7f92a947757920167dcfa0797",
+      "status": "IDENTICAL_SEMANTICS",
+      "witnesses": 46
+    },
+    {
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 69,
+          "descriptor_opens": 69,
+          "evictions": 67,
+          "full_hash_bytes": 110725392,
+          "full_hash_checks": 178,
+          "identity_checks": 5383,
+          "payload_parses": 69,
+          "peak_open_descriptors": 2,
+          "registered_versions": 22,
+          "reloads": 47
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 22
+      },
+      "case": "044_i2c",
+      "checkpoints": 7,
+      "domains": 22,
+      "old_result": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-v1/044_i2c-old/result.json",
+      "old_result_sha256": "0719a82d9c783263c4748ebdeb7fcb51e4de6c5d431ecda82d591b6edd0b0b2e",
+      "semantic_sha256": "e8d861d8fc12b4be2b6594c545e797a20e4f8b556f555ee23f13430ba311de4c",
+      "status": "IDENTICAL_SEMANTICS",
+      "witnesses": 1609
+    },
+    {
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 44,
+          "descriptor_opens": 44,
+          "evictions": 42,
+          "full_hash_bytes": 11186121,
+          "full_hash_checks": 107,
+          "identity_checks": 1401,
+          "payload_parses": 44,
+          "peak_open_descriptors": 2,
+          "registered_versions": 15,
+          "reloads": 29
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 15
+      },
+      "case": "041_des_area",
+      "checkpoints": 1,
+      "domains": 15,
+      "old_result": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-v1/041_des_area-old/result.json",
+      "old_result_sha256": "0cdeb33598bcdaa4be833b38f6b7b66ea81536b7d35147a19420bf1fa737bce0",
+      "semantic_sha256": "e76ca5c7858c4b08fc85d3264a0b82c91537c2d43e7118d649ca8e5f5c8c97e2",
+      "status": "IDENTICAL_SEMANTICS",
+      "witnesses": 355
+    },
+    {
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 257,
+          "descriptor_opens": 257,
+          "evictions": 255,
+          "full_hash_bytes": 303834080,
+          "full_hash_checks": 535,
+          "identity_checks": 4612,
+          "payload_parses": 257,
+          "peak_open_descriptors": 2,
+          "registered_versions": 46,
+          "reloads": 211
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 46
+      },
+      "case": "034_b20_opt",
+      "checkpoints": 22,
+      "domains": 46,
+      "old_result": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-v1/034_b20_opt-old/result.json",
+      "old_result_sha256": "757b0d02e22dbc2af5fd085a54eb887d62d0369e6d71310712c2612feb99c28c",
+      "semantic_sha256": "0cc97c31acb020121fb384dd22f4332eb7b7df58b2adf20c4978f29529da9b8c",
+      "status": "IDENTICAL_SEMANTICS",
+      "witnesses": 987
+    },
+    {
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 120,
+          "descriptor_opens": 120,
+          "evictions": 118,
+          "full_hash_bytes": 334165716,
+          "full_hash_checks": 245,
+          "identity_checks": 4606,
+          "payload_parses": 120,
+          "peak_open_descriptors": 2,
+          "registered_versions": 19,
+          "reloads": 101
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 19
+      },
+      "case": "045_mem_ctrl",
+      "checkpoints": 15,
+      "domains": 19,
+      "old_result": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-v1/045_mem_ctrl-old/result.json",
+      "old_result_sha256": "50b3834fd73f2b31959e137c1d28a1c7f81f4076b23a130498b66a0eb062a03f",
+      "semantic_sha256": "de877bc736aa8d57f0657b4119e5d31273d75ec15ecef139ce4fcb7664472e22",
+      "status": "IDENTICAL_SEMANTICS",
+      "witnesses": 1284
+    },
+    {
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 107,
+          "descriptor_opens": 107,
+          "evictions": 105,
+          "full_hash_bytes": 322819424,
+          "full_hash_checks": 247,
+          "identity_checks": 6239,
+          "payload_parses": 107,
+          "peak_open_descriptors": 2,
+          "registered_versions": 23,
+          "reloads": 84
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 23
+      },
+      "case": "060_wb_dma",
+      "checkpoints": 11,
+      "domains": 23,
+      "old_result": "/workspace/scratch/7e0c7273599c/evidence-preserved/free-manifest-cache-validation-v1/saved-equivalence-v1/060_wb_dma-old/result.json",
+      "old_result_sha256": "8aaea0fedbbf7ae81f6959a8332ac5af2a39681024807bdbd143311194c4f038",
+      "semantic_sha256": "98e1fedd071b2b43de1f208d397f97502e5889582b962019100d497558736038",
+      "status": "IDENTICAL_SEMANTICS",
+      "witnesses": 1825
+    }
+  ],
+  "old_results_reused_from_exact_bound_saved_v1": true,
+  "performance_comparison": "NOT_RUN",
+  "solver_calls": 0,
+  "status": "PASS",
+  "transform_runs": 0
+}

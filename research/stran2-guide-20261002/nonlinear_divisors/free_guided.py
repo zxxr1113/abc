@@ -50,13 +50,26 @@ class PredecessorFreeDomain:
         deadline.remaining()
         self.initial_ci = [hex(v) for v in free[1:1+a.ni+a.nl]]
         self.manifests = {}
-        self.persist()
+        self.manifest_cache = None
+        if job.get('free_manifest_cache'):
+            import free_manifest_cache as mc
+            p.require(Path(mc.__file__).resolve() == Path(__file__).resolve().parent/'free_manifest_cache.py',
+                      'wrong manifest cache module')
+            self.manifest_cache = mc.ManifestCache(self.out,job['case']['input_sha256'],(a.ni,a.nl),deadline)
+        try:self.persist()
+        except BaseException:
+            if self.manifest_cache:self.manifest_cache.close()
+            raise
 
     def persist(self):
         self.deadline.remaining()
         snap = self.state.snapshot()
         name = f'version_{snap.version:05d}.json'
         path = self.directory / name
+        if self.manifest_cache and snap.version in self.manifests:
+            old=self.manifests[snap.version]
+            self.manifest_cache.check_identity(old)
+            return old
         payload = dict(schema=1, domain=fs.FREE_DOMAIN, input_sha256=snap.input_sha256,
             free_version=snap.version, free_mask=hex(snap.mask), free_signature_bits=snap.lanes,
             free_domain_sha256=snap.domain_sha256, initial_domain_sha256=snap.initial_domain_sha256,
@@ -68,10 +81,12 @@ class PredecessorFreeDomain:
                       'immutable free-domain manifest changed')
             return old
         p.require(not path.exists(), 'free-domain manifest already exists')
-        p.write_json(path, payload)
+        if self.manifest_cache:self.manifest_cache.write_new(name,payload)
+        else:p.write_json(path, payload)
         self.deadline.remaining()
         bound = dict(file=name, sha256=p.sha(path), free_version=snap.version,
                      free_domain_sha256=snap.domain_sha256, free_signature_bits=snap.lanes)
+        if self.manifest_cache:self.manifest_cache.register(bound,payload)
         self.manifests[snap.version] = bound
         return bound
 
@@ -79,7 +94,17 @@ class PredecessorFreeDomain:
         return fs.domain_projection(row['root'], row['pool'], seq, mask, version, self.state.snapshot())
 
     def annotate(self, candidates):
-        manifest = self.persist()
+        if self.manifest_cache:
+            try:
+                self.deadline.remaining()
+                if not candidates:return
+                manifest=self.persist()
+                with self.manifest_cache.identity_boundary(manifest):self._annotate(candidates,manifest)
+            except BaseException:
+                self.manifest_cache.close();raise
+        else:self._annotate(candidates,self.persist())
+
+    def _annotate(self,candidates,manifest):
         for c in candidates:
             self.deadline.remaining()
             witness = self.state.witness(c['root'], c['recipe'], c['out'], lane=c['witness_lane'])
@@ -161,15 +186,35 @@ class PredecessorFreeDomain:
                     global_added_cap=256, sampled_pi_field='previous_inputs', proof_domain_unchanged=True)
 
 
-def verify_witness_annotation(a, candidate, ordinary_witness, case_out, input_hash):
+def verify_witness_annotation(a, candidate, ordinary_witness, case_out, input_hash, manifest_cache=None):
+    try:return _load_and_verify_witness(a,candidate,ordinary_witness,case_out,input_hash,manifest_cache)
+    except BaseException:
+        if manifest_cache is not None:manifest_cache.close()
+        raise
+
+
+def _load_and_verify_witness(a, candidate, ordinary_witness, case_out, input_hash, manifest_cache):
     """Bind a preserved full witness to its immutable discovery free snapshot."""
     annotation=candidate['free_domain'];bound=annotation['manifest'];w=annotation['witness']
     p.require(annotation['schema']==1 and annotation['policy']=='authenticated_predecessor_PI_RO_only', 'wrong free witness policy')
     name=bound['file'];p.require(type(name) is str and name.startswith('version_') and name.endswith('.json') and
         name[8:-5].isdigit() and Path(name).name==name, 'invalid free manifest path')
     path=Path(case_out)/'free_domains'/name
+    if manifest_cache is not None:
+        try:
+            p.require(manifest_cache.case==Path(case_out).resolve() and manifest_cache.input_sha256==input_hash and
+                      (manifest_cache.ni,manifest_cache.nl)==(a.ni,a.nl),'witness cache context differs')
+            with manifest_cache.witness_payload(bound) as manifest:
+                return _verify_witness_manifest(a,candidate,ordinary_witness,input_hash,manifest)
+        except BaseException:
+            manifest_cache.close();raise
     p.require(p.sha(path)==bound['sha256'], 'free witness manifest hash differs')
     manifest=json.loads(path.read_text())
+    return _verify_witness_manifest(a,candidate,ordinary_witness,input_hash,manifest)
+
+
+def _verify_witness_manifest(a,candidate,ordinary_witness,input_hash,manifest):
+    annotation=candidate['free_domain'];bound=annotation['manifest'];w=annotation['witness']
     p.require(manifest['input_sha256']==w['input_sha256']==input_hash and manifest['domain']=='unrestricted_free_PI_RO' and
               manifest['free_version']==w['free_version']==bound['free_version'] and
               manifest['free_domain_sha256']==w['free_domain_sha256']==bound['free_domain_sha256'] and
@@ -189,9 +234,9 @@ def verify_witness_annotation(a, candidate, ordinary_witness, case_out, input_ha
         origin=dict(kind='initial_random_free',lane=lane,initial_domain_sha256=manifest['initial_domain_sha256'])
     else:
         records=manifest['records'];p.require(len(records)==manifest['free_signature_bits']-256, 'free lane records incomplete')
-        origin=records[lane-256];p.require(origin['lane']==lane and origin['sampled_pi_field']=='previous_inputs' and
+        origin=dict(records[lane-256]);p.require(origin['lane']==lane and origin['sampled_pi_field']=='previous_inputs' and
                                         origin['domain']=='unrestricted_free_PI_RO','free lane provenance/frame differs')
-        assignment=origin['inputs']+origin['state']
+        assignment=list(origin['inputs'])+list(origin['state'])
     p.require(assignment==ordinary_witness['inputs']+ordinary_witness['state'] and
               fs.digest(origin)==fs.digest(json.loads(w['origin_json'])), 'free witness lane origin differs')
     p.require(len(ordinary_witness['inputs'])==a.ni and len(ordinary_witness['state'])==a.nl and

@@ -316,6 +316,16 @@ inline 可选后端新增更窄的模型验证 fast path：只有逐字节绑定
 
 保存记录另显示可定位的工程浪费，但不是新的计时因果证明：完整i2c有666次persist调用、644次同版本重复，其中415空候选批；重复manifest逻辑读0.898GiB，1609次preproof检查再读1.787GiB。wb至少820次persist/797重复/520空批，重复逻辑读2.820GiB，preproof再读5.443GiB。它们是API字节量，**非物理磁盘I/O**。完整i2c solver进程wall 2.044→2.183s而总变换22.171→55.440s；des查询410→407却12.813→26.340s，说明不能仅用更多SAT解释回归。persist本身未单独计时。后续仅评估不可变版本缓存与chunk入口/出口full hash、逐见证身份和原图回放，保持该负pilot不变；在固定记录等价/篡改测试和完整case计时通过前，不再次扩跑或声称面积改善。
 
+### 不可变 free manifest 缓存：保持证据边界的工程加速，尚未重跑优化器
+
+针对上述重复工作新增默认关闭的 `free_manifest_cache.py`：按case/input/free-version/domain-hash/manifest-hash完整key持有不可变payload，不以文件名或调用者可变字典授权复用。最多两个打开的manifest descriptor，淘汰时关闭，reload必须重新认证且额外hash/parse计入成本；所有创建版本的原始身份与hash保留用于最后全量检查。新版本使用锚定目录descriptor、独占临时文件和no-replace发布，禁止覆盖或跟随竞态symlink。每个新版本创建、消费它的proof chunk入口/出口、selected checkpoint及成功结束的所有created版本均做full hash；每个见证仍检查锚定文件身份并执行完整原图回放。漂移或deadline拒绝整个未发布chunk。空候选annotation只做deadline检查，不读不消费manifest；篡改在下次实际消费边界或最终all-created检查发现，不把无关后续文件变化误当成旧checkpoint自身输入证明失效。outer checkpoint与外部完整free-domain审计保持不变。
+
+实现前后验证发现并修复tuple/list payload比较和check-then-write发布竞态，保留首次失败日志。105个producer唯一测试通过；独立31个focused/worker测试及5种真实 `/proc` descriptor故障检查通过，实际打开数最多2且结束归零。三个完整case重放1844个有序事件、1699次annotation（1392空批）、50次原模型admission、78个proof边界及39次版本创建，先移除旧annotation再生成，pre-cache/current-default/current-opt-in的bytes、293个追加lane注释与结果一致。另三个未完成case仅做较窄的保存域/preproof/CNF/checkpoint重放；六例合计127域、6106见证、59 checkpoint通过，不能把后者说成六例完整搜索顺序复现。新cache实现身份单独记录，不改写旧job、proof或model来源。真实supervisor timeout后，早先合法checkpoint由另进程完整复核。
+
+独立正确性通过后按冻结计划 `89b5304a2306b1426061726e3668de008b01fa59528801650a8ace9267f515fe` 做12个保存工作记录进程：三个完整case各两组相反先后顺序，same-current-source default/cache、单worker、逻辑cache冷启动、每case累计120s上限。12/12通过，无超限，所有原证据与源身份不变；独立核对为 **7376个相同事件收据和156个再生manifest**。过程wall包含共享oracle/evidence校验、cache构造/淘汰/reload、full hashes、原图回放及输出；全局完整性检查/必要清理另列。没有search、solver、DSEC或新optimizer运行。
+
+两轮均值 default→cache：i2c **25.090→9.075s（−63.83%）**，des **9.131→4.201s（−53.99%）**，两个先后顺序方向一致；b03观测0.265→0.290s，但+25.7ms处在该Python `Popen.wait(timeout)` 最大50ms轮询sleep的观测粒度内，不算可靠的小例变慢结论。这里只是完整保存工作记录的工程加速，非纯persist计时、OS冷盘测量、端到端优化器加速或面积提升。证据在 `cloud_validation_20261001/free_manifest_cache_reviewed/`。前述202→133AND负pilot仍原样保留；任何后续正式比较须同时重跑原配置、前态free无cache和前态free有cache，三臂同一冻结runtime/预算并重新归因，不能拼接历史baseline。
+
 ### 先行工作校准与待证明贡献
 
 本轮检索后的结论是：reset/image 证明原理及反例反馈均有明确先行工作，不能作为新理论宣称。

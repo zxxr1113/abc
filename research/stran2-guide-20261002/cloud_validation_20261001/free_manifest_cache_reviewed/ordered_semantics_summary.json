@@ -1,0 +1,94 @@
+{
+  "DSEC_calls": 0,
+  "cases": [
+    {
+      "annotation_regenerated_from_absent_field": true,
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 7,
+          "descriptor_opens": 7,
+          "evictions": 1,
+          "full_hash_bytes": 64650,
+          "full_hash_checks": 12,
+          "identity_checks": 209,
+          "manifest_publications": 2,
+          "payload_parses": 3,
+          "peak_open_descriptors": 2,
+          "registered_versions": 2,
+          "reloads": 1
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 2
+      },
+      "case": "005_b03",
+      "events": 45,
+      "events_sha256": "da5082cc1d613e48bd022e4c26ebd8aac52f3ca6529596b5914d8f5e9b564308",
+      "status": "IDENTICAL_ORDERED_SEMANTICS_ALL_THREE_MODES"
+    },
+    {
+      "annotation_regenerated_from_absent_field": true,
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 99,
+          "descriptor_opens": 99,
+          "evictions": 53,
+          "full_hash_bytes": 101780394,
+          "full_hash_checks": 164,
+          "identity_checks": 6028,
+          "manifest_publications": 22,
+          "payload_parses": 55,
+          "peak_open_descriptors": 2,
+          "registered_versions": 22,
+          "reloads": 33
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 22
+      },
+      "case": "044_i2c",
+      "events": 726,
+      "events_sha256": "debbcb764c0760d0cc1084fe0f7c053b194a3c0195f8a08293b6fcf6ac29dc76",
+      "status": "IDENTICAL_ORDERED_SEMANTICS_ALL_THREE_MODES"
+    },
+    {
+      "annotation_regenerated_from_absent_field": true,
+      "cache_report": {
+        "cache_capacity": 2,
+        "closed": true,
+        "implementation_sha256": "6781ba77af8543215930ac4c73b7d811c6f6e71a21e99d0f852177f20301b551",
+        "metrics": {
+          "descriptor_closes": 60,
+          "descriptor_opens": 60,
+          "evictions": 28,
+          "full_hash_bytes": 9749350,
+          "full_hash_checks": 93,
+          "identity_checks": 1560,
+          "manifest_publications": 15,
+          "payload_parses": 30,
+          "peak_open_descriptors": 2,
+          "registered_versions": 15,
+          "reloads": 15
+        },
+        "open_descriptors": 0,
+        "policy": "immutable_free_manifest_cache_v1",
+        "registered_versions": 15
+      },
+      "case": "041_des_area",
+      "events": 1073,
+      "events_sha256": "5321f04a5feb210d6ecadffab947fe6034fd85e2fc6a95bec72f5e5c205de947",
+      "status": "IDENTICAL_ORDERED_SEMANTICS_ALL_THREE_MODES"
+    }
+  ],
+  "performance_comparison": "NOT_RUN",
+  "search_runs": 0,
+  "solver_calls": 0,
+  "status": "PASS",
+  "transform_runs": 0
+}
