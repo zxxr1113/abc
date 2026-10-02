@@ -1,0 +1,158 @@
+{
+  "status": "PASS_TERMINAL_PUBLICATION_AND_CACHE_BOUNDARIES",
+  "jobs": 18,
+  "job_outcomes": {
+    "COMPLETE": 11,
+    "BUDGET_EXHAUSTED": 7
+  },
+  "observed_on_time_checkpoints": 250,
+  "published_feature_free_witness_replays": 1717,
+  "published_appended_witness_replays": 58,
+  "cache_completion": [
+    {
+      "case": "005_b03.aig",
+      "status": "COMPLETED_ALL_CREATED_VERIFIED_AND_CLOSED"
+    },
+    {
+      "case": "044_i2c.aig",
+      "status": "COMPLETED_ALL_CREATED_VERIFIED_AND_CLOSED"
+    },
+    {
+      "case": "041_des_area.aig",
+      "status": "COMPLETED_ALL_CREATED_VERIFIED_AND_CLOSED"
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "status": "TIMEOUT_NO_SUCCESS_FINAL_CACHE_REPORT_RETAINED_CHECKPOINT_VERIFIED"
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "status": "TIMEOUT_NO_SUCCESS_FINAL_CACHE_REPORT_RETAINED_CHECKPOINT_VERIFIED"
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "status": "TIMEOUT_NO_SUCCESS_FINAL_CACHE_REPORT_RETAINED_CHECKPOINT_VERIFIED"
+    }
+  ],
+  "missing_transform_rss": [
+    {
+      "case": "034_b20_opt.aig",
+      "arm": "predecessor_cache_on",
+      "worker_bindings": 2
+    }
+  ],
+  "bound_files": 2160,
+  "records": [
+    {
+      "case": "005_b03.aig",
+      "arm": "inline_free_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 3
+    },
+    {
+      "case": "005_b03.aig",
+      "arm": "predecessor_cache_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 3
+    },
+    {
+      "case": "005_b03.aig",
+      "arm": "predecessor_cache_on",
+      "status": "COMPLETE",
+      "observed_checkpoints": 3
+    },
+    {
+      "case": "044_i2c.aig",
+      "arm": "predecessor_cache_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 7
+    },
+    {
+      "case": "044_i2c.aig",
+      "arm": "predecessor_cache_on",
+      "status": "COMPLETE",
+      "observed_checkpoints": 7
+    },
+    {
+      "case": "044_i2c.aig",
+      "arm": "inline_free_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 7
+    },
+    {
+      "case": "041_des_area.aig",
+      "arm": "predecessor_cache_on",
+      "status": "COMPLETE",
+      "observed_checkpoints": 1
+    },
+    {
+      "case": "041_des_area.aig",
+      "arm": "inline_free_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 1
+    },
+    {
+      "case": "041_des_area.aig",
+      "arm": "predecessor_cache_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 1
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "arm": "predecessor_cache_on",
+      "status": "BUDGET_EXHAUSTED",
+      "observed_checkpoints": 23
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "arm": "predecessor_cache_off",
+      "status": "BUDGET_EXHAUSTED",
+      "observed_checkpoints": 22
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "arm": "inline_free_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 53
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "arm": "inline_free_off",
+      "status": "BUDGET_EXHAUSTED",
+      "observed_checkpoints": 26
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "arm": "predecessor_cache_on",
+      "status": "BUDGET_EXHAUSTED",
+      "observed_checkpoints": 20
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "arm": "predecessor_cache_off",
+      "status": "BUDGET_EXHAUSTED",
+      "observed_checkpoints": 15
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "arm": "predecessor_cache_off",
+      "status": "BUDGET_EXHAUSTED",
+      "observed_checkpoints": 12
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "arm": "inline_free_off",
+      "status": "COMPLETE",
+      "observed_checkpoints": 30
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "arm": "predecessor_cache_on",
+      "status": "BUDGET_EXHAUSTED",
+      "observed_checkpoints": 16
+    }
+  ],
+  "boundary": "Authenticated source guards and saved publication receipts; successful final all-created closure is claimed only for complete cache arms. Timeout incumbents keep their own exact proof/domain evidence.",
+  "no_historical_baseline_splicing": true,
+  "no_new_solver_or_dsec": true
+}

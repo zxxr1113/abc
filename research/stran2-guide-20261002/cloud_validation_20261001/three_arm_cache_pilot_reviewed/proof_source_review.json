@@ -1,0 +1,76 @@
+{
+  "all_original_files_unchanged": true,
+  "arms": 18,
+  "artifacts": {
+    "evidence_after.json": "96c4ad811a16b8746a36aa476deed6be10f1d26a4b0b4fd038d8bfd06b58a921",
+    "evidence_before.json": "96c4ad811a16b8746a36aa476deed6be10f1d26a4b0b4fd038d8bfd06b58a921",
+    "evidence_final_after.json": "96c4ad811a16b8746a36aa476deed6be10f1d26a4b0b4fd038d8bfd06b58a921",
+    "first_attempt.log": "89884f79595b9a1852102b86551cb16f0317be8538a0af4cf55e628f2098dac3",
+    "original_raw_decoder_reference.py": "5ef8b672548e857cb9df296e8ac7bc9b0861d3c707fe3789c8cedd2b6108fe2a",
+    "review.json": "03e8845e941edb6bbd742610db50e36bee1dd81ba4bb346450d6dc87ca2ce9b5",
+    "review.py": "620f40c436d9927c6475cf24ade41e799de92a05d3d15da657a78a9de2974395",
+    "supplement_bound_after.json": "7f40f838eea55a0413a8bae22bc48fc008dbb5440849a0b39a71559de1906c67",
+    "supplement_bound_before.json": "7f40f838eea55a0413a8bae22bc48fc008dbb5440849a0b39a71559de1906c67",
+    "supplement_first_attempt.log": "470c4241eddf0f6151e29138d9316d6aaa4db2e98537dcbebb1570b94d49933c",
+    "supplement_review.json": "01d05a46c374c2928976ab2dcd8cc001523ca35bf3d1e7b492f240bbdf26ac04",
+    "verify_bindings.py": "d978e22ec20c4190c0ca0e825003d07f847d1f0dc75b04d62422d4998c334123"
+  },
+  "candidate_raw_statuses": {
+    "SAT": 45497,
+    "UNSAT": 3828
+  },
+  "cases": 6,
+  "conditional_marginal_totals": {
+    "inline_free_off": 202,
+    "predecessor_cache_off": 133,
+    "predecessor_cache_on": 147
+  },
+  "direct_raw_statuses": {
+    "SAT": 31205,
+    "UNSAT": 155
+  },
+  "first_attempt_failures": [],
+  "frozen_plan_sha256": "ddb63abb57f4489c21d8116bc834ac22c2516cd0c960856be9b6eda247c7baf5",
+  "input_evidence_files": 20559,
+  "limitations": [
+    "No new solver/DSEC run: saved SAT/UNSAT/UNKNOWN receipts and existing graph-bound DSEC logs are authenticated, not independently re-proved with a solver or DRAT checker.",
+    "Product byte replay uses each arm own frozen product helper; full CO evaluations and all saved PI/RO witnesses use the separate raw decoder/evaluator.",
+    "Scope is all completed candidate proof chunks and selected-root Direct constants, saved pools, used divisors, and exact zero-fresh connected 1/2-AND grammar. Partial chunks are explicitly unqualified. Global original aliases and final aggregate arithmetic are reviewed separately.",
+    "128 arbitrary full PI/RO worlds per product are structural replay checks, not exhaustive equivalence."
+  ],
+  "new_DSEC_runs": 0,
+  "new_solver_queries": 0,
+  "selected_appended_max_absolute_lane": 385,
+  "status": "PASS",
+  "supplement_counts": {
+    "DSEC_embedded_command_bindings": 90,
+    "arm_frozen_runtime_sources": 294,
+    "arms": 18,
+    "complete_proof_summary_bindings": 895,
+    "top_frozen_sources": 43
+  },
+  "totals": {
+    "audit_products_rebuilt": 54,
+    "build_chunk_candidates": 25616,
+    "build_chunk_witnesses": 25616,
+    "build_chunks": 895,
+    "build_logical_receipts": 73416,
+    "build_raw_rows": 49325,
+    "direct_candidates": 15652,
+    "direct_logical_receipts": 46956,
+    "direct_raw_rows": 31360,
+    "direct_witnesses": 14977,
+    "mixed_prefix_fresh_builds": 228,
+    "partial_candidates": 6,
+    "partial_chunks": 4,
+    "partial_raw_completed_rows": 8,
+    "partial_witnesses": 6,
+    "positive_directs": 140,
+    "saved_DSEC_certificates_verified": 90,
+    "selected_appended_witnesses": 5,
+    "selected_builds": 298,
+    "selected_witnesses_replayed": 298,
+    "source_checkpoint_products_rebuilt": 36
+  },
+  "transform_runs": 0
+}

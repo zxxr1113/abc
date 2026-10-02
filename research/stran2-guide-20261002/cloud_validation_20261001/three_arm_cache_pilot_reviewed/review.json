@@ -1,0 +1,236 @@
+{
+  "all_leave_one_out_signs_preserved": true,
+  "all_three_complete_subset": {
+    "cases": 3,
+    "gains": [
+      10,
+      10,
+      10
+    ]
+  },
+  "cache_boundary": [
+    {
+      "case": "005_b03.aig",
+      "status": "COMPLETED_ALL_CREATED_VERIFIED_AND_CLOSED"
+    },
+    {
+      "case": "044_i2c.aig",
+      "status": "COMPLETED_ALL_CREATED_VERIFIED_AND_CLOSED"
+    },
+    {
+      "case": "041_des_area.aig",
+      "status": "COMPLETED_ALL_CREATED_VERIFIED_AND_CLOSED"
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "status": "TIMEOUT_NO_SUCCESS_FINAL_CACHE_REPORT_RETAINED_CHECKPOINT_VERIFIED"
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "status": "TIMEOUT_NO_SUCCESS_FINAL_CACHE_REPORT_RETAINED_CHECKPOINT_VERIFIED"
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "status": "TIMEOUT_NO_SUCCESS_FINAL_CACHE_REPORT_RETAINED_CHECKPOINT_VERIFIED"
+    }
+  ],
+  "case_rows": [
+    {
+      "cache_recovery": 0,
+      "cached_vs_inline": 0,
+      "case": "005_b03.aig",
+      "free_cached": 3,
+      "free_uncached": 3,
+      "inline": 3,
+      "loaded_and": 128
+    },
+    {
+      "cache_recovery": 0,
+      "cached_vs_inline": 0,
+      "case": "044_i2c.aig",
+      "free_cached": 7,
+      "free_uncached": 7,
+      "inline": 7,
+      "loaded_and": 2879
+    },
+    {
+      "cache_recovery": 0,
+      "cached_vs_inline": 0,
+      "case": "041_des_area.aig",
+      "free_cached": 0,
+      "free_uncached": 0,
+      "inline": 0,
+      "loaded_and": 10133
+    },
+    {
+      "cache_recovery": 1,
+      "cached_vs_inline": -36,
+      "case": "034_b20_opt.aig",
+      "free_cached": 39,
+      "free_uncached": 38,
+      "inline": 75,
+      "loaded_and": 13440
+    },
+    {
+      "cache_recovery": 8,
+      "cached_vs_inline": -7,
+      "case": "045_mem_ctrl.aig",
+      "free_cached": 34,
+      "free_uncached": 26,
+      "inline": 41,
+      "loaded_and": 34059
+    },
+    {
+      "cache_recovery": 5,
+      "cached_vs_inline": -12,
+      "case": "060_wb_dma.aig",
+      "free_cached": 64,
+      "free_uncached": 59,
+      "inline": 76,
+      "loaded_and": 9555
+    }
+  ],
+  "contrasts": {
+    "cache_vs_uncached": {
+      "and_delta": 14,
+      "equal_case_percentage_points": 0.013876291998775358
+    },
+    "cached_free_vs_inline": {
+      "and_delta": -55,
+      "equal_case_percentage_points": -0.06899973506896158
+    },
+    "uncached_free_vs_inline": {
+      "and_delta": -69,
+      "equal_case_percentage_points": -0.082876027067737
+    }
+  },
+  "coverage": {
+    "inline_free_off": {
+      "budget_exhausted": 1,
+      "complete_searches": 5,
+      "validated_retained": 6
+    },
+    "predecessor_cache_off": {
+      "budget_exhausted": 3,
+      "complete_searches": 3,
+      "validated_retained": 6
+    },
+    "predecessor_cache_on": {
+      "budget_exhausted": 3,
+      "complete_searches": 3,
+      "validated_retained": 6
+    }
+  },
+  "domains": {
+    "all_arm_source_models_replayed": 20807,
+    "appended_qualified_relations": 143,
+    "appended_worlds": 1949,
+    "every_appended_qualified_relation_rejected_by_initial256": true,
+    "feature_versions": 270,
+    "published_appended_witness_occurrences": 58,
+    "published_feature_witness_replays": 1717,
+    "published_on_time_checkpoints": 250
+  },
+  "limitations": [
+    "All comparisons use this one new current-runtime three-arm run; historical missing raw outputs were not spliced or recreated.",
+    "Saved solver/DSEC statuses are authenticated and SAT/model assignments independently replayed; reviewer performed no new solving or DRAT re-proof.",
+    "Only selected-root bounded Direct plus whole-original structural aliases were audited; native novelty and unrestricted Boolean Direct exhaustion are not established.",
+    "Three cache arms timed out; their valid on-time incumbents are retained without claiming completed search or successful final all-created cache closure.",
+    "Costs are separate measurements of their stated boundaries; audit work is outside each120s transform, and no precise cause of the area difference is assigned."
+  ],
+  "memory": {
+    "missing": [
+      {
+        "arm": "predecessor_cache_on",
+        "case": "034_b20_opt.aig",
+        "worker_bindings": 2
+      }
+    ],
+    "observed_arm_samples": 17,
+    "qualification": "Observed owned-process RSS sums, not exact physical peak; shared pages double-counted, short-lived processes can be missed; ambiguous cached b20 remains null."
+  },
+  "new_review_dsec_runs": 0,
+  "new_review_solver_queries": 0,
+  "new_review_transforms": 0,
+  "original_run_integrity": {
+    "bytes": 2619003172,
+    "files": 20559,
+    "status": "PASS",
+    "unchanged": true,
+    "wall_s": 4.298585868004011
+  },
+  "plan_sha256": "ddb63abb57f4489c21d8116bc834ac22c2516cd0c960856be9b6eda247c7baf5",
+  "producer_costs": {
+    "direct_driver_wall_s": 224.9743909389872,
+    "global_driver_wall_s": 21.408753641975636,
+    "new_audit_dsec_executions": 27,
+    "original_dsec_executions": 36,
+    "transform_wall_s": 1189.3520743500048
+  },
+  "proof": {
+    "candidate_cnfs": 895,
+    "candidate_witnesses": 25616,
+    "completed_unknown_results": 0,
+    "direct_cnfs": 18,
+    "direct_witnesses": 14977,
+    "independent_product_replays": 90,
+    "logical_receipt_references": 120372,
+    "partial_unqualified_witnesses": 6,
+    "raw_completed_query_rows": 80685,
+    "saved_dsec_graph_log_tool_command_bindings": 90,
+    "selected_appended_witnesses": 5,
+    "selected_max_absolute_lane": 385,
+    "selected_witnesses": 298
+  },
+  "source_reports": {
+    "cost_packet": {
+      "bytes": 114842,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-global-accounting-independent-review-v1/owner_packet_check.json",
+      "sha256": "0613a9428b1a6185d35a797340b57c059a91ac273083d53d02fe1edd9898fc0f"
+    },
+    "global_accounting": {
+      "bytes": 942687,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-global-accounting-independent-review-v1/review.json",
+      "sha256": "5d256ac581da4c0a1eb07c006acf9815fba6abb2811c7ee12295f193d66afdf4"
+    },
+    "plan": {
+      "bytes": 2641,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/environment-recovery-independent-review-v1/three_arm_plan_review.json",
+      "sha256": "a729b0e535b1733d1850ad64e55692650e2ee9c6886ef249fe3286b707b7a59f"
+    },
+    "proof": {
+      "bytes": 3512,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-proof-products-independent-review-v1/final_review.json",
+      "sha256": "7829270e8d6b5b3e4e9833cdd2c9ebe57413ee3694916454e4f078cd09b455fa"
+    },
+    "recovery": {
+      "bytes": 965,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/environment-recovery-independent-review-v1/solver_recovery_review.json",
+      "sha256": "6c6d606bac3c28cc770363088df8b6000b59fe7fa86560482a13ebb2a372f7ee"
+    },
+    "terminal": {
+      "bytes": 4088,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-worlds-independent-review-v1/terminal_review.json",
+      "sha256": "1d9e40da3e6fce2ea32a7cb76ca2bfe8137977c821c361d10c8135b23a6821b9"
+    },
+    "world": {
+      "bytes": 20685,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-worlds-independent-review-v1/review.json",
+      "sha256": "e0e926726c5ff49999b5da307692a64dd193dd8bd13ea83a5860cea38a1bc6dc"
+    }
+  },
+  "status": "PASS_ALL18_FRESH_ARM_PROOF_PRODUCT_PROVENANCE_ACCOUNTING",
+  "totals": {
+    "inline": 202,
+    "predecessor_free_cached": 147,
+    "predecessor_free_uncached": 133
+  },
+  "whole_original_accounting": {
+    "existing_direct_outputs": 70,
+    "independent_direct_and_global_product_replays": 126,
+    "later_output_or_intermediate_aliases": 0,
+    "root_dependent_aliases": 0,
+    "selected_recipe_classifications": 596,
+    "structurally_new_outputs": 526
+  }
+}

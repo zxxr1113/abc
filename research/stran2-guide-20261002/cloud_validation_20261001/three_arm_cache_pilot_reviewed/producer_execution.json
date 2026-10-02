@@ -1,0 +1,14 @@
+{
+  "capacity_stop": null,
+  "disk_start": {
+    "free_bytes": 27234824192,
+    "required_bytes": 17179869184
+  },
+  "finished_unix": 1790914644.1904263,
+  "jobs": 18,
+  "plan_sha256": "ddb63abb57f4489c21d8116bc834ac22c2516cd0c960856be9b6eda247c7baf5",
+  "source_and_tools_unchanged": true,
+  "started_unix": 1790913091.9012752,
+  "status": "FINISHED",
+  "validated": 18
+}

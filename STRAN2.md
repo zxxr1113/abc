@@ -332,6 +332,30 @@ inline 可选后端新增更窄的模型验证 fast path：只有逐字节绑定
 
 两轮均值 default→cache：i2c **25.090→9.075s（−63.83%）**，des **9.131→4.201s（−53.99%）**，两个先后顺序方向一致；b03观测0.265→0.290s，但+25.7ms处在该Python `Popen.wait(timeout)` 最大50ms轮询sleep的观测粒度内，不算可靠的小例变慢结论。这里只是完整保存工作记录的工程加速，非纯persist计时、OS冷盘测量、端到端优化器加速或面积提升。证据在 `cloud_validation_20261001/free_manifest_cache_reviewed/`。前述202→133AND负pilot仍原样保留；任何后续正式比较须同时重跑原配置、前态free无cache和前态free有cache，三臂同一冻结runtime/预算并重新归因，不能拼接历史baseline。
 
+### 恢复后的全新三臂实测：缓存追回14 AND，仍不足以替代原配置
+
+在缺失shared历史原件后，保留的12份输入和runtime逐字节核验，inline solver由保留C/header/libabc.a重新构建到scratch新路径，输出SHA与旧cf05cee6完全相同；28项模型协议和5项严格跨source CLI测试通过，未将新路径伪装成历史原件。新计划SHA `ddb63abb57f4489c21d8116bc834ac22c2516cd0c960856be9b6eda247c7baf5` 将6例×3臂全部重新运行：原inline image/free-off、前态free/cache-off、前态free/cache-on。三臂同一b04f4ca runtime、full compiled validator（cone关）、C1000/120s、单worker，循环三种次序及其反序，使各臂每个位置各两次、pair先后平衡。各臂均fresh Direct及完整原图alias审计，不拼接历史baseline。
+
+2026-10-02 03:51:31.901–04:17:24.190 UTC全部18臂一次完成，保留产品18/18独立验证，无失败或容量停止。原配置5/6搜索完成，两个free臂各3/6；其余7个是经验证的预算内checkpoint，不等于完成搜索。正确性及归因主表为：
+
+| 案例 | inline原配置 | free无cache | free有cache | cache追回 | cache后相对原配置 |
+|---|---:|---:|---:|---:|---:|
+| b03 | 3 | 3 | 3 | 0 | 0 |
+| i2c | 7 | 7 | 7 | 0 | 0 |
+| des_area | 0 | 0 | 0 | 0 | 0 |
+| b20_opt | 75 | 38 | 39 | +1 | −36 |
+| mem_ctrl | 41 | 26 | 34 | +8 | −7 |
+| wb_dma | 76 | 59 | 64 | +5 | −12 |
+| 合计真正Build AND | **202** | **133** | **147** | **+14** | **−55** |
+
+cache相对free无cache等例增量 **+0.013876292 pp**，相对inline原配置仍 **−0.068999735 pp**；原free无cache为−0.082876027 pp。三个臂共同完成的3例，其Build收益均持平，所有leave-one-out比较的符号保持。不能从局部新配方或保存记录的工程加速推导全流程面积优势。实际i2c变换进程wall21.63/58.10/37.48s，cache明显降低启用free后的成本，却仍贵于inline且面积同为7AND；这只是本次具体边界观察，不分配面积差的精确原因。
+
+外层wrapper总wall1552.29s，18个transform进程wall求和1189.352s；额外Direct driver224.974s、global driver21.409s，其他完整性/控制开销不混算。producer执行36个原transform DSEC及27个fresh audit DSEC，完全相同且完整绑定的同run图有显式复用；reviewer没有新solver/DSEC/transform。前态样本/新增配方、cache验证、证明及归因均独立核验：270个free版本、1949个追加world、全部三臂20807个原模型回放、250个预算内checkpoint认证，两个free臂的143条追加lane的qualified记录确实在初始256lane无差异（非跨臂去重身份数）。80685条原始query记录、895份candidate CNF和18份Direct CNF、298个selected见证及90个产品逐字节重建通过；全原图596次分类无later/intermediate alias导致Build降级。原20559文件/2.619GB在review前后完整hash一致。
+
+RSS采样器改用owned PPid/start-token关系，已验证nested worker/child及无关进程排除。17臂有观测RSS，cached b20因出现两个候选worker身份保留null，不能猜测peak。指标是owned进程RSS之和，含共享页重复计数、可能漏短命峰，非精确物理内存。三个完成cache臂有final all-created/closed-descriptor验证；三个timeout cache臂只有已通过完整外部核验的on-time checkpoint，不声称完成最终全量cache闭合。独立主复核 `review.json` SHA `1780bf61956c35373e551aac1d6f71a476dc7b84a029b42756adc492b6f4598b`，紧凑表/计划/复核在 `cloud_validation_20261001/three_arm_cache_pilot_reviewed/`，新原件在scratch的 `stran2-free-cache-three-arm-pilot-prepared-v1/`。
+
+**结论：结束本轮全局前态free/cache调优支线，不扩展55例、不替换推荐v3配置。**缓存是正确且局部有用的工程能力，但当前前态free搜索在固定预算下不占优。后续仅做独立、小规模的候选补充诊断：把无采样差异视为“未知”而非已证组合等价，用候选局部free-SAT模型分类，保持正常候选池与证明边界，不再默认增长全局free域；是否有额外收益仍待实验，不能提前宣称。
+
 ### 先行工作校准与待证明贡献
 
 本轮检索后的结论是：reset/image 证明原理及反例反馈均有明确先行工作，不能作为新理论宣称。

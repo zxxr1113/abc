@@ -1,0 +1,7 @@
+case,loaded_AND,inline,free_uncached,free_cached,cache_recovery,cached_vs_inline
+005_b03.aig,128,3,3,3,0,0
+044_i2c.aig,2879,7,7,7,0,0
+041_des_area.aig,10133,0,0,0,0,0
+034_b20_opt.aig,13440,75,38,39,1,-36
+045_mem_ctrl.aig,34059,41,26,34,8,-7
+060_wb_dma.aig,9555,76,59,64,5,-12

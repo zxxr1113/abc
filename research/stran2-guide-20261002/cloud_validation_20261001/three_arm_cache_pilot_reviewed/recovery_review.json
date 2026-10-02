@@ -1,0 +1,25 @@
+{
+  "binary_byte_identical_to_historical": true,
+  "binary_sha256": "cf05cee69987954083b8522658885a342d94b739e70b7fd9bf61f0327f6afdec",
+  "bound_files": 56,
+  "historical_missing_files_restored": false,
+  "new_location": "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-solver-recovery-v1/solver",
+  "new_producer_fixture": {
+    "auditor_exact_graph_dsec_reuses": 3,
+    "build_marginal": 1,
+    "direct_raw_queries": 32,
+    "enabled_selected_candidates": 1,
+    "formal_pilot": false,
+    "fresh_transform_dsec": 2
+  },
+  "producer_binding_tests": 5,
+  "producer_protocol_tests": 28,
+  "reviewer_execution": {
+    "dsec_calls": 0,
+    "solver_calls": 0,
+    "tests": 0
+  },
+  "scope": "Read-only source/tool/log/product authentication of a new recovery fixture; historical reports and missing run identities were not rewritten.",
+  "source_commit": "b04f4ca3aab332939adccb84b51c3e5babccb76c",
+  "status": "PASS_REBUILT_BINARY_AND_NEW_SMOKE_BINDINGS"
+}

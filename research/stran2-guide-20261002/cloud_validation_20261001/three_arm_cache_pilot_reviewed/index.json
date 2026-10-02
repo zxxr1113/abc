@@ -1,0 +1,74 @@
+{
+  "directory": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-final-independent-review-v1",
+  "files": {
+    "cost_packet_summary.json": {
+      "bytes": 2834,
+      "sha256": "f6dca0e0288d250646256b26fb9dea2f101ccf7023ae895231c5a3b537982fb6"
+    },
+    "global_accounting_summary.json": {
+      "bytes": 29274,
+      "sha256": "f914f6b5e5bd8aa7cb74391302d7b2a10dc3f77d86a6d899e332cdcf1b42f406"
+    },
+    "plan_review.json": {
+      "bytes": 2641,
+      "sha256": "a729b0e535b1733d1850ad64e55692650e2ee9c6886ef249fe3286b707b7a59f"
+    },
+    "proof_review.json": {
+      "bytes": 3512,
+      "sha256": "7829270e8d6b5b3e4e9833cdd2c9ebe57413ee3694916454e4f078cd09b455fa"
+    },
+    "recovery_review.json": {
+      "bytes": 965,
+      "sha256": "6c6d606bac3c28cc770363088df8b6000b59fe7fa86560482a13ebb2a372f7ee"
+    },
+    "review.json": {
+      "bytes": 7819,
+      "sha256": "1780bf61956c35373e551aac1d6f71a476dc7b84a029b42756adc492b6f4598b"
+    },
+    "terminal_review.json": {
+      "bytes": 4088,
+      "sha256": "1d9e40da3e6fce2ea32a7cb76ca2bfe8137977c821c361d10c8135b23a6821b9"
+    },
+    "world_review.json": {
+      "bytes": 20685,
+      "sha256": "e0e926726c5ff49999b5da307692a64dd193dd8bd13ea83a5860cea38a1bc6dc"
+    }
+  },
+  "source_reports": {
+    "cost_packet": {
+      "bytes": 114842,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-global-accounting-independent-review-v1/owner_packet_check.json",
+      "sha256": "0613a9428b1a6185d35a797340b57c059a91ac273083d53d02fe1edd9898fc0f"
+    },
+    "global_accounting": {
+      "bytes": 942687,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-global-accounting-independent-review-v1/review.json",
+      "sha256": "5d256ac581da4c0a1eb07c006acf9815fba6abb2811c7ee12295f193d66afdf4"
+    },
+    "plan": {
+      "bytes": 2641,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/environment-recovery-independent-review-v1/three_arm_plan_review.json",
+      "sha256": "a729b0e535b1733d1850ad64e55692650e2ee9c6886ef249fe3286b707b7a59f"
+    },
+    "proof": {
+      "bytes": 3512,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-proof-products-independent-review-v1/final_review.json",
+      "sha256": "7829270e8d6b5b3e4e9833cdd2c9ebe57413ee3694916454e4f078cd09b455fa"
+    },
+    "recovery": {
+      "bytes": 965,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/environment-recovery-independent-review-v1/solver_recovery_review.json",
+      "sha256": "6c6d606bac3c28cc770363088df8b6000b59fe7fa86560482a13ebb2a372f7ee"
+    },
+    "terminal": {
+      "bytes": 4088,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-worlds-independent-review-v1/terminal_review.json",
+      "sha256": "1d9e40da3e6fce2ea32a7cb76ca2bfe8137977c821c361d10c8135b23a6821b9"
+    },
+    "world": {
+      "bytes": 20685,
+      "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-worlds-independent-review-v1/review.json",
+      "sha256": "e0e926726c5ff49999b5da307692a64dd193dd8bd13ea83a5860cea38a1bc6dc"
+    }
+  }
+}

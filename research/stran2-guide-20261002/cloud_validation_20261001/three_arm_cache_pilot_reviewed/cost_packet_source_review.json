@@ -1,0 +1,1331 @@
+{
+  "accounting_report_sha256": "5d256ac581da4c0a1eb07c006acf9815fba6abb2811c7ee12295f193d66afdf4",
+  "all_dsec_graph_inputs_and_outputs_inside_current_run": true,
+  "before_after_bindings_unchanged": true,
+  "distinct_saved_dsec_executions": 63,
+  "dsec_bindings": [
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/baseline_dsec.log",
+      "log_sha256": "7d73a1591c850675cc39cb2eee11fab518ee967de2854e0accdfce7755b92614",
+      "output_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/dsec.log",
+      "log_sha256": "0cd2eb202d4ea18ca72590ca29f6117b0c0222f74d3a57766f37b11c5bfd8e03",
+      "output_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "b7e72cd1f0e1d9815f2672bf46fa4b86c0440137c6ddbf7889a5a4c6c348c797",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/mixed/dsec.log",
+      "log_sha256": "e47e472275ccd47df57485b7205733cc4889bf8199eb25c47144f185debcd6fc",
+      "output_sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "b7e72cd1f0e1d9815f2672bf46fa4b86c0440137c6ddbf7889a5a4c6c348c797",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/mixed/dsec.log",
+      "log_sha256": "e47e472275ccd47df57485b7205733cc4889bf8199eb25c47144f185debcd6fc",
+      "output_sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "b7e72cd1f0e1d9815f2672bf46fa4b86c0440137c6ddbf7889a5a4c6c348c797",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/dsec.log",
+      "log_sha256": "0cd2eb202d4ea18ca72590ca29f6117b0c0222f74d3a57766f37b11c5bfd8e03",
+      "output_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/baseline_dsec.log",
+      "log_sha256": "7d73a1591c850675cc39cb2eee11fab518ee967de2854e0accdfce7755b92614",
+      "output_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/baseline_dsec.log",
+      "log_sha256": "b99386dd64fe464515fbfa7360bc8121c79a28390a79effff323eb909e47b6cb",
+      "output_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/dsec.log",
+      "log_sha256": "7ef8ead126444117b7ba166f0af4ec8c30b967ba399f0432d3581b02574464ae",
+      "output_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "9808f6bf96b904eef8bf84680aacc17aa2ec46fd1e5d56de4d950126a43fbdc7",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/mixed/dsec.log",
+      "log_sha256": "6616a561bac3c04de424424bf0cf952f945517cea6f462016d267556e5dfcc35",
+      "output_sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "9808f6bf96b904eef8bf84680aacc17aa2ec46fd1e5d56de4d950126a43fbdc7",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/mixed/dsec.log",
+      "log_sha256": "6616a561bac3c04de424424bf0cf952f945517cea6f462016d267556e5dfcc35",
+      "output_sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "9808f6bf96b904eef8bf84680aacc17aa2ec46fd1e5d56de4d950126a43fbdc7",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/dsec.log",
+      "log_sha256": "7ef8ead126444117b7ba166f0af4ec8c30b967ba399f0432d3581b02574464ae",
+      "output_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/baseline_dsec.log",
+      "log_sha256": "b99386dd64fe464515fbfa7360bc8121c79a28390a79effff323eb909e47b6cb",
+      "output_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/baseline_dsec.log",
+      "log_sha256": "bbc0f2d03829180dc282b887bbdc41a29b318a163a579c82d779da971b7a0f96",
+      "output_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/dsec.log",
+      "log_sha256": "4d972bac3a2c0ab477b442792ee82abb5a78f8b144a88e8e84c7b90e6b9b006d",
+      "output_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "eae8f0ef06cc96b81c1a555127f8bf25c81b3c83aec825affa2d61fd01782ac6",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/mixed/dsec.log",
+      "log_sha256": "3b8e9c62e4357b4c56dd7247a9daed3127dbb514e38af9ec43336b4562a481ca",
+      "output_sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "eae8f0ef06cc96b81c1a555127f8bf25c81b3c83aec825affa2d61fd01782ac6",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/mixed/dsec.log",
+      "log_sha256": "3b8e9c62e4357b4c56dd7247a9daed3127dbb514e38af9ec43336b4562a481ca",
+      "output_sha256": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/direct_only/dsec.log",
+      "log_sha256": "eae8f0ef06cc96b81c1a555127f8bf25c81b3c83aec825affa2d61fd01782ac6",
+      "output_sha256": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/dsec.log",
+      "log_sha256": "4d972bac3a2c0ab477b442792ee82abb5a78f8b144a88e8e84c7b90e6b9b006d",
+      "output_sha256": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/baseline_dsec.log",
+      "log_sha256": "bbc0f2d03829180dc282b887bbdc41a29b318a163a579c82d779da971b7a0f96",
+      "output_sha256": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/baseline_dsec.log",
+      "log_sha256": "0bf451ec21b0b29f14f1463f3e9aadd1761177b40706e9d60ad54794ad87d0cd",
+      "output_sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/dsec.log",
+      "log_sha256": "a8b65e487e703d551bd4d2a0b8c0a3e25aa090d78a3c9f17c8e538152f7b0cda",
+      "output_sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "b3157fc15f273204ea3209970825aa5cc1b73b3be4299b73e7141d59e47b1ac2",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/mixed/dsec.log",
+      "log_sha256": "53e613e48b6f13f4ecc455fc0a7a5d1aba8d230b47822219f9c38b002c95dd3d",
+      "output_sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "b3157fc15f273204ea3209970825aa5cc1b73b3be4299b73e7141d59e47b1ac2",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/mixed/dsec.log",
+      "log_sha256": "53e613e48b6f13f4ecc455fc0a7a5d1aba8d230b47822219f9c38b002c95dd3d",
+      "output_sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "b3157fc15f273204ea3209970825aa5cc1b73b3be4299b73e7141d59e47b1ac2",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/dsec.log",
+      "log_sha256": "a8b65e487e703d551bd4d2a0b8c0a3e25aa090d78a3c9f17c8e538152f7b0cda",
+      "output_sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/baseline_dsec.log",
+      "log_sha256": "0bf451ec21b0b29f14f1463f3e9aadd1761177b40706e9d60ad54794ad87d0cd",
+      "output_sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/baseline_dsec.log",
+      "log_sha256": "0f1ea883f9f7ab1cb12128203aa1b6fb632f23fae722b4480ce8cdf0aa9f9f62",
+      "output_sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/dsec.log",
+      "log_sha256": "915f138baf59d22c576a7df571e82fd78c6a2c06f302858bac8dc58f55fba328",
+      "output_sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "5714a36495fb5f6dc5e621334e0e920ac0f3d459012b6b092dfd45fe34f36d1e",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/mixed/dsec.log",
+      "log_sha256": "2443cf52feb0d82b5e1a9e7575a827ef448811acf1436d65c0d557f4be9df2a7",
+      "output_sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "5714a36495fb5f6dc5e621334e0e920ac0f3d459012b6b092dfd45fe34f36d1e",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/mixed/dsec.log",
+      "log_sha256": "2443cf52feb0d82b5e1a9e7575a827ef448811acf1436d65c0d557f4be9df2a7",
+      "output_sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "5714a36495fb5f6dc5e621334e0e920ac0f3d459012b6b092dfd45fe34f36d1e",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/dsec.log",
+      "log_sha256": "915f138baf59d22c576a7df571e82fd78c6a2c06f302858bac8dc58f55fba328",
+      "output_sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/baseline_dsec.log",
+      "log_sha256": "0f1ea883f9f7ab1cb12128203aa1b6fb632f23fae722b4480ce8cdf0aa9f9f62",
+      "output_sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/baseline_dsec.log",
+      "log_sha256": "da8895041afba3b362b0fb5614cde3c0635b25fa7d94affccb78e5fd2a64bfb1",
+      "output_sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/dsec.log",
+      "log_sha256": "5e0fe6c366eb3a95bf81d8c99ae308383fd50d6f994845f3837880634c09b273",
+      "output_sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "66a1ebbec38ec89d1c3c9b00d1243ab0d39126021c634b9e0054f4aebea9d81d",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/mixed/dsec.log",
+      "log_sha256": "239ebc1b3c88a34671728392e6535e69dfb3770b4f3620bf3c4e4e80ae625a9d",
+      "output_sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "66a1ebbec38ec89d1c3c9b00d1243ab0d39126021c634b9e0054f4aebea9d81d",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/mixed/dsec.log",
+      "log_sha256": "239ebc1b3c88a34671728392e6535e69dfb3770b4f3620bf3c4e4e80ae625a9d",
+      "output_sha256": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/direct_only/dsec.log",
+      "log_sha256": "66a1ebbec38ec89d1c3c9b00d1243ab0d39126021c634b9e0054f4aebea9d81d",
+      "output_sha256": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/dsec.log",
+      "log_sha256": "5e0fe6c366eb3a95bf81d8c99ae308383fd50d6f994845f3837880634c09b273",
+      "output_sha256": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/baseline_dsec.log",
+      "log_sha256": "da8895041afba3b362b0fb5614cde3c0635b25fa7d94affccb78e5fd2a64bfb1",
+      "output_sha256": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/baseline_dsec.log",
+      "log_sha256": "9f29e654964f129457ee7232d3f4e262cd343cc828531873e420aedfe5ed5ae4",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log",
+      "log_sha256": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/baseline_dsec.log",
+      "log_sha256": "fe1408b0ea42bfef3005778cd264a4acb85e7935c54f1b595ec05804aeb28310",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log",
+      "log_sha256": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/baseline_dsec.log",
+      "log_sha256": "b2237d6f24a0cc0db501c64f7ffe5632da9ef1db96c5ecd95675e78a5d038626",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log",
+      "log_sha256": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+      "output_sha256": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "257b98b475b5933c83100d32594d02b348fab19d927d067b5f24f977a86dfd36",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/dsec.log",
+      "log_sha256": "b690597a72f7df6a88ad5c5d8686e394bae635d8fbea2fb43322c1d34080199c",
+      "output_sha256": "8dd80c60b44d91921ffcdccd2293983087fc641c50b761a3c86f18f9c6f7e62b",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "257b98b475b5933c83100d32594d02b348fab19d927d067b5f24f977a86dfd36",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/dsec.log",
+      "log_sha256": "b690597a72f7df6a88ad5c5d8686e394bae635d8fbea2fb43322c1d34080199c",
+      "output_sha256": "8dd80c60b44d91921ffcdccd2293983087fc641c50b761a3c86f18f9c6f7e62b",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "257b98b475b5933c83100d32594d02b348fab19d927d067b5f24f977a86dfd36",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/dsec.log",
+      "log_sha256": "b690597a72f7df6a88ad5c5d8686e394bae635d8fbea2fb43322c1d34080199c",
+      "output_sha256": "8dd80c60b44d91921ffcdccd2293983087fc641c50b761a3c86f18f9c6f7e62b",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "257b98b475b5933c83100d32594d02b348fab19d927d067b5f24f977a86dfd36",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/dsec.log",
+      "log_sha256": "b690597a72f7df6a88ad5c5d8686e394bae635d8fbea2fb43322c1d34080199c",
+      "output_sha256": "8dd80c60b44d91921ffcdccd2293983087fc641c50b761a3c86f18f9c6f7e62b",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "257b98b475b5933c83100d32594d02b348fab19d927d067b5f24f977a86dfd36",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "e43960cfd3ed1faf7430b066b796c5911fa40cd63b30c74a015bb562dea11e6f",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/dsec.log",
+      "log_sha256": "f7a0d38d888b28d38d08c8b8f3c3e7e862b28d5b8ebfbf3e12946612f01dac1e",
+      "output_sha256": "9df10bc3308721d047f74a85b441296bc9b5a77d5dfbaf067b4bc521266681de",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "e43960cfd3ed1faf7430b066b796c5911fa40cd63b30c74a015bb562dea11e6f",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/dsec.log",
+      "log_sha256": "f7a0d38d888b28d38d08c8b8f3c3e7e862b28d5b8ebfbf3e12946612f01dac1e",
+      "output_sha256": "9df10bc3308721d047f74a85b441296bc9b5a77d5dfbaf067b4bc521266681de",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "e43960cfd3ed1faf7430b066b796c5911fa40cd63b30c74a015bb562dea11e6f",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/dsec.log",
+      "log_sha256": "f7a0d38d888b28d38d08c8b8f3c3e7e862b28d5b8ebfbf3e12946612f01dac1e",
+      "output_sha256": "9df10bc3308721d047f74a85b441296bc9b5a77d5dfbaf067b4bc521266681de",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "e43960cfd3ed1faf7430b066b796c5911fa40cd63b30c74a015bb562dea11e6f",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/dsec.log",
+      "log_sha256": "f7a0d38d888b28d38d08c8b8f3c3e7e862b28d5b8ebfbf3e12946612f01dac1e",
+      "output_sha256": "9df10bc3308721d047f74a85b441296bc9b5a77d5dfbaf067b4bc521266681de",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "e43960cfd3ed1faf7430b066b796c5911fa40cd63b30c74a015bb562dea11e6f",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "c1dcd9d56e2992ee2ccc03a4fb4587198fe9d30361160eb93c4c05c8fa5fcc39",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/dsec.log",
+      "log_sha256": "b0a5924c1238c166b5a19cc0eaac33484e96a092fcb15153209b7d573402e63d",
+      "output_sha256": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "c1dcd9d56e2992ee2ccc03a4fb4587198fe9d30361160eb93c4c05c8fa5fcc39",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/dsec.log",
+      "log_sha256": "b0a5924c1238c166b5a19cc0eaac33484e96a092fcb15153209b7d573402e63d",
+      "output_sha256": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "c1dcd9d56e2992ee2ccc03a4fb4587198fe9d30361160eb93c4c05c8fa5fcc39",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/dsec.log",
+      "log_sha256": "b0a5924c1238c166b5a19cc0eaac33484e96a092fcb15153209b7d573402e63d",
+      "output_sha256": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "c1dcd9d56e2992ee2ccc03a4fb4587198fe9d30361160eb93c4c05c8fa5fcc39",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/dsec.log",
+      "log_sha256": "b0a5924c1238c166b5a19cc0eaac33484e96a092fcb15153209b7d573402e63d",
+      "output_sha256": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/baseline_dsec.log",
+      "log_sha256": "c1dcd9d56e2992ee2ccc03a4fb4587198fe9d30361160eb93c4c05c8fa5fcc39",
+      "output_sha256": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/baseline_dsec.log",
+      "log_sha256": "7b817f9af239bc2670266e2eecd1e4378392722f544f8565be1b7f77dfafa092",
+      "output_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/dsec.log",
+      "log_sha256": "82c5a346c1db63b0ce79b293eb5a78abc085351972ada05607d6d5cd0484216a",
+      "output_sha256": "2b8f4ef28259f222bb41b2071aae8baaa7799307761cba04a94312847c948822",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/direct_only/dsec.log",
+      "log_sha256": "527bc2ab78aeb38d0ac44cd62b596fe7ab298cecade0e078527148b510259d5a",
+      "output_sha256": "fe182c8db682ac5ae94b07245c2de6a3539dd577d22a34b8934be3dc8e3bf412",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/mixed/dsec.log",
+      "log_sha256": "ad6b05836d678ff1207cc918fd7200b79de465cd8c06ba650d930500154dc7a8",
+      "output_sha256": "04ef66dc0e326a01cabd527f0e7cd73b270ea46db7c831145abb4cb88a1852b3",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log",
+      "log_sha256": "2319a507cc660dd51c0883420e51e50686fde3a5dd02e9d3b21d3d57349986f8",
+      "output_sha256": "1ce74f7a8f1c40c14e1dc81bdc7585ffc60fd3a0e3a181e6cf60473737a2cfe5",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/mixed/dsec.log",
+      "log_sha256": "ad6b05836d678ff1207cc918fd7200b79de465cd8c06ba650d930500154dc7a8",
+      "output_sha256": "04ef66dc0e326a01cabd527f0e7cd73b270ea46db7c831145abb4cb88a1852b3",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log",
+      "log_sha256": "2319a507cc660dd51c0883420e51e50686fde3a5dd02e9d3b21d3d57349986f8",
+      "output_sha256": "1ce74f7a8f1c40c14e1dc81bdc7585ffc60fd3a0e3a181e6cf60473737a2cfe5",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/dsec.log",
+      "log_sha256": "82c5a346c1db63b0ce79b293eb5a78abc085351972ada05607d6d5cd0484216a",
+      "output_sha256": "2b8f4ef28259f222bb41b2071aae8baaa7799307761cba04a94312847c948822",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/baseline_dsec.log",
+      "log_sha256": "7b817f9af239bc2670266e2eecd1e4378392722f544f8565be1b7f77dfafa092",
+      "output_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/baseline_dsec.log",
+      "log_sha256": "c1d396b858d6839b51a96f238455b8f60b44cffefaca086665c85892499002ad",
+      "output_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/dsec.log",
+      "log_sha256": "f999eb7c702b8d7809d4abcc122a16076426a33d80d58b4d84f8bfb3d9dfdef6",
+      "output_sha256": "ff0fc7b758f55c8b0e82bd104d72f74ed8f379efe3c66ef33515525a27a254de",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/direct_only/dsec.log",
+      "log_sha256": "60180cd2396d97d0c29e2defe29bb035aecf4742e422906996b9c4371f1277a7",
+      "output_sha256": "fe182c8db682ac5ae94b07245c2de6a3539dd577d22a34b8934be3dc8e3bf412",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/mixed/dsec.log",
+      "log_sha256": "9bac4646b2f85e7458e7e5e6481afaba4c6c5ee1f1b3404a47c3d618739f16e3",
+      "output_sha256": "29df14788de7b702a539c13fee91ba094d505d1d46370a866e886c25b38691b1",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log",
+      "log_sha256": "c0a8f43c6a809326386abf4c58bcf87d7ee4c7d503e7950da43405c8dbf20d2f",
+      "output_sha256": "1ce74f7a8f1c40c14e1dc81bdc7585ffc60fd3a0e3a181e6cf60473737a2cfe5",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/mixed/dsec.log",
+      "log_sha256": "9bac4646b2f85e7458e7e5e6481afaba4c6c5ee1f1b3404a47c3d618739f16e3",
+      "output_sha256": "29df14788de7b702a539c13fee91ba094d505d1d46370a866e886c25b38691b1",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log",
+      "log_sha256": "c0a8f43c6a809326386abf4c58bcf87d7ee4c7d503e7950da43405c8dbf20d2f",
+      "output_sha256": "1ce74f7a8f1c40c14e1dc81bdc7585ffc60fd3a0e3a181e6cf60473737a2cfe5",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/dsec.log",
+      "log_sha256": "f999eb7c702b8d7809d4abcc122a16076426a33d80d58b4d84f8bfb3d9dfdef6",
+      "output_sha256": "ff0fc7b758f55c8b0e82bd104d72f74ed8f379efe3c66ef33515525a27a254de",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/baseline_dsec.log",
+      "log_sha256": "c1d396b858d6839b51a96f238455b8f60b44cffefaca086665c85892499002ad",
+      "output_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/baseline_dsec.log",
+      "log_sha256": "21543b46edfadebb4b527572dbc759e14bc1616a0666bc51bb6c0a7a2a7b1dd3",
+      "output_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/dsec.log",
+      "log_sha256": "f20418c6f89f17405e34d78779f5a5f356804b2042199a542c1bc428715ba599",
+      "output_sha256": "6230af3fbe2c47963f0993888f4e1ba4a41ba168d8c2343cdfb9dc034d1022f5",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/direct_only/dsec.log",
+      "log_sha256": "785c5182c0d1a11dc402a6e1e4005ce29f7527ca5286a06c06d25bb26ddd51eb",
+      "output_sha256": "30c1a3c9bc5e67c92db5205d354e3b8e493c59ee4f9d8ce82a99621c15d3e0fe",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/mixed/dsec.log",
+      "log_sha256": "14bb9fe8f06a14df5e18e52a5cb52b9e623c8f522a55e38c64839cd847b32580",
+      "output_sha256": "c4de9c0b96678a5976e7734b9290a96623a5f07d0cb0da0de482165c9e9afa28",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log",
+      "log_sha256": "195e0fee19342080a9775f70e2e4e92586b1ab426dc0c92601e994d1de80f3b9",
+      "output_sha256": "af9bb99e724c605a91e7927c23ea3dd18d0255ec2adb86246592182083852623",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/mixed/dsec.log",
+      "log_sha256": "14bb9fe8f06a14df5e18e52a5cb52b9e623c8f522a55e38c64839cd847b32580",
+      "output_sha256": "c4de9c0b96678a5976e7734b9290a96623a5f07d0cb0da0de482165c9e9afa28",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log",
+      "log_sha256": "195e0fee19342080a9775f70e2e4e92586b1ab426dc0c92601e994d1de80f3b9",
+      "output_sha256": "af9bb99e724c605a91e7927c23ea3dd18d0255ec2adb86246592182083852623",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/dsec.log",
+      "log_sha256": "f20418c6f89f17405e34d78779f5a5f356804b2042199a542c1bc428715ba599",
+      "output_sha256": "6230af3fbe2c47963f0993888f4e1ba4a41ba168d8c2343cdfb9dc034d1022f5",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/baseline_dsec.log",
+      "log_sha256": "21543b46edfadebb4b527572dbc759e14bc1616a0666bc51bb6c0a7a2a7b1dd3",
+      "output_sha256": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/baseline_dsec.log",
+      "log_sha256": "479b72bd099d39cd77e36b14cb8adf16026141d84b5d356b9c916fb4711ba813",
+      "output_sha256": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/dsec.log",
+      "log_sha256": "478b3c5ce360ad3d0436e0eb6c3522c387a5b1aa4df96e6c9b0c73c64a834c4b",
+      "output_sha256": "f9e97a2b4b3b0a7dfcb2a6f079ed6a632bb65f4cd2fa9e4e0fadb9428d434403",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "64ed6e7533af449c6642416104dc91b5ce5b8136aeb273d818a62030fa2b77ed",
+      "output_sha256": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/mixed/dsec.log",
+      "log_sha256": "fd3398f9b115fdc98050263222eed2d04cae95098d8c30b290b7d86559290bd9",
+      "output_sha256": "fd37a80bef8336e5bcd60e52f74560af352e96246c0774c4a99f31a5ae178e5c",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "64ed6e7533af449c6642416104dc91b5ce5b8136aeb273d818a62030fa2b77ed",
+      "output_sha256": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/mixed/dsec.log",
+      "log_sha256": "fd3398f9b115fdc98050263222eed2d04cae95098d8c30b290b7d86559290bd9",
+      "output_sha256": "fd37a80bef8336e5bcd60e52f74560af352e96246c0774c4a99f31a5ae178e5c",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "64ed6e7533af449c6642416104dc91b5ce5b8136aeb273d818a62030fa2b77ed",
+      "output_sha256": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/dsec.log",
+      "log_sha256": "478b3c5ce360ad3d0436e0eb6c3522c387a5b1aa4df96e6c9b0c73c64a834c4b",
+      "output_sha256": "f9e97a2b4b3b0a7dfcb2a6f079ed6a632bb65f4cd2fa9e4e0fadb9428d434403",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/baseline_dsec.log",
+      "log_sha256": "479b72bd099d39cd77e36b14cb8adf16026141d84b5d356b9c916fb4711ba813",
+      "output_sha256": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/baseline_dsec.log",
+      "log_sha256": "2d2f70afef7e47a0cd8b84ecc7953c5029e0a90f26483dbc1a55137f789a7d6d",
+      "output_sha256": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/dsec.log",
+      "log_sha256": "835ecd2657c09878616cedf70aea46948c39b2fe813dc6433c26d6edb95dd109",
+      "output_sha256": "8452caa0ee78496f1d204a609d6412227779dca475c10a2afc00993e1bc19ed7",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "e6922f1b51a92d55d7fbb3d4d33fc745115d426197d4e0540cf3f80fdbfc223b",
+      "output_sha256": "de86102b2255860df4be2337ca4a9e59509d8e77922dda8be001f22b3b2933fd",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/mixed/dsec.log",
+      "log_sha256": "2e5da292bb6e8660df677162d1d28fdc81a2de3d774f4e2f9f205c5257ae7ede",
+      "output_sha256": "e09c6a1212659a7072be030cdf7fb20a5648eb22f0f4a4d62a102d4c0c8c7a40",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "e6922f1b51a92d55d7fbb3d4d33fc745115d426197d4e0540cf3f80fdbfc223b",
+      "output_sha256": "de86102b2255860df4be2337ca4a9e59509d8e77922dda8be001f22b3b2933fd",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/mixed/dsec.log",
+      "log_sha256": "2e5da292bb6e8660df677162d1d28fdc81a2de3d774f4e2f9f205c5257ae7ede",
+      "output_sha256": "e09c6a1212659a7072be030cdf7fb20a5648eb22f0f4a4d62a102d4c0c8c7a40",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "e6922f1b51a92d55d7fbb3d4d33fc745115d426197d4e0540cf3f80fdbfc223b",
+      "output_sha256": "de86102b2255860df4be2337ca4a9e59509d8e77922dda8be001f22b3b2933fd",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/dsec.log",
+      "log_sha256": "835ecd2657c09878616cedf70aea46948c39b2fe813dc6433c26d6edb95dd109",
+      "output_sha256": "8452caa0ee78496f1d204a609d6412227779dca475c10a2afc00993e1bc19ed7",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/baseline_dsec.log",
+      "log_sha256": "2d2f70afef7e47a0cd8b84ecc7953c5029e0a90f26483dbc1a55137f789a7d6d",
+      "output_sha256": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+      "scope": "global/original/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/baseline_dsec.log",
+      "log_sha256": "620ea1564e42cdcd1b5d7d11c81f9316a8d86da44c81dc5bfe75318805319859",
+      "output_sha256": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/dsec.log",
+      "log_sha256": "2acb8a2ae7fab80bec3e53d2a3711400d5159903e02773eb544b5ebc937562d5",
+      "output_sha256": "c1b22495d3fff64314a8e72f5a0314c011733ba59080d101d1455eeed002797c",
+      "scope": "original"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "ec3486135ce2e0776d608c3216c6264561f167020c08ec9e315c091366314bd5",
+      "output_sha256": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+      "scope": "direct/direct_only"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/mixed/dsec.log",
+      "log_sha256": "46eaf150265b05deb59ebbdc44557a75867e722dfc6e7d2757cf65fa7f6562c0",
+      "output_sha256": "1b543d00f26a8e6bd18ef18e662e92518f59d1a81ddfe54a8e26521c1211e52b",
+      "scope": "direct/mixed"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "ec3486135ce2e0776d608c3216c6264561f167020c08ec9e315c091366314bd5",
+      "output_sha256": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+      "scope": "direct/same_mixed_set_without_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/mixed/dsec.log",
+      "log_sha256": "46eaf150265b05deb59ebbdc44557a75867e722dfc6e7d2757cf65fa7f6562c0",
+      "output_sha256": "1b543d00f26a8e6bd18ef18e662e92518f59d1a81ddfe54a8e26521c1211e52b",
+      "scope": "global/mixed/full"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/direct_only/dsec.log",
+      "log_sha256": "ec3486135ce2e0776d608c3216c6264561f167020c08ec9e315c091366314bd5",
+      "output_sha256": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+      "scope": "global/mixed/without_genuinely_new_build"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/dsec.log",
+      "log_sha256": "2acb8a2ae7fab80bec3e53d2a3711400d5159903e02773eb544b5ebc937562d5",
+      "output_sha256": "c1b22495d3fff64314a8e72f5a0314c011733ba59080d101d1455eeed002797c",
+      "scope": "global/original/full"
+    },
+    {
+      "input_sha256": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+      "log": "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/baseline_dsec.log",
+      "log_sha256": "620ea1564e42cdcd1b5d7d11c81f9316a8d86da44c81dc5bfe75318805319859",
+      "output_sha256": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+      "scope": "global/original/without_genuinely_new_build"
+    }
+  ],
+  "dsec_bindings_checked": 162,
+  "elapsed_s": 1.9891315350032528,
+  "exploratory_inspection_failure": "One read-only interactive print assumed transform exists in hard-killed run result and got KeyError: transform; inspection repeated using guaranteed driver/status fields. No data edits or execution retries.",
+  "first_reviewer_failure": "review-first-attempt.py assumed generic VALIDATED audit-result statuses; actual specific complete status labels fixed in reviewer only. first-run.log and failure JSON retained. No product/runtime/original-evidence correction.",
+  "new_audit_dsec_executions": 27,
+  "new_solver_dsec_transform_test_calls": 0,
+  "original_dsec_executions": 36,
+  "owner_cost_summary_exact": {
+    "direct_audit_driver_s": 224.9743909389872,
+    "global_audit_driver_s": 21.408753641975636,
+    "new_audit_dsec_calls": 27,
+    "new_audit_dsec_s": 58.1087779969821,
+    "original_dsec_calls": 36,
+    "original_product_dsec_s": 34.73067805801111,
+    "transform_observer_work_s": 17.408031606842997,
+    "transform_process_s": 1189.3520743500048,
+    "wrapper_wall_s": 1552.2891511917114
+  },
+  "owner_coverage_exact": {
+    "complete_search_arms": 11,
+    "fixed_arms": 18,
+    "sampled_rss_observed": 17,
+    "validated_arms": 18,
+    "validated_timeout_incumbents": 7
+  },
+  "owner_first_reviewer_failure": "Owner packet intentionally omits Direct rejected-candidate metadata; reviewer first assumed full dictionary equality, then checked exact projection excluding only rejected. First script, first log, failure JSON retained.",
+  "owner_packet_sha256": "fc6084c6dfddcdc8a8e54537f97a16e0b3748f60df70dde188c2449c03db705d",
+  "owner_per_arm_graph_products_match_independent_rebuild": true,
+  "owner_rss_fields_and_null_exact": true,
+  "owner_three_contrasts_exact": true,
+  "qualification": "11 COMPLETE searches and7 BUDGET_EXHAUSTED hard-killed workers with validated on-time incumbents. Transform sum is1189.352s, with Direct/global audits and DSEC outside the120s per-arm transform cap. DSEC subcomponents are included in parent driver costs. Cached b20 sampled RSS remains null. No timing-to-gain causal conclusion.",
+  "read_artifact_bindings": {
+    "/workspace/scratch/7e0c7273599c/abc-stran2/abc": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+    "/workspace/scratch/7e0c7273599c/abc-stran2/research/stran2-guide-20261002/free_domain_diagnostic/collect_three_arm_results.py": "06c236e5cb8dca60d169147cd7d1588c246cef7391a998713d539c56536feadb",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-global-accounting-independent-review-v1/check_owner_packet.py": "d0fbeb7a8b456e7477b7b3a50bad1d4642b45b04f2d2b88ec18ac3a4c1f72ff9",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-global-accounting-independent-review-v1/review.json": "5d256ac581da4c0a1eb07c006acf9815fba6abb2811c7ee12295f193d66afdf4",
+    "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-pilot-results-v1/packet.worker.json": "fc6084c6dfddcdc8a8e54537f97a16e0b3748f60df70dde188c2449c03db705d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/direct_only/dsec.log": "b7e72cd1f0e1d9815f2672bf46fa4b86c0440137c6ddbf7889a5a4c6c348c797",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/direct_only/product.aig": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/input.aig": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/mixed/dsec.log": "e47e472275ccd47df57485b7205733cc4889bf8199eb25c47144f185debcd6fc",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/inline_free_off/direct/005_b03/mixed/product.aig": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/direct_only/dsec.log": "9808f6bf96b904eef8bf84680aacc17aa2ec46fd1e5d56de4d950126a43fbdc7",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/direct_only/product.aig": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/input.aig": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/mixed/dsec.log": "6616a561bac3c04de424424bf0cf952f945517cea6f462016d267556e5dfcc35",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_off/direct/005_b03/mixed/product.aig": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/direct_only/dsec.log": "eae8f0ef06cc96b81c1a555127f8bf25c81b3c83aec825affa2d61fd01782ac6",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/direct_only/product.aig": "9044bc6349825b4c53c8e56acceaccbf009291d91b85b46d7b2d4a37599ded78",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/input.aig": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/mixed/dsec.log": "3b8e9c62e4357b4c56dd7247a9daed3127dbb514e38af9ec43336b4562a481ca",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/005_b03/predecessor_cache_on/direct/005_b03/mixed/product.aig": "ba4a6a16db5bc9fdf8502d46d72e8900a0e278a70b439e3d93fef74054cb2052",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/direct_only/dsec.log": "66a1ebbec38ec89d1c3c9b00d1243ab0d39126021c634b9e0054f4aebea9d81d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/direct_only/product.aig": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/input.aig": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/mixed/dsec.log": "239ebc1b3c88a34671728392e6535e69dfb3770b4f3620bf3c4e4e80ae625a9d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/inline_free_off/direct/044_i2c/mixed/product.aig": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/direct_only/dsec.log": "b3157fc15f273204ea3209970825aa5cc1b73b3be4299b73e7141d59e47b1ac2",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/direct_only/product.aig": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/input.aig": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/mixed/dsec.log": "53e613e48b6f13f4ecc455fc0a7a5d1aba8d230b47822219f9c38b002c95dd3d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_off/direct/044_i2c/mixed/product.aig": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/direct_only/dsec.log": "5714a36495fb5f6dc5e621334e0e920ac0f3d459012b6b092dfd45fe34f36d1e",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/direct_only/product.aig": "9efd4b6386806d91493b53d1b7c4241d3a4315051ec214dbfb048e49d7d14dfd",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/input.aig": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/mixed/dsec.log": "2443cf52feb0d82b5e1a9e7575a827ef448811acf1436d65c0d557f4be9df2a7",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/044_i2c/predecessor_cache_on/direct/044_i2c/mixed/product.aig": "ec5e21ba2853daa4b9e9979667ae1efec1fee7a2353e151458bee20829c7922f",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/direct_only/dsec.log": "527bc2ab78aeb38d0ac44cd62b596fe7ab298cecade0e078527148b510259d5a",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/direct_only/product.aig": "fe182c8db682ac5ae94b07245c2de6a3539dd577d22a34b8934be3dc8e3bf412",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/input.aig": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/mixed/dsec.log": "ad6b05836d678ff1207cc918fd7200b79de465cd8c06ba650d930500154dc7a8",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/mixed/product.aig": "04ef66dc0e326a01cabd527f0e7cd73b270ea46db7c831145abb4cb88a1852b3",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log": "2319a507cc660dd51c0883420e51e50686fde3a5dd02e9d3b21d3d57349986f8",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/inline_free_off/direct/045_mem_ctrl/same_mixed_set_without_build/product.aig": "1ce74f7a8f1c40c14e1dc81bdc7585ffc60fd3a0e3a181e6cf60473737a2cfe5",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/direct_only/dsec.log": "785c5182c0d1a11dc402a6e1e4005ce29f7527ca5286a06c06d25bb26ddd51eb",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/direct_only/product.aig": "30c1a3c9bc5e67c92db5205d354e3b8e493c59ee4f9d8ce82a99621c15d3e0fe",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/input.aig": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/mixed/dsec.log": "14bb9fe8f06a14df5e18e52a5cb52b9e623c8f522a55e38c64839cd847b32580",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/mixed/product.aig": "c4de9c0b96678a5976e7734b9290a96623a5f07d0cb0da0de482165c9e9afa28",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log": "195e0fee19342080a9775f70e2e4e92586b1ab426dc0c92601e994d1de80f3b9",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_off/direct/045_mem_ctrl/same_mixed_set_without_build/product.aig": "af9bb99e724c605a91e7927c23ea3dd18d0255ec2adb86246592182083852623",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/direct_only/dsec.log": "60180cd2396d97d0c29e2defe29bb035aecf4742e422906996b9c4371f1277a7",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/direct_only/product.aig": "fe182c8db682ac5ae94b07245c2de6a3539dd577d22a34b8934be3dc8e3bf412",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/input.aig": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/mixed/dsec.log": "9bac4646b2f85e7458e7e5e6481afaba4c6c5ee1f1b3404a47c3d618739f16e3",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/mixed/product.aig": "29df14788de7b702a539c13fee91ba094d505d1d46370a866e886c25b38691b1",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/same_mixed_set_without_build/dsec.log": "c0a8f43c6a809326386abf4c58bcf87d7ee4c7d503e7950da43405c8dbf20d2f",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/045_mem_ctrl/predecessor_cache_on/direct/045_mem_ctrl/same_mixed_set_without_build/product.aig": "1ce74f7a8f1c40c14e1dc81bdc7585ffc60fd3a0e3a181e6cf60473737a2cfe5",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/direct_only/dsec.log": "e6922f1b51a92d55d7fbb3d4d33fc745115d426197d4e0540cf3f80fdbfc223b",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/direct_only/product.aig": "de86102b2255860df4be2337ca4a9e59509d8e77922dda8be001f22b3b2933fd",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/input.aig": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/mixed/dsec.log": "2e5da292bb6e8660df677162d1d28fdc81a2de3d774f4e2f9f205c5257ae7ede",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/inline_free_off/direct/060_wb_dma/mixed/product.aig": "e09c6a1212659a7072be030cdf7fb20a5648eb22f0f4a4d62a102d4c0c8c7a40",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/direct_only/dsec.log": "64ed6e7533af449c6642416104dc91b5ce5b8136aeb273d818a62030fa2b77ed",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/direct_only/product.aig": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/input.aig": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/mixed/dsec.log": "fd3398f9b115fdc98050263222eed2d04cae95098d8c30b290b7d86559290bd9",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_off/direct/060_wb_dma/mixed/product.aig": "fd37a80bef8336e5bcd60e52f74560af352e96246c0774c4a99f31a5ae178e5c",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/direct_only/dsec.log": "ec3486135ce2e0776d608c3216c6264561f167020c08ec9e315c091366314bd5",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/direct_only/product.aig": "b6e1155381cc0cb3b3464f7e7a0ff5a0be874498a24161df1b450caa0ab452fd",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/input.aig": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/mixed/dsec.log": "46eaf150265b05deb59ebbdc44557a75867e722dfc6e7d2757cf65fa7f6562c0",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/audits/060_wb_dma/predecessor_cache_on/direct/060_wb_dma/mixed/product.aig": "1b543d00f26a8e6bd18ef18e662e92518f59d1a81ddfe54a8e26521c1211e52b",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/execution.json": "fd4006327ce1d8c5775807d07f3e4d6415a153e4347987844d527ac05604bb99",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/ledger.json": "a3857f5ae60c947d77dd4be5ba7a63dd38e1e73a88d76ddf2ddf71c7977ef905",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/plan.json": "ddb63abb57f4489c21d8116bc834ac22c2516cd0c960856be9b6eda247c7baf5",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/baseline_dsec.log": "7d73a1591c850675cc39cb2eee11fab518ee967de2854e0accdfce7755b92614",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/checkpoints/checkpoint_00002/product.aig": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/checkpoints/checkpoint_00002/replay_without_build.aig": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/inline_free_off/005_b03/dsec.log": "0cd2eb202d4ea18ca72590ca29f6117b0c0222f74d3a57766f37b11c5bfd8e03",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/baseline_dsec.log": "b99386dd64fe464515fbfa7360bc8121c79a28390a79effff323eb909e47b6cb",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/checkpoints/checkpoint_00002/product.aig": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/checkpoints/checkpoint_00002/replay_without_build.aig": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_off/005_b03/dsec.log": "7ef8ead126444117b7ba166f0af4ec8c30b967ba399f0432d3581b02574464ae",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/baseline_dsec.log": "bbc0f2d03829180dc282b887bbdc41a29b318a163a579c82d779da971b7a0f96",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/checkpoints/checkpoint_00002/product.aig": "fb042ec5681451f1d689f03b31225792728ca33fba5a77590edcf9a7e55287f8",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/checkpoints/checkpoint_00002/replay_without_build.aig": "c78406de546859e4a82d30fcf08382798f87fd5203368b9bd2068da42ca7e3b2",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/005_b03/predecessor_cache_on/005_b03/dsec.log": "4d972bac3a2c0ab477b442792ee82abb5a78f8b144a88e8e84c7b90e6b9b006d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/baseline_dsec.log": "c1dcd9d56e2992ee2ccc03a4fb4587198fe9d30361160eb93c4c05c8fa5fcc39",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/checkpoints/checkpoint_00050/product.aig": "5d9866a60779083a88982246f653ee637b9d2219785f5aefc5d3175f24f1e10a",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/checkpoints/checkpoint_00050/replay_without_build.aig": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/inline_free_off/034_b20_opt/dsec.log": "b0a5924c1238c166b5a19cc0eaac33484e96a092fcb15153209b7d573402e63d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/baseline_dsec.log": "e43960cfd3ed1faf7430b066b796c5911fa40cd63b30c74a015bb562dea11e6f",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/checkpoints/checkpoint_00020/product.aig": "9df10bc3308721d047f74a85b441296bc9b5a77d5dfbaf067b4bc521266681de",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/checkpoints/checkpoint_00020/replay_without_build.aig": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_off/034_b20_opt/dsec.log": "f7a0d38d888b28d38d08c8b8f3c3e7e862b28d5b8ebfbf3e12946612f01dac1e",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/baseline_dsec.log": "257b98b475b5933c83100d32594d02b348fab19d927d067b5f24f977a86dfd36",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/checkpoints/checkpoint_00022/product.aig": "8dd80c60b44d91921ffcdccd2293983087fc641c50b761a3c86f18f9c6f7e62b",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/checkpoints/checkpoint_00022/replay_without_build.aig": "584e750910e6b47ec628015f42efad5efba9f856a9d0bab83e01077d45e07fae",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/034_b20_opt/predecessor_cache_on/034_b20_opt/dsec.log": "b690597a72f7df6a88ad5c5d8686e394bae635d8fbea2fb43322c1d34080199c",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/baseline_dsec.log": "fe1408b0ea42bfef3005778cd264a4acb85e7935c54f1b595ec05804aeb28310",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/checkpoints/checkpoint_00000/product.aig": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/checkpoints/checkpoint_00000/replay_without_build.aig": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/inline_free_off/041_des_area/dsec.log": "76696043aa230ebd0b9fb0dccf4c2980df7bdf7e7e56f18f645afd90f4ae6853",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/baseline_dsec.log": "b2237d6f24a0cc0db501c64f7ffe5632da9ef1db96c5ecd95675e78a5d038626",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/checkpoints/checkpoint_00000/product.aig": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/checkpoints/checkpoint_00000/replay_without_build.aig": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_off/041_des_area/dsec.log": "33387f843ee096e05795c3c987ddba542f0eccb3d62b0da8725cbdbdc0365cd0",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/baseline_dsec.log": "9f29e654964f129457ee7232d3f4e262cd343cc828531873e420aedfe5ed5ae4",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/checkpoints/checkpoint_00000/product.aig": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/checkpoints/checkpoint_00000/replay_without_build.aig": "a8f227cb13d406c2d0a69f68b8948fb0394931ad80ab08cc100569d104d9c261",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/041_des_area/predecessor_cache_on/041_des_area/dsec.log": "e54363c0397a2e842ebc929fdf93a46046ab4ce806b72477ed56391de34b8c92",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/baseline_dsec.log": "da8895041afba3b362b0fb5614cde3c0635b25fa7d94affccb78e5fd2a64bfb1",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/checkpoints/checkpoint_00006/product.aig": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/checkpoints/checkpoint_00006/replay_without_build.aig": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/inline_free_off/044_i2c/dsec.log": "5e0fe6c366eb3a95bf81d8c99ae308383fd50d6f994845f3837880634c09b273",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/baseline_dsec.log": "0bf451ec21b0b29f14f1463f3e9aadd1761177b40706e9d60ad54794ad87d0cd",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/checkpoints/checkpoint_00006/product.aig": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/checkpoints/checkpoint_00006/replay_without_build.aig": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_off/044_i2c/dsec.log": "a8b65e487e703d551bd4d2a0b8c0a3e25aa090d78a3c9f17c8e538152f7b0cda",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/baseline_dsec.log": "0f1ea883f9f7ab1cb12128203aa1b6fb632f23fae722b4480ce8cdf0aa9f9f62",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/checkpoints/checkpoint_00006/product.aig": "e1ebb88f777c0a2d5ac047eb26bf121e467d20934f52d6b05607be2b4f6f05eb",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/checkpoints/checkpoint_00006/replay_without_build.aig": "d238ecf021c01e774de25d492cf693fb8143eaec6a52f660fe736aa25194f0b3",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/044_i2c/predecessor_cache_on/044_i2c/dsec.log": "915f138baf59d22c576a7df571e82fd78c6a2c06f302858bac8dc58f55fba328",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/baseline_dsec.log": "7b817f9af239bc2670266e2eecd1e4378392722f544f8565be1b7f77dfafa092",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/checkpoints/checkpoint_00023/product.aig": "2b8f4ef28259f222bb41b2071aae8baaa7799307761cba04a94312847c948822",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/checkpoints/checkpoint_00023/replay_without_build.aig": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/inline_free_off/045_mem_ctrl/dsec.log": "82c5a346c1db63b0ce79b293eb5a78abc085351972ada05607d6d5cd0484216a",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/baseline_dsec.log": "21543b46edfadebb4b527572dbc759e14bc1616a0666bc51bb6c0a7a2a7b1dd3",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/checkpoints/checkpoint_00012/product.aig": "6230af3fbe2c47963f0993888f4e1ba4a41ba168d8c2343cdfb9dc034d1022f5",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/checkpoints/checkpoint_00012/replay_without_build.aig": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_off/045_mem_ctrl/dsec.log": "f20418c6f89f17405e34d78779f5a5f356804b2042199a542c1bc428715ba599",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/baseline_dsec.log": "c1d396b858d6839b51a96f238455b8f60b44cffefaca086665c85892499002ad",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/checkpoints/checkpoint_00019/product.aig": "ff0fc7b758f55c8b0e82bd104d72f74ed8f379efe3c66ef33515525a27a254de",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/checkpoints/checkpoint_00019/replay_without_build.aig": "4b8d6d333b7362bbffb6fbaf537650517356ec7790362c487c6d34b2d9a4bd65",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/045_mem_ctrl/predecessor_cache_on/045_mem_ctrl/dsec.log": "f999eb7c702b8d7809d4abcc122a16076426a33d80d58b4d84f8bfb3d9dfdef6",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/baseline_dsec.log": "2d2f70afef7e47a0cd8b84ecc7953c5029e0a90f26483dbc1a55137f789a7d6d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/checkpoints/checkpoint_00029/product.aig": "8452caa0ee78496f1d204a609d6412227779dca475c10a2afc00993e1bc19ed7",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/checkpoints/checkpoint_00029/replay_without_build.aig": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/inline_free_off/060_wb_dma/dsec.log": "835ecd2657c09878616cedf70aea46948c39b2fe813dc6433c26d6edb95dd109",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/baseline_dsec.log": "479b72bd099d39cd77e36b14cb8adf16026141d84b5d356b9c916fb4711ba813",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/checkpoints/checkpoint_00011/product.aig": "f9e97a2b4b3b0a7dfcb2a6f079ed6a632bb65f4cd2fa9e4e0fadb9428d434403",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/checkpoints/checkpoint_00011/replay_without_build.aig": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_off/060_wb_dma/dsec.log": "478b3c5ce360ad3d0436e0eb6c3522c387a5b1aa4df96e6c9b0c73c64a834c4b",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/baseline_dsec.log": "620ea1564e42cdcd1b5d7d11c81f9316a8d86da44c81dc5bfe75318805319859",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/checkpoints/checkpoint_00013/product.aig": "c1b22495d3fff64314a8e72f5a0314c011733ba59080d101d1455eeed002797c",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/checkpoints/checkpoint_00013/replay_without_build.aig": "efc4c96edafdd416b5ad48109a8b98394b27763a152e8245840149897f76614a",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/runs/060_wb_dma/predecessor_cache_on/060_wb_dma/dsec.log": "2acb8a2ae7fab80bec3e53d2a3711400d5159903e02773eb544b5ebc937562d5",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/source/inputs/first_seq/005_b03.aig": "cc4e67b53b04af6c181f6eebfaedbe6ece1405b18185927cb4647d7a8ad2c790",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/source/inputs/first_seq/034_b20_opt.aig": "f0cae1b2dea03b6386d179516e065b2210d4c0c483934ed5f7003fa9ee4f9f3f",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/source/inputs/first_seq/041_des_area.aig": "7250459e0414d345c0c394ea520123e96573b66a12f4bc2533a2e7f1b6f367f3",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/source/inputs/first_seq/044_i2c.aig": "c6befd31347d5f333cd55ff82455ebd8c29a54003664ac76444758fe068ecaba",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/source/inputs/first_seq/045_mem_ctrl.aig": "f15181f600119ada8ef469f6d76efc30273a526cf02fa52128f026e12a05d780",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/source/inputs/first_seq/060_wb_dma.aig": "40af6bc5378f4c3f7ab041decf7a562793c1805ed070fd4148781333ed0c678d",
+    "/workspace/scratch/7e0c7273599c/stran2-free-cache-three-arm-pilot-prepared-v1/summary.json": "2edcca04836215fd45170e0472376ce1e1f954a3d69d9da4bb3d127047e1f35f"
+  },
+  "repeated_audit_graph_certificates_not_new_executions": true,
+  "script_sha256": "d0fbeb7a8b456e7477b7b3a50bad1d4642b45b04f2d2b88ec18ac3a4c1f72ff9",
+  "status": "PASS"
+}

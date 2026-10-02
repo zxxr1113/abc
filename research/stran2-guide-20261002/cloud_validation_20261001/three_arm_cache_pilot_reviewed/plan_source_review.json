@@ -1,0 +1,69 @@
+{
+  "arms": [
+    "inline_free_off",
+    "predecessor_cache_off",
+    "predecessor_cache_on"
+  ],
+  "cases": 6,
+  "conflicts_per_query": 1000,
+  "controller_sha256": "ce9fe82849a350e639a9c969a812f69f5dba8899d7543732969aa5c3b1db2918",
+  "disk": {
+    "free_bytes_at_review": 27234889728,
+    "guard": "Before each transform/audit: reserve plus max(2GiB, twice observed job free-space consumption); capacity failure skips remaining jobs.",
+    "limitation": "Planning allowance is not an empirical output bound or a within-process write quota.",
+    "minimum_start_bytes": 17179869184,
+    "reserve_gib": 4
+  },
+  "external_bindings": 208,
+  "fixed_source_and_commands": "PASS",
+  "historical_raw_evidence": "Shared original paths remain unavailable; new scratch identities do not rewrite historical records.",
+  "jobs": 18,
+  "monitor_sha256": "dc13b0cda88499b3c445bbff3b33663225bd5f8ffd22b0ac1f79b8ecb45c4d82",
+  "new_pilot_launched": false,
+  "new_reviewer_solver_calls": 0,
+  "new_reviewer_tests": 0,
+  "orders": [
+    [
+      "inline_free_off",
+      "predecessor_cache_off",
+      "predecessor_cache_on"
+    ],
+    [
+      "predecessor_cache_off",
+      "predecessor_cache_on",
+      "inline_free_off"
+    ],
+    [
+      "predecessor_cache_on",
+      "inline_free_off",
+      "predecessor_cache_off"
+    ],
+    [
+      "predecessor_cache_on",
+      "predecessor_cache_off",
+      "inline_free_off"
+    ],
+    [
+      "inline_free_off",
+      "predecessor_cache_on",
+      "predecessor_cache_off"
+    ],
+    [
+      "predecessor_cache_off",
+      "inline_free_off",
+      "predecessor_cache_on"
+    ]
+  ],
+  "original_runtime_code_changed": false,
+  "pair_order_and_position_balance": "PASS",
+  "plan_sha256": "ddb63abb57f4489c21d8116bc834ac22c2516cd0c960856be9b6eda247c7baf5",
+  "preparer_sha256": "d92b02d68b91e8cd4740df022abe55279cf5e77e3cc196f0f4e4dff18efd9d29",
+  "proof_and_attribution_review": "Fresh per-arm Direct and whole-original alias audits; exact same-run graph-bound DSEC reuse only; valid timeout checkpoints retained; missing margins never zeroed.",
+  "rss": "100ms requested sampling plus observer work; complete observed PPid/start-token tree only; physical/shared-page and race limitations retained; no subtraction from transform budget.",
+  "runtime_commit": "b04f4ca3aab332939adccb84b51c3e5babccb76c",
+  "same_recovered_solver_all_arms": "PASS",
+  "source_bindings": 43,
+  "status": "PASS_FROZEN_PROTOCOL_AWAITING_PARENT_GO",
+  "transform_seconds_per_arm": 120,
+  "witness_boundary": "Absolute lanes/full saved domains/original model provenance; no requirement that discovery and final free-domain hashes agree."
+}

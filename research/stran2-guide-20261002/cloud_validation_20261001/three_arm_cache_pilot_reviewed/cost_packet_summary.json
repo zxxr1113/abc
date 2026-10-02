@@ -1,0 +1,45 @@
+{
+  "accounting_report_sha256": "5d256ac581da4c0a1eb07c006acf9815fba6abb2811c7ee12295f193d66afdf4",
+  "all_dsec_graph_inputs_and_outputs_inside_current_run": true,
+  "before_after_bindings_unchanged": true,
+  "distinct_saved_dsec_executions": 63,
+  "dsec_bindings_checked": 162,
+  "elapsed_s": 1.9891315350032528,
+  "exploratory_inspection_failure": "One read-only interactive print assumed transform exists in hard-killed run result and got KeyError: transform; inspection repeated using guaranteed driver/status fields. No data edits or execution retries.",
+  "first_reviewer_failure": "review-first-attempt.py assumed generic VALIDATED audit-result statuses; actual specific complete status labels fixed in reviewer only. first-run.log and failure JSON retained. No product/runtime/original-evidence correction.",
+  "new_audit_dsec_executions": 27,
+  "new_solver_dsec_transform_test_calls": 0,
+  "original_dsec_executions": 36,
+  "owner_cost_summary_exact": {
+    "direct_audit_driver_s": 224.9743909389872,
+    "global_audit_driver_s": 21.408753641975636,
+    "new_audit_dsec_calls": 27,
+    "new_audit_dsec_s": 58.1087779969821,
+    "original_dsec_calls": 36,
+    "original_product_dsec_s": 34.73067805801111,
+    "transform_observer_work_s": 17.408031606842997,
+    "transform_process_s": 1189.3520743500048,
+    "wrapper_wall_s": 1552.2891511917114
+  },
+  "owner_coverage_exact": {
+    "complete_search_arms": 11,
+    "fixed_arms": 18,
+    "sampled_rss_observed": 17,
+    "validated_arms": 18,
+    "validated_timeout_incumbents": 7
+  },
+  "owner_first_reviewer_failure": "Owner packet intentionally omits Direct rejected-candidate metadata; reviewer first assumed full dictionary equality, then checked exact projection excluding only rejected. First script, first log, failure JSON retained.",
+  "owner_packet_sha256": "fc6084c6dfddcdc8a8e54537f97a16e0b3748f60df70dde188c2449c03db705d",
+  "owner_per_arm_graph_products_match_independent_rebuild": true,
+  "owner_rss_fields_and_null_exact": true,
+  "owner_three_contrasts_exact": true,
+  "qualification": "11 COMPLETE searches and7 BUDGET_EXHAUSTED hard-killed workers with validated on-time incumbents. Transform sum is1189.352s, with Direct/global audits and DSEC outside the120s per-arm transform cap. DSEC subcomponents are included in parent driver costs. Cached b20 sampled RSS remains null. No timing-to-gain causal conclusion.",
+  "repeated_audit_graph_certificates_not_new_executions": true,
+  "script_sha256": "d0fbeb7a8b456e7477b7b3a50bad1d4642b45b04f2d2b88ec18ac3a4c1f72ff9",
+  "source_report": {
+    "bytes": 114842,
+    "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-global-accounting-independent-review-v1/owner_packet_check.json",
+    "sha256": "0613a9428b1a6185d35a797340b57c059a91ac273083d53d02fe1edd9898fc0f"
+  },
+  "status": "PASS"
+}

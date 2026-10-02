@@ -1,0 +1,24 @@
+{
+  "archive": "/workspace/scratch/7e0c7273599c/deliverables/stran2-three-arm-final-products-v1.tar.gz",
+  "archive_bytes": 1283828,
+  "archive_sha256": "f42bdb5dc752ee03183bb86242efecc8a2b84de7afc9b4941036e03951ff18f6",
+  "compact_index_files": 8,
+  "compact_packet_compaction_only": true,
+  "compact_source_reports": 7,
+  "copied_files_authenticated": 153,
+  "corrected_totals": {
+    "inline_free_off": 202,
+    "predecessor_cache_off": 133,
+    "predecessor_cache_on": 147
+  },
+  "exact_saved_dsec_logs": 36,
+  "final_graph_pairs": 18,
+  "graphs": 36,
+  "historical_shared_evidence_not_reconstructed": true,
+  "input_graphs": 12,
+  "no_new_solver_dsec_or_graph_rebuild": true,
+  "regular_files": 155,
+  "scope": "Final graph pairs, exact existing DSEC logs and compact reports; does not include every raw SAT/model receipt or provide a self-contained replay of all proofs.",
+  "selected_same_set_ablation_differences": "PASS",
+  "status": "PASS_FINAL_ARCHIVE_AND_COMPACT_COPIES"
+}
