@@ -2316,7 +2316,7 @@ static int Gia_ResbSolvScheduleChoice( Gia_ResbMan_t * p, int fUseOr,
         Vec_IntEntry(p->vSolvOrder, iChoice) : iChoice;
 }
 
-void Gia_ManSortBinate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Wec_t * vSorter )
+static void Gia_ManSortBinateQuality( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_t * vBinateVars, Vec_Wec_t * vSorter, int fNoTruncation )
 {
     int nMints[2] = { Abc_TtCountOnesVec(pSets[0], nWords), Abc_TtCountOnesVec(pSets[1], nWords) };
     word * pBig = nMints[0] > nMints[1] ? pSets[0] : pSets[1];
@@ -2345,8 +2345,47 @@ void Gia_ManSortBinate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords, Vec_Int_
     Gia_ResbSortFinish( vSorter, pUsed, nWords+1, vBinateVars, NULL );
     if ( pUsed != Used ) ABC_FREE( pUsed );
 
-    if ( Vec_IntSize(vBinateVars) > 2000 )
+    if ( !fNoTruncation && Vec_IntSize(vBinateVars) > 2000 )
         Vec_IntShrink( vBinateVars, 2000 );
+}
+
+void Gia_ManSortBinate( word * pSets[2], Vec_Ptr_t * vDivs, int nWords,
+    Vec_Int_t * vBinateVars, Vec_Wec_t * vSorter )
+{
+    Gia_ManSortBinateQuality( pSets, vDivs, nWords, vBinateVars,
+        vSorter, Abc_ResubQualityNoTruncation() );
+}
+
+static void Gia_ResbQualityBinateSortSelfTest()
+{
+    word Data[3] = { ABC_CONST(0xaaaaaaaaaaaaaaaa),
+        ABC_CONST(0x5555555555555555), ABC_CONST(0xcccccccccccccccc) };
+    word * Sets[2] = { Data, Data + 1 };
+    Vec_Ptr_t * Divs = Vec_PtrAlloc( 2003 );
+    Vec_Int_t * Full = Vec_IntAlloc( 2001 ), * Bounded;
+    Vec_Wec_t * Sorter = Vec_WecAlloc( 64 );
+    int i, Obj, Seen[2003] = {0};
+    Vec_PtrPushTwo( Divs, Data, Data + 1 );
+    for ( i = 0; i < 2001; i++ )
+    {
+        Vec_PtrPush( Divs, Data + 2 );
+        Vec_IntPush( Full, i + 2 );
+    }
+    Bounded = Vec_IntDup( Full );
+    Gia_ManSortBinateQuality( Sets, Divs, 1, Bounded, Sorter, 0 );
+    Gia_ManSortBinateQuality( Sets, Divs, 1, Full, Sorter, 1 );
+    assert( Vec_IntSize(Bounded) == 2000 && Vec_IntSize(Full) == 2001 );
+    for ( i = 0; i < 2000; i++ )
+        assert( Vec_IntEntry(Bounded, i) == Vec_IntEntry(Full, i) );
+    Vec_IntForEachEntry( Full, Obj, i )
+    {
+        assert( Obj >= 2 && Obj < 2003 && !Seen[Obj] );
+        Seen[Obj] = 1;
+    }
+    for ( i = 2; i < 2003; i++ ) assert( Seen[i] );
+    Vec_IntFree( Full ); Vec_IntFree( Bounded );
+    Vec_PtrFree( Divs ); Vec_WecFree( Sorter );
+    Abc_Print(1, "stran-quality-binate-sort-selftest: PASS default=2000 unlimited=2001 ordered-prefix=1 membership=complete\n");
 }
 
 /**Function*************************************************************
@@ -4166,6 +4205,7 @@ static void Gia_ResbResidualCacheSelfTest()
     int nVariants = 0;
     word Target, Remainder;
 
+    Gia_ResbQualityBinateSortSelfTest();
     Gia_ResbQualityScheduleSelfTest();
     Gia_ResbMultiPathScheduleSelfTest();
     // Duplicate pivots share a literal success or an XOR residual which
@@ -4428,7 +4468,7 @@ static void Gia_ResbProblemCacheCompare( void ** Divs, int nWords,
         Abc_ResubIteratorReadPivotProfile(Iter,Profile);
         if ( na ) for ( k=GIA_RESUB_PIVOT_CURRENT_PATH; k<=GIA_RESUB_PIVOT_CURRENT_DUPLICATE; k++ )
             assert(Profile[k]==Base->PivotProfile[k]);
-        if ( fPages || eb )
+        if ( (fPages && (Count + 1) % fPages == 0) || eb )
         {
             Abc_ResubIteratorResumeStop(Iter,Cursor);
             Iter=NULL;
@@ -4467,10 +4507,13 @@ static void Gia_ResbProblemCacheSelfTest()
         {
             Gia_ResbProblemCacheCompare(Divs,Words,Limit,0);
             Gia_ResbProblemCacheCompare(Divs,Words,Limit,1);
+            Gia_ResbProblemCacheCompare(Divs,Words,Limit,5);
+            Gia_ResbProblemCacheCompare(Divs,Words,Limit,16);
             assert(s_pResbMemo->nHits==0);
             assert(Vec_PtrSize(s_pResbMemo->vEntries)==0);
         }
         Abc_ResubProblemCacheStop(0);
+        Abc_Print(1, "stran-quality-pagination-selftest: PASS pages=0,1,5,16 ordered-stream=identical memo-disabled=1\n");
         return;
     }
     for ( Words=1; Words<=2; Words++ ) for ( Limit=2; Limit<=3; Limit++ )

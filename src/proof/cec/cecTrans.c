@@ -163,10 +163,11 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     {
         QualityPars = *pPars;
         QualityPars.nConstrMax = QualityPars.nConstrBaseMax = 0;
-        QualityPars.nRootConstrTop = QualityPars.nRootProofBatch = 0;
+        // q is a total-search horizon; j only paginates the same stream.
+        // Preserve the caller's j so proof can run before full enumeration.
+        QualityPars.nRootConstrTop = 0;
         pPars = &QualityPars;
         nTfoMax = 0;
-        fMicroBatch = 0;
     }
     Prof.DiagPhase = iPhase;
     Prof.pStrictCex = !fCombOnly && pStrictCex && pStrictCex->Mode <= 3 ? pStrictCex : NULL;
@@ -668,14 +669,15 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     if ( Abc_ResubQualityNoTruncation() )
     {
         StrictPars.nConstrMax = StrictPars.nConstrBaseMax = 0;
-        StrictPars.nRootConstrTop = StrictPars.nRootProofBatch = 0;
+        StrictPars.nRootConstrTop = 0;
         StrictPars.nRootWaves = 0;
     }
     pPars = &StrictPars;
     if ( Abc_ResubQualityNoTruncation() || Cec_TranQualityActualCost() )
-        Abc_Print(1, "stran-quality options: no-truncation=%d actual-cost=%d N=%d T=%d D=%d; finite grammar, unchanged proof/commit.\n",
+        Abc_Print(1, "stran-quality options: no-truncation=%d actual-cost=%d N=%d T=%d D=%d j=%d; finite grammar, unchanged proof/commit.\n",
             Abc_ResubQualityNoTruncation(), Cec_TranQualityActualCost(),
-            pPars->nDepNodesMax, pPars->nKitCoreMax, pPars->fBdcPortfolio);
+            pPars->nDepNodesMax, pPars->nKitCoreMax, pPars->fBdcPortfolio,
+            pPars->nRootProofBatch);
     Abc_Print(1,"stran-strict options: S=%d w=%d.\n",pPars->nStepsMax,pPars->nRootWaves);
     // Run arbitrary-state combinational proof exactly once on the initial
     // graph.  COM owns a fixed q=4 frontier, ignores the SEQ proof micro-batch
@@ -688,7 +690,8 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
         PassPars = *pPars;
         PassPars.nRootWaves = 1;
         PassPars.nRootConstrTop = CEC_TRAN_COMB_BUILD_Q;
-        PassPars.nRootProofBatch = 0;
+        PassPars.nRootProofBatch = Abc_ResubQualityNoTruncation() ?
+                pPars->nRootProofBatch : 0;
         pNext = Cec_ManSequentialRootPass( p, &PassPars,
             0, 1, &ProofHistory, pDb, fRootBatch, NULL );
         Gia_ManStop( p );

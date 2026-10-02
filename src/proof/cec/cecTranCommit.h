@@ -971,7 +971,15 @@ static int Cec_TranPipelineSelfTest()
     Cec_TranCandVecPush( &Cands, ZeroGain );
     Cec_TranRootPrepareSeqFrontier( p, &Root, 1, &Cands,
         pCovered, pUsed, pMffc, vMffc, vSupport, 1, &Seq, &Prof );
-    assert( Seq.nSize == 0 );
+    // The raw-one-gate candidate hashes to existing N1.  It is an alias,
+    // not a genuinely fresh Build, but its frozen physical cost is zero.
+    assert( Seq.nSize == (Cec_TranQualityActualCost() ? 1 : 0) );
+    if ( Cec_TranQualityActualCost() )
+    {
+        assert( Seq.pArray[0].Gain == 1 && Seq.pArray[0].nGates == 1 );
+        assert( Seq.pArray[0].iTarget == Root.iObj );
+        assert( Cec_TranQualityCostGainOne(p, &ZeroGain, pCovered, pUsed, NULL) == 1 );
+    }
 
     // Interleaved targets and a tried candidate exercise target indexing.
     // Reusing initialized potentials must produce the same sorted frontier
@@ -993,11 +1001,12 @@ static int Cec_TranPipelineSelfTest()
             pCovered, pUsed, pMffc, vMffc, vSupport, 0, &Indexed, &Prof );
         Cec_TranRootPrepareSeqFrontier( p, Roots, 2, &Mixed,
             pCovered, pUsed, pMffc, vMffc, vSupport, 1, &Refreshed, &Prof );
-        assert( Indexed.nSize == 2 && Refreshed.nSize == 2 );
+        assert( Indexed.nSize == (Cec_TranQualityActualCost() ? 3 : 2) );
+        assert( Refreshed.nSize == Indexed.nSize );
         assert( Indexed.pArray[0].iTarget == Root.iObj &&
-            Indexed.pArray[1].iTarget == Abc_Lit2Var(iN1) );
+            Indexed.pArray[Indexed.nSize-1].iTarget == Abc_Lit2Var(iN1) );
         assert( !memcmp(Indexed.pArray, Refreshed.pArray,
-            2 * sizeof(Cec_TranCand_t)) );
+            Indexed.nSize * sizeof(Cec_TranCand_t)) );
         Cec_TranCandVecStop( &Indexed );
         Cec_TranCandVecStop( &Refreshed );
         Cec_TranCandVecStop( &Mixed );
