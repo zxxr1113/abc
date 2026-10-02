@@ -1,0 +1,29 @@
+{
+  "STRAN2_section_review": "PASS after random-world and bounded-Direct scope wording corrections",
+  "archive": "/workspace/scratch/7e0c7273599c/stran2-unsampled-frontier-final-packet-v2.tar.gz",
+  "archive_bytes": 7705012,
+  "archive_sha256": "fe6a02bb20970ccabf0b90e5c3b403f4550f9198db1ba8586b2061e003b4f62d",
+  "byte_preserved_sources": true,
+  "checksum_entries": 438,
+  "complete_new_attribution_files": 156,
+  "complete_new_diagnostic_files": 130,
+  "exported_original_files_verified": 435,
+  "extra_export_review_wall_s": 1.2165574850005214,
+  "fresh_DSEC_log_copies": 17,
+  "limits": [
+    "Large executables/static library/toolchain/header bytes are referenced by hash, not bundled",
+    "Older precursor raw receipts and full old run trees are not bundled",
+    "Original absolute paths and source identities are preserved; relocated replay/new tools need new bound evidence",
+    "Portable AIG/log pairs can be read or freshly verified, but this is not self-contained replay of every historical proof"
+  ],
+  "new_DSEC_calls": 0,
+  "new_solver_calls": 0,
+  "policy_stopped": true,
+  "portable_primary_pairs": 18,
+  "product_graphs": 28,
+  "reproducibility_limits_explicit": true,
+  "status": "PASS",
+  "tar_contents_match_directory": true,
+  "total_archive_files": 439,
+  "unsafe_or_duplicate_members": 0
+}
