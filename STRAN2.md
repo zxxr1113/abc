@@ -1,7 +1,7 @@
 # &stran2 技术路线、贡献与实验复评
 
 **Period:** Sep. 13-26, 2026<br>
-**Measurement refresh:** Oct. 1, 2026
+**Measurement refresh:** Oct. 2, 2026
 
 **Timing correction.** Earlier draft timings were parsed from mixed ABC command output that also contained `&r` and auxiliary commands. Those commands could reset or change the observed timing boundary, making some numbers look artificially low. All speed results below now use exact boundaries: an explicit transform timer for Strict and monotonic direct-child wall time for Window ODC. Every baseline/candidate/`&scorr` comparison is paired on the same host with the same boundary; DSEC time is excluded.
 
@@ -17,6 +17,24 @@
 每个计入主指标的 Build 必须同时满足：①构造了替换表达式；②同一提交前图上的自由 PI/RO 根差异 miter 为 SAT，且反例复核成功，UNKNOWN 不计入；③根关系通过完整时序证明；④实际安全提交产生正的精确 cleanup 收益。对同一选中集合移除这类 Build、保留其他候选，再重放计算其增益；逐例除以原 loaded AND 后报告等例均值，同时给出 AND 总数、加权比例、覆盖案例和独立 DSEC。
 
 还须在明确参数下让普通 `&scorr` 与匹配组合搜索达到联合稳定后评估。`&scorr` 本身也有时序证明能力；新方法的待验证贡献是发现并实现它未取得的新表达式缩减，不能仅凭“使用归纳”判定独有性。此前的起点是 Fast35 联合基线后的 **0.28169% / 35 AND / 29 个 Build / 8 个受益案例**；该具体替换的非组合性已证实，尚不构成任意组合优化算法最优面积的下界。2026-10-01进一步在同一Fast35提高至80 AND，但较大独立集的质量/覆盖仍弱；详见下一节。用户于 2026-10-01 在后继会话明确继续并行 Guide 研究；执行约定见下节。
+
+## 2026-10-02 强组合基线上的 Guide × divisor 质量诊断（进行中）
+
+用户恢复前一会话的云端合并任务，授权多 agent 并行、实验执行与不限 token 额度；随后明确本轮主任务是查清候选发现与构造瓶颈，先关闭会丢失候选的截断和加速限制，质量全部建立在强组合基础上。历史暂停仅指前轮，不阻止本轮。生产默认算法与研究入口的启用状态仍须分别报告。
+
+本轮先核原生 StrictGuide 的自由态硬约束，再核 divisor 组合覆盖、原始门数与实际共享门成本、候选保留；commit 暂只检查正确性。Guide 与 divisor 不是独立变量：同一观测表同时改变排序、池截断及表达式可行性。大 pool 和更强过滤不保证有收益；只有同根配方的首次恢复位置与实际证明/重放才能归因，不预设可达到旧 7%。
+
+**固定约定。**主指标沿用自由 PI/RO SAT 且见证回放、完整 SEQ 证明、实际同集合移除重放的正 Build AND及独立 DSEC，逐例以原 loaded AND 归一化等权平均；另报大小层、独立设计与最大贡献例剔除。每个变换/独立 DSEC 初始120秒，自由SAT30秒/百万冲突；timeout/UNKNOWN/未覆盖根均缺失，不能填零。先完成短批量机制判断，再决定正式产品矩阵。质量优先、不作同host受争用计时的速度结论。用户明确不限额度；当前接口无可靠任务独占额度统计，不给出伪精确token消耗。
+
+**强组合来源已找齐。**云端55份first-SEQ与loaded输入SHA均匹配原共享证据；55例均有历史联合固定点和loaded→prefix DSEC正文PASS。Fast35的 `joint_baseline/manifest.json`、`run_joint.py` 与holdout的manifest、`prepare_holdout_joint.py` 均在本地，精确command/env和源码patch不再缺失，索引见 `stran2_cloud_import_20261002/20261002T065236Z/agent_results_review/strong_baseline_provenance.json`。原基线为增强COM mode2/TFO1、Guide1→Guide0→scorr F1/C1000到decoded固定点，不能以live普通q4 COM替代。扩大搜索后还须跑相同构造能力的COM对照，旧有限配置固定点不是更大候选空间的组合最优证明。
+
+**预选机制样本。**保留云端六例b03/i2c/des_area/b20_opt/mem_ctrl/wb_dma，再按首SEQ实际规模加入aes_core/ac97_ctrl/systemcaes/b17/tv80，共11例；不因收益改样本。昂贵逐根构造从各例所有eligible根按ID等间隔预选最多32根，同图同根做单变量消融；全图轻量池统计另报。这个root样本只能建立机制证据，不外推整图面积。比如ethernet原loaded195995 AND、首SEQ仅202，不以原尺寸冒称当前大图。
+
+**关闭限制的边界。**原生 `B=0,D=0,q=0,j=0,w=0` 仅取消相应外层数量/深度/epoch限制；已发现TFO仍有隐式256上限，底层pair和greedy frontier还会按divisor数量截断。研究源码逐项显式关闭，成本消融另用冻结图真实共享门成本代替MFFC−raw-gates。库的15-bit配对编码及最多100门接口属于实现范围，必须显式检查，绝不以静默截断伪装无限；Stage5仍为贪心构造，不能叫全表达式穷尽。Cloud原型另分别取消top8、pool24以及上游reservoir/depth/alias数量限制；有限2门语法、free样本预筛和image证明域作为剩余边界单列。证明、拓扑合法与精确正cleanup不关闭。
+
+**首项已完成机制证据。**历史三臂六例inline-free-off最终105个已审计genuine Build，用C StrictGuide相同固定随机流/RO→PI顺序重放Q4的256自由态样本，102个被硬拒绝（b03 3/3、i2c 4/4、des0、b20_opt58/58、mem_ctrl12/12、wb_dma25/28）；每个首个拒绝lane都有完整原图scalar重放。105个均通过独立reset样本和cloud初始reset/image样本。这是对历史赢家的条件召回诊断，不是全批损失比例、新收益或改变Guide后能自然生成全部配方的保证。证据 `stran2_guide_divisor_20261002/guide/known_oracle_signatures_v1/`。
+
+本轮独立生产HEAD checker已在seed-hr-111本机构建并通过原规定检查；云端六例三臂的36份selected/ablation图已重新DSEC **36/36 PASS**，typed接口也逐图核对。云端全55的442→808 AND只完成紧凑表算术重算（12好43平0差），全55原始产品未包含在此次包，不能声称本轮重新逐图验证。候选代码与研究Python可移植验证、原生关闭截断源码及同根实验正在进行。所有原始状态保存在 `/mnt/home/zhaoxiran/script2/evidence/stran2_guide_divisor_20261002/` 和 `/mnt/home/zhaoxiran/script2/evidence/20261002T070010Z_seed-hr-111_validation_3375321/`，只在本报告整合科研叙述。
 
 ## 2026-10-01 云端接续：可复用非线性输入基与实际门成本
 

@@ -6,10 +6,11 @@ import unittest
 from diagnostic import append_worlds, choose_models, random_worlds, domain_diagnostics, worlds, digest
 from independent import Aig
 
-FROZEN=Path('/tmp/image-cegar-diagnostic-v1/source/diagnostic.py')
+PACKAGE=Path(__file__).resolve().parent.parent
+FROZEN=PACKAGE/'image_cegar_diagnostic/diagnostic.py'
 spec=importlib.util.spec_from_file_location('original_diagnostic_for_tests',FROZEN)
 d=importlib.util.module_from_spec(spec);spec.loader.exec_module(d)
-p=d.load_runtime(Path('/tmp/nonlinear-anytime-pilot-v1/source'))
+p=d.load_runtime(PACKAGE)
 
 class Fixture:
     ni,nl,m,na,no=2,2,7,3,2

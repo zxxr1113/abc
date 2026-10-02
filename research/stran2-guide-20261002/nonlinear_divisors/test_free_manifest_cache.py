@@ -11,7 +11,7 @@ import anytime as at
 import free_guided as fg
 import prototype as p
 from free_manifest_cache import ManifestCache
-from test_anytime import budget,fixture
+from test_anytime import budget,fixture,rewrite_preserving_mtime_with_changed_ctime
 
 class CacheTests(unittest.TestCase):
     def setUp(self):
@@ -50,8 +50,8 @@ class CacheTests(unittest.TestCase):
         self.assertEqual(self.cache.metrics['descriptor_opens'],self.cache.metrics['descriptor_closes'])
 
     def test_changed_same_size_restored_mtime_rejected(self):
-        bound,path,_=self.add(0);s=path.stat();data=path.read_bytes();path.write_bytes(data.replace(b'0x1',b'0x3'))
-        os.utime(path,ns=(s.st_atime_ns,s.st_mtime_ns))
+        bound,path,_=self.add(0);data=path.read_bytes()
+        rewrite_preserving_mtime_with_changed_ctime(path,data.replace(b'0x1',b'0x3'))
         with self.assertRaisesRegex(ValueError,'identity changed'):self.cache.check_identity(bound)
         self.assertTrue(self.cache.closed);self.assertFalse(self.cache.entries)
 

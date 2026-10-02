@@ -15,6 +15,7 @@ import diagnostic as d
 from test_diagnostic import Circuit,p
 import anytime as at
 from product import write_aig
+from test_anytime import rewrite_preserving_mtime_with_changed_ctime
 
 
 class HelperGuardTests(unittest.TestCase):
@@ -44,8 +45,7 @@ class HelperGuardTests(unittest.TestCase):
         return out,answer
 
     def mutate(self):
-        old=self.helper.stat();self.helper.write_bytes(b'B'*16)
-        os.utime(self.helper,ns=(old.st_atime_ns,old.st_mtime_ns))
+        old=rewrite_preserving_mtime_with_changed_ctime(self.helper,b'B'*16)
         self.assertEqual(self.helper.stat().st_size,old.st_size)
         self.assertEqual(self.helper.stat().st_mtime_ns,old.st_mtime_ns)
         self.assertNotEqual(self.helper.stat().st_ctime_ns,old.st_ctime_ns)

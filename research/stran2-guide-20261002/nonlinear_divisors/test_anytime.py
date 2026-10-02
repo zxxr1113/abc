@@ -20,6 +20,25 @@ def budget():
     return Budget(start, start + 30)
 
 
+def rewrite_preserving_mtime_with_changed_ctime(path, data):
+    """Make the metadata-change adversary explicit even on coarse-clock tmpfs.
+
+    A stat guard does not detect bytes changed within an identical metadata
+    tuple; full boundary SHA checks cover that separate condition.  These
+    tests exercise the guard only once the requested ctime change exists.
+    """
+    old = path.stat()
+    end = time.monotonic() + 1
+    while True:
+        path.write_bytes(data)
+        os.utime(path, ns=(old.st_atime_ns, old.st_mtime_ns))
+        if path.stat().st_ctime_ns != old.st_ctime_ns:
+            return old
+        if time.monotonic() >= end:
+            raise AssertionError("filesystem did not expose a ctime change")
+        time.sleep(0.002)
+
+
 def fixture(directory, same_next=True):
     # q1'=a, q2'=a: a*q1*b*q2 == a*q1*b on all reset-reachable states.
     path = directory / "input.aig"
@@ -93,8 +112,7 @@ class CacheTests(unittest.TestCase):
             self.broker.solve([[0]], "reset")
         solver = self.broker.solver
         stat = solver.stat()
-        solver.write_text("changed test solve")  # same length; restore original mtime
-        os.utime(solver, ns=(stat.st_atime_ns, stat.st_mtime_ns))
+        rewrite_preserving_mtime_with_changed_ctime(solver, b"changed test solve")
         self.assertEqual(solver.stat().st_size, stat.st_size)
         self.assertEqual(solver.stat().st_mtime_ns, stat.st_mtime_ns)
         with self.assertRaisesRegex(ValueError, "solver executable identity changed"):

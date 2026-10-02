@@ -233,7 +233,8 @@ class SupervisorTests(unittest.TestCase):
                 self.assertIsNone(report["child_pid"])
                 self.assertEqual(report["errno"],errno.ENOSPC)
                 self.assertIn("synthetic full output filesystem",report["traceback"])
-                self.assertTrue(any(str(files[0]) in note for note in caught.exception.__notes__))
+                if hasattr(caught.exception, "add_note"):
+                    self.assertTrue(any(str(files[0]) in note for note in caught.exception.__notes__))
 
     def test_popen_failure_preserves_primary_error_record(self):
         with tempfile.TemporaryDirectory() as temp:
