@@ -272,7 +272,7 @@ inline 可选后端新增更窄的模型验证 fast path：只有逐字节绑定
 
 全410份实际CNF的独立解析确认符合此条件。9059个已消费模型的compiled AND求值数从125,245,260降到10,144,012（−91.9007%）；加上不变的117,123,740次原图AND求值，算术操作量下降47.4901%。这**不包含plan构建、hash、schema及lookup成本，不能据此声称wall加速**。所有9059模型/300轮的full/cone/saved witness、完整样本、投影决定及签名历史一致；58个未完成chunk的额外模型仍排除。19项针对性测试和四组小型完成运行对照通过，八份DSEC绑定复核；聚合125项执行通过加另进程11项冻结前提测试，总136项唯一执行通过。
 
-正确性冻结源manifest为 `a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2`，紧凑证据在 `cloud_validation_20261001/cone_validator_reviewed/`。云环境恢复后全部冻结文件和复核索引再次校验一致，无需重复已完成运行。下一步只允许相同保存模型的两轮反序单worker计时，完整包含冷plan、三层绑定、原图回放、admission及输出成本；未完成该计时前不扩大正式cohort或改变推荐配置。
+正确性冻结源manifest为 `a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2`，紧凑证据在 `cloud_validation_20261001/cone_validator_reviewed/`。云环境恢复后全部冻结文件和复核索引再次校验一致，无需重复已完成运行。相同保存模型的两轮反序单worker计时已于2026-10-02完成并独立复核：24/24试验、36,236次模型回放、1200个admission轮全部匹配冻结参考。完整仪表化pipeline wall **236.81358→230.27028s（−2.7631%）**，两轮分别−1.64%/−3.83%；mem−11.82%、wb−3.19%，但b20 **+9.01%变慢**。边界包含冷plan、三层绑定、原图回放、admission/输出和额外test-only参考复核，无新solver/DSEC，不是端到端变换或面积测试。compiled validator47.5418→38.8376s（−18.31%），18,118个cone模型均新建plan、无cache复用，冷plan花22.2131s，说明gate算术节约被准备成本大幅抵消。b03表面节约0.797s与guard时间减少0.803s对应，其compiled validator反而略慢；cache/startup各自原因未被单独隔离，不能叫算法加速。两次匹配反序不足以给统计置信结论，OS文件cache未清空，环境重启前后的旧pilot时间不可直接相减。紧凑记录在 `cloud_validation_20261001/cone_timing_reviewed/`。因此**停止这条性能支线，保留full默认和cone可选实现，不为2.76%的保存记录结果扩跑正式cohort**。
 
 ### 自由域漏筛诊断：前态反馈发现一个真实但很小的增量
 

@@ -1,0 +1,316 @@
+{
+  "status": "PASS",
+  "plan_sha256": "459bdcb292a060c221386e58856cf6645e224546f684e49264fae95d1087e364",
+  "harness_sha256": "7eff7d5b857c76567284918b9d62d6991d0404443d62dec8322aa7a2f152f13f",
+  "source_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "source_summary_sha256": "0043fb27261a49bb67d0053e910fac873d3117d282abfce8823ccfc777170ce7",
+  "ledger_sha256": "728ee7eeb16ee4f8f57789f5d1bd89079382ce16533b8be7e9db3b116c9b28cd",
+  "trials": 24,
+  "model_replays": 36236,
+  "admission_rounds": 1200,
+  "unique_round_sample_vectors_independently_recomputed": 300,
+  "all_trial_semantics_equal_to_saved_reference": true,
+  "all_source_artifacts_bound": true,
+  "wall_full_s": 236.81357890300205,
+  "wall_cone_s": 230.27028044899635,
+  "wall_reduction_percent": 2.763058809514385,
+  "compiled_validator_full_s": 47.5418246930094,
+  "compiled_validator_cone_s": 38.83759950312742,
+  "cold_cone_planning_s": 22.21306915002424,
+  "cases": [
+    {
+      "case": "005_b03.aig",
+      "cone_two_repetitions_s": 1.442491201996745,
+      "full_two_repetitions_s": 2.239397449000535,
+      "reduction_percent": 35.58574416343364,
+      "saved_s": 0.7969062470037898
+    },
+    {
+      "case": "044_i2c.aig",
+      "cone_two_repetitions_s": 10.012889695000922,
+      "full_two_repetitions_s": 10.676580969000497,
+      "reduction_percent": 6.216327829354784,
+      "saved_s": 0.6636912739995751
+    },
+    {
+      "case": "041_des_area.aig",
+      "cone_two_repetitions_s": 4.774984411000332,
+      "full_two_repetitions_s": 4.776248896003381,
+      "reduction_percent": 0.026474436960488568,
+      "saved_s": 0.0012644850030483212
+    },
+    {
+      "case": "034_b20_opt.aig",
+      "cone_two_repetitions_s": 78.62897327999963,
+      "full_two_repetitions_s": 72.12896031499986,
+      "reduction_percent": -9.011654870128538,
+      "saved_s": -6.500012964999769
+    },
+    {
+      "case": "045_mem_ctrl.aig",
+      "cone_two_repetitions_s": 70.39848037799675,
+      "full_two_repetitions_s": 79.83939531400028,
+      "reduction_percent": 11.824882814897798,
+      "saved_s": 9.440914936003537
+    },
+    {
+      "case": "060_wb_dma.aig",
+      "cone_two_repetitions_s": 65.01246148300197,
+      "full_two_repetitions_s": 67.1529959599975,
+      "reduction_percent": 3.1875487405962133,
+      "saved_s": 2.1405344769955263
+    }
+  ],
+  "sweeps": [
+    {
+      "sweep": 0,
+      "reduction_percent": 1.6446368154304891
+    },
+    {
+      "sweep": 1,
+      "reduction_percent": 3.8338123942242786
+    }
+  ],
+  "boundaries": [
+    "Saved-record validation/admission only, no new SAT/model emission/discovery/DSEC",
+    "Direct-child wall includes two upstream binding layers, cold graph/plans, both full original-AIG passes, output I/O and extra test-only full sample reference pass",
+    "Nested component timers overlap parents and must not be added twice",
+    "Two order-reversed sweeps with OS cache retained, no statistical confidence claim",
+    "No comparison to pre-restart host times and no end-to-end speed or area inference"
+  ],
+  "recommendation": "Retain opt-in/default unchanged: 2.76% aggregate observed savings is small and b20 regresses 9.01%; no default switch or all55 rerun is justified by this timing diagnostic alone.",
+  "reviewer_new_solver_queries": 0,
+  "reviewer_new_DSEC_calls": 0,
+  "reviewer_new_benchmark_runs": 0,
+  "extra_artifact_review_wall_s": 14.229963000998396,
+  "trials_reviewed": [
+    {
+      "trial": 0,
+      "case": "005_b03.aig",
+      "validator": "full",
+      "models": 3,
+      "rounds": 1,
+      "status": "PASS",
+      "summary_sha256": "eed557487f0b9183803f2e14ce2a1bf86abd5f87cf3dad2b93af960c60ba45cd"
+    },
+    {
+      "trial": 1,
+      "case": "005_b03.aig",
+      "validator": "cone",
+      "models": 3,
+      "rounds": 1,
+      "status": "PASS",
+      "summary_sha256": "6628cb3405a6d43708b5dd71e2f3d21d5b9108036dbb27d0e5e5ae9aada1e4ad"
+    },
+    {
+      "trial": 2,
+      "case": "044_i2c.aig",
+      "validator": "cone",
+      "models": 1120,
+      "rounds": 31,
+      "status": "PASS",
+      "summary_sha256": "07093e7f7f674dae753ea79d82ef037918de0f0662e7879dc7d32e76cc3f9e1a"
+    },
+    {
+      "trial": 3,
+      "case": "044_i2c.aig",
+      "validator": "full",
+      "models": 1120,
+      "rounds": 31,
+      "status": "PASS",
+      "summary_sha256": "82c4e86dcdd12f90333f57da145f59a3fefadf6a1f9924f5e68a8178afc062ab"
+    },
+    {
+      "trial": 4,
+      "case": "041_des_area.aig",
+      "validator": "full",
+      "models": 114,
+      "rounds": 12,
+      "status": "PASS",
+      "summary_sha256": "2c681f641ef69732d927105abe8c1b668f293aac4c526900cc4ba3fca0f2a3d5"
+    },
+    {
+      "trial": 5,
+      "case": "041_des_area.aig",
+      "validator": "cone",
+      "models": 114,
+      "rounds": 12,
+      "status": "PASS",
+      "summary_sha256": "b4b4bb5508e91fbe142f2bca2af0a7d9a4a435d30b225b568df008618aead357"
+    },
+    {
+      "trial": 6,
+      "case": "034_b20_opt.aig",
+      "validator": "cone",
+      "models": 1705,
+      "rounds": 119,
+      "status": "PASS",
+      "summary_sha256": "82258a59a18af883e9bc02bef9c90bd0e3147f82237af422b34491779f5534a5"
+    },
+    {
+      "trial": 7,
+      "case": "034_b20_opt.aig",
+      "validator": "full",
+      "models": 1705,
+      "rounds": 119,
+      "status": "PASS",
+      "summary_sha256": "5769c5c1d41f6021c4af0d29b5a561a9349706454067d6e2eb7da8b340eb9c99"
+    },
+    {
+      "trial": 8,
+      "case": "045_mem_ctrl.aig",
+      "validator": "full",
+      "models": 2601,
+      "rounds": 49,
+      "status": "PASS",
+      "summary_sha256": "91eb72c924a19553808d52c56f95f4cd969103125db49002225f0dfd658e636a"
+    },
+    {
+      "trial": 9,
+      "case": "045_mem_ctrl.aig",
+      "validator": "cone",
+      "models": 2601,
+      "rounds": 49,
+      "status": "PASS",
+      "summary_sha256": "d249698e6b3adc7997f8f12b5478c78241ebc40b4ee810d1bc7e9f92a0c97ab5"
+    },
+    {
+      "trial": 10,
+      "case": "060_wb_dma.aig",
+      "validator": "cone",
+      "models": 3516,
+      "rounds": 88,
+      "status": "PASS",
+      "summary_sha256": "1e4f8c2ded0be53ca66bec9aab1e46eabb3eedd91cd42c408cf35334c5650f7e"
+    },
+    {
+      "trial": 11,
+      "case": "060_wb_dma.aig",
+      "validator": "full",
+      "models": 3516,
+      "rounds": 88,
+      "status": "PASS",
+      "summary_sha256": "c695790ea70a316bc849b3fb5a91326d55b194db1a3ba896ed5ddf706b70be97"
+    },
+    {
+      "trial": 12,
+      "case": "005_b03.aig",
+      "validator": "cone",
+      "models": 3,
+      "rounds": 1,
+      "status": "PASS",
+      "summary_sha256": "11a852aa2407c8c81d27b5a221e9ff2df8b56f8a277483d15df22651da30001b"
+    },
+    {
+      "trial": 13,
+      "case": "005_b03.aig",
+      "validator": "full",
+      "models": 3,
+      "rounds": 1,
+      "status": "PASS",
+      "summary_sha256": "be071a64ab0d96dff495914f9b0b48b32ab395c951b5f96dfae7d6e28c63e4b8"
+    },
+    {
+      "trial": 14,
+      "case": "044_i2c.aig",
+      "validator": "full",
+      "models": 1120,
+      "rounds": 31,
+      "status": "PASS",
+      "summary_sha256": "8d9d8739e2a32a3df5539bbe46df9cd879e388f02a21c753edbfc626a3509eca"
+    },
+    {
+      "trial": 15,
+      "case": "044_i2c.aig",
+      "validator": "cone",
+      "models": 1120,
+      "rounds": 31,
+      "status": "PASS",
+      "summary_sha256": "80f09149c5cfb75a75fb60e78c5467994d7b90af1ad5b2366ad9ed2cb7021ca0"
+    },
+    {
+      "trial": 16,
+      "case": "041_des_area.aig",
+      "validator": "cone",
+      "models": 114,
+      "rounds": 12,
+      "status": "PASS",
+      "summary_sha256": "8b57f501ac0999a4663b8dc42e02296a7b2b893847a35f4bfbf202daf6cce21e"
+    },
+    {
+      "trial": 17,
+      "case": "041_des_area.aig",
+      "validator": "full",
+      "models": 114,
+      "rounds": 12,
+      "status": "PASS",
+      "summary_sha256": "197c42421332be6c5051653f7d37370961941c81d10898c8e50b1f070992b9a3"
+    },
+    {
+      "trial": 18,
+      "case": "034_b20_opt.aig",
+      "validator": "full",
+      "models": 1705,
+      "rounds": 119,
+      "status": "PASS",
+      "summary_sha256": "a4941eb6ab0da46c7ea0dc44411f52ab980cb8a3ae665076ac4d65bf2f4e8402"
+    },
+    {
+      "trial": 19,
+      "case": "034_b20_opt.aig",
+      "validator": "cone",
+      "models": 1705,
+      "rounds": 119,
+      "status": "PASS",
+      "summary_sha256": "81b61dfa8a46cff71de319e22084c958c82b9594759bdc31f9920fff9efe9830"
+    },
+    {
+      "trial": 20,
+      "case": "045_mem_ctrl.aig",
+      "validator": "cone",
+      "models": 2601,
+      "rounds": 49,
+      "status": "PASS",
+      "summary_sha256": "703dd67fd996d7aa05004c3cbe9bef31b7cffbae14558e5c38932253f9ec7700"
+    },
+    {
+      "trial": 21,
+      "case": "045_mem_ctrl.aig",
+      "validator": "full",
+      "models": 2601,
+      "rounds": 49,
+      "status": "PASS",
+      "summary_sha256": "34ece0bc0c62f9f39df9cf1ca60c2f7fd2835de281cf5db6e7c950ad81ce6fcf"
+    },
+    {
+      "trial": 22,
+      "case": "060_wb_dma.aig",
+      "validator": "full",
+      "models": 3516,
+      "rounds": 88,
+      "status": "PASS",
+      "summary_sha256": "f7c4683847acfe10cd2692a04a672e722f910eb8aa133a38e0f7606da5c9fdee"
+    },
+    {
+      "trial": 23,
+      "case": "060_wb_dma.aig",
+      "validator": "cone",
+      "models": 3516,
+      "rounds": 88,
+      "status": "PASS",
+      "summary_sha256": "ee0b8785384544f25c27221ef08c000e2f11cc9eb0042fdaa6cc5f9a6fc86281"
+    }
+  ],
+  "script_sha256": "8980eb61830929e97636860f78843a81e29c13a3728ce9d81911dc409d8bfae5",
+  "mechanism_analysis_sha256": "76bbee005f4fc45fa030da58ff01406b4e83633f347addcda657249bcd5252cb",
+  "cone_models_and_cold_plans": 18118,
+  "observed_plan_cache_hits": 0,
+  "b03_caution": {
+    "full_guard_s": 1.7923892399994656,
+    "cone_guard_s": 0.9894264879985712,
+    "full_compiled_s": 0.0011686599973472767,
+    "cone_compiled_s": 0.0016254199945251457,
+    "interpretation": "The 0.7969s aggregate b03 wall difference is dominated by 0.8030s lower measured guard time. The tiny compiled validator is slower in cone mode. Cache/startup causes were not separately isolated; do not interpret the b03 percentage as algorithm speedup."
+  },
+  "parent_branch_disposition": "Stop this performance branch; retain opt-in code and full default, with no further optimization/cohort authorized"
+}

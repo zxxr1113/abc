@@ -1,0 +1,753 @@
+{
+  "controller_pid": 6,
+  "finished_utc": "2026-10-02T00:03:08Z",
+  "plan_sha256": "459bdcb292a060c221386e58856cf6645e224546f684e49264fae95d1087e364",
+  "started_utc": "2026-10-01T23:55:21Z",
+  "status": "COMPLETE_ALL_24_PASS",
+  "trials": [
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5648130048,
+        "free_disk_bytes": 9761759232
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5469532160,
+        "free_disk_bytes": 9761718272
+      },
+      "case": "005_b03.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "0"
+      ],
+      "direct_child_wall_s": 1.5620325340023555,
+      "finished_utc": "2026-10-01T23:55:23Z",
+      "log_sha256": "946381726af497a7dac567217ee0a66399aff5058310e6d97e52c98809e0f2c8",
+      "models": 3,
+      "returncode": 0,
+      "rounds": 1,
+      "semantic_digest": "14910409d07463932081ebf0342cf6f5e4762a5f42a55ec128f5c344d64c5235",
+      "started_utc": "2026-10-01T23:55:21Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_00_005_b03_full/summary.json",
+      "summary_sha256": "eed557487f0b9183803f2e14ce2a1bf86abd5f87cf3dad2b93af960c60ba45cd",
+      "sweep": 0,
+      "trial": 0,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5635997696,
+        "free_disk_bytes": 9761705984
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5540007936,
+        "free_disk_bytes": 9761669120
+      },
+      "case": "005_b03.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "1"
+      ],
+      "direct_child_wall_s": 0.7190903669979889,
+      "finished_utc": "2026-10-01T23:55:23Z",
+      "log_sha256": "d9a41671daa0f7c3b731742b4874e1cf1015eafa9cee3a155ffdfbb36aba6200",
+      "models": 3,
+      "returncode": 0,
+      "rounds": 1,
+      "semantic_digest": "14910409d07463932081ebf0342cf6f5e4762a5f42a55ec128f5c344d64c5235",
+      "started_utc": "2026-10-01T23:55:23Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_01_005_b03_cone/summary.json",
+      "summary_sha256": "6628cb3405a6d43708b5dd71e2f3d21d5b9108036dbb27d0e5e5ae9aada1e4ad",
+      "sweep": 0,
+      "trial": 1,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5618921472,
+        "free_disk_bytes": 9761660928
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5392621568,
+        "free_disk_bytes": 9756016640
+      },
+      "case": "044_i2c.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "2"
+      ],
+      "direct_child_wall_s": 5.0626454209996155,
+      "finished_utc": "2026-10-01T23:55:28Z",
+      "log_sha256": "f53679f035cd5dc54f71574a195d0d771ef092e9fb54ee437b64d62d6ca1d1a6",
+      "models": 1120,
+      "returncode": 0,
+      "rounds": 31,
+      "semantic_digest": "77a8b76585592583c4630775b7959aa6767e7438ef206b4731f706f6ebf968ac",
+      "started_utc": "2026-10-01T23:55:23Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_02_044_i2c_cone/summary.json",
+      "summary_sha256": "07093e7f7f674dae753ea79d82ef037918de0f0662e7879dc7d32e76cc3f9e1a",
+      "sweep": 0,
+      "trial": 2,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5605900288,
+        "free_disk_bytes": 9756008448
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5556350976,
+        "free_disk_bytes": 9750376448
+      },
+      "case": "044_i2c.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "3"
+      ],
+      "direct_child_wall_s": 5.376985376999073,
+      "finished_utc": "2026-10-01T23:55:34Z",
+      "log_sha256": "12a829b3fc2598825f8fb50a0dacc6cc1a5cae1a8424170f9f7db24e906e54c2",
+      "models": 1120,
+      "returncode": 0,
+      "rounds": 31,
+      "semantic_digest": "77a8b76585592583c4630775b7959aa6767e7438ef206b4731f706f6ebf968ac",
+      "started_utc": "2026-10-01T23:55:28Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_03_044_i2c_full/summary.json",
+      "summary_sha256": "82c4e86dcdd12f90333f57da145f59a3fefadf6a1f9924f5e68a8178afc062ab",
+      "sweep": 0,
+      "trial": 3,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5552832512,
+        "free_disk_bytes": 9750360064
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5335957504,
+        "free_disk_bytes": 9749102592
+      },
+      "case": "041_des_area.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "4"
+      ],
+      "direct_child_wall_s": 2.5595812770006887,
+      "finished_utc": "2026-10-01T23:55:36Z",
+      "log_sha256": "d0621c449db70c24c3e014b13997a747f5a71b364e4ddbed4e04a8526631cb97",
+      "models": 114,
+      "returncode": 0,
+      "rounds": 12,
+      "semantic_digest": "dd9409a1522dffa4c54fc9563859e9faa907574d5beb895157ef7bf43f5301f4",
+      "started_utc": "2026-10-01T23:55:34Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_04_041_des_area_full/summary.json",
+      "summary_sha256": "2c681f641ef69732d927105abe8c1b668f293aac4c526900cc4ba3fca0f2a3d5",
+      "sweep": 0,
+      "trial": 4,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5505167360,
+        "free_disk_bytes": 9749090304
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5464260608,
+        "free_disk_bytes": 9747841024
+      },
+      "case": "041_des_area.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "5"
+      ],
+      "direct_child_wall_s": 2.3712697689989,
+      "finished_utc": "2026-10-01T23:55:39Z",
+      "log_sha256": "b02950cb704a71b09e2d566f9595fbf841094badf4bd3298cbf8c5462203b3ce",
+      "models": 114,
+      "returncode": 0,
+      "rounds": 12,
+      "semantic_digest": "dd9409a1522dffa4c54fc9563859e9faa907574d5beb895157ef7bf43f5301f4",
+      "started_utc": "2026-10-01T23:55:36Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_05_041_des_area_cone/summary.json",
+      "summary_sha256": "b4b4bb5508e91fbe142f2bca2af0a7d9a4a435d30b225b568df008618aead357",
+      "sweep": 0,
+      "trial": 5,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5505138688,
+        "free_disk_bytes": 9747824640
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5364428800,
+        "free_disk_bytes": 9726480384
+      },
+      "case": "034_b20_opt.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "6"
+      ],
+      "direct_child_wall_s": 39.4942476239994,
+      "finished_utc": "2026-10-01T23:56:18Z",
+      "log_sha256": "6cbaeb8f0f556ad7526973fbc9a17895c28ad40fe0998094258f42627b1cdc0d",
+      "models": 1705,
+      "returncode": 0,
+      "rounds": 119,
+      "semantic_digest": "a575399b86a7cf5d6cb2ea411da54a0ae45c2e6324f4ac0bf6dfd898662ce6da",
+      "started_utc": "2026-10-01T23:55:39Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_06_034_b20_opt_cone/summary.json",
+      "summary_sha256": "82258a59a18af883e9bc02bef9c90bd0e3147f82237af422b34491779f5534a5",
+      "sweep": 0,
+      "trial": 6,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5579063296,
+        "free_disk_bytes": 9726472192
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5465776128,
+        "free_disk_bytes": 9705136128
+      },
+      "case": "034_b20_opt.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "7"
+      ],
+      "direct_child_wall_s": 33.881446547999076,
+      "finished_utc": "2026-10-01T23:56:52Z",
+      "log_sha256": "53f781caf0f6b84aea4545091543418333c268da091bf4945fe1ed8bb28b415d",
+      "models": 1705,
+      "returncode": 0,
+      "rounds": 119,
+      "semantic_digest": "a575399b86a7cf5d6cb2ea411da54a0ae45c2e6324f4ac0bf6dfd898662ce6da",
+      "started_utc": "2026-10-01T23:56:18Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_07_034_b20_opt_full/summary.json",
+      "summary_sha256": "5769c5c1d41f6021c4af0d29b5a561a9349706454067d6e2eb7da8b340eb9c99",
+      "sweep": 0,
+      "trial": 7,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5596532736,
+        "free_disk_bytes": 9705119744
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5410430976,
+        "free_disk_bytes": 9643802624
+      },
+      "case": "045_mem_ctrl.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "8"
+      ],
+      "direct_child_wall_s": 40.054553065998334,
+      "finished_utc": "2026-10-01T23:57:32Z",
+      "log_sha256": "da561ca48787b36b768d81c1eaf389dc15d01f7fadc2347b4df10b3202de187a",
+      "models": 2601,
+      "returncode": 0,
+      "rounds": 49,
+      "semantic_digest": "afbf22372a57af256dfb4b02749015b3dcd1813ea78d1f446596d1af7797f252",
+      "started_utc": "2026-10-01T23:56:52Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_08_045_mem_ctrl_full/summary.json",
+      "summary_sha256": "91eb72c924a19553808d52c56f95f4cd969103125db49002225f0dfd658e636a",
+      "sweep": 0,
+      "trial": 8,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5590888448,
+        "free_disk_bytes": 9643802624
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5267927040,
+        "free_disk_bytes": 9582493696
+      },
+      "case": "045_mem_ctrl.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "9"
+      ],
+      "direct_child_wall_s": 34.346907667997584,
+      "finished_utc": "2026-10-01T23:58:07Z",
+      "log_sha256": "c449a3a1d9867fd5451bd74dc90f6ed3ebcad80f371c8a5ab50ed00e8c5516ea",
+      "models": 2601,
+      "returncode": 0,
+      "rounds": 49,
+      "semantic_digest": "afbf22372a57af256dfb4b02749015b3dcd1813ea78d1f446596d1af7797f252",
+      "started_utc": "2026-10-01T23:57:32Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_09_045_mem_ctrl_cone/summary.json",
+      "summary_sha256": "d249698e6b3adc7997f8f12b5478c78241ebc40b4ee810d1bc7e9f92a0c97ab5",
+      "sweep": 0,
+      "trial": 9,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5581594624,
+        "free_disk_bytes": 9582485504
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5375643648,
+        "free_disk_bytes": 9526071296
+      },
+      "case": "060_wb_dma.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "10"
+      ],
+      "direct_child_wall_s": 31.92941019600039,
+      "finished_utc": "2026-10-01T23:58:39Z",
+      "log_sha256": "70e1af9501f1e2ca5522cbc7cd6065997a93827beb9e4d11f0ebb35a1a682f60",
+      "models": 3516,
+      "returncode": 0,
+      "rounds": 88,
+      "semantic_digest": "f3d477a1f14fdb2234c47b3ec2f7f45b19d7d1c0e751c94f41f464b958cc6c5c",
+      "started_utc": "2026-10-01T23:58:07Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_10_060_wb_dma_cone/summary.json",
+      "summary_sha256": "1e4f8c2ded0be53ca66bec9aab1e46eabb3eedd91cd42c408cf35334c5650f7e",
+      "sweep": 0,
+      "trial": 10,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5554016256,
+        "free_disk_bytes": 9526063104
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5382168576,
+        "free_disk_bytes": 9469923328
+      },
+      "case": "060_wb_dma.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "11"
+      ],
+      "direct_child_wall_s": 32.393930884998554,
+      "finished_utc": "2026-10-01T23:59:11Z",
+      "log_sha256": "60417a291cf02496defba2e45d57a2ce70161f880c5d828ab3aee60afb3bb88d",
+      "models": 3516,
+      "returncode": 0,
+      "rounds": 88,
+      "semantic_digest": "f3d477a1f14fdb2234c47b3ec2f7f45b19d7d1c0e751c94f41f464b958cc6c5c",
+      "started_utc": "2026-10-01T23:58:39Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_11_060_wb_dma_full/summary.json",
+      "summary_sha256": "c695790ea70a316bc849b3fb5a91326d55b194db1a3ba896ed5ddf706b70be97",
+      "sweep": 0,
+      "trial": 11,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5590421504,
+        "free_disk_bytes": 9469640704
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5506732032,
+        "free_disk_bytes": 9469599744
+      },
+      "case": "005_b03.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "12"
+      ],
+      "direct_child_wall_s": 0.7234008349987562,
+      "finished_utc": "2026-10-01T23:59:12Z",
+      "log_sha256": "54e1504ab2caf6cf6f00881586cde9f380ffb9eab5fc079bfce6d320c5a969a7",
+      "models": 3,
+      "returncode": 0,
+      "rounds": 1,
+      "semantic_digest": "14910409d07463932081ebf0342cf6f5e4762a5f42a55ec128f5c344d64c5235",
+      "started_utc": "2026-10-01T23:59:11Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_12_005_b03_cone/summary.json",
+      "summary_sha256": "11a852aa2407c8c81d27b5a221e9ff2df8b56f8a277483d15df22651da30001b",
+      "sweep": 1,
+      "trial": 12,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5556858880,
+        "free_disk_bytes": 9469591552
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5430517760,
+        "free_disk_bytes": 9469554688
+      },
+      "case": "005_b03.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "13"
+      ],
+      "direct_child_wall_s": 0.6773649149981793,
+      "finished_utc": "2026-10-01T23:59:12Z",
+      "log_sha256": "634282d88c4a154f133fcd944c53e0b8c15d7bb97b1abf6a05e8216aa921f72b",
+      "models": 3,
+      "returncode": 0,
+      "rounds": 1,
+      "semantic_digest": "14910409d07463932081ebf0342cf6f5e4762a5f42a55ec128f5c344d64c5235",
+      "started_utc": "2026-10-01T23:59:12Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_13_005_b03_full/summary.json",
+      "summary_sha256": "be071a64ab0d96dff495914f9b0b48b32ab395c951b5f96dfae7d6e28c63e4b8",
+      "sweep": 1,
+      "trial": 13,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5554438144,
+        "free_disk_bytes": 9469546496
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5519921152,
+        "free_disk_bytes": 9463914496
+      },
+      "case": "044_i2c.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "14"
+      ],
+      "direct_child_wall_s": 5.299595592001424,
+      "finished_utc": "2026-10-01T23:59:18Z",
+      "log_sha256": "fa899b9ac2399cd17556d21835658f354f8b2c617dc942cdb0aef78ad9fd56af",
+      "models": 1120,
+      "returncode": 0,
+      "rounds": 31,
+      "semantic_digest": "77a8b76585592583c4630775b7959aa6767e7438ef206b4731f706f6ebf968ac",
+      "started_utc": "2026-10-01T23:59:12Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_14_044_i2c_full/summary.json",
+      "summary_sha256": "8d9d8739e2a32a3df5539bbe46df9cd879e388f02a21c753edbfc626a3509eca",
+      "sweep": 1,
+      "trial": 14,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5567578112,
+        "free_disk_bytes": 9463898112
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5496983552,
+        "free_disk_bytes": 9458405376
+      },
+      "case": "044_i2c.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "15"
+      ],
+      "direct_child_wall_s": 4.950244274001307,
+      "finished_utc": "2026-10-01T23:59:23Z",
+      "log_sha256": "7b14ed37c309337b2534ffafc649e7143e1cff291fb17376ac01df2b71be954b",
+      "models": 1120,
+      "returncode": 0,
+      "rounds": 31,
+      "semantic_digest": "77a8b76585592583c4630775b7959aa6767e7438ef206b4731f706f6ebf968ac",
+      "started_utc": "2026-10-01T23:59:18Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_15_044_i2c_cone/summary.json",
+      "summary_sha256": "80f09149c5cfb75a75fb60e78c5467994d7b90af1ad5b2366ad9ed2cb7021ca0",
+      "sweep": 1,
+      "trial": 15,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5556019200,
+        "free_disk_bytes": 9458245632
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5504360448,
+        "free_disk_bytes": 9457045504
+      },
+      "case": "041_des_area.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "16"
+      ],
+      "direct_child_wall_s": 2.4037146420014324,
+      "finished_utc": "2026-10-01T23:59:25Z",
+      "log_sha256": "599562a1f479b3b4f97ff787f763a77b7be2555f17984ca0742c7622601faf9b",
+      "models": 114,
+      "returncode": 0,
+      "rounds": 12,
+      "semantic_digest": "dd9409a1522dffa4c54fc9563859e9faa907574d5beb895157ef7bf43f5301f4",
+      "started_utc": "2026-10-01T23:59:23Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_16_041_des_area_cone/summary.json",
+      "summary_sha256": "8b57f501ac0999a4663b8dc42e02296a7b2b893847a35f4bfbf202daf6cce21e",
+      "sweep": 1,
+      "trial": 16,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5554180096,
+        "free_disk_bytes": 9456975872
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5443489792,
+        "free_disk_bytes": 9455718400
+      },
+      "case": "041_des_area.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "17"
+      ],
+      "direct_child_wall_s": 2.216667619002692,
+      "finished_utc": "2026-10-01T23:59:27Z",
+      "log_sha256": "8c4c34e374d140ff6c240df5e6c3f34b4d4c59b6849d68c43d9773f09ae0c922",
+      "models": 114,
+      "returncode": 0,
+      "rounds": 12,
+      "semantic_digest": "dd9409a1522dffa4c54fc9563859e9faa907574d5beb895157ef7bf43f5301f4",
+      "started_utc": "2026-10-01T23:59:25Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_17_041_des_area_full/summary.json",
+      "summary_sha256": "197c42421332be6c5051653f7d37370961941c81d10898c8e50b1f070992b9a3",
+      "sweep": 1,
+      "trial": 17,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5553364992,
+        "free_disk_bytes": 9455710208
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5282017280,
+        "free_disk_bytes": 9433313280
+      },
+      "case": "034_b20_opt.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "18"
+      ],
+      "direct_child_wall_s": 38.24751376700078,
+      "finished_utc": "2026-10-02T00:00:05Z",
+      "log_sha256": "d509f66ddd71d85b16186b8153b2f7b9f9d6d9ee48679fdb99328d8b898f327f",
+      "models": 1705,
+      "returncode": 0,
+      "rounds": 119,
+      "semantic_digest": "a575399b86a7cf5d6cb2ea411da54a0ae45c2e6324f4ac0bf6dfd898662ce6da",
+      "started_utc": "2026-10-01T23:59:27Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_18_034_b20_opt_full/summary.json",
+      "summary_sha256": "a4941eb6ab0da46c7ea0dc44411f52ab980cb8a3ae665076ac4d65bf2f4e8402",
+      "sweep": 1,
+      "trial": 18,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5587333120,
+        "free_disk_bytes": 9433305088
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5305626624,
+        "free_disk_bytes": 9413017600
+      },
+      "case": "034_b20_opt.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "19"
+      ],
+      "direct_child_wall_s": 39.13472565600023,
+      "finished_utc": "2026-10-02T00:00:45Z",
+      "log_sha256": "ba66b5f8cb2959dc85aa55607f33b1425113ee7767dfde685f403d31a32f8d95",
+      "models": 1705,
+      "returncode": 0,
+      "rounds": 119,
+      "semantic_digest": "a575399b86a7cf5d6cb2ea411da54a0ae45c2e6324f4ac0bf6dfd898662ce6da",
+      "started_utc": "2026-10-02T00:00:05Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_19_034_b20_opt_cone/summary.json",
+      "summary_sha256": "81b61dfa8a46cff71de319e22084c958c82b9594759bdc31f9920fff9efe9830",
+      "sweep": 1,
+      "trial": 19,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5537226752,
+        "free_disk_bytes": 9413005312
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5386752000,
+        "free_disk_bytes": 9351557120
+      },
+      "case": "045_mem_ctrl.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "20"
+      ],
+      "direct_child_wall_s": 36.051572709999164,
+      "finished_utc": "2026-10-02T00:01:21Z",
+      "log_sha256": "3571952c6fe4280afb95a7503552454411f56abf095ae91a4bd846934d4c34fe",
+      "models": 2601,
+      "returncode": 0,
+      "rounds": 49,
+      "semantic_digest": "afbf22372a57af256dfb4b02749015b3dcd1813ea78d1f446596d1af7797f252",
+      "started_utc": "2026-10-02T00:00:45Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_20_045_mem_ctrl_cone/summary.json",
+      "summary_sha256": "703dd67fd996d7aa05004c3cbe9bef31b7cffbae14558e5c38932253f9ec7700",
+      "sweep": 1,
+      "trial": 20,
+      "validator": "cone"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5602746368,
+        "free_disk_bytes": 9351557120
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5325430784,
+        "free_disk_bytes": 9289330688
+      },
+      "case": "045_mem_ctrl.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "21"
+      ],
+      "direct_child_wall_s": 39.78484224800195,
+      "finished_utc": "2026-10-02T00:02:00Z",
+      "log_sha256": "f16fe9205c68de2a5abdfbbea7b1f006e7b663d3915bdf14cf74b7a4d13af38b",
+      "models": 2601,
+      "returncode": 0,
+      "rounds": 49,
+      "semantic_digest": "afbf22372a57af256dfb4b02749015b3dcd1813ea78d1f446596d1af7797f252",
+      "started_utc": "2026-10-02T00:01:21Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_21_045_mem_ctrl_full/summary.json",
+      "summary_sha256": "34ece0bc0c62f9f39df9cf1ca60c2f7fd2835de281cf5db6e7c950ad81ce6fcf",
+      "sweep": 1,
+      "trial": 21,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5575053312,
+        "free_disk_bytes": 9289322496
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5328379904,
+        "free_disk_bytes": 9233956864
+      },
+      "case": "060_wb_dma.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "22"
+      ],
+      "direct_child_wall_s": 34.759065074998944,
+      "finished_utc": "2026-10-02T00:02:35Z",
+      "log_sha256": "098e10810bd2b706de85d27b55d3a0836cca88f72ffbdbda65f64d7a81b118a4",
+      "models": 3516,
+      "returncode": 0,
+      "rounds": 88,
+      "semantic_digest": "f3d477a1f14fdb2234c47b3ec2f7f45b19d7d1c0e751c94f41f464b958cc6c5c",
+      "started_utc": "2026-10-02T00:02:00Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_22_060_wb_dma_full/summary.json",
+      "summary_sha256": "f7c4683847acfe10cd2692a04a672e722f910eb8aa133a38e0f7606da5c9fdee",
+      "sweep": 1,
+      "trial": 22,
+      "validator": "full"
+    },
+    {
+      "capacity_before": {
+        "available_memory_bytes": 5589192704,
+        "free_disk_bytes": 9233948672
+      },
+      "capacity_low_water": {
+        "available_memory_bytes": 5388513280,
+        "free_disk_bytes": 9177526272
+      },
+      "case": "060_wb_dma.aig",
+      "command": [
+        "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+        "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+        "worker",
+        "23"
+      ],
+      "direct_child_wall_s": 33.08305128700158,
+      "finished_utc": "2026-10-02T00:03:08Z",
+      "log_sha256": "90ed8a7f3b098f60cd4f364b5c8c7a17725f2e6a0df8c4f3a06dd4e856b8277b",
+      "models": 3516,
+      "returncode": 0,
+      "rounds": 88,
+      "semantic_digest": "f3d477a1f14fdb2234c47b3ec2f7f45b19d7d1c0e751c94f41f464b958cc6c5c",
+      "started_utc": "2026-10-02T00:02:35Z",
+      "status": "PASS",
+      "summary": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_23_060_wb_dma_cone/summary.json",
+      "summary_sha256": "ee0b8785384544f25c27221ef08c000e2f11cc9eb0042fdaa6cc5f9a6fc86281",
+      "sweep": 1,
+      "trial": 23,
+      "validator": "cone"
+    }
+  ]
+}

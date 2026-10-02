@@ -1,0 +1,18 @@
+{
+  "b03_caution": "The 0.80s aggregate b03 difference is dominated by guard/cache/startup variability (full guard 1.79s, cone 0.99s), not its ~1ms compiled validation; retain both trials but do not interpret b03 percentage as algorithm speedup.",
+  "b20_observation": "Across both repetitions, compiled validation rises from 16.46s to 23.26s, including 14.22s of cold cone planning; primary pipeline rises by 6.50s (9.01%).",
+  "cone_capture_including_hash_wall_s": 11.50455525900179,
+  "cone_evaluation_excluding_plan_wall_s": 5.119975094101392,
+  "cone_models": 18118,
+  "cone_plan_build_wall_s": 22.21306915002424,
+  "cone_plan_cache_hits_observed": 0,
+  "cone_plans_built": 18118,
+  "finding": "Every consumed model built a fresh assumption plan in this stream. The nominal compiled gate-count reduction does not price DFS set/stack traversal, node sorting and tuple plan allocation, complete projection validation, or immutable capture.",
+  "full_evaluation_wall_s": 40.77510514404639,
+  "limitations": "Two repetitions quantify this run, not statistical confidence. Full pipeline includes the declared test-only reference check. No model choices, proofs, products, or area metrics change.",
+  "measured_scope": "Two fixed order-reversed sweeps of the identical consumed model stream, including guards, upstream binding layers, cold plans, both original AIG passes, admission, output and full-sample reference validation.",
+  "mem_ctrl_observation": "Across both repetitions, compiled validation drops from 18.50s to 9.21s; primary pipeline drops by 9.44s (11.82%).",
+  "recommendation": "Keep exact-cone experimental. The 2.76% observed fixed-stream pipeline reduction and mixed per-case effects do not establish an end-to-end transform improvement or justify another formal cohort by themselves. Any later code hypothesis should first address cold one-use plan overhead under the same fixed model stream; no retuning or runtime change was performed here.",
+  "status": "SAVED_RECORD_MECHANISM_OBSERVATION",
+  "timing_summary_sha256": "0043fb27261a49bb67d0053e910fac873d3117d282abfce8823ccfc777170ce7"
+}
