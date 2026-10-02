@@ -10,6 +10,62 @@
 **指标更正（2026-09-30 最终审计）。**历史表的 Build 列为 `seq_commit_build_and_gain / loaded AND`：在 Strict 中该字段是已选候选的结构 marginal gain 求和，未分配组合提交产生的额外 cleanup；在 ODC 中则按同一提交集合做精确类型归因。因此历史 Strict 的 “Ordered Build” 名称不准确。下述最新审计另给出按 Direct→Build 顺序重放的精确 Build、自由状态 SAT 反例确认的非组合 Build 和完整流程净差。阶段/最终总缩减均使用实际图 AND 差。百分比默认是逐例相对原 loaded AND 再等例平均；百分点记为 pp。
 
 
+## 2026-10-02 普通 stran2 的 ODC 缩减归因与实现审计
+
+用户本轮明确**不考虑强组合前缀**，要求先详细归因，再排查旧 Strict 约7%而 ODC 未达到预期约14%的原因。本节只诊断普通 q4 COMB → Strict → Window ODC；与同报告另行记录的强组合 Guide/divisor 研究分别归因，不改变该研究的授权或状态。本节不启动 rewrite 或旧弱变种。审计源码为生产 `75ae0910ee100ba6162e333b1fab42b7d2f42dda`，算法源码未改。内部并行审计不创建其他 Codex chat。
+
+**结论。**存在可确认的搜索空间收窄、有限前缀停止、提交前贪心损失及统计归因缺陷；尚未找到 care 极性、漏出口或错误授证的具体 bug。ODC 的合法替换集合更大，不推出有限算法的面积收益翻倍。当前证据不能把各机制损失相加成“可追回约5个百分点”，也不能承诺修正后14%。
+
+### 先建立归因口径与判别链路
+
+固定同一输入和普通 Strict endpoint，以 loaded AND `A0`、初始 scorr 后 `Ac`、q4 COMB 后 `Ak`、Strict 后 `As`、ODC 后 `Aw` 区分四段：`最终缩减 = (A0-Ac + Ac-Ak + Ak-As + As-Aw)/A0`。旧7%是 **SEQ Build marginal 字段**，包含在 Strict 阶段图差中；不是全流程面积，不是时序独占，也不能与另一配置 ODC 的增量直接相加。新增 ODC 用 `As-Aw`，类型归因用同一实际选中集合的精确重放，候选估计 gain 不相加成面积。
+
+排查链路为：①输入/构建/环境/指标可比性 → ②根覆盖与空间/寄存器出口 → ③care、极性、重汇聚、容量 → ④divisor reservoir/pool/support/completion → ⑤原teacher、长reset样本、辅助自由状态样本 → ⑥CBS与完整时序证明、UNKNOWN与共享批次 → ⑦窗口兼容性、结构选择、当前图验证及cleanup → ⑧q前缀、轮数、无提交停止及超时覆盖。逐项区分已测事实、代码确定的限制和未量化的假设。
+
+| 普通前缀证据；百分比均相对原loaded AND等例平均 | Strict SEQ Build | Strict+ODC SEQ Build | ODC真实额外AND缩减 | 边界 |
+|---|---:|---:|---:|---|
+| 旧Fast35 F1/C1000，同35输入SHA、同旧binary | 7.057889% | 8.958466% | 1.900577 pp / 812 AND | 35/35旧独立DSEC PASS；历史Strict列仍为marginal |
+| 旧Fast35 F2/C1000 | 7.071088% | 9.599563% | 2.528475 pp / 805 AND | 不与F1混作单因素因果 |
+| 2026-09-29 New58，三臂共同DSEC PASS44例，Guide/CEX旧Strict开关关 | 3.04559% | 9.66080% | 6.61521 pp | 不与旧Fast35样本/旧7%相加 |
+
+旧Fast35两臂 q4 COMB Build 均3.051571%，COMB+SEQ Build 字段之和为10.109460%/12.010037%；全流程最终AND缩减为27.325113%/29.225690%。这三个口径不可混用。旧 CSV `seq_build_only_and_gain`两臂恰均2737 AND/7.053857%，**没有包含ODC**；主用 `seq_commit_build_and_gain`和实际图差则包含812 AND且闭合。当前New58的45个完成例逐例核对：ODC前段AND等于单独Strict产品；ODC总Build减Strict Build、SEQ差及窗口图差全部相等，未发现主指标漏记。
+
+实际参数也须按stage核对：旧 `-E 747118613`使ODC为 **q320/B128/N20/depth4/max-extra80**；2026-09-29 `-E 742531093`使其为 **q80/B64/N20/depth4/max-extra80**，不是命令表面的q20/B16。两者core上限8、TFI深度8、无E512，均Build-only。新批次 `-O0/-L4/H2`；旧批次 `-O0/-L16/H2`。Strict speed 的S0/w3仅应用于Strict副本，Window重新使用原全局S=-1，没有意外继承S0。初始F/C与事务F/C分别记录，`ABC_STRICT_BOTH_POLARITIES`也应明确记录，不能只记Guide/CEX。
+
+### 已确认的实现限制及实际漏斗
+
+1. **ODC默认删掉全部零门替换与MFFC1根。**[ODC入口](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranOdc.h:769)置 `fBuildOnly=1`，[根循环](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranOdc.h:907)跳过MFFC≤1；较大根同样不搜索Constant/Existing，native折叠为零门的recipe及Kit/BDC的constant/literal也被丢弃。ODC下合法的Direct关系未必是此前Strict关系，故“Strict已经跑过”不能证明它们无价值。本轮独立读取**35个普通Strict、Guide/CEX开启、初始F1/C1000**保存产品，35/35原result状态为DSEC PASS，文件SHA与AND逐一相符：18,331个剩余AND根中 **9,682为MFFC1（52.82%；等例比例55.80%）**，只剩8,649根进入默认ODC的大小域。MFFC1定义另用fanin引用重数独立核对。此为排除根数量，**不是损失面积比例**。独立8赋值局部图例也证明MFFC1可以有合法正cleanup ODC。若启用E512，MFFC1 Direct仍固定使用L1 care，不能认为同时开放了深窗口。
+
+2. **H2把部分ODC又收紧为辅助行上的根相等。**[SigGuide](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranSigGuide.h:290)对附加free PI/RO及cube行强制care全1；H2在原care观察缺一侧根极性时介入。New58完成45例累计170,182次guide root调用，46,518次changed（27.34%），不是从未触发的理论问题。独立反例 `r=(a&b)&c`、出口 `y=r&a`、替换 `r'=b&c`：8个赋值的出口全等，根2→1 AND；`a=0,b=c=1`处根差在真实care之外，H2全care却拒绝。精确复刻生产固定随机流与CI顺序[a,b,c]，64个附加行有8个此类根差。此例证明**连组合ODC也可能被拒**；未执行原生构造/证明/提交，不将其当真实基准面积。H2也能排除伪候选，净质量影响仍需同图对照。
+
+3. **窗口观察比永久输出等价更强。**[WindowCollect](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranOdcCare.h:82)在每个PO/RI、特殊门、depth或容量处保留出口；当前depth4、最多80额外AND。直接触及RI的根被要求当前RI关系成立，不利用跨寄存器之后的永久PO不可观察性；增加F不会改变此空间边界。增加构造预算N还会反向缩小窗口容量 `100-N`，不是纯构造消融。旧首快照8588根的历史结构分析中，4231根触及RI，4805触及depth4、142触及容量；1489根本身成为出口，其中1375纯RI、64同时RI/PO。这些理由可能重叠，不相加。新45例模拟累计care bits为239,401,374/404,267,008（59.22%有care），约40.78%采样观察被masked，却不等于40.78%可删门；227,502/1,235,112证明查询恢复full care。独立数学检查256个DAG、32,768个窗口×64赋值，全部满足跨界边起点被保留为出口及 `全TFO care ⊆ window care`。未发现补边、翻转或重汇聚漏传播；此为数学模型验证，不冒称已执行当前C函数的完整证明。
+
+4. **care放宽不自动扩展divisor和completion搜索。**[DivPool](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranTfo.h:132)仍受TFI深度、reservoir、较早对象ID、完整fanin一跳TFO、ranked B和core8限制。rank本身使用care，但当前未开E33554432，[TFO pool rescue](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranBuild.h:1611)仍以strict root labels找exact core，可能不保留只在care上有用的材料；日志care-pool-changed=0与此一致，不能说整个rank从未用care。native、Kit/BDC的有限support与ISF completion也不枚举全部合法表达式。旧样本上没生成候选，不能区分“无机会”与“当前材料/构造找不到”。
+
+5. **teacher覆盖与传递不同于正式证明能力。**Strict私有主动CEX bank在[阶段切换](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTrans.c:721)被释放，ODC只接收初始封存pDb；不自动继承取得旧7%的所有教学信息。ODC另用CEX_MODE2/COMPRESS4，把原观察与64条256帧随机reset轨迹压缩后用于构造；随机长轨迹不是失败候选的SAT反馈，更多证明时间不会自动增强teacher。`ABC_STRICT_GUIDE`并未误套到ODC，ODC的全care附加约束来自自身H2。care在root-batch overflow路径按原selected traces及全部帧精确投影，未见stale列重算；其他Q/overflow设置的启发式选择与断言覆盖另列，普通Q4家族不能外推。
+
+6. **主要候选计数流失分别在证明和窗口预筛选。**New58 **45个完成产品**（主面积比较另用三臂PASS44例）的累计流为：**1,318,870生成 → 1,235,112正增益尝试 → 95,705获证 → 5,621进入结构选择 → 5,395选中**。其中90,084个已证候选被窗口兼容性挡掉，余226在后续结构/冲突/无环/增益选择中失去。数值包含跨轮重复与同root备选，不能以95,705−5,395计算可追回面积。CBS b100、SEQ C1000及共享推测批次均为有限证明，SAT反驳与UNKNOWN/不完整须分开；116,970次induction UNKNOWN是义务/调用计数，不是同数真实等价候选。历史相同窗口加深F新增145证书但仅9个进入安全选中集合，也说明只增加证明深度不充分。
+
+7. **已证pool在全局面积选择之前已经贪心收窄。**[ODC选择](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranOdc.h:321)按局部gain降序，`WindowPoolAdd`立即预留整个窗口及外部reads；同root仅首个已证recipe保留，再交给GWMIN与结构gain。预留候选后来被弃，先被挡住的备选也不回填。独立冲突图A gain3挡B/C各2证明预贪心可选3而兼容集合可选4；不是实际电路收益测量。窗口互不干扰条件用于保证任意子集都安全，**不能直接删除兼容性检查**。ODC证书不能像Strict历史那样跨改图直接drain，任何新提交策略仍需当前图完整证明。
+
+8. **保守gain被当作必需的正收益门槛。**[构造门数限制](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranBuild.h:1009)及[frontier过滤](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranBuild.h:2140)使用MFFC−raw recipe gates；已有结构hash复用和下游cleanup可能使实际收益更高，却只有已过门槛、已证且进入SafePool的候选才用FrozenRecipeCost。这个下界≤0不推出精确cleanup≤0。独立局部AIG的8态例中，保守gain0而实际4→3 AND；Strict可能从另一根取得同收益，所以不将例子称为Strict固定点后的新增ODC面积。
+
+9. **no-commit不代表搜索空间耗尽，轮数上限也确实截断。**[ODC调度](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranOdc.h:802)关闭-j分页，各root只取wave0的q前缀，随后销毁cursor；[无提交即退出](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranOdc.h:1054)，即便iterator capped而未exhausted。新45例22例hit L4且最后仍提交，23例no-commit；iterator cumulative cap hits4719/170011；另有窗口容量溢出6201/197396次window-discovery调用，二者分开。三臂PASS44例四轮真实ODC gain为9076/5871/2134/973 AND。旧F2在线control日志的35例全部未hit L16，轮数1–14，仍复现9.599563%；第5–13轮合计仅108 AND/0.114718 pp、5例受益，故旧约9.6%不能归因于L4。该control来自另一旧binary/归一化SHA，只作旧机制复现，不当同binary消融。旧depth/cap有限变体证据保留，不为当前审计重新启动。裸-k/-J默认O64可进一步截断证明，但上述正式家族均O0，排除这一原因。
+
+10. **证明通道统计有确定缺陷，面积主账没有对应漏计。**[ODC成功候选标记](/mnt/home/zhaoxiran/abc/src/proof/cec/cecTranOdc.h:344)忽略逐义务vStage，在非CBS-only运行中把所有成功候选统一标为SEQ。这是diagnostic defect：不会导致错误提交或改变AND，却不能据此说ODC候选都需要时序证明。应按全部出口的实际CBS/SEQ状态记录，再对所选集合做面积归因；走SEQ通道也不证明高预算自由状态SAT一定为SAT。旧 `build_only`未含ODC的问题另如上，不覆盖主提交字段。
+
+### 已排除的解释、证据边界与下一步
+
+当前未见窗口出口漏约束、Shannon masked-pair factor极性错误、缓存hash碰撞、UNKNOWN复用为证书或跳过正cleanup的问题。native完整流cache以有序truth words和options做完整键比较，只发布exhausted流；q截断prefix不缓存为完整结果。cache/factor是已测同图工程机制，不把它们当作面积损失根因。每个ODC提交继续要求当前图完整出口证明和正精确cleanup，不能为涨分放宽。
+
+覆盖与接口必须单列：本节主数量取普通Fast35/New58，不把已知HWMCC B/C分区错配的旧裸DSEC PASS混入。New58新ODC主批次45/58完成，超时13例不填零；较大集合的选择偏差已在下文保存。编译/执行身份也发现潜在复现风险：workspace `./abc` SHA为 `4624260a5d6514ca326fa0ce559b80a17e8b1f9bca8d4ef58d9328e350a01bd8`，无build record、缺当前stage-option打印字符串，不能视为当前HEAD测试binary；本轮没有执行它。shuguang资源采样256/256 busy CPU，故未启动新ABC构建或面积/性能矩阵；没有把本轮Python观察开销当算法速度。
+
+优先做**同一普通Strict endpoint**上的判别，而非先堆F/C/B/q：①E512 on/off，区分MFFC1与其他根的Direct；②H0/H2与使用真实window care的辅助观察，区分伪候选过滤与有效ODC误排；③逐root保存完整候选身份及raw/frozen/exact成本，量化保守gain剪枝；④保存全部已证pool和预筛选原因，复放兼容集合及被丢备选；⑤同图区分q capped/exhausted与真正no-op，并核Lcap末轮；⑥记录逐出口CBS/SEQ/SAT/UNKNOWN及真实reset反例。**构造、证明、选择、最终面积是四层；不得把不同改图轨迹的涨分简单分摊相加。**这些是下一轮判别方案，本次没有开始算法重构、默认切换或生产集成；没有证据承诺14%。
+
+此区分也与先行工作对ODC依赖和兼容性损失的分析一致：[Scalable Sequential Optimization Under Observability Don't Cares, DATE 2024](https://people.eecs.berkeley.edu/~alanmi/publications/2024/date24_seq.pdf)。其技术映射面积口径不与本项目AIG AND百分比比较。
+
+本轮唯一叙述报告为本文件；可执行复算脚本、逐例CSV、源码/图SHA、初始dirty patch、资源和binary核查、独立数学结果统一在 `/mnt/home/zhaoxiran/script2/evidence/stran2_odc_audit_20261002/20261002T073225Z_shuguang_ab2fac38/`：`identity.json`、`resource_source_binary_audit.json`、`analyze_root_coverage.py`、`structural_coverage/`、`care_construct/`、`proof_commit_static.py/json`、`historical/`。本轮检查为历史产品只读复算、结构身份/引用双核及独立数学检查；**没有新运行原生ABC/DSEC，也没有把合成反例当基准收益**。生产算法未改，前轮Guide停止决定及下述历史证据保持。
+
 ## 当前主目标（用户于 2026-10-01 明确）
 
 论文贡献的主指标是：**组合不等价、但从指定 reset 出发时序等价的新构造 Build 所带来的精确 AND 缩减**。用户关心的是这种 Build reduction；整条 `&stran` 的总缩减、Direct 收益、组合等价的 Build 收益及完整证明/CBS-only 的整流程差，不替代这个主指标。
