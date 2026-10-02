@@ -1,0 +1,62 @@
+{
+  "accepted_samples": 454,
+  "complete_sample_and_projection_reference_match": true,
+  "counts": {
+    "upstream_batch_model_rows": 2601,
+    "upstream_batches_each_layer": 49,
+    "upstream_solve_model_receipts": 2601
+  },
+  "harness_sha256": "7eff7d5b857c76567284918b9d62d6991d0404443d62dec8322aa7a2f152f13f",
+  "models": 2601,
+  "new_DSEC": 0,
+  "new_solver_queries": 0,
+  "notes": "Primary direct-child wall includes startup/final summary/exit. Test-only whole-sample reference reevaluation is top_reference_validation; top_collector retains exactly two original passes per model. No OS cache flush.",
+  "peak_rss_kib": 289428,
+  "rounds": 49,
+  "semantic_digest": "afbf22372a57af256dfb4b02749015b3dcd1813ea78d1f446596d1af7797f252",
+  "source_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "status": "PASS",
+  "timer_calls": {
+    "nested_binding_read_hash_parse": 147,
+    "nested_binding_receipt": 7803,
+    "nested_compiled_cnf_hash": 49,
+    "nested_full_compiled_evaluate": 2601,
+    "nested_original_AIG_step": 5202,
+    "nested_original_recipe": 2601,
+    "nested_runtime_JSON_output": 147,
+    "top_admission_signature": 49,
+    "top_case_guard": 1,
+    "top_case_initialization": 1,
+    "top_collector": 49,
+    "top_final_guard": 1,
+    "top_reference_validation": 49,
+    "top_round_output": 49,
+    "top_round_prepare": 49,
+    "top_upstream_binding_layers": 49
+  },
+  "timers_inclusive_seconds": {
+    "nested_binding_read_hash_parse": 1.9000724479883502,
+    "nested_binding_receipt": 0.03790447995925206,
+    "nested_compiled_cnf_hash": 0.7118936580118316,
+    "nested_full_compiled_evaluate": 8.682618350001576,
+    "nested_original_AIG_step": 8.669712019123835,
+    "nested_original_recipe": 0.026925869100523414,
+    "nested_runtime_JSON_output": 2.0041845180167,
+    "top_admission_signature": 4.684942562995275,
+    "top_case_guard": 0.6128095999993093,
+    "top_case_initialization": 0.2286885749999783,
+    "top_collector": 23.387850160001108,
+    "top_final_guard": 0.6736916010013374,
+    "top_reference_validation": 5.094314829999348,
+    "top_round_output": 1.6042901070068183,
+    "top_round_prepare": 2.2070026969922765,
+    "top_upstream_binding_layers": 1.4112487620150205
+  },
+  "trial": {
+    "case": "045_mem_ctrl.aig",
+    "sweep": 0,
+    "trial": 8,
+    "validator": "full"
+  },
+  "worker_wall_before_summary_s": 39.91222029900018
+}

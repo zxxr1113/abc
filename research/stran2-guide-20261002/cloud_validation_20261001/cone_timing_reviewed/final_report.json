@@ -1,0 +1,32 @@
+{
+  "all_samples_witnesses_admission_signatures_match": true,
+  "b03_clarification": "The 0.7969s aggregate b03 wall difference is dominated by 0.8030s lower measured guard time. The tiny compiled validator is slower in cone mode. Cache/startup causes were not separately isolated; do not interpret the b03 percentage as algorithm speedup.",
+  "b20_regression_percent": 9.011654870128538,
+  "cone_compiled_validator_s": 38.83759950312742,
+  "cone_pipeline_wall_s": 230.27028044899635,
+  "decision": "Parent directed stopping this performance branch after independent review. Keep cone opt-in and full evaluator default. No more cone optimization or formal cohort.",
+  "full_compiled_validator_s": 47.5418246930094,
+  "full_pipeline_wall_s": 236.81357890300205,
+  "independent_review": {
+    "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-cone-timing-independent-review/review.json",
+    "sha256": "9055ab88c2589cb4b4564b4c84a3d71a10bac71071e30f554c269f9a1b3ff5df"
+  },
+  "limits": "Saved-record pipeline only, two order-reversed sweeps, no statistical confidence or end-to-end transform/area claim. All mandated guards, cold plans, both original passes, admission/output and declared extra test-only sample reference validation included.",
+  "mem_ctrl_reduction_percent": 11.824882814897798,
+  "models_per_arm_per_sweep": 9059,
+  "new_DSEC": 0,
+  "new_solver_queries": 0,
+  "observed_wall_reduction_percent": 2.763058809514385,
+  "old_negative_pilot_unchanged": true,
+  "raw_evidence_root": "/workspace/shared/stran2-cone-saved-record-timing-v1",
+  "raw_replays_retained": true,
+  "rounds_per_arm_per_sweep": 300,
+  "runtime_source_edits_in_timing_task": false,
+  "source_commit": "c0d12621986168756135c1427ed9f7f0651497d2",
+  "source_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "status": "COMPLETE_INDEPENDENT_REVIEW_PASS_BRANCH_STOPPED",
+  "timing_summary_sha256": "0043fb27261a49bb67d0053e910fac873d3117d282abfce8823ccfc777170ce7",
+  "total_model_replays": 36236,
+  "total_rounds": 1200,
+  "trials": 24
+}

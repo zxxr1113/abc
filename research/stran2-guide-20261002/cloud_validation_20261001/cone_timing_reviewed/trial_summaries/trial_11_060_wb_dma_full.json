@@ -1,0 +1,62 @@
+{
+  "accepted_samples": 639,
+  "complete_sample_and_projection_reference_match": true,
+  "counts": {
+    "upstream_batch_model_rows": 3516,
+    "upstream_batches_each_layer": 88,
+    "upstream_solve_model_receipts": 3516
+  },
+  "harness_sha256": "7eff7d5b857c76567284918b9d62d6991d0404443d62dec8322aa7a2f152f13f",
+  "models": 3516,
+  "new_DSEC": 0,
+  "new_solver_queries": 0,
+  "notes": "Primary direct-child wall includes startup/final summary/exit. Test-only whole-sample reference reevaluation is top_reference_validation; top_collector retains exactly two original passes per model. No OS cache flush.",
+  "peak_rss_kib": 278932,
+  "rounds": 88,
+  "semantic_digest": "f3d477a1f14fdb2234c47b3ec2f7f45b19d7d1c0e751c94f41f464b958cc6c5c",
+  "source_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "status": "PASS",
+  "timer_calls": {
+    "nested_binding_read_hash_parse": 264,
+    "nested_binding_receipt": 10548,
+    "nested_compiled_cnf_hash": 88,
+    "nested_full_compiled_evaluate": 3516,
+    "nested_original_AIG_step": 7032,
+    "nested_original_recipe": 3516,
+    "nested_runtime_JSON_output": 264,
+    "top_admission_signature": 88,
+    "top_case_guard": 1,
+    "top_case_initialization": 1,
+    "top_collector": 88,
+    "top_final_guard": 1,
+    "top_reference_validation": 88,
+    "top_round_output": 88,
+    "top_round_prepare": 88,
+    "top_upstream_binding_layers": 88
+  },
+  "timers_inclusive_seconds": {
+    "nested_binding_read_hash_parse": 1.6221136490603385,
+    "nested_binding_receipt": 0.047873338728095405,
+    "nested_compiled_cnf_hash": 0.47495347400035826,
+    "nested_full_compiled_evaluate": 4.8890526831419265,
+    "nested_original_AIG_step": 4.642921313035913,
+    "nested_original_recipe": 0.0213952219892235,
+    "nested_runtime_JSON_output": 1.7161205740449077,
+    "top_admission_signature": 7.960602411010768,
+    "top_case_guard": 0.4952319840012933,
+    "top_case_initialization": 0.21127945199987153,
+    "top_collector": 14.515788626016729,
+    "top_final_guard": 0.23856129399791826,
+    "top_reference_validation": 4.194998471011786,
+    "top_round_output": 1.3663707610176061,
+    "top_round_prepare": 2.124887674013735,
+    "top_upstream_binding_layers": 1.1716669980050938
+  },
+  "trial": {
+    "case": "060_wb_dma.aig",
+    "sweep": 0,
+    "trial": 11,
+    "validator": "full"
+  },
+  "worker_wall_before_summary_s": 32.287795620002726
+}

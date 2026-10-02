@@ -1,0 +1,26 @@
+{"event": "START", "utc": "2026-10-01T23:55:21Z", "plan_sha256": "459bdcb292a060c221386e58856cf6645e224546f684e49264fae95d1087e364", "capacity": {"free_disk_bytes": 9761763328, "available_memory_bytes": 5648130048}}
+{"event": "PASS", "trial": 0, "case": "005_b03.aig", "validator": "full", "wall_s": 1.5620325340023555, "models": 3, "rounds": 1}
+{"event": "PASS", "trial": 1, "case": "005_b03.aig", "validator": "cone", "wall_s": 0.7190903669979889, "models": 3, "rounds": 1}
+{"event": "PASS", "trial": 2, "case": "044_i2c.aig", "validator": "cone", "wall_s": 5.0626454209996155, "models": 1120, "rounds": 31}
+{"event": "PASS", "trial": 3, "case": "044_i2c.aig", "validator": "full", "wall_s": 5.376985376999073, "models": 1120, "rounds": 31}
+{"event": "PASS", "trial": 4, "case": "041_des_area.aig", "validator": "full", "wall_s": 2.5595812770006887, "models": 114, "rounds": 12}
+{"event": "PASS", "trial": 5, "case": "041_des_area.aig", "validator": "cone", "wall_s": 2.3712697689989, "models": 114, "rounds": 12}
+{"event": "PASS", "trial": 6, "case": "034_b20_opt.aig", "validator": "cone", "wall_s": 39.4942476239994, "models": 1705, "rounds": 119}
+{"event": "PASS", "trial": 7, "case": "034_b20_opt.aig", "validator": "full", "wall_s": 33.881446547999076, "models": 1705, "rounds": 119}
+{"event": "PASS", "trial": 8, "case": "045_mem_ctrl.aig", "validator": "full", "wall_s": 40.054553065998334, "models": 2601, "rounds": 49}
+{"event": "PASS", "trial": 9, "case": "045_mem_ctrl.aig", "validator": "cone", "wall_s": 34.346907667997584, "models": 2601, "rounds": 49}
+{"event": "PASS", "trial": 10, "case": "060_wb_dma.aig", "validator": "cone", "wall_s": 31.92941019600039, "models": 3516, "rounds": 88}
+{"event": "PASS", "trial": 11, "case": "060_wb_dma.aig", "validator": "full", "wall_s": 32.393930884998554, "models": 3516, "rounds": 88}
+{"event": "PASS", "trial": 12, "case": "005_b03.aig", "validator": "cone", "wall_s": 0.7234008349987562, "models": 3, "rounds": 1}
+{"event": "PASS", "trial": 13, "case": "005_b03.aig", "validator": "full", "wall_s": 0.6773649149981793, "models": 3, "rounds": 1}
+{"event": "PASS", "trial": 14, "case": "044_i2c.aig", "validator": "full", "wall_s": 5.299595592001424, "models": 1120, "rounds": 31}
+{"event": "PASS", "trial": 15, "case": "044_i2c.aig", "validator": "cone", "wall_s": 4.950244274001307, "models": 1120, "rounds": 31}
+{"event": "PASS", "trial": 16, "case": "041_des_area.aig", "validator": "cone", "wall_s": 2.4037146420014324, "models": 114, "rounds": 12}
+{"event": "PASS", "trial": 17, "case": "041_des_area.aig", "validator": "full", "wall_s": 2.216667619002692, "models": 114, "rounds": 12}
+{"event": "PASS", "trial": 18, "case": "034_b20_opt.aig", "validator": "full", "wall_s": 38.24751376700078, "models": 1705, "rounds": 119}
+{"event": "PASS", "trial": 19, "case": "034_b20_opt.aig", "validator": "cone", "wall_s": 39.13472565600023, "models": 1705, "rounds": 119}
+{"event": "PASS", "trial": 20, "case": "045_mem_ctrl.aig", "validator": "cone", "wall_s": 36.051572709999164, "models": 2601, "rounds": 49}
+{"event": "PASS", "trial": 21, "case": "045_mem_ctrl.aig", "validator": "full", "wall_s": 39.78484224800195, "models": 2601, "rounds": 49}
+{"event": "PASS", "trial": 22, "case": "060_wb_dma.aig", "validator": "full", "wall_s": 34.759065074998944, "models": 3516, "rounds": 88}
+{"event": "PASS", "trial": 23, "case": "060_wb_dma.aig", "validator": "cone", "wall_s": 33.08305128700158, "models": 3516, "rounds": 88}
+{"event": "COMPLETE", "utc": "2026-10-02T00:03:08Z", "trials": 24}

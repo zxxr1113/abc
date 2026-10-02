@@ -1,0 +1,62 @@
+{
+  "accepted_samples": 3,
+  "complete_sample_and_projection_reference_match": true,
+  "counts": {
+    "upstream_batch_model_rows": 3,
+    "upstream_batches_each_layer": 1,
+    "upstream_solve_model_receipts": 3
+  },
+  "harness_sha256": "7eff7d5b857c76567284918b9d62d6991d0404443d62dec8322aa7a2f152f13f",
+  "models": 3,
+  "new_DSEC": 0,
+  "new_solver_queries": 0,
+  "notes": "Primary direct-child wall includes startup/final summary/exit. Test-only whole-sample reference reevaluation is top_reference_validation; top_collector retains exactly two original passes per model. No OS cache flush.",
+  "peak_rss_kib": 177292,
+  "rounds": 1,
+  "semantic_digest": "14910409d07463932081ebf0342cf6f5e4762a5f42a55ec128f5c344d64c5235",
+  "source_manifest_sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2",
+  "status": "PASS",
+  "timer_calls": {
+    "nested_binding_read_hash_parse": 3,
+    "nested_binding_receipt": 9,
+    "nested_compiled_cnf_hash": 1,
+    "nested_full_compiled_evaluate": 3,
+    "nested_original_AIG_step": 6,
+    "nested_original_recipe": 3,
+    "nested_runtime_JSON_output": 3,
+    "top_admission_signature": 1,
+    "top_case_guard": 1,
+    "top_case_initialization": 1,
+    "top_collector": 1,
+    "top_final_guard": 1,
+    "top_reference_validation": 1,
+    "top_round_output": 1,
+    "top_round_prepare": 1,
+    "top_upstream_binding_layers": 1
+  },
+  "timers_inclusive_seconds": {
+    "nested_binding_read_hash_parse": 0.002138357998774154,
+    "nested_binding_receipt": 5.648800652124919e-05,
+    "nested_compiled_cnf_hash": 0.00032959300006041303,
+    "nested_full_compiled_evaluate": 0.00021768599617644213,
+    "nested_original_AIG_step": 0.0002745160018093884,
+    "nested_original_recipe": 1.3940996723249555e-05,
+    "nested_runtime_JSON_output": 0.000703953999618534,
+    "top_admission_signature": 0.0359997099985776,
+    "top_case_guard": 0.23362679399724584,
+    "top_case_initialization": 0.10442051900099614,
+    "top_collector": 0.004043716999149183,
+    "top_final_guard": 0.22857697500148788,
+    "top_reference_validation": 0.0004057559999637306,
+    "top_round_output": 0.0005624719997285865,
+    "top_round_prepare": 0.0016204179992200807,
+    "top_upstream_binding_layers": 0.0019484920012473594
+  },
+  "trial": {
+    "case": "005_b03.aig",
+    "sweep": 1,
+    "trial": 13,
+    "validator": "full"
+  },
+  "worker_wall_before_summary_s": 0.6138038460012467
+}

@@ -1,0 +1,315 @@
+{
+  "files": {
+    "approved_proposal.json": {
+      "bytes": 7173,
+      "original_path": "/workspace/shared/stran2-cone-validator-correctness-v1/saved_record_timing_proposal.json",
+      "sha256": "76774d2fa3f1c4cf1702d16b9f8eefbf5e29864bb5985ed5c12b8b36f431f16e"
+    },
+    "controller.log": {
+      "bytes": 3551,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/controller.log",
+      "sha256": "040c67c7b38c764ff6635a516a21d11a23608f730acaf5b537d1e36585c040e7"
+    },
+    "final_report.json": {
+      "bytes": 2072,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/final_report.json",
+      "sha256": "cd3fe6bc3c4719c3de54daa4c5df2de253ca46fdbf651c555d34d82a8bfc6f6b"
+    },
+    "frozen_source_manifest.json": {
+      "bytes": 6024,
+      "original_path": "/workspace/shared/stran2-cone-validator-correctness-v1/final_manifest.json",
+      "sha256": "a3a1dbf2609def7a186cf13be4591ad61baa6c3a3e09f220e813f4bf8e3e3fa2"
+    },
+    "independent_review/review.log": {
+      "bytes": 1907,
+      "original_path": "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-cone-timing-independent-review/review.log",
+      "sha256": "d6b460b596c639de773dca6983734f28eea8847c1f5ce9b3cf21bfa03b1d8a8a"
+    },
+    "independent_review/review.py": {
+      "bytes": 10167,
+      "original_path": "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-cone-timing-independent-review/review.py",
+      "sha256": "8980eb61830929e97636860f78843a81e29c13a3728ce9d81911dc409d8bfae5"
+    },
+    "independent_timing_review.json": {
+      "bytes": 10259,
+      "original_path": "/workspace/scratch/7e0c7273599c/evidence-preserved/inline-cone-timing-independent-review/review.json",
+      "sha256": "9055ab88c2589cb4b4564b4c84a3d71a10bac71071e30f554c269f9a1b3ff5df"
+    },
+    "ledger.json": {
+      "bytes": 28918,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/ledger.json",
+      "sha256": "728ee7eeb16ee4f8f57789f5d1bd89079382ce16533b8be7e9db3b116c9b28cd"
+    },
+    "mechanism_analysis.json": {
+      "bytes": 2111,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/mechanism_analysis.json",
+      "sha256": "76bbee005f4fc45fa030da58ff01406b4e83633f347addcda657249bcd5252cb"
+    },
+    "plan.json": {
+      "bytes": 425476,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/plan.json",
+      "sha256": "459bdcb292a060c221386e58856cf6645e224546f684e49264fae95d1087e364"
+    },
+    "summarize_timing.py": {
+      "bytes": 6690,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/summarize_timing.py",
+      "sha256": "d1da51c7b7284453c3b69196521d2d19dc096f1798ca3a4d8bd47f75de0eb285"
+    },
+    "timing_harness.py": {
+      "bytes": 24929,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_harness.py",
+      "sha256": "7eff7d5b857c76567284918b9d62d6991d0404443d62dec8322aa7a2f152f13f"
+    },
+    "timing_summary.json": {
+      "bytes": 84596,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/timing_summary.json",
+      "sha256": "0043fb27261a49bb67d0053e910fac873d3117d282abfce8823ccfc777170ce7"
+    },
+    "trial_logs/trial_00.log": {
+      "bytes": 2208,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_00.log",
+      "sha256": "946381726af497a7dac567217ee0a66399aff5058310e6d97e52c98809e0f2c8"
+    },
+    "trial_logs/trial_01.log": {
+      "bytes": 2527,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_01.log",
+      "sha256": "d9a41671daa0f7c3b731742b4874e1cf1015eafa9cee3a155ffdfbb36aba6200"
+    },
+    "trial_logs/trial_02.log": {
+      "bytes": 2547,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_02.log",
+      "sha256": "f53679f035cd5dc54f71574a195d0d771ef092e9fb54ee437b64d62d6ca1d1a6"
+    },
+    "trial_logs/trial_03.log": {
+      "bytes": 2211,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_03.log",
+      "sha256": "12a829b3fc2598825f8fb50a0dacc6cc1a5cae1a8424170f9f7db24e906e54c2"
+    },
+    "trial_logs/trial_04.log": {
+      "bytes": 2215,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_04.log",
+      "sha256": "d0621c449db70c24c3e014b13997a747f5a71b364e4ddbed4e04a8526631cb97"
+    },
+    "trial_logs/trial_05.log": {
+      "bytes": 2548,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_05.log",
+      "sha256": "b02950cb704a71b09e2d566f9595fbf841094badf4bd3298cbf8c5462203b3ce"
+    },
+    "trial_logs/trial_06.log": {
+      "bytes": 2553,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_06.log",
+      "sha256": "6cbaeb8f0f556ad7526973fbc9a17895c28ad40fe0998094258f42627b1cdc0d"
+    },
+    "trial_logs/trial_07.log": {
+      "bytes": 2218,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_07.log",
+      "sha256": "53f781caf0f6b84aea4545091543418333c268da091bf4945fe1ed8bb28b415d"
+    },
+    "trial_logs/trial_08.log": {
+      "bytes": 2207,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_08.log",
+      "sha256": "da561ca48787b36b768d81c1eaf389dc15d01f7fadc2347b4df10b3202de187a"
+    },
+    "trial_logs/trial_09.log": {
+      "bytes": 2541,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_09.log",
+      "sha256": "c449a3a1d9867fd5451bd74dc90f6ed3ebcad80f371c8a5ab50ed00e8c5516ea"
+    },
+    "trial_logs/trial_10.log": {
+      "bytes": 2542,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_10.log",
+      "sha256": "70e1af9501f1e2ca5522cbc7cd6065997a93827beb9e4d11f0ebb35a1a682f60"
+    },
+    "trial_logs/trial_11.log": {
+      "bytes": 2213,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_11.log",
+      "sha256": "60417a291cf02496defba2e45d57a2ce70161f880c5d828ab3aee60afb3bb88d"
+    },
+    "trial_logs/trial_12.log": {
+      "bytes": 2527,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_12.log",
+      "sha256": "54e1504ab2caf6cf6f00881586cde9f380ffb9eab5fc079bfce6d320c5a969a7"
+    },
+    "trial_logs/trial_13.log": {
+      "bytes": 2211,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_13.log",
+      "sha256": "634282d88c4a154f133fcd944c53e0b8c15d7bb97b1abf6a05e8216aa921f72b"
+    },
+    "trial_logs/trial_14.log": {
+      "bytes": 2212,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_14.log",
+      "sha256": "fa899b9ac2399cd17556d21835658f354f8b2c617dc942cdb0aef78ad9fd56af"
+    },
+    "trial_logs/trial_15.log": {
+      "bytes": 2547,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_15.log",
+      "sha256": "7b14ed37c309337b2534ffafc649e7143e1cff291fb17376ac01df2b71be954b"
+    },
+    "trial_logs/trial_16.log": {
+      "bytes": 2546,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_16.log",
+      "sha256": "599562a1f479b3b4f97ff787f763a77b7be2555f17984ca0742c7622601faf9b"
+    },
+    "trial_logs/trial_17.log": {
+      "bytes": 2222,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_17.log",
+      "sha256": "8c4c34e374d140ff6c240df5e6c3f34b4d4c59b6849d68c43d9773f09ae0c922"
+    },
+    "trial_logs/trial_18.log": {
+      "bytes": 2219,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_18.log",
+      "sha256": "d509f66ddd71d85b16186b8153b2f7b9f9d6d9ee48679fdb99328d8b898f327f"
+    },
+    "trial_logs/trial_19.log": {
+      "bytes": 2554,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_19.log",
+      "sha256": "ba66b5f8cb2959dc85aa55607f33b1425113ee7767dfde685f403d31a32f8d95"
+    },
+    "trial_logs/trial_20.log": {
+      "bytes": 2547,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_20.log",
+      "sha256": "3571952c6fe4280afb95a7503552454411f56abf095ae91a4bd846934d4c34fe"
+    },
+    "trial_logs/trial_21.log": {
+      "bytes": 2210,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_21.log",
+      "sha256": "f16fe9205c68de2a5abdfbbea7b1f006e7b663d3915bdf14cf74b7a4d13af38b"
+    },
+    "trial_logs/trial_22.log": {
+      "bytes": 2208,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_22.log",
+      "sha256": "098e10810bd2b706de85d27b55d3a0836cca88f72ffbdbda65f64d7a81b118a4"
+    },
+    "trial_logs/trial_23.log": {
+      "bytes": 2539,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trial_23.log",
+      "sha256": "90ed8a7f3b098f60cd4f364b5c8c7a17725f2e6a0df8c4f3a06dd4e856b8277b"
+    },
+    "trial_summaries/trial_00_005_b03_full.json": {
+      "bytes": 2416,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_00_005_b03_full/summary.json",
+      "sha256": "eed557487f0b9183803f2e14ce2a1bf86abd5f87cf3dad2b93af960c60ba45cd"
+    },
+    "trial_summaries/trial_01_005_b03_cone.json": {
+      "bytes": 2771,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_01_005_b03_cone/summary.json",
+      "sha256": "6628cb3405a6d43708b5dd71e2f3d21d5b9108036dbb27d0e5e5ae9aada1e4ad"
+    },
+    "trial_summaries/trial_02_044_i2c_cone.json": {
+      "bytes": 2791,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_02_044_i2c_cone/summary.json",
+      "sha256": "07093e7f7f674dae753ea79d82ef037918de0f0662e7879dc7d32e76cc3f9e1a"
+    },
+    "trial_summaries/trial_03_044_i2c_full.json": {
+      "bytes": 2419,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_03_044_i2c_full/summary.json",
+      "sha256": "82c4e86dcdd12f90333f57da145f59a3fefadf6a1f9924f5e68a8178afc062ab"
+    },
+    "trial_summaries/trial_04_041_des_area_full.json": {
+      "bytes": 2423,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_04_041_des_area_full/summary.json",
+      "sha256": "2c681f641ef69732d927105abe8c1b668f293aac4c526900cc4ba3fca0f2a3d5"
+    },
+    "trial_summaries/trial_05_041_des_area_cone.json": {
+      "bytes": 2792,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_05_041_des_area_cone/summary.json",
+      "sha256": "b4b4bb5508e91fbe142f2bca2af0a7d9a4a435d30b225b568df008618aead357"
+    },
+    "trial_summaries/trial_06_034_b20_opt_cone.json": {
+      "bytes": 2797,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_06_034_b20_opt_cone/summary.json",
+      "sha256": "82258a59a18af883e9bc02bef9c90bd0e3147f82237af422b34491779f5534a5"
+    },
+    "trial_summaries/trial_07_034_b20_opt_full.json": {
+      "bytes": 2426,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_07_034_b20_opt_full/summary.json",
+      "sha256": "5769c5c1d41f6021c4af0d29b5a561a9349706454067d6e2eb7da8b340eb9c99"
+    },
+    "trial_summaries/trial_08_045_mem_ctrl_full.json": {
+      "bytes": 2415,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_08_045_mem_ctrl_full/summary.json",
+      "sha256": "91eb72c924a19553808d52c56f95f4cd969103125db49002225f0dfd658e636a"
+    },
+    "trial_summaries/trial_09_045_mem_ctrl_cone.json": {
+      "bytes": 2785,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_09_045_mem_ctrl_cone/summary.json",
+      "sha256": "d249698e6b3adc7997f8f12b5478c78241ebc40b4ee810d1bc7e9f92a0c97ab5"
+    },
+    "trial_summaries/trial_10_060_wb_dma_cone.json": {
+      "bytes": 2786,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_10_060_wb_dma_cone/summary.json",
+      "sha256": "1e4f8c2ded0be53ca66bec9aab1e46eabb3eedd91cd42c408cf35334c5650f7e"
+    },
+    "trial_summaries/trial_11_060_wb_dma_full.json": {
+      "bytes": 2421,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_11_060_wb_dma_full/summary.json",
+      "sha256": "c695790ea70a316bc849b3fb5a91326d55b194db1a3ba896ed5ddf706b70be97"
+    },
+    "trial_summaries/trial_12_005_b03_cone.json": {
+      "bytes": 2771,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_12_005_b03_cone/summary.json",
+      "sha256": "11a852aa2407c8c81d27b5a221e9ff2df8b56f8a277483d15df22651da30001b"
+    },
+    "trial_summaries/trial_13_005_b03_full.json": {
+      "bytes": 2419,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_13_005_b03_full/summary.json",
+      "sha256": "be071a64ab0d96dff495914f9b0b48b32ab395c951b5f96dfae7d6e28c63e4b8"
+    },
+    "trial_summaries/trial_14_044_i2c_full.json": {
+      "bytes": 2420,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_14_044_i2c_full/summary.json",
+      "sha256": "8d9d8739e2a32a3df5539bbe46df9cd879e388f02a21c753edbfc626a3509eca"
+    },
+    "trial_summaries/trial_15_044_i2c_cone.json": {
+      "bytes": 2791,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_15_044_i2c_cone/summary.json",
+      "sha256": "80f09149c5cfb75a75fb60e78c5467994d7b90af1ad5b2366ad9ed2cb7021ca0"
+    },
+    "trial_summaries/trial_16_041_des_area_cone.json": {
+      "bytes": 2790,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_16_041_des_area_cone/summary.json",
+      "sha256": "8b57f501ac0999a4663b8dc42e02296a7b2b893847a35f4bfbf202daf6cce21e"
+    },
+    "trial_summaries/trial_17_041_des_area_full.json": {
+      "bytes": 2430,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_17_041_des_area_full/summary.json",
+      "sha256": "197c42421332be6c5051653f7d37370961941c81d10898c8e50b1f070992b9a3"
+    },
+    "trial_summaries/trial_18_034_b20_opt_full.json": {
+      "bytes": 2427,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_18_034_b20_opt_full/summary.json",
+      "sha256": "a4941eb6ab0da46c7ea0dc44411f52ab980cb8a3ae665076ac4d65bf2f4e8402"
+    },
+    "trial_summaries/trial_19_034_b20_opt_cone.json": {
+      "bytes": 2798,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_19_034_b20_opt_cone/summary.json",
+      "sha256": "81b61dfa8a46cff71de319e22084c958c82b9594759bdc31f9920fff9efe9830"
+    },
+    "trial_summaries/trial_20_045_mem_ctrl_cone.json": {
+      "bytes": 2791,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_20_045_mem_ctrl_cone/summary.json",
+      "sha256": "703dd67fd996d7aa05004c3cbe9bef31b7cffbae14558e5c38932253f9ec7700"
+    },
+    "trial_summaries/trial_21_045_mem_ctrl_full.json": {
+      "bytes": 2418,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_21_045_mem_ctrl_full/summary.json",
+      "sha256": "34ece0bc0c62f9f39df9cf1ca60c2f7fd2835de281cf5db6e7c950ad81ce6fcf"
+    },
+    "trial_summaries/trial_22_060_wb_dma_full.json": {
+      "bytes": 2416,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_22_060_wb_dma_full/summary.json",
+      "sha256": "f7c4683847acfe10cd2692a04a672e722f910eb8aa133a38e0f7606da5c9fdee"
+    },
+    "trial_summaries/trial_23_060_wb_dma_cone.json": {
+      "bytes": 2783,
+      "original_path": "/workspace/shared/stran2-cone-saved-record-timing-v1/trials/trial_23_060_wb_dma_cone/summary.json",
+      "sha256": "ee0b8785384544f25c27221ef08c000e2f11cc9eb0042fdaa6cc5f9a6fc86281"
+    }
+  },
+  "note": "Compact reviewed evidence only. The full raw saved model/CNF/replay streams stay at their immutable workspace paths; this compact bundle alone is not a portable rerun dataset.",
+  "source_commit": "c0d12621986168756135c1427ed9f7f0651497d2",
+  "source_runtime_unchanged": true,
+  "status": "READY_FOR_PARENT_EVIDENCE_COMMIT",
+  "target_suggestion": "research/stran2-guide-20261002/cloud_validation_20261001/inline_cone_timing_reviewed",
+  "total_file_bytes": 733441
+}

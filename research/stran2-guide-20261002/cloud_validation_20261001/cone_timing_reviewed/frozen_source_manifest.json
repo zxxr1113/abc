@@ -1,0 +1,80 @@
+{
+  "abc_sha256": "354909c529a36dc7af07f05d07cb09c600a2e1e1c2e4a3a63263c2e1af795342",
+  "complete_run_differentials": [
+    "default unchanged",
+    "standalone helper unchanged",
+    "inline full reference unchanged",
+    "inline full versus cone same discovery/query/models/products"
+  ],
+  "evidence": {
+    "all-tests.log": "37dd9316ce07d7ddffcfb516ad2345b605e53ee29f45deba7a3c2618db30ef3a",
+    "check_complete_runs.py": "b8699e655024de549d3a2d5cbee7b4c922b4ba4609f6817add80f64c6547262c",
+    "complete_run_differentials.json": "c38da57e35d3b74bc09dc5994f1396e3b60b7c235b44b4f85397d5dba261a130",
+    "focused-tests-v2.log": "0e7c149e7e82fd12ac250cf3d991fa6f4e057d8b0384af2aaa064ce4e0d05271",
+    "frozen-records/plan.json": "cde70576ad4614c9a2330dead6a68eba413caee09b27a4810ff2d0f26db84138",
+    "frozen-records/summary.json": "f0b2d2e183089b863475fe94dead191937b2dfb1dadc35a9d8b370a0c9b0115a",
+    "frozen-supplemental-tests.log": "8e2939fbfee65ff72764633a3835097be489005a772de3ae9fc3f4661d273a4f",
+    "frozen_record_differential.py": "241edddb41f8ab46bcf88e79834b1982415666a1794c28e3f866907dfee3f913"
+  },
+  "frozen_records": {
+    "cases": 6,
+    "models": 9059,
+    "new_solver_queries": 0,
+    "rounds": 300,
+    "same_full_samples_witnesses_projection_decisions_and_signatures": true
+  },
+  "negative_pilot_unchanged": true,
+  "proof_solver_sha256": "cf05cee69987954083b8522658885a342d94b739e70b7fd9bf61f0327f6afdec",
+  "repo_source_hashes": {
+    "image_cegar_diagnostic/build_model_solver.sh": "4e7902cb52a337758fe02b5593e36c701f9438d192c8dabd4f85f1543d437ee5",
+    "image_cegar_diagnostic/diagnostic.py": "72813095ab7a5b8db299a56c1549aba682bd876eaf98e7276ac49a81f2eb64a8",
+    "image_cegar_diagnostic/model_solver.c": "bdcef1e03911ba8126bf4bfb34442baad44697536f556ea35a8a206946679667",
+    "nonlinear_divisors/anytime.py": "16a97e32df1644143b35b6042433081561bd669d322d9fbe786e3107087ccff5",
+    "nonlinear_divisors/build_query_model_solver.sh": "c1196746e9306a3e63f4abb3c261d04aa3536efee2020ee97f82dd3cfbf8732d",
+    "nonlinear_divisors/image_guided.py": "71530b39fdbfe7d75722d5d3d6f6d47b2e397a91abb889a2422e9f2e5f0a6395",
+    "nonlinear_divisors/inline_models.py": "fd19c68f897d739ab6bd0f488b57917af40f7885655ab995abf4e8227173cd44",
+    "nonlinear_divisors/product.py": "97985c9dde8e8171ebe69e3452b7ae93ff6ec90d6a2d908e5931fa02187565bc",
+    "nonlinear_divisors/prototype.py": "a052a17c2a5c0c7816a4106c326543d8978deb37172fe6947003fda10b762f67",
+    "nonlinear_divisors/query_model_solver.c": "e8292abe31bc13990194c17d778abbab3b8dcaf2e15119de0a9dd4d340b437f0",
+    "nonlinear_divisors/test_anytime.py": "758a2c198e1e07b915d02c16d9843b3b23565a88da8dc62e8c3a0146f0da8ffb",
+    "nonlinear_divisors/test_anytime_supervisor.py": "c1e799ec914eb522ea78900d2918d1d32bcfe061486dd38f574cd6affbb6029f",
+    "nonlinear_divisors/test_cone_models.py": "95de250eb6f430dfb77954a86b2a1f36a67399cb75eb62bb48633aec168c1744",
+    "nonlinear_divisors/test_inline_models.py": "52365935de56875591181a540ca94a113326b99d826dad201f980a4a054ea218",
+    "seq_care_synthesis/guide.py": "22d372ca2a96044e2f16ac1e38b2113436518f79f21072cec3660dee51c60f71",
+    "seq_care_synthesis/scan_exact_care.py": "bb6abc7a08d1275c2567237c412c4284e8cc69a54f0315f393edcd5c19d88854",
+    "seq_cut_image/diagnose.py": "6591e7ca66fbdaca907bb61102489c98052f2e602e20afd94ae4dfbbf3fb4b8f",
+    "teacher_adaptive_tools/teacher_bmc.py": "197bfab8b547e620c9eb9b7c8921f96b09b98fa10ddb01eacb9825ca343a0b60"
+  },
+  "schema": 1,
+  "source_hashes": {
+    "image_cegar_diagnostic/build_model_solver.sh": "4e7902cb52a337758fe02b5593e36c701f9438d192c8dabd4f85f1543d437ee5",
+    "image_cegar_diagnostic/diagnostic.py": "72813095ab7a5b8db299a56c1549aba682bd876eaf98e7276ac49a81f2eb64a8",
+    "image_cegar_diagnostic/model_solver.c": "bdcef1e03911ba8126bf4bfb34442baad44697536f556ea35a8a206946679667",
+    "nonlinear_divisors/anytime.py": "16a97e32df1644143b35b6042433081561bd669d322d9fbe786e3107087ccff5",
+    "nonlinear_divisors/build_query_model_solver.sh": "c1196746e9306a3e63f4abb3c261d04aa3536efee2020ee97f82dd3cfbf8732d",
+    "nonlinear_divisors/image_guided.py": "71530b39fdbfe7d75722d5d3d6f6d47b2e397a91abb889a2422e9f2e5f0a6395",
+    "nonlinear_divisors/inline_models.py": "fd19c68f897d739ab6bd0f488b57917af40f7885655ab995abf4e8227173cd44",
+    "nonlinear_divisors/product.py": "97985c9dde8e8171ebe69e3452b7ae93ff6ec90d6a2d908e5931fa02187565bc",
+    "nonlinear_divisors/prototype.py": "a052a17c2a5c0c7816a4106c326543d8978deb37172fe6947003fda10b762f67",
+    "nonlinear_divisors/query_model_solver.c": "e8292abe31bc13990194c17d778abbab3b8dcaf2e15119de0a9dd4d340b437f0",
+    "nonlinear_divisors/test_anytime.py": "758a2c198e1e07b915d02c16d9843b3b23565a88da8dc62e8c3a0146f0da8ffb",
+    "nonlinear_divisors/test_anytime_supervisor.py": "c1e799ec914eb522ea78900d2918d1d32bcfe061486dd38f574cd6affbb6029f",
+    "nonlinear_divisors/test_cone_models.py": "95de250eb6f430dfb77954a86b2a1f36a67399cb75eb62bb48633aec168c1744",
+    "nonlinear_divisors/test_inline_models.py": "52365935de56875591181a540ca94a113326b99d826dad201f980a4a054ea218",
+    "seq_care_synthesis/guide.py": "22d372ca2a96044e2f16ac1e38b2113436518f79f21072cec3660dee51c60f71",
+    "seq_care_synthesis/scan_exact_care.py": "bb6abc7a08d1275c2567237c412c4284e8cc69a54f0315f393edcd5c19d88854",
+    "seq_cut_image/diagnose.py": "6591e7ca66fbdaca907bb61102489c98052f2e602e20afd94ae4dfbbf3fb4b8f",
+    "teacher_adaptive_tools/teacher_bmc.py": "197bfab8b547e620c9eb9b7c8921f96b09b98fa10ddb01eacb9825ca343a0b60"
+  },
+  "status": "CORRECTNESS_VALIDATED_AWAITING_INDEPENDENT_FINAL_REVIEW",
+  "tested_flags": "--inline-image-models --inline-cone-check; full compiled evaluator remains the default",
+  "tests": {
+    "aggregate_discovered": 136,
+    "aggregate_executed_passed": 125,
+    "aggregate_skipped": 11,
+    "frozen_supplemental_executed_passed": 11,
+    "new_focused": 19,
+    "total_unique_executed_passed": 136
+  },
+  "timing_claim": "NONE: correctness executions are not a controlled performance comparison"
+}
