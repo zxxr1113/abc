@@ -1,0 +1,48 @@
+{
+  "archive": {
+    "bytes": 1283828,
+    "path": "/workspace/scratch/7e0c7273599c/deliverables/stran2-three-arm-final-products-v1.tar.gz",
+    "sha256": "f42bdb5dc752ee03183bb86242efecc8a2b84de7afc9b4941036e03951ff18f6"
+  },
+  "compact_packet": {
+    "bytes": 844349,
+    "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-pilot-results-v1/packet.json",
+    "sha256": "86b694e27f3ee676093d29245a98e236a7235121acf1cb6bec3295d13c1805cd"
+  },
+  "exact_dsec_logs": 36,
+  "exact_input_graphs": 12,
+  "files": 155,
+  "graph_pairs": 18,
+  "independent_review": {
+    "bytes": 985,
+    "path": "/workspace/scratch/7e0c7273599c/evidence-preserved/three-arm-final-export-independent-review-v1/review.json",
+    "sha256": "6ccb065fce4a5c39643464e01dbfebd39bffb66b962d0637be1a40cf36c2f330"
+  },
+  "independent_review_result": {
+    "archive": "/workspace/scratch/7e0c7273599c/deliverables/stran2-three-arm-final-products-v1.tar.gz",
+    "archive_bytes": 1283828,
+    "archive_sha256": "f42bdb5dc752ee03183bb86242efecc8a2b84de7afc9b4941036e03951ff18f6",
+    "compact_index_files": 8,
+    "compact_packet_compaction_only": true,
+    "compact_source_reports": 7,
+    "copied_files_authenticated": 153,
+    "corrected_totals": {
+      "inline_free_off": 202,
+      "predecessor_cache_off": 133,
+      "predecessor_cache_on": 147
+    },
+    "exact_saved_dsec_logs": 36,
+    "final_graph_pairs": 18,
+    "graphs": 36,
+    "historical_shared_evidence_not_reconstructed": true,
+    "input_graphs": 12,
+    "no_new_solver_dsec_or_graph_rebuild": true,
+    "regular_files": 155,
+    "scope": "Final graph pairs, exact existing DSEC logs and compact reports; does not include every raw SAT/model receipt or provide a self-contained replay of all proofs.",
+    "selected_same_set_ablation_differences": "PASS",
+    "status": "PASS_FINAL_ARCHIVE_AND_COMPACT_COPIES"
+  },
+  "no_new_solver_queries": true,
+  "scope": "Compact independently reviewed evidence and18 final selected/same-set-ablation graph pairs, with exact graph-bound DSEC logs and six first_seq/loaded inputs. Not all raw SAT/model logs; not a self-contained replay of every proof certificate.",
+  "status": "INDEPENDENT_EXPORT_REVIEW_PASS"
+}
