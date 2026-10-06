@@ -443,6 +443,9 @@ static Vec_Str_t * Cec_TranProveCombBatch( Gia_Man_t * pBatch,
     return vStage;
 }
 
+#include "cecTranRelational.h"
+#include "cecTranRelationalBfsTest.h"
+
 // Return one status bit per candidate.  Seed candidate endpoints as ordinary
 // equivalence classes and run one shared correspondence closure over exactly
 // these relations.  This retains &scorr's standard BMC, SRM, CEX resimulation,
@@ -455,15 +458,27 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
 {
     Cec_ParCor_t Cor;
     Gia_Obj_t * pObj;
-    Vec_Int_t * vSeqPairs = NULL;
+    Vec_Int_t * vSeqPairs = NULL, * vRelStatus = NULL;
     Vec_Int_t * vStatus = Vec_IntStart( nCands );
     Vec_Str_t * vStage;
     Cec_ProfCor_t CorrBefore;
     int i, RetValue = 1, nSeq = 0;
+    int RelMode = pPars->fOdcProofScope ? Cec_TranRelationalMode(pPars) : 0;
+    int RelRounds = 0;
     int nSeqSplit = 0, nSeqUnknown = 0, nSeqRoots = 0;
     int SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH;
     abctime clk, timeSeq = 0;
     memset( &Cor, 0, sizeof(Cor) );
+    assert( !pPars->fOdcProofScope || pPars->fOdcFanout );
+    assert(nHelpers >= 0 && Vec_IntSize(vPairs) == 2*(nHelpers+nCands));
+    assert(Vec_IntSize(vCombPairs) == 2*nCands);
+    assert(!vAndCounts || Vec_StrSize(vAndCounts) == nCands);
+    assert(pPars->fUseCbsMultiLit ? Vec_IntSize(vQueries) == 0 :
+        Vec_IntSize(vQueries) == nCands);
+    // Strict's existing certificate helpers retain their own legacy scope.
+    // Speculative ODC CONST helpers must use relational withdrawal closure.
+    assert(!pPars->fOdcProofScope || !nHelpers || RelMode == 1);
+    if ( pPars->fOdcProofScope ) pProf->nOdcConstInjected += nHelpers;
     pProf->nRootSrmNodesMax = Abc_MaxInt(
         pProf->nRootSrmNodesMax, Gia_ManObjNum(pBatch) );
     vStage = Cec_TranProveCombBatch( pBatch, pCands, nCands,
@@ -474,6 +489,33 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
             if ( Vec_StrEntry(vStage, i) == 0 )
                 nSeq++;
     pProf->nSeqCands += nSeq;
+    if ( nSeq && RelMode )
+    {
+        clk = Abc_Clock();
+        vRelStatus = Cec_TranRelationalProve(pBatch,vPairs,pPars,&RelRounds);
+        assert(Vec_IntSize(vRelStatus) == nHelpers+nCands);
+        if ( pPars->fOdcProofScope && nHelpers )
+        {
+            pProf->nOdcConstChecked += nHelpers;
+            for ( i = 0; i < nHelpers; i++ )
+            {
+                int Status = Vec_IntEntry(vRelStatus,i);
+                assert(Status >= -1 && Status <= 1);
+                pProf->nOdcConstSurvived += Status == 1;
+                pProf->nOdcConstWithdrawn += Status == 0;
+                pProf->nOdcConstUnknown += Status == -1;
+            }
+            assert(pProf->nOdcConstChecked == pProf->nOdcConstSurvived +
+                pProf->nOdcConstWithdrawn + pProf->nOdcConstUnknown);
+        }
+        pProf->timeRootScorrOther += Abc_Clock() - clk;
+        if ( RelMode == 1 )
+        {
+            Cor.fCompleted = 1;
+            pProf->nSeqSeeded += nHelpers + nCands;
+            pProf->nSeqFixedRounds += RelRounds;
+        }
+    }
     if ( nSeq )
     {
         int iPrevTarget = -1, nClass = 0;
@@ -500,6 +542,9 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
                 pProf->nSeqClassMax, nClass + 1 );
         }
         pProf->nSeqRoots += nSeqRoots;
+    }
+    if ( nSeq && RelMode != 1 )
+    {
         Gia_ManSetPhase( pBatch );
         pBatch->pReprs = ABC_CALLOC( Gia_Rpr_t, Gia_ManObjNum(pBatch) );
         Gia_ManForEachObj( pBatch, pObj, i )
@@ -590,7 +635,8 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
         int fBatchComplete = 0;
         if ( !fProved && nSeq )
         {
-            int fSameClass = Cec_TranRootBatchPairProved( pBatch,
+            int fSameClass = RelMode == 1 ? Vec_IntEntry(vRelStatus,nHelpers+i) == 1 :
+                Cec_TranRootBatchPairProved( pBatch,
                 Vec_IntEntry(vPairs, 2*(nHelpers+i)),
                 Vec_IntEntry(vPairs, 2*(nHelpers+i)+1) );
             fBatchComplete = RetValue && Cor.fCompleted;
@@ -606,14 +652,17 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
                 // affected speculative class.  A global early stop is UNKNOWN;
                 // a completed fixed point classifies each relation by whether
                 // its endpoints survived in the same refined class.
-                nSeqSplit += fBatchComplete && !fSameClass;
-                nSeqUnknown += !fBatchComplete;
+                nSeqSplit += fBatchComplete && !fSameClass &&
+                    (RelMode != 1 || Vec_IntEntry(vRelStatus,nHelpers+i) == 0);
+                nSeqUnknown += !fBatchComplete ||
+                    (RelMode == 1 && Vec_IntEntry(vRelStatus,nHelpers+i) < 0);
             }
         }
         if ( !fProved && !fCombOnly && nSeq &&
              pCands[i].nKind == CEC_TRAN_CAND_CONSTR )
             Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf, pCands + i,
-                fBatchComplete ? SuppRefuteEvent :
+                fBatchComplete && !(RelMode == 1 &&
+                    Vec_IntEntry(vRelStatus,nHelpers+i)<0) ? SuppRefuteEvent :
                     CEC_TRAN_SUPP_UNKNOWN );
         if ( fProved && Vec_StrEntry(vStage, i) == 0 )
         {
@@ -622,6 +671,20 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
         }
         Vec_IntWriteEntry( vStatus, i, fProved );
     }
+    if ( RelMode == 2 && nSeq )
+    {
+        int both=0, legacyOnly=0, relationalOnly=0, neither=0;
+        for ( i=0; i<nCands; i++ )
+        {
+            int a=Vec_IntEntry(vStatus,i), b=Vec_StrEntry(vStage,i)==1 ||
+                Vec_IntEntry(vRelStatus,nHelpers+i)==1;
+            both += a && b; legacyOnly += a && !b;
+            relationalOnly += !a && b; neither += !a && !b;
+        }
+        Abc_Print(1,"stran-root relational-comparison: schema=1 candidates=%d both=%d legacy-only=%d relational-only=%d neither=%d consume=legacy\n",
+            nCands,both,legacyOnly,relationalOnly,neither);
+    }
+    Vec_IntFreeP(&vRelStatus);
     pProf->nRootBatchCalls++;
     pProf->nRootBatchMax = Abc_MaxInt( pProf->nRootBatchMax,
         nHelpers + nCands );

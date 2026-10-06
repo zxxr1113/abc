@@ -29,6 +29,12 @@ ABC_NAMESPACE_IMPL_START
 
 #include "cecTranInt.h"
 
+static int Cec_TranRelationalSelfTest();
+static int Cec_TranRelationalBfsSelfTest();
+static int Cec_TranOdcRelationalBoundarySelfTest();
+static int Cec_TranConstHelperSelfTest();
+
+
 int Cec_TranRootSelfTest()
 {
     return Abc_ResubIteratorSelfTest() && Cec_TranCanonicalizeSelfTest() &&
@@ -43,7 +49,9 @@ int Cec_TranRootSelfTest()
         Cec_TranOdcDirectSelfTest() && Cec_TranSigGuideSelfTest() &&
         Cec_TranStrictCexSelfTest() && Cec_TranStrictCexActiveSelfTest() &&
         Cec_TranStrictGuideSelfTest() && Cec_TranRelObsSelfTest() &&
-        Cec_TranTraceBuildSelfTest();
+        Cec_TranTraceBuildSelfTest() && Cec_TranRelationalSelfTest() &&
+        Cec_TranRelationalBfsSelfTest() && Cec_TranOdcRelationalBoundarySelfTest() &&
+        Cec_TranConstHelperSelfTest();
 }
 
 void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
@@ -91,6 +99,29 @@ void Cec_ManTranSetDefaultParams( Cec_ParTran_t * p )
     p->fUseFreeSim = 1;
     p->fUseHelpers = 1;
     p->fBuildOnly = 0;
+}
+
+// Reproduce the reviewed Guide1/CEX4 ordinary-COM route. This is a command
+// preset, not a new search policy; later explicit options still override it.
+void Cec_ManTranSetRoute1Params( Cec_ParTran_t * p, int fOdc )
+{
+    Cec_ManTranSetDefaultParams(p);
+    p->fRoute1 = 1;
+    p->nBTLimit = 1000;
+    p->nInitialFrames = 1; p->nInitialConflicts = 200;
+    p->nStrictSteps = 0; p->nStrictWaves = 3;
+    p->nKitCoreMax = 8; p->fBdcPortfolio = 1;
+    p->nRootConstrTop = 20; p->nRootProofBatch = 5;
+    p->nExplore = 742531093;
+    p->fUseTfoDivs = 1;
+    p->nOdcProofMax = 0; p->nOdcFanoutRounds = 4;
+    if ( fOdc )
+    {
+        p->fUseOdc = p->fOdcFanout = 1;
+        p->nSignatureGuide = 2;
+        p->nWindowFrames = 1; p->nWindowConflicts = 1000;
+        p->fWindowCache = p->fWindowFactor = 1;
+    }
 }
 
 #include "cecTranCex.h"
@@ -206,7 +237,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
         pPars->nSimWords, pPars->nSimFrames ) : pSource;
     // Keep the Q/W reset teacher unchanged. The separate Build table adds
     // conservative free-state observations before ranking or cursor creation.
-    if ( !fCombOnly && Cec_TranStrictCexOption("ABC_STRICT_GUIDE", 0, 1) )
+    if ( !fCombOnly && Cec_TranStrictCexOption("ABC_STRICT_GUIDE", pPars->fRoute1, 1) )
     {
         if ( !fRootBatch )
             pSim = Cec_TranStrictGuide( pSource, pPars->fProfile );
@@ -650,6 +681,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
 }
 
 #include "cecTranOdc.h"
+#include "cecTranConstHelperTest.h"
 #include "cecTranRelObs.h"
 #include "cecTranTraceBuild.h"
 
@@ -664,6 +696,7 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     int nCombPasses = 0, nCombCommits = 0;
     int nSeqPasses = 0, nSeqCommits = 0;
     Cec_TranStrictCex_t * pStrictCex = Cec_TranStrictCexStart( pGia, pPars );
+    StrictPars.fOdcProofScope = 0;
     if ( StrictPars.nStrictSteps >= -1 ) StrictPars.nStepsMax = StrictPars.nStrictSteps;
     if ( StrictPars.nStrictWaves >= 0 ) StrictPars.nRootWaves = StrictPars.nStrictWaves;
     if ( Abc_ResubQualityNoTruncation() )
@@ -768,6 +801,154 @@ static Gia_Man_t * Cec_ManSequentialTransductionInt( Gia_Man_t * pGia,
     else if ( pPars->nRelObs == 6 )
         p = Cec_TranRunRelObs( p, pPars );
     return p;
+}
+
+static int Cec_TranOdcRelationalBoundarySelfTest()
+{
+    char const * Env = "ABC_ODC_RELATIONAL_PROOF";
+    char * SavedEnv = getenv(Env) ? Abc_UtilStrsav(getenv(Env)) : NULL;
+    Cec_ParTran_t Pars, SavedPars;
+    Cec_TranProf_t Prof;
+    Cec_TranCand_t Cand, Helpers[2];
+    Cec_TranCandVec_t Obs = {0}, Frontier = {0};
+    Gia_Man_t * p, * pClean;
+    Vec_Int_t * vStatus;
+    Vec_Str_t * vStage;
+    int a, b, q, r, g, z, Full, i, Factor, nTried, nSelected;
+    int KindSelected[3], KindGain[3];
+    long long nObligations, nProved, nBatches;
+    abctime TimeProof;
+    if ( setenv(Env,"1",1) ) abort();
+    Cec_ManTranSetDefaultParams(&Pars);
+    Pars.fOdcFanout=Pars.fOdcProofScope=1;
+    Pars.nFrames=1; Pars.nBTLimit=Pars.nCombBTLimit=1000;
+    Pars.nStepsMax=-1; Pars.nExplore=134217728;
+    Pars.nDepNodesMax=20; Pars.nOdcProofMax=0;
+    Pars.fUseFreeSim=0;
+    SavedPars=Pars;
+
+    // r=a&b is invariant under the original swap transition.  The factor
+    // wrapper must propagate a complete certificate and distinguish S0.
+    p=Gia_ManStart(16);
+    a=Gia_ManAppendCi(p); b=Gia_ManAppendCi(p);
+    r=Gia_ManAppendAnd(p,a,b);
+    Gia_ManAppendCo(p,r); Gia_ManAppendCo(p,b); Gia_ManAppendCo(p,a);
+    Gia_ManSetRegNum(p,2); Gia_ManStaticFanoutStart(p);
+    Cand=Cec_TranCandCreateLiteral(Abc_Lit2Var(r),0,1,CEC_TRAN_CAND_CONST,0);
+    memset(&Prof,0,sizeof(Prof));
+    vStatus=Cec_TranProveWindowFactorBatch(p,NULL,0,&Cand,1,&Pars,&Prof,0,&vStage,&Full);
+    assert(Vec_IntSize(vStatus)==1 && Vec_StrSize(vStage)==1);
+    assert(Vec_IntEntry(vStatus,0)==1 && Vec_StrEntry(vStage,0)==2);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    Pars.nStepsMax=0; memset(&Prof,0,sizeof(Prof));
+    vStatus=Cec_TranProveWindowFactorBatch(p,NULL,0,&Cand,1,&Pars,&Prof,0,&vStage,&Full);
+    assert(Vec_IntEntry(vStatus,0)==0 && Vec_StrEntry(vStage,0)==0);
+    assert(Prof.nSeqUnknown>0);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage); Pars=SavedPars;
+    Gia_ManStaticFanoutStop(p); Gia_ManStop(p);
+
+    // For every free state, (a&b)&a equals b&a.  S0 cannot downgrade a
+    // universal CBS certificate, regardless of the legal next-state logic.
+    p=Gia_ManStart(16);
+    a=Gia_ManAppendCi(p); b=Gia_ManAppendCi(p);
+    r=Gia_ManAppendAnd(p,a,b); g=Gia_ManAppendAnd(p,r,a);
+    Gia_ManAppendCo(p,g); Gia_ManAppendCo(p,b); Gia_ManAppendCo(p,a^1);
+    Gia_ManSetRegNum(p,2); Gia_ManStaticFanoutStart(p);
+    Cand=Cec_TranCandCreateLiteral(Abc_Lit2Var(r),b,1,CEC_TRAN_CAND_EXIST,0);
+    Pars.nStepsMax=0; memset(&Prof,0,sizeof(Prof));
+    vStatus=Cec_TranProveWindowFactorBatch(p,NULL,0,&Cand,1,&Pars,&Prof,0,&vStage,&Full);
+    assert(Vec_IntEntry(vStatus,0)==1 && Vec_StrEntry(vStage,0)==1);
+    assert(Prof.nSeqCands==0 && Prof.nSeqUnknown==0);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+
+    // Only the ODC proof scope reads the opt-in environment.  Keep the
+    // fanout feature set while proving a simple universal root equality.
+    Pars.fOdcProofScope=0;
+    if ( setenv(Env,"invalid-outside-odc",1) ) abort();
+    Cand=Cec_TranCandCreateLiteral(Abc_Lit2Var(g),r,1,CEC_TRAN_CAND_EXIST,1);
+    memset(&Prof,0,sizeof(Prof));
+    vStatus=Cec_TranProveRootBatch(p,NULL,0,&Cand,1,&Pars,&Prof,1,&vStage);
+    assert(Vec_IntEntry(vStatus,0)==1 && Vec_StrEntry(vStage,0)==1);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    if ( setenv(Env,"1",1) ) abort();
+    Pars=SavedPars;
+    Gia_ManStaticFanoutStop(p); Gia_ManStop(p);
+
+    // A false first helper catches a missing nHelpers result offset.  The
+    // surviving b=0 helper and a=0 obligation are mutually inductive; q=0
+    // fails and is withdrawn before their complete fixed-point round.
+    p=Gia_ManStart(16);
+    a=Gia_ManAppendCi(p); b=Gia_ManAppendCi(p); q=Gia_ManAppendCi(p);
+    Gia_ManAppendCo(p,a);
+    Gia_ManAppendCo(p,b); Gia_ManAppendCo(p,a); Gia_ManAppendCo(p,1);
+    Gia_ManSetRegNum(p,3);
+    Helpers[0]=Cec_TranCandCreateLiteral(Abc_Lit2Var(q),0,0,CEC_TRAN_CAND_CONST,1);
+    Helpers[1]=Cec_TranCandCreateLiteral(Abc_Lit2Var(b),0,0,CEC_TRAN_CAND_CONST,1);
+    Cand=Cec_TranCandCreateLiteral(Abc_Lit2Var(a),0,0,CEC_TRAN_CAND_CONST,1);
+    memset(&Prof,0,sizeof(Prof));
+    vStatus=Cec_TranProveRootBatch(p,Helpers,2,&Cand,1,&Pars,&Prof,0,&vStage);
+    assert(Vec_IntSize(vStatus)==1 && Vec_StrSize(vStage)==1);
+    assert(Vec_IntEntry(vStatus,0)==1 && Vec_StrEntry(vStage,0)==2);
+    assert(Prof.nSeqSeeded==3 && Prof.nSeqFixedRounds==2);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    memset(&Prof,0,sizeof(Prof));
+    vStatus=Cec_TranProveRootBatch(p,Helpers,1,&Cand,1,&Pars,&Prof,0,&vStage);
+    assert(Vec_IntEntry(vStatus,0)==0 && Vec_StrEntry(vStage,0)==0);
+    assert(Prof.nSeqSplit>0 && Prof.nSeqUnknown==0);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage); Gia_ManStop(p);
+
+    // The first exit is universally preserved, but the second observes the
+    // edit after reset: a'=0,b'=1 makes b&!a=1 while r&!a remains zero.
+    // Test the actual all-exit acceptance gate with and without factoring.
+    p=Gia_ManStart(16);
+    a=Gia_ManAppendCi(p); b=Gia_ManAppendCi(p);
+    r=Gia_ManAppendAnd(p,a,b); g=Gia_ManAppendAnd(p,r,a);
+    z=Gia_ManAppendAnd(p,r,a^1);
+    Gia_ManAppendCo(p,g); Gia_ManAppendCo(p,z);
+    Gia_ManAppendCo(p,0); Gia_ManAppendCo(p,1);
+    Gia_ManSetRegNum(p,2); Gia_ManCreateRefs(p);
+    Cand=Cec_TranCandCreateLiteral(Abc_Lit2Var(r),b,1,CEC_TRAN_CAND_EXIST,0);
+    Cand.Gain=1; Pars.nFrames=2;
+    Gia_ManStaticFanoutStart(p);
+    Cec_TranWindowObligations(p,&Cand,&Pars,&Obs);
+    assert(Obs.nSize==2);
+    memset(&Prof,0,sizeof(Prof));
+    vStatus=Cec_TranProveRootBatch(p,NULL,0,Obs.pArray,Obs.nSize,&Pars,&Prof,0,&vStage);
+    for ( i=0; i<Obs.nSize; i++ )
+    {
+        assert(Obs.pArray[i].iTarget==Abc_Lit2Var(g) ||
+            Obs.pArray[i].iTarget==Abc_Lit2Var(z));
+        if ( Obs.pArray[i].iTarget==Abc_Lit2Var(g) )
+            assert(Vec_IntEntry(vStatus,i)==1 && Vec_StrEntry(vStage,i)==1);
+        else
+            assert(Vec_IntEntry(vStatus,i)==0 && Vec_StrEntry(vStage,i)==0);
+    }
+    assert(Prof.nSeqSplit>0 && Prof.nSeqUnknown==0);
+    Vec_IntFree(vStatus); Vec_StrFree(vStage);
+    Cec_TranCandVecStop(&Obs); Gia_ManStaticFanoutStop(p);
+    Cec_TranCandVecPush(&Frontier,Cand);
+    for ( Factor=0; Factor<2; Factor++ )
+    {
+        Pars.fWindowFactor=Factor; memset(&Prof,0,sizeof(Prof));
+        memset(KindSelected,0,sizeof(KindSelected));
+        memset(KindGain,0,sizeof(KindGain));
+        nTried=nSelected=0; nObligations=nProved=nBatches=0;
+        pClean=Cec_TranOdcFanoutRound(p,&Frontier,NULL,0,&Pars,&Prof,0,
+            &nTried,&nSelected,&nObligations,&nProved,&nBatches,&TimeProof,
+            KindSelected,KindGain);
+        assert(nTried==1 && nSelected==0 && nProved==0 && !pClean);
+        assert(nObligations==(Factor ? 1 : 2) && nBatches>0);
+        assert(Prof.nSeqSplit>0 && Prof.nSeqUnknown==0);
+    }
+    Cec_TranCandVecStop(&Frontier); Gia_ManStop(p); Pars=SavedPars;
+    if ( SavedEnv )
+    {
+        if ( setenv(Env,SavedEnv,1) ) abort();
+        ABC_FREE(SavedEnv);
+    }
+    else if ( unsetenv(Env) ) abort();
+    Abc_Print(1,"stran ODC relational scope/helper/UNKNOWN/CBS/all-exit boundary self-test: PASS\n");
+    return 1;
 }
 
 Gia_Man_t * Cec_ManSequentialTransduction( Gia_Man_t * pGia,

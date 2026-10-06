@@ -1,3 +1,5 @@
+#include "cecTranConstHelper.h"
+
 // ODC proof, composition, and serial orchestration.
 // Private implementation fragment included only by cecTrans.c.
 
@@ -271,7 +273,8 @@ static void Cec_TranOdcKindGains( Gia_Man_t * p,
 // frame by frame.  Helpers may participate in correspondence closure without
 // being physical edits.  Never carry these ODC certificates across a commit.
 static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
-    Cec_TranCandVec_t * pFrontier, Cec_ParTran_t * pPars,
+    Cec_TranCandVec_t * pFrontier,
+    Cec_TranCand_t const * pHelpers, int nHelpers, Cec_ParTran_t * pPars,
     Cec_TranProf_t * pProf, int iRound, int * pnTried, int * pnSelected,
     long long * pnObligations, long long * pnProved, long long * pnBatches,
     abctime * pTimeProof, int * pKindSelected, int * pKindGain )
@@ -310,9 +313,9 @@ static Gia_Man_t * Cec_TranOdcFanoutRound( Gia_Man_t * p,
     if ( Obligations.nSize )
     {
         if ( pPars->fWindowFactor )
-            vStatus = Cec_TranProveWindowFactorBatch(p,Obligations.pArray,
+            vStatus = Cec_TranProveWindowFactorBatch(p,pHelpers,nHelpers,Obligations.pArray,
                 Obligations.nSize,pPars,pProf,fCombBoundaryOnly,&vStage,&nFull);
-        else vStatus = Cec_TranProveRootBatch( p, NULL, 0,
+        else vStatus = Cec_TranProveRootBatch( p, pHelpers, nHelpers,
             Obligations.pArray, Obligations.nSize, pPars, pProf,
             fCombBoundaryOnly, &vStage );
         (*pnBatches)++;
@@ -700,12 +703,12 @@ static int Cec_TranOdcDirectSelfTest()
             CEC_TRAN_CAND_CONST, 0);
         Cec_TranCandVecPush(&Cands, Cand);
         Pars.nExplore |= 4096;
-        pComb = Cec_TranOdcFanoutRound(p, &Cands, &Pars, &CheckProf, 0,
+        pComb = Cec_TranOdcFanoutRound(p, &Cands, NULL, 0, &Pars, &CheckProf, 0,
             &nTried, &nSelected, &nObs, &nPass, &nBatch, &TimeProof,
             Kinds, KindGain);
         assert(!pComb && nSelected == 0 && nPass == 0);
         Pars.nExplore &= ~4096;
-        pSeq = Cec_TranOdcFanoutRound(p, &Cands, &Pars, &CheckProf, 0,
+        pSeq = Cec_TranOdcFanoutRound(p, &Cands, NULL, 0, &Pars, &CheckProf, 0,
             &nTried, &nSelected, &nObs, &nPass, &nBatch, &TimeProof,
             Kinds, KindGain);
         assert(pSeq && nSelected == 1 && nPass == 1);
@@ -759,8 +762,20 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     int nInitial = Gia_ManAndNum( p );
     int fUseCare = !OdcPars.fOdcStrict;
     int fOdcDirect = OdcPars.fOdcFanout && (OdcPars.nExplore & 512);
-    int iRound;
+    int CarePairTruth = OdcPars.fOdcFanout && fUseCare ?
+        Cec_TranStrictCexOption("ABC_ODC_CARE_PAIR_TRUTH",OdcPars.fRoute1,1) : 0;
+    int SavedCarePairTruth = Abc_ResubSetCarePairTruth(CarePairTruth);
+    int SavedPackDefault = s_CexPackDefault;
+    int iRound, fConstHelpers;
     abctime TimeAll = Abc_Clock(), TimeProofAll = 0;
+
+    // This owned stage-local copy is the only pipeline entry that activates
+    // the relational lane. The global fanout option also occurs in Strict.
+    OdcPars.fOdcProofScope = OdcPars.fOdcFanout;
+    s_CexPackDefault = OdcPars.fRoute1 ? 2 : 0;
+    fConstHelpers = Cec_TranConstHelpersEnabled(&OdcPars);
+    Abc_Print(1,"stran-root ODC CONST-helper policy: schema=1 enabled=%d scope=odc-relational source=original-reset-signatures proof-only=1 q-slots=0 commit=0.\n",fConstHelpers);
+    Abc_Print(1,"stran-root ODC pair-truth policy: schema=1 enabled=%d scope=odc fixed-material-pool=1.\n",CarePairTruth);
 
     // ODC is an additional Build portfolio, not a second Direct/scorr pass.
     // One page retrieves the same q-prefix without changing the strict proof
@@ -797,8 +812,8 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
     if ( OdcPars.nExplore & 16777216 ) OdcPars.nStage5Paths = 4;
     assert( !OdcPars.nSignatureGuide || (OdcPars.fOdcFanout && fUseCare &&
         OdcPars.fUseConstr && (OdcPars.nExplore & 134217728) &&
-        getenv("ABC_CEX_MODE") && atoi(getenv("ABC_CEX_MODE")) == 2 &&
-        getenv("ABC_CEX_COMPRESS") && atoi(getenv("ABC_CEX_COMPRESS")) == 4) );
+        Cec_TranStrictCexOption("ABC_CEX_MODE",OdcPars.fRoute1 ? 2 : 0,3) == 2 &&
+        Cec_TranStrictCexOption("ABC_CEX_COMPRESS",OdcPars.fRoute1 ? 4 : 0,6) == 4) );
     OdcPars.nRootProofBatch = 0;
     OdcPars.nExplore &= ~6;
     // A uniform round cap bounds repeated rediscovery, independently of the
@@ -809,7 +824,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         Cec_TranProf_t Prof = {0};
         Cec_TranDiscStat_t Disc = {0};
         Cec_TranCandVec_t Known = {0}, RootCands = {0};
-        Cec_TranCandVec_t Candidates = {0}, Frontier = {0};
+        Cec_TranCandVec_t Candidates = {0}, Frontier = {0}, ConstHelpers = {0};
         Cec_TranRoot_t * pRoots;
         Cec_TranRootCursor_t * pCursors;
         Cec_TranDepScratch_t Dep;
@@ -853,18 +868,20 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         qsort( pRoots, nRoots, sizeof(Cec_TranRoot_t), Cec_TranRootCompare );
         pCursors = ABC_CALLOC( Cec_TranRootCursor_t, Gia_ManObjNum(p) );
         pSource = Cec_TranSimStart( p, &OdcPars, pDb );
+        if ( fConstHelpers )
+            Cec_TranConstHelperNominate(p,pSource,&ConstHelpers,&Prof);
         fRootBatch = Vec_PtrSize(pDb->vCexes) > 64 * OdcPars.nSimWords;
         pSim = fRootBatch ? Cec_TranSimStartRootBatch( p,
             OdcPars.nSimWords, OdcPars.nSimFrames ) : pSource;
         Abc_ResubPrepareManager( pSim->nSlots );
         Cec_TranDepScratchStart( &Dep, pSim->nSlots,
             OdcPars.nConstrBaseMax ? OdcPars.nConstrBaseMax : 64, 1 );
-        s_CexMode = getenv("ABC_CEX_MODE") ? atoi(getenv("ABC_CEX_MODE")) : 0;
+        s_CexMode = Cec_TranStrictCexOption("ABC_CEX_MODE",OdcPars.fRoute1 ? 2 : 0,3);
         assert(s_CexMode >= 0 && s_CexMode <= 3);
         s_CexRound=iRound+1;
         s_CexRoots=s_CexTriggered=s_CexPoints=s_CexAdded=0; s_CexTime=0;
         s_CexCoreConflicts=s_CexRefinedLabels=0;
-        s_CexCompress=getenv("ABC_CEX_COMPRESS")?atoi(getenv("ABC_CEX_COMPRESS")):0;
+        s_CexCompress=Cec_TranStrictCexOption("ABC_CEX_COMPRESS",OdcPars.fRoute1 ? 4 : 0,6);
         assert(s_CexCompress>=0 && s_CexCompress<=6);
         s_CexRawRows=s_CexUniqueRows=s_CexTables=s_CexPoolConflict=0;
         s_CexNarrowing=0; s_CexNarrowRoots=s_CexNarrowDivsBefore=s_CexNarrowDivsAfter=0;
@@ -988,7 +1005,8 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
 
         if ( OdcPars.fOdcFanout )
         {
-            pClean = Cec_TranOdcFanoutRound( p, &Frontier, &OdcPars, &Prof,
+            pClean = Cec_TranOdcFanoutRound( p, &Frontier, ConstHelpers.pArray,
+                ConstHelpers.nSize, &OdcPars, &Prof,
                 iRound, &nTried, &nSelected, &nObligations, &nProved,
                 &nBatches, &TimeProof, KindSelected, KindGain );
             fCommitted = pClean != NULL;
@@ -1041,6 +1059,8 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         Cec_TranCandVecStop( &RootCands );
         Cec_TranCandVecStop( &Candidates );
         Cec_TranCandVecStop( &Frontier );
+        if ( fConstHelpers ) Cec_TranConstHelperPrint(&Prof,iRound);
+        Cec_TranCandVecStop( &ConstHelpers );
         Vec_IntFree( vMffc );
         Vec_IntFree( vSupport );
         Vec_IntFree( vOne );
@@ -1089,5 +1109,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         nCommits, nGain, nLimitHits, nInitial, Gia_ManAndNum(p),
         Cec_TranTimeSec(TimeProofAll), Cec_TranTimeSec(Abc_Clock() - TimeAll) );
     if ( OdcPars.fWindowCache ) Abc_ResubProblemCacheStop(pPars->fProfile);
+    Abc_ResubSetCarePairTruth(SavedCarePairTruth);
+    s_CexPackDefault = SavedPackDefault;
     return p;
 }

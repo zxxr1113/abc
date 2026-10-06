@@ -42269,6 +42269,8 @@ static int Abc_StranNamedOption( Cec_ParTran_t * p, char const * s )
     char const * Eq = strchr(s,'=');
     int i, Value;
     if ( !Eq ) return 0;
+    if ( !strcmp(s,"profile=route1") || !strcmp(s,"profile=route1-strict") )
+    { Cec_ManTranSetRoute1Params(p,!strcmp(s,"profile=route1")); return 1; }
     if ( !strcmp(s,"profile=strict-speed") )
     { p->nStrictSteps=0; p->nStrictWaves=3; return 1; }
     if ( !strcmp(s,"profile=quality") )
@@ -42311,7 +42313,9 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
         {"ABC_CEX_PROJECT_ALL",1}, {"ABC_CEX_PACK_FAST",2},
         {"ABC_STRICT_CEX_INITIAL",1}, {"ABC_STRICT_CEX_MODE",6},
         {"ABC_STRICT_CEX_SOLVER",1}, {"ABC_STRICT_GUIDE",1},
-        {"ABC_STRICT_BOTH_POLARITIES",1}
+        {"ABC_STRICT_BOTH_POLARITIES",1},
+        {"ABC_ODC_RELATIONAL_PROOF",2}, {"ABC_ODC_CARE_PAIR_TRUTH",1},
+        {"ABC_ODC_CONST_HELPERS",1}
     };
     Cec_ManTranSetDefaultParams( pPars );
     // The historical &stran2 prepass used C1000 even though the shared
@@ -42526,8 +42530,8 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
     }
     if ( pPars->nSignatureGuide && (!pPars->fUseOdc || !pPars->fOdcFanout ||
          pPars->fOdcStrict || !pPars->fUseConstr || !(pPars->nExplore & 134217728) ||
-         !getenv("ABC_CEX_MODE") || atoi(getenv("ABC_CEX_MODE")) != 2 ||
-         !getenv("ABC_CEX_COMPRESS") || atoi(getenv("ABC_CEX_COMPRESS")) != 4) )
+         (getenv("ABC_CEX_MODE") ? atoi(getenv("ABC_CEX_MODE")) : pPars->fRoute1 ? 2 : 0) != 2 ||
+         (getenv("ABC_CEX_COMPRESS") ? atoi(getenv("ABC_CEX_COMPRESS")) : pPars->fRoute1 ? 4 : 0) != 4) )
     {
         Abc_Print( -1, "&stran%s: -H requires care-aware -k -J construction with spatial windows, ABC_CEX_MODE=2 and ABC_CEX_COMPRESS=4. Use the signature preset.\n", fStran2 ? "2" : "" );
         return 1;
@@ -42556,6 +42560,9 @@ static int Abc_CommandAbc9StranInt( Abc_Frame_t * pAbc,
 usage:
     Abc_Print( -2, "usage: &stran%s [-A name=value] [-YRFCSNQWKBTDVLOHZEqwjbae num] [-MJdxckilgfupoyh]\n", fStran2 ? "2" : "" );
     Abc_Print(-2,"\t-A key=value : stage-local controls (repeatable; last assignment wins)\n");
+    Abc_Print(-2,"\t  profile=route1: reviewed ordinary COM + Strict + ODC, no environment setup needed\n");
+    Abc_Print(-2,"\t  profile=route1-strict: the same reviewed Strict prefix, without ODC\n");
+    Abc_Print(-2,"\t  Route1 profiles reset parameters; put explicit overrides after the profile.\n");
     Abc_Print(-2,"\t  profile=quality|strict-speed: resets strict overrides or sets strict-S=0, strict-w=3\n");
     Abc_Print(-2,"\t  initial-F/C, strict-S/w, window-F/C/B/q/S, window-cache=0|1, window-factor=0|1, output-L\n");
     Abc_Print(-2,"\t  spatial-depth=0|1|2|4|8 replaces the spatial/depth bits of -E (0 disables).\n");

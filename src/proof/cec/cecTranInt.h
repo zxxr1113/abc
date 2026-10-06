@@ -157,6 +157,7 @@ extern void Abc_ResubPrepareManager( int nWords );
 extern void Abc_ResubProblemCacheStart( int nPayloadMiB );
 extern void Abc_ResubProblemCacheStop( int fPrint );
 extern void Abc_ResubSetBothPolarities( int Enable );
+extern int Abc_ResubSetCarePairTruth( int Enable );
 extern void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs,
     int nWords, int nLimit, int nDivsMax, int fUseZero, int fUseXor,
     int fUseSolvSched, int nStage5Paths, int fProfilePivots, int * pCursor,
@@ -500,6 +501,10 @@ struct Cec_TranProf_t_
     int     nRootWaveProved[64];
     int     nRootWaveSelected[64];
     abctime timeRootWaveConstruct[64];
+    // ODC proof-only CONST predicates are never edit candidates or area gain.
+    int     nOdcConstScanned, nOdcConstZero, nOdcConstOne;
+    int     nOdcConstInjected, nOdcConstChecked;
+    int     nOdcConstSurvived, nOdcConstWithdrawn, nOdcConstUnknown;
     int     nSeqCands;          // unresolved candidates sent to scorr
     int     nSeqSeeded;         // endpoint relations actually seeded into scorr classes
     int     nSeqProved;         // candidates proved only by scorr

@@ -2,6 +2,7 @@
 // AND the target bit match; multiplicity is retained separately. Only care=1
 // rows enter. No state projection or cross-snapshot equivalence is assumed.
 static int s_CexCompress, s_CexThisConflict, s_CexNarrowing;
+static int s_CexPackDefault;
 static long long s_CexNarrowRoots, s_CexNarrowDivsBefore, s_CexNarrowDivsAfter;
 static abctime s_CexNativeTime, s_CexDiscoveryTime;
 static Cec_TranSim_t * s_CexPacked;
@@ -29,7 +30,7 @@ static word * Cec_TranCexCompactInto(Cec_TranSim_t * a, word const * ca,
     int side,s,i,j,obj,keyRow,lab,slot, fConflict=0;
     int * hash, * labels;
     word * keys, * key, * care, * rows;
-    int fast=getenv("ABC_CEX_PACK_FAST")?atoi(getenv("ABC_CEX_PACK_FAST")):0;
+    int fast=getenv("ABC_CEX_PACK_FAST")?atoi(getenv("ABC_CEX_PACK_FAST")):s_CexPackDefault;
     abctime clk=Abc_Clock();
     while(cap<2*maxRows) cap*=2;
     hash=ABC_CALLOC(int,cap); labels=ABC_ALLOC(int,maxRows);

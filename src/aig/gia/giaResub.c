@@ -319,6 +319,16 @@ static int Gia_ResbQualityPackPair( int Lo, int Hi, int Compl )
 
 typedef struct Gia_ResbMan_t_ Gia_ResbMan_t;
 typedef struct Gia_ResbRootCache_t_ Gia_ResbRootCache_t;
+// The caller owns the ODC scope. Each manager captures the policy at bind
+// time, so an existing iterator never changes its ordered pair universe.
+static int s_ResubCarePairTruth = 0;
+int Abc_ResubSetCarePairTruth( int Enable )
+{
+    int Previous = s_ResubCarePairTruth;
+    assert( Enable == 0 || Enable == 1 );
+    s_ResubCarePairTruth = Enable;
+    return Previous;
+}
 struct Gia_ResbRootCache_t_
 {
     int         nWords;
@@ -328,6 +338,7 @@ struct Gia_ResbRootCache_t_
     int         fQualityNoTruncation;
     int         fUseZero;
     int         fUseXor;
+    int         fCarePairTruth;
     int         nStage5Paths;
     int         nBinds;
     Vec_Ptr_t * vContextDivs;
@@ -414,6 +425,7 @@ struct Gia_ResbMan_t_
     int         nTopFrontierNovelSum;
     int         fUseZero;
     int         fUseXor;
+    int         fCarePairTruth;
     int         fDebug;
     int         fVerbose;
     int         fVeryVerbose;
@@ -423,6 +435,7 @@ struct Gia_ResbMan_t_
     Vec_Int_t * vNotUnateVars[2];
     Vec_Int_t * vUnatePairs[2];
     Vec_Int_t * vBinateVars;
+    Vec_Int_t * vPairVars;
     Vec_Int_t * vUnateLitsW[2];
     Vec_Int_t * vUnatePairsW[2];
     Vec_Int_t * vTopUnateLits[2];
@@ -498,6 +511,7 @@ Gia_ResbMan_t * Gia_ResbAlloc( int nWords )
     p->vResidualCacheSolveTimes = Vec_WrdAlloc( 100 );
     p->vSorter          = Vec_WecAlloc( nWords*64 );
     p->vBinateVars      = Vec_IntAlloc( 100 );
+    p->vPairVars        = Vec_IntAlloc( 100 );
     p->vGates           = Vec_IntAlloc( 100 );
     p->vDivs            = Vec_PtrAlloc( 100 );
     p->pSets[0]         = ABC_CALLOC( word, nWords );
@@ -583,6 +597,7 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     p->nTopFrontierCoverSum = p->nTopFrontierNovelSum = 0;
     p->fUseZero     = fUseZero;
     p->fUseXor      = fUseXor;
+    p->fCarePairTruth = s_ResubCarePairTruth && !fUseXor;
     p->fDebug       = fDebug;
     p->fVerbose     = fVerbose;
     p->fVeryVerbose = fVeryVerbose;
@@ -602,6 +617,7 @@ void Gia_ResbInit( Gia_ResbMan_t * p, Vec_Ptr_t * vDivs, int nWords, int nLimit,
     Vec_IntClear( p->vUnatePairsW[0]  );
     Vec_IntClear( p->vUnatePairsW[1]  );
     Vec_IntClear( p->vBinateVars      );
+    Vec_IntClear( p->vPairVars        );
     // Exact remainder states are local to one root binding.  In particular,
     // the pass-owned manager must not carry them across ResumeStart() roots.
     Vec_IntClear( p->vResidualCacheBins );
@@ -656,6 +672,7 @@ void Gia_ResbFree( Gia_ResbMan_t * p )
     Vec_WrdFree( p->vResidualCacheMasks );
     Vec_WrdFree( p->vResidualCacheSolveTimes );
     Vec_IntFree( p->vBinateVars      );
+    Vec_IntFree( p->vPairVars        );
     Vec_IntFree( p->vGates           );
     Vec_WrdFree( p->vSims            );
     Vec_PtrFree( p->vDivs            );
@@ -712,6 +729,7 @@ static Gia_ResbRootCache_t * Gia_ResbRootCacheAlloc( Gia_ResbMan_t * p )
     pCache->fQualityNoTruncation = p->fQualityNoTruncation;
     pCache->fUseZero = p->fUseZero;
     pCache->fUseXor = p->fUseXor;
+    pCache->fCarePairTruth = p->fCarePairTruth;
     pCache->nStage5Paths = p->nStage5Paths;
     pCache->nBinds = 1;
     pCache->vContextDivs = Vec_PtrAlloc( pCache->nDivs );
@@ -743,6 +761,7 @@ static int Gia_ResbRootCacheCompatible( Gia_ResbRootCache_t * pCache,
     if ( pCache->nWords != nWords || pCache->nDivs != Vec_PtrSize(vDivs) ||
          pCache->nLimit != nLimit || pCache->nDivsMax != nDivsMax ||
          pCache->fUseZero != fUseZero || pCache->fUseXor != fUseXor ||
+         pCache->fCarePairTruth != (s_ResubCarePairTruth && !fUseXor) ||
          pCache->nStage5Paths != nStage5Paths ||
          pCache->fQualityNoTruncation != Abc_ResubQualityNoTruncation() )
         return 0;
@@ -2388,6 +2407,28 @@ static void Gia_ResbQualityBinateSortSelfTest()
     Abc_Print(1, "stran-quality-binate-sort-selftest: PASS default=2000 unlimited=2001 ordered-prefix=1 membership=complete\n");
 }
 
+// Unateness on the opposite target side does not disqualify a material from
+// an AND implicant. For example, removing one cared ON row can make d unate
+// for OFF while a useful a & !d remains OFF-disjoint. Pair eligibility must
+// test the pair itself. Keep the existing material ranking and B cap, then
+// let Gia_ManFindUnatePairsInt test its four phases against current OFF/ON.
+// A literal covering the same sampled rows is not a formal dominance proof;
+// dropping its pair can lose a stronger, provable temporal relation.
+static Vec_Int_t * Gia_ResbPairVars( Gia_ResbMan_t * p )
+{
+    int i;
+    if ( !p->fCarePairTruth )
+        return p->vBinateVars;
+    Vec_IntClear( p->vPairVars );
+    for ( i = 2; i < Vec_PtrSize(p->vDivs); i++ )
+        Vec_IntPush( p->vPairVars, i );
+    Gia_ManSortBinate( p->pSets, p->vDivs, p->nWords,
+        p->vPairVars, p->vSorter );
+    if ( Vec_IntSize(p->vPairVars) > p->nDivsMax )
+        Vec_IntShrink( p->vPairVars, p->nDivsMax );
+    return p->vPairVars;
+}
+
 /**Function*************************************************************
 
   Synopsis    [Perform resubstitution.]
@@ -2677,7 +2718,7 @@ static int Gia_ManResubPerform_rec_int( Gia_ResbMan_t * p, int nLimit,
             Vec_IntClear( p->vUnatePairsW[1] );
         }
         Gia_ManFindUnatePairs( p->pSets, p->vDivs, p->nWords,
-            p->vBinateVars, p->vUnatePairs, p->fVerbose );
+            Gia_ResbPairVars(p), p->vUnatePairs, p->fVerbose );
         // Canonicalize the relation before ranking and keep the same B-wide
         // frontier as root discovery.
         if ( p->fSkipTemplates )
@@ -3096,6 +3137,11 @@ struct Gia_ResbIter_t_
     long long MultiPathCacheProfileLast[6];
 };
 
+// Legacy cursors retain their exact six scalar values. Care-pair cursors
+// carry policy identity above the low stage bits, including pages that have
+// not yet created a residual root cache.
+#define GIA_RESUB_CURSOR_CARE_PAIR (1 << 16)
+
 #include "giaResubMemo.h"
 
 static int Gia_ResbPivotRankBin( int Rank )
@@ -3301,7 +3347,7 @@ static void Gia_ResbIterPreparePairs( Gia_ResbIter_t * pIt )
     Gia_ManSortBinate( p->pSets, p->vDivs, p->nWords,
         p->vBinateVars, p->vSorter );
     Gia_ManFindUnatePairs( p->pSets, p->vDivs, p->nWords,
-        p->vBinateVars, p->vUnatePairs, 0 );
+        Gia_ResbPairVars(p), p->vUnatePairs, 0 );
     Gia_ManSortPairs( p->pSets, p->vDivs, p->nWords,
         p->vUnatePairs, p->vUnatePairsW, p->vSorter );
     // A physical B-wide divisor pool can induce O(B^2) pair literals.  Letting
@@ -3486,7 +3532,8 @@ void * Abc_ResubIteratorStart( void ** ppDivs, int nDivs, int nWords,
 }
 
 // Resume one iterator cursor on the pass-owned resubstitution manager.  The
-// first four loop cursors retain their original meaning.  The fifth remains
+// low stage bits and three loop cursors retain their original meaning. The
+// stage word additionally records the captured care-pair policy. The fifth remains
 // the historical Stage-5 rank cursor with paths=1; with paths>1 it is the
 // documented flattened schedule slot.  The sixth stores only the classified
 // Stage-5 top-frontier length needed to decode that slot after rebinding.  A
@@ -3508,6 +3555,12 @@ void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
         nStage5Paths == 4 );
     assert( s_pResbMan != NULL );
     assert( s_pResbMan->nWords == nWords );
+    // Pair order is part of a live cursor's meaning. A fresh root binding
+    // may discard incompatible cache state; continuing old indices under a
+    // different policy violates the immutable root/page contract.
+    assert( !pCursor[0] ||
+        !!(pCursor[0] & GIA_RESUB_CURSOR_CARE_PAIR) ==
+            (s_ResubCarePairTruth && !fUseXor) );
     if ( pCache && !Gia_ResbRootCacheCompatible(pCache, &Divs, nWords,
             nLimit, nDivsMax, fUseZero, fUseXor, nStage5Paths) )
     {
@@ -3530,7 +3583,7 @@ void * Abc_ResubIteratorResumeStart( void ** ppDivs, int nDivs, int nWords,
     pIt->p->fProfilePivots = fProfilePivots;
     if ( pCursor[0] )
     {
-        pIt->Stage = pCursor[0];
+        pIt->Stage = pCursor[0] & ~GIA_RESUB_CURSOR_CARE_PAIR;
         pIt->n = pCursor[1];
         pIt->i = pCursor[2];
         pIt->k = pCursor[3];
@@ -3560,7 +3613,8 @@ void Abc_ResubIteratorResumeStop( void * pVoid, int * pCursor )
     if ( pIt == NULL )
         return;
     Gia_ResbMemoUnbind(pIt);
-    pCursor[0] = pIt->Stage;
+    pCursor[0] = pIt->Stage |
+        (pIt->p->fCarePairTruth ? GIA_RESUB_CURSOR_CARE_PAIR : 0);
     pCursor[1] = pIt->n;
     pCursor[2] = pIt->i;
     pCursor[3] = pIt->k;
@@ -4108,6 +4162,8 @@ static int Gia_ResbIteratorCompareResume( void ** ppDivs,
     int nCrossPageHits = 0;
     nStage5Paths = nStage5Paths <= 1 ? 1 : nStage5Paths;
     pDrain->Stage = 5;
+    if ( pDrain->p->fCarePairTruth )
+        Cursor[0] |= GIA_RESUB_CURSOR_CARE_PAIR;
     pDrain->p->fUseSolvSched = fUseSolvSched;
     pDrain->p->nStage5Paths = nStage5Paths;
     Abc_ResubPrepareManager( 1 );
@@ -4581,6 +4637,186 @@ static void Gia_ResbProblemCacheSelfTest()
     Abc_Print(1,"stran complete-native cache word/options/collision/prefix/resume/ordered-stream self-test: PASS\n");
 }
 
+static int Gia_ResbCareTruthMatches( word Truth, word Off, word On )
+{
+    return !(Truth & Off) && !(~Truth & On);
+}
+
+// Independent truth evaluation uses the original bound OFF/ON words, not
+// the manager's mutable residual sets. Check every yielded native recipe.
+static int Gia_ResbCareRecipeCheck( void ** Divs, int nDivs, int nWords,
+    int * Array, int nArray, word * KnownTarget )
+{
+    word Values[16], Truth;
+    int w, i, a, b, nKnown = KnownTarget != NULL;
+    assert( (nArray & 1) && nArray / 2 <= 3 && nDivs + nArray / 2 <= 16 );
+    for ( w = 0; w < nWords; w++ )
+    {
+        for ( i = 0; i < nDivs; i++ ) Values[i] = ((word *)Divs[i])[w];
+        for ( i = 0; i < nArray / 2; i++ )
+        {
+            a = Abc_Lit2Var(Array[2*i]); b = Abc_Lit2Var(Array[2*i+1]);
+            assert( a >= 2 && b >= 2 && a <= b && b < nDivs + i );
+            Values[nDivs+i] = (Values[a] ^ (Abc_LitIsCompl(Array[2*i]) ? ~(word)0 : 0)) &
+                (Values[b] ^ (Abc_LitIsCompl(Array[2*i+1]) ? ~(word)0 : 0));
+        }
+        a = Abc_Lit2Var(Array[nArray-1]);
+        assert( a >= 2 && a < nDivs + nArray / 2 );
+        Truth = Values[a] ^ (Abc_LitIsCompl(Array[nArray-1]) ? ~(word)0 : 0);
+        assert( Gia_ResbCareTruthMatches(Truth, ((word *)Divs[0])[w], ((word *)Divs[1])[w]) );
+        if ( KnownTarget ) nKnown &= Truth == KnownTarget[w];
+    }
+    return nKnown;
+}
+
+// Exhaust all constant/literal, one-AND and two-AND expressions over both
+// material phases. The second gate combines the first with a literal; using
+// its two phases together adds no new function. These fixtures have no such
+// cheaper care completion, rather than just a differently named recipe.
+static void Gia_ResbCareNoCheapSelfTest( word * Data )
+{
+    word Lits[12], First, Last;
+    int i, j, k, f, g;
+    Lits[0] = 0; Lits[1] = ~(word)0;
+    for ( i = 0; i < 10; i++ )
+        Lits[i+2] = Data[2+i/2] ^ ((i&1) ? ~(word)0 : 0);
+    for ( i = 0; i < 12; i++ )
+    {
+        assert( !Gia_ResbCareTruthMatches(Lits[i], Data[0], Data[1]) );
+        for ( j = 0; j < 12; j++ ) for ( f = 0; f < 2; f++ )
+        {
+            First = (Lits[i] & Lits[j]) ^ (f ? ~(word)0 : 0);
+            assert( !Gia_ResbCareTruthMatches(First, Data[0], Data[1]) );
+            for ( k = 0; k < 12; k++ ) for ( g = 0; g < 2; g++ )
+            {
+                Last = (First & Lits[k]) ^ (g ? ~(word)0 : 0);
+                assert( !Gia_ResbCareTruthMatches(Last, Data[0], Data[1]) );
+            }
+        }
+    }
+}
+
+// Compare full public Next streams with one-item pages, including exact
+// stage pair rebuilding and complete-problem memo replay. Return actual
+// stream counts, preserving duplicate recipes across exact/greedy stages.
+static int Gia_ResbCareDrainCheck( void ** Divs, int nDivs, int nWords,
+    int B, int fPages, word * KnownTarget, int * pnKnown )
+{
+    Gia_ResbIter_t * Base = (Gia_ResbIter_t *)Abc_ResubIteratorStart(
+        Divs, nDivs, nWords, 3, B, 0, 0 );
+    Gia_ResbIter_t * Page = NULL;
+    void * RootCache = NULL;
+    int Cursor[6] = {0}, * a, * b, na, nb, sa, sb, ea, eb, ia, ib;
+    int Count = 0, Steps = 0, Known = 0;
+    Abc_ResubPrepareManager(nWords);
+    do
+    {
+        if ( !Page ) Page = (Gia_ResbIter_t *)Abc_ResubIteratorResumeStart(
+            Divs, nDivs, nWords, 3, B, 0, 0, 0, 1, 0, Cursor, &RootCache );
+        sa = sb = 0;
+        na = Abc_ResubIteratorNext(Base, &a, &sa, &ea, &ia);
+        nb = Abc_ResubIteratorNext(Page, &b, &sb, &eb, &ib);
+        assert( !ia && !ib && na == nb && ea == eb && sa == sb );
+        if ( na )
+        {
+            assert( !memcmp(a, b, sizeof(int) * na) );
+            Known += Gia_ResbCareRecipeCheck(Divs, nDivs, nWords, a, na, KnownTarget);
+            Count++;
+        }
+        assert( Vec_IntSize(Base->p->vPairVars) <= B );
+        assert( Vec_IntSize(Base->p->vUnatePairs[0]) <= B &&
+            Vec_IntSize(Base->p->vUnatePairs[1]) <= B );
+        if ( fPages || eb )
+        {
+            Abc_ResubIteratorResumeStop(Page, Cursor);
+            assert( !!(Cursor[0] & GIA_RESUB_CURSOR_CARE_PAIR) == Base->p->fCarePairTruth );
+            Page = NULL;
+        }
+        assert( ++Steps < 4096 );
+    } while ( !ea );
+    Abc_ResubRootCacheStop(RootCache);
+    Abc_ResubPrepareManager(0);
+    Abc_ResubIteratorStop(Base);
+    if ( pnKnown ) *pnKnown = Known;
+    return Count;
+}
+
+static void Gia_ResbCarePairTruthSelfTest()
+{
+    unsigned Pool[3][5] = {{45477,31788,4508,19052,45195},
+        {62691,4066,6996,2709,42419},{61695,6960,32823,54542,23526}};
+    unsigned Targets[3] = {19292,44834,13368}, Cares[3] = {65527,24063,63999};
+    word Data[7], Target, Care, Rep = ABC_CONST(0x0001000100010001);
+    word RandomData[8][2]; void * Divs[7], * RandomDivs[8];
+    int Saved = Abc_ResubSetCarePairTruth(0), SavedPolarity = s_ResubBothPolarities;
+    int t, i, j, w, Full, Old, New, Known, Total = 0;
+    unsigned Rand = 0xA17C3925;
+    long long Hits;
+    Abc_ResubSetBothPolarities(0);
+    for ( i = 0; i < 7; i++ ) Divs[i] = Data + i;
+    for ( t = 0; t < 3; t++ )
+    {
+        Target = Targets[t] * Rep; Care = Cares[t] * Rep;
+        for ( i = 0; i < 5; i++ ) Data[i+2] = Pool[t][i] * Rep;
+        Data[0] = ~Target; Data[1] = Target;
+        Abc_ResubSetCarePairTruth(0);
+        Full = Gia_ResbCareDrainCheck(Divs, 7, 1, 5, 1, &Target, &Known);
+        assert( Full > 0 && Known == Full );
+        Data[0] = ~Target & Care; Data[1] = Target & Care;
+        Gia_ResbCareNoCheapSelfTest(Data);
+        Abc_ResubProblemCacheStart(0);
+        Old = Gia_ResbCareDrainCheck(Divs, 7, 1, 5, 0, &Target, &Known);
+        assert( !Old );
+        Hits = s_pResbMemo->nHits;
+        Abc_ResubSetCarePairTruth(1);
+        New = Gia_ResbCareDrainCheck(Divs, 7, 1, 5, 0, &Target, &Known);
+        assert( New > 0 && Known > 0 && s_pResbMemo->nHits == Hits );
+        assert( Gia_ResbCareDrainCheck(Divs, 7, 1, 5, 1, &Target, NULL) == New );
+        assert( s_pResbMemo->nHits == Hits + 1 );
+        Abc_ResubSetCarePairTruth(0);
+        assert( !Gia_ResbCareDrainCheck(Divs, 7, 1, 5, 1, &Target, NULL) );
+        assert( s_pResbMemo->nHits == Hits + 2 );
+        Abc_ResubProblemCacheStop(0);
+        {
+            Gia_ResbIter_t * It = (Gia_ResbIter_t *)Abc_ResubIteratorStart(Divs, 7, 1, 3, 5, 0, 0);
+            Gia_ResbRootCache_t * Cache = Gia_ResbRootCacheAlloc(It->p);
+            assert( Gia_ResbRootCacheCompatible(Cache, It->p->vDivs, 1, 3, 5, 0, 0, 1) );
+            Abc_ResubSetCarePairTruth(1);
+            assert( !It->p->fCarePairTruth &&
+                !Gia_ResbRootCacheCompatible(Cache, It->p->vDivs, 1, 3, 5, 0, 0, 1) );
+            Gia_ResbRootCacheFree(Cache); Abc_ResubIteratorStop(It);
+        }
+        Abc_Print(1, "stran care-pair fixture=%d full-stream=%d legacy-care=%d truth-care=%d strict-recipe-recovered=%d\n",
+            t, Full, Old, New, Known);
+    }
+    for ( i = 0; i < 8; i++ ) RandomDivs[i] = RandomData[i];
+    Abc_ResubSetCarePairTruth(1);
+    for ( t = 0; t < 64; t++ )
+    {
+        for ( i = 0; i < 8; i++ ) for ( w = 0; w < 2; w++ )
+        {
+            Rand = 1664525 * Rand + 1013904223;
+            RandomData[i][w] = (word)Rand << 32;
+            Rand = 1664525 * Rand + 1013904223;
+            RandomData[i][w] ^= Rand;
+        }
+        for ( w = 0; w < 2; w++ )
+        {
+            Care = RandomData[0][w];
+            Target = (RandomData[2][w] & ~RandomData[3][w]) |
+                (~RandomData[4][w] & RandomData[5][w]);
+            RandomData[0][w] = ~Target & Care; RandomData[1][w] = Target & Care;
+        }
+        // Include legal B<N bindings without enlarging their material cap.
+        j = 2 + t % 5;
+        Total += Gia_ResbCareDrainCheck(RandomDivs, 8, 2, j, 1, NULL, NULL);
+    }
+    assert( Total > 0 );
+    Abc_ResubSetBothPolarities(SavedPolarity);
+    Abc_ResubSetCarePairTruth(Saved);
+    Abc_Print(1, "stran care-pair truth eligibility/cheap-alternative/page/cache/random self-test: PASS random-bindings=64 valid-recipes=%d\n", Total);
+}
+
 int Abc_ResubIteratorSelfTest()
 {
     word Off = 0x2, On = 0xD, D = 0x8, E = 0x5;
@@ -4746,6 +4982,7 @@ int Abc_ResubIteratorSelfTest()
     ABC_FREE( P.pArray );
     assert( nNext > 0 && nInvalid == 0 && fSawResumedPair );
     Gia_ResbProblemCacheSelfTest();
+    Gia_ResbCarePairTruthSelfTest();
     return 1;
 }
 

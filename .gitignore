@@ -60,6 +60,7 @@ tags
 
 /libabc.a
 /abc
+/abc.build.json
 
 /arch_flags
 

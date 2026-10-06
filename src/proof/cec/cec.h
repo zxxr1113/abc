@@ -369,6 +369,8 @@ struct Cec_ParTran_t_
     int              fUseOdc;       // run serial first-level ODC Build after the strict fixed point
     int              fOdcStrict;    // use full care in the serial phase (matched experiment control)
     int              fOdcFanout;    // opt-in frozen fanout-boundary proof and conservative bundle commit
+    int              fOdcProofScope; // internal: actual ODC invocation, never a Strict prefix option
+    int              fRoute1;      // reviewed ordinary-COM/Strict/ODC policy defaults
     int              fUseConstr;    // enable dependency-function resub recipes
     int              fUseCbsMultiLit;// root CBS: direct literal cubes vs constructed XOR query
     int              fUseFreeSim;   // screen/CEGIS CBS candidates with independent PI/RO signatures
@@ -379,6 +381,7 @@ struct Cec_ParTran_t_
     int              fProfile;      // print phase and target-gate profiles
 };
 extern void          Cec_ManTranSetDefaultParams( Cec_ParTran_t * pPars );
+extern void          Cec_ManTranSetRoute1Params( Cec_ParTran_t * pPars, int fOdc );
 extern Gia_Man_t *   Cec_ManSequentialTransduction( Gia_Man_t * pAig, Cec_ParTran_t * pPars );
 extern Gia_Man_t *   Cec_ManSequentialTransduction2( Gia_Man_t * pAig, Cec_ParTran_t * pPars );
 /*=== cecCore.c ==========================================================*/

@@ -32,11 +32,11 @@ static int Cec_TranStrictCexOption( char const * Name, int Default, int Max )
 static Cec_TranStrictCex_t * Cec_TranStrictCexStart( Gia_Man_t * p, Cec_ParTran_t * Pars )
 {
     Cec_TranStrictCex_t * b;
-    int Mode = Cec_TranStrictCexOption("ABC_STRICT_CEX_MODE", 0, 6);
+    int Mode = Cec_TranStrictCexOption("ABC_STRICT_CEX_MODE", Pars->fRoute1 ? 4 : 0, 6);
     if ( !Mode ) return NULL;
     b = ABC_CALLOC(Cec_TranStrictCex_t, 1);
     b->Mode = Mode;
-    b->Solver = Cec_TranStrictCexOption("ABC_STRICT_CEX_SOLVER", 0, 1);
+    b->Solver = Cec_TranStrictCexOption("ABC_STRICT_CEX_SOLVER", Pars->fRoute1, 1);
     b->nPis = Gia_ManPiNum(p);
     b->nFramesMax = Pars->nSimFrames;
     b->vPrefixes = Vec_PtrAlloc(64);

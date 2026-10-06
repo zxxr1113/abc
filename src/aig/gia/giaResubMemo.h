@@ -3,7 +3,7 @@
 // Hashes only index the table; a hit always requires a full key comparison.
 // A q-truncated stream is discarded, never mistaken for an exhausted problem.
 
-#define GIA_RESUB_MEMO_OPTIONS 10
+#define GIA_RESUB_MEMO_OPTIONS 11
 #define GIA_RESUB_MEMO_META 9
 #define GIA_RESUB_MEMO_FEATURES (GIA_RESUB_PIVOT_CURRENT_DUPLICATE-GIA_RESUB_PIVOT_CURRENT_PATH+1)
 struct Gia_ResbMemoEntry_t_
@@ -108,7 +108,7 @@ static void Gia_ResbMemoBind( Gia_ResbIter_t * pIt, void ** ppDivs,
     long long Bytes;
     int Options[GIA_RESUB_MEMO_OPTIONS] = {nDivs,nWords,nLimit,nDivsMax,
         fUseZero,fUseXor,fUseSolvSched,nStage5Paths,fProfile,
-        s_ResubBothPolarities};
+        s_ResubBothPolarities,pIt->p->fCarePairTruth};
     // Only a fresh pure problem can be keyed without the residual cache and
     // traversal history. Existing per-root/page memoization stays unchanged.
     if ( !s_pResbMemo || pCursor[0] || (ppRootCache && *ppRootCache) ) return;

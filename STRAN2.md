@@ -1,5 +1,28 @@
 # &stran2 技术路线、贡献与实验复评
 
+## 当前主线：路线一已集成为 `&stran2`（2026-10-07）
+
+用户明确将路线一作为当前主开发版本：普通/弱 COM → 已有 Guide1/CEX4 Strict → 已验证 ODC，继续使用 `/mnt/home/zhaoxiran/abc` 的 `codex/stran2` 分支。路线二（强 COM → 新证明方式的 Strict → 待接 ODC）独立命名为 `&stran3`，后续目标和结果以 `STRAN3.md` 为准；本次不合入其新 Strict，也未注册未完成的 `&stran3` 命令。
+
+用户选择保留原默认入口，用明确 profile 开启完整路线一：
+
+```text
+&stran2 -A profile=route1
+&stran2 -A profile=route1-strict
+```
+
+第一条运行完整 Strict＋ODC；第二条仅运行相同 Strict 前缀。原有裸命令、参数和 `profile=strict-speed/quality` 继续保留原行为。新 profile 重置参数，因此显式参数覆盖应写在它之后；原有 `ABC_*` 环境开关仍可显式覆盖，标准复现应清除旧实验环境变量。使用新 profile 不需要设置环境变量。
+
+配置绑定历史完整路线：初始 scorr F1/C200，事务 F1/C1000、CBS100；普通 COM 固定q4，Strict Guide1/CEX4/solver1/initial1、S0/w3、q20/j5；ODC relation1/care-pair-truth1/CONST-helper1，q80/B64/N20/K8、L4/H2、深度4、额外节点上限80、cache/factor开启、S−1。可用 `-p` 输出阶段日志。历史约7%的Strict主要属于组合可证明搜索收益；其工程价值与真正时序贡献分类分别保留。
+
+集成基于生产 `b850f3cb10540232a4a5d1d0297e69f532b724bf`，按内容移植已验证ODC冻源 `proof_helper_v1_source_workspace_v2.tar.gz`（SHA256 `2a50767d9f74c0ed73dd40eaf55b3c0d57aec623480aec01bb43bd216cdace31`）。纳入原转移关系的完整归纳证明、常量helper提名/撤回/候选索引隔离、care pair资格及其缓存/分页身份；保留生产已有迭代器修复。未恢复原型中的无限窗口、替代选择器、证明拆批或快照导出入口。ODC证明方式只在实际ODC阶段激活，不改变路线一Strict证明边界。
+
+本次验证和冻源身份保存在 `/mnt/home/zhaoxiran/script2/evidence/20261006T170247Z_shuguang_route1_integration/`。同机隔离构建（最终make j8）、原生自测、两套回归脚本及45项Python检查通过（42通过、3按环境跳过）。预定12例的Strict和完整Strict→ODC分别与重新本机构建的冻结原型逐例同图，48次独立DSEC全部明确PASS，无变换超时或等价FAIL。关系证明另有48张小图、F1/F2/F3共4464项穷举/BFS对照。验证覆盖是本次预定12例，不冒称重跑全New58。首次移植编译的冲突修复记录保留，不把失败构建作为有效binary。
+
+历史完整路线的共同37/58例仍为Strict SEQ实际7.349038%、ODC增量5.371653%、合计12.720691%（各例原loaded AND分母，等例平均）；21个transform timeout保留。这些不是新的全58验证结果，也不是Boolean-new时序Build均值。本次集成不宣称新面积提升或速度提升。下一步如继续优化，优先围绕本路线ODC开展单独、可归因的改进。
+
+以下保留历史研究记录；其中路线二及旧“下一步”讨论不改变以上当前范围。
+
 **Period:** Sep. 13-26, 2026<br>
 **Measurement refresh:** Oct. 2, 2026
 

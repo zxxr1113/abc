@@ -59,13 +59,14 @@ static int Cec_TranWindowFactorCare( Gia_Man_t * p, Gia_Man_t * pNew,
 }
 
 static Gia_Man_t * Cec_TranBuildWindowFactorBatch( Gia_Man_t * p,
+    Cec_TranCand_t const * pHelpers, int nHelpers,
     Cec_TranCand_t const * pCands, int nCands, Cec_ParTran_t * pPars,
     Vec_Int_t ** pvPairs, Vec_Int_t ** pvCombPairs, Vec_Int_t ** pvQueries,
     Vec_Int_t ** pvAndLeaves, Vec_Str_t ** pvAndCounts, int * pnFull )
 {
     Gia_Man_t * pNew, * pTemp;
     Gia_Obj_t * pObj;
-    Vec_Int_t * vPairs = Vec_IntAlloc(2*nCands);
+    Vec_Int_t * vPairs = Vec_IntAlloc(2*(nHelpers+nCands));
     Vec_Int_t * vCombPairs = Vec_IntAlloc(2*nCands);
     Vec_Int_t * vQueries = Vec_IntAlloc(nCands);
     Vec_Int_t * vAndLeaves = pPars->fUseCbsMultiLit ? Vec_IntAlloc(2*nCands) : NULL;
@@ -79,7 +80,7 @@ static Gia_Man_t * Cec_TranBuildWindowFactorBatch( Gia_Man_t * p,
     int Leaves[2*CEC_TRAN_RECIPE_NODES_MAX+1];
     int i, k, r, Root, Rep, Bad, Care, nRoots = 0, nBefore, nAfterCopy, nLeaves;
     long long nCofactorNodes = 0, nOriginalExits = 0, nUnfactoredWindowNodes = 0;
-    assert(nCands > 0);
+    assert(nCands > 0 && nHelpers >= 0 && (!nHelpers || pHelpers));
     *pnFull = 0;
     Gia_ManFillValue(p);
     pNew = Gia_ManStart(Gia_ManObjNum(p)+4*nCands+16);
@@ -91,6 +92,18 @@ static Gia_Man_t * Cec_TranBuildWindowFactorBatch( Gia_Man_t * p,
         pObj->Value = Cec_TranHashGate(pNew,pObj,
             Gia_ObjFanin0Copy(pObj),Gia_ObjFanin1Copy(pObj));
     nAfterCopy = Gia_ManAndNum(pNew);
+    // Helpers are original-graph predicates.  They are never care-masked and
+    // never enter candidate-only CBS queries, leaf arrays, or returned status.
+    for ( i = 0; i < nHelpers; i++ )
+    {
+        assert(pHelpers[i].nKind == CEC_TRAN_CAND_CONST &&
+            pHelpers[i].nGates == 0 && pHelpers[i].Recipe == NULL &&
+            pHelpers[i].iOut >= 0 && pHelpers[i].iOut <= 1);
+        Root = Cec_TranCopyLit(p,Abc_Var2Lit(pHelpers[i].iTarget,0));
+        Rep = pHelpers[i].iOut;
+        Root = Cec_TranRootClassEndpoint(pNew,Root,Gia_ManPiNum(p),pPiProxies);
+        Vec_IntPushTwo(vPairs,Root,Rep);
+    }
     for ( i = 0; i < nCands; i++ )
     {
         r = pCands[i].iTarget;
@@ -134,6 +147,9 @@ static Gia_Man_t * Cec_TranBuildWindowFactorBatch( Gia_Man_t * p,
         Rep = Cec_TranRootClassEndpoint(pNew,Rep,Gia_ManPiNum(p),pPiProxies);
         Vec_IntPushTwo(vPairs,Root,Rep);
     }
+    assert(Vec_IntSize(vPairs) == 2*(nHelpers+nCands));
+    assert(Vec_IntSize(vCombPairs) == 2*nCands);
+    assert(!vAndCounts || Vec_StrSize(vAndCounts) == nCands);
     Vec_IntForEachEntry(vQueries,Bad,i) Gia_ManAppendCo(pNew,Bad);
     Vec_IntForEachEntry(vPairs,Bad,i) Gia_ManAppendCo(pNew,Bad);
     Gia_ManForEachRi(p,pObj,i) Gia_ManAppendCo(pNew,Gia_ObjFanin0Copy(pObj));
@@ -158,16 +174,17 @@ static Gia_Man_t * Cec_TranBuildWindowFactorBatch( Gia_Man_t * p,
 }
 
 static Vec_Int_t * Cec_TranProveWindowFactorBatch( Gia_Man_t * p,
+    Cec_TranCand_t const * pHelpers, int nHelpers,
     Cec_TranCand_t const * pCands, int nCands, Cec_ParTran_t * pPars,
     Cec_TranProf_t * pProf, int fCombOnly, Vec_Str_t ** pvStage, int * pnFull )
 {
     Vec_Int_t * vPairs, * vCombPairs, * vQueries, * vAndLeaves;
     Vec_Str_t * vAndCounts;
     abctime clk = Abc_Clock();
-    Gia_Man_t * pBatch = Cec_TranBuildWindowFactorBatch(p,pCands,nCands,pPars,
+    Gia_Man_t * pBatch = Cec_TranBuildWindowFactorBatch(p,pHelpers,nHelpers,pCands,nCands,pPars,
         &vPairs,&vCombPairs,&vQueries,&vAndLeaves,&vAndCounts,pnFull);
     pProf->timeRootCbsGraph += Abc_Clock()-clk;
-    return Cec_TranProveRootBatchPrepared(pBatch,pCands,nCands,0,
+    return Cec_TranProveRootBatchPrepared(pBatch,pCands,nCands,nHelpers,
         pPars,pProf,fCombOnly,pvStage,vPairs,vCombPairs,vQueries,vAndLeaves,vAndCounts);
 }
 
@@ -224,7 +241,7 @@ static void Cec_TranWindowFactorCheck( Gia_Man_t * p,
         Vec_Int_t * status;
         Vec_Str_t * stage;
         pPars->fUseCbsMultiLit = Mode;
-        New = Cec_TranBuildWindowFactorBatch(p,pCand,1,pPars,
+        New = Cec_TranBuildWindowFactorBatch(p,NULL,0,pCand,1,pPars,
             &np,&nc,&nq,&leaves,&counts,&Full);
         assert(Truth == Cec_TranWindowFactorTruth(New,nc));
         status = Cec_TranProveRootBatchPrepared(New,pCand,1,0,pPars,&Prof,1,
@@ -263,7 +280,7 @@ static void Cec_TranWindowFactorSequentialCheck()
         Pars.fUseCbsMultiLit=Mode;
         Cand.iTarget=Abc_Lit2Var(r); Cand.nKind=CEC_TRAN_CAND_CONST;
         Cand.iOut=0;
-        status=Cec_TranProveWindowFactorBatch(p,&Cand,1,&Pars,&Prof,0,&stage,&Full);
+        status=Cec_TranProveWindowFactorBatch(p,NULL,0,&Cand,1,&Pars,&Prof,0,&stage,&Full);
         assert(Vec_IntEntry(status,0)==!Next);
         if ( !Next ) assert(Vec_StrEntry(stage,0)==2);
         Vec_IntFree(status); Vec_StrFree(stage);
