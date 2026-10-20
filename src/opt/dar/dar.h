@@ -54,6 +54,8 @@ struct Dar_RwrPar_t_
     int              fRecycle;       // enables cut recycling
     int              fVerbose;       // enables verbose output
     int              fVeryVerbose;   // enables very verbose output
+    int              fResub;         // use structural-cut resubstitution
+    int              nResubCutSize;  // maximum cut leaves (4..10)
 };
 
 struct Dar_RefPar_t_  

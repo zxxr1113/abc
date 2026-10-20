@@ -20,6 +20,7 @@
 
 #include <inttypes.h>
 #include <errno.h>
+#include <limits.h>
 #include "base/abc/abc.h"
 #include "bool/lms/lms.h"
 #include "base/main/main.h"
@@ -506,6 +507,7 @@ static int Abc_CommandAbc9Lcorr              ( Abc_Frame_t * pAbc, int argc, cha
 static int Abc_CommandAbc9Scorr              ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Scorr2             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Scorr3             ( Abc_Frame_t * pAbc, int argc, char ** argv );
+static int Abc_CommandAbc9Sresub             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Drw                ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Choice             ( Abc_Frame_t * pAbc, int argc, char ** argv );
 static int Abc_CommandAbc9Sat                ( Abc_Frame_t * pAbc, int argc, char ** argv );
@@ -1374,6 +1376,7 @@ void Abc_Init( Abc_Frame_t * pAbc )
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr",        Abc_CommandAbc9Scorr,        0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr2",       Abc_CommandAbc9Scorr2,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&scorr3",       Abc_CommandAbc9Scorr3,       0 );
+    Cmd_CommandAdd( pAbc, "ABC9",         "&sresub",       Abc_CommandAbc9Sresub,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&drw",          Abc_CommandAbc9Drw,          0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&choice",       Abc_CommandAbc9Choice,       0 );
     Cmd_CommandAdd( pAbc, "ABC9",         "&sat",          Abc_CommandAbc9Sat,          0 );
@@ -18341,7 +18344,7 @@ int Abc_CommandDRewrite( Abc_Frame_t * pAbc, int argc, char ** argv )
 {
     Abc_Ntk_t * pNtk, * pNtkRes;
     Dar_RwrPar_t Pars, * pPars = &Pars;
-    int c;
+    int c, fCutSize = 0, fRewriteOption = 0;
 
     extern Abc_Ntk_t * Abc_NtkDRewrite( Abc_Ntk_t * pNtk, Dar_RwrPar_t * pPars );
 
@@ -18349,11 +18352,12 @@ int Abc_CommandDRewrite( Abc_Frame_t * pAbc, int argc, char ** argv )
     // set defaults
     Dar_ManDefaultRwrParams( pPars );
     Extra_UtilGetoptReset();
-    while ( ( c = Extra_UtilGetopt( argc, argv, "CNMflzrvwh" ) ) != EOF )
+    while ( ( c = Extra_UtilGetopt( argc, argv, "CNMflzrvwkh" ) ) != EOF )
     {
         switch ( c )
         {
         case 'C':
+            fRewriteOption = 1;
             if ( globalUtilOptind >= argc )
             {
                 Abc_Print( -1, "Command line switch \"-C\" should be followed by an integer.\n" );
@@ -18365,6 +18369,7 @@ int Abc_CommandDRewrite( Abc_Frame_t * pAbc, int argc, char ** argv )
                 goto usage;
             break;
         case 'N':
+            fRewriteOption = 1;
             if ( globalUtilOptind >= argc )
             {
                 Abc_Print( -1, "Command line switch \"-N\" should be followed by an integer.\n" );
@@ -18376,6 +18381,7 @@ int Abc_CommandDRewrite( Abc_Frame_t * pAbc, int argc, char ** argv )
                 goto usage;
             break;
         case 'M':
+            fRewriteOption = 1;
             if ( globalUtilOptind >= argc )
             {
                 Abc_Print( -1, "Command line switch \"-M\" should be followed by an integer.\n" );
@@ -18387,21 +18393,37 @@ int Abc_CommandDRewrite( Abc_Frame_t * pAbc, int argc, char ** argv )
                 goto usage;
             break;
         case 'f':
+            fRewriteOption = 1;
             pPars->fFanout ^= 1;
             break;
         case 'l':
             pPars->fUpdateLevel ^= 1;
             break;
         case 'z':
+            fRewriteOption = 1;
             pPars->fUseZeros ^= 1;
             break;
         case 'r':
-            pPars->fRecycle ^= 1;
+            pPars->fResub = 1;
             break;
+        case 'k':
+        {
+            char * pEnd;
+            long Value;
+            if ( globalUtilOptind >= argc ) goto usage;
+            errno = 0;
+            Value = strtol( argv[globalUtilOptind++], &pEnd, 10 );
+            if ( errno || pEnd == argv[globalUtilOptind-1] ||
+                 *pEnd || Value < 4 || Value > 10 ) goto usage;
+            pPars->nResubCutSize = (int)Value;
+            fCutSize = 1;
+            break;
+        }
         case 'v':
             pPars->fVerbose ^= 1;
             break;
         case 'w':
+            fRewriteOption = 1;
             pPars->fVeryVerbose ^= 1;
             break;
         case 'h':
@@ -18410,6 +18432,8 @@ int Abc_CommandDRewrite( Abc_Frame_t * pAbc, int argc, char ** argv )
             goto usage;
         }
     }
+    if ( (fCutSize && !pPars->fResub) || (pPars->fResub && fRewriteOption) ||
+         globalUtilOptind != argc ) goto usage;
     if ( pPars->fUseZeros )
         pPars->nMinSaved = 0;
     if ( pPars->nMinSaved == 0 )
@@ -18428,14 +18452,14 @@ int Abc_CommandDRewrite( Abc_Frame_t * pAbc, int argc, char ** argv )
     if ( pNtkRes == NULL )
     {
         Abc_Print( -1, "Command has failed.\n" );
-        return 0;
+        return pPars->fResub ? 1 : 0;
     }
     // replace the current network
     Abc_FrameReplaceCurrentNetwork( pAbc, pNtkRes );
     return 0;
 
 usage:
-    Abc_Print( -2, "usage: drw [-C num] [-NM num] [-lfzrvwh]\n" );
+    Abc_Print( -2, "usage: drw [-C num] [-NM num] [-flzvwh] | drw -r [-k 4..10] [-lv]\n" );
     Abc_Print( -2, "\t         performs combinational AIG rewriting\n" );
     Abc_Print( -2, "\t-C num : the max number of cuts at a node [default = %d]\n", pPars->nCutsMax );
     Abc_Print( -2, "\t-N num : the max number of subgraphs tried [default = %d]\n", pPars->nSubgMax );
@@ -18443,7 +18467,8 @@ usage:
     Abc_Print( -2, "\t-l     : toggle preserving the number of levels [default = %s]\n", pPars->fUpdateLevel? "yes": "no" );
     Abc_Print( -2, "\t-f     : toggle representing fanouts [default = %s]\n", pPars->fFanout? "yes": "no" );
     Abc_Print( -2, "\t-z     : toggle using zero-cost replacements [default = %s]\n", pPars->fUseZeros? "yes": "no" );
-    Abc_Print( -2, "\t-r     : toggle using cut recycling [default = %s]\n", pPars->fRecycle? "yes": "no" );
+    Abc_Print( -2, "\t-r     : use structural-cut resubstitution\n" );
+    Abc_Print( -2, "\t-k num : max resubstitution cut leaves [default = %d]\n", pPars->nResubCutSize );
     Abc_Print( -2, "\t-v     : toggle verbose printout [default = %s]\n", pPars->fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-w     : toggle very verbose printout [default = %s]\n", pPars->fVeryVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n");
@@ -42592,6 +42617,66 @@ usage:
     Abc_Print( -2, "\t-k     : toggle auditing final base and step obligations with Kissat [default = %s]\n", Pars.fKissatCert? "yes": "no" );
     Abc_Print( -2, "\t-v     : toggle printing verbose information [default = %s]\n", Pars.fVerbose? "yes": "no" );
     Abc_Print( -2, "\t-h     : print the command usage\n" );
+    return 1;
+}
+
+/**Function*************************************************************
+
+  Synopsis    [Performs sequential root resubstitution.]
+
+***********************************************************************/
+static int Abc_CommandAbc9Sresub( Abc_Frame_t * pAbc, int argc, char ** argv )
+{
+    Cec_ParTran_t Pars;
+    Gia_Man_t * pResult;
+    int c, fStrictOnly = 0;
+
+    Cec_ManTranSetRoute3Params( &Pars, 1 );
+    Extra_UtilGetoptReset();
+    while ( (c = Extra_UtilGetopt(argc, argv, "fcsph")) != EOF )
+    {
+        if ( c == 'f' || c == 'c' )
+        {
+            char * pEnd;
+            long Value;
+            if ( globalUtilOptind >= argc ) goto usage;
+            errno = 0;
+            Value = strtol( argv[globalUtilOptind++], &pEnd, 10 );
+            if ( errno || pEnd == argv[globalUtilOptind-1] ||
+                 *pEnd || Value < (c == 'f') || Value > INT_MAX ) goto usage;
+            if ( c == 'f' ) Pars.nFrames = Pars.nWindowFrames = (int)Value;
+            else Pars.nBTLimit = Pars.nWindowConflicts = (int)Value;
+            continue;
+        }
+        switch ( c )
+        {
+        case 's': fStrictOnly = 1; break;
+        case 'p': Pars.fProfile ^= 1; break;
+        default: goto usage;
+        }
+    }
+    if ( globalUtilOptind != argc ) goto usage;
+    if ( fStrictOnly ) Pars.fUseOdc = 0;
+    if ( !pAbc->pGia || Gia_ManBoxNum(pAbc->pGia) ||
+         Gia_ManHasChoices(pAbc->pGia) || pAbc->pGia->pMuxes ||
+         Gia_ManXorNum(pAbc->pGia) )
+    {
+        Abc_Print( -1, "&sresub requires a plain GIA without boxes or choices.\n" );
+        return 1;
+    }
+    if ( !Gia_ManRegNum(pAbc->pGia) ) return 0;
+    pResult = Cec_ManSequentialTransduction( pAbc->pGia, &Pars );
+    if ( !pResult ) return 1;
+    Abc_FrameUpdateGia( pAbc, pResult );
+    return 0;
+
+usage:
+    Abc_Print( -2, "usage: &sresub [-f num] [-c num] [-sph]\n" );
+    Abc_Print( -2, "\t-f num : induction depth in Strict and ODC [default = %d]\n", Pars.nFrames );
+    Abc_Print( -2, "\t-c num : SAT conflict limit in Strict and ODC [default = %d]\n", Pars.nBTLimit );
+    Abc_Print( -2, "\t-s     : run Strict only\n" );
+    Abc_Print( -2, "\t-p     : print exact Build reduction\n" );
+    Abc_Print( -2, "\t-h     : print command usage\n" );
     return 1;
 }
 

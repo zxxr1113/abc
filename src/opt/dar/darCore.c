@@ -61,6 +61,7 @@ void Dar_ManDefaultRwrParams( Dar_RwrPar_t * pPars )
     pPars->fRecycle     =  1;
     pPars->fVerbose     =  0;
     pPars->fVeryVerbose =  0;
+    pPars->nResubCutSize = 6;
 }
 
 #define MAX_VAL 10
@@ -78,6 +79,7 @@ void Dar_ManDefaultRwrParams( Dar_RwrPar_t * pPars )
 ***********************************************************************/
 int Dar_ManRewrite( Aig_Man_t * pAig, Dar_RwrPar_t * pPars )
 {
+    if ( pPars->fResub ) return Dar_ManResubRewrite( pAig, pPars );
     extern Vec_Int_t * Saig_ManComputeSwitchProbs( Aig_Man_t * p, int nFrames, int nPref, int fProbOne );
     int fVerbose = pPars->fVerbose;
     Dar_Man_t * p;
