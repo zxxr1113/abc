@@ -6,6 +6,6 @@ ABC_NAMESPACE_HEADER_START
 typedef struct Drw_Gia_t_ Drw_Gia_t;
 extern Drw_Gia_t * Drw_GiaStart( Gia_Man_t * pGia );
 extern Vec_Int_t * Drw_GiaSelect( Drw_Gia_t * p, int Id );
-extern void Drw_GiaStop( Drw_Gia_t * p, int fProfile );
+extern void Drw_GiaStop( Drw_Gia_t * p );
 ABC_NAMESPACE_HEADER_END
 #endif

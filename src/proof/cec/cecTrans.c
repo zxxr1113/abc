@@ -272,8 +272,6 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
             if ( Owner == 1 ) Cec_TranSourceMacroTraceGraph(p, Owner);
         }
     }
-    if ( pPars->fProfile )
-        Prof.pBuildSuppProf = Cec_TranSuppProfStart( Gia_ManObjNum(p) );
     clk = Abc_Clock();
     pSource = fCombOnly && pPars->fCombFreeDiscovery ?
         Cec_TranSimStartFreeCiDiscovery( p, pPars ) :
@@ -664,7 +662,7 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
 
     // All proof and discovery data refer to the one immutable snapshot.  Tear
     // them down before the sole bundle duplication stops that snapshot.
-    Cec_TranCutCacheStop((Cec_TranCutCache_t *)Prof.pStrictCutCache,0);
+    Cec_TranCutCacheStop((Cec_TranCutCache_t *)Prof.pStrictCutCache);
     Prof.pStrictCutCache = NULL;
     for ( i = 0; i < Gia_ManObjNum(p); i++ )
         Cec_TranRootCursorStop( pCursors + i );
@@ -696,8 +694,6 @@ static Gia_Man_t * Cec_ManSequentialRootPass( Gia_Man_t * pGia,
     Prof.timeRootResubEnumCanon = Prof.timeRootDepSearch;
     Prof.timeRootCbsSolve = Prof.timeCombSolve;
     Prof.timeTotal = Abc_Clock() - clkTotal;
-    Cec_TranSuppProfStop( Prof.pBuildSuppProf );
-    Prof.pBuildSuppProf = NULL;
     Abc_Print( 1, "stran-root summary: round=%d phase=%s roots=%d selected=%d comb-proved=%d seq-proved=%d unique-proved=%d AND=%d->%d exact-gain=%lld.\n",
         iRound + 1, fCombOnly ? "comb" : "seq", nRoots,
         Selected.nSize, Prof.nCombProved, Prof.nSeqProved,

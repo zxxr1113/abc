@@ -237,22 +237,6 @@ struct Cec_TranCand_t_
     int      nGreedyDiversitySym;// min symmetric difference to earlier paths
 };
 
-enum
-{
-    CEC_TRAN_SUPP_VALID = 0,
-    CEC_TRAN_SUPP_ACCEPTED,
-    CEC_TRAN_SUPP_SUBMITTED,
-    CEC_TRAN_SUPP_REFUTED_BMC_BATCH,
-    CEC_TRAN_SUPP_REFUTED_IND_BATCH,
-    CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH,
-    CEC_TRAN_SUPP_UNKNOWN,
-    CEC_TRAN_SUPP_PROVED,
-    CEC_TRAN_SUPP_SELECTED
-};
-
-static void Cec_TranSuppProfRecordCand( Cec_TranSuppProf_t * p,
-    Cec_TranCand_t const * pCand, int Event );
-
 static int Cec_TranBuildRankBin( int Rank )
 {
     return Rank <= 1 ? 0 : Rank == 2 ? 1 : Rank <= 4 ? 2 :
@@ -529,9 +513,6 @@ static void Cec_TranProfileBuildCandidate( Cec_TranProf_t * pProf,
     if ( pCand->nKind != CEC_TRAN_CAND_CONSTR )
         return;
     assert( Outcome >= 0 && Outcome < CEC_TRAN_BUILD_OUTCOMES );
-    Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf, pCand,
-        Outcome == 0 ? CEC_TRAN_SUPP_ACCEPTED :
-        Outcome == 1 ? CEC_TRAN_SUPP_PROVED : CEC_TRAN_SUPP_SELECTED );
     Stage = pCand->nResubStage;
     RankBin = Cec_TranBuildRankBin(pCand->nResubRank);
     GateBin = Cec_TranBuildGateBin(pCand->nGates);

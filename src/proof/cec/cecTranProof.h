@@ -543,7 +543,6 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
     int RelRounds = 0;
     int RelChunkMode = Cec_TranRelChunkMode(pPars);
     int nSeqSplit = 0, nSeqUnknown = 0, nSeqRoots = 0;
-    int SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_NO_SAT_BATCH;
     abctime clk, timeSeq = 0;
     memset( &Cor, 0, sizeof(Cor) );
     assert( !pPars->fOdcProofScope || pPars->fOdcFanout );
@@ -677,17 +676,6 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
         clk = Abc_Clock();
         RetValue = Cec_ManLSCorrespondenceClasses( pBatch, &Cor );
         timeSeq = Abc_Clock() - clk;
-        // The correspondence profiler exposes aggregate SAT causes, not the
-        // class split caused by each individual obligation.  Keep this label
-        // explicitly batch-scoped: BMC dominates when both phases saw SAT;
-        // "ind-only" means this batch saw no reset-reachable BMC SAT.
-        if ( pPars->fProfile )
-        {
-            if ( pProf->Corr.nBmcSat > CorrBefore.nBmcSat )
-                SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_BMC_BATCH;
-            else if ( pProf->Corr.nIndSat > CorrBefore.nIndSat )
-                SuppRefuteEvent = CEC_TRAN_SUPP_REFUTED_IND_BATCH;
-        }
         // Detailed correspondence counters use nanosecond ticks.  Attribute
         // the complete base phase, inductive SAT, and resimulation separately;
         // the remaining wall time is class management and fixed-point control.
@@ -754,12 +742,6 @@ static Vec_Int_t * Cec_TranProveRootBatchPrepared( Gia_Man_t * pBatch,
                     (RelMode == 1 && Vec_IntEntry(vRelStatus,nHelpers+i) < 0);
             }
         }
-        if ( !fProved && !fCombOnly && nSeq &&
-             pCands[i].nKind == CEC_TRAN_CAND_CONSTR )
-            Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf, pCands + i,
-                fBatchComplete && !(RelMode == 1 &&
-                    Vec_IntEntry(vRelStatus,nHelpers+i)<0) ? SuppRefuteEvent :
-                    CEC_TRAN_SUPP_UNKNOWN );
         if ( fProved && Vec_StrEntry(vStage, i) == 0 )
         {
             Vec_StrWriteEntry( vStage, i, 2 );

@@ -834,9 +834,6 @@ static int Cec_TranRootProvePortfolio( Gia_Man_t * p,
     {
         pProf->nStageKindSubmitted[iPhase][pPortfolio->pArray[i].nKind]++;
         pProf->nLaneKindSubmitted[0][pPortfolio->pArray[i].nKind]++;
-        if ( pPortfolio->pArray[i].nKind == CEC_TRAN_CAND_CONSTR )
-            Cec_TranSuppProfRecordCand( pProf->pBuildSuppProf,
-                pPortfolio->pArray + i, CEC_TRAN_SUPP_SUBMITTED );
         if ( pPortfolio->pArray[i].fKitPortfolio )
             pProf->nRootKitSubmitted++;
         if ( pPortfolio->pArray[i].fBdcPortfolio )

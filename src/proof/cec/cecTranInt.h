@@ -19,13 +19,6 @@ static int Cec_TranQualityActualCost( void )
 #define CEC_TRAN_BUILD_GAIN_BINS 6
 #define CEC_TRAN_BUILD_DIVRANK_BINS 6
 #define CEC_TRAN_BUILD_MFFC_BINS 6
-#define CEC_TRAN_BUILD_SUPPORT_SIZE_BINS 6
-#define CEC_TRAN_BUILD_SUPPORT_MULT_BINS 6
-#define CEC_TRAN_BUILD_SUPPORT_RATIO_BINS 5
-#define CEC_TRAN_BUILD_RESIDUAL_SAMPLE_RATE 32
-#define CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES 8
-#define CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS 6
-#define CEC_TRAN_BUILD_RESIDUAL_SIZE_BINS 7
 #define CEC_TRAN_PIVOT_RANK_BINS 8
 #define CEC_TRAN_PIVOT_RATIO_BINS 5
 #define CEC_TRAN_PIVOT_KIND_BINS 2
@@ -183,7 +176,6 @@ struct Cec_TranTfoStats_t_
     int       fLimit;
     abctime   Time;
 };
-typedef struct Cec_TranSuppProf_t_ Cec_TranSuppProf_t;
 typedef struct Cec_TranProf_t_ Cec_TranProf_t;
 typedef struct Cec_TranPivotBucketProf_t_ Cec_TranPivotBucketProf_t;
 struct Cec_TranPivotBucketProf_t_
@@ -499,7 +491,6 @@ struct Cec_TranProf_t_
     Cec_TranPivotBucketProf_t GreedyPivotState[2];
     Cec_TranPivotBucketProf_t MultiPath[CEC_TRAN_MULTIPATH_RANK_BINS]
         [CEC_TRAN_MULTIPATH_PATH_BINS];
-    Cec_TranSuppProf_t * pBuildSuppProf;
     int     nRootWaveDepCalls[64];
     int     nRootWaveRecipes[64];
     int     nRootWaveSubmitted[64];

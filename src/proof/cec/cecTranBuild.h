@@ -199,169 +199,6 @@ static int Cec_TranResidualSimBit( word const * pSim, int iSample )
     return (int)((pSim[iSample >> 6] >> (iSample & 63)) & 1);
 }
 
-static void Cec_TranResidualSampleInsert( int iSample, word Score,
-    int * pSamples, word * pScores, int * pnSamples )
-{
-    int i, iWorst = 0;
-    if ( *pnSamples < CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES )
-    {
-        pSamples[*pnSamples] = iSample;
-        pScores[(*pnSamples)++] = Score;
-        return;
-    }
-    for ( i = 1; i < *pnSamples; i++ )
-        if ( pScores[i] > pScores[iWorst] ||
-             (pScores[i] == pScores[iWorst] &&
-              pSamples[i] > pSamples[iWorst]) )
-            iWorst = i;
-    if ( Score > pScores[iWorst] ||
-         (Score == pScores[iWorst] && iSample >= pSamples[iWorst]) )
-        return;
-    pSamples[iWorst] = iSample;
-    pScores[iWorst] = Score;
-}
-
-// Profiling-only counterfactual: compare the current static ranking prefix
-// against conditional greedy selection from the complete pre-truncation
-// reservoir.  At most 8 off and 8 on samples give an exact 64-bit residual
-// pair mask.  Root sampling bounds overhead without changing discovery.
-static void Cec_TranSuppProfResidualSample( Cec_TranSuppProf_t * p,
-    Cec_TranSim_t * pSim, int iTarget, Vec_Int_t * vReservoir,
-    Cec_TranDivRank_t const * pRanks, int nSupportMax )
-{
-    static int const Depth[CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS] = {
-        1, 2, 4, 8, 16, 32 };
-    int Off[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
-    int On[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
-    word OffScore[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
-    word OnScore[CEC_TRAN_BUILD_RESIDUAL_SAMPLE_VALUES];
-    word * pCovers, Full, Covered, BestGainMask;
-    char * pSelected;
-    Vec_Int_t * vGreedy;
-    word * pTarget, * pDiv;
-    int nOff = 0, nOn = 0, nPairs, nReservoir, nSelect;
-    int i, k, d, iRank, iObj, iBest, nBest, nStaticSize = 0;
-    int nGreedySize = 0, iDepth;
-    if ( p == NULL || Vec_IntSize(vReservoir) == 0 )
-        return;
-    assert( iTarget > 0 && iTarget < p->nObjs );
-    if ( p->pRootResidualOffset[iTarget] != -3 )
-        return;
-    p->nResidualEligibleRoots++;
-    if ( p->nResidualSampledRoots &&
-         Cec_TranResidualMix((word)(unsigned)iTarget) %
-            CEC_TRAN_BUILD_RESIDUAL_SAMPLE_RATE )
-    {
-        p->pRootResidualOffset[iTarget] = -2;
-        return;
-    }
-    p->pRootResidualOffset[iTarget] = -1;
-    p->nResidualSampledRoots++;
-    pTarget = Cec_TranSimObj( pSim, iTarget );
-    for ( i = 0; i < 64 * pSim->nSlots; i++ )
-    {
-        word Score = Cec_TranResidualMix(
-            ((word)(unsigned)iTarget << 32) ^ (word)(unsigned)i );
-        if ( Cec_TranResidualSimBit(pTarget, i) )
-            Cec_TranResidualSampleInsert( i, Score,
-                On, OnScore, &nOn );
-        else
-            Cec_TranResidualSampleInsert( i, Score,
-                Off, OffScore, &nOff );
-    }
-    if ( nOff == 0 || nOn == 0 )
-    {
-        p->nResidualNoPairRoots++;
-        return;
-    }
-    nPairs = nOff * nOn;
-    Full = nPairs == 64 ? ~(word)0 : (((word)1 << nPairs) - 1);
-    p->nResidualPairs += nPairs;
-    nReservoir = Vec_IntSize( vReservoir );
-    nSelect = Abc_MinInt( nReservoir, Abc_MinInt(nSupportMax, 32) );
-    pCovers = ABC_CALLOC( word, nReservoir );
-    pSelected = ABC_CALLOC( char, nReservoir );
-    vGreedy = Vec_IntAlloc( nSelect );
-    for ( iRank = 0; iRank < nReservoir; iRank++ )
-    {
-        iObj = Vec_IntEntry( vReservoir, pRanks[iRank].iPos );
-        pDiv = Cec_TranSimObj( pSim, iObj );
-        for ( i = 0; i < nOff; i++ )
-            for ( k = 0; k < nOn; k++ )
-                if ( Cec_TranResidualSimBit(pDiv, Off[i]) !=
-                     Cec_TranResidualSimBit(pDiv, On[k]) )
-                    pCovers[iRank] |= (word)1 << (i * nOn + k);
-    }
-    Covered = 0;
-    iDepth = 0;
-    for ( iRank = 0; iRank < nSelect; iRank++ )
-    {
-        Covered |= pCovers[iRank];
-        while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS &&
-                Depth[iDepth] == iRank + 1 )
-            p->nResidualStaticCovered[iDepth++] +=
-                Abc_TtCountOnes( Covered );
-        if ( Covered == Full && nStaticSize == 0 )
-            nStaticSize = iRank + 1;
-    }
-    while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS )
-        p->nResidualStaticCovered[iDepth++] += Abc_TtCountOnes( Covered );
-    Covered = 0;
-    iDepth = 0;
-    for ( d = 0; d < nSelect; d++ )
-    {
-        iBest = -1;
-        nBest = 0;
-        BestGainMask = 0;
-        for ( iRank = 0; iRank < nReservoir; iRank++ )
-            if ( !pSelected[iRank] )
-            {
-                word GainMask = pCovers[iRank] & ~Covered;
-                int nGain = Abc_TtCountOnes( GainMask );
-                if ( nGain > nBest )
-                    iBest = iRank, nBest = nGain, BestGainMask = GainMask;
-            }
-        if ( iBest < 0 )
-            break;
-        pSelected[iBest] = 1;
-        Covered |= BestGainMask;
-        Vec_IntPush( vGreedy, Vec_IntEntry(vReservoir,
-            pRanks[iBest].iPos) );
-        while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS &&
-                Depth[iDepth] == d + 1 )
-            p->nResidualGreedyCovered[iDepth++] +=
-                Abc_TtCountOnes( Covered );
-        if ( Covered == Full )
-        {
-            nGreedySize = d + 1;
-            break;
-        }
-    }
-    while ( iDepth < CEC_TRAN_BUILD_RESIDUAL_DEPTH_BINS )
-        p->nResidualGreedyCovered[iDepth++] += Abc_TtCountOnes( Covered );
-    if ( nStaticSize )
-    {
-        p->nResidualStaticComplete++;
-        p->nResidualStaticSizeSum += nStaticSize;
-        p->nResidualStaticSize[
-            Cec_TranSuppProfResidualSizeBin(nStaticSize)]++;
-    }
-    if ( nGreedySize )
-    {
-        p->nResidualGreedyComplete++;
-        p->nResidualGreedySizeSum += nGreedySize;
-        p->nResidualGreedySize[
-            Cec_TranSuppProfResidualSizeBin(nGreedySize)]++;
-        Vec_IntSort( vGreedy, 0 );
-        p->pRootResidualOffset[iTarget] = Vec_IntSize(p->vResidualKeys);
-        p->pRootResidualSize[iTarget] = Vec_IntSize(vGreedy);
-        Vec_IntAppend( p->vResidualKeys, vGreedy );
-    }
-    Vec_IntFree( vGreedy );
-    ABC_FREE( pCovers );
-    ABC_FREE( pSelected );
-}
-
 // Select at most eight divisors that exactly separate every currently
 // observed OFF sample from every ON sample.  Groups represent assignments to
 // the already selected core which still contain both labels.  The next
@@ -1423,9 +1260,6 @@ static void Cec_TranCollectRootConstructedIter( Gia_Man_t * p,
         pProf->nRootBuildStageValid[iAttempt]++;
         if ( pPars->fProfile )
             Cec_TranProfilePivotCandidate( pProf, &Cand, -2 );
-        Cec_TranSuppProfRecord( pProf->pBuildSuppProf, Cand.iTarget,
-            vCandSupport, Cand.nGates, Cand.nResubStage,
-            CEC_TRAN_SUPP_VALID );
         pProf->timeRootBuildStage[iAttempt] += timePart;
         fAccepted = 0;
         fKnownDuplicate = Cec_TranCandVecContains(pKnown, &Cand);
@@ -2147,16 +1981,6 @@ static void Cec_TranRootDiscoverOne( Gia_Man_t * p, Cec_TranSim_t * pSim,
         pProf->timeExpObs += Abc_Clock() - clk;
     }
     Cec_TranPreproofEvent( pProf, p, "observation", 1, Vec_IntSize(vPool), nObservationWordWork );
-    Cec_TranPreproofEvent( pProf, p, "residual-sample", 0, Vec_IntSize(vPool), 0 );
-    if ( Vec_IntSize(vPool) )
-    {
-        if ( pPars->fUseConstr && Cec_TranRootBuildEligible(pRoot) &&
-             iWave == 0 )
-            Cec_TranSuppProfResidualSample( pProf->pBuildSuppProf, pSim,
-                pRoot->iObj, vPool, pRanks,
-                pPars->nConstrBaseMax ? pPars->nConstrBaseMax : 32 );
-    }
-    Cec_TranPreproofEvent( pProf, p, "residual-sample", 1, Vec_IntSize(vPool), 0 );
     if ( pPars->fUseConstr )
     {
         pProf->nRootDivReservoirCalls++;

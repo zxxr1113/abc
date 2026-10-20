@@ -1411,7 +1411,6 @@ struct Drw_Gia_t_
     Drw_Man_t Core;
     Drw_Cut_t Structural;
     int Captures;
-    long long Queries, FullMarks, SupportLoss;
 };
 
 static void Drw_GiaRequire( int Condition, const char * pMessage )
@@ -1480,18 +1479,12 @@ Vec_Int_t * Drw_GiaSelect( Drw_Gia_t * p, int Id )
     vLeaves = Vec_IntAlloc(4);
     for ( i = 0; i < p->Structural.nLeaves; ++i )
         Vec_IntPush(vLeaves,p->Structural.Leaves[i]);
-    p->Queries++;
-    p->FullMarks += p->Core.fFullMark;
-    p->SupportLoss += p->Structural.nLeaves != Cut.nLeaves;
     return vLeaves;
 }
 
-void Drw_GiaStop( Drw_Gia_t * p, int fProfile )
+void Drw_GiaStop( Drw_Gia_t * p )
 {
     if ( !p ) return;
-    if ( fProfile )
-        Abc_Print(1,"sresub drw-selector: queries=%lld states=%.0f limited=%d full=%lld support-loss=%lld\n",
-            p->Queries,p->Core.nCuts,p->Core.nLimited,p->FullMarks,p->SupportLoss);
     Vec_IntFree(p->Core.vStack);
     ABC_FREE(p->Core.pObjs);
     ABC_FREE(p);

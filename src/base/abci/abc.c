@@ -42657,11 +42657,11 @@ static int Abc_CommandAbc9Sresub( Abc_Frame_t * pAbc, int argc, char ** argv )
     }
     if ( globalUtilOptind != argc ) goto usage;
     if ( fStrictOnly ) Pars.fUseOdc = 0;
-    if ( !pAbc->pGia || Gia_ManBoxNum(pAbc->pGia) ||
+    if ( !pAbc->pGia || Gia_ManBoxNum(pAbc->pGia) || Gia_ManBufNum(pAbc->pGia) ||
          Gia_ManHasChoices(pAbc->pGia) || pAbc->pGia->pMuxes ||
          Gia_ManXorNum(pAbc->pGia) )
     {
-        Abc_Print( -1, "&sresub requires a plain GIA without boxes or choices.\n" );
+        Abc_Print( -1, "&sresub requires a plain GIA without boxes, buffers, or choices.\n" );
         return 1;
     }
     if ( !Gia_ManRegNum(pAbc->pGia) ) return 0;

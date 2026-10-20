@@ -101,7 +101,6 @@ typedef struct Cec_TranCutCache_t_
     Drw_Gia_t * pDrw;
     Vec_Ptr_t * vCuts;
     int Size;
-    long long Queries, Hits;
 } Cec_TranCutCache_t;
 
 static Cec_TranCutCache_t * Cec_TranCutCacheStartMode( Gia_Man_t * pGia,
@@ -129,10 +128,8 @@ static Vec_Int_t * Cec_TranCutCacheSelect( Cec_TranCutCache_t * p, int Id,
     Cec_TranTfoStats_t * pStats )
 {
     Vec_Int_t * vCut = p->vCuts ? (Vec_Int_t *)Vec_PtrEntry(p->vCuts,Id) : NULL;
-    p->Queries++;
     if ( vCut )
     {
-        p->Hits++;
         if ( pStats ) pStats->nCutLeaves = Vec_IntSize(vCut);
         return Vec_IntDup(vCut);
     }
@@ -142,14 +139,12 @@ static Vec_Int_t * Cec_TranCutCacheSelect( Cec_TranCutCache_t * p, int Id,
     return vCut;
 }
 
-static void Cec_TranCutCacheStop( Cec_TranCutCache_t * p, int fProfile )
+static void Cec_TranCutCacheStop( Cec_TranCutCache_t * p )
 {
     int i;
     Vec_Int_t * vCut;
     if ( !p ) return;
-    if ( fProfile ) Abc_Print(1,"sresub cut-reuse: selector=%s cache=%d queries=%lld hits=%lld\n",
-        p->pDrw ? "drw4" : "greedy",p->vCuts != NULL,p->Queries,p->Hits);
-    Drw_GiaStop(p->pDrw,fProfile);
+    Drw_GiaStop(p->pDrw);
     if ( p->vCuts )
     {
         Vec_PtrForEachEntry(Vec_Int_t *,p->vCuts,vCut,i) Vec_IntFreeP(&vCut);

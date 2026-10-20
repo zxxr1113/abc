@@ -636,7 +636,7 @@ static Gia_Man_t * Cec_TranRunOdcSerial( Gia_Man_t * p,
         s_CexDiscoveryTime=Abc_Clock()-cd; }
         // Rebuild from the next graph after every commit. Never retain a cut
         // manager, divisor pool or care mask across ODC snapshots.
-        Cec_TranCutCacheStop((Cec_TranCutCache_t *)Prof.pOdcCutCache,0);
+        Cec_TranCutCacheStop((Cec_TranCutCache_t *)Prof.pOdcCutCache);
         Prof.pOdcCutCache = NULL;
         if ( fOdcDirect )
         {
